@@ -129,9 +129,9 @@ function overlayHtml() {
     if (!app.overlay)
         return '';
     if (app.overlay === 'inventory' && app.loadout)
-        return `<div class="overlay inventory-overlay"><div class="panel inventory-modal"><div class="section-title">行动背包 <span>整理物品时世界仍在运行 · Tab 关闭</span></div><div class="columns"><div>${grid(app.loadout.bag, 'bag', 44)}<div class="inv-help">总负重 ${app.raid?.carriedWeight().toFixed(1)} / ${SURVIVAL.carryLimit} kg　·　含装备与安全箱</div></div><div><div class="section-title">安全箱</div>${grid(app.loadout.safe, 'safe', 44)}<div class="inv-help">死亡后保留</div></div>${details()}</div>${btn('关闭背包', 'close', 'text-button')}</div></div>`;
+        return `<div class="overlay inventory-overlay"><div class="panel inventory-modal"><div class="section-title">行动背包 <span>${playerInput.touch ? '整理物品时世界仍在运行' : '整理物品时世界仍在运行 · Tab 关闭'}</span></div><div class="columns"><div>${grid(app.loadout.bag, 'bag', 44)}<div class="inv-help">总负重 ${app.raid?.carriedWeight().toFixed(1)} / ${SURVIVAL.carryLimit} kg　·　含装备与安全箱</div></div><div><div class="section-title">安全箱</div>${grid(app.loadout.safe, 'safe', 44)}<div class="inv-help">死亡后保留</div></div>${details()}</div>${btn('关闭背包', 'close', 'text-button')}</div></div>`;
     if (app.overlay === 'map')
-        return `<div class="overlay"><div class="panel map-modal"><div class="section-title">滨科夫县沿海管制图 <span>M 关闭 · 时间继续流逝</span></div><canvas id="map" width="690" height="400"></canvas><div class="legend"><span>● 你的位置　 <span style="color:#d0df91">▣ 当前撤离点</span></span><span>深绿：永久通路　暗红：潮汐淹没区</span>${btn('关闭地图', 'close', 'text-button')}</div></div></div>`;
+        return `<div class="overlay"><div class="panel map-modal"><div class="section-title">滨科夫县沿海管制图 <span>${playerInput.touch ? '时间继续流逝' : 'M 关闭 · 时间继续流逝'}</span></div><canvas id="map" width="690" height="400"></canvas><div class="legend"><span>● 你的位置　 <span style="color:#d0df91">▣ 当前撤离点</span></span><span>深绿：永久通路　暗红：潮汐淹没区</span>${btn('关闭地图', 'close', 'text-button')}</div></div></div>`;
     if (app.overlay === 'pause')
         return `<div class="overlay"><div class="panel modal"><div class="section-label">行动暂停 · 电台静默</div><h2>暂时隐蔽</h2><p>行动已暂停。刷新后可从最近成功保存的检查点继续，少量未保存进度可能回退。</p><label class="small">音量 <span id="volume-label">${Math.round(app.save.settings.volume * 100)}%</span><input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.05" value="${app.save.settings.volume}"></label><div class="actions">${btn('继续行动', 'close', 'primary')}${btn('操作指南', 'help')}${btn('放弃行动', 'abandon', 'danger')}${btn('导出行动备份', 'export-save')}</div></div></div>`;
     if (app.overlay === 'abandon')
@@ -381,10 +381,34 @@ function bind() {
         file.value = '';
     };
 }
-export function drawMap() { const canvas = document.getElementById('map') as HTMLCanvasElement; if (!canvas)
-    return; const ctx = canvas.getContext('2d')!, sx = canvas.width / WORLD_W, sy = canvas.height / WORLD_H; ctx.fillStyle = '#0e1a1b'; ctx.fillRect(0, 0, canvas.width, canvas.height); WORLD.tiles.forEach((row, y) => row.forEach((t, x) => { ctx.fillStyle = ['#384b3e', '#849178', '#12363b', '#141e1b', app.raid?.highTide ? '#724840' : '#44665a', '#69735d', '#8e805b'][t] || '#222'; ctx.fillRect(x * 32 * sx, y * 32 * sy, 32 * sx + 1, 32 * sy + 1); })); ctx.font = `${playerInput.touch ? Math.ceil(12 * canvas.width / canvas.getBoundingClientRect().width) : 11}px "Microsoft YaHei"`; ctx.textAlign = 'center'; WORLD.zones.forEach(z => { ctx.fillStyle = '#f0e4b8'; ctx.fillText(z.name, (z.x + z.w / 2) * sx, (z.y + z.h / 2) * sy); }); app.raid?.config.exits.forEach(e => { ctx.strokeStyle = '#d7ed90'; ctx.lineWidth = 2; ctx.strokeRect(e.x * sx - 6, e.y * sy - 6, 12, 12); ctx.fillStyle = '#d7ed90'; ctx.fillText(e.name, e.x * sx, e.y * sy - 12); }); if (app.raid) {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(app.raid.player.x * sx, app.raid.player.y * sy, 4, 0, Math.PI * 2);
-    ctx.fill();
-} }
+export function drawMap() {
+    const canvas = document.getElementById('map') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!, sx = canvas.width / WORLD_W, sy = canvas.height / WORLD_H;
+    ctx.fillStyle = '#0e1a1b'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    WORLD.tiles.forEach((row, y) => row.forEach((t, x) => {
+        ctx.fillStyle = ['#384b3e', '#849178', '#12363b', '#141e1b', app.raid?.highTide ? '#724840' : '#44665a', '#69735d', '#8e805b'][t] || '#222';
+        ctx.fillRect(x * 32 * sx, y * 32 * sy, 32 * sx + 1, 32 * sy + 1);
+    }));
+    const bounds = canvas.getBoundingClientRect();
+    const fontSize = playerInput.touch ? Math.ceil(12 / Math.min(bounds.width / canvas.width, bounds.height / canvas.height)) : 11;
+    ctx.font = `${fontSize}px "Microsoft YaHei"`; ctx.textAlign = 'center';
+    const label = (name: string, x: number, y: number) => {
+        if (playerInput.touch) {
+            const half = ctx.measureText(name).width / 2 + 3;
+            x = Math.max(half, Math.min(canvas.width - half, x));
+            y = Math.max(fontSize + 3, Math.min(canvas.height - 4, y));
+        }
+        ctx.fillText(name, x, y);
+    };
+    WORLD.zones.forEach(z => { ctx.fillStyle = '#f0e4b8'; label(z.name, (z.x + z.w / 2) * sx, (z.y + z.h / 2) * sy); });
+    app.raid?.config.exits.forEach(e => {
+        ctx.strokeStyle = '#d7ed90'; ctx.lineWidth = 2;
+        ctx.strokeRect(e.x * sx - 6, e.y * sy - 6, 12, 12);
+        ctx.fillStyle = '#d7ed90'; label(e.name, e.x * sx, e.y * sy - 12);
+    });
+    if (app.raid) {
+        ctx.fillStyle = '#fff'; ctx.beginPath();
+        ctx.arc(app.raid.player.x * sx, app.raid.player.y * sy, 4, 0, Math.PI * 2); ctx.fill();
+    }
+}
