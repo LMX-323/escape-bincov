@@ -14,7 +14,7 @@ export interface EnemyDef {
 }
 export interface LootEntry { id: string; weight: number; min: number; max: number }
 export type LootTable = LootEntry[];
-export interface Item { uid: string; id: string; qty: number; x: number; y: number; relief?: boolean }
+export interface Item { uid: string; id: string; qty: number; x: number; y: number; relief?: boolean; rotated?: boolean }
 export interface Inventory { w: number; h: number; items: Item[] }
 /** ammo is the total loaded count; ammoRelief is its unsellable subset. */
 export interface Magazine { ammo: number; ammoRelief: number }
@@ -25,7 +25,7 @@ export interface RunSummary {
   seed: number; recovered: boolean;
 }
 export interface SaveDataV1 {
-  version: 1; cash: number; stash: Inventory; bag: Inventory; safe: Inventory;
+  version: 2; cash: number; stash: Inventory; bag: Inventory; safe: Inventory;
   equipment: Equipment; quests: Record<string, boolean>;
   upgraded: boolean; settings: { volume: number }; stats: { runs: number; extracts: number; kills: number };
   activeRun: null | { seed: number; runId?: string }; lastResult?: RunSummary;
@@ -40,16 +40,16 @@ const item = (id: string, name: string, short: string, w: number, h: number, wei
   ({ id, name, short, w, h, weight, stack, buy, sell, kind, description, color });
 
 export const ITEMS: Record<string, ItemDef> = {
-  knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '随身携带的旧匕首。按 2 切换，撤离失败也不会丢失。', 0xb4c3bf),
+  knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '随身携带的旧匕首。撤离失败也不会丢失。', 0xb4c3bf),
   pistol: item('pistol', '旧式手枪', '手枪', 2, 1, 0.8, 1, 320, 150, 'weapon', '使用 9 毫米弹，弹匣容量 8 发。适合近距离交火。', 0xa7aaa0),
   shotgun: item('shotgun', '双管霰弹枪', '双管', 3, 1, 2.7, 1, 780, 370, 'weapon', '使用霰弹，可装填 2 发。近距离更容易让多枚弹丸命中。', 0xc58458),
   carbine: item('carbine', '半自动卡宾枪', '卡宾', 3, 1, 2.4, 1, 1200, 580, 'weapon', '使用卡宾枪弹，弹匣容量 12 发。适合远距离点射。', 0x929e78),
   ammo9: item('ammo9', '9 毫米弹', '9mm', 1, 1, 0.012, 40, 7, 3, 'ammo', '旧式手枪用弹药。商店按包出售，背包数量按发计算。', 0xcba96c),
   shell: item('shell', '霰弹', '霰弹', 1, 1, 0.045, 20, 16, 7, 'ammo', '双管霰弹枪用弹药。', 0xc76650),
   ammoR: item('ammoR', '卡宾枪弹', '卡宾弹', 1, 1, 0.022, 30, 12, 5, 'ammo', '半自动卡宾枪用弹药。', 0xcbbd88),
-  bandage: item('bandage', '密封绷带', '绷带', 1, 1, 0.12, 4, 45, 18, 'medical', '止血，恢复 16 点生命。放在背包中可按 Q 使用。', 0xdad9bd),
+  bandage: item('bandage', '密封绷带', '绷带', 1, 1, 0.12, 4, 45, 18, 'medical', '止血，恢复 16 点生命。', 0xdad9bd),
   medkit: item('medkit', '急救包', '急救包', 2, 1, 0.65, 2, 160, 65, 'medical', '恢复 55 点生命并止血。', 0xc96959),
-  antidote: item('antidote', '除藻药剂', '除藻剂', 1, 1, 0.2, 3, 120, 50, 'medical', '降低 55 点污染。打开背包，选中后点击「使用」。', 0x8bb4a0),
+  antidote: item('antidote', '除藻药剂', '除藻剂', 1, 1, 0.2, 3, 120, 50, 'medical', '降低 55 点污染。', 0x8bb4a0),
   water: item('water', '净水瓶', '净水', 1, 2, 0.6, 2, 35, 14, 'food', '恢复全部耐力，降低 12 点污染。', 0x83a9ba),
   food: item('food', '鱼松罐头', '罐头', 1, 1, 0.3, 3, 50, 20, 'food', '恢复 12 点生命和 50 点耐力。', 0xcbaa76),
   scrap: item('scrap', '泵机零件', '零件', 1, 1, 0.55, 5, 85, 35, 'part', '水产站维修用零件，共需 3 个。泵壳上还留着盐渍。', 0x9caaa0),
@@ -112,20 +112,28 @@ const emptyEquipment = (): Equipment => ({ weapon: null, relief: false, ammo: 0,
 export function createInventory(w: number, h: number): Inventory {
   return { w: Math.max(1, integer(w, 1, 30)), h: Math.max(1, integer(h, 1, 30)), items: [] };
 }
-export function fits(inv: Inventory, id: string, x: number, y: number, ignoreUid?: string): boolean {
+export function itemSize(item: Pick<Item, 'id' | 'rotated'>) {
+  const d = ITEMS[item.id];
+  return item.rotated ? { w: d.h, h: d.w } : { w: d.w, h: d.h };
+}
+export function fits(inv: Inventory, id: string, x: number, y: number, ignoreUid?: string, rotated = false): boolean {
   const def = Object.hasOwn(ITEMS, id) ? ITEMS[id] : undefined;
-  if (!def || !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x + def.w > inv.w || y + def.h > inv.h) return false;
+  if (!def) return false;
+  const size = itemSize({ id, rotated });
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x + size.w > inv.w || y + size.h > inv.h) return false;
   return inv.items.every(other => {
     if (other.uid === ignoreUid) return true;
-    const d = ITEMS[other.id];
-    return x + def.w <= other.x || x >= other.x + d.w || y + def.h <= other.y || y >= other.y + d.h;
+    const d = itemSize(other);
+    return x + size.w <= other.x || x >= other.x + d.w || y + size.h <= other.y || y >= other.y + d.h;
   });
 }
-function space(inv: Inventory, id: string): { x: number; y: number } | null {
-  for (let y = 0; y < inv.h; y++) for (let x = 0; x < inv.w; x++) if (fits(inv, id, x, y)) return { x, y };
+function space(inv: Inventory, id: string, rotated = false, autoRotate = true): { x: number; y: number; rotated?: boolean } | null {
+  const orientations = autoRotate && ITEMS[id].w !== ITEMS[id].h ? [rotated, !rotated] : [rotated];
+  for (const direction of orientations) for (let y = 0; y < inv.h; y++) for (let x = 0; x < inv.w; x++)
+    if (fits(inv, id, x, y, undefined, direction)) return { x, y, ...(direction ? { rotated: true } : {}) };
   return null;
 }
-export function addItem(inv: Inventory, id: string, qty = 1, relief = false): number {
+export function addItem(inv: Inventory, id: string, qty = 1, relief = false, rotated = false, autoRotate = true): number {
   let left = integer(qty);
   const def = Object.hasOwn(ITEMS, id) ? ITEMS[id] : undefined;
   if (!def) return left;
@@ -137,7 +145,7 @@ export function addItem(inv: Inventory, id: string, qty = 1, relief = false): nu
     if (!left) return 0;
   }
   while (left > 0) {
-    const pos = space(inv, id);
+    const pos = space(inv, id, rotated, autoRotate);
     if (!pos) break;
     const take = Math.min(left, def.stack);
     inv.items.push({ uid: uid(), id, qty: take, ...pos, ...(relief ? { relief: true } : {}) });
@@ -145,10 +153,11 @@ export function addItem(inv: Inventory, id: string, qty = 1, relief = false): nu
   }
   return left;
 }
-export function moveItem(inv: Inventory, itemUid: string, x: number, y: number): boolean {
+export function moveItem(inv: Inventory, itemUid: string, x: number, y: number, rotated?: boolean): boolean {
   const selected = inv.items.find(i => i.uid === itemUid);
   if (!selected) return false;
-  if (fits(inv, selected.id, x, y, itemUid)) { selected.x = x; selected.y = y; return true; }
+  const direction = rotated ?? !!selected.rotated;
+  if (fits(inv, selected.id, x, y, itemUid, direction)) { selected.x = x; selected.y = y; if (direction) selected.rotated = true; else delete selected.rotated; return true; }
   const target = inv.items.find(i => i.uid !== itemUid && i.x === x && i.y === y);
   if (target && target.id === selected.id && !!target.relief === !!selected.relief && target.qty + selected.qty <= ITEMS[target.id].stack) {
     target.qty += selected.qty;
@@ -157,19 +166,23 @@ export function moveItem(inv: Inventory, itemUid: string, x: number, y: number):
   }
   return false;
 }
+export function rotateItem(inv: Inventory, itemUid: string): boolean {
+  const item = inv.items.find(i => i.uid === itemUid);
+  return !!item && ITEMS[item.id].w !== ITEMS[item.id].h && moveItem(inv, itemUid, item.x, item.y, !item.rotated);
+}
 export function transferItem(from: Inventory, to: Inventory, itemUid: string, x?: number, y?: number): boolean {
   const selected = from.items.find(i => i.uid === itemUid);
   if (!selected) return false;
   if (from === to) return x !== undefined && y !== undefined && moveItem(from, itemUid, x, y);
   const trial = clone(to);
   if (x !== undefined && y !== undefined) {
-    if (fits(trial, selected.id, x, y)) trial.items.push({ ...selected, x, y });
+    if (fits(trial, selected.id, x, y, undefined, !!selected.rotated)) trial.items.push({ ...selected, x, y });
     else {
       const target = trial.items.find(i => i.x === x && i.y === y);
       if (!target || target.id !== selected.id || !!target.relief !== !!selected.relief || target.qty + selected.qty > ITEMS[target.id].stack) return false;
       target.qty += selected.qty;
     }
-  } else if (addItem(trial, selected.id, selected.qty, !!selected.relief) > 0) return false;
+  } else if (addItem(trial, selected.id, selected.qty, !!selected.relief, !!selected.rotated) > 0) return false;
   to.items = trial.items;
   from.items.splice(from.items.indexOf(selected), 1);
   return true;
@@ -191,7 +204,7 @@ export function removeItem(inv: Inventory, id: string, qty: number): boolean {
 }
 export function newSave(): SaveDataV1 {
   const save: SaveDataV1 = {
-    version: 1, cash: 700, stash: createInventory(10, 6), bag: createInventory(6, 5), safe: createInventory(2, 2),
+    version: 2, cash: 700, stash: createInventory(10, 6), bag: createInventory(6, 5), safe: createInventory(2, 2),
     equipment: { weapon: 'pistol', relief: false, ammo: 0, ammoRelief: 0 }, quests: { repair: false, sample: false, ledger: false },
     upgraded: false, settings: { volume: 0.35 }, stats: { runs: 0, extracts: 0, kills: 0 }, activeRun: null,
   };
@@ -202,21 +215,21 @@ export function newSave(): SaveDataV1 {
   addItem(save.stash, 'ammo9', 24);
   return save;
 }
-function cleanInventory(raw: unknown, w: number, h: number, used = new Set<string>()): Inventory {
+function cleanInventory(raw: unknown, w: number, h: number, used = new Set<string>(), allowRotation = true): Inventory {
   const inv = createInventory(w, h);
   const entries = isObject(raw) && Array.isArray(raw.items) ? raw.items : Array.isArray(raw) ? raw : [];
   for (const entry of entries.slice(0, 900)) {
     if (!isObject(entry) || typeof entry.id !== 'string' || !Object.hasOwn(ITEMS, entry.id)) continue;
     const qty = integer(entry.qty ?? entry.quantity, 1, ITEMS[entry.id].stack * w * h);
     if (!qty) continue;
-    if (qty <= ITEMS[entry.id].stack && fits(inv, entry.id, entry.x, entry.y)) {
+    if (qty <= ITEMS[entry.id].stack && fits(inv, entry.id, entry.x, entry.y, undefined, allowRotation && entry.rotated === true)) {
       let itemUid = typeof entry.uid === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(entry.uid) && !used.has(entry.uid) ? entry.uid : uid();
       while (used.has(itemUid)) itemUid = uid();
       used.add(itemUid);
-      inv.items.push({ uid: itemUid, id: entry.id, qty, x: entry.x, y: entry.y, ...(entry.relief === true ? { relief: true } : {}) });
+      inv.items.push({ uid: itemUid, id: entry.id, qty, x: entry.x, y: entry.y, ...(entry.relief === true ? { relief: true } : {}), ...(allowRotation && typeof entry.rotated === 'boolean' ? { rotated: entry.rotated } : {}) });
     } else {
       const firstNewItem = inv.items.length;
-      addItem(inv, entry.id, qty, entry.relief === true);
+      addItem(inv, entry.id, qty, entry.relief === true, allowRotation && entry.rotated === true, false);
       for (const added of inv.items.slice(firstNewItem)) {
         while (used.has(added.uid)) added.uid = uid();
         used.add(added.uid);
@@ -226,7 +239,7 @@ function cleanInventory(raw: unknown, w: number, h: number, used = new Set<strin
   return inv;
 }
 export function migrateSave(raw: unknown): SaveDataV1 {
-  if (!isObject(raw) || (raw.version !== undefined && raw.version !== 0 && raw.version !== 1)) return newSave();
+  if (!isObject(raw) || (raw.version !== undefined && ![0, 1, 2].includes(raw.version))) return newSave();
   const upgraded = raw.upgraded === true;
   const equipped = isObject(raw.equipment) ? raw.equipment : {};
   const quests = isObject(raw.quests) ? raw.quests : {};
@@ -234,8 +247,8 @@ export function migrateSave(raw: unknown): SaveDataV1 {
   const settings = isObject(raw.settings) ? raw.settings : {};
   const used = new Set<string>();
   const save: SaveDataV1 = {
-    version: 1, cash: integer(raw.cash, 0), stash: cleanInventory(raw.stash ?? raw.inventory, 10, upgraded ? 9 : 6, used),
-    bag: cleanInventory(raw.bag, 6, 5, used), safe: cleanInventory(raw.safe, 2, 2, used),
+    version: 2, cash: integer(raw.cash, 0), stash: cleanInventory(raw.stash ?? raw.inventory, 10, upgraded ? 9 : 6, used, raw.version === 2),
+    bag: cleanInventory(raw.bag, 6, 5, used, raw.version === 2), safe: cleanInventory(raw.safe, 2, 2, used, raw.version === 2),
     equipment: { weapon: isGun(equipped.weapon) ? equipped.weapon : null, relief: equipped.relief === true, ...cleanMagazine(equipped.weapon, equipped.ammo, equipped.ammoRelief) },
     quests: Object.fromEntries(Object.keys(QUESTS).map(key => [key, quests[key] === true])), upgraded,
     settings: { volume: typeof settings.volume === 'number' && Number.isFinite(settings.volume) ? Math.max(0, Math.min(1, settings.volume)) : 0.35 },

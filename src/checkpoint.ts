@@ -13,7 +13,7 @@ export interface EnemyState extends ActorState {
 export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean }
 export interface BulletState extends ActorState { uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean }
 export interface RaidCheckpoint {
-  version: 1; worldVersion: typeof WORLD_VERSION; seed: number; runId: string;
+  version: 2; worldVersion: typeof WORLD_VERSION; seed: number; runId: string;
   loadout: D.RunLoadout; player: ActorState;
   hp: number; stamina: number; pollution: number; bleeding: number; kills: number; elapsed: number;
   highTide: boolean; knife: boolean; reloadLeft: number; fireCooldown: number;
@@ -30,7 +30,7 @@ export function initialCheckpoint(config: RunConfig, carried: D.RunLoadout): Rai
   const enemies: EnemyState[] = config.enemies.map((e, i) => ({ ...e, uid: `enemy-${i}`, rotation: 0, hp: D.ENEMIES[e.id].hp,
     home: { x: e.x, y: e.y }, target: { x: e.x, y: e.y }, state: 'patrol', timer: random() * 3,
     cooldown: 1 + random(), path: [], repath: 0, alert: 0 }));
-  return { version: 1, worldVersion: WORLD_VERSION, seed: config.seed, runId: loadout.runId!, loadout,
+  return { version: 2, worldVersion: WORLD_VERSION, seed: config.seed, runId: loadout.runId!, loadout,
     player: { ...config.spawn, rotation: 0 }, hp: B.maxHealth, stamina: B.maxStamina, pollution: 0, bleeding: 0,
     kills: 0, elapsed: 0, highTide: config.initialHigh, knife: false, reloadLeft: 0, fireCooldown: 0,
     warned: false, tideChanged: false, shotNoise: null, noiseRadius: 510, noiseTime: 0, hitTime: 0,
@@ -46,9 +46,9 @@ function actor(value: any): boolean { return point(value) && number(value.rotati
 function bool(value: unknown): boolean { return typeof value === 'boolean'; }
 
 /** Strict validation before rebuilding any world objects; never normalize a partial raid. */
-export function validateCheckpoint(value: unknown, profile: D.SaveDataV1): RaidCheckpoint {
+export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy = false): RaidCheckpoint {
   const c = value as RaidCheckpoint;
-  if (!c || c.version !== 1 || c.worldVersion !== WORLD_VERSION || !integer(c.seed, 0xffffffff)
+  if (!c || c.version !== (legacy ? 1 : 2) || c.worldVersion !== WORLD_VERSION || !integer(c.seed, 0xffffffff)
       || typeof c.runId !== 'string' || c.runId !== profile.activeRun?.runId || c.seed !== profile.activeRun.seed
       || !c.loadout || c.loadout.runId !== c.runId || !actor(c.player)) fail();
   const synthetic = structuredClone(profile);
@@ -92,5 +92,5 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1): RaidC
     if (!actor(b) || !number(b.vx, -1000, 1000) || !number(b.vy, -1000, 1000) || !number(b.left, 0, 2000)
         || !number(b.damage, 0, 1000) || !bool(b.enemy)) fail();
   }
-  return structuredClone(c);
+  return { ...structuredClone(c), version: 2 };
 }

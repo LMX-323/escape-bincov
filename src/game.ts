@@ -7,7 +7,7 @@ import { SURVIVAL as B } from './balance';
 import { app, audio, saveSession } from './app';
 import { playerInput, ActiveClock, type InputFrame } from './input';
 import { type RaidCheckpoint } from './checkpoint';
-import { render, setOverlay, finish, toast, drawMap } from './ui';
+import { render, setOverlay, finish, toast, drawMap, refreshQuickPanel } from './ui';
 export class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
     create() { createTextures(this); this.scene.start('Menu'); }
@@ -133,7 +133,7 @@ export class RaidScene extends Phaser.Scene {
         this.flood = this.add.graphics().setDepth(2);
         this.drawFlood();
         WORLD.notes.forEach(n => { this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3); this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3); });
-        this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n按住 E 3 秒 · 撤离`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3); });
+        this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3).setData('exit', e.name); });
         this.player = this.add.image(this.config.spawn.x, this.config.spawn.y, 'player').setDepth(8);
         this.fx = this.add.graphics().setDepth(9);
         this.weather = this.add.graphics().setDepth(20).setScrollFactor(0);
@@ -164,7 +164,7 @@ export class RaidScene extends Phaser.Scene {
     snapshot(): RaidCheckpoint {
         this.syncMagazine();
         const actor = (sprite: Phaser.GameObjects.Image) => ({ x: sprite.x, y: sprite.y, rotation: sprite.rotation });
-        return structuredClone({ version: 1, worldVersion: 'coast-v1', seed: this.config.seed, runId: app.loadout!.runId!,
+        return structuredClone({ version: 2, worldVersion: 'coast-v1', seed: this.config.seed, runId: app.loadout!.runId!,
             loadout: app.loadout!, player: actor(this.player), hp: this.hp, stamina: this.stamina, pollution: this.pollution,
             bleeding: this.bleeding, kills: this.kills, elapsed: this.elapsed, highTide: this.highTide, knife: this.knife,
             reloadLeft: this.reloadLeft, fireCooldown: this.fireCooldown, warned: this.warned, tideChanged: this.tideChanged,
@@ -206,6 +206,21 @@ export class RaidScene extends Phaser.Scene {
                 }
             } }
     spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[id]?.color || 0xc7b889), id, qty, relief }); }
+    nearbyLoot() { return this.loot.filter(l => distance(l.sprite, this.player) < 43 && lineOfSight(l.sprite, this.player)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player) || a.uid.localeCompare(b.uid)); }
+    pickupLoot(uid: string) {
+        const loot = this.nearbyLoot().find(l => l.uid === uid);
+        if (!loot) { toast('这件物资已不在拾取范围内。'); return false; }
+        const result = saveSession.mutate(() => {
+            const left = D.addItem(app.loadout!.bag, loot.id, loot.qty, !!loot.relief);
+            if (left === loot.qty) return false;
+            loot.qty = left;
+            if (!left) { loot.sprite.destroy(); this.loot.splice(this.loot.indexOf(loot), 1); }
+        }, this);
+        if (result === 'committed') { audio.pickup(); toast('物资已收入背包。', 'success'); }
+        else if (result === 'rejected') toast('背包空间不足，请整理物资。');
+        else if (result === 'save-failed') { setOverlay('checkpoint-error'); toast('保存失败，本次拾取已撤回。'); }
+        return result === 'committed';
+    }
     drop(item: D.Item) { this.spawnLoot(this.player.x, this.player.y, item.id, item.qty, !!item.relief); }
     syncMagazine() { if (app.loadout) {
         app.loadout.ammo = this.mag;
@@ -219,7 +234,9 @@ export class RaidScene extends Phaser.Scene {
     carriedWeight() { const l = app.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.mag : 0); }
     say(message: string, seconds = 7) { css('radio', message); const el = document.getElementById('radio'); if (el)
         el.style.display = 'block'; this.radioTime = seconds; audio.radio(); }
-    useItem(id: string, inv: D.Inventory = app.loadout!.bag) {
+    useItem(id: string, inv: D.Inventory = app.loadout!.bag, itemUid?: string) {
+        const chosen = itemUid ? inv.items.find(i => i.uid === itemUid && i.id === id && i.qty > 0) : null;
+        if (itemUid && !chosen) return false;
         if (!['bandage', 'medkit', 'water', 'food', 'antidote'].includes(id) || !D.count(inv, id))
             return false;
         if (id === 'bandage') {
@@ -248,7 +265,8 @@ export class RaidScene extends Phaser.Scene {
         }
         if (id === 'antidote')
             this.pollution = Math.max(0, this.pollution - B.antidoteCleanse);
-        D.removeItem(inv, id, 1);
+        if (chosen) { chosen.qty--; if (!chosen.qty) inv.items = inv.items.filter(i => i.uid !== chosen.uid); }
+        else D.removeItem(inv, id, 1);
         audio.pickup();
         toast(`已使用${D.ITEMS[id].name}`);
         return true;
@@ -565,7 +583,7 @@ export class RaidScene extends Phaser.Scene {
             return;
         let text = '';
         const exit = this.config.exits.find(e => distance(e, this.player) < 48);
-        const loot = this.loot.filter(l => distance(l.sprite, this.player) < 43 && lineOfSight(l.sprite, this.player)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player))[0];
+        const nearby = this.nearbyLoot(), loot = nearby[0];
         const note = WORLD.notes.find(n => distance(n, this.player) < 43);
         const touchButton = document.getElementById('touch-interact');
         if (touchButton) touchButton.textContent = exit ? '按住撤离' : loot ? '拾取' : note ? '阅读' : '交互';
@@ -589,15 +607,7 @@ export class RaidScene extends Phaser.Scene {
             if (loot) {
                 text = `E 拾取　${D.ITEMS[loot.id].name} × ${loot.qty}`;
                 if (input && this.inputFrame.actions.has('interact')) {
-                    const result = saveSession.mutate(() => {
-                        const left = D.addItem(app.loadout!.bag, loot.id, loot.qty, !!loot.relief);
-                        if (left === loot.qty) return false;
-                        loot.qty = left;
-                        if (!left) { loot.sprite.destroy(); this.loot.splice(this.loot.indexOf(loot), 1); }
-                    }, this);
-                    if (result === 'committed') { audio.pickup(); toast('物资已收入背包。'); }
-                    else if (result === 'rejected') toast('背包空间不足，请整理物资。');
-                    else { setOverlay('checkpoint-error'); toast('保存失败，本次拾取已撤回。'); }
+                    this.pickupLoot(loot.uid);
                 }
             }
             else if (note) {
@@ -605,11 +615,23 @@ export class RaidScene extends Phaser.Scene {
                 if (input && this.inputFrame.actions.has('interact')) {
                     this.say(`${note.title}：${note.text}`, 14);
                     this.noteSeen.add(note.title);
+                    if (playerInput.touch) { app.reading = { title: note.title, text: note.text }; setOverlay('reading'); }
                 }
             }
         }
-        el.textContent = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住撤离按钮').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
+        text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
+        const signature = text + ':' + nearby.length;
+        if (el.dataset.content !== signature) {
+            el.dataset.content = signature; el.replaceChildren();
+            const description = document.createElement('span'); description.textContent = text; el.append(description);
+            if (nearby.length > 1 || (exit && nearby.length)) {
+                const button = document.createElement('button'); button.textContent = `附近 ${nearby.length}`; button.dataset.action = 'nearby'; button.onclick = () => setOverlay('nearby'); el.append(button);
+            }
+        }
         el.style.display = text && !app.overlay ? 'block' : 'none';
+        const height = `${el.offsetHeight}px`;
+        if (document.documentElement.style.getPropertyValue('--interaction-height') !== height)
+            document.documentElement.style.setProperty('--interaction-height', height);
     }
     drawEffects(dt: number) {
         this.weather.clear();
@@ -639,6 +661,11 @@ export class RaidScene extends Phaser.Scene {
             }
     }
     updateHud() {
+        refreshQuickPanel();
+        for (const child of this.children.list) if (child instanceof Phaser.GameObjects.Text && child.getData('exit')) {
+            const label = `${child.getData('exit')}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`;
+            if (child.text !== label) child.setText(label);
+        }
         const labels = document.getElementById('world-labels');
         if (labels && playerInput.touch) {
             const rect = this.game.canvas.getBoundingClientRect(), parent = labels.getBoundingClientRect(), scale = rect.width / 960;
@@ -661,11 +688,16 @@ export class RaidScene extends Phaser.Scene {
         css('gunname', w.name);
         const ammo = document.getElementById('ammo');
         if (ammo) ammo.innerHTML = w.ammo ? `${this.mag.toString().padStart(2, '0')} <small>/ ${D.count(app.loadout!.bag, w.ammo)}</small>` : '近战 <small>/ 始终保留</small>';
-        css('reload', this.reloadLeft > 0 ? `换弹中　${this.reloadLeft.toFixed(1)} 秒` : playerInput.touch ? '外圈持续开火' : 'R 换弹　1 主武器　2 匕首');
+        css('reload', this.reloadLeft > 0 ? `换弹中　${this.reloadLeft.toFixed(1)} 秒` : playerInput.touch ? (w.ammo ? '外圈持续开火' : '外圈持续挥砍') : 'R 换弹　1 主武器　2 匕首');
+        const reloadButton = document.querySelector<HTMLElement>('[data-command="reload"]');
+        if (reloadButton) { reloadButton.textContent = this.reloadLeft > 0 ? `换弹 ${this.reloadLeft.toFixed(1)}s` : '换弹'; reloadButton.setAttribute('aria-label', this.reloadLeft > 0 ? `换弹中，剩余${this.reloadLeft.toFixed(1)}秒` : '换弹'); }
+        for (const command of ['knife', 'primary']) document.querySelector(`[data-command="${command}"]`)?.setAttribute('aria-pressed', String(command === 'knife' ? !w.ammo : !!w.ammo));
+        const healButton = document.querySelector<HTMLElement>('[data-command="heal"]');
+        if (healButton) { const qty = D.count(app.loadout!.bag, 'bandage') + D.count(app.loadout!.bag, 'medkit'); healButton.textContent = `治疗 ${qty}`; healButton.setAttribute('aria-label', `快捷治疗，背包可用${qty}件`); }
         const zone = WORLD.zones.find(z => this.player.x >= z.x && this.player.x < z.x + z.w && this.player.y >= z.y && this.player.y < z.y + z.h);
         css('zone', zone?.name || '沿海封锁区');
         css('tide', `${this.highTide ? '高潮位 · 浅滩封闭' : '低潮位 · 捷径开放'}　/　${this.tideChanged ? '高架路可通行' : '出击 5 分钟后换潮'}`);
         const warning = document.getElementById('warning');
-        if (warning) warning.innerHTML = this.warned && !this.tideChanged ? '<div class="banner">潮汐预警 · 请离开浅滩</div>' : this.bleeding ? '<div class="banner">持续流血 · Q 止血</div>' : '';
+        if (warning) warning.innerHTML = this.warned && !this.tideChanged ? '<div class="banner">潮汐预警 · 请离开浅滩</div>' : this.bleeding ? `<div class="banner">持续流血 · ${playerInput.touch ? '点「治疗」止血' : 'Q 止血'}</div>` : '';
     }
 }
