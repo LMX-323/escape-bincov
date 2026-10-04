@@ -15,7 +15,7 @@ const globals = new Map<string, PropertyDescriptor | undefined>();
 beforeEach(() => {
   stored = null; failWrites = false; writes = 0;
   for (const key of ['document', 'localStorage']) globals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { body: { dataset: {} }, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     getItem: () => stored,
     setItem: (_key: string, value: string) => { if (failWrites) throw new Error('quota exceeded'); stored = value; writes++; },

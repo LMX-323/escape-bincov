@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/ui/menu.png" alt="逃离滨科夫实际游戏主菜单：盐雾中的废弃水产站" width="100%">
+  <img src="docs/title/1920x1080.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>
@@ -82,6 +82,8 @@
 
 </details>
 
+主界面支持桌面、宽屏和手机横竖屏排布，提供「动态景物」开关，并遵循系统减少动态效果设置。**完整游戏仍需要键盘与鼠标**；当前适配范围与真实截图见 [夜港主界面记录](docs/TITLE-SCREEN.md)。
+
 大陆网络下 GitHub Pages 的访问体验需以实际网络为准；遇到加载问题可使用离线版。备用静态托管方案与存档迁移说明见 [大陆在线游玩指南](docs/ONLINE-CHINA.md)。
 
 ## 🛠️ 本地开发
@@ -105,6 +107,7 @@ pnpm dev
 | `pnpm package` | 构建游戏，生成离线包、网页包与制品清单 |
 | `pnpm test:browser` | 两种分辨率的浏览器回归 |
 | `pnpm test:ui` | 界面布局检查与双分辨率截图 |
+| `pnpm test:title` | 12 种主界面视口、键盘/点击、动态开关和场景往返检查 |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:portable` | 实际解压 ZIP，验证离线启动与操作 |
 | `pnpm test:play` | 约 10 分钟真实计时自动玩家，适用于玩法改动 |
@@ -150,6 +153,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | GitHub Pages 发布、更新与回退 | [部署手册](docs/DEPLOYMENT.md) |
 | 大陆网络下的托管选择 | [大陆在线游玩指南](docs/ONLINE-CHINA.md) |
 | 界面设计、前后对照与本轮验证 | [界面精修记录](docs/UI-POLISH.md) |
+| 夜港主界面、手机布局与性能取舍 | [主界面重制记录](docs/TITLE-SCREEN.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
 | 离线分享及验收证据 | [便携包说明](docs/PORTABLE.md) · [验收记录](docs/ACCEPTANCE.md) |
 

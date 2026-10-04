@@ -85,6 +85,7 @@ git push -u origin agent/short-task-name
 | `src/balance.ts` | 负重、耐力、污染、治疗等生存数值 | 玩法变化须验证真实计时与失败场景 |
 | `src/world.ts` | 地图、种子配置、碰撞、视线和寻路 | 潮位切换前后出生点、物资与撤离可达性 |
 | `src/art.ts` / `src/audio.ts` | 程序像素图形和合成音效 | 不增加离线运行时网络依赖 |
+| `src/title-art.ts` / `src/title-screen.ts` / `src/title.css` | 夜港主界面、缓存景物、视口布局 | 动态开关、减少动态效果、安全区；不改变局内缩放 |
 | `src/style.css` | 菜单、HUD、背包和对话框样式 | 两种分辨率、文字可读性、点击区域 |
 | `tests/` | 纯规则、地图与存档回归 | 风险对应断言，避免仅检查实现细节 |
 | `scripts/build.mjs` | esbuild 打包、HTML 内联与开发服务 | 两个 HTML 字节一致，第三方声明保留 |
@@ -121,7 +122,7 @@ git push -u origin agent/short-task-name
 | --- | --- |
 | 纯文字/文档 | 本地及仓库链接、命令、事实、图片路径；无需新增代码测试 |
 | 领域规则、数据、地图 | `pnpm test`、`pnpm package`；相应边界/可达性回归 |
-| UI、操作、场景 | 上述检查 + `pnpm test:browser`、`pnpm test:ui`；1280×720 与 1920×1080 截图 |
+| UI、操作、场景 | 上述检查 + `pnpm test:browser`、`pnpm test:ui`；1280×720 与 1920×1080 截图。主界面/全局输入/缩放还需 `pnpm test:title` |
 | 交易、库存、结算、备份 | 上述检查 + `pnpm test:save-browser`，包括写入失败、重复重试、旧存档、导入覆盖与多窗口影响 |
 | 打包、依赖或发布 | `pnpm package`、`pnpm test:portable`、ZIP 内容/哈希与线上普通入口检查 |
 | 战斗、AI、潮汐、持续负载 | 对应回归 + `pnpm test:play`；另明确真人平衡性是否验证 |
@@ -132,6 +133,8 @@ git push -u origin agent/short-task-name
 pnpm test
 pnpm package
 pnpm test:browser
+pnpm test:ui
+pnpm test:title
 pnpm test:save-browser
 pnpm test:portable
 ```

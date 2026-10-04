@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { createTextures, drawWorld, drawBackdrop } from './art';
+import { drawTitleBackdrop } from './title-art';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point } from './world';
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
@@ -11,7 +12,7 @@ export class BootScene extends Phaser.Scene {
 }
 export class MenuScene extends Phaser.Scene {
     constructor() { super('Menu'); }
-    create() { drawBackdrop(this); render(); }
+    create() { drawTitleBackdrop(this, app.menuMotion); render(); }
 }
 export class HideoutScene extends Phaser.Scene {
     constructor() { super('Hideout'); }
