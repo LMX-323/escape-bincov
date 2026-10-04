@@ -156,3 +156,4 @@ body[data-screen="menu"] .modal:focus-within { border-top-color: #c6d58b; }
 }
 
 .mobile .title-link { min-height: 48px; min-width: 48px; touch-action: manipulation; }
+.mobile body[data-screen="menu"] .modal button { min-height: 48px; min-width: 48px; padding: 10px 12px; font-size: 14px; touch-action: manipulation; }

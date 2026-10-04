@@ -60,6 +60,10 @@ try {
       const modal = page.getByRole('dialog', { name: '行动指南' });
       await modal.waitFor();
       const bounds = await modal.boundingBox();
+      if (width < 1000) {
+        const targets = await modal.locator('button').evaluateAll(nodes => nodes.map(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })));
+        assert.ok(targets.every(r => r.width >= 48 && r.height >= 48), 'Mobile dialog target below 48 CSS px');
+      }
       assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= height + 1, 'Help escapes viewport');
       assert.equal(await page.locator('.title-screen').getAttribute('inert'), '');
       await page.keyboard.press('Tab');

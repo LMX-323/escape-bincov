@@ -114,6 +114,7 @@ try{
   const raw=await page.evaluate(()=>{const key='escape-bincov.session.v2',r=JSON.parse(localStorage.getItem(key));r.version=999;const text=JSON.stringify(r);localStorage.setItem(key,text);return text});
   await page.reload();await page.getByRole('heading',{name:'暂时无法打开存档'}).waitFor();
   assert.equal(await page.evaluate(()=>localStorage.getItem('escape-bincov.session.v2')),raw);
+  const targets=await page.locator('.modal button').evaluateAll(nodes=>nodes.map(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height})));assert.ok(targets.every(r=>r.width>=48&&r.height>=48));
   const download=page.waitForEvent('download');await action('export-original').tap();const path=resolve(out,'unknown-original.json');await (await download).saveAs(path);assert.equal(await readFile(path,'utf8'),raw);
  });
  report.status='passed';
