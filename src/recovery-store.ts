@@ -13,6 +13,11 @@ export interface SessionRecord {
   legacyBackup: string | null;
 }
 const failure = (): never => { throw new Error('无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。'); };
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
+  if (value && typeof value === 'object') return '{' + Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => JSON.stringify(k) + ':' + canonical(v)).join(',') + '}';
+  return JSON.stringify(value);
+}
 export function decodeSession(text: string): SessionRecord {
   if (new TextEncoder().encode(text).length > SESSION_MAX_BYTES) return failure();
   let r: SessionRecord;
@@ -22,7 +27,10 @@ export function decodeSession(text: string): SessionRecord {
       || (r.legacyBackup !== null && typeof r.legacyBackup !== 'string') || !r.profile || r.profile.version !== 1) return failure();
   const active = r.profile.activeRun;
   // Profile fields retain the existing strict inventory and economy validation.
-  decodeBackup(JSON.stringify({ ...r.profile, activeRun: null }));
+  const checked = decodeBackup(JSON.stringify({ ...r.profile, activeRun: null }));
+  checked.activeRun = active ? { seed: active.seed, runId: active.runId } : null;
+  // Never discard the strict decoder's normalized result and then trust unchecked fields.
+  if (canonical(checked) !== canonical(r.profile)) return failure();
   if (active) {
     if (typeof active.runId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(active.runId) || r.terminal !== null) return failure();
     r.raid = validateCheckpoint(r.raid, r.profile);

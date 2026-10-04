@@ -44,7 +44,9 @@ test('malformed, future and inconsistent checkpoints never overwrite stored prog
   const valid = f.data.get(SESSION_KEY)!;
   for (const mutate of [(r: any) => { r.version = 99; }, (r: any) => { r.raid = null; },
     (r: any) => { r.raid.rng = -1; }, (r: any) => { r.raid.loot.push(r.raid.loot[0]); },
-    (r: any) => { r.raid.loadout.ammoRelief = 999; }, (r: any) => { r.raid.worldVersion = 'future'; }]) {
+    (r: any) => { r.raid.loadout.ammoRelief = 999; }, (r: any) => { r.raid.worldVersion = 'future'; },
+    (r: any) => { r.profile.reliefSupplies = [{ id: 'carbine', qty: 99 }]; },
+    (r: any) => { r.profile.lastResult = { outcome: 'extract', kills: 'invalid' }; }]) {
     const value = JSON.parse(valid); mutate(value); const corrupt = JSON.stringify(value); f.data.set(SESSION_KEY, corrupt);
     assert.throws(() => new RecoveryStore(f.storage).load()); assert.equal(f.data.get(SESSION_KEY), corrupt);
   }
