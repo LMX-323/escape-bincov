@@ -3,7 +3,7 @@ body[data-screen="menu"] #frame {
   width: 100%; height: 100%; height: 100dvh; transform: none !important;
   box-shadow: none;
 }
-body[data-screen="menu"] #game { overflow: hidden; cursor: default; }
+body[data-screen="menu"] #game { inset: 0; width: 100%; height: 100%; transform: none; overflow: hidden; cursor: default; touch-action: auto; }
 body[data-screen="menu"] #game canvas { width: 100% !important; height: 100% !important; object-fit: cover; object-position: 65% center; }
 .title-screen {
   --title-cream: #e6e8ca;
@@ -154,3 +154,6 @@ body[data-screen="menu"] .modal:focus-within { border-top-color: #c6d58b; }
   .title-english { font-size: 8px; letter-spacing: .45em; }
   .title-save-note { font-size: 8px; }
 }
+
+.mobile .title-link { min-height: 48px; min-width: 48px; touch-action: manipulation; }
+.mobile body[data-screen="menu"] .modal button { min-height: 48px; min-width: 48px; padding: 10px 12px; font-size: 14px; touch-action: manipulation; }

@@ -1,0 +1,149 @@
+{
+  "startedAt": "2026-10-04T09:51:23.028Z",
+  "browser": "138.0.7204.0",
+  "entry": "test-results/pr2-before/index.html",
+  "method": "Offline Chromium keyboard/mouse and native AudioContext. Touch capability is emulated; positions and enemy cooldowns are fixtures. No physical-device or audible-output certification.",
+  "cases": [
+    {
+      "name": "touch laptop keyboard/mouse 1280x720",
+      "status": "failed",
+      "errors": [],
+      "requests": [],
+      "error": "AssertionError [ERR_ASSERTION]: {\"touch\":true,\"moved\":0,\"shots\":0,\"afterRelease\":8}\n    at keyboardAndMouse (file://scripts/desktop-input-test.mjs:78:10)\n    at async test (file://scripts/desktop-input-test.mjs:51:21)\n    at async file://scripts/desktop-input-test.mjs:92:5",
+      "state": {
+        "x": 700,
+        "y": 784,
+        "elapsed": 1.1480000000000001,
+        "hp": 100,
+        "bleeding": 0,
+        "mag": 8,
+        "bag": {
+          "w": 6,
+          "h": 5,
+          "items": [
+            {
+              "uid": "bc-mutn5f21-6",
+              "id": "ammo9",
+              "qty": 24,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5f21-7",
+              "id": "bandage",
+              "qty": 2,
+              "x": 1,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5f21-8",
+              "id": "water",
+              "qty": 1,
+              "x": 2,
+              "y": 0
+            }
+          ]
+        },
+        "overlay": "",
+        "touch": true,
+        "audio": [
+          "running"
+        ]
+      }
+    },
+    {
+      "name": "Esc resumes the native audio context on every pause cycle",
+      "status": "failed",
+      "errors": [],
+      "requests": [],
+      "error": "AssertionError [ERR_ASSERTION]: Game resumes but its native audio context stays suspended\n+ actual - expected\n\n  [\n+   'suspended'\n-   'running'\n  ]\n\n    at file://scripts/desktop-input-test.mjs:106:14\n    at async test (file://scripts/desktop-input-test.mjs:51:21)\n    at async file://scripts/desktop-input-test.mjs:96:3",
+      "state": {
+        "x": 700,
+        "y": 784,
+        "elapsed": 0.31989999999850993,
+        "hp": 100,
+        "bleeding": 0,
+        "mag": 8,
+        "bag": {
+          "w": 6,
+          "h": 5,
+          "items": [
+            {
+              "uid": "bc-mutn5gez-6",
+              "id": "ammo9",
+              "qty": 24,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5gez-7",
+              "id": "bandage",
+              "qty": 2,
+              "x": 1,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5gez-8",
+              "id": "water",
+              "qty": 1,
+              "x": 2,
+              "y": 0
+            }
+          ]
+        },
+        "overlay": "",
+        "touch": false,
+        "audio": [
+          "suspended"
+        ]
+      }
+    },
+    {
+      "name": "ineffective healing preserves held movement and all medical items",
+      "status": "failed",
+      "errors": [],
+      "requests": [],
+      "error": "AssertionError [ERR_ASSERTION]: Held D stopped after Q: 723.8783999999165 -> 723.8783999999165\n    at file://scripts/desktop-input-test.mjs:143:12\n    at async test (file://scripts/desktop-input-test.mjs:51:21)\n    at async file://scripts/desktop-input-test.mjs:132:3",
+      "state": {
+        "x": 723.8783999999165,
+        "y": 784,
+        "elapsed": 0.7843000000007452,
+        "hp": 100,
+        "bleeding": 0,
+        "mag": 8,
+        "bag": {
+          "w": 6,
+          "h": 5,
+          "items": [
+            {
+              "uid": "bc-mutn5h8r-6",
+              "id": "ammo9",
+              "qty": 24,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5h8r-7",
+              "id": "bandage",
+              "qty": 2,
+              "x": 1,
+              "y": 0
+            },
+            {
+              "uid": "bc-mutn5h8r-8",
+              "id": "water",
+              "qty": 1,
+              "x": 2,
+              "y": 0
+            }
+          ]
+        },
+        "overlay": "",
+        "touch": false,
+        "audio": [
+          "running"
+        ]
+      }
+    }
+  ]
+}

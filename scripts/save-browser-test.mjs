@@ -17,14 +17,14 @@ page.on('console', message => { if (message.type() === 'error') report.errors.pu
 context.on('request', request => { if (/^https?:/.test(request.url())) report.externalRequests.push(request.url()); });
 const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
 const state = () => page.evaluate(() => ({ save: window.__bincov.app.save, state: window.__bincov.app.state, pending: window.__bincov.app.pendingSettlement, overlay: window.__bincov.app.overlay }));
-async function failStorage(on) {
-  await page.evaluate(on => {
+async function failStorage(on, terminalOnly = false) {
+  await page.evaluate(({on, terminalOnly}) => {
     window.__realStorageWrite ??= Storage.prototype.setItem;
     Storage.prototype.setItem = on ? function (key, value) {
-      if (key === 'escape-bincov.save.v1') throw new DOMException('Injected quota failure', 'QuotaExceededError');
+      if (key === 'escape-bincov.session.v2' && (!terminalOnly || !JSON.parse(value).profile.activeRun)) throw new DOMException('Injected quota failure', 'QuotaExceededError');
       return window.__realStorageWrite.call(this, key, value);
     } : window.__realStorageWrite;
-  }, on);
+  }, {on, terminalOnly});
 }
 async function step(name, work) {
   const item = { name, status: 'running' }; report.steps.push(item);
@@ -89,14 +89,14 @@ try {
   await step('failed safe transfer rolls back live containers', async () => {
     await action('tab', 'gear').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
     await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-    await page.evaluate(() => window.__bincov.app.raid.enemies.forEach(e => e.cooldown = 100000));
+    await page.evaluate(() => window.__bincov.app.raid.enemies.forEach(e => e.cooldown = 9999));
     await page.keyboard.press('Tab');
     const item = page.locator('[data-source="bag"][aria-label^="密封绷带"]');
     await item.click();
     const before = await page.evaluate(() => window.__bincov.app.loadout);
     await failStorage(true); await action('secure').click();
     assert.deepEqual(await page.evaluate(() => window.__bincov.app.loadout), before);
-    await failStorage(false); await action('close').click();
+    await failStorage(false); await action('retry-checkpoint').click(); await action('close').click();
   });
   await step('real extraction freezes on failed save; backup contains the collected sample', async () => {
     await page.evaluate(() => {
@@ -106,7 +106,7 @@ try {
     await page.waitForTimeout(600); await page.keyboard.press('e', { delay: 100 });
     await page.waitForFunction(() => window.__bincov.app.loadout.bag.items.some(i => i.id === 'sample'));
     await page.evaluate(() => { const r = window.__bincov.app.raid; r.player.setPosition(r.config.exits[0].x, r.config.exits[0].y); });
-    await page.waitForTimeout(600); await failStorage(true);
+    await page.waitForTimeout(600); await failStorage(true, true);
     await page.keyboard.down('e');
     try { await page.getByRole('heading', { name: '结算尚未保存' }).waitFor(); } finally { await page.keyboard.up('e'); }
     const pending = await state(); assert.equal(pending.state, 'run'); assert.equal(pending.pending.lastResult.outcome, 'extract');
@@ -141,10 +141,10 @@ try {
       assert.equal(await p.evaluate(() => '__bincov' in window), false);
       await p.locator('[data-action="enter"]').click(); await p.locator('[data-action="tab"][data-id="home"]').click();
       await p.locator('#backup-file').setInputFiles(backupPath); await p.locator('[data-action="confirm-import"]').click();
-      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.save.v1')));
+      const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2')).profile);
       assert.equal(saved.stats.extracts, 1); assert.ok(saved.bag.items.some(i => i.id === 'sample'));
       await p.goto('https://bincov.test/updated/index.html');
-      assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.save.v1'))), saved);
+      assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2')).profile), saved);
     } finally { await fresh.close(); }
   });
   await step('a real cross-window storage event protects a pending settlement and its backup', async () => {
@@ -167,7 +167,7 @@ try {
       await p.evaluate(() => {
         window.__realStorageWrite = Storage.prototype.setItem;
         Storage.prototype.setItem = function (key, value) {
-          if (key === 'escape-bincov.save.v1') throw new DOMException('Injected quota failure', 'QuotaExceededError');
+          if (key === 'escape-bincov.session.v2' && !JSON.parse(value).profile.activeRun) throw new DOMException('Injected quota failure', 'QuotaExceededError');
           return window.__realStorageWrite.call(this, key, value);
         };
       });
@@ -176,16 +176,17 @@ try {
       await p.getByRole('heading', { name: '结算尚未保存' }).waitFor();
       const pending = await p.evaluate(() => window.__bincov.app.pendingSettlement);
       assert.ok(pending);
-      const latest = structuredClone(pending); latest.cash += 111;
+      const latest = await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2')));
+      latest.profile = structuredClone(pending); latest.profile.cash += 111; latest.raid = null; latest.revision++; latest.terminal = null;
       const peer = await shared.newPage();
       await peer.goto('https://bincov.test/writer');
-      await peer.evaluate(save => localStorage.setItem('escape-bincov.save.v1', JSON.stringify(save)), latest);
+      await peer.evaluate(save => localStorage.setItem('escape-bincov.session.v2', JSON.stringify(save)), latest);
       await p.waitForFunction(() => window.__bincov.app.conflict && !window.__bincov.app.storageOK);
       await p.evaluate(() => { Storage.prototype.setItem = window.__realStorageWrite; });
       assert.equal(await p.locator('[data-action="retry-save"]').isDisabled(), true);
       assert.equal(await p.evaluate(() => window.__bincov.persist()), false);
       assert.deepEqual(await p.evaluate(() => window.__bincov.app.pendingSettlement), pending);
-      assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.save.v1'))), latest);
+      assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2'))), latest);
       const downloadPromise = p.waitForEvent('download');
       await p.locator('[data-action="export-save"]').click();
       const file = resolve(out, 'conflict-settlement-backup.json');

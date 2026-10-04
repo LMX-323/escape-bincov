@@ -1,4 +1,5 @@
 import { ITEMS, WEAPONS, migrateSave, type SaveDataV1 } from './domain';
+import { decodeSession, SESSION_MAX_BYTES, type SessionRecord } from './recovery-store';
 
 export const BACKUP_MAX_BYTES = 1024 * 1024;
 
@@ -43,4 +44,21 @@ export function decodeBackup(text: string): SaveDataV1 {
   const gun = equipment.weapon === null ? null : Object.hasOwn(WEAPONS, equipment.weapon) && equipment.weapon !== 'knife' ? WEAPONS[equipment.weapon] : undefined;
   if (gun === undefined || equipment.ammo > (gun?.magazine ?? 0) || equipment.ammoRelief > equipment.ammo) fail();
   return migrateSave(raw);
+}
+
+/** Live backups use a distinct envelope; settled v1 exports remain readable by old tools. */
+export function encodeRecoveryBackup(record: SessionRecord): string {
+  decodeSession(JSON.stringify(record));
+  return JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 2, record });
+}
+export function decodePortableBackup(text: string): { kind: 'settled'; save: SaveDataV1 } | { kind: 'session'; record: SessionRecord } {
+  if (new TextEncoder().encode(text).length > SESSION_MAX_BYTES + 512) throw new Error('存档文件过大。');
+  let parsed: any;
+  try { parsed = JSON.parse(text); } catch { throw new Error('无法读取存档：文件不是有效的 JSON。'); }
+  if (parsed?.format === 'escape-bincov-recovery-backup') {
+    if (parsed.formatVersion !== 2) throw new Error('此备份来自更新的版本，请使用兼容版本导入。');
+    return { kind: 'session', record: decodeSession(JSON.stringify(parsed.record)) };
+  }
+  if (parsed?.format === 'escape-bincov-session') return { kind: 'session', record: decodeSession(text) };
+  return { kind: 'settled', save: decodeBackup(text) };
 }

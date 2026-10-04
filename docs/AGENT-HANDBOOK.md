@@ -78,6 +78,8 @@ git push -u origin agent/short-task-name
 | --- | --- | --- |
 | `src/main.ts` | Phaser 初始化、缩放、全局输入、窗口切换、存档冲突 | 普通入口无测试接口，画布边界与像素缩放 |
 | `src/game.ts` | 场景、移动、射击、敌人、潮汐、撤离与 HUD | 行动锁定、帧更新、计时、生命周期和输入坐标 |
+| `src/input.ts` / `src/mobile.ts` | 统一输入快照、指针归属与触控控件 | 暂停/取消/切屏释放，键鼠语义不变 |
+| `src/checkpoint.ts` / `src/recovery-store.ts` | 完整快照校验、迁移、单记录提交与写入所有权 | 不拆分档案和世界的提交点；拒绝未知数据 |
 | `src/app.ts` | 组装共享状态、音效和存档会话 | 唯一状态来源；Phaser/场景仅类型依赖 |
 | `src/session.ts` | 出击提交、事务回滚、结算重试、导入和存储冲突状态 | 无 DOM/Phaser；写入成功后提交；失败回滚 |
 | `src/ui.ts` | 菜单、整备、交易、任务、背包、导入导出、结算展示 | 调用会话接口；世界副作用放在提交之后 |
@@ -101,9 +103,9 @@ git push -u origin agent/short-task-name
 
 ### 存档与结算
 
-存档键为 `escape-bincov.save.v1`。出击前记账，携入物资离开仓库；中断行动恢复为失败。成功结算基于候选存档，只有写入成功才能展示完成；失败时保持 `pendingSettlement`、停止行动并允许重试/备份。一次行动只能结算一次。
+主档为 `escape-bincov.session.v2`；`escape-bincov.save.v1` 只在首次迁移时读取，保留原始备份。出击前将扣账与初始世界一次提交；新版中断行动恢复最近成功检查点，无快照的旧版行动沿用失败规则。成功结算基于候选存档，只有写入成功才能展示完成；失败时保持 `pendingSettlement`、停止行动并允许重试/备份。一次行动只能结算一次。
 
-导入应校验完整数据、提示覆盖并以实际写入成功为提交点。导出不应虚构进行中行动的完成状态。多窗口冲突不得覆盖新存档；浏览器存储被禁止时不能继续出击。强制关闭未保存且未备份的页面会丢失内存结果，这个限制必须如实保留。
+导入应校验完整数据、提示覆盖并以实际写入成功为提交点。进行中行动导出完整 v2 检查点备份，不能伪装成已完成行动；旧 v1 已结算备份继续兼容。多窗口冲突不得覆盖新存档；浏览器存储被禁止时不能继续出击。强制关闭未保存且未备份的页面会丢失内存结果，这个限制必须如实保留。
 
 ### 物品与经济
 
@@ -123,7 +125,7 @@ git push -u origin agent/short-task-name
 | --- | --- |
 | 纯文字/文档 | 本地及仓库链接、命令、事实、图片路径；无需新增代码测试 |
 | 领域规则、数据、地图 | `pnpm test`、`pnpm package`；相应边界/可达性回归 |
-| UI、操作、场景 | 上述检查 + `pnpm test:browser`、`pnpm test:ui`；1280×720 与 1920×1080 截图。主界面/全局输入/缩放还需 `pnpm test:title` |
+| UI、操作、场景 | 上述检查 + `pnpm test:browser`、`pnpm test:ui`；1280×720 与 1920×1080 截图。主界面/全局输入/缩放还需 `pnpm test:title`；输入/暂停/事务回滚还需 `pnpm test:desktop-input` 和 `pnpm test:mobile` |
 | 交易、库存、结算、备份 | 上述检查 + `pnpm test:save-browser`，包括写入失败、重复重试、旧存档、导入覆盖与多窗口影响 |
 | 打包、依赖或发布 | `pnpm package`、`pnpm test:portable`、ZIP 内容/哈希与线上普通入口检查 |
 | 战斗、AI、潮汐、持续负载 | 对应回归 + `pnpm test:play`；另明确真人平衡性是否验证 |
@@ -134,10 +136,12 @@ git push -u origin agent/short-task-name
 pnpm test
 pnpm package
 pnpm test:browser
+pnpm test:desktop-input
 pnpm test:ui
 pnpm test:title
 pnpm test:save-browser
 pnpm test:portable
+pnpm test:mobile
 ```
 
 CI 对 PR 与 `main` 运行以上检查，并保存 14 天诊断附件。真实计时脚本约 10 分钟，不在每次 CI 中默认执行。
@@ -165,7 +169,7 @@ PR 标题概括具体变化，如 `fix: keep extraction rewards when saving fail
 
 后续优先依据真人反馈考虑：战斗命中/受击反馈、初局引导、清空固定敌人后的持续目标、物资与经济节奏，以及更多可复现的存档兼容性场景。这些是讨论项，不是当前任务默认授权。
 
-多人联机、云存档、移动触控和手柄都未实现；不要把静态网站部署误写成已经支持联机。大陆备用部署见 [ONLINE-CHINA.md](ONLINE-CHINA.md)，Pages 维护见 [DEPLOYMENT.md](DEPLOYMENT.md)。
+移动触控和本局恢复已在 PR #2 实现候选版，真机与大陆网络验收见 `MOBILE-IMPLEMENTATION.md`；多人联机、云存档与手柄未实现；不要把静态网站部署误写成已经支持联机。大陆备用部署见 [ONLINE-CHINA.md](ONLINE-CHINA.md)，Pages 维护见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 ## 9. 一句话交接提示词
 

@@ -60,6 +60,10 @@ try {
       const modal = page.getByRole('dialog', { name: '行动指南' });
       await modal.waitFor();
       const bounds = await modal.boundingBox();
+      if (width < 1000) {
+        const targets = await modal.locator('button').evaluateAll(nodes => nodes.map(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })));
+        assert.ok(targets.every(r => r.width >= 48 && r.height >= 48), 'Mobile dialog target below 48 CSS px');
+      }
       assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= height + 1, 'Help escapes viewport');
       assert.equal(await page.locator('.title-screen').getAttribute('inert'), '');
       await page.keyboard.press('Tab');
@@ -71,12 +75,12 @@ try {
       assert.equal(await page.locator('[data-action="title-motion"]').evaluate(el => el === document.activeElement), true, 'Native Tab navigation is blocked');
       await page.keyboard.press('Space');
       assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false', 'Reduced motion control misrepresents its effective state');
-      const saved = await page.evaluate(() => localStorage.getItem('escape-bincov.save.v1'));
+      const saved = await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2'));
       if (width < 600) await page.locator('.title-enter').tap();
       else { await page.locator('.title-enter').focus(); await page.keyboard.press('Enter'); }
       await page.locator('.hideout').waitFor();
       assert.equal(await page.evaluate(() => document.body.dataset.screen), 'hideout');
-      assert.equal(await page.evaluate(() => localStorage.getItem('escape-bincov.save.v1')), saved, 'Title entry alters existing progress');
+      assert.equal(await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2')), saved, 'Title entry alters existing progress');
       await page.locator('[data-action="tab"][data-id="home"]').click();
       await page.locator('[data-action="menu"]').click();
       await page.locator('.title-enter').waitFor();

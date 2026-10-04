@@ -234,3 +234,144 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #1e3024; border: 1px solid #869a6c; box-shadow: 0 4px 16px #0005; color: #e0e8c5; padding: 10px 18px; max-width: 90vw; pointer-events: none; font-size: 12px; line-height: 1.6; opacity: 0; transition: opacity .15s; z-index: 50; }
 .storage-error { color: #e8a186; font-size: 11px; }
 @media (prefers-reduced-motion: reduce) { button, #toast { transition: none; } }
+
+/* Mobile UI uses CSS pixels; only the 16:9 world scales. No DPR-sized backing buffer. */
+:root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
+#touch-controls, #world-labels { display: none; }
+.mobile body { height: var(--view-height, 100dvh); overscroll-behavior: none; }
+.mobile #frame { width: 100%; height: 100%; transform: none; }
+.mobile #game { inset: auto; width: 960px; height: 540px; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(var(--world-scale, .5)); transform-origin: center; touch-action: none; }
+.mobile #ui, .mobile #touch-controls, .mobile #world-labels { inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
+.mobile body:not([data-screen="menu"]) button { min-height: 48px; font-size: 14px; padding: 10px 12px; touch-action: manipulation; }
+.mobile input { min-height: 48px; font-size: 16px; }
+.mobile .small, .mobile .inv-help, .mobile .content-note { font-size: 12px; }
+.mobile .section-label, .mobile .eyebrow { font-size: 11px; }
+.mobile .section-title { font-size: 15px; }
+.mobile .section-title span { font-size: 11px; white-space: normal; }
+.mobile .hideout { inset: 6px; }
+.mobile .topbar { padding: 10px 12px; min-height: 58px; }
+.mobile .topbar h2 { font-size: 18px; }
+.mobile .station-signal, .mobile .station-identity .section-label { display: none; }
+.mobile .cash { padding-left: 12px; }
+.mobile .cash strong { font-size: 19px; }
+.mobile .cash span { font-size: 11px; }
+.mobile .tabs { padding: 0 10px; gap: 20px; overflow-x: auto; scrollbar-width: none; }
+.mobile .tabs button { white-space: nowrap; flex-shrink: 0; font-size: 14px; }
+.mobile .content { padding: 12px; overscroll-behavior: contain; }
+.mobile .columns, .mobile .station-layout { display: flex; flex-direction: column; gap: 18px; }
+.mobile .gear-columns > section { position: static; max-width: 100%; overflow-x: auto; }
+.mobile .gear-columns > .stash-section, .mobile .gear-columns > .bag-section, .mobile .gear-columns > .safe-section { display: none; }
+.mobile[data-container="stash"] .gear-columns > .stash-section, .mobile[data-container="bag"] .gear-columns > .bag-section, .mobile[data-container="safe"] .gear-columns > .safe-section { display: block; width: 100%; }
+.mobile .safe-section .equip { width: 180px; }
+.mobile .mobile-inventory-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mobile .mobile-inventory-tabs .active { color: #e1eab8; border-color: #a9bd78; background: #35472d; }
+.mobile .mobile-inventory-tabs button { font-size: 12px; padding: 7px 10px; }
+.mobile .inventory-list { width: 100%; min-width: 285px; display: flex; flex-direction: column; }
+.mobile .inventory-row { display: flex; gap: 12px; align-items: center; width: 100%; min-height: 64px; border-width: 0 0 1px; text-align: left; background: #18271e; }
+.mobile .inventory-row img { position: static; width: 32px; height: 32px; transform: none; }
+.mobile .inventory-row span { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.mobile .inventory-row small { font-size: 11px; color: var(--muted); }
+.mobile .inventory-row b { font: 14px var(--mono); }
+.mobile .item-label { font-size: 11px; }
+.mobile .qty { font-size: 12px; }
+.mobile .details-empty { display: none; }
+.mobile .details:not(.details-empty) { position: fixed; z-index: 50; top: auto; left: max(12px, var(--safe-left)); right: max(12px, var(--safe-right)); bottom: max(12px, var(--safe-bottom)); width: auto; max-height: calc(var(--view-height, 100dvh) - 32px); overflow: auto; border: 1px solid #8b9d6c; padding: 16px; box-shadow: 0 -15px 60px #000c; background: #15231ffb; }
+.mobile .item-heading h3 { font-size: 18px; }
+.mobile .item-description { font-size: 14px; }
+.mobile .item-facts { grid-template-columns: repeat(4, 1fr); }
+.mobile .item-facts dt, .mobile .item-facts dd { font-size: 12px; }
+.mobile .item-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.mobile .item-actions button { font-size: 14px; }
+.mobile .bottom-bar { margin: 0 12px; gap: 8px; min-height: 72px; flex-wrap: wrap; padding: 10px 0; }
+.mobile .departure-note { display: none; }
+.mobile .seed-label { margin-left: 0; font-size: 12px; }
+.mobile .seed { width: 88px; }
+.mobile .bottom-bar .primary { margin-left: auto; min-width: 118px; }
+.mobile .shop-grid { grid-template-columns: 1fr; width: 100%; }
+.mobile .shop-card { min-height: 70px; }
+.mobile .shop-card strong { font-size: 15px; }
+.mobile .shop-card .small { font-size: 12px; }
+.mobile .shop-card button { font-size: 14px; }
+.mobile .merchant-heading { align-items: flex-start; gap: 12px; }
+.mobile .merchant-heading h3 span { display: block; border: 0; margin: 4px 0; padding: 0; font-size: 12px; }
+.mobile .merchant-heading p { font-size: 12px; }
+.mobile .quests { grid-template-columns: 1fr; }
+.mobile .quest { height: auto; min-height: 270px; }
+.mobile .quest p, .mobile .quest-needs li, .mobile .quest-needs strong, .mobile .quest-footer span { font-size: 13px; }
+.mobile .quest h3 { font-size: 19px; }
+.mobile .station-controls { border: 0; padding: 0; width: 100%; }
+.mobile .station-copy, .mobile .tide-notes > div, .mobile .save-controls p { font-size: 14px; }
+.mobile .save-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mobile .overlay { padding: 10px; overflow: auto; }
+.mobile .modal, .mobile .result, .mobile .inventory-modal, .mobile .map-modal { width: min(100%, 660px) !important; max-height: 100%; padding: 18px; overflow: auto; }
+.mobile .modal p, .mobile .result p { font-size: 14px; }
+.mobile .modal h2, .mobile .result h2 { font-size: 26px; }
+.mobile .actions { flex-wrap: wrap; gap: 8px; }
+.mobile .help-grid { grid-template-columns: 1fr; font-size: 14px; }
+.mobile .inventory-modal .columns > div { max-width: 100%; overflow: auto; }
+.mobile .map-modal #map { width: 100%; height: auto; }
+.mobile .legend { flex-wrap: wrap; font-size: 12px; line-height: 1.7; gap: 6px; }
+.mobile .hud-top { top: 10px; left: 12px; right: 178px; padding: 0; }
+.mobile .location strong { font-size: 16px; }
+.mobile .location .section-label { display: none; }
+.mobile .location .small { font-size: 11px; }
+.mobile .timer strong { font-size: 24px; }
+.mobile .timer small { display: none; }
+.mobile .hud-bottom { top: 56px; left: 12px; bottom: auto; right: 12px; align-items: flex-start; }
+.mobile .vitals { width: 148px; padding: 8px 10px; }
+.mobile .vital-row { font-size: 11px; }
+.mobile .weapon-hud { text-align: right; padding: 4px 8px; }
+.mobile .weapon-hud .ammo { font-size: 23px; }
+.mobile #reload { max-width: 180px; font-size: 11px; }
+.mobile .keytips { display: none; }
+.mobile .radio { top: 112px; left: 175px; right: 175px; width: auto; font-size: 12px; padding: 7px; }
+.mobile .interaction { top: auto; bottom: 12px; left: 50%; width: min(310px, 43%); transform: translateX(-50%); font-size: 12px; padding: 8px; text-align: center; }
+.mobile .banner { top: 35%; font-size: 14px; }
+.mobile #touch-controls { display: block; position: absolute; pointer-events: none; z-index: 10; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mobile:not([data-state="run"]) #touch-controls, .mobile:not([data-overlay=""]) #touch-controls { display: none; }
+.mobile #touch-controls button, .mobile .stick { pointer-events: auto; touch-action: none; -webkit-touch-callout: none; }
+.mobile .touch-top { position: absolute; top: 6px; right: 8px; display: flex; gap: 6px; }
+.mobile .touch-top button { min-width: 48px; background: #1b2a22df; }
+.mobile .stick { position: absolute; bottom: 28px; width: 104px; height: 104px; border-radius: 50%; border: 1px solid #b4c68688; background: radial-gradient(circle, #bccf9920 0 18%, transparent 19% 60%, #afbd8715 61% 100%); box-shadow: inset 0 0 0 14px #8dab6715; }
+.mobile .move-stick { left: 24px; }
+.mobile .aim-stick { right: 24px; border-color: #ccaf8088; }
+.mobile .stick i { position: absolute; width: 38px; height: 38px; left: calc(50% - 19px); top: calc(50% - 19px); transform: translate(var(--stick-x, 0px), var(--stick-y, 0px)); border-radius: 50%; border: 1px solid #c8d4a38c; background: #a7bd8150; }
+.mobile .stick span { position: absolute; top: calc(100% + 6px); width: 100%; text-align: center; font-size: 10px; letter-spacing: 1px; color: #c4c9a9; }
+.mobile .aim-stick.firing { border-color: #e4aa6c; background-color: #b4753c35; }
+.mobile .aim-stick.firing i { background: #dda16670; }
+.mobile .touch-tools { position: absolute; bottom: 36px; left: 148px; display: flex; flex-direction: column; gap: 5px; }
+.mobile .touch-combat { position: absolute; bottom: 40px; right: 146px; display: flex; flex-direction: column; gap: 8px; }
+.mobile .touch-tools button, .mobile .touch-combat button { background: #18251cce; font-size: 12px; padding: 6px 10px; min-width: 54px; }
+.mobile #touch-interact { border-color: #b6c487; color: #e3eabb; }
+.mobile #world-labels { display: block; position: absolute; pointer-events: none; overflow: hidden; }
+.mobile #world-labels span { position: absolute; font-size: 12px; padding: 3px 7px; color: #dbe6ad; background: #17251ede; white-space: nowrap; transform: translate(-50%, -100%); }
+.mobile:not([data-state="run"]) #world-labels, .mobile:not([data-overlay=""]) #world-labels { display: none; }
+.mobile #toast { bottom: max(15px, var(--safe-bottom)); max-width: calc(100vw - 24px); font-size: 13px; z-index: 100; }
+@media (orientation: landscape) {
+  .mobile .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .mobile .quests { grid-template-columns: repeat(2, 1fr); }
+  .mobile .help-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-height: 340px) and (orientation: landscape) {
+  .mobile .hud-top { top: 4px; }
+  .mobile .hud-bottom { top: 43px; }
+  .mobile .vitals { width: 130px; padding: 4px 8px; }
+  .mobile .radio { display: none !important; }
+  .mobile .location .small, .mobile .weapon-hud .small { display: none; }
+  .mobile .stick { bottom: 20px; width: 96px; height: 96px; }
+  .mobile .touch-tools { flex-direction: row; left: 140px; bottom: 60px; }
+  .mobile .touch-tools button[data-command="primary"] { position: absolute; top: 53px; left: 0; }
+  .mobile .interaction { top: auto; bottom: 8px; }
+}
+
+.mobile .touch-guide + .help-grid { display: none; }
+.mobile { -webkit-tap-highlight-color: transparent; }
+.mobile .map-modal { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(calc(var(--view-height, 100dvh) - 20px), 600px); overflow: hidden; }
+.mobile .map-modal #map { width: 100%; height: 100%; object-fit: contain; min-height: 0; margin: 0; border: 0; }
+.mobile .map-modal .legend { padding-top: 6px; }
+@media (max-height: 340px) and (orientation: landscape) {
+  .mobile .weapon-hud { margin-top: 16px; }
+  .mobile .map-modal { padding: 10px 14px; }
+  .mobile .map-modal .section-title { margin-bottom: 5px; }
+  .mobile .map-modal .legend { font-size: 11px; }
+}

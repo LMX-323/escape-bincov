@@ -30,11 +30,11 @@
 
 ## 4. 存档是最高优先级的回归区域
 
-- 存档键为 `escape-bincov.save.v1`。改变数据结构时提供兼容迁移和回归证据，不静默重置老玩家进度。
+- 新版主档为 `escape-bincov.session.v2`，旧 `escape-bincov.save.v1` 只作首次迁移来源并保留原始字节。格式、兼容与回退规则见 `docs/MOBILE-IMPLEMENTATION.md`；未知或损坏数据必须拒绝覆盖，不能静默重置进度。
 - 结算必须先成功写入，再显示成功；`pendingSettlement` 必须保留到写入成功或玩家导出备份。重试不得重复发奖。
-- 购买、任务、物品转移、医疗使用等写入失败必须回滚相应状态。掉落世界物品不能早于持久化成功。
+- 购买、任务、物品转移、医疗使用等写入失败必须回滚相应状态。活动行动的物品变化必须与对应世界快照同一事务提交；失败时连同世界掉落一起回滚，不能分成两次持久化。
 - 保留多窗口存档冲突保护、导入校验和覆盖确认。禁止用忽略异常或强制覆盖解决冲突。
-- 保留死亡/超时/放弃/刷新失败规则、安全箱保留规则、弹药来源与救济物资限制；未经明确需求不得改变。
+- 保留死亡/超时/放弃失败规则、安全箱保留规则、弹药来源与救济限制。维护者已授权新版行动在刷新/页面回收后恢复最近成功检查点；只有无快照的旧版行动仍执行原中断失败规则。
 - 测试接口只在显式 `?test=1` 下暴露，普通试玩入口不得依赖该接口。
 
 ## 5. 验证与交付
@@ -54,8 +54,10 @@ pnpm test
 pnpm package
 pnpm exec playwright install chromium
 pnpm test:browser
+pnpm test:desktop-input
 pnpm test:save-browser
 pnpm test:portable
+pnpm test:mobile
 ```
 
 运行环境：Node.js 24、pnpm 11.19.0。CI 配置是 `.github/workflows/ci-pages.yml`；最新工作状态以 GitHub 的提交、PR、CI 和部署记录为准。

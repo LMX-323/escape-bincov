@@ -2,29 +2,33 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { createSessionState, SaveSession } from '../src/session';
+import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
+const read = (storage: D.StorageLike) => new RecoveryStore(storage).load().save;
 
 /** No global storage, document, Phaser, UI mocks or timers are needed here. */
 function fixture(raw: string | null = null) {
     const state = createSessionState();
     state.state = 'hideout';
-    let stored = raw;
+    const data = new Map<string, string>();
+    if (raw) data.set(raw.includes('escape-bincov-session') ? SESSION_KEY : D.SAVE_KEY, raw);
     let failWrites = false;
     let writes = 0;
     const storage: D.StorageLike = {
-        getItem: key => { assert.equal(key, D.SAVE_KEY); return stored; },
+        getItem: key => data.get(key) ?? null,
         setItem: (key, value) => {
-            assert.equal(key, D.SAVE_KEY);
+            assert.equal(key, SESSION_KEY);
             if (failWrites) throw new Error('quota exceeded');
-            stored = value;
+            data.set(key, value);
             writes++;
         },
     };
     const session = new SaveSession(state, () => storage);
+    if (raw === null) { session.initialize(); writes = 0; }
     return {
         state, session, storage,
         snapshot: () => structuredClone(state),
         failWrites(value: boolean) { failWrites = value; },
-        get stored() { return stored; },
+        get stored() { return data.get(SESSION_KEY) ?? data.get(D.SAVE_KEY) ?? null; },
         get writes() { return writes; },
     };
 }
@@ -53,14 +57,15 @@ test('a denied storage accessor is handled without publishing a raid loadout', (
     assert.equal(state.loadout, null);
 });
 
-test('initialization migrates a version-zero save and keeps malformed-save fallback', () => {
+test('initialization migrates version-zero but refuses to overwrite malformed saves', () => {
     const old = fixture(JSON.stringify({ version: 0, cash: 1234, inventory: [{ id: 'pearl', quantity: 2 }] }));
     assert.equal(old.session.initialize(), true);
     assert.equal(old.state.save.cash, 1234);
     assert.equal(D.count(old.state.save.stash, 'pearl'), 2);
-    assert.equal(D.readSave(old.storage).version, 1);
+    assert.equal(read(old.storage).version, 1);
     const corrupt = fixture('{');
-    assert.equal(corrupt.session.initialize(), true);
+    assert.equal(corrupt.session.initialize(), false);
+    assert.equal(corrupt.stored, '{');
     assert.equal(corrupt.state.save.cash, 700);
     assert.equal(corrupt.state.recovery, false);
 });
@@ -104,13 +109,14 @@ test('deployment publishes gear and run count only after storage accepts the can
         },
     }));
     f.failWrites(false);
+    assert.equal(observing.initialize(), true);
     assert.equal(observing.beginRun(42), true);
     assert.equal(f.state.save.stats.runs, 1);
     const deployed = f.snapshot();
-    assert.equal(deployed.loadout?.runId, D.readSave(f.storage).activeRun?.runId);
-    assert.deepEqual(deployed.loadout?.bag, before.bag);
+    assert.equal(deployed.loadout?.runId, read(f.storage).activeRun?.runId);
+    assert.equal(D.count(deployed.loadout!.bag, 'ammo9') + deployed.loadout!.ammo, D.count(before.bag, 'ammo9'));
     assert.equal(f.state.save.bag.items.length, 0);
-    assert.equal(f.writes, 1);
+    assert.equal(f.writes, 2);
 });
 
 test('deployment cannot bypass session state or a cross-window conflict', () => {
@@ -146,7 +152,7 @@ for (const failure of ['reject', 'throw'] as const) test(`a ${failure} after par
     assert.equal(f.writes, 1, 'Only deployment was written');
 });
 
-test('a committed safe transfer checkpoints exactly what interrupted recovery retains', () => {
+test('a committed safe transfer restores the matching live loadout without duplication', () => {
     const f = fixture();
     D.addItem(f.state.save.safe, 'pearl');
     f.session.beginRun(42); f.state.state = 'run';
@@ -156,6 +162,7 @@ test('a committed safe transfer checkpoints exactly what interrupted recovery re
     reopened.session.initialize();
     assert.equal(D.count(reopened.state.save.safe, 'pearl'), 0);
     assert.equal(D.count(reopened.state.save.bag, 'pearl'), 0);
+    assert.equal(D.count(reopened.state.checkpoint!.loadout.bag, 'pearl'), 1);
 });
 
 test('relief and volume writes retain the last durable values on failure', () => {
@@ -172,8 +179,8 @@ test('relief and volume writes retain the last durable values on failure', () =>
     assert.equal(f.session.grantRelief(), true);
     assert.equal(f.session.grantRelief(), false);
     assert.equal(f.session.setVolume(0.8), true);
-    assert.equal(D.count(D.readSave(f.storage).bag, 'ammo9'), 12);
-    assert.equal(D.readSave(f.storage).settings.volume, 0.8);
+    assert.equal(D.count(read(f.storage).bag, 'ammo9'), 12);
+    assert.equal(read(f.storage).settings.volume, 0.8);
     assert.equal(f.writes, 2);
 });
 
@@ -186,7 +193,7 @@ test('staging, failed writes and conflict keep one frozen settlement until succe
     f.failWrites(true);
     assert.equal(f.session.retrySettlement(), false);
     assert.equal(f.state.result, null);
-    assert.ok(D.readSave(f.storage).activeRun);
+    assert.ok(read(f.storage).activeRun);
     assert.equal(f.session.prepareSettlement('death', 10), false);
     assert.equal(f.session.mutate(() => { throw new Error('Must never run'); }), 'blocked');
     assert.equal(f.session.setVolume(0.8), false);
@@ -222,5 +229,5 @@ test('import commits before replacing state and does not alias its input', () =>
     assert.equal(f.session.importSave(candidate), true);
     candidate.cash = 0;
     assert.equal(f.state.save.cash, 1234);
-    assert.equal(D.readSave(f.storage).cash, 1234);
+    assert.equal(read(f.storage).cash, 1234);
 });

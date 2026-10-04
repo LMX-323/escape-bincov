@@ -32,7 +32,7 @@
 
 浏览器本地存储按 origin 隔离，不会自动从 `file:` 迁移到 `https:`。旧版离线用户先在原路径升级到支持备份的 HTML，用原浏览器导出，再进入在线版导入。换域名或浏览器也应先导出。
 
-同一 GitHub 账户的项目 Pages 通常共用 `https://xuys2025.github.io` origin。本游戏使用独立存档键 `escape-bincov.save.v1`；其他项目不要复用该键。同源路径变化不提供存档隔离，不要未经评估在该 origin 部署会读写此存储的不可信脚本。
+同一 GitHub 账户的项目 Pages 通常共用 `https://xuys2025.github.io` origin。本游戏使用 `escape-bincov.session.v2` 作为主档，`escape-bincov.save.v1` 保留作旧档迁移来源；其他项目不要复用这些键。同源路径变化不提供存档隔离，不要未经评估在该 origin 部署会读写此存储的不可信脚本。
 
 ## 失败与回退
 
@@ -41,7 +41,7 @@
 - Pages 未启用：在 Settings → Pages 确认来源为 GitHub Actions，检查工作流部署记录。
 - 部署成功但页面旧：核对提交与 Pages 部署时间，再刷新；不要先清除玩家浏览器存储。
 - 正式版本需要回退：创建回退提交的 PR，重新构建并验证后合并；不要 force-push `main`。
-- 存档格式已经迁移时，先评估旧程序能否读取新数据，不要盲目回退。
+- 移动候选已引入 v2 完整记录。回退包必须保留 v2 读取、校验与导出能力；旧 0.1.1 HTML 无法读取新版进度，不能直接回退后让玩家继续写旧档。具体迁移和旧客户端隔离见 `MOBILE-IMPLEMENTATION.md`。
 
 ## 网络范围
 

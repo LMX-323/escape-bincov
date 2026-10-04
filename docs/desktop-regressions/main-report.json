@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-10-04T09:45:49.346Z",
+  "browser": "138.0.7204.0",
+  "entry": "test-results/baseline/index.html",
+  "method": "Offline Chromium keyboard/mouse and native AudioContext. Touch capability is emulated; positions and enemy cooldowns are fixtures. No physical-device or audible-output certification.",
+  "cases": [
+    {
+      "name": "touch laptop keyboard/mouse 1280x720",
+      "status": "passed",
+      "errors": [],
+      "requests": [],
+      "detail": {
+        "touch": false,
+        "moved": 41.003200000000675,
+        "shots": 1,
+        "afterRelease": 7
+      }
+    },
+    {
+      "name": "Esc resumes the native audio context on every pause cycle",
+      "status": "passed",
+      "errors": [],
+      "requests": []
+    },
+    {
+      "name": "ineffective healing preserves held movement and all medical items",
+      "status": "passed",
+      "errors": [],
+      "requests": [],
+      "detail": {
+        "before": 700,
+        "afterQ": 746.6091733333333,
+        "after": 785.7330133333334
+      }
+    }
+  ]
+}

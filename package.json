@@ -9,14 +9,24 @@
     "build": "tsc --noEmit && node scripts/build.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:browser": "node scripts/browser-test.mjs",
+    "test:desktop-input": "node scripts/desktop-input-test.mjs",
     "test:save-browser": "node scripts/save-browser-test.mjs",
     "test:play": "node --import tsx scripts/natural-play.mjs",
     "package": "pnpm build && node scripts/package.mjs",
     "test:portable": "node scripts/portable-test.mjs",
     "test:ui": "node scripts/ui-review.mjs",
+    "test:mobile": "node scripts/mobile-test.mjs",
     "test:title": "node scripts/title-review.mjs"
   },
-  "dependencies": { "phaser": "3.90.0" },
-  "devDependencies": { "@types/node": "^24.0.0", "esbuild": "^0.25.0", "typescript": "^5.9.0", "tsx": "^4.20.0", "playwright": "^1.55.0" },
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0",
+    "tsx": "^4.20.0",
+    "playwright": "^1.55.0"
+  },
   "packageManager": "pnpm@11.19.0"
 }

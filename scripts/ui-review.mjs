@@ -87,7 +87,7 @@ try {
       await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
       await page.evaluate(() => {
         const r = window.__bincov.app.raid;
-        r.enemies.forEach(e => { e.cooldown = 100000; });
+        r.enemies.forEach(e => { e.cooldown = 9999; });
         r.player.setPosition(700, 784);
       });
       // Bleeding must not be described as a normal state when pollution is low.
