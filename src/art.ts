@@ -344,7 +344,7 @@ export function drawBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Container 
     rect(c, '#1a2923', 530, 319, 270, 24); rect(c, '#775c41', 530, 316, 270, 4);
     for (let i = 0; i < 30; i++) rect(c, '#a07e5022', 535 + i * 9, 321, 3, 15);
     rect(c, '#6e7352', 571, 331, 133, 29); rect(c, '#ada88a', 574, 333, 127, 2);
-    c.font = 'bold 15px "Microsoft YaHei", sans-serif'; c.fillStyle = '#d4cba5'; c.fillText('滨科夫 · 水产站', 579, 352);
+    c.font = 'bold 15px "Microsoft YaHei", sans-serif'; c.fillStyle = '#d4cba5'; c.fillText('滨科夫水产站', 579, 352);
     rect(c, '#132a25', 650, 367, 71, 49); rect(c, '#586b56', 652, 370, 65, 3);
     for (let n = 0; n < 6; n++) rect(c, '#2b4337', 652, 378 + n * 6, 65, 2);
     rect(c, '#354b39', 550, 368, 57, 36); rect(c, '#9b8052', 553, 370, 50, 29);

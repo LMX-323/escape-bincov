@@ -40,26 +40,26 @@ const item = (id: string, name: string, short: string, w: number, h: number, wei
   ({ id, name, short, w, h, weight, stack, buy, sell, kind, description, color });
 
 export const ITEMS: Record<string, ItemDef> = {
-  knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '伴你离开水产站的旧匕首。始终保留，按 2 切换。', 0xb4c3bf),
-  pistol: item('pistol', '旧式手枪', '手枪', 2, 1, 0.8, 1, 320, 150, 'weapon', '使用 9 毫米弹，8 发弹匣。可靠的近距离武器。', 0xa7aaa0),
-  shotgun: item('shotgun', '双管霰弹枪', '双管', 3, 1, 2.7, 1, 780, 370, 'weapon', '两发装填。近距离命中多枚弹丸时威力极强。', 0xc58458),
-  carbine: item('carbine', '半自动卡宾枪', '卡宾', 3, 1, 2.4, 1, 1200, 580, 'weapon', '12 发弹匣。适合隔着港口街道精确射击。', 0x929e78),
-  ammo9: item('ammo9', '9 毫米弹', '9mm', 1, 1, 0.012, 40, 7, 3, 'ammo', '旧式手枪弹药。价格与重量均按每发计算。', 0xcba96c),
-  shell: item('shell', '霰弹', '12G', 1, 1, 0.045, 20, 16, 7, 'ammo', '双管霰弹枪弹药。', 0xc76650),
-  ammoR: item('ammoR', '卡宾枪弹', '卡宾弹', 1, 1, 0.022, 30, 12, 5, 'ammo', '半自动卡宾枪弹药。', 0xcbbd88),
-  bandage: item('bandage', '密封绷带', '绷带', 1, 1, 0.12, 4, 45, 18, 'medical', '止血并恢复少量生命。Q 优先使用急需的医疗品。', 0xdad9bd),
+  knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '随身携带的旧匕首。按 2 切换，撤离失败也不会丢失。', 0xb4c3bf),
+  pistol: item('pistol', '旧式手枪', '手枪', 2, 1, 0.8, 1, 320, 150, 'weapon', '使用 9 毫米弹，弹匣容量 8 发。适合近距离交火。', 0xa7aaa0),
+  shotgun: item('shotgun', '双管霰弹枪', '双管', 3, 1, 2.7, 1, 780, 370, 'weapon', '使用霰弹，可装填 2 发。近距离更容易让多枚弹丸命中。', 0xc58458),
+  carbine: item('carbine', '半自动卡宾枪', '卡宾', 3, 1, 2.4, 1, 1200, 580, 'weapon', '使用卡宾枪弹，弹匣容量 12 发。适合远距离点射。', 0x929e78),
+  ammo9: item('ammo9', '9 毫米弹', '9mm', 1, 1, 0.012, 40, 7, 3, 'ammo', '旧式手枪用弹药。商店按包出售，背包数量按发计算。', 0xcba96c),
+  shell: item('shell', '霰弹', '霰弹', 1, 1, 0.045, 20, 16, 7, 'ammo', '双管霰弹枪用弹药。', 0xc76650),
+  ammoR: item('ammoR', '卡宾枪弹', '卡宾弹', 1, 1, 0.022, 30, 12, 5, 'ammo', '半自动卡宾枪用弹药。', 0xcbbd88),
+  bandage: item('bandage', '密封绷带', '绷带', 1, 1, 0.12, 4, 45, 18, 'medical', '止血，恢复 16 点生命。放在背包中可按 Q 使用。', 0xdad9bd),
   medkit: item('medkit', '急救包', '急救包', 2, 1, 0.65, 2, 160, 65, 'medical', '恢复 55 点生命并止血。', 0xc96959),
-  antidote: item('antidote', '除藻药剂', '除藻剂', 1, 1, 0.2, 3, 120, 50, 'medical', '减少 55 点异常污染。标签印着已停产的批号。', 0x8bb4a0),
-  water: item('water', '净水瓶', '净水', 1, 2, 0.6, 2, 35, 14, 'food', '恢复耐力，减少少量异常污染。', 0x83a9ba),
-  food: item('food', '鱼松罐头', '罐头', 1, 1, 0.3, 3, 50, 20, 'food', '恢复少量生命和耐力。滨科夫的熟悉味道。', 0xcbaa76),
-  scrap: item('scrap', '泵机零件', '零件', 1, 1, 0.55, 5, 85, 35, 'part', '修复水产站需要 3 个。废泵壳仍带着潮盐。', 0x9caaa0),
-  wire: item('wire', '绝缘线圈', '线圈', 1, 1, 0.25, 5, 65, 28, 'part', '修复水产站需要 2 卷。铜芯尚未被盐水咬穿。', 0xbf8054),
-  fuse: item('fuse', '陶瓷保险管', '保险管', 1, 1, 0.1, 4, 100, 45, 'part', '修复水产站需要 1 支。请在断电后更换。', 0xd0c5a1),
-  battery: item('battery', '观测仪电池', '电池', 1, 2, 0.8, 2, 160, 75, 'part', '仍有余电。常在潮汐观测站找到。', 0xa99a5e),
-  watch: item('watch', '防水怀表', '怀表', 1, 1, 0.15, 2, 0, 240, 'valuable', '所有指针都停在 03:17。商人愿意收购。', 0xccaa69),
-  pearl: item('pearl', '雾色海珠', '海珠', 1, 1, 0.08, 3, 0, 360, 'valuable', '离开海水仍微微发光。高价值物资。', 0xb0cec0),
-  sample: item('sample', '赤潮封存样本', '样本', 1, 1, 0.25, 1, 0, 100, 'quest', '观测站封存的样本。无线电里有人等待它。', 0xc26654),
-  ledger: item('ledger', '港口船册', '船册', 2, 1, 0.45, 1, 0, 130, 'quest', '旧渔港值班室的船册。最后一页记录了一艘不存在的船。', 0xd2c396),
+  antidote: item('antidote', '除藻药剂', '除藻剂', 1, 1, 0.2, 3, 120, 50, 'medical', '降低 55 点污染。打开背包，选中后点击「使用」。', 0x8bb4a0),
+  water: item('water', '净水瓶', '净水', 1, 2, 0.6, 2, 35, 14, 'food', '恢复全部耐力，降低 12 点污染。', 0x83a9ba),
+  food: item('food', '鱼松罐头', '罐头', 1, 1, 0.3, 3, 50, 20, 'food', '恢复 12 点生命和 50 点耐力。', 0xcbaa76),
+  scrap: item('scrap', '泵机零件', '零件', 1, 1, 0.55, 5, 85, 35, 'part', '水产站维修用零件，共需 3 个。泵壳上还留着盐渍。', 0x9caaa0),
+  wire: item('wire', '绝缘线圈', '线圈', 1, 1, 0.25, 5, 65, 28, 'part', '水产站维修用线圈，共需 2 卷。铜芯还完好。', 0xbf8054),
+  fuse: item('fuse', '陶瓷保险管', '保险管', 1, 1, 0.1, 4, 100, 45, 'part', '水产站维修用保险管，共需 1 支。', 0xd0c5a1),
+  battery: item('battery', '观测仪电池', '电池', 1, 2, 0.8, 2, 160, 75, 'part', '潮汐观测站的备用电池，还剩一些电。可出售。', 0xa99a5e),
+  watch: item('watch', '防水怀表', '怀表', 1, 1, 0.15, 2, 0, 240, 'valuable', '指针停在 03:17。表壳完好，可以卖个好价钱。', 0xccaa69),
+  pearl: item('pearl', '雾色海珠', '海珠', 1, 1, 0.08, 3, 0, 360, 'valuable', '表面像蒙着一层雾，离水后仍泛着微光。可出售。', 0xb0cec0),
+  sample: item('sample', '赤潮封存样本', '样本', 1, 1, 0.25, 1, 0, 100, 'quest', '潮汐观测站封存的赤潮样本，用于任务「瓶中的潮声」。', 0xc26654),
+  ledger: item('ledger', '港口船册', '船册', 2, 1, 0.45, 1, 0, 130, 'quest', '旧渔港的值班船册，用于任务「未归的第七艘船」。', 0xd2c396),
 };
 
 /** Distances are world pixels; cooldown/reload are seconds; spread is radians. */
@@ -87,12 +87,12 @@ export const LOOT_TABLE: LootTable = [
 ];
 export const MERCHANTS: Record<'arms' | 'med', { name: string; subtitle: string; stock: string[] }> = {
   arms: { name: '老栓', subtitle: '武器 · 零件', stock: ['pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'scrap', 'wire', 'fuse', 'battery'] },
-  med: { name: '许医生', subtitle: '医疗 · 补给', stock: ['bandage', 'medkit', 'antidote', 'water', 'food'] },
+  med: { name: '许医生', subtitle: '医疗用品 · 食品', stock: ['bandage', 'medkit', 'antidote', 'water', 'food'] },
 };
 export const QUESTS: Record<string, { name: string; description: string; needs: Record<string, number>; reward: number; radio: string }> = {
-  repair: { name: '让灯亮起来', description: '交付泵机零件 ×3、绝缘线圈 ×2、保险管 ×1，恢复水产站供电。', needs: { scrap: 3, wire: 2, fuse: 1 }, reward: 420, radio: '灯亮了。海面上的那个影子，却没有跟着消失。储物架现在可以升级。' },
-  sample: { name: '瓶中的潮声', description: '从潮汐观测站带回一份赤潮封存样本。', needs: { sample: 1 }, reward: 650, radio: '样本已收到。奇怪……瓶内的潮位比外面的海早变化了三十秒。' },
-  ledger: { name: '未归的第七艘船', description: '从旧渔港带回港口船册。', needs: { ledger: 1 }, reward: 800, radio: '名册上有七艘船，码头只有六个泊位。最后一艘，靠的是哪片岸？' },
+  repair: { name: '让灯亮起来', description: '找齐维修物资，恢复水产站供电。完成后可扩建仓库。', needs: { scrap: 3, wire: 2, fuse: 1 }, reward: 420, radio: '电台通了，灯也稳了。仓库可以扩建了。' },
+  sample: { name: '瓶中的潮声', description: '从潮汐观测站带回一份赤潮封存样本。', needs: { sample: 1 }, reward: 650, radio: '样本收到了。瓶里的水面比外海提前三十秒上涨。先别开封。' },
+  ledger: { name: '未归的第七艘船', description: '从旧渔港带回港口船册。', needs: { ledger: 1 }, reward: 800, radio: '船册上记了七艘船，码头却只有六个泊位。第七艘还得再查。' },
 };
 export const SAVE_KEY = 'escape-bincov.save.v1';
 export const STASH_UPGRADE_COST = 600;
@@ -262,7 +262,7 @@ export function readSave(storage: StorageLike): SaveDataV1 {
   return migrateSave(parsed);
 }
 export function beginRun(save: SaveDataV1, seed: number): RunLoadout {
-  if (save.activeRun) throw new Error('已有未结算行动，请先处理失联结算。');
+  if (save.activeRun) throw new Error('上次行动尚未结算，暂时不能出击。');
   const runId = uid();
   const loadout: RunLoadout = { bag: clone(save.bag), safe: clone(save.safe), ...save.equipment, ...cleanMagazine(save.equipment.weapon, save.equipment.ammo, save.equipment.ammoRelief), runId };
   save.bag = createInventory(6, 5);
@@ -285,7 +285,7 @@ export function settleRun(save: SaveDataV1, loadout: RunLoadout, outcome: Outcom
   const summary: RunSummary = {
     outcome, kills: integer(kills), keptValue: inventoryValue(loadout.safe) + (outcome === 'extract' ? carriedValue : 0),
     lostValue: outcome === 'extract' ? 0 : carriedValue, seed: save.activeRun.seed, recovered: false,
-    message: outcome === 'extract' ? '你听见水产站的铁门在身后合拢。今晚，灯还亮着。' : outcome === 'death' ? '无线电里只剩下潮声。安全箱被回收，随身物资遗失。' : '封锁窗口已关闭。你与水产站失去联系，随身物资遗失。',
+    message: outcome === 'extract' ? '成功撤离，装备和物资已带回水产站。' : outcome === 'death' ? '撤离失败，背包物资和主武器丢失。安全箱内的物品和水手匕首保留。' : '撤离超时，背包物资和主武器丢失。安全箱内的物品和水手匕首保留。',
   };
   save.bag = outcome === 'extract' ? clone(loadout.bag) : createInventory(6, 5);
   save.equipment = outcome === 'extract' ? { weapon: loadout.weapon, relief: loadout.relief, ...magazine } : emptyEquipment();
@@ -298,7 +298,7 @@ export function settleRun(save: SaveDataV1, loadout: RunLoadout, outcome: Outcom
 }
 export function recoverInterrupted(save: SaveDataV1): RunSummary | null {
   if (!save.activeRun) return null;
-  const summary: RunSummary = { outcome: 'death', kills: 0, keptValue: inventoryValue(save.safe), lostValue: 0, seed: save.activeRun.seed, recovered: true, message: '上次行动中断，已按撤离失败处理。安全箱内容保留。' };
+  const summary: RunSummary = { outcome: 'death', kills: 0, keptValue: inventoryValue(save.safe), lostValue: 0, seed: save.activeRun.seed, recovered: true, message: '上次行动中断，已按撤离失败处理。安全箱内的物品和水手匕首保留。' };
   save.bag = createInventory(6, 5);
   save.equipment = emptyEquipment();
   save.activeRun = null;

@@ -126,7 +126,7 @@ export class RaidScene extends Phaser.Scene {
         this.flood = this.add.graphics().setDepth(2);
         this.drawFlood();
         WORLD.notes.forEach(n => { this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3); this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3); });
-        this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n按住 E · 撤离`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3); });
+        this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n按住 E 3 秒 · 撤离`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3); });
         for (const l of this.config.loot)
             this.spawnLoot(l.x, l.y, l.id, l.qty);
         for (const e of this.config.enemies) {
@@ -170,7 +170,7 @@ export class RaidScene extends Phaser.Scene {
     } }
     loadMagazine() { const loaded = D.reloadMagazine(app.loadout!.weapon || 'knife', this.mag, this.magRelief, app.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine(); }
     equipItem(uid: string) { this.syncMagazine(); if (!D.equipRun(app.loadout!, uid)) {
-        toast('无法装备：请先腾出旧武器和弹药所需空间。');
+        toast('无法装备，背包装不下换下的武器和弹药。请先腾出空间。');
         return;
     } this.mag = app.loadout!.ammo; this.magRelief = app.loadout!.ammoRelief; this.knife = false; this.reloadLeft = 0; this.startReload(); this.player.setTexture('player-' + this.currentWeapon.id); toast('已装备' + this.currentWeapon.name); }
     carriedWeight() { const l = app.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.mag : 0); }
@@ -181,7 +181,7 @@ export class RaidScene extends Phaser.Scene {
             return false;
         if (id === 'bandage') {
             if (this.hp >= B.maxHealth && !this.bleeding) {
-                toast('无需包扎。');
+                toast('生命已满，且没有流血，无需使用绷带。');
                 return false;
             }
             this.hp = Math.min(B.maxHealth, this.hp + B.bandageHeal);
@@ -189,7 +189,7 @@ export class RaidScene extends Phaser.Scene {
         }
         if (id === 'medkit') {
             if (this.hp >= B.maxHealth && !this.bleeding) {
-                toast('无需急救。');
+                toast('生命已满，且没有流血，无需使用急救包。');
                 return false;
             }
             this.hp = Math.min(B.maxHealth, this.hp + B.medkitHeal);
@@ -207,19 +207,19 @@ export class RaidScene extends Phaser.Scene {
             this.pollution = Math.max(0, this.pollution - B.antidoteCleanse);
         D.removeItem(inv, id, 1);
         audio.pickup();
-        toast(`使用了${D.ITEMS[id].name}`);
+        toast(`已使用${D.ITEMS[id].name}`);
         return true;
     }
     heal() { const bag = app.loadout!.bag; const id = this.bleeding && D.count(bag, 'bandage') ? 'bandage' : D.count(bag, 'medkit') ? 'medkit' : D.count(bag, 'bandage') ? 'bandage' : null; if (id)
         this.useItem(id);
     else
-        toast('背包内没有可用的医疗用品。'); }
+        toast('背包中没有绷带或急救包。'); }
     move(sprite: Phaser.GameObjects.Image, dx: number, dy: number, canEscapeFlood = false) { const escaping = canEscapeFlood && !isWalkable(sprite.x, sprite.y, true, 10) && isWalkable(sprite.x, sprite.y, false, 10); const high = this.highTide && !escaping; if (isWalkable(sprite.x + dx, sprite.y, high, 10))
         sprite.x += dx; if (isWalkable(sprite.x, sprite.y + dy, high, 10))
         sprite.y += dy; }
     startReload() { const w = this.currentWeapon; if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
         if (!D.count(app.loadout!.bag, w.ammo)) {
-            toast('没有备用弹药。');
+            toast('背包中没有适用的备用弹药。');
             return;
         }
         this.reloadLeft = w.reload;
@@ -286,7 +286,7 @@ export class RaidScene extends Phaser.Scene {
         }
         if (!this.warned && this.elapsed >= this.config.warningAt) {
             this.warned = true;
-            this.say('紧急广播：潮位将在 30 秒后翻转。立即离开红潮浅滩，沿高架路与海堤通行。', 12);
+            this.say('潮汐预警：30 秒后潮位变化。请离开浅滩，走高架路或海堤。', 12);
         }
         if (!this.tideChanged && this.elapsed >= this.config.tideAt) {
             this.tideChanged = true;
@@ -304,7 +304,7 @@ export class RaidScene extends Phaser.Scene {
                     }
                 }
             }
-            this.say(this.highTide ? '潮位上升。浅滩捷径已淹没，撤离高架路保持通行。' : '潮位下降。浅滩捷径开放，小心残留污染。', 10);
+            this.say(this.highTide ? '涨潮了，浅滩无法通行。高架路和海堤仍可通行。' : '退潮了，浅滩可以通行。涉水仍会积累污染。', 10);
         }
         const input = !app.overlay;
         let dx = 0, dy = 0;
@@ -521,7 +521,7 @@ export class RaidScene extends Phaser.Scene {
         const loot = this.loot.filter(l => distance(l.sprite, this.player) < 43 && lineOfSight(l.sprite, this.player)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player))[0];
         const note = WORLD.notes.find(n => distance(n, this.player) < 43);
         if (exit) {
-            text = `${exit.name}　·　保持静止，按住 E 撤离`;
+            text = `${exit.name}　·　站稳并按住 E 3 秒撤离`;
             if (input && this.keys.E.isDown && !moving && !this.hitTime) {
                 this.extractTime += dt;
                 text = `正在撤离　${Math.min(B.extractionSeconds, this.extractTime).toFixed(1)} / ${B.extractionSeconds.toFixed(1)} 秒`;
@@ -538,14 +538,14 @@ export class RaidScene extends Phaser.Scene {
         else {
             this.extractTime = 0;
             if (loot) {
-                text = `E 搜刮　${D.ITEMS[loot.id].name} × ${loot.qty}`;
+                text = `E 拾取　${D.ITEMS[loot.id].name} × ${loot.qty}`;
                 if (input && Phaser.Input.Keyboard.JustDown(this.keys.E)) {
                     const left = D.addItem(app.loadout!.bag, loot.id, loot.qty, !!loot.relief);
                     if (left === loot.qty)
                         toast('背包空间不足，按 Tab 整理。');
                     else {
                         audio.pickup();
-                        toast(`获得 ${D.ITEMS[loot.id].name} × ${loot.qty - left}`);
+                        toast(`已拾取 ${D.ITEMS[loot.id].name} × ${loot.qty - left}`);
                         loot.qty = left;
                         if (!left) {
                             loot.sprite.destroy();
@@ -594,7 +594,7 @@ export class RaidScene extends Phaser.Scene {
         css('timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
         css('hp', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
         css('stamina', Math.round(this.stamina).toString());
-        css('status', `${this.bleeding ? '流血 · ' : ''}${this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : '状态稳定'}`);
+        css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : ''].filter(Boolean).join(' · ') || '状态正常');
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
         if (hp) hp.style.width = Math.max(0,this.hp)/B.maxHealth*100 + '%';
@@ -602,11 +602,11 @@ export class RaidScene extends Phaser.Scene {
         const w = this.currentWeapon;
         css('gunname', w.name);
         const ammo = document.getElementById('ammo');
-        if (ammo) ammo.innerHTML = w.ammo ? `${this.mag.toString().padStart(2, '0')} <small>/ ${D.count(app.loadout!.bag, w.ammo)}</small>` : '近战 <small>/ 永久保留</small>';
+        if (ammo) ammo.innerHTML = w.ammo ? `${this.mag.toString().padStart(2, '0')} <small>/ ${D.count(app.loadout!.bag, w.ammo)}</small>` : '近战 <small>/ 始终保留</small>';
         css('reload', this.reloadLeft > 0 ? `换弹中　${this.reloadLeft.toFixed(1)} 秒` : 'R 换弹　1 主武器　2 匕首');
         const zone = WORLD.zones.find(z => this.player.x >= z.x && this.player.x < z.x + z.w && this.player.y >= z.y && this.player.y < z.y + z.h);
         css('zone', zone?.name || '沿海封锁区');
-        css('tide', `${this.highTide ? '高潮位 · 浅滩封闭' : '低潮位 · 捷径开放'}　/　${this.tideChanged ? '高架路可通行' : '05:00 潮汐翻转'}`);
+        css('tide', `${this.highTide ? '高潮位 · 浅滩封闭' : '低潮位 · 捷径开放'}　/　${this.tideChanged ? '高架路可通行' : '出击 5 分钟后换潮'}`);
         const warning = document.getElementById('warning');
         if (warning) warning.innerHTML = this.warned && !this.tideChanged ? '<div class="banner">潮汐预警 · 请离开浅滩</div>' : this.bleeding ? '<div class="banner">持续流血 · Q 止血</div>' : '';
     }

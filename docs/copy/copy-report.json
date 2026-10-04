@@ -1,0 +1,90 @@
+{
+  "baseline": "702692a0c6d79ea5d51a291eac60f16013ab0688",
+  "checks": [
+    {
+      "name": "Only copy literals changed: src/domain.ts",
+      "status": "passed"
+    },
+    {
+      "name": "Only copy literals changed: src/world.ts",
+      "status": "passed"
+    },
+    {
+      "name": "Only copy literals changed: src/art.ts",
+      "status": "passed"
+    },
+    {
+      "name": "Only copy literals changed: src/main.ts",
+      "status": "passed"
+    },
+    {
+      "name": "Only copy literals changed: src/save-backup.ts",
+      "status": "passed"
+    },
+    {
+      "name": "20 item descriptions and actions: 1280x720",
+      "status": "passed",
+      "items": [
+        "knife",
+        "pistol",
+        "shotgun",
+        "carbine",
+        "ammo9",
+        "shell",
+        "ammoR",
+        "bandage",
+        "medkit",
+        "antidote",
+        "water",
+        "food",
+        "scrap",
+        "wire",
+        "fuse",
+        "battery",
+        "watch",
+        "pearl",
+        "sample",
+        "ledger"
+      ]
+    },
+    {
+      "name": "Import and both pending-save panels: 1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "20 item descriptions and actions: 1920x1080",
+      "status": "passed",
+      "items": [
+        "knife",
+        "pistol",
+        "shotgun",
+        "carbine",
+        "ammo9",
+        "shell",
+        "ammoR",
+        "bandage",
+        "medkit",
+        "antidote",
+        "water",
+        "food",
+        "scrap",
+        "wire",
+        "fuse",
+        "battery",
+        "watch",
+        "pearl",
+        "sample",
+        "ledger"
+      ]
+    },
+    {
+      "name": "Import and both pending-save panels: 1920x1080",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "methodology": "Offline Chromium, explicit ?test=1 item and save-error fixtures. Each of the 20 item descriptions is checked at both desktop sizes; screenshots are unmodified. Pure rules normalized only for Chinese copy and the renamed 12G label.",
+  "browser": "138.0.7204.0",
+  "status": "passed",
+  "finishedAt": "2026-10-04T08:18:21.075Z"
+}
