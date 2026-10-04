@@ -47,6 +47,8 @@ jobs:
         run: pnpm test:ui
       - name: Save reliability regression
         run: pnpm test:save-browser
+      - name: Mobile input and recovery regression
+        run: pnpm test:mobile
       - name: Offline portable regression
         run: pnpm test:portable
       - name: Save diagnostic reports and screenshots

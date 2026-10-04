@@ -167,7 +167,7 @@ try {
       await p.evaluate(() => {
         window.__realStorageWrite = Storage.prototype.setItem;
         Storage.prototype.setItem = function (key, value) {
-          if (key === 'escape-bincov.session.v2') throw new DOMException('Injected quota failure', 'QuotaExceededError');
+          if (key === 'escape-bincov.session.v2' && !JSON.parse(value).profile.activeRun) throw new DOMException('Injected quota failure', 'QuotaExceededError');
           return window.__realStorageWrite.call(this, key, value);
         };
       });
