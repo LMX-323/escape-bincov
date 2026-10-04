@@ -1,7 +1,9 @@
 import * as D from './domain';
 import { WORLD, WORLD_W, WORLD_H, generateRun } from './world';
 import { SURVIVAL } from './balance';
-import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from './save-backup';
+import { encodeBackup, encodeRecoveryBackup, decodePortableBackup } from './save-backup';
+import { SESSION_MAX_BYTES } from './recovery-store';
+import { playerInput } from './input';
 import { app, audio, saveSession } from './app';
 import type { SessionMutation } from './session';
 const ui = () => document.getElementById('ui')!;
@@ -14,11 +16,11 @@ function saved(ok: boolean): boolean {
 export function persist(save: D.SaveDataV1 = app.save): boolean {
     return saved(saveSession.persist(save));
 }
-export function initSave() {
-    saved(saveSession.initialize());
+export function initSave(owned = true) {
+    saved(saveSession.initialize(owned));
     audio.setVolume(app.save.settings.volume);
 }
-export function changeState(state: typeof app.state) { if (app.pendingSettlement) { setOverlay('save-error'); return; } app.state = state; app.overlay = ''; app.selected = ''; if (state === 'hideout') {
+export function changeState(state: typeof app.state) { if (app.pendingSettlement) { setOverlay('save-error'); return; } app.raid?.releaseInput(); playerInput.clear(); app.state = state; app.overlay = ''; app.selected = ''; if (state === 'hideout') {
     saved(saveSession.grantRelief());
 } app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); app.game?.scene.start(({ menu: 'Menu', hideout: 'Hideout', run: 'Raid', result: 'Result' })[state]); render(); }
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -56,8 +58,11 @@ function details() {
     return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div></div><p class="item-description">${d.description}</p><dl class="item-facts"><div><dt>占用</dt><dd>${d.w} × ${d.h} 格</dd></div><div><dt>总重</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>回收价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 仅供自用</p>' : ''}<div class="item-actions">${actions}</div></aside>`;
 }
 export function render() {
+    document.documentElement.dataset.state = app.state;
+    document.documentElement.dataset.overlay = app.overlay;
+    document.dispatchEvent(new Event('bincov-ui'));
     if (app.state === 'menu') {
-        ui().innerHTML = `<div class="menu"><div class="menu-location">滨科夫县 <span>沿海封锁区</span></div><h1>逃离<br>滨科夫</h1><div class="subtitle">ESCAPE BINCOV</div><p class="intro">台风过后，海没有退去。<br>带上最后一匣子弹，穿过盐雾与封锁线。<br>找到补给，活着回到水产站。</p>${btn('进入水产站 <span aria-hidden="true">→</span>', 'enter', 'primary')}<footer>单人撤离生存 <span>进度保存在本机</span></footer>${btn('操作指南', 'help', 'text-button')}</div><div class="version"><span>北纬 27° · 赤潮封锁第 17 天</span><span class="build-number">ESCAPE BINCOV / 0.1.1</span><a class="repo-link" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub · 反馈 / 参与开发 ↗</a></div>${overlayHtml()}`;
+        ui().innerHTML = `<div class="menu"><div class="menu-location">滨科夫县 <span>沿海封锁区</span></div><h1>逃离<br>滨科夫</h1><div class="subtitle">ESCAPE BINCOV</div><p class="intro">台风过后，海没有退去。<br>带上最后一匣子弹，穿过盐雾与封锁线。<br>找到补给，活着回到水产站。</p>${btn(app.checkpoint ? '继续上次行动 <span aria-hidden="true">→</span>' : '进入水产站 <span aria-hidden="true">→</span>', 'enter', 'primary')}<footer>单人撤离生存 <span>进度保存在本机</span></footer>${btn('操作指南', 'help', 'text-button')}</div><div class="version"><span>北纬 27° · 赤潮封锁第 17 天</span><span class="build-number">ESCAPE BINCOV / 0.1.1</span><a class="repo-link" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub · 反馈 / 参与开发 ↗</a></div>${overlayHtml()}`;
         bind();
         return;
     }
@@ -105,10 +110,17 @@ function renderHideout() {
     bind();
 }
 function overlayHtml() {
+    if (!app.storageOK && app.state === 'menu')
+        return `<div class="overlay"><div class="panel modal"><div class="section-label orange">进度保护</div><h2>暂时无法打开存档</h2><p>${esc(app.storageError || '请允许浏览器存储后刷新重试。')}</p><div class="actions">${btn('导出原始存档', 'export-original')}${btn('刷新重试', 'refresh', 'primary')}</div></div></div>`;
+    if (app.overlay === 'checkpoint-error')
+        return `<div class="overlay"><div class="panel modal"><div class="section-label orange">进度保护</div><h2>本局暂时无法保存</h2><p>行动已暂停。最近成功保存：${app.lastSavedAt ? new Date(app.lastSavedAt).toLocaleTimeString() : '尚无'}。</p><p>请恢复浏览器存储后重试。也可以先导出当前行动备份，避免丢失本次进度。</p><div class="actions">${btn('重试保存', 'retry-checkpoint', 'primary')}${btn('导出行动备份', 'export-save')}</div></div></div>`;
+    if (app.overlay === 'rotate')
+        return `<div class="overlay"><div class="panel modal"><div class="section-label">行动已暂停</div><h2>横过来，准备出发。</h2><p>横屏能看清沿海街区，也能同时移动和瞄准。转回横屏后，点击继续行动。</p><div class="actions">${btn('操作指南', 'help')}${btn('导出行动备份', 'export-save')}${btn('放弃行动', 'abandon', 'danger')}</div></div></div>`;
+
     if (app.pendingSettlement)
         return `<div class="overlay"><div class="panel modal"><div class="section-label orange">进度保护</div><h2>结算尚未保存</h2><p>行动已停止，结算物资保留在当前页面。</p><p>${app.conflict ? '另一个窗口已修改存档。请先下载本次结算备份，刷新后再从水产站导入。' : '浏览器暂时无法保存进度。请恢复存储后重试，或先下载本次结算备份。'}</p><p class="small orange">保存或备份完成前，请不要关闭或刷新页面。</p><div class="actions">${btn('重试保存', 'retry-save', 'primary', app.conflict ? 'disabled' : '')}${btn('下载结算备份', 'export-save')}</div><p class="small muted">备份包含本次结算，可在「水产站 → 导入存档」恢复。</p></div></div>`;
-    if (app.overlay === 'import-save' && app.pendingImport)
-        return `<div class="overlay"><div class="panel modal"><h2>导入这份存档？</h2><p>现金 ¥ ${app.pendingImport.cash} · 累计行动 ${app.pendingImport.stats.runs} 次</p><p>导入会覆盖当前浏览器的进度。建议先导出当前存档。</p><div class="actions">${btn('先导出当前存档', 'export-save')}${btn('确认导入', 'confirm-import', 'primary')}${btn('取消', 'close')}</div></div></div>`;
+    if (app.overlay === 'import-save' && (app.pendingImport || app.pendingRecoveryImport))
+        return `<div class="overlay"><div class="panel modal"><h2>导入这份存档？</h2><p>现金 ¥ ${(app.pendingImport || app.pendingRecoveryImport!.profile).cash} · 累计行动 ${(app.pendingImport || app.pendingRecoveryImport!.profile).stats.runs} 次</p><p>导入会覆盖当前浏览器的进度。建议先导出当前存档。</p><div class="actions">${btn('先导出当前存档', 'export-save')}${btn('确认导入', 'confirm-import', 'primary')}${btn('取消', 'close')}</div></div></div>`;
     if (!app.overlay)
         return '';
     if (app.overlay === 'inventory' && app.loadout)
@@ -116,12 +128,19 @@ function overlayHtml() {
     if (app.overlay === 'map')
         return `<div class="overlay"><div class="panel map-modal"><div class="section-title">滨科夫县沿海管制图 <span>M 关闭 · 时间继续流逝</span></div><canvas id="map" width="690" height="400"></canvas><div class="legend"><span>● 你的位置　 <span style="color:#d0df91">▣ 当前撤离点</span></span><span>深绿：永久通路　暗红：潮汐淹没区</span>${btn('关闭地图', 'close', 'text-button')}</div></div></div>`;
     if (app.overlay === 'pause')
-        return `<div class="overlay"><div class="panel modal"><div class="section-label">行动暂停 · 电台静默</div><h2>暂时隐蔽</h2><p>行动已暂停。关闭或刷新页面将按撤离失败结算。</p><label class="small">音量 <span id="volume-label">${Math.round(app.save.settings.volume * 100)}%</span><input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.05" value="${app.save.settings.volume}"></label><div class="actions">${btn('继续行动', 'close', 'primary')}${btn('操作指南', 'help')}${btn('放弃行动', 'abandon', 'danger')}</div></div></div>`;
+        return `<div class="overlay"><div class="panel modal"><div class="section-label">行动暂停 · 电台静默</div><h2>暂时隐蔽</h2><p>行动已暂停。刷新后可从最近成功保存的检查点继续，少量未保存进度可能回退。</p><label class="small">音量 <span id="volume-label">${Math.round(app.save.settings.volume * 100)}%</span><input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.05" value="${app.save.settings.volume}"></label><div class="actions">${btn('继续行动', 'close', 'primary')}${btn('操作指南', 'help')}${btn('放弃行动', 'abandon', 'danger')}${btn('导出行动备份', 'export-save')}</div></div></div>`;
     if (app.overlay === 'abandon')
         return `<div class="overlay"><div class="panel modal"><h2>放弃这次行动？</h2><p>你会失去携带与搜到的物资。安全箱里的东西会保留。</p><div class="actions">${btn('继续隐蔽', 'pause', 'primary')}${btn('确认放弃', 'confirm-abandon', 'danger')}</div></div></div>`;
-    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">水产站 · 随身手册</div><h2>行动指南</h2><div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '射击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '拾取 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>先在水产站整备，备用弹药放入背包。搜刮地上的黄色物资，沿永久高架路抵达绿色撤离点。站稳并按住 E，读条 3 秒即可回家。</p><p>潮汐翻转前会广播预警；涉水会积累污染。按 Q 优先止血，背包内可使用解毒剂。主动放弃、死亡、超时或刷新均会失去携带物资。</p>${btn('明白了', 'close', 'primary')}</div></div>`;
+    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">水产站 · 随身手册</div><h2>行动指南</h2>${playerInput.touch ? '<p class="touch-guide">左盘移动，推到外圈冲刺。右盘内圈瞄准、外圈持续开火，松开即停。靠近物资点「搜刮」，撤离区内停稳并按住「撤离」3 秒。地图和背包不暂停，整理时仍可能受击。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '射击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '拾取 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>先在水产站整备，备用弹药放入背包。搜刮地上的黄色物资，沿永久高架路抵达绿色撤离点。站稳并按住 E，读条 3 秒即可回家。</p><p>潮汐翻转前会广播预警；涉水会积累污染。按 Q 优先止血，背包内可使用解毒剂。主动放弃、死亡、超时会失去携带物资。刷新可恢复最近成功保存的检查点。</p>${btn('明白了', 'close', 'primary')}</div></div>`;
 }
-export function setOverlay(value: string) { app.overlay = app.pendingSettlement ? 'save-error' : value; app.selected = ''; render(); }
+export function setOverlay(value: string) {
+    if (app.overlay === 'checkpoint-error' && value !== 'checkpoint-error' && !app.storageOK) return;
+    if (!value && playerInput.touch && app.state === 'run' && (innerWidth < innerHeight || innerHeight < 280)) value = 'rotate';
+    app.raid?.releaseInput(); playerInput.clear();
+    app.overlay = app.pendingSettlement ? 'save-error' : value; app.selected = '';
+    if (['pause','help','abandon','rotate'].includes(app.overlay)) { app.raid?.checkpoint(); audio.stop(); }
+    render();
+}
 export function finish(outcome: 'extract' | 'death' | 'timeout') {
     if (app.state !== 'run' || !app.loadout || app.conflict || app.pendingSettlement) return;
     app.raid?.syncMagazine();
@@ -139,7 +158,16 @@ export function retrySettlement(): boolean {
 }
 export function exportSave() {
     try {
-        const text = encodeBackup(app.pendingSettlement ?? app.save);
+        let text: string;
+        if (app.pendingSettlement) text = encodeBackup(app.pendingSettlement);
+        else if (app.save.activeRun) {
+            const record = saveSession.currentRecord();
+            if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
+            const raid = app.raid?.snapshot() ?? app.checkpoint;
+            record.profile = structuredClone(app.save); record.raid = raid;
+            if (raid) D.checkpointSafe(record.profile, raid.loadout.safe, raid.runId);
+            text = encodeRecoveryBackup(record);
+        } else text = encodeBackup(app.save);
         const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
@@ -167,6 +195,7 @@ export function mutate(action: SessionMutation, message = ''): boolean {
         return false;
     }
     if (result === 'save-failed') {
+        if (app.state === 'run') { app.overlay = 'checkpoint-error'; app.raid?.releaseInput(); audio.stop(); }
         toast('保存失败，本次操作已撤回。请恢复浏览器存储后重试。');
         render();
         return false;
@@ -177,7 +206,7 @@ export function mutate(action: SessionMutation, message = ''): boolean {
 function bind() {
     ui().querySelectorAll<HTMLElement>('[data-action]').forEach(el => el.onclick = () => {
         const a = el.dataset.action!, id = el.dataset.id!;
-        if (app.conflict && a !== 'export-save') {
+        if (app.conflict && !['export-save', 'export-original', 'refresh'].includes(a)) {
             toast('存档已在另一窗口变更，请刷新此页继续。');
             return;
         }
@@ -185,11 +214,33 @@ function bind() {
         audio.click();
         if (app.pendingSettlement && a !== 'export-save' && a !== 'retry-save') return;
         switch (a) {
+            case 'refresh': location.reload(); break;
+            case 'export-original': {
+                try {
+                    const raw = saveSession.original(); if (!raw) { toast('浏览器内没有可导出的存档。'); break; }
+                    const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+                    const link = document.createElement('a'); link.href = url; link.download = 'Escape-Bincov-original-save.json'; link.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch { toast('无法读取原始存档，请检查浏览器存储权限。'); }
+                break;
+            }
+            case 'retry-checkpoint': if (app.raid?.checkpoint()) { app.overlay = 'pause'; render(); } break;
             case 'retry-save': retrySettlement(); break;
             case 'export-save': exportSave(); break;
             case 'import-save': document.getElementById('backup-file')?.click(); break;
-            case 'confirm-import': if (app.pendingImport) importSave(app.pendingImport); break;
+            case 'confirm-import':
+                if (app.pendingRecoveryImport && saveSession.importRecord(app.pendingRecoveryImport)) {
+                    app.pendingRecoveryImport = null; changeState('menu'); toast('备份已导入，可继续保存的行动。');
+                } else if (app.pendingImport) importSave(app.pendingImport);
+                break;
             case 'enter':
+                if (app.checkpoint) {
+                    if (saveSession.resumeRun()) {
+                        app.game!.registry.set('runConfig', generateRun(app.checkpoint.seed));
+                        changeState('run'); app.overlay = 'pause'; render();
+                    }
+                    break;
+                }
                 changeState('hideout');
                 if (app.recovery) {
                     toast('上次行动信号中断，已按失败结算。安全箱保留。');
@@ -251,7 +302,7 @@ function bind() {
                 mutate(() => D.equip(app.save, app.selected), '主武器已装备。');
                 break;
             case 'equip-run':
-                app.raid?.equipItem(app.selected);
+                mutate(() => app.raid?.equipItem(app.selected) ?? false);
                 app.selected = '';
                 render();
                 break;
@@ -274,7 +325,7 @@ function bind() {
                 const i = selected();
                 if (i && app.raid) {
                     const raid = app.raid;
-                    if (mutate(() => { const inv = inventory(app.selectedSource); inv.items = inv.items.filter(x => x.uid !== i.uid); })) raid.drop(i);
+                    mutate(() => { const inv = inventory(app.selectedSource); inv.items = inv.items.filter(x => x.uid !== i.uid); raid.drop(i); });
                 }
                 break;
             }
@@ -284,7 +335,8 @@ function bind() {
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
         el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict)
         return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); }; el.ondragstart = e => { e.dataTransfer!.setData('text/plain', JSON.stringify({ uid: el.dataset.uid, source: el.dataset.source })); e.dataTransfer!.effectAllowed = 'move'; }; });
-    ui().querySelectorAll<HTMLElement>('[data-grid]').forEach(el => { el.ondragover = e => { e.preventDefault(); e.dataTransfer!.dropEffect = 'move'; }; el.ondrop = e => { e.preventDefault(); if (app.conflict)
+    ui().querySelectorAll<HTMLElement>('[data-grid]').forEach(el => {
+        el.ondragover = e => { e.preventDefault(); e.dataTransfer!.dropEffect = 'move'; }; el.ondrop = e => { e.preventDefault(); if (app.conflict)
         return; try {
         const d = JSON.parse(e.dataTransfer!.getData('text/plain'));
         const cell = Number(el.dataset.cell), r = el.getBoundingClientRect(), scale = r.width / el.offsetWidth, x = Math.floor((e.clientX - r.left) / scale / cell), y = Math.floor((e.clientY - r.top) / scale / cell), target = el.dataset.grid!;
@@ -306,10 +358,10 @@ function bind() {
         const selectedFile = file.files?.[0];
         if (!selectedFile) return;
         try {
-            if (selectedFile.size > BACKUP_MAX_BYTES) throw new Error('存档文件过大。');
-            const candidate = decodeBackup(await selectedFile.text());
+            if (selectedFile.size > SESSION_MAX_BYTES + 512) throw new Error('存档文件过大。');
+            const candidate = decodePortableBackup(await selectedFile.text());
             if (app.state !== 'hideout' || app.conflict || app.pendingSettlement) return;
-            app.pendingImport = candidate; setOverlay('import-save');
+            app.pendingImport = candidate.kind === 'settled' ? candidate.save : null; app.pendingRecoveryImport = candidate.kind === 'session' ? candidate.record : null; setOverlay('import-save');
         } catch (error) { toast(error instanceof Error ? error.message : '无法读取存档文件。'); }
         file.value = '';
     };

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { app } from '../src/app';
+import { app, saveSession } from '../src/app';
+import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
+import { initialCheckpoint } from '../src/checkpoint';
+import { generateRun } from '../src/world';
+const read = () => new RecoveryStore(localStorage).load().save;
+function begin() { saveSession.beginRun(42); return app.loadout!; }
 import { finish, retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
 import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from '../src/save-backup';
 
@@ -15,12 +20,13 @@ const globals = new Map<string, PropertyDescriptor | undefined>();
 beforeEach(() => {
   stored = null; failWrites = false; writes = 0;
   for (const key of ['document', 'localStorage']) globals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { documentElement: { dataset: {} }, dispatchEvent() {}, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
-    getItem: () => stored,
+    getItem: (key: string) => key === SESSION_KEY ? stored : null,
     setItem: (_key: string, value: string) => { if (failWrites) throw new Error('quota exceeded'); stored = value; writes++; },
   } });
-  Object.assign(app, { game: null, save: D.newSave(), state: 'hideout', raid: null, loadout: null, tab: 'gear', overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
+  Object.assign(app, { checkpoint: null, pendingRecoveryImport: null, storageError: '', lastSavedAt: 0, game: null, save: D.newSave(), state: 'hideout', raid: null, loadout: null, tab: 'gear', overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
+  saveSession.initialize(); writes = 0;
 });
 afterEach(() => {
   clearTimeout((toast as any).timer);
@@ -31,13 +37,13 @@ afterEach(() => {
 });
 
 for (const outcome of ['extract', 'death', 'timeout'] as const) test(`${outcome}: failed settlement stays pending, retry saves exactly once and survives reload`, () => {
-  app.loadout = D.beginRun(app.save, 42);
+  app.loadout = begin();
   D.addItem(app.loadout.bag, 'sample');
   D.addItem(app.loadout.safe, 'pearl');
-  D.writeSave(localStorage, app.save);
+  saveSession.persist(app.save, initialCheckpoint(generateRun(42), app.loadout));
   app.state = 'run';
   let locked = false;
-  app.raid = { syncMagazine() {}, lock() { locked = true; }, kills: 2 } as any;
+  app.raid = { syncMagazine() {}, releaseInput() {}, checkpoint() {}, lock() { locked = true; }, kills: 2 } as any;
   failWrites = true;
   finish(outcome);
   assert.equal(locked, true);
@@ -45,7 +51,7 @@ for (const outcome of ['extract', 'death', 'timeout'] as const) test(`${outcome}
   assert.equal(app.result, null);
   assert.equal(app.pendingSettlement?.lastResult?.outcome, outcome);
   assert.match(screen.innerHTML, /结算尚未保存/);
-  assert.ok(JSON.parse(stored!).activeRun);
+  assert.ok(JSON.parse(stored!).profile.activeRun);
   assert.equal(app.save.stats.extracts, 0);
   setOverlay('');
   assert.equal(app.overlay, 'save-error', 'Escape cannot hide an unsaved settlement');
@@ -59,8 +65,8 @@ for (const outcome of ['extract', 'death', 'timeout'] as const) test(`${outcome}
   failWrites = false;
   assert.equal(retrySettlement(), true);
   assert.equal(retrySettlement(), false);
-  assert.equal(writes, 2, 'Only deployment and one successful settlement were written');
-  const reopened = D.readSave(localStorage);
+  assert.equal(writes, 3, 'Deployment, the updated checkpoint and one successful settlement were written');
+  const reopened = read();
   assert.equal(D.recoverInterrupted(reopened), null);
   assert.equal(reopened.stats.runs, 1);
   assert.equal(reopened.stats.kills, 2);
@@ -79,15 +85,15 @@ test('merchant purchases and quest submission roll back cash, items and rewards 
   assert.deepEqual(app.save, original);
   failWrites = false;
   assert.equal(mutate(() => D.submitQuest(app.save, 'sample')), true);
-  assert.equal(D.readSave(localStorage).quests.sample, true);
+  assert.equal(read().quests.sample, true);
   assert.equal(app.save.cash, original.cash + D.QUESTS.sample.reward);
 });
 
 test('failed safe transfers and medical use restore both inventories and player vitals', () => {
   D.addItem(app.save.safe, 'medkit');
-  app.loadout = D.beginRun(app.save, 42);
+  app.loadout = begin();
   app.state = 'run';
-  app.raid = { hp: 10, stamina: 50, pollution: 20, bleeding: 1, carriedWeight: () => 2 } as any;
+  app.raid = { releaseInput() {}, checkpoint() {}, hp: 10, stamina: 50, pollution: 20, bleeding: 1, carriedWeight: () => 2 } as any;
   const saveBefore = structuredClone(app.save), loadoutBefore = structuredClone(app.loadout);
   failWrites = true;
   assert.equal(mutate(() => D.transferItem(app.loadout!.safe, app.loadout!.bag, app.loadout!.safe.items[0].uid)), false);
@@ -100,10 +106,10 @@ test('failed safe transfers and medical use restore both inventories and player 
 });
 
 test('another tab cannot be overwritten by a pending retry; backup remains exportable', () => {
-  app.loadout = D.beginRun(app.save, 42); app.state = 'run'; failWrites = true;
+  app.loadout = begin(); app.state = 'run'; failWrites = true;
   finish('extract'); app.conflict = true; failWrites = false;
   assert.equal(retrySettlement(), false);
-  assert.equal(writes, 0);
+  assert.equal(writes, 1, 'Only the deployment commit succeeded');
   assert.equal(decodeBackup(encodeBackup(app.pendingSettlement!)).stats.extracts, 1);
   assert.equal(mutate(() => { app.save.cash = 999; }), false);
 });
@@ -117,7 +123,7 @@ test('backup import preserves the old save on failure and commits the full new s
   assert.deepEqual(app.save, original);
   failWrites = false;
   assert.equal(importSave(candidate), true);
-  assert.deepEqual(D.readSave(localStorage), candidate);
+  assert.deepEqual(read(), candidate);
 });
 
 test('backup reader rejects unrelated, unsupported, truncated, oversized, overlapping and live-raid data', () => {

@@ -12,7 +12,7 @@ const out = join(root, 'test-results');
 const smoke = process.argv.includes('--smoke');
 const entry = join(root, 'dist', 'index.html');
 const url = pathToFileURL(entry).href + '?test=1';
-const SAVE_KEY = 'escape-bincov.save.v1';
+const SAVE_KEY = 'escape-bincov.session.v2';
 const report = {
   startedAt: new Date().toISOString(), mode: smoke ? 'smoke' : 'full', entry: url,
   browser: executablePath, offline: true, viewports: [], screenshots: [],
@@ -104,7 +104,7 @@ async function suite(viewport) {
   async function collectSample() {
     await page.evaluate(() => {
       const raid = window.__bincov.app.raid;
-      raid.enemies.forEach(enemy => { enemy.cooldown = 100000; });
+      raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
       const sample = raid.loot.find(item => item.id === 'sample');
       if (!sample) throw new Error('Guaranteed sample missing');
       raid.player.setPosition(sample.sprite.x, sample.sprite.y);
@@ -166,7 +166,7 @@ async function suite(viewport) {
       await deploy(42);
       const current = await run();
       assert.equal(current.enemies, 25); assert.equal(current.loot, 60);
-      const committed = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+      const committed = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, SAVE_KEY);
       assert.ok(committed.activeRun); assert.equal(committed.bag.items.length, 0);
       await screenshot('raid');
       return current;
@@ -177,7 +177,7 @@ async function suite(viewport) {
       await page.evaluate(() => {
         const raid = window.__bincov.app.raid;
         raid.player.setPosition(208, 784);
-        raid.enemies.forEach(enemy => { enemy.cooldown = 100000; });
+        raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
       });
       await settleCamera();
       const before = await run();
@@ -222,7 +222,7 @@ async function suite(viewport) {
       }));
       assert.ok(record.fps.samples >= 2 && record.fps.average > 0, 'FPS sampler produced measurements');
       assert.equal(record.fps.stayedInRun, true);
-      await page.evaluate(() => { const raid = window.__bincov.app.raid; raid.enemies.forEach(enemy => { enemy.cooldown = 100000; }); raid.hp = 100; raid.bleeding = 0; });
+      await page.evaluate(() => { const raid = window.__bincov.app.raid; raid.enemies.forEach(enemy => { enemy.cooldown = 9999; }); raid.hp = 100; raid.bleeding = 0; });
       return record.fps;
     });
     await step('actual aimed pistol shot consumes ammunition and hits an enemy', async () => {
@@ -231,10 +231,10 @@ async function suite(viewport) {
         raid.player.setPosition(700, 784);
         raid.bullets.forEach(bullet => bullet.sprite.destroy()); raid.bullets = [];
         const index = raid.enemies.findIndex(enemy => enemy.id === 'scav');
-        raid.enemies.forEach((other,otherIndex)=>{if(otherIndex!==index){other.sprite.setPosition(208,1456);other.home={x:208,y:1456};other.target={x:208,y:1456};other.timer=100000;other.alert=0;other.state='patrol';other.path=[];}});
+        raid.enemies.forEach((other,otherIndex)=>{if(otherIndex!==index){other.sprite.setPosition(208,1456);other.home={x:208,y:1456};other.target={x:208,y:1456};other.timer=9999;other.alert=0;other.state='patrol';other.path=[];}});
         const enemy = raid.enemies[index];
-        enemy.sprite.setPosition(820, 784); enemy.hp = 56; enemy.cooldown = 100000;
-        enemy.home = { x: 820, y: 784 }; enemy.target = { x: 820, y: 784 }; enemy.timer = 100000;
+        enemy.sprite.setPosition(820, 784); enemy.hp = 56; enemy.cooldown = 9999;
+        enemy.home = { x: 820, y: 784 }; enemy.target = { x: 820, y: 784 }; enemy.timer = 9999;
         return { index, hp: enemy.hp, mag: raid.mag };
       });
       await settleCamera();
@@ -300,7 +300,7 @@ async function suite(viewport) {
         const raid = window.__bincov.app.raid;
         const exit = raid.config.exits[0];
         raid.player.setPosition(exit.x, exit.y); raid.hp = 100; raid.bleeding = 0; raid.pollution = 0;
-        raid.enemies.forEach(enemy => { enemy.cooldown = 100000; });
+        raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
         raid.bullets.forEach(bullet => bullet.sprite.destroy()); raid.bullets = [];
       });
       await settleCamera();
@@ -347,10 +347,10 @@ async function suite(viewport) {
       assert.deepEqual(await state(), { ...saved, state: 'menu' });
       return { completedRuns: 3, outcomes: ['extract', 'death', 'timeout'], volumeAfterReload: (await state()).volume };
     });
-    await step('fourth run: midrun reload loses carried items and checkpoints safe loot', async () => {
+    await step('fourth run: midrun reload restores carried items and the matching world checkpoint', async () => {
       await action('enter').click(); await waitState('hideout');
       const medkit = (await state()).stash.items.find(item => item.id === 'medkit');
-      assert.ok(medkit, 'An untouched warehouse medkit can test carried-item loss');
+      assert.ok(medkit, 'An untouched warehouse medkit can test carried-item recovery');
       await page.locator(`[data-uid="${medkit.uid}"]`).click(); await action('transfer').click();
       assert.ok((await state()).bag.items.some(item => item.id === 'medkit'));
       const stashBefore = (await state()).stash;
@@ -360,17 +360,19 @@ async function suite(viewport) {
       await page.waitForFunction(() => window.__bincov.app.overlay === 'inventory');
       const sampleUid = await page.evaluate(() => window.__bincov.app.loadout.bag.items.find(item => item.id === 'sample').uid);
       await page.locator(`[data-uid="${sampleUid}"]`).click(); await action('secure').click();
-      const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), SAVE_KEY);
+      const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, SAVE_KEY);
       assert.ok(checkpoint.activeRun); assert.ok(checkpoint.safe.items.some(item => item.id === 'sample'));
       await page.reload({ waitUntil: 'load' }); await waitState('menu'); await action('enter').waitFor();
       const recovered = await state();
-      assert.equal(recovered.activeRun, null); assert.equal(recovered.stats.runs, 4);
-      assert.equal(recovered.result.recovered, true); assert.equal(recovered.result.outcome, 'death');
+      assert.ok(recovered.activeRun); assert.equal(recovered.stats.runs, 4);
+      assert.equal(recovered.result.outcome, 'timeout', 'Reload must not settle the new run');
+      assert.ok(await page.evaluate(() => __bincov.app.checkpoint.loadout.bag.items.some(i => i.id === 'medkit')));
       assert.equal(recovered.bag.items.length, 0); assert.equal(recovered.equipment.weapon, null);
       assert.deepEqual(recovered.stash, stashBefore); assert.deepEqual(recovered.safe, checkpoint.safe);
       assert.equal(recovered.cash, beforeResults.cash); assert.deepEqual(recovered.quests, beforeResults.quests);
-      await action('enter').click(); await screenshot('recovered-hideout');
-      return { carriedMedkitLost: true, safeSamplePreserved: true, noExtraSettlement: recovered.stats.runs === 4 };
+      await action('enter').click(); await waitState('run'); await page.waitForFunction(() => __bincov.app.raid?.player?.active);
+      assert.equal(await page.evaluate(() => __bincov.app.overlay), 'pause'); await screenshot('recovered-raid');
+      return { carriedMedkitRestored: true, safeSamplePreserved: true, noExtraSettlement: recovered.stats.runs === 4 };
     });
   } finally {
     if (record.steps.some(item => item.status === 'failed')) {
