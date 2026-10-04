@@ -75,7 +75,12 @@ try{
  await step('live backup round trip and failed medical transaction preserve consistent state',async()=>{
   const promise=page.waitForEvent('download');await action('export-save').tap();const file=resolve(out,'live-backup.json');await (await promise).saveAs(file);
   const backup=JSON.parse(await readFile(file,'utf8'));assert.equal(backup.formatVersion,2);assert.equal(backup.record.raid.hp,72);
-  await action('close').tap();await page.locator('[data-panel="inventory"]').tap();
+  await action('close').tap();
+  // The restored checkpoint deliberately includes an unfinished reload. Let it
+  // settle before comparing the medical transaction's before/after loadout:
+  // inventory stays live, so a concurrent reload legitimately moves ammunition.
+  await page.waitForFunction(()=>__bincov.app.raid.reloadLeft===0);
+  await page.locator('[data-panel="inventory"]').tap();
   await page.locator('[data-source="bag"][aria-label^="密封绷带"]').tap();
   const before=await page.evaluate(()=>({loadout:__bincov.app.loadout,hp:__bincov.app.raid.hp}));
   await page.evaluate(()=>{window.__write=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2')throw new Error('quota');return __write.call(this,k,v)}});
