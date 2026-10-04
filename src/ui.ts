@@ -4,6 +4,7 @@ import { SURVIVAL } from './balance';
 import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from './save-backup';
 import { app, audio, saveSession } from './app';
 import type { SessionMutation } from './session';
+import { titleScreen } from './title-screen';
 const ui = () => document.getElementById('ui')!;
 export function toast(message: string) { const el = document.getElementById('toast')!; el.textContent = message; el.style.opacity = '1'; clearTimeout((toast as any).timer); (toast as any).timer = setTimeout(() => el.style.opacity = '0', 3300); }
 function saved(ok: boolean): boolean {
@@ -56,9 +57,22 @@ function details() {
     return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div></div><p class="item-description">${d.description}</p><dl class="item-facts"><div><dt>占用</dt><dd>${d.w} × ${d.h} 格</dd></div><div><dt>总重</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>回收价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 仅供自用</p>' : ''}<div class="item-actions">${actions}</div></aside>`;
 }
 export function render() {
+    document.body.dataset.screen = app.state;
+    app.game?.scale.updateBounds();
     if (app.state === 'menu') {
-        ui().innerHTML = `<div class="menu"><div class="menu-location">滨科夫县 <span>沿海封锁区</span></div><h1>逃离<br>滨科夫</h1><div class="subtitle">ESCAPE BINCOV</div><p class="intro">台风过后，海没有退去。<br>带上最后一匣子弹，穿过盐雾与封锁线。<br>找到补给，活着回到水产站。</p>${btn('进入水产站 <span aria-hidden="true">→</span>', 'enter', 'primary')}<footer>单人撤离生存 <span>进度保存在本机</span></footer>${btn('操作指南', 'help', 'text-button')}</div><div class="version"><span>北纬 27° · 赤潮封锁第 17 天</span><span class="build-number">ESCAPE BINCOV / 0.1.1</span><a class="repo-link" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub · 反馈 / 参与开发 ↗</a></div>${overlayHtml()}`;
+        const focusedAction = (document.activeElement as HTMLElement | null)?.dataset.action;
+        ui().innerHTML = titleScreen({ runs: app.save.stats.runs, extracts: app.save.stats.extracts, motion: app.menuMotion,
+            overlay: !!app.overlay, storageOK: app.storageOK }) + overlayHtml();
         bind();
+        if (app.overlay) {
+            const modal = ui().querySelector<HTMLElement>('.modal');
+            modal?.setAttribute('role', 'dialog');
+            modal?.setAttribute('aria-modal', 'true');
+            modal?.setAttribute('aria-label', '行动指南');
+            modal?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+        } else if (focusedAction === 'close' || focusedAction === 'title-motion') {
+            ui().querySelector<HTMLButtonElement>(`[data-action="${focusedAction === 'close' ? 'help' : 'title-motion'}"]`)?.focus({ preventScroll: true });
+        }
         return;
     }
     if (app.state === 'hideout')
@@ -185,6 +199,15 @@ function bind() {
         audio.click();
         if (app.pendingSettlement && a !== 'export-save' && a !== 'retry-save') return;
         switch (a) {
+            case 'title-motion':
+                if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    toast('系统已开启「减少动态效果」，景物保持静止。');
+                    break;
+                }
+                app.menuMotion = !app.menuMotion;
+                app.game?.scene.getScene('Menu').events.emit('title-motion', app.menuMotion);
+                render();
+                break;
             case 'retry-save': retrySettlement(); break;
             case 'export-save': exportSave(); break;
             case 'import-save': document.getElementById('backup-file')?.click(); break;

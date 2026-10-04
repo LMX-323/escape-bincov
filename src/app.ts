@@ -11,6 +11,7 @@ export const app = {
     raid: null as RaidScene | null,
     tab: 'gear', overlay: '', selected: '', selectedSource: '', seed: '',
     pendingImport: null as SaveDataV1 | null,
+    menuMotion: true,
 };
 
 export const audio = new SynthAudio();

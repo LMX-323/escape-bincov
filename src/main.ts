@@ -1,22 +1,35 @@
 import Phaser from 'phaser';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { app, saveSession } from './app';
-import { initSave, setOverlay, persist, toast } from './ui';
+import { initSave, setOverlay, persist, toast, render } from './ui';
 import { SAVE_KEY } from './domain';
 initSave();
+app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: true }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
 function resize() { const scale = Math.max(.25, Math.floor(Math.min(innerWidth / 960, innerHeight / 540)) || Math.min(innerWidth / 960, innerHeight / 540)); document.getElementById('frame')!.style.transform = `scale(${scale})`; if (app.game?.canvas)
     app.game.scale.updateBounds();
 else
     setTimeout(resize, 50); }
 addEventListener('resize', resize);
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+    if (!e.matches) return;
+    app.menuMotion = false;
+    if (app.state === 'menu') {
+        app.game?.scene.getScene('Menu').events.emit('title-motion', false);
+        render();
+    }
+});
 addEventListener('beforeunload', e => { if (app.pendingSettlement) { e.preventDefault(); e.returnValue = ''; } });
 resize();
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('visibilitychange', () => { if (document.hidden && app.state === 'run')
     setOverlay('pause'); });
 addEventListener('keydown', e => { if ((e.target as HTMLElement).tagName === 'INPUT')
-    return; if (['Tab', ' ', 'Escape'].includes(e.key))
+    return; if (app.state === 'menu' && app.overlay && e.key === 'Tab') {
+    e.preventDefault();
+    document.querySelector<HTMLButtonElement>('#ui .modal button')?.focus();
+    return;
+} if (app.state === 'run' && ['Tab', ' ', 'Escape'].includes(e.key))
     e.preventDefault(); if (e.repeat)
     return; if (app.state === 'run') {
     if (e.key === 'Tab')

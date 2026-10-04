@@ -45,6 +45,8 @@ jobs:
         run: pnpm test:browser
       - name: UI layout and screenshot review
         run: pnpm test:ui
+      - name: Responsive title and motion regression
+        run: pnpm test:title
       - name: Save reliability regression
         run: pnpm test:save-browser
       - name: Offline portable regression
