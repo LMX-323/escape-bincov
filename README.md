@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/menu.png" alt="逃离滨科夫实际游戏主菜单：盐雾中的废弃水产站" width="100%">
+  <img src="docs/ui/menu.png" alt="逃离滨科夫实际游戏主菜单：盐雾中的废弃水产站" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>
@@ -36,20 +36,20 @@
 
 ## 📸 封锁区现场
 
-![低潮时的沿海封锁区、道路与行动 HUD](docs/preview.png)
+![低潮时的沿海封锁区、道路与行动 HUD](docs/ui/hud.png)
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/hideout.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备、交易与安全箱</td>
-    <td width="50%"><img src="docs/media/map.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
+    <td width="50%"><img src="docs/ui/gear.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备、交易与安全箱</td>
+    <td width="50%"><img src="docs/ui/map.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/media/high-tide.png" alt="潮位翻转后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
-    <td width="50%"><img src="docs/save-home.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
+    <td width="50%"><img src="docs/ui/high-tide.png" alt="潮位翻转后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
+    <td width="50%"><img src="docs/ui/home.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
   </tr>
 </table>
 
-<sub>截图来自 0.1.1 实际运行与自动验收场景，未使用概念图代替游戏画面。</sub>
+<sub>截图来自 0.1.1 界面精修后的实际运行与自动验收场景。查看 [界面精修记录与前后对照](docs/UI-POLISH.md)。</sub>
 
 ## ▶️ 开始你的第一局
 
@@ -104,6 +104,7 @@ pnpm dev
 | `pnpm build` | 严格类型检查，生成两个独立 HTML 入口 |
 | `pnpm package` | 构建游戏，生成离线包、网页包与制品清单 |
 | `pnpm test:browser` | 两种分辨率的浏览器回归 |
+| `pnpm test:ui` | 界面布局检查与双分辨率截图 |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:portable` | 实际解压 ZIP，验证离线启动与操作 |
 | `pnpm test:play` | 约 10 分钟真实计时自动玩家，适用于玩法改动 |
@@ -133,7 +134,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 存档专项 / 离线便携检查 | 7 项 / 6 项通过 |
 | 真实计时自动流程 | 约 10 分 19 秒，两次成功撤离 |
 
-这些是 0.1.1 的实测记录；新提交状态以顶部 CI 标识为准。自动玩家可读取场景状态进行寻路和瞄准，不能替代真人手感与平衡性评价。完整方法及边界见 [验收记录](docs/ACCEPTANCE.md)。
+上表保留 0.1.1 的完整循环验收记录；本轮界面改动的复测见 [界面精修记录](docs/UI-POLISH.md)，新提交状态以顶部 CI 标识为准。自动玩家可读取场景状态进行寻路和瞄准，不能替代真人手感与平衡性评价。完整方法及边界见 [验收记录](docs/ACCEPTANCE.md)。
 
 下一轮优先关注真人试玩反馈、战斗反馈、局内后半段的目标与威胁，以及存档兼容性。**多人联机、云存档、触控和手柄尚未实现**，也不属于当前在线托管的能力。
 
@@ -147,6 +148,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 如何贡献、提交 PR | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | GitHub Pages 发布、更新与回退 | [部署手册](docs/DEPLOYMENT.md) |
 | 大陆网络下的托管选择 | [大陆在线游玩指南](docs/ONLINE-CHINA.md) |
+| 界面设计、前后对照与本轮验证 | [界面精修记录](docs/UI-POLISH.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
 | 离线分享及验收证据 | [便携包说明](docs/PORTABLE.md) · [验收记录](docs/ACCEPTANCE.md) |
 

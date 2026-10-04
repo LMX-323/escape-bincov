@@ -117,7 +117,7 @@ git push -u origin agent/short-task-name
 | --- | --- |
 | 纯文字/文档 | 本地及仓库链接、命令、事实、图片路径；无需新增代码测试 |
 | 领域规则、数据、地图 | `pnpm test`、`pnpm package`；相应边界/可达性回归 |
-| UI、操作、场景 | 上述检查 + `pnpm test:browser`；1280×720 与 1920×1080 截图 |
+| UI、操作、场景 | 上述检查 + `pnpm test:browser`、`pnpm test:ui`；1280×720 与 1920×1080 截图 |
 | 交易、库存、结算、备份 | 上述检查 + `pnpm test:save-browser`，包括写入失败、重复重试、旧存档、导入覆盖与多窗口影响 |
 | 打包、依赖或发布 | `pnpm package`、`pnpm test:portable`、ZIP 内容/哈希与线上普通入口检查 |
 | 战斗、AI、潮汐、持续负载 | 对应回归 + `pnpm test:play`；另明确真人平衡性是否验证 |
