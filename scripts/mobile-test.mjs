@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { browserOptions } from './browser-options.mjs';
+import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
 
 const out=resolve('test-results/mobile'); await mkdir(out,{recursive:true});
 const report={startedAt:new Date().toISOString(),method:'Chromium touch emulation with real CDP multi-touch, fault injection, complete checkpoint comparisons and offline requests blocked. Not physical iPhone/Android or Safari validation.',steps:[],errors:[],requests:[]};
@@ -97,16 +98,16 @@ try{
   await page.locator('[data-panel="inventory"]').tap();
   await page.locator('[data-source="bag"][aria-label^="密封绷带"]').tap();
   const before=await page.evaluate(()=>({loadout:__bincov.app.loadout,hp:__bincov.app.raid.hp}));
-  await page.evaluate(()=>{window.__write=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2')throw new Error('quota');return __write.call(this,k,v)}});
+  await failSessionWritesOnClick(page,'[data-action="use"]');
   await action('use').tap();assert.equal((await runtime()).overlay,'checkpoint-error');
   assert.deepEqual(await page.evaluate(()=>({loadout:__bincov.app.loadout,hp:__bincov.app.raid.hp})),before);
-  await page.evaluate(()=>{Storage.prototype.setItem=__write});await action('retry-checkpoint').tap();assert.equal((await runtime()).storageOK,true);
+  await restoreSessionWrites(page);await action('retry-checkpoint').tap();assert.equal((await runtime()).storageOK,true);
   await action('close').tap();await page.locator('[data-panel="inventory"]').tap();await page.locator('[data-source="bag"][aria-label^="赤潮封存样本"]').tap();
   const beforeDrop=await page.evaluate(()=>({loadout:__bincov.app.loadout,loot:__bincov.app.raid.snapshot().loot}));
-  await page.evaluate(()=>{Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2')throw new Error('quota');return __write.call(this,k,v)}});
+  await failSessionWritesOnClick(page,'[data-action="drop"]');
   await action('drop').tap();assert.equal((await runtime()).overlay,'checkpoint-error');
   assert.deepEqual(await page.evaluate(()=>({loadout:__bincov.app.loadout,loot:__bincov.app.raid.snapshot().loot})),beforeDrop);
-  await page.evaluate(()=>{Storage.prototype.setItem=__write});await action('retry-checkpoint').tap();await action('close').tap();
+  await restoreSessionWrites(page);await action('retry-checkpoint').tap();await action('close').tap();
   await page.locator('[data-panel="pause"]').tap();await action('abandon').tap();await action('confirm-abandon').tap();await action('return').tap();
   await action('tab','home').tap();await page.locator('#backup-file').setInputFiles(file);await action('confirm-import').tap();await action('enter').tap();await page.waitForFunction(()=>__bincov.app.raid?.player?.active);
   assert.equal((await runtime()).raid.hp,72);assert.equal((await runtime()).overlay,'pause');

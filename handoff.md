@@ -2,6 +2,14 @@
 
 更新：2026-10-04。权威仓库：https://github.com/xuys2025/escape-bincov 。公开发布后以仓库最新 `main` 为基线；所有后续任务先读 `AGENTS.md` 和 `docs/AGENT-HANDBOOK.md`，通过独立分支与 PR 交付。
 
+## 2026-10-04 PR #7 合并后：移动故障注入测试时序补修
+
+PR #7 已于 `12624b1d14f38b3c2b4221532cb530c168d906c9` 合并。PR CI 通过，但 [main CI #26](https://github.com/xuys2025/escape-bincov/actions/runs/37210621393) 两次分别在医疗按钮和旋转格位点击前超时，Pages 均未部署。失败日志均显示目标被移出 DOM；第一次附件处于存档保护页。本地定向复现确认：提前替换 `Storage.setItem` 后，周期保存先触发 `checkpoint-error`，玩家生命与背包仍完整，测试来不及执行目标点击。
+
+以该 main 为唯一基线，在 `fix/mobile-fault-injection-timing` 补修测试。共用 `scripts/storage-fault.mjs` 在目标可信 click 的捕获阶段启用写入失败；点击前的周期保存保持正常。每次布置后先等待一次真实自动保存，主动覆盖慢输入窗口；恢复存储时断言目标确实发生了失败写入。医疗、丢弃、附近拾取和旋转用例继续使用真实触控和原有完整回滚断言，无强制点击、重试包装或放宽超时。
+
+本地 `pnpm test` 76/76、`pnpm test:mobile` 10/10、携带真实 v0.2.0 HTML 的 `pnpm test:mobile-ux` 12/12 通过；`pnpm package` 通过，游戏 HTML、ZIP 与制品清单无变化。补修仅涉及测试脚本与本交接，不改游戏代码、存档协议、自动保存行为或 CI 门槛。CI 和部署状态以补修 PR 及后续 main 的 Actions 为准；手机真机验收仍待补充。
+
 ## 2026-10-04 审阅追加：短屏拾取成功消息遮挡警告（PR #7）
 
 重新 fetch 后 main 仍为 `4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2`，继续同一独立分支。确认候选 `014579f` 在 640×300、三件物资拾取后显示「附近 2」时，成功消息覆盖止血警告 3840 CSS px²。新增测试在旧构建上失败，原两件物资用例因拾取后不再显示附近按钮而漏测。

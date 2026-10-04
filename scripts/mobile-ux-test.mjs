@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { WORLD } from '../src/world.ts';
 import { browserOptions } from './browser-options.mjs';
+import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
 
 const out=resolve('test-results/mobile-ux'); await mkdir(out,{recursive:true});
 const report={startedAt:new Date().toISOString(),method:'Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures. Includes failure injection; not physical phone validation.',steps:[],errors:[],requests:[]};
@@ -114,9 +115,9 @@ try {
   await page.evaluate(()=>{const {app}=__bincov,r=app.raid;app.loadout.bag.items=Array.from({length:30},(_,i)=>({uid:'ux-b'+i,id:'bandage',qty:i?4:3,x:i%6,y:Math.floor(i/6)}));r.loot.forEach(l=>l.sprite.destroy());r.loot=[];r.spawnLoot(700,784,'water',1);r.spawnLoot(720,784,'bandage',3);});
   await action('nearby').tap();const id=await page.evaluate(()=>__bincov.app.raid.loot.find(l=>l.id==='bandage').uid);
   const before=await page.evaluate(()=>({bag:__bincov.app.loadout.bag,loot:__bincov.app.raid.snapshot().loot}));
-  await page.evaluate(()=>{window.__write=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2')throw Error('quota');return __write.call(this,k,v)}});
+  await failSessionWritesOnClick(page,`[data-action="pickup-loot"][data-id="${id}"]`);
   await action('pickup-loot',id).tap();assert.equal(await page.evaluate(()=>__bincov.app.overlay),'checkpoint-error');assert.deepEqual(await page.evaluate(()=>({bag:__bincov.app.loadout.bag,loot:__bincov.app.raid.snapshot().loot})),before);
-  await page.evaluate(()=>{Storage.prototype.setItem=__write});await action('retry-checkpoint').tap();await action('close').tap();await action('nearby').tap();await shot('nearby-844');await action('pickup-loot',id).tap();
+  await restoreSessionWrites(page);await action('retry-checkpoint').tap();await action('close').tap();await action('nearby').tap();await shot('nearby-844');await action('pickup-loot',id).tap();
   assert.equal(await page.evaluate(()=>__bincov.app.loadout.bag.items.reduce((n,i)=>n+i.qty,0)),120);assert.equal(await page.evaluate(()=>__bincov.app.raid.loot.length),2);assert.equal(await page.evaluate(()=>__bincov.app.raid.loot.find(l=>l.id==='bandage').qty),2);
   await page.evaluate(()=>{__bincov.app.raid.player.setPosition(1000,784);});await page.waitForFunction(()=>document.querySelector('.quick-body').textContent.includes('附近没有'));assert.equal(await action('pickup-loot').count(),0);await action('close').tap();
  });
@@ -134,9 +135,9 @@ try {
   const before=await page.evaluate(()=>__bincov.app.loadout.bag);
   await page.locator('[data-uid="ux-rotate-water"]').tap();await action('rotate-item').tap();assert.match(await page.locator('.placement-hint').innerText(),/2 × 1/);await action('clear-selection').tap();assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),before);
   await page.locator('[data-uid="ux-rotate-water"]').tap();await action('rotate-item').tap();
-  await page.evaluate(()=>{window.__write=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2')throw Error('quota');return __write.call(this,k,v)}});
+  await failSessionWritesOnClick(page,'[data-grid="bag"]');
   await page.locator('[data-grid="bag"]').tap({position:{x:26,y:78}});assert.equal(await page.evaluate(()=>__bincov.app.overlay),'checkpoint-error');assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),before);assert.equal(await page.evaluate(()=>__bincov.app.placement),false);
-  await page.evaluate(()=>{Storage.prototype.setItem=__write});await action('retry-checkpoint').tap();await action('close').tap();await page.locator('[data-panel="inventory"]').tap();await page.locator('[data-uid="ux-rotate-water"]').tap();await action('rotate-item').tap();await page.locator('[data-grid="bag"]').tap({position:{x:26,y:78}});
+  await restoreSessionWrites(page);await action('retry-checkpoint').tap();await action('close').tap();await page.locator('[data-panel="inventory"]').tap();await page.locator('[data-uid="ux-rotate-water"]').tap();await action('rotate-item').tap();await page.locator('[data-grid="bag"]').tap({position:{x:26,y:78}});
   assert.deepEqual(await page.evaluate(()=>{const i=__bincov.app.loadout.bag.items.find(i=>i.uid==='ux-rotate-water');return [i.x,i.y,i.rotated]}),[0,1,true]);
  });
  await step('desktop rotation preview can cancel, leave its tab and commit in both required sizes',async()=>{
