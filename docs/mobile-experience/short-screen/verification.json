@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-04",
+  "baseline": "4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2",
+  "reproducedOn": "014579f0f9cac4b81f160bf615d627d1bca520ed",
+  "sourceSha256": {
+    "src/style.css": "ef6e28c52af7daf4c957c6bcd816d841a3257409e6baad5a1d0b71cada243193",
+    "src/ui.ts": "aae0f3ebb061e86da67888c31b96529b4da34c3e2b8df39ba02e365bdbd15816",
+    "scripts/mobile-ux-test.mjs": "21b616f12b4d5f745a2f5c22d58851d76504e934583d58be95e57c485a6c3b01"
+  },
+  "environment": {
+    "platform": "Linux x64",
+    "node": "24.19.0",
+    "pnpmLocal": "11.25.0",
+    "pnpmRepositoryAndCI": "11.19.0",
+    "chromium": "138.0.7204.0",
+    "renderer": "SwiftShader"
+  },
+  "unit": {
+    "passed": 76,
+    "failed": 0
+  },
+  "browserCounts": {
+    "browser": 24,
+    "desktop-input": 10,
+    "ui": 38,
+    "title": 16,
+    "save-browser": 9,
+    "mobile": 10,
+    "mobile-ux": 12,
+    "portable": 6
+  },
+  "browserChecks": 125,
+  "package": "passed",
+  "htmlBytes": 1682319,
+  "htmlSha256": "484143b4c2349ca735e068e229edd79e2089c09e83d0792038426dc78a020709",
+  "newRegression": {
+    "caseCombinations": 13,
+    "postPickupMeasurements": 26,
+    "oldBuildFailed": true,
+    "oldWarningOverlapCssPixelsSquared": 3840,
+    "currentOverlaps": 0,
+    "safeInsets": {
+      "left": 44,
+      "right": 12,
+      "bottom": 20
+    }
+  },
+  "method": "Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures. Includes failure injection; not physical phone validation.",
+  "unrun": [
+    "physical iPhone Safari / Android / QQ",
+    "natural-play long run",
+    "browser-toolbar behavior on physical phones"
+  ],
+  "gameSourceCommit": "d8820b9485e910f5c0d9588d0ed72c830ef1c4d6",
+  "gameSourceTree": "1662e3cecd58c771967e97f7c1efb34612330989",
+  "regressionRevision": "Timing isolation after CI #24: nearby panel checks and fresh rapid consecutive taps are separate; no game timing change.",
+  "ci24": {
+    "runId": 37208326012,
+    "head": "f49e0722a82fadb5c7a9a4e17a65a4515fce18d4",
+    "result": "failed at repeated-pickup timing assertion; first three-item overlap checks passed",
+    "report": "ci24-report.json"
+  }
+}

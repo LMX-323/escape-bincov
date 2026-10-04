@@ -1,0 +1,141 @@
+{
+  "baseline": "4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2",
+  "method": "Current source and rebuilt HTML; Chromium touch emulation. Synthetic inventories, HP, player and loot positions only through ?test=1. No physical phone or QQ browser.",
+  "checks": [
+    {
+      "name": "safe-medkit-then-water",
+      "status": "limitation-reproduced",
+      "secondItemRemaining": 1
+    },
+    {
+      "name": "safe-water-then-medkit",
+      "status": "limitation-reproduced",
+      "secondItemRemaining": 1
+    },
+    {
+      "name": "all-fixed-orientation-pairs",
+      "status": "confirmed",
+      "arrangements": 4,
+      "validPairs": 0
+    },
+    {
+      "name": "touch-safe-transfer",
+      "status": "limitation-reproduced",
+      "safe": {
+        "w": 2,
+        "h": 2,
+        "items": [
+          {
+            "uid": "bc-mutr23j4-b",
+            "id": "medkit",
+            "qty": 1,
+            "x": 0,
+            "y": 0
+          }
+        ]
+      },
+      "waterInBag": true,
+      "notice": "放不下这件物品，请先整理目标容器。"
+    },
+    {
+      "name": "heal-visible-667x375",
+      "status": "passed",
+      "text": "治疗",
+      "x": 148,
+      "y": 185,
+      "width": 68,
+      "height": 48,
+      "hit": true,
+      "onscreen": true
+    },
+    {
+      "name": "heal-visible-740x300",
+      "status": "passed",
+      "text": "治疗",
+      "x": 140,
+      "y": 192,
+      "width": 54,
+      "height": 48,
+      "hit": true,
+      "onscreen": true
+    },
+    {
+      "name": "heal-visible-844x390",
+      "status": "passed",
+      "text": "治疗",
+      "x": 148,
+      "y": 200,
+      "width": 68,
+      "height": 48,
+      "hit": true,
+      "onscreen": true
+    },
+    {
+      "name": "heal-visible-915x412",
+      "status": "passed",
+      "text": "治疗",
+      "x": 148,
+      "y": 222,
+      "width": 68,
+      "height": 48,
+      "hit": true,
+      "onscreen": true
+    },
+    {
+      "name": "heal-visible-932x430",
+      "status": "passed",
+      "text": "治疗",
+      "x": 148,
+      "y": 240,
+      "width": 68,
+      "height": 48,
+      "hit": true,
+      "onscreen": true
+    },
+    {
+      "name": "trusted-touch-heals-from-bag",
+      "status": "passed",
+      "hp": 66,
+      "bandages": 1,
+      "notice": "已使用密封绷带"
+    },
+    {
+      "name": "safe-only-medicine-shortcut-and-manual-use",
+      "status": "limitation-reproduced",
+      "shortcutMessage": "背包中没有绷带或急救包。",
+      "hpBefore": 40,
+      "hpAfterShortcut": 40,
+      "hpAfterManualUse": 95,
+      "menuTaps": 3
+    },
+    {
+      "name": "nearest-unfittable-loot-blocks-stackable-neighbor",
+      "status": "limitation-reproduced",
+      "afterTwoTaps": {
+        "bandages": 119,
+        "loot": [
+          {
+            "id": "water",
+            "qty": 1
+          },
+          {
+            "id": "bandage",
+            "qty": 1
+          }
+        ],
+        "notice": "背包空间不足，请整理物资。",
+        "prompt": "附近物资　净水瓶 × 1"
+      },
+      "afterMoving20Pixels": {
+        "bandages": 120,
+        "loot": [
+          "water"
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "138.0.7204.0",
+  "status": "completed"
+}

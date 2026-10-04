@@ -1,0 +1,55 @@
+{
+  "startedAt": "2026-10-04T12:51:41.381Z",
+  "method": "Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures. Includes failure injection; not physical phone validation.",
+  "steps": [
+    {
+      "name": "seven phone sizes have immediately reachable inventory and detail exits",
+      "status": "passed"
+    },
+    {
+      "name": "placement cancel and close/reopen keep inventory selectable and unchanged",
+      "status": "passed"
+    },
+    {
+      "name": "success toast does not cover nearby text, warning or combat buttons",
+      "status": "passed"
+    },
+    {
+      "name": "short phone reading remains visible with reachable exit and a live clock",
+      "status": "passed"
+    },
+    {
+      "name": "short phone reload is visible on its button",
+      "status": "passed"
+    },
+    {
+      "name": "nearby list picks the stackable item without moving; failure restores world and bag",
+      "status": "passed"
+    },
+    {
+      "name": "quick therapy does not consume safe medicine; supply picker explicitly uses it",
+      "status": "passed"
+    },
+    {
+      "name": "rotated safe restores from the durable checkpoint after refresh",
+      "status": "passed"
+    },
+    {
+      "name": "manual rotation preview cancels unchanged and failed placement rolls back",
+      "status": "passed"
+    },
+    {
+      "name": "desktop rotation preview can cancel, leave its tab and commit in both required sizes",
+      "status": "passed"
+    },
+    {
+      "name": "actual v0.2.0 raid migrates once; old HTML refuses the rotated record without overwriting",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "138.0.7204.0",
+  "status": "passed",
+  "finishedAt": "2026-10-04T12:52:01.755Z"
+}

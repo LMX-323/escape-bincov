@@ -1,0 +1,173 @@
+{
+  "startedAt": "2026-10-04T13:54:47.225Z",
+  "checks": [
+    {
+      "name": "composition, help, input and round-trip 1280x720",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 1920x1080",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 2560x1080",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 1024x768",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 768x1024",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 360x800",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 390x844",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 412x915",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 430x932",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 844x390",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 932x430",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "composition, help, input and round-trip 640x360",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false
+    },
+    {
+      "name": "motion toggle and live reduced-motion preference",
+      "status": "passed"
+    },
+    {
+      "name": "five scene round-trips without texture, tween or listener growth",
+      "status": "passed",
+      "children": 4,
+      "tweens": 3,
+      "paused": false,
+      "textures": 4,
+      "listeners": 1,
+      "properties": [
+        [
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0.9998140628639158
+        ],
+        [
+          893,
+          189,
+          0.9996820539878264
+        ],
+        [
+          -16.174705882352942,
+          -23.534117647058824,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "120-frame desktop headless sample (measurement, not a device guarantee)",
+      "status": "passed",
+      "frames": 120,
+      "medianMs": 16.699999999999818,
+      "p95Ms": 16.799999999999727,
+      "actualFps": 59.859375
+    },
+    {
+      "name": "orientation changes, including an open help dialog",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "methodology": "Offline, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 is only used for motion/lifecycle/performance inspection. No gameplay or save fixtures.",
+  "browser": "138.0.7204.0",
+  "htmlBytes": 1682319,
+  "frameSample": {
+    "frames": 120,
+    "medianMs": 16.699999999999818,
+    "p95Ms": 16.799999999999727,
+    "actualFps": 59.859375
+  },
+  "status": "passed",
+  "finishedAt": "2026-10-04T13:55:00.137Z"
+}

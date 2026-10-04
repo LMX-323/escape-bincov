@@ -62,7 +62,7 @@ test('initialization migrates version-zero but refuses to overwrite malformed sa
     assert.equal(old.session.initialize(), true);
     assert.equal(old.state.save.cash, 1234);
     assert.equal(D.count(old.state.save.stash, 'pearl'), 2);
-    assert.equal(read(old.storage).version, 1);
+    assert.equal(read(old.storage).version, 2);
     const corrupt = fixture('{');
     assert.equal(corrupt.session.initialize(), false);
     assert.equal(corrupt.stored, '{');

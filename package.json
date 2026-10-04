@@ -16,6 +16,7 @@
     "test:portable": "node scripts/portable-test.mjs",
     "test:ui": "node scripts/ui-review.mjs",
     "test:mobile": "node scripts/mobile-test.mjs",
+    "test:mobile-ux": "node --import tsx scripts/mobile-ux-test.mjs",
     "test:title": "node scripts/title-review.mjs"
   },
   "dependencies": {

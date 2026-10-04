@@ -2,7 +2,7 @@ import { playerInput, type InputAction } from './input';
 
 export function installControls(overlay: (name: string) => void, isRunning: () => boolean, unlockAudio: () => void) {
   const root = document.getElementById('touch-controls')!;
-  root.innerHTML = `<div class="touch-top"><button data-panel="map" aria-label="地图">地图</button><button data-panel="inventory" aria-label="背包">背包</button><button data-panel="pause" aria-label="暂停">Ⅱ</button></div>
+  root.innerHTML = `<div class="touch-top"><button data-panel="map" aria-label="地图">地图</button><button data-panel="inventory" aria-label="背包">背包</button><button data-panel="supplies" aria-label="药品与补给">药品</button><button data-panel="pause" aria-label="暂停">Ⅱ</button></div>
     <div class="stick move-stick" data-stick="move" role="group" aria-label="移动摇杆，推到外圈冲刺"><span>移动 · 冲刺</span><i></i></div>
     <div class="touch-tools"><button data-command="heal" aria-label="快捷治疗">治疗</button><button data-command="knife" aria-label="切换匕首">匕首</button><button data-command="primary" aria-label="切换主武器">主武器</button></div>
     <div class="touch-combat"><button data-command="reload" aria-label="换弹">换弹</button><button id="touch-interact" aria-label="拾取或按住撤离">交互</button></div>

@@ -295,7 +295,7 @@ test('quest submission consumes across inventories atomically and rewards once',
 
 test('version-zero inventory upgrades; corrupt and unknown fields cannot inject items', () => {
   const save = migrateSave({ version: 0, cash: 32, inventory: [{ id: 'bandage', quantity: 2 }], settings: { volume: 8 } });
-  assert.equal(save.version, 1);
+  assert.equal(save.version, 2);
   assert.equal(save.cash, 32);
   assert.equal(count(save.stash, 'bandage'), 2);
   assert.equal(save.settings.volume, 1);
@@ -306,10 +306,10 @@ test('version-zero inventory upgrades; corrupt and unknown fields cannot inject 
   assert.equal(bad.settings.volume, 0.35);
   assert.equal(count(bad.stash, 'water'), 2);
   assert.equal(count(bad.stash, 'ammo9'), 0);
-  assert.equal(migrateSave(null).version, 1);
-  assert.equal(migrateSave({ version: 99 }).version, 1);
+  assert.equal(migrateSave(null).version, 2);
+  assert.equal(migrateSave({ version: 99 }).version, 2);
   const corruptStorage = { getItem: () => '{broken', setItem: () => {} };
-  assert.equal(readSave(corruptStorage).version, 1);
+  assert.equal(readSave(corruptStorage).version, 2);
 });
 
 test('storage errors propagate instead of silently authorizing an unsafe raid', () => {

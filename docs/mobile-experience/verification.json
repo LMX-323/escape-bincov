@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-04",
+  "baseline": "4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2",
+  "sourceCommit": "aea5f1de5aac253e66d2ede3dd4a9db7676241bb",
+  "sourceTree": "bc5d329a9aafacc51e7feea13b561c65180a697a",
+  "environment": {
+    "platform": "Linux x64",
+    "node": "24.19.0",
+    "pnpmLocal": "11.25.0",
+    "pnpmRepositoryAndCI": "11.19.0",
+    "chromium": "138.0.7204.0",
+    "renderer": "SwiftShader"
+  },
+  "unit": {
+    "passed": 76,
+    "failed": 0
+  },
+  "browserCounts": {
+    "browser": 24,
+    "desktop-input": 10,
+    "ui": 38,
+    "title": 16,
+    "save-browser": 9,
+    "mobile": 10,
+    "mobile-ux": 11,
+    "portable": 6
+  },
+  "browserChecks": 124,
+  "package": "passed",
+  "htmlBytes": 1680973,
+  "htmlSha256": "61bc46d631842c4e1ea68ea5a205f43c74b933e3ea7016a911111330edad5d01",
+  "method": "Offline real key/mouse/touch events, explicit test fixtures and fault injection; not physical-phone certification. Optional actual v0.2.0 HTML compatibility case was run locally.",
+  "unrun": [
+    "physical iPhone Safari / Android / QQ",
+    "natural-play long run",
+    "browser-toolbar behavior on physical phones"
+  ]
+}
