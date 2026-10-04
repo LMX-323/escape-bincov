@@ -88,7 +88,7 @@ try{
  });
  await step('live backup round trip and failed medical transaction preserve consistent state',async()=>{
   const promise=page.waitForEvent('download');await action('export-save').tap();const file=resolve(out,'live-backup.json');await (await promise).saveAs(file);
-  const backup=JSON.parse(await readFile(file,'utf8'));assert.equal(backup.formatVersion,2);assert.equal(backup.record.raid.hp,72);
+  const backup=JSON.parse(await readFile(file,'utf8'));assert.equal(backup.formatVersion,3);assert.equal(backup.record.raid.hp,72);
   await action('close').tap();
   // The restored checkpoint deliberately includes an unfinished reload. Let it
   // settle before comparing the medical transaction's before/after loadout:
