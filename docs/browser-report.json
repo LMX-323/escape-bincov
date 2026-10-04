@@ -1,0 +1,382 @@
+{
+  "startedAt": "2026-10-04T04:55:38.303Z",
+  "mode": "full",
+  "entry": "file:///workspace/scratch/eebd448ac08a/bincov-review/dist/index.html?test=1",
+  "browser": "/workspace/scratch/eebd448ac08a/bincov-browser-runtime/chromium",
+  "offline": true,
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "steps": [
+        {
+          "name": "offline menu and integer canvas scaling",
+          "status": "passed",
+          "detail": {
+            "width": 960,
+            "height": 540,
+            "x": 160,
+            "y": 90,
+            "logicalWidth": 960,
+            "logicalHeight": 540
+          },
+          "durationMs": 746.11
+        },
+        {
+          "name": "hideout, merchant price and native inventory drag",
+          "status": "passed",
+          "detail": {
+            "purchasedRounds": 12,
+            "charged": 84,
+            "nativeDragCell": [
+              5,
+              4
+            ],
+            "safeBandages": 2
+          },
+          "durationMs": 987.86
+        },
+        {
+          "name": "seeded deployment: 25 enemies and 60 pieces of ground loot",
+          "status": "passed",
+          "detail": {
+            "x": 208,
+            "y": 1232,
+            "rotation": 0.31247110356187235,
+            "elapsed": 0.06657999999999988,
+            "hp": 100,
+            "mag": 8,
+            "high": false,
+            "enemies": 25,
+            "alive": 25,
+            "loot": 60,
+            "seed": 42
+          },
+          "durationMs": 875.78
+        },
+        {
+          "name": "real WASD movement and pointer mapping",
+          "status": "passed",
+          "detail": {
+            "movementX": 50.34,
+            "movementY": -50.4,
+            "aimErrorRadians": 0
+          },
+          "durationMs": 2145.9
+        },
+        {
+          "name": "25-enemy, 60-loot battle performance sample",
+          "status": "passed",
+          "detail": {
+            "measuredMs": 5008.200000000186,
+            "frames": 301,
+            "samples": 30,
+            "average": 56.942871983846025,
+            "minimum": 53.44140625,
+            "median": 57.48309326171875,
+            "frameIntervalP95Ms": 16.799999999999272,
+            "stayedInRun": true,
+            "target60ApproxMet": true
+          },
+          "durationMs": 5585.3
+        },
+        {
+          "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
+          "status": "passed",
+          "detail": {
+            "beforeAmmo": 8,
+            "afterAmmo": 7,
+            "damagedEnemyIndex": 1
+          },
+          "durationMs": 786.23
+        },
+        {
+          "name": "real E pickup, pause, map and persisted volume controls",
+          "status": "passed",
+          "detail": {
+            "volume": 0.2,
+            "sampleLootedByKeyboard": true
+          },
+          "durationMs": 1926.78
+        },
+        {
+          "name": "tide warning, high-tide transition and real movement out of flood",
+          "status": "passed",
+          "detail": {
+            "warningAt": 270,
+            "tideAt": 300,
+            "xAfterFlip": 2032,
+            "xAfterMovement": 1964.8
+          },
+          "durationMs": 8388.92
+        },
+        {
+          "name": "first run: actual three-second extraction retains loot and gear",
+          "status": "passed",
+          "detail": {
+            "actualHoldMs": 3019.64,
+            "savedRuns": 1
+          },
+          "durationMs": 3677.56
+        },
+        {
+          "name": "second run: actual enemy attack causes death and protects the safe",
+          "status": "passed",
+          "durationMs": 1040.72
+        },
+        {
+          "name": "third run: timeout and three-run persistence after reload",
+          "status": "passed",
+          "detail": {
+            "completedRuns": 3,
+            "outcomes": [
+              "extract",
+              "death",
+              "timeout"
+            ],
+            "volumeAfterReload": 0.2
+          },
+          "durationMs": 1134.55
+        },
+        {
+          "name": "fourth run: midrun reload loses carried items and checkpoints safe loot",
+          "status": "passed",
+          "detail": {
+            "carriedMedkitLost": true,
+            "safeSamplePreserved": true,
+            "noExtraSettlement": true
+          },
+          "durationMs": 2055.92
+        }
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-menu.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-hideout.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-raid.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-map.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-high-tide.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-extract.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-death.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-timeout.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-recovered-hideout.png"
+      ],
+      "fps": {
+        "measuredMs": 5008.200000000186,
+        "frames": 301,
+        "samples": 30,
+        "average": 56.942871983846025,
+        "minimum": 53.44140625,
+        "median": 57.48309326171875,
+        "frameIntervalP95Ms": 16.799999999999272,
+        "stayedInRun": true,
+        "target60ApproxMet": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "steps": [
+        {
+          "name": "offline menu and integer canvas scaling",
+          "status": "passed",
+          "detail": {
+            "width": 1920,
+            "height": 1080,
+            "x": 0,
+            "y": 0,
+            "logicalWidth": 960,
+            "logicalHeight": 540
+          },
+          "durationMs": 602.96
+        },
+        {
+          "name": "hideout, merchant price and native inventory drag",
+          "status": "passed",
+          "detail": {
+            "purchasedRounds": 12,
+            "charged": 84,
+            "nativeDragCell": [
+              5,
+              4
+            ],
+            "safeBandages": 2
+          },
+          "durationMs": 1276.07
+        },
+        {
+          "name": "seeded deployment: 25 enemies and 60 pieces of ground loot",
+          "status": "passed",
+          "detail": {
+            "x": 208,
+            "y": 1232,
+            "rotation": 0.3122564700470214,
+            "elapsed": 0.049926666666666564,
+            "hp": 100,
+            "mag": 8,
+            "high": false,
+            "enemies": 25,
+            "alive": 25,
+            "loot": 60,
+            "seed": 42
+          },
+          "durationMs": 1288.02
+        },
+        {
+          "name": "real WASD movement and pointer mapping",
+          "status": "passed",
+          "detail": {
+            "movementX": 50.4,
+            "movementY": -52.26,
+            "aimErrorRadians": 0
+          },
+          "durationMs": 2153.48
+        },
+        {
+          "name": "25-enemy, 60-loot battle performance sample",
+          "status": "passed",
+          "detail": {
+            "measuredMs": 5003.5000000001855,
+            "frames": 277,
+            "samples": 27,
+            "average": 56.32034047444662,
+            "minimum": 54.828758239746094,
+            "median": 56.693359375,
+            "frameIntervalP95Ms": 33.30000000000018,
+            "stayedInRun": true,
+            "target60ApproxMet": true
+          },
+          "durationMs": 5567.65
+        },
+        {
+          "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
+          "status": "passed",
+          "detail": {
+            "beforeAmmo": 8,
+            "afterAmmo": 7,
+            "damagedEnemyIndex": 1
+          },
+          "durationMs": 761.72
+        },
+        {
+          "name": "real E pickup, pause, map and persisted volume controls",
+          "status": "passed",
+          "detail": {
+            "volume": 0.2,
+            "sampleLootedByKeyboard": true
+          },
+          "durationMs": 2618.91
+        },
+        {
+          "name": "tide warning, high-tide transition and real movement out of flood",
+          "status": "passed",
+          "detail": {
+            "warningAt": 270,
+            "tideAt": 300,
+            "xAfterFlip": 2032,
+            "xAfterMovement": 1971.52
+          },
+          "durationMs": 8077.51
+        },
+        {
+          "name": "first run: actual three-second extraction retains loot and gear",
+          "status": "passed",
+          "detail": {
+            "actualHoldMs": 3017.42,
+            "savedRuns": 1
+          },
+          "durationMs": 4402.67
+        },
+        {
+          "name": "second run: actual enemy attack causes death and protects the safe",
+          "status": "passed",
+          "durationMs": 1661.57
+        },
+        {
+          "name": "third run: timeout and three-run persistence after reload",
+          "status": "passed",
+          "detail": {
+            "completedRuns": 3,
+            "outcomes": [
+              "extract",
+              "death",
+              "timeout"
+            ],
+            "volumeAfterReload": 0.2
+          },
+          "durationMs": 1793.46
+        },
+        {
+          "name": "fourth run: midrun reload loses carried items and checkpoints safe loot",
+          "status": "passed",
+          "detail": {
+            "carriedMedkitLost": true,
+            "safeSamplePreserved": true,
+            "noExtraSettlement": true
+          },
+          "durationMs": 3476.45
+        }
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-menu.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-hideout.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-raid.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-map.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-high-tide.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-extract.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-death.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-timeout.png",
+        "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-recovered-hideout.png"
+      ],
+      "fps": {
+        "measuredMs": 5003.5000000001855,
+        "frames": 277,
+        "samples": 27,
+        "average": 56.32034047444662,
+        "minimum": 54.828758239746094,
+        "median": 56.693359375,
+        "frameIntervalP95Ms": 33.30000000000018,
+        "stayedInRun": true,
+        "target60ApproxMet": true
+      }
+    }
+  ],
+  "screenshots": [
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-menu.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-hideout.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-raid.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-map.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-high-tide.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-extract.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-death.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-result-timeout.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1280x720-recovered-hideout.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-menu.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-hideout.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-raid.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-map.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-high-tide.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-extract.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-death.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-result-timeout.png",
+    "/workspace/scratch/eebd448ac08a/bincov-review/test-results/1920x1080-recovered-hideout.png"
+  ],
+  "methodology": [
+    "Each viewport uses a fresh isolated browser context and the single file:// HTML; no development server.",
+    "HTTP(S) access is blocked and attempted requests fail acceptance.",
+    "Travel, enemy positions, health and elapsed time use explicit test fixtures. Movement, aiming, firing, looting, dragging and extraction use browser input.",
+    "Success, combat death and timeout are three consecutive runs per context, followed by reload and a fourth interrupted run.",
+    "FPS is sampled from Phaser actualFps and requestAnimationFrame in headless Chrome; this is not a claim about every physical GPU.",
+    "The test does not establish 30–60 minutes of subjective replay value or natural ten-minute difficulty balance."
+  ],
+  "browserVersion": "138.0.7204.0",
+  "status": "passed",
+  "finishedAt": "2026-10-04T04:56:41.612Z"
+}

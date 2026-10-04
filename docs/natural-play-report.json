@@ -1,0 +1,247 @@
+{
+  "startedAt": "2026-10-04T04:13:07.680Z",
+  "minutes": 10,
+  "methodology": "Automated real-time session. Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse. This is not a human fun/balance evaluation.",
+  "samples": [
+    {
+      "realSeconds": 2,
+      "run": 1,
+      "elapsed": 0,
+      "hp": 100,
+      "kills": 0,
+      "highTide": false,
+      "x": 208,
+      "y": 1232
+    },
+    {
+      "realSeconds": 32,
+      "run": 1,
+      "elapsed": 30,
+      "hp": 100,
+      "kills": 3,
+      "highTide": false,
+      "x": 397,
+      "y": 337
+    },
+    {
+      "realSeconds": 62,
+      "run": 1,
+      "elapsed": 60,
+      "hp": 88,
+      "kills": 6,
+      "highTide": false,
+      "x": 621,
+      "y": 1410
+    },
+    {
+      "realSeconds": 92,
+      "run": 1,
+      "elapsed": 90,
+      "hp": 88,
+      "kills": 8,
+      "highTide": false,
+      "x": 1344,
+      "y": 1071
+    },
+    {
+      "realSeconds": 122,
+      "run": 1,
+      "elapsed": 120,
+      "hp": 57,
+      "kills": 14,
+      "highTide": false,
+      "x": 1042,
+      "y": 396
+    },
+    {
+      "realSeconds": 152,
+      "run": 1,
+      "elapsed": 150,
+      "hp": 54,
+      "kills": 18,
+      "highTide": false,
+      "x": 1937,
+      "y": 656
+    },
+    {
+      "realSeconds": 182,
+      "run": 1,
+      "elapsed": 180,
+      "hp": 100,
+      "kills": 20,
+      "highTide": false,
+      "x": 1940,
+      "y": 1053
+    },
+    {
+      "realSeconds": 212,
+      "run": 1,
+      "elapsed": 211,
+      "hp": 89,
+      "kills": 25,
+      "highTide": false,
+      "x": 1860,
+      "y": 1556
+    },
+    {
+      "realSeconds": 242,
+      "run": 1,
+      "elapsed": 241,
+      "hp": 89,
+      "kills": 25,
+      "highTide": false,
+      "x": 269,
+      "y": 1409
+    },
+    {
+      "realSeconds": 272,
+      "run": 1,
+      "elapsed": 271,
+      "hp": 89,
+      "kills": 25,
+      "highTide": false,
+      "x": 2065,
+      "y": 1322
+    },
+    {
+      "realSeconds": 302,
+      "run": 1,
+      "elapsed": 301,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 344,
+      "y": 176
+    },
+    {
+      "realSeconds": 332,
+      "run": 1,
+      "elapsed": 331,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 362,
+      "run": 1,
+      "elapsed": 361,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 392,
+      "run": 1,
+      "elapsed": 391,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 423,
+      "run": 1,
+      "elapsed": 421,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 453,
+      "run": 1,
+      "elapsed": 451,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 483,
+      "run": 1,
+      "elapsed": 481,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 513,
+      "run": 1,
+      "elapsed": 511,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 543,
+      "run": 1,
+      "elapsed": 541,
+      "hp": 89,
+      "kills": 25,
+      "highTide": true,
+      "x": 214,
+      "y": 109
+    },
+    {
+      "realSeconds": 573,
+      "run": 2,
+      "elapsed": 16,
+      "hp": 100,
+      "kills": 3,
+      "highTide": true,
+      "x": 190,
+      "y": 946
+    },
+    {
+      "realSeconds": 603,
+      "run": 2,
+      "elapsed": 46,
+      "hp": 100,
+      "kills": 9,
+      "highTide": true,
+      "x": 836,
+      "y": 844
+    }
+  ],
+  "outcomes": [
+    {
+      "outcome": "extract",
+      "kills": 25,
+      "keptValue": 4124,
+      "lostValue": 0,
+      "seed": 42,
+      "recovered": false,
+      "message": "你听见水产站的铁门在身后合拢。今晚，灯还亮着。"
+    },
+    {
+      "outcome": "extract",
+      "kills": 9,
+      "keptValue": 4064,
+      "lostValue": 0,
+      "seed": 43,
+      "recovered": false,
+      "message": "你听见水产站的铁门在身后合拢。今晚，灯还亮着。"
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "browser": "138.0.7204.0",
+  "status": "passed",
+  "finalStats": {
+    "runs": 2,
+    "extracts": 2,
+    "kills": 34
+  },
+  "finishedAt": "2026-10-04T04:23:26.669Z"
+}

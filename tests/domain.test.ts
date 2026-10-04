@@ -1,0 +1,493 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  ITEMS, SAVE_KEY, QUESTS, STASH_UPGRADE_COST, createInventory, addItem, moveItem, transferItem,
+  removeItem, count, weight, fits, newSave, migrateSave, readSave, writeSave, beginRun,
+  checkpointSafe, settleRun, recoverInterrupted, grantRelief, buy, sell, equip, unequip, equipRun,
+  submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
+} from '../src/domain';
+
+test('20 original items have coherent footprints, stacks and prices', () => {
+  assert.equal(Object.keys(ITEMS).length, 20);
+  for (const def of Object.values(ITEMS)) {
+    assert.ok(def.w > 0 && def.h > 0 && def.stack > 0);
+    if (def.buy) assert.ok(def.sell <= def.buy);
+  }
+});
+
+test('placement respects width, bounds and collisions; rotations are not implicit', () => {
+  const inv = createInventory(2, 2);
+  assert.equal(addItem(inv, 'shotgun'), 1);
+  assert.equal(addItem(inv, 'water'), 0);
+  assert.equal(fits(inv, 'pistol', 0, 1), false);
+  assert.equal(moveItem(inv, inv.items[0].uid, 1, 0), true);
+  assert.equal(moveItem(inv, inv.items[0].uid, 2, 0), false);
+  assert.equal(moveItem(inv, inv.items[0].uid, 0.5, 0), false);
+  assert.equal(addItem(inv, 'bandage', 8), 0);
+  assert.equal(addItem(inv, 'bandage'), 1);
+});
+
+test('stacking and weight use per-unit definitions and preserve relief provenance', () => {
+  const inv = createInventory(6, 5);
+  addItem(inv, 'ammo9', 39);
+  addItem(inv, 'ammo9', 5);
+  assert.deepEqual(inv.items.map(i => i.qty), [40, 4]);
+  addItem(inv, 'ammo9', 12, true);
+  assert.equal(inv.items.length, 3);
+  assert.equal(weight(inv), 0.672);
+  assert.equal(removeItem(inv, 'ammo9', 57), false);
+  assert.equal(count(inv, 'ammo9'), 56);
+  assert.equal(removeItem(inv, 'ammo9', 42), true);
+  assert.equal(count(inv, 'ammo9'), 14);
+});
+
+test('transfers are all-or-nothing, including partially fillable stacks', () => {
+  const source = createInventory(2, 2), target = createInventory(1, 1);
+  addItem(source, 'ammo9', 12);
+  addItem(target, 'ammo9', 36);
+  const before = JSON.stringify([source, target]);
+  assert.equal(transferItem(source, target, source.items[0].uid), false);
+  assert.equal(JSON.stringify([source, target]), before);
+  removeItem(target, 'ammo9', 8);
+  assert.equal(transferItem(source, target, source.items[0].uid, 0, 0), true);
+  assert.equal(source.items.length, 0);
+  assert.equal(count(target, 'ammo9'), 40);
+});
+
+test('moving a complete stack onto a compatible stack merges it', () => {
+  const inv = createInventory(2, 1);
+  addItem(inv, 'bandage', 5);
+  inv.items[0].qty = 2;
+  assert.equal(moveItem(inv, inv.items[1].uid, 0, 0), true);
+  assert.equal(inv.items.length, 1);
+  assert.equal(inv.items[0].qty, 3);
+});
+
+test('merchant stock, payment and full storage are transaction-safe', () => {
+  const save = newSave();
+  assert.equal(buy(save, 'medkit', 'arms'), false);
+  const cash = save.cash;
+  assert.equal(buy(save, 'ammo9', 'arms'), true);
+  assert.equal(save.cash, cash - 12 * ITEMS.ammo9.buy);
+  const purchased = save.stash.items.find(i => i.id === 'ammo9')!;
+  const saleQty = purchased.qty;
+  assert.equal(sell(save, purchased.uid), true);
+  assert.equal(save.cash, cash - 84 + saleQty * ITEMS.ammo9.sell);
+  save.stash = createInventory(1, 1);
+  addItem(save.stash, 'watch', 2);
+  const before = JSON.stringify(save);
+  assert.equal(buy(save, 'pistol', 'arms'), false);
+  assert.equal(JSON.stringify(save), before);
+});
+
+test('equipping swaps safely and returns the gun to storage on unequip', () => {
+  const save = newSave();
+  addItem(save.stash, 'shotgun');
+  const gun = save.stash.items.find(i => i.id === 'shotgun')!;
+  assert.equal(equip(save, gun.uid), true);
+  assert.equal(save.equipment.weapon, 'shotgun');
+  assert.equal(count(save.stash, 'pistol'), 1);
+  assert.equal(unequip(save), true);
+  assert.equal(save.equipment.weapon, null);
+  assert.equal(count(save.stash, 'shotgun'), 1);
+});
+
+test('reload consumes exactly missing rounds and never invents ammunition', () => {
+  const bag = createInventory(6, 5);
+  addItem(bag, 'ammo9', 10);
+  assert.equal(reload('pistol', 3, bag), 8);
+  assert.equal(count(bag, 'ammo9'), 5);
+  assert.equal(reload('pistol', 8, bag), 8);
+  assert.equal(count(bag, 'ammo9'), 5);
+  assert.equal(reload('pistol', 0, bag), 5);
+  assert.equal(reload('pistol', 0, bag), 0);
+  assert.equal(reload('knife', 0, bag), 0);
+});
+
+test('damage respects armor and clamps at zero without healing', () => {
+  assert.equal(applyDamage(100, 27, 7), 80);
+  assert.equal(applyDamage(10, 27), 0);
+  assert.equal(applyDamage(100, 4, 8), 100);
+  assert.equal(applyDamage(100, -20), 100);
+});
+
+test('loot and random streams are reproducible and quantities are valid', () => {
+  assert.deepEqual(rollLoot(814, 100), rollLoot(814, 100));
+  assert.notDeepEqual(rollLoot(814, 100), rollLoot(815, 100));
+  const rng = seededRandom(0);
+  for (let i = 0; i < 1000; i++) { const n = rng(); assert.ok(n >= 0 && n < 1); }
+  assert.deepEqual(rollLoot(9, 2, []), []);
+  assert.deepEqual(rollLoot(9, 2, [{ id: 'sample', min: 1, max: 1, weight: 1 }]), [{ id: 'sample', qty: 1 }, { id: 'sample', qty: 1 }]);
+});
+
+test('begin commits gear out of save and extract restores it exactly once', () => {
+  const save = newSave(), stash = JSON.stringify(save.stash);
+  const loadout = beginRun(save, 123);
+  assert.equal(save.bag.items.length, 0);
+  assert.equal(save.equipment.weapon, null);
+  assert.throws(() => beginRun(save, 456));
+  addItem(loadout.bag, 'watch');
+  addItem(loadout.safe, 'pearl');
+  const summary = settleRun(save, loadout, 'extract', 3)!;
+  assert.equal(summary.outcome, 'extract');
+  assert.equal(count(save.bag, 'watch'), 1);
+  assert.equal(count(save.safe, 'pearl'), 1);
+  assert.equal(save.equipment.weapon, 'pistol');
+  assert.equal(JSON.stringify(save.stash), stash);
+  assert.equal(save.stats.extracts, 1);
+  assert.equal(save.stats.kills, 3);
+  const before = JSON.stringify(save);
+  assert.equal(settleRun(save, loadout, 'extract', 3), null);
+  assert.equal(JSON.stringify(save), before);
+});
+
+for (const outcome of ['death', 'timeout'] as const) test(`${outcome} loses carried gear and preserves the 2×2 safe`, () => {
+  const save = newSave(), stash = JSON.stringify(save.stash);
+  const loadout = beginRun(save, 75);
+  addItem(loadout.bag, 'watch');
+  addItem(loadout.safe, 'sample');
+  const result = settleRun(save, loadout, outcome, 2)!;
+  assert.equal(save.equipment.weapon, null);
+  assert.equal(save.bag.items.length, 0);
+  assert.equal(count(save.safe, 'sample'), 1);
+  assert.equal(JSON.stringify(save.stash), stash);
+  assert.ok(result.lostValue >= 240);
+  assert.equal(save.activeRun, null);
+});
+
+test('storage round trip and interrupted run keep checkpointed safe without duplicating loadout', () => {
+  const data = new Map<string, string>();
+  const storage = { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => { data.set(key, value); } };
+  const save = newSave(), loadout = beginRun(save, 17);
+  addItem(loadout.safe, 'pearl');
+  checkpointSafe(save, loadout.safe);
+  writeSave(storage, save);
+  assert.ok(data.has(SAVE_KEY));
+  const restored = readSave(storage);
+  assert.equal(recoverInterrupted(restored)?.recovered, true);
+  assert.equal(count(restored.safe, 'pearl'), 1);
+  assert.equal(restored.bag.items.length, 0);
+  assert.equal(restored.equipment.weapon, null);
+  assert.equal(recoverInterrupted(restored), null);
+  assert.equal(settleRun(restored, loadout, 'extract', 0), null);
+});
+
+test('stale settlement cannot resolve a newer run, even with the same seed', () => {
+  const save = newSave(), first = beginRun(save, 1);
+  settleRun(save, first, 'extract', 0);
+  const second = beginRun(save, 1);
+  assert.equal(settleRun(save, first, 'extract', 99), null);
+  assert.ok(save.activeRun);
+  assert.ok(settleRun(save, second, 'extract', 0));
+});
+
+test('three completed runs and refreshes persist progress with no multiplication', () => {
+  let save = newSave();
+  for (let round = 0; round < 3; round++) {
+    const loadout = beginRun(save, 100 + round);
+    addItem(loadout.safe, 'pearl');
+    settleRun(save, loadout, 'extract', round);
+    save = migrateSave(JSON.parse(JSON.stringify(save)));
+  }
+  assert.equal(save.stats.runs, 3);
+  assert.equal(save.stats.extracts, 3);
+  assert.equal(save.stats.kills, 3);
+  assert.equal(count(save.safe, 'pearl'), 3);
+  assert.equal(count(save.bag, 'ammo9'), 32);
+});
+
+test('relief is conditional, cannot be repeatedly claimed and cannot be sold', () => {
+  const save = newSave();
+  save.cash = 199;
+  save.equipment.weapon = null;
+  save.bag = createInventory(6, 5);
+  assert.equal(grantRelief(save), true);
+  assert.equal(save.equipment.weapon, 'pistol');
+  assert.equal(save.equipment.relief, true);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(count(save.bag, 'bandage'), 1);
+  assert.equal(grantRelief(save), false);
+  assert.equal(sell(save, save.bag.items[0].uid), false);
+  assert.equal(unequip(save), true);
+  const pistol = save.stash.items.find(i => i.id === 'pistol')!;
+  assert.equal(sell(save, pistol.uid), false);
+  assert.equal(grantRelief(save), false);
+  assert.equal(equip(save, pistol.uid), true);
+  assert.equal(save.equipment.relief, true);
+});
+
+test('a gun inside the safe prevents relief duplication after save recovery', () => {
+  let save = newSave();
+  save.cash = 0;
+  save.equipment = { weapon: null, relief: false, ammo: 0, ammoRelief: 0 };
+  save.bag = createInventory(6, 5);
+  assert.equal(grantRelief(save), true);
+  assert.equal(unequip(save), true);
+  const gun = save.stash.items.find(i => i.id === 'pistol')!;
+  assert.equal(transferItem(save.stash, save.safe, gun.uid), true);
+  assert.equal(grantRelief(save), false);
+  const run = beginRun(save, 700);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.ok(recoverInterrupted(save));
+  assert.equal(count(save.safe, 'pistol'), 1);
+  assert.equal(save.safe.items[0].relief, true);
+  assert.equal(save.equipment.weapon, null);
+  assert.equal(count(save.bag, 'ammo9'), 0);
+  assert.equal(grantRelief(save), false);
+  assert.equal(sell(save, save.safe.items[0].uid), false);
+  assert.equal(settleRun(save, run, 'extract', 9), null);
+});
+
+test('recovering and persisting a failed poor run grants exactly one relief kit', () => {
+  let save = newSave();
+  save.cash = 0;
+  beginRun(save, 701);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.ok(recoverInterrupted(save));
+  assert.equal(save.equipment.relief, true);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(count(save.bag, 'bandage'), 1);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.equal(recoverInterrupted(save), null);
+  assert.equal(grantRelief(save), false);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(count(save.bag, 'bandage'), 1);
+});
+
+test('removing an item from safe and checkpointing cannot resurrect it on refresh', () => {
+  let save = newSave();
+  addItem(save.safe, 'pearl');
+  const run = beginRun(save, 702);
+  const pearl = run.safe.items.find(i => i.id === 'pearl')!;
+  assert.equal(transferItem(run.safe, run.bag, pearl.uid), true);
+  checkpointSafe(save, run.safe);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  recoverInterrupted(save);
+  assert.equal(count(save.safe, 'pearl'), 0);
+  assert.equal(count(save.bag, 'pearl'), 0);
+});
+
+test('quest submission consumes across inventories atomically and rewards once', () => {
+  const save = newSave();
+  addItem(save.stash, 'scrap', 2);
+  addItem(save.bag, 'scrap', 1);
+  addItem(save.safe, 'wire', 2);
+  const before = JSON.stringify(save);
+  assert.equal(submitQuest(save, 'repair'), false);
+  assert.equal(JSON.stringify(save), before);
+  addItem(save.stash, 'fuse');
+  const cash = save.cash;
+  assert.equal(submitQuest(save, 'repair'), true);
+  assert.equal(save.cash, cash + QUESTS.repair.reward);
+  assert.equal(count(save.bag, 'scrap') + count(save.stash, 'scrap'), 0);
+  assert.equal(count(save.safe, 'wire'), 0);
+  assert.equal(submitQuest(save, 'repair'), false);
+  assert.equal(upgradeStash(save), true);
+  assert.equal(save.cash, cash + QUESTS.repair.reward - STASH_UPGRADE_COST);
+  assert.equal(save.stash.h, 9);
+  assert.equal(upgradeStash(save), false);
+  for (const id of ['sample', 'ledger']) {
+    addItem(save.stash, id);
+    assert.equal(submitQuest(save, id), true);
+    assert.equal(save.quests[id], true);
+  }
+});
+
+test('version-zero inventory upgrades; corrupt and unknown fields cannot inject items', () => {
+  const save = migrateSave({ version: 0, cash: 32, inventory: [{ id: 'bandage', quantity: 2 }], settings: { volume: 8 } });
+  assert.equal(save.version, 1);
+  assert.equal(save.cash, 32);
+  assert.equal(count(save.stash, 'bandage'), 2);
+  assert.equal(save.settings.volume, 1);
+  const bad = migrateSave({ version: 1, cash: -99, stash: { items: [{ id: 'not-an-item', qty: 1 }, { id: 'ammo9', qty: -2 }, { id: 'water', qty: 1, x: 0, y: 0 }, { id: 'water', qty: 1, x: 0, y: 0 }] }, equipment: { weapon: '__proto__' }, settings: { volume: NaN }, quests: { repair: 'true' } });
+  assert.equal(bad.cash, 0);
+  assert.equal(bad.equipment.weapon, null);
+  assert.equal(bad.quests.repair, false);
+  assert.equal(bad.settings.volume, 0.35);
+  assert.equal(count(bad.stash, 'water'), 2);
+  assert.equal(count(bad.stash, 'ammo9'), 0);
+  assert.equal(migrateSave(null).version, 1);
+  assert.equal(migrateSave({ version: 99 }).version, 1);
+  const corruptStorage = { getItem: () => '{broken', setItem: () => {} };
+  assert.equal(readSave(corruptStorage).version, 1);
+});
+
+test('storage errors propagate instead of silently authorizing an unsafe raid', () => {
+  assert.throws(() => writeSave({ getItem: () => null, setItem: () => { throw new Error('quota'); } }, newSave()), /quota/);
+});
+
+test('mixed magazines load relief rounds first without changing ordinary ammo provenance', () => {
+  const bag = createInventory(6, 5);
+  addItem(bag, 'ammo9', 10);
+  addItem(bag, 'ammo9', 3, true);
+  const result = reloadMagazine('pistol', 2, 1, bag);
+  assert.deepEqual(result, { ammo: 8, ammoRelief: 4 });
+  assert.equal(count(bag, 'ammo9'), 7);
+  assert.equal(bag.items.every(i => !i.relief), true);
+  assert.deepEqual(reloadMagazine('pistol', result.ammo, result.ammoRelief, bag), result);
+  assert.equal(count(bag, 'ammo9'), 7);
+});
+
+test('a full bag and full stash do not lose loaded rounds on extraction or refresh', () => {
+  let save = newSave();
+  save.bag = createInventory(6, 5);
+  save.stash = createInventory(10, 6);
+  addItem(save.bag, 'watch', 60);
+  addItem(save.stash, 'watch', 120);
+  save.equipment.ammo = 8;
+  save.equipment.ammoRelief = 3;
+  const run = beginRun(save, 808);
+  assert.equal(save.equipment.ammo, 0);
+  assert.equal(run.ammo, 8);
+  assert.equal(run.ammoRelief, 3);
+  // The first round fired is relief ammunition.
+  run.ammo--;
+  run.ammoRelief--;
+  assert.ok(settleRun(save, run, 'extract', 0));
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.equal(save.equipment.ammo, 7);
+  assert.equal(save.equipment.ammoRelief, 2);
+  assert.equal(count(save.bag, 'watch'), 60);
+  assert.equal(count(save.stash, 'watch'), 120);
+  assert.equal(count(save.bag, 'ammo9'), 0);
+  const next = beginRun(save, 809);
+  assert.equal(next.ammo, 7);
+  assert.equal(next.ammoRelief, 2);
+  settleRun(save, next, 'death', 0);
+  assert.equal(save.equipment.ammo, 0);
+  assert.equal(save.equipment.ammoRelief, 0);
+});
+
+test('unloading a mixed magazine preserves saleability independently of a relief gun', () => {
+  const save = newSave();
+  save.stash = createInventory(10, 6);
+  save.equipment = { weapon: 'pistol', relief: true, ammo: 7, ammoRelief: 3 };
+  assert.equal(unequip(save), true);
+  const ordinary = save.stash.items.find(i => i.id === 'ammo9' && !i.relief)!;
+  const relief = save.stash.items.find(i => i.id === 'ammo9' && i.relief)!;
+  assert.equal(ordinary.qty, 4);
+  assert.equal(relief.qty, 3);
+  const cash = save.cash;
+  assert.equal(sell(save, ordinary.uid), true);
+  assert.equal(save.cash, cash + 4 * ITEMS.ammo9.sell);
+  assert.equal(sell(save, relief.uid), false);
+});
+
+test('equipment swaps reject insufficient unloading space without losing gun or ammo', () => {
+  const save = newSave();
+  save.stash = createInventory(3, 1);
+  addItem(save.stash, 'shotgun');
+  save.equipment.ammo = 8;
+  save.equipment.ammoRelief = 2;
+  const before = JSON.stringify(save);
+  assert.equal(equip(save, save.stash.items[0].uid), false);
+  assert.equal(JSON.stringify(save), before);
+  save.stash = createInventory(2, 1);
+  const beforeUnequip = JSON.stringify(save);
+  assert.equal(unequip(save), false);
+  assert.equal(JSON.stringify(save), beforeUnequip);
+});
+
+test('full inventories queue one relief kit, persist it, and deliver only when room opens', () => {
+  let save = newSave();
+  save.cash = 0;
+  save.equipment = { weapon: null, relief: false, ammo: 0, ammoRelief: 0 };
+  save.bag = createInventory(6, 5);
+  save.stash = createInventory(10, 6);
+  addItem(save.bag, 'watch', 60);
+  addItem(save.stash, 'watch', 120);
+  assert.equal(grantRelief(save), true);
+  assert.equal(save.equipment.weapon, 'pistol');
+  assert.equal(save.equipment.relief, true);
+  assert.deepEqual(save.reliefSupplies, [{ id: 'ammo9', qty: 12 }, { id: 'bandage', qty: 1 }]);
+  assert.equal(grantRelief(save), false);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.equal(grantRelief(save), false);
+  assert.equal(count(save.bag, 'watch'), 60);
+  assert.equal(count(save.stash, 'watch'), 120);
+  removeItem(save.bag, 'watch', 2);
+  assert.equal(grantRelief(save), true);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.deepEqual(save.reliefSupplies, [{ id: 'bandage', qty: 1 }]);
+  removeItem(save.bag, 'watch', 2);
+  assert.equal(grantRelief(save), true);
+  assert.equal(count(save.bag, 'bandage'), 1);
+  assert.equal(save.reliefSupplies, undefined);
+  assert.equal(grantRelief(save), false);
+  assert.equal(save.bag.items.filter(i => i.id !== 'watch').every(i => i.relief), true);
+});
+
+test('relief can use stash space while a full bag remains unchanged', () => {
+  const save = newSave();
+  save.cash = 0;
+  save.equipment = { weapon: null, relief: false, ammo: 0, ammoRelief: 0 };
+  save.bag = createInventory(6, 5);
+  save.stash = createInventory(10, 6);
+  addItem(save.bag, 'watch', 60);
+  assert.equal(grantRelief(save), true);
+  assert.equal(count(save.bag, 'watch'), 60);
+  assert.equal(count(save.stash, 'ammo9'), 12);
+  assert.equal(count(save.stash, 'bandage'), 1);
+  assert.equal(save.stash.items.every(i => i.relief), true);
+  assert.equal(save.reliefSupplies, undefined);
+});
+
+test('migration normalizes magazine bounds and unique item IDs across every container', () => {
+  const same = { id: 'ammo9', uid: 'duplicated', qty: 1, x: 0, y: 0 };
+  const save = migrateSave({ version: 1, stash: { items: [same] }, bag: { items: [same] }, safe: { items: [same] }, equipment: { weapon: 'pistol', ammo: 999, ammoRelief: 999 } });
+  const all = [...save.stash.items, ...save.bag.items, ...save.safe.items];
+  assert.equal(all.length, 3);
+  assert.equal(new Set(all.map(i => i.uid)).size, 3);
+  assert.deepEqual(save.equipment, { weapon: 'pistol', relief: false, ammo: 8, ammoRelief: 8 });
+  const legacy = migrateSave({ version: 1, equipment: { weapon: 'carbine', relief: false } });
+  assert.equal(legacy.equipment.ammo, 0);
+  assert.equal(legacy.equipment.ammoRelief, 0);
+  const noGun = migrateSave({ version: 1, equipment: { weapon: null, ammo: 3, ammoRelief: 2 } });
+  assert.equal(noGun.equipment.ammo, 0);
+  assert.equal(noGun.equipment.ammoRelief, 0);
+});
+
+test('stale safe checkpoints cannot alter the current run and legacy active runs cannot settle', () => {
+  const save = newSave(), first = beginRun(save, 900);
+  settleRun(save, first, 'extract', 0);
+  const second = beginRun(save, 901);
+  addItem(first.safe, 'pearl');
+  checkpointSafe(save, first.safe, first.runId);
+  assert.equal(count(save.safe, 'pearl'), 0);
+  addItem(second.safe, 'sample');
+  checkpointSafe(save, second.safe, second.runId);
+  assert.equal(count(save.safe, 'sample'), 1);
+  const legacy = migrateSave({ ...save, activeRun: { seed: 901 } });
+  assert.equal(settleRun(legacy, first, 'extract', 0), null);
+  assert.ok(recoverInterrupted(legacy));
+});
+
+test('raid gun swaps unload a mixed magazine with both ammo origins preserved', () => {
+  const save = newSave();
+  save.bag = createInventory(6, 5);
+  save.equipment = { weapon: 'pistol', relief: true, ammo: 8, ammoRelief: 3 };
+  addItem(save.bag, 'carbine');
+  addItem(save.safe, 'pistol');
+  const run = beginRun(save, 903), beforeSafe = JSON.stringify(run.safe);
+  assert.equal(equipRun(run, run.safe.items[0].uid), false);
+  assert.equal(equipRun(run, run.bag.items.find(i => i.id === 'carbine')!.uid), true);
+  assert.equal(run.weapon, 'carbine');
+  assert.equal(run.relief, false);
+  assert.equal(run.ammo, 0);
+  assert.equal(run.ammoRelief, 0);
+  assert.equal(run.bag.items.find(i => i.id === 'pistol')!.relief, true);
+  assert.equal(run.bag.items.find(i => i.id === 'ammo9' && !i.relief)!.qty, 5);
+  assert.equal(run.bag.items.find(i => i.id === 'ammo9' && i.relief)!.qty, 3);
+  assert.equal(JSON.stringify(run.safe), beforeSafe);
+});
+
+test('a full raid backpack rejects a loaded gun swap atomically', () => {
+  const save = newSave();
+  save.bag = createInventory(6, 5);
+  addItem(save.bag, 'shotgun');
+  addItem(save.bag, 'watch', 54);
+  save.equipment = { weapon: 'pistol', relief: false, ammo: 8, ammoRelief: 4 };
+  const run = beginRun(save, 904), before = JSON.stringify(run);
+  assert.equal(equipRun(run, run.bag.items.find(i => i.id === 'shotgun')!.uid), false);
+  assert.equal(JSON.stringify(run), before);
+});

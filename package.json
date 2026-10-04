@@ -1,0 +1,20 @@
+{
+  "name": "escape-bincov",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "description": "逃离滨科夫：本地单人撤离生存垂直切片",
+  "scripts": {
+    "dev": "node scripts/build.mjs --serve",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:browser": "node scripts/browser-test.mjs",
+    "test:save-browser": "node scripts/save-browser-test.mjs",
+    "test:play": "node --import tsx scripts/natural-play.mjs",
+    "package": "pnpm build && node scripts/package.mjs",
+    "test:portable": "node scripts/portable-test.mjs"
+  },
+  "dependencies": { "phaser": "3.90.0" },
+  "devDependencies": { "@types/node": "^24.0.0", "esbuild": "^0.25.0", "typescript": "^5.9.0", "tsx": "^4.20.0", "playwright": "^1.55.0" },
+  "packageManager": "pnpm@11.19.0"
+}
