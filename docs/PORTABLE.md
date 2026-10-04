@@ -1,4 +1,12 @@
-# 0.1.1 便携包与网页包验证
+# 便携包与网页包验证
+
+## 0.2.0 发布检查
+
+2026-10-04，以 `ba2d3cd`（前五个 PR 全部合入后的 main）为基线准备 v0.2.0。重新执行 `pnpm package` 与 `pnpm test:portable`，6 项检查通过；ZIP CRC、内部入口、两个 HTML 的逐字节一致性及发布清单哈希全部通过。环境为 Linux / Chromium 138.0.7204.0；实际解压后通过普通入口离线操作，没有运行时外部请求。
+
+当前版本与文件校验值见 [release-manifest.json](release-manifest.json)，下载与升级说明见 [v0.2.0 发版公告](releases/v0.2.0.md)。本轮诊断报告在忽略的 `test-results/portable-report.json`，远端完整报告由对应 CI 的 `browser-evidence` 提供。
+
+## 0.1.1 历史验证
 
 2026-10-04，Linux 上的 Chromium 138.0.7204.0 完成 6 项便携检查，全部通过。
 

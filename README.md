@@ -7,7 +7,7 @@
 **台风过后，海没有退去。带上最后一匣子弹，活着回到水产站。**
 
 [![CI & Pages](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml)
-![Version](https://img.shields.io/badge/version-0.1.1-c9d58c?style=flat-square&labelColor=142323)
+![Version](https://img.shields.io/badge/version-0.2.0-c9d58c?style=flat-square&labelColor=142323)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-77a79d?style=flat-square&labelColor=142323)
 ![Phaser](https://img.shields.io/badge/Phaser-3.90.0-cb906b?style=flat-square&labelColor=142323)
 
@@ -29,7 +29,7 @@
 
 这是一款 **2D 俯视角像素撤离生存原型**：整理装备、搜集物资、应对交战，在限时内撤离。带回的物资可以出售、交付任务，也可以留作下次出击使用。当前提供一张手工地图与完整的单人循环，仍处于早期开发阶段。
 
-> 📱 **PR #2 移动候选版**：触控战斗、手机整备和刷新恢复已实现，真机验收待补。当前 Pages 与下载链接指向已合并的 `main`；PR 通过审阅并合并后才会更新。
+> 🌊 **v0.2.0「夜港归来」**：汇集前五个 PR，带来更清楚的整备界面、全新夜港主菜单、手机触控尝鲜与行动中断恢复。[阅读完整发版公告](docs/releases/v0.2.0.md)。手机真机验收仍待完成。
 
 | 🔫 搜刮与交战 | 🌊 会改变路线的潮汐 | 🏚️ 持续发展的水产站 |
 | :--- | :--- | :--- |
@@ -53,13 +53,13 @@
 
 <sub>截图来自 0.1.1 界面精修后的实际运行与自动验收场景。查看 [界面精修记录与前后对照](docs/UI-POLISH.md)。</sub>
 
-## 📱 手机触控候选版
+## 📱 手机触控尝鲜
 
 左盘移动与冲刺，右盘瞄准与持续开火；整备支持点选物品和格位，旋转或切到后台会暂停。刷新后从最近检查点继续。
 
 ![手机横屏的双摇杆与战斗按钮](docs/mobile/combat-844.png)
 
-当前为 **PR #2 候选版**，通过 Chromium 触控仿真，尚未完成 iPhone/Android 真机验收。玩法、恢复协议、竖屏/短屏截图及全部测试结果见 [移动适配实现记录](docs/MOBILE-IMPLEMENTATION.md)。
+手机触控已随 **v0.2.0** 提供，目前为尝鲜功能：通过 Chromium 触控仿真，尚未完成 iPhone/Android 真机验收。玩法、恢复协议、竖屏/短屏截图及测试结果见 [移动适配实现记录](docs/MOBILE-IMPLEMENTATION.md)。
 
 ## ▶️ 开始你的第一局
 
@@ -92,7 +92,7 @@
 
 </details>
 
-主界面支持桌面、宽屏和手机横竖屏排布，提供「动态景物」开关，并遵循系统减少动态效果设置。本分支已加入手机触控候选，真机验收待补；主界面设计与历史截图见 [夜港主界面记录](docs/TITLE-SCREEN.md)。
+主界面支持桌面、宽屏和手机横竖屏排布，提供「动态景物」开关，并遵循系统减少动态效果设置。手机触控已开放尝鲜，真机验收待补；主界面设计与历史截图见 [夜港主界面记录](docs/TITLE-SCREEN.md)。
 
 大陆网络下 GitHub Pages 的访问体验需以实际网络为准；遇到加载问题可使用离线版。备用静态托管方案与存档迁移说明见 [大陆在线游玩指南](docs/ONLINE-CHINA.md)。
 
@@ -140,6 +140,8 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 
 ## ✅ 当前进度与下一步
 
+**当前版本为 v0.2.0**：前五个 PR 已全部合入，包含界面精修、夜港主菜单、手机触控尝鲜、完整行动恢复、存档基础整理与玩家文案校对。升级步骤和已知限制见 [发版公告](docs/releases/v0.2.0.md)，最新验证以对应提交的 Actions 为准。
+
 **0.1.1 已具备完整单人循环**：整备 → 出击 → 搜集物资/交战 → 撤离或失败 → 结算 → 回站整备。此版本修复了结算保存失败、库存操作回滚与暂停 HUD，并增加备份导入导出。
 
 | 验证 | 已记录结果 |
@@ -157,6 +159,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 
 | 想了解什么 | 从这里开始 |
 | --- | --- |
+| v0.2.0 更新亮点、下载与升级 | [完整发版公告](docs/releases/v0.2.0.md) · [更新记录](CHANGELOG.md) |
 | 游戏规则、任务、物品与旧存档迁移 | [完整游玩手册](docs/PLAYING.md) |
 | Agent 必须遵守的规则 | [AGENTS.md](AGENTS.md) |
 | 架构、开发流程、验证与交接 | [Agent 开发手册](docs/AGENT-HANDBOOK.md) |

@@ -1,6 +1,6 @@
 {
   "name": "escape-bincov",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "逃离滨科夫：单人像素撤离生存游戏",
