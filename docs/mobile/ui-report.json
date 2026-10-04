@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-10-04T08:32:09.005Z",
+  "startedAt": "2026-10-04T09:02:25.472Z",
   "checks": [
     {
       "viewport": "1280x720",
@@ -197,5 +197,5 @@
   "methodology": "Offline file HTML, fresh saves, real UI input at both required viewports. Expanded stash, completed quests and raid positions use explicit fixtures. Screenshots are unmodified browser captures; geometry checks do not replace visual review.",
   "browser": "138.0.7204.0",
   "status": "passed",
-  "finishedAt": "2026-10-04T08:32:36.339Z"
+  "finishedAt": "2026-10-04T09:02:52.670Z"
 }

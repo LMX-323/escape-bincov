@@ -1,7 +1,7 @@
 {
   "portable": true,
   "status": "passed",
-  "startedAt": "2026-10-04T08:50:47.389Z",
+  "startedAt": "2026-10-04T09:02:53.925Z",
   "archive": "<workspace>/release/Escape-Bincov-portable.zip",
   "browser": "/workspace/scratch/eebd448ac08a/bincov-browser-runtime/chromium",
   "offline": true,
@@ -18,8 +18,8 @@
           "README-游玩说明.txt",
           "start the game.html"
         ],
-        "htmlBytes": 1666285,
-        "sha256": "1ff8a71924318369ff994225f58e23896dd16a5ba04845aa03b433cd5844554b"
+        "htmlBytes": 1668822,
+        "sha256": "c58705cbe206482364f7b46b383ff588f05129815d2496548cb7c44586bce7bc"
       }
     },
     {
@@ -71,16 +71,16 @@
   "unexpectedFileRequests": [],
   "errors": [],
   "methodology": "Extract the shared ZIP outside the workspace; open its file:// HTML without test hooks; use real buttons and keyboard/mouse input; read the visible HUD. No fixtures, original assets, server, screenshots, or internet access.",
-  "extractionDirectory": "/tmp/滨科夫 portable test urNf4r",
-  "sha256": "1ff8a71924318369ff994225f58e23896dd16a5ba04845aa03b433cd5844554b",
-  "archiveSha256": "9587411a32c8146176cf0aea4a553df6c297fe16a3a17f806748174ced421d4a",
-  "htmlBytes": 1666285,
-  "archiveBytes": 399628,
+  "extractionDirectory": "/tmp/滨科夫 portable test AHeATL",
+  "sha256": "c58705cbe206482364f7b46b383ff588f05129815d2496548cb7c44586bce7bc",
+  "archiveSha256": "f343e2e0cc7b9bd4cbf7788eefffefee98b7db51b64f181bf6d21cc82e2001ee",
+  "htmlBytes": 1668822,
+  "archiveBytes": 399895,
   "files": [
     "README-游玩说明.txt",
     "start the game.html"
   ],
-  "entry": "file:///tmp/%E6%BB%A8%E7%A7%91%E5%A4%AB%20portable%20test%20urNf4r/start%20the%20game.html",
+  "entry": "file:///tmp/%E6%BB%A8%E7%A7%91%E5%A4%AB%20portable%20test%20AHeATL/start%20the%20game.html",
   "browserVersion": "138.0.7204.0",
   "testHookAbsent": true,
   "seed": 42,
@@ -109,5 +109,5 @@
     "unchanged": true
   },
   "temporaryDirectoryRemoved": true,
-  "finishedAt": "2026-10-04T08:50:52.427Z"
+  "finishedAt": "2026-10-04T09:02:58.772Z"
 }

@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-10-04T08:30:39.756Z",
+  "startedAt": "2026-10-04T09:00:30.733Z",
   "mode": "full",
   "entry": "file://<workspace>/dist/index.html?test=1",
   "browser": "/workspace/scratch/eebd448ac08a/bincov-browser-runtime/chromium",
@@ -22,7 +22,7 @@
             "logicalWidth": 960,
             "logicalHeight": 540
           },
-          "durationMs": 1135.13
+          "durationMs": 1163.56
         },
         {
           "name": "hideout, merchant price and native inventory drag",
@@ -36,7 +36,7 @@
             ],
             "safeBandages": 2
           },
-          "durationMs": 1253.68
+          "durationMs": 1195.47
         },
         {
           "name": "seeded deployment: 25 enemies and 60 pieces of ground loot",
@@ -45,7 +45,7 @@
             "x": 208,
             "y": 1232,
             "rotation": 0.31877491538589275,
-            "elapsed": 0.029399999998509885,
+            "elapsed": 0.022299999997019766,
             "hp": 100,
             "mag": 8,
             "high": false,
@@ -54,33 +54,33 @@
             "loot": 60,
             "seed": 42
           },
-          "durationMs": 1013.55
+          "durationMs": 929.9
         },
         {
           "name": "real WASD movement and pointer mapping",
           "status": "passed",
           "detail": {
-            "movementX": 52.34,
-            "movementY": -50.36,
+            "movementX": 50.42,
+            "movementY": -50.42,
             "aimErrorRadians": 0
           },
-          "durationMs": 2159.45
+          "durationMs": 2159.47
         },
         {
           "name": "25-enemy, 60-loot battle performance sample",
           "status": "passed",
           "detail": {
-            "measuredMs": 5008.800000000745,
+            "measuredMs": 5008.100000000744,
             "frames": 301,
             "samples": 30,
-            "average": 57.93348159790039,
-            "minimum": 56.4697265625,
-            "median": 58.01422119140625,
-            "frameIntervalP95Ms": 16.700000000000728,
+            "average": 57.77855911254883,
+            "minimum": 56.2158203125,
+            "median": 57.87139892578125,
+            "frameIntervalP95Ms": 16.800000000000182,
             "stayedInRun": true,
             "target60ApproxMet": true
           },
-          "durationMs": 5580.46
+          "durationMs": 5577.42
         },
         {
           "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
@@ -90,7 +90,7 @@
             "afterAmmo": 7,
             "damagedEnemyIndex": 1
           },
-          "durationMs": 803.99
+          "durationMs": 772.95
         },
         {
           "name": "real E pickup, pause, map and persisted volume controls",
@@ -99,7 +99,7 @@
             "volume": 0.2,
             "sampleLootedByKeyboard": true
           },
-          "durationMs": 1827.57
+          "durationMs": 1953.08
         },
         {
           "name": "tide warning, high-tide transition and real movement out of flood",
@@ -108,23 +108,23 @@
             "warningAt": 270,
             "tideAt": 300,
             "xAfterFlip": 2032,
-            "xAfterMovement": 1964.71
+            "xAfterMovement": 1964.92
           },
-          "durationMs": 1214.44
+          "durationMs": 1364.35
         },
         {
           "name": "first run: actual three-second extraction retains loot and gear",
           "status": "passed",
           "detail": {
-            "actualHoldMs": 3011.66,
+            "actualHoldMs": 3015.48,
             "savedRuns": 1
           },
-          "durationMs": 3678.9
+          "durationMs": 3684.06
         },
         {
           "name": "second run: actual enemy attack causes death and protects the safe",
           "status": "passed",
-          "durationMs": 811
+          "durationMs": 972.82
         },
         {
           "name": "third run: timeout and three-run persistence after reload",
@@ -138,7 +138,7 @@
             ],
             "volumeAfterReload": 0.2
           },
-          "durationMs": 1304.46
+          "durationMs": 1362.73
         },
         {
           "name": "fourth run: midrun reload restores carried items and the matching world checkpoint",
@@ -148,7 +148,7 @@
             "safeSamplePreserved": true,
             "noExtraSettlement": true
           },
-          "durationMs": 2834.42
+          "durationMs": 2782.51
         }
       ],
       "errors": [],
@@ -165,13 +165,13 @@
         "<workspace>/test-results/1280x720-recovered-raid.png"
       ],
       "fps": {
-        "measuredMs": 5008.800000000745,
+        "measuredMs": 5008.100000000744,
         "frames": 301,
         "samples": 30,
-        "average": 57.93348159790039,
-        "minimum": 56.4697265625,
-        "median": 58.01422119140625,
-        "frameIntervalP95Ms": 16.700000000000728,
+        "average": 57.77855911254883,
+        "minimum": 56.2158203125,
+        "median": 57.87139892578125,
+        "frameIntervalP95Ms": 16.800000000000182,
         "stayedInRun": true,
         "target60ApproxMet": true
       }
@@ -193,7 +193,7 @@
             "logicalWidth": 960,
             "logicalHeight": 540
           },
-          "durationMs": 962.96
+          "durationMs": 1150.06
         },
         {
           "name": "hideout, merchant price and native inventory drag",
@@ -207,7 +207,7 @@
             ],
             "safeBandages": 2
           },
-          "durationMs": 2109.21
+          "durationMs": 1916.61
         },
         {
           "name": "seeded deployment: 25 enemies and 60 pieces of ground loot",
@@ -216,7 +216,7 @@
             "x": 208,
             "y": 1232,
             "rotation": 0.31877491538589275,
-            "elapsed": 0.025399999998509885,
+            "elapsed": 0.025,
             "hp": 100,
             "mag": 8,
             "high": false,
@@ -225,33 +225,33 @@
             "loot": 60,
             "seed": 42
           },
-          "durationMs": 1349.43
+          "durationMs": 1186.89
         },
         {
           "name": "real WASD movement and pointer mapping",
           "status": "passed",
           "detail": {
-            "movementX": 50.46,
-            "movementY": -46.61,
+            "movementX": 52.15,
+            "movementY": -47.94,
             "aimErrorRadians": 0
           },
-          "durationMs": 2162.04
+          "durationMs": 2130.78
         },
         {
           "name": "25-enemy, 60-loot battle performance sample",
           "status": "passed",
           "detail": {
-            "measuredMs": 5025.50000000149,
-            "frames": 215,
+            "measuredMs": 5010.499999999254,
+            "frames": 216,
             "samples": 21,
-            "average": 45.34522374471029,
-            "minimum": 43.75312900543213,
-            "median": 45.33750534057617,
+            "average": 45.69869241260347,
+            "minimum": 45.1648006439209,
+            "median": 45.626312255859375,
             "frameIntervalP95Ms": 33.399999999999636,
             "stayedInRun": true,
             "target60ApproxMet": false
           },
-          "durationMs": 5600.95
+          "durationMs": 5593.35
         },
         {
           "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
@@ -261,7 +261,7 @@
             "afterAmmo": 7,
             "damagedEnemyIndex": 1
           },
-          "durationMs": 784.25
+          "durationMs": 797.39
         },
         {
           "name": "real E pickup, pause, map and persisted volume controls",
@@ -270,7 +270,7 @@
             "volume": 0.2,
             "sampleLootedByKeyboard": true
           },
-          "durationMs": 2610.21
+          "durationMs": 2655.72
         },
         {
           "name": "tide warning, high-tide transition and real movement out of flood",
@@ -279,23 +279,23 @@
             "warningAt": 270,
             "tideAt": 300,
             "xAfterFlip": 2032,
-            "xAfterMovement": 1966.41
+            "xAfterMovement": 1964.2
           },
-          "durationMs": 1867.14
+          "durationMs": 1858.21
         },
         {
           "name": "first run: actual three-second extraction retains loot and gear",
           "status": "passed",
           "detail": {
-            "actualHoldMs": 3029.64,
+            "actualHoldMs": 2996.84,
             "savedRuns": 1
           },
-          "durationMs": 4293.47
+          "durationMs": 4213.85
         },
         {
           "name": "second run: actual enemy attack causes death and protects the safe",
           "status": "passed",
-          "durationMs": 1656.86
+          "durationMs": 1673.21
         },
         {
           "name": "third run: timeout and three-run persistence after reload",
@@ -309,7 +309,7 @@
             ],
             "volumeAfterReload": 0.2
           },
-          "durationMs": 1509.7
+          "durationMs": 1712.21
         },
         {
           "name": "fourth run: midrun reload restores carried items and the matching world checkpoint",
@@ -319,7 +319,7 @@
             "safeSamplePreserved": true,
             "noExtraSettlement": true
           },
-          "durationMs": 4257.64
+          "durationMs": 4425.46
         }
       ],
       "errors": [],
@@ -336,12 +336,12 @@
         "<workspace>/test-results/1920x1080-recovered-raid.png"
       ],
       "fps": {
-        "measuredMs": 5025.50000000149,
-        "frames": 215,
+        "measuredMs": 5010.499999999254,
+        "frames": 216,
         "samples": 21,
-        "average": 45.34522374471029,
-        "minimum": 43.75312900543213,
-        "median": 45.33750534057617,
+        "average": 45.69869241260347,
+        "minimum": 45.1648006439209,
+        "median": 45.626312255859375,
         "frameIntervalP95Ms": 33.399999999999636,
         "stayedInRun": true,
         "target60ApproxMet": false
@@ -378,5 +378,5 @@
   ],
   "browserVersion": "138.0.7204.0",
   "status": "passed",
-  "finishedAt": "2026-10-04T08:31:32.692Z"
+  "finishedAt": "2026-10-04T09:01:24.127Z"
 }

@@ -96,7 +96,7 @@ export function createWorld(): MapData {
   // Harbor sheds, inland pump house and the starting fisheries station.
   house(49, 27, 9, 6, '旧渔港船务所', 'harbor', true);
   house(49, 40, 9, 8, '海堤泵房', 'pump', true);
-  house(10, 46, 12, 4, '废弃水产站', 'shelter', true);
+  house(10, 46, 12, 4, '滨科夫水产站', 'shelter', true);
   // Quay and courtyard caches. Flooded caches contain extra valuables.
   for (const [x, y] of [
     [3, 5], [3, 12], [3, 20], [3, 29], [3, 40], [8, 45], [26, 46], [29, 47],
@@ -120,11 +120,11 @@ export function createWorld(): MapData {
   return {
     tiles, buildings, lootSpots, enemySpots,
     zones: [
-      zone(9, 6, 23, 17, '城中村巷道', '褪色门牌 · 旧日回声'),
-      zone(9, 26, 23, 17, '水产市场', '空箱与盐 · 搜集维修物资'),
-      zone(48, 6, 11, 17, '潮汐观测站', '异常潮位 · 样本封存'),
-      zone(48, 26, 23, 8, '旧渔港', '搁浅船只 · 船册失踪'),
-      zone(48, 39, 11, 9, '海堤泵房', '最后的供电 · 高架通道'),
+      zone(9, 6, 23, 17, '城中村巷道', '沿巷道搜索，留意拐角'),
+      zone(9, 26, 23, 17, '水产市场', '市场里留有水产站的维修物资'),
+      zone(48, 6, 11, 17, '潮汐观测站', '赤潮样本封存在站内'),
+      zone(48, 26, 23, 8, '旧渔港', '去船务所找港口船册'),
+      zone(48, 39, 11, 9, '海堤泵房', '沿海堤可避开被淹的浅滩'),
     ],
     spawns: [center(6, 47), center(6, 38), center(6, 20)],
     exits: [
@@ -133,11 +133,11 @@ export function createWorld(): MapData {
       { ...center(61, 48), id: 'seawall', name: '南堤信号灯' },
     ],
     notes: [
-      { ...center(8, 46), title: '水产站维修单', text: '小蔡把备用物资留在了市场。泵机零件三份、绝缘线圈两卷、陶瓷保险管一支，够让水产站的灯撑过今晚。' },
-      { ...center(20, 33), title: '市场停业告示', text: '所有红色贝类禁止出售。冰柜里的敲击声不属于活物。请勿回应。——滨科夫县水产联络处' },
-      { ...center(53, 17), title: '观测站记录', text: '潮位峰值总比预报晚三十秒。每当海面退下去，仪器都会多记录一次心跳。样本已封存。' },
-      { ...center(58, 30), title: '港口值班笔记', text: '船册里第七艘船没有船主，却每天按时回港。把船册带回去，许医生知道该找谁。' },
-      { ...center(58, 45), title: '泵房便笺', text: '海堤主路高于警戒潮位。即使低地封闭，也沿路灯走。别踩进有光的红水。' },
+      { ...center(8, 46), title: '水产站维修单', text: '小蔡在水产市场留了备用物资：泵机零件三个、绝缘线圈两卷、陶瓷保险管一支。拿齐了就回来修电源。' },
+      { ...center(20, 33), title: '市场停业告示', text: '即日起停止收购、出售红色贝类。冷柜内如有敲击声，请离开，不要开柜。——滨科夫县水产联络处' },
+      { ...center(53, 17), title: '观测站记录', text: '今天的潮峰又比预报晚了三十秒。退潮时，传感器录到一段像心跳的声音。样本已封存，等人来取。' },
+      { ...center(58, 30), title: '港口值班笔记', text: '第七艘船每天回港，船主那栏却一直空着。船册先别销毁，带回水产站交给许医生。' },
+      { ...center(58, 45), title: '泵房便笺', text: '海堤主路高于警戒潮位。低地淹了就沿路灯走，别踩发红的水。' },
     ],
   };
 }

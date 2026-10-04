@@ -2,15 +2,15 @@
   "date": "2026-10-04",
   "status": "local-passed",
   "releaseStatus": "mobile-candidate-awaiting-physical-device-acceptance",
-  "base": "702692a0c6d79ea5d51a291eac60f16013ab0688",
+  "base": "193007318ea7d8cdc9e23a5fe812be65ff3bfdb0",
   "environment": {
     "os": "Linux x64",
     "node": "24.19.0",
     "pnpm": "11.25.0 (repository and CI remain pinned to 11.19.0)",
     "chromium": "138.0.7204.0, headless, SwiftShader"
   },
-  "htmlBytes": 1666285,
-  "htmlSha256": "1ff8a71924318369ff994225f58e23896dd16a5ba04845aa03b433cd5844554b",
+  "htmlBytes": 1668822,
+  "htmlSha256": "c58705cbe206482364f7b46b383ff588f05129815d2496548cb7c44586bce7bc",
   "checks": {
     "unit": 69,
     "browser": 24,
@@ -36,13 +36,17 @@
     "China mainland carrier access",
     "HarmonyOS and WeChat"
   ],
-  "finalStyleRecheck": {
-    "change": "48 CSS px touch targets in title help and save-protection dialogs",
+  "finalIntegrationRecheck": {
+    "change": "Integrate accepted PR #5 player copy, preserving mobile input and recovery semantics",
     "passed": [
+      "unit",
+      "test:browser",
       "test:title",
       "test:mobile",
-      "test:portable"
-    ],
-    "otherChecks": "Full short regression passed before this CSS-only adjustment; latest PR CI repeats the full suite."
+      "test:save-browser",
+      "test:ui",
+      "test:portable",
+      "legacyCoexistence"
+    ]
   }
 }

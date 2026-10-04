@@ -90,7 +90,7 @@ async function boot() {
         if (e.key !== SESSION_KEY && e.key !== SAVE_KEY && e.key !== null) return;
         saveSession.markConflict();
         if (app.state === 'run') { setOverlay('pause'); app.raid?.lock(); }
-        toast('另一个窗口修改了存档。请导出需要保留的进度，再刷新本页。');
+        toast('另一个窗口已更新存档，本页已停止操作。请导出需要保留的进度，再刷新本页。');
     });
     // Explicitly opt-in acceptance hooks; never available in the normal game.
     if (new URLSearchParams(location.search).get('test') === '1')

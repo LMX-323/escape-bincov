@@ -1,0 +1,81 @@
+{
+  "baseline": "702692a0c6d79ea5d51a291eac60f16013ab0688",
+  "branch": "agent/player-copy-pass",
+  "environment": {
+    "node": "24.19.0",
+    "pnpm": "11.25.0",
+    "browser": "Chromium 138.0.7204.0"
+  },
+  "unitTests": {
+    "passed": 59,
+    "failed": 0
+  },
+  "package": "passed",
+  "checks": {
+    "browser": {
+      "passed": 24,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T08:20:01.149Z"
+    },
+    "ui": {
+      "passed": 38,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T08:16:27.823Z"
+    },
+    "title": {
+      "passed": 16,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T08:17:27.851Z"
+    },
+    "save": {
+      "passed": 9,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T08:18:01.996Z"
+    },
+    "portable": {
+      "passed": 6,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T08:21:21.010Z"
+    },
+    "copy": {
+      "passed": 9,
+      "errors": [],
+      "externalRequests": null,
+      "finishedAt": "2026-10-04T08:18:21.075Z",
+      "note": "Supplemental layout check collects page errors; network requests are covered by the browser, UI, title, save and portable suites."
+    }
+  },
+  "artifacts": {
+    "version": "0.1.1",
+    "htmlBytes": 1628851,
+    "htmlSha256": "51fd63753dd4d34a69ffa2a1d1326b7eec9e43102b8081f21aebea56c1520391",
+    "artifacts": {
+      "dist/index.html": {
+        "bytes": 1628851,
+        "sha256": "51fd63753dd4d34a69ffa2a1d1326b7eec9e43102b8081f21aebea56c1520391"
+      },
+      "start the game.html": {
+        "bytes": 1628851,
+        "sha256": "51fd63753dd4d34a69ffa2a1d1326b7eec9e43102b8081f21aebea56c1520391"
+      },
+      "release/Escape-Bincov-portable.zip": {
+        "bytes": 388810,
+        "sha256": "9ee9d45260dcd580b9d797343cfc088b80eff8db4d8c8688793cd32da9b6fcbb"
+      },
+      "release/Escape-Bincov-web.zip": {
+        "bytes": 387115,
+        "sha256": "d082a73d7aa667338d8bfb3fff8bf0d77dbcfe5db2a581bfbe76d7233044c68c"
+      }
+    }
+  },
+  "limits": [
+    "Mobile viewports are emulated; no physical-device or screen-reader testing.",
+    "Ten-minute test:play not rerun; no gameplay-rule changes."
+  ],
+  "artifactHashesAndDocLinks": "passed"
+}

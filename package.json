@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": true,
   "type": "module",
-  "description": "逃离滨科夫：本地单人撤离生存垂直切片",
+  "description": "逃离滨科夫：单人像素撤离生存游戏",
   "scripts": {
     "dev": "node scripts/build.mjs --serve",
     "build": "tsc --noEmit && node scripts/build.mjs",
