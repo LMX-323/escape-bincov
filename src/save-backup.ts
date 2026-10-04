@@ -9,11 +9,11 @@ export function encodeBackup(save: SaveDataV1): string {
 }
 
 export function decodeBackup(text: string): SaveDataV1 {
-  if (new TextEncoder().encode(text).length > BACKUP_MAX_BYTES) throw new Error('存档文件过大。');
+  if (new TextEncoder().encode(text).length > BACKUP_MAX_BYTES) throw new Error('文件超过 1 MiB，请选择游戏导出的存档备份。');
   let parsed: any;
-  try { parsed = JSON.parse(text); } catch { throw new Error('无法读取存档：文件不是有效的 JSON。'); }
+  try { parsed = JSON.parse(text); } catch { throw new Error('无法读取存档。请选择游戏导出的 JSON 备份文件。'); }
   const raw = parsed?.format === 'escape-bincov-backup' && parsed.formatVersion === 1 ? parsed.save : parsed;
-  const fail = () => { throw new Error('存档格式或内容不完整，未替换当前进度。'); };
+  const fail = () => { throw new Error('存档格式不支持或内容不完整，当前进度未改动。'); };
   const integer = (n: unknown) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n <= 1e9;
   if (!raw || raw.version !== 1 || raw.activeRun !== null || !integer(raw.cash) || typeof raw.upgraded !== 'boolean') fail();
   if (!raw.settings || typeof raw.settings.volume !== 'number' || !Number.isFinite(raw.settings.volume) || raw.settings.volume < 0 || raw.settings.volume > 1) fail();

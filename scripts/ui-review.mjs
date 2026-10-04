@@ -90,9 +90,33 @@ try {
         r.enemies.forEach(e => { e.cooldown = 100000; });
         r.player.setPosition(700, 784);
       });
+      // Bleeding must not be described as a normal state when pollution is low.
+      const statusLabels = await page.evaluate(() => {
+        const r = window.__bincov.app.raid;
+        const before = { bleeding: r.bleeding, pollution: r.pollution };
+        r.bleeding = 1; r.pollution = 0; r.updateHud();
+        const bleeding = document.querySelector('#status').textContent;
+        r.pollution = 50; r.updateHud();
+        const combined = document.querySelector('#status').textContent;
+        Object.assign(r, before); r.updateHud();
+        return { bleeding, combined };
+      });
+      assert.match(statusLabels.bleeding, /流血/);
+      assert.doesNotMatch(statusLabels.bleeding, /正常|稳定/);
+      assert.match(statusLabels.combined, /流血.*污染 50%/);
       await page.waitForTimeout(300); await shot('raid');
       await page.keyboard.press('Tab'); await shot('inventory');
       await page.locator('[data-source="bag"][aria-label^="密封绷带"]').click(); await shot('inventory-item');
+      const bandagesBefore = await page.evaluate(() => {
+        const { app } = window.__bincov;
+        app.raid.hp = 100; app.raid.bleeding = 0;
+        return app.loadout.bag.items.filter(i => i.id === 'bandage').reduce((n, i) => n + i.qty, 0);
+      });
+      await action('use').click();
+      assert.match(await page.locator('#toast').textContent(), /生命已满/,
+        'Unnecessary treatment explanation was replaced by a generic transaction error');
+      assert.equal(await page.evaluate(() => window.__bincov.app.loadout.bag.items
+        .filter(i => i.id === 'bandage').reduce((n, i) => n + i.qty, 0)), bandagesBefore);
       await action('close').click(); await page.keyboard.press('m'); await shot('map');
       await action('close').click(); await page.keyboard.press('Escape'); await shot('pause');
       const timer = await page.locator('#timer').textContent();

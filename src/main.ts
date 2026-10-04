@@ -45,11 +45,11 @@ addEventListener('storage', e => { if (e.key === SAVE_KEY) {
     saveSession.markConflict();
     if (app.state === 'run') {
         setOverlay('pause');
-        toast('另一个窗口修改了存档。请关闭此页，避免覆盖进度。');
+        toast('另一个窗口已更新存档，本页已停止操作。');
         app.raid?.lock();
     }
     else {
-        toast('另一个窗口修改了存档。刷新本页加载最新进度。');
+        toast('另一个窗口已更新存档。请刷新此页，加载最新进度。');
     }
 } });
 // Deliberately opt-in for automated local acceptance; absent during normal play.

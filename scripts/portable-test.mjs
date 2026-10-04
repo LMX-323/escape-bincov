@@ -197,7 +197,7 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
   await step('Tab opens the action inventory and its close button dismisses it', async () => {
     await page.keyboard.press('Tab');
     await page.locator('.inventory-modal').waitFor({ state: 'visible' });
-    assert.match(await page.locator('.inventory-modal').innerText(), /行动背包/);
+    assert.match(await page.locator('.inventory-modal > .section-title').innerText(), /^背包/);
     await action('close').click();
     await page.locator('.inventory-modal').waitFor({ state: 'detached' });
     report.inventory = { openedWithTab: true, closedWithButton: true };
@@ -207,7 +207,7 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
   await step('Escape pauses play and the visible clock stays unchanged', async () => {
     const running = (await page.locator('#timer').innerText()).trim();
     await page.keyboard.press('Escape');
-    await page.getByRole('heading', { name: '暂时隐蔽', exact: true }).waitFor({ state: 'visible' });
+    await page.getByRole('heading', { name: '行动暂停', exact: true }).waitFor({ state: 'visible' });
     const before = (await page.locator('#timer').innerText()).trim();
     assert.ok(before <= running, 'Opening pause must not reset the visible clock to 10:00');
     await page.waitForTimeout(1500);

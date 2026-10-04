@@ -19,16 +19,16 @@ export function titleScreen(options: { runs: number; extracts: number; motion: b
                 <div class="title-kicker"><span></span>海还没有退去</div>
                 <h1><span class="title-escape">逃离</span><span class="title-bincov">滨科夫<span class="title-period" aria-hidden="true">.</span></span></h1>
                 <div class="title-english" lang="en">ESCAPE BINCOV</div>
-                <p class="title-story">穿过盐雾与封锁线，<br>带上你找到的一切，<em>活着回来。</em></p>
+                <p class="title-story">穿过盐雾与封锁线，<br>带上找到的物资，<em>活着回来。</em></p>
                 <div class="title-actions">
-                    <button class="title-enter" data-action="enter"><span><strong>进入水产站</strong><small>${runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '整备装备，准备出发'}</small></span>${arrow}</button>
-                    <p class="title-save-note">单人撤离生存<span>进度保存在本机</span></p>
-                    ${!storageOK ? '<p class="title-storage-note" role="status">本地存档暂不可写，暂时无法出击。</p>' : ''}
+                    <button class="title-enter" data-action="enter"><span><strong>进入水产站</strong><small>${runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '整理装备，准备出发'}</small></span>${arrow}</button>
+                    <p class="title-save-note">单人撤离生存<span>进度保存在此浏览器</span></p>
+                    ${!storageOK ? '<p class="title-storage-note" role="status">浏览器无法保存进度，暂时不能出击。</p>' : ''}
                 </div>
             </div>
             <aside class="title-fieldnote" aria-label="水产站电台">
-                <div class="title-fieldnote-rule"><span>01 / 最后的避难点</span><span>27° N</span></div>
-                <div class="title-radio-heading"><span class="radio-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>水产站 · 留守频道</div>
+                <div class="title-fieldnote-rule"><span>沿海避难点</span><span>封锁第 17 天</span></div>
+                <div class="title-radio-heading"><span class="radio-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>水产站 · 值守电台</div>
                 <p>“看见岸边那盏灯了吗？<br>我们在这里，等你回来。”</p>
             </aside>
         </div>
@@ -38,7 +38,7 @@ export function titleScreen(options: { runs: number; extracts: number; motion: b
                 <button class="title-link title-motion" data-action="title-motion" aria-pressed="${motion}" aria-label="动态景物">${motionIcon}<span>动态景物 <b>${motion ? '开' : '关'}</b></span></button>
                 <a class="title-link title-repo" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
             </nav>
-            <div class="title-edition"><span class="title-input-note">当前战斗需要键盘与鼠标</span><span class="title-build">VOL. 01 <b>/</b> v0.1.1</span></div>
+            <div class="title-edition"><span class="title-input-note">游玩需要键盘与鼠标</span><span class="title-build">v0.1.1</span></div>
         </footer>
     </section>`;
 }
