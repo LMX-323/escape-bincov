@@ -46,6 +46,7 @@ async function suite(viewport) {
   const page = await context.newPage();
   activePage = page;
   page.setDefaultTimeout(10000);
+  await page.addInitScript(() => { window.__longTasks = []; new PerformanceObserver(list => { window.__longTasks.push(...list.getEntries().map(e => ({ start: e.startTime, duration: e.duration }))); }).observe({ entryTypes: ['longtask'] }); });
   page.on('pageerror', error => record.errors.push({ type: 'pageerror', message: error.stack || error.message }));
   page.on('console', message => { if (message.type() === 'error') record.errors.push({ type: 'console', message: message.text() }); });
   const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
@@ -77,6 +78,8 @@ async function suite(viewport) {
       console.log(`PASS ${label} · ${name}`);
     } catch (error) {
       item.status = 'failed'; item.error = error.stack || String(error);
+      record.failureState = await page.evaluate(() => ({overlay:__bincov.app.overlay,error:__bincov.app.storageError,elapsed:__bincov.app.raid?.elapsed,stall:__bincov.app.raid?.lastStall,now:performance.now(),longTasks:window.__longTasks.slice(-15)}));
+      console.log(JSON.stringify(record.failureState));
       throw error;
     } finally { item.durationMs = rounded(performance.now() - start); await saveReport(); }
   }
@@ -287,7 +290,7 @@ async function suite(viewport) {
       const escaped = await run();
       assert.ok(escaped.x < 63 * 32 - 10, 'Player can leave the high-tide strip');
       // Regression: actor center is dry but the collision radius still overlaps water.
-      await page.evaluate(() => window.__bincov.app.raid.player.setPosition(63 * 32 - 1, 10 * 32 + 16));
+      await page.evaluate(() => { window.__bincov.app.raid.player.setPosition(63 * 32 - 1, 10 * 32 + 16); });
       await hold('a', 450);
       assert.ok((await run()).x < 63 * 32 - 20, 'Half-overlapping flood boundary must not trap the actor');
       await screenshot('high-tide');

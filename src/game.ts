@@ -80,6 +80,7 @@ export class RaidScene extends Phaser.Scene {
     private inputFrame = playerInput.read(false);
     private nextEntity = 1;
     private checkpointAt = 0;
+    lastStall: { seconds: number; at: number } | null = null;
     private fx!: Phaser.GameObjects.Graphics;
     private weather!: Phaser.GameObjects.Graphics;
     private flood!: Phaser.GameObjects.Graphics;
@@ -311,7 +312,7 @@ export class RaidScene extends Phaser.Scene {
     update(_time: number, _delta: number) {
         if (app.state !== 'run' || !this.player || this.extracted || this.paused) { this.clock.reset(); return; }
         const tick = this.clock.tick(performance.now());
-        if (tick.stalled) { setOverlay('pause'); toast('画面暂时停顿，行动已暂停。准备好后继续。'); return; }
+        if (tick.stalled) { this.lastStall = { seconds: tick.seconds, at: performance.now() }; setOverlay('pause'); toast('画面暂时停顿，行动已暂停。准备好后继续。'); return; }
         this.elapsed += tick.seconds;
         if (this.elapsed >= this.config.duration) { this.extracted = true; finish('timeout'); return; }
         const frame = playerInput.read(!app.overlay);
