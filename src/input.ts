@@ -9,6 +9,7 @@ export interface InputFrame {
 type Stick = { id: number; x: number; y: number; distance: number };
 const actionKeys: Record<string, InputAction> = { r: 'reload', q: 'heal', '1': 'primary', '2': 'knife', e: 'interact' };
 export class PlayerInput {
+  /** Enables phone controls/layout; keyboard and mouse remain available on every device. */
   touch = false;
   pointer = { x: 480, y: 270 };
   private keys = new Set<string>();
@@ -54,15 +55,17 @@ export class PlayerInput {
   }
   read(enabled = true): InputFrame {
     const move = this.sticks.get('move'), aim = this.sticks.get('aim');
+    const movingStick = this.touch && move && move.distance > .18 ? move : null;
+    const aimingStick = this.touch && aim && aim.distance > .18 ? aim : null;
     const frame: InputFrame = {
-      x: this.touch ? (move && move.distance > .18 ? move.x : 0) : Number(this.keys.has('d')) - Number(this.keys.has('a')),
-      y: this.touch ? (move && move.distance > .18 ? move.y : 0) : Number(this.keys.has('s')) - Number(this.keys.has('w')),
-      sprint: this.touch ? !!move && move.distance >= .9 : this.keys.has('shift'),
-      aim: this.touch && aim && aim.distance > .18 ? { x: aim.x, y: aim.y } : null,
-      pointer: { ...this.pointer }, precise: !this.touch && this.precise,
-      firePressed: !this.touch && this.pressed,
-      fireHeld: this.touch && !!aim && aim.distance >= .62,
-      interactHeld: this.touch ? this.interaction !== null : this.keys.has('e'),
+      x: movingStick ? movingStick.x : Number(this.keys.has('d')) - Number(this.keys.has('a')),
+      y: movingStick ? movingStick.y : Number(this.keys.has('s')) - Number(this.keys.has('w')),
+      sprint: movingStick ? movingStick.distance >= .9 : this.keys.has('shift'),
+      aim: aimingStick ? { x: aimingStick.x, y: aimingStick.y } : null,
+      pointer: { ...this.pointer }, precise: !aimingStick && this.precise,
+      firePressed: this.pressed,
+      fireHeld: !!aimingStick && aimingStick.distance >= .62,
+      interactHeld: (this.touch && this.interaction !== null) || this.keys.has('e'),
       actions: new Set(this.actions), touch: this.touch,
     };
     this.actions.clear(); this.pressed = false;

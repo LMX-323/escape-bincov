@@ -12,12 +12,14 @@ async function boot() {
     initSave(ownership.owned);
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
     app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
-    const coarse = matchMedia('(any-pointer: coarse)');
+    const coarse = matchMedia('(pointer: coarse)'), fine = matchMedia('(any-pointer: fine)');
     const controls = installControls(setOverlay, () => app.state === 'run', () => audio.start());
     let previousWidth = 0, previousHeight = 0;
     function resize() {
         const editing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
-        const touch = coarse.matches && Math.min(innerWidth, innerHeight) < 900;
+        // Phone layout is a presentation choice, not permission to use a keyboard or mouse.
+        // Hybrid computers and wide coarse-only screens keep the desktop UI.
+        const touch = coarse.matches && !fine.matches && Math.min(innerWidth, innerHeight) < 900 && Math.max(innerWidth, innerHeight) < 1200;
         const modeChanged = playerInput.touch !== touch;
         playerInput.touch = touch;
         document.documentElement.classList.toggle('mobile', touch);
@@ -38,7 +40,7 @@ async function boot() {
         }
         if (modeChanged && app.game?.isBooted) render();
     }
-    addEventListener('resize', resize); visualViewport?.addEventListener('resize', resize); coarse.addEventListener('change', resize);
+    addEventListener('resize', resize); visualViewport?.addEventListener('resize', resize); coarse.addEventListener('change', resize); fine.addEventListener('change', resize);
     app.game.events.once('ready', resize); resize();
     matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
         if (!e.matches) return;
@@ -59,8 +61,13 @@ async function boot() {
     addEventListener('beforeunload', e => { app.raid?.checkpoint(); if (app.pendingSettlement || !app.storageOK) { e.preventDefault(); e.returnValue = ''; } });
     document.addEventListener('contextmenu', e => { if ((e.target as HTMLElement).closest('#game, #touch-controls')) e.preventDefault(); });
     addEventListener('pointermove', e => { if (e.pointerType === 'mouse') playerInput.pointer = { x: e.clientX, y: e.clientY }; });
-    document.getElementById('game')!.addEventListener('mousedown', e => {
-        if (playerInput.touch || app.overlay) return;
+    const game = document.getElementById('game')!;
+    let pointerType = '';
+    game.addEventListener('pointerdown', e => { pointerType = e.pointerType; });
+    // Mouse chords emit mousedown for each button; pointerdown only fires for the first.
+    // Remember the source to reject compatibility mouse events synthesized from a touch.
+    game.addEventListener('mousedown', e => {
+        if (pointerType !== 'mouse' || app.overlay) return;
         playerInput.pointer = { x: e.clientX, y: e.clientY }; playerInput.mouse(e.button, true); audio.start();
     });
     addEventListener('mouseup', e => playerInput.mouse(e.button, false));
