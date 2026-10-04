@@ -3,7 +3,8 @@ import { createTextures, drawWorld, drawBackdrop } from './art';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point } from './world';
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
-import { app, audio, render, setOverlay, finish, toast, drawMap } from './ui';
+import { app, audio } from './app';
+import { render, setOverlay, finish, toast, drawMap } from './ui';
 export class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
     create() { createTextures(this); this.scene.start('Menu'); }

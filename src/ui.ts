@@ -1,49 +1,25 @@
-import Phaser from 'phaser';
 import * as D from './domain';
 import { WORLD, WORLD_W, WORLD_H, generateRun } from './world';
-import { SynthAudio } from './audio';
 import { SURVIVAL } from './balance';
 import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from './save-backup';
-import type { RaidScene } from './game';
-export const audio = new SynthAudio();
-export const app = {
-    game: null as Phaser.Game | null,
-    save: null as unknown as D.SaveDataV1,
-    state: 'menu' as 'menu' | 'hideout' | 'run' | 'result',
-    raid: null as RaidScene | null,
-    loadout: null as D.RunLoadout | null,
-    tab: 'gear', overlay: '', selected: '', selectedSource: '', seed: '',
-    result: null as D.RunSummary | null, storageOK: true, recovery: false, conflict: false,
-    pendingSettlement: null as D.SaveDataV1 | null,
-    pendingImport: null as D.SaveDataV1 | null,
-};
+import { app, audio, saveSession } from './app';
+import type { SessionMutation } from './session';
 const ui = () => document.getElementById('ui')!;
 export function toast(message: string) { const el = document.getElementById('toast')!; el.textContent = message; el.style.opacity = '1'; clearTimeout((toast as any).timer); (toast as any).timer = setTimeout(() => el.style.opacity = '0', 3300); }
-export function persist(save: D.SaveDataV1 = app.save): boolean { if (app.conflict)
-    return false; try {
-    D.writeSave(localStorage, save);
-    app.storageOK = true;
-    return true;
+function saved(ok: boolean): boolean {
+    if (!ok && !app.conflict && !app.storageOK)
+        toast('无法写入本地存档。请允许浏览器存储后再出击。');
+    return ok;
 }
-catch {
-    app.storageOK = false;
-    toast('无法写入本地存档。请允许浏览器存储后再出击。');
-    return false;
-} }
-export function initSave() { try {
-    const raw = localStorage.getItem(D.SAVE_KEY);
-    app.save = raw ? D.migrateSave(JSON.parse(raw)) : D.newSave();
-    app.recovery = !!app.save.activeRun;
-    D.recoverInterrupted(app.save);
-    persist();
+export function persist(save: D.SaveDataV1 = app.save): boolean {
+    return saved(saveSession.persist(save));
 }
-catch {
-    app.save = D.newSave();
-    persist();
-} audio.setVolume(app.save.settings.volume); }
+export function initSave() {
+    saved(saveSession.initialize());
+    audio.setVolume(app.save.settings.volume);
+}
 export function changeState(state: typeof app.state) { if (app.pendingSettlement) { setOverlay('save-error'); return; } app.state = state; app.overlay = ''; app.selected = ''; if (state === 'hideout') {
-    const candidate = structuredClone(app.save);
-    if (D.grantRelief(candidate) && persist(candidate)) app.save = candidate;
+    saved(saveSession.grantRelief());
 } app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); app.game?.scene.start(({ menu: 'Menu', hideout: 'Hideout', run: 'Raid', result: 'Result' })[state]); render(); }
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const btn = (label: string, action: string, cls = '', extra = '') => `<button class="${cls}" data-action="${action}" ${extra}>${label}</button>`;
@@ -149,22 +125,15 @@ export function setOverlay(value: string) { app.overlay = app.pendingSettlement 
 export function finish(outcome: 'extract' | 'death' | 'timeout') {
     if (app.state !== 'run' || !app.loadout || app.conflict || app.pendingSettlement) return;
     app.raid?.syncMagazine();
-    const candidate = structuredClone(app.save);
-    if (!D.settleRun(candidate, app.loadout, outcome, app.raid?.kills || 0)) return;
-    app.pendingSettlement = candidate;
+    if (!saveSession.prepareSettlement(outcome, app.raid?.kills || 0)) return;
     app.raid?.lock();
     retrySettlement();
 }
 export function retrySettlement(): boolean {
-    const candidate = app.pendingSettlement;
-    if (!candidate) return false;
-    if (!persist(candidate)) { setOverlay('save-error'); return false; }
-    app.save = candidate;
-    app.result = candidate.lastResult!;
-    app.pendingSettlement = null;
-    if (app.result.outcome === 'extract') audio.extract(); else audio.death();
+    if (!app.pendingSettlement) return false;
+    if (!saved(saveSession.retrySettlement())) { setOverlay('save-error'); return false; }
+    if (app.result!.outcome === 'extract') audio.extract(); else audio.death();
     app.raid = null;
-    app.loadout = null;
     changeState('result');
     return true;
 }
@@ -181,27 +150,27 @@ export function exportSave() {
     } catch (error) { toast(error instanceof Error ? error.message : '备份下载失败，请重试。'); }
 }
 export function importSave(candidate: D.SaveDataV1): boolean {
-    if (app.state !== 'hideout' || app.pendingSettlement || candidate.activeRun || !persist(candidate)) return false;
-    app.save = structuredClone(candidate);
+    if (!saved(saveSession.importSave(candidate))) return false;
     app.pendingImport = null;
-    app.recovery = false;
     audio.setVolume(app.save.settings.volume);
     setOverlay('');
     toast('存档已导入并保存。');
     return true;
 }
 function selected() { return inventory(app.selectedSource).items.find(x => x.uid === app.selected); }
-export function mutate(action: () => unknown, message = ''): boolean {
-    if (app.conflict || app.pendingSettlement) return false;
-    const before = structuredClone(app.save), carried = app.loadout ? structuredClone(app.loadout) : null;
-    const raid = app.raid, vitals = raid ? { hp: raid.hp, stamina: raid.stamina, pollution: raid.pollution, bleeding: raid.bleeding } : null;
-    const rollback = () => { app.save = before; app.loadout = carried; if (raid && vitals) Object.assign(raid, vitals); };
-    let ok: unknown;
-    try { ok = action(); } catch (error) { rollback(); throw error; }
-    if (ok === false) { rollback(); toast('操作未完成：请检查现金、空间或所需物资。'); render(); return false; }
-    if (app.state === 'run' && app.loadout) D.checkpointSafe(app.save, app.loadout.safe, app.loadout.runId);
-    else D.grantRelief(app.save);
-    if (!persist()) { rollback(); toast('保存失败，本次操作已撤回。请恢复浏览器存储后重试。'); render(); return false; }
+export function mutate(action: SessionMutation, message = ''): boolean {
+    const result = saveSession.mutate(action, app.raid);
+    if (result === 'blocked') return false;
+    if (result === 'rejected') {
+        toast('操作未完成：请检查现金、空间或所需物资。');
+        render();
+        return false;
+    }
+    if (result === 'save-failed') {
+        toast('保存失败，本次操作已撤回。请恢复浏览器存储后重试。');
+        render();
+        return false;
+    }
     if (message) toast(message);
     app.selected = ''; render(); return true;
 }
@@ -255,13 +224,7 @@ function bind() {
                 break;
             case 'deploy': {
                 const cfg = generateRun(app.seed || Date.now());
-                const before = structuredClone(app.save);
-                app.loadout = D.beginRun(app.save, cfg.seed);
-                if (!persist()) {
-                    app.save = before;
-                    app.loadout = null;
-                    break;
-                }
+                if (!saved(saveSession.beginRun(cfg.seed))) break;
                 app.game!.registry.set('runConfig', cfg);
                 changeState('run');
                 break;
@@ -334,8 +297,7 @@ function bind() {
     const volume = document.getElementById('volume') as HTMLInputElement | null;
     if (volume)
         volume.oninput = () => {
-            const candidate = structuredClone(app.save); candidate.settings.volume = Number(volume.value);
-            if (persist(candidate)) { app.save = candidate; audio.setVolume(candidate.settings.volume); }
+            if (saved(saveSession.setVolume(Number(volume.value)))) audio.setVolume(app.save.settings.volume);
             else volume.value = String(app.save.settings.volume);
             document.getElementById('volume-label')!.textContent = Math.round(app.save.settings.volume * 100) + '%';
         };

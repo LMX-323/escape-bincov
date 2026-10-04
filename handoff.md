@@ -16,6 +16,28 @@
 
 本轮验证为源码事实、相对链接、资料来源与 Markdown 差异检查；本地未重跑游戏测试或打包，因为只有文档改动。PR 的自动 CI 结果以 Actions 为准。移动端代码、真机多指/音频/文件测试、热衰减和大陆三网测试均尚未开展。下一步从 M0 测量与输入原型开始，按阶段提交独立 PR，不得将本计划标为已实现。
 
+## 2026-10-04 应用状态与存档会话重构
+
+基线 `f4c50bdf1ae7cd6a1c1309ea77aa765169ac4b6b`，独立分支 `agent/core-foundation-refactor`。抽出 `src/app.ts` 组装共享状态，以及不依赖 DOM/Phaser 的 `src/session.ts`，统一出击、物品事务、结算重试、导入、救济、音量和冲突状态。UI 保留模板、交互、提示及场景切换；出击候选先写入再发布，物品事务在拒绝、异常和存储失败时恢复存档、负载及生命状态。
+
+存档键/格式、备份版本、领域与战斗规则、地图、样式和美术均未改变，没有新增依赖或运行时网络请求。对比基线的 23 个 UI 模板字面量完全一致；HTML 增加 1,318 字节（约 0.08%）。两份 HTML、两个 ZIP 和 `docs/release-manifest.json` 已重新打包，内容、CRC、字节数及 SHA-256 核对通过。后续扩展示例见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，开发手册的源码地图已同步。
+
+本地实际验证（Linux x64、Node 24.19.0、pnpm 11.25.0、Playwright 1.63.0、Chromium 138.0.7204.0 / SwiftShader）：
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm test` | 59/59，通过；新增 12 项无 DOM 的会话测试，保留原 UI 流程测试 |
+| `pnpm package` | 通过，包含严格 TypeScript 检查 |
+| `pnpm test:browser` | 24/24，通过；1280×720 和 1920×1080 |
+| `pnpm test:ui` | 38/38，通过；两种分辨率截图，人工抽查整备、站内设置及待保存弹窗 |
+| `pnpm test:save-browser` | 9/9，通过；新增失败出击及真实同源双窗口冲突/备份 |
+| `pnpm test:portable` | 6/6，通过；解压后普通入口离线操作，无测试接口/外部资源请求 |
+| 文档链接、模板对比、制品哈希、`git diff --check` | 通过 |
+
+环境说明：`pnpm exec playwright install chromium` 的 CDN 下载在此环境返回无效 ZIP，改用已可用的 Chromium，通过既有 `BINCOV_CHROME`/`BINCOV_CHROME_ARGS` 配置执行；未修改断言或仓库依赖。项目及 CI 的 pnpm 版本仍固定为 11.19.0。本地诊断和截图在忽略的 `test-results/`；PR 的 CI 会重新生成可下载报告，以对应 Actions 结果为准。
+
+未运行十分钟 `test:play`、手机真机及大陆网络实测；本次没有修改战斗、AI、潮汐、持续负载或输入规则。当前没有发现阻塞回归。输入/战斗/HUD 仍在 `game.ts`，UI 模板与事件仍在 `ui.ts`，后续按具体需求分步拆分。按 PR 交付，未合并或更新正式 Pages。
+
 ## 2026-10-04 界面精修
 
 基线 `a0345e8df55c9ea50b2985b0ba549be38bc676c6`，独立分支 `agent/ui-polish`。保留暗绿像素场景与原有玩法，统一整备导航、物品格、详情面板、交易行、任务进度、站内设置、HUD 和弹窗。主要修正物品名称/数量重叠、长内容与出击底栏挤压，以及重复装饰标题占据操作区域的问题。

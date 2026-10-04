@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
-import { app, initSave, setOverlay, persist, toast } from './ui';
+import { app, saveSession } from './app';
+import { initSave, setOverlay, persist, toast } from './ui';
 import { SAVE_KEY } from './domain';
 initSave();
 app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: true }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
@@ -28,16 +29,14 @@ addEventListener('keydown', e => { if ((e.target as HTMLElement).tagName === 'IN
 else if (e.key === 'Escape')
     setOverlay(''); });
 addEventListener('storage', e => { if (e.key === SAVE_KEY) {
-    app.conflict = true;
+    saveSession.markConflict();
     if (app.state === 'run') {
         setOverlay('pause');
         toast('另一个窗口修改了存档。请关闭此页，避免覆盖进度。');
-        app.storageOK = false;
         app.raid?.lock();
     }
     else {
         toast('另一个窗口修改了存档。刷新本页加载最新进度。');
-        app.storageOK = false;
     }
 } });
 // Deliberately opt-in for automated local acceptance; absent during normal play.

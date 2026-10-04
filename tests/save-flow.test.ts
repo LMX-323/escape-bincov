@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { app, finish, retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
+import { app } from '../src/app';
+import { finish, retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
 import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from '../src/save-backup';
 
 let stored: string | null;
