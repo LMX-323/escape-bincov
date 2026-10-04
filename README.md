@@ -149,6 +149,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | GitHub Pages 发布、更新与回退 | [部署手册](docs/DEPLOYMENT.md) |
 | 大陆网络下的托管选择 | [大陆在线游玩指南](docs/ONLINE-CHINA.md) |
 | 界面设计、前后对照与本轮验证 | [界面精修记录](docs/UI-POLISH.md) |
+| 手机目标、触控方案、实施阶段与验收门槛 | [2026 移动端适配计划（尚未实现）](docs/MOBILE-ADAPTATION-PLAN.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
 | 离线分享及验收证据 | [便携包说明](docs/PORTABLE.md) · [验收记录](docs/ACCEPTANCE.md) |
 
