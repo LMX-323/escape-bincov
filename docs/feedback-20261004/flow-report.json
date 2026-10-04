@@ -1,0 +1,526 @@
+{
+  "baseline": "4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2",
+  "startedAt": "2026-10-04T12:16:14.778Z",
+  "method": "Offline Chromium mobile emulation and trusted touch. Synthetic player positions, bleeding and ammunition via explicit ?test=1. Viewport and CSS safe-area fixtures do not establish actual browser-bar or physical phone behavior.",
+  "checks": [
+    {
+      "name": "inventory-exit-667x375",
+      "status": "usability-gap-reproduced",
+      "initial": {
+        "text": "关闭背包",
+        "visible": true,
+        "rect": {
+          "x": 29,
+          "y": 564.78125,
+          "width": 82,
+          "height": 48,
+          "bottom": 612.78125
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      },
+      "safe": {
+        "text": "暂无物品",
+        "visible": true,
+        "rect": {
+          "x": 29,
+          "y": 420.390625,
+          "width": 104,
+          "height": 104,
+          "bottom": 524.390625
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 103,
+        "clientHeight": 103
+      }
+    },
+    {
+      "name": "detail-close-667x375",
+      "status": "reachable",
+      "text": "关闭详情",
+      "visible": true,
+      "rect": {
+        "x": 29,
+        "y": 326.265625,
+        "width": 300.5,
+        "height": 48,
+        "bottom": 374.265625
+      },
+      "inViewport": true,
+      "inPanel": false,
+      "centerHit": true,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "inventory-exit-740x300",
+      "status": "usability-gap-reproduced",
+      "initial": {
+        "text": "关闭背包",
+        "visible": true,
+        "rect": {
+          "x": 59,
+          "y": 564.78125,
+          "width": 82,
+          "height": 48,
+          "bottom": 612.78125
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      },
+      "safe": {
+        "text": "暂无物品",
+        "visible": true,
+        "rect": {
+          "x": 59,
+          "y": 420.390625,
+          "width": 104,
+          "height": 104,
+          "bottom": 524.390625
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 103,
+        "clientHeight": 103
+      }
+    },
+    {
+      "name": "detail-close-740x300",
+      "status": "usability-gap-reproduced",
+      "text": "关闭详情",
+      "visible": true,
+      "rect": {
+        "x": 29,
+        "y": 326.265625,
+        "width": 337,
+        "height": 48,
+        "bottom": 374.265625
+      },
+      "inViewport": false,
+      "inPanel": false,
+      "centerHit": false,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "inventory-exit-844x390",
+      "status": "usability-gap-reproduced",
+      "initial": {
+        "text": "关闭背包",
+        "visible": true,
+        "rect": {
+          "x": 111,
+          "y": 564.78125,
+          "width": 82,
+          "height": 48,
+          "bottom": 612.78125
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      },
+      "safe": {
+        "text": "暂无物品",
+        "visible": true,
+        "rect": {
+          "x": 111,
+          "y": 420.390625,
+          "width": 104,
+          "height": 104,
+          "bottom": 524.390625
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 103,
+        "clientHeight": 103
+      }
+    },
+    {
+      "name": "detail-close-844x390",
+      "status": "reachable",
+      "text": "关闭详情",
+      "visible": true,
+      "rect": {
+        "x": 29,
+        "y": 326.265625,
+        "width": 389,
+        "height": 48,
+        "bottom": 374.265625
+      },
+      "inViewport": true,
+      "inPanel": true,
+      "centerHit": true,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "inventory-exit-915x412",
+      "status": "usability-gap-reproduced",
+      "initial": {
+        "text": "关闭背包",
+        "visible": true,
+        "rect": {
+          "x": 146.5,
+          "y": 564.78125,
+          "width": 82,
+          "height": 48,
+          "bottom": 612.78125
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      },
+      "safe": {
+        "text": "暂无物品",
+        "visible": true,
+        "rect": {
+          "x": 146.5,
+          "y": 420.390625,
+          "width": 104,
+          "height": 104,
+          "bottom": 524.390625
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 103,
+        "clientHeight": 103
+      }
+    },
+    {
+      "name": "detail-close-915x412",
+      "status": "reachable",
+      "text": "关闭详情",
+      "visible": true,
+      "rect": {
+        "x": 29,
+        "y": 335,
+        "width": 424.5,
+        "height": 48,
+        "bottom": 383
+      },
+      "inViewport": true,
+      "inPanel": true,
+      "centerHit": true,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "inventory-exit-932x430",
+      "status": "usability-gap-reproduced",
+      "initial": {
+        "text": "关闭背包",
+        "visible": true,
+        "rect": {
+          "x": 155,
+          "y": 564.78125,
+          "width": 82,
+          "height": 48,
+          "bottom": 612.78125
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      },
+      "safe": {
+        "text": "暂无物品",
+        "visible": true,
+        "rect": {
+          "x": 155,
+          "y": 420.390625,
+          "width": 104,
+          "height": 104,
+          "bottom": 524.390625
+        },
+        "inViewport": false,
+        "inPanel": false,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 103,
+        "clientHeight": 103
+      }
+    },
+    {
+      "name": "detail-close-932x430",
+      "status": "reachable",
+      "text": "关闭详情",
+      "visible": true,
+      "rect": {
+        "x": 29,
+        "y": 353,
+        "width": 433,
+        "height": 48,
+        "bottom": 401
+      },
+      "inViewport": true,
+      "inPanel": true,
+      "centerHit": true,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "run-placement-no-cancel",
+      "status": "defect-reproduced",
+      "selected": "bc-mutsbpok-7",
+      "placement": true,
+      "overlay": "inventory",
+      "hp": 100,
+      "elapsed": 1.18660000000894,
+      "cancelButtons": 0,
+      "instruction": 0
+    },
+    {
+      "name": "run-placement-stuck-after-reopen",
+      "status": "defect-reproduced",
+      "selected": "",
+      "placement": true,
+      "overlay": "inventory",
+      "hp": 100,
+      "elapsed": 1.3363999999985094,
+      "detailActions": 0
+    },
+    {
+      "name": "inventory-remains-live",
+      "status": "existing-rule-confirmed",
+      "before": {
+        "selected": "",
+        "placement": false,
+        "overlay": "inventory",
+        "hp": 74.97841999999807,
+        "elapsed": 1.3696000000014896
+      },
+      "after": {
+        "selected": "",
+        "placement": false,
+        "overlay": "inventory",
+        "hp": 74.72934000000099,
+        "elapsed": 1.7527999999970199
+      },
+      "pauseVisible": false
+    },
+    {
+      "name": "short-screen-reading-hidden",
+      "status": "defect-reproduced",
+      "radio": {
+        "text": "水产站维修单：小蔡在水产市场留了备用物资：泵机零件三个、绝缘线圈两卷、陶瓷保险管一支。拿齐了就回来修电源。",
+        "visible": false,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0
+        },
+        "inViewport": true,
+        "inPanel": true,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 0,
+        "clientHeight": 0
+      },
+      "seen": [
+        "水产站维修单"
+      ]
+    },
+    {
+      "name": "short-screen-reload-status-hidden",
+      "status": "defect-reproduced",
+      "remaining": 1.18329999999702,
+      "indicator": {
+        "text": "换弹中　1.2 秒",
+        "visible": false,
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0
+        },
+        "inViewport": true,
+        "inPanel": true,
+        "centerHit": false,
+        "scrollTop": 0,
+        "scrollHeight": 0,
+        "clientHeight": 0
+      },
+      "button": {
+        "text": "换弹",
+        "visible": true,
+        "rect": {
+          "x": 540,
+          "y": 156,
+          "width": 54,
+          "height": 48,
+          "bottom": 204
+        },
+        "inViewport": true,
+        "inPanel": true,
+        "centerHit": true,
+        "scrollTop": 0,
+        "scrollHeight": 46,
+        "clientHeight": 46
+      }
+    },
+    {
+      "name": "height-only-resize-pauses",
+      "status": "simulated-risk-confirmed",
+      "note": "Only a 10 CSS px height change is simulated. No claim of reproduced Safari/QQ toolbar behavior.",
+      "before": {
+        "selected": "",
+        "placement": false,
+        "overlay": "",
+        "hp": 74.69684000000099,
+        "elapsed": 2.053
+      },
+      "after": {
+        "selected": "",
+        "placement": false,
+        "overlay": "pause",
+        "hp": 74.69684000000099,
+        "elapsed": 2.053
+      }
+    },
+    {
+      "name": "interaction-controls-667x375",
+      "status": "panel-overlap-reproduced",
+      "note": "Panel boundaries overlap; this alone does not prove item-name text or button centers are covered.",
+      "overlaps": [
+        {
+          "text": "主武器",
+          "overlap": 403.853759765625
+        },
+        {
+          "text": "拾取",
+          "overlap": 114.760009765625
+        }
+      ]
+    },
+    {
+      "name": "interaction-controls-740x300",
+      "status": "clear",
+      "note": "Panel boundaries overlap; this alone does not prove item-name text or button centers are covered.",
+      "overlaps": []
+    },
+    {
+      "name": "interaction-controls-844x390",
+      "status": "clear",
+      "note": "Panel boundaries overlap; this alone does not prove item-name text or button centers are covered.",
+      "overlaps": []
+    },
+    {
+      "name": "injected-safe-area-control-reachability",
+      "status": "passed",
+      "controls": [
+        {
+          "label": "地图",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "背包",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "Ⅱ",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "治疗",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "匕首",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "主武器",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "换弹",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        },
+        {
+          "label": "拾取",
+          "inside": true,
+          "minSize": true,
+          "hit": true
+        }
+      ],
+      "note": "Injected CSS values, not an actual notch/navigation bar."
+    },
+    {
+      "name": "map-close-reachable",
+      "status": "passed",
+      "text": "关闭地图",
+      "visible": true,
+      "rect": {
+        "x": 650.984375,
+        "y": 313,
+        "width": 82,
+        "height": 48,
+        "bottom": 361
+      },
+      "inViewport": true,
+      "inPanel": true,
+      "centerHit": true,
+      "scrollTop": 0,
+      "scrollHeight": 46,
+      "clientHeight": 46
+    },
+    {
+      "name": "pause-and-resume",
+      "status": "passed",
+      "paused": "pause",
+      "resumed": "",
+      "elapsedFrozen": true
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "138.0.7204.0",
+  "status": "completed"
+}

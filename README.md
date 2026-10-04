@@ -171,7 +171,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 手机目标、触控方案、实施阶段与验收门槛 | [2026 移动端适配计划](docs/MOBILE-ADAPTATION-PLAN.md) |
 | 移动端操作、完整恢复协议与验证边界 | [移动适配实现](docs/MOBILE-IMPLEMENTATION.md) |
 | PR #2 桌面回归修复与前后对照 | [桌面回归修复](docs/DESKTOP-REGRESSION-FIXES.md) |
-| 安全箱收纳、手机搜刮和用药反馈 | [核实结果与修改计划](docs/PLAYER-FEEDBACK-PLAN.md)（尚未实现） |
+| 移动体验：背包、搜刮、用药和战斗提示 | [关联排查与修改计划](docs/PLAYER-FEEDBACK-PLAN.md)（尚未实现） |
 | 夜港主界面、手机布局与性能取舍 | [主界面重制记录](docs/TITLE-SCREEN.md) |
 | 玩家文案、统一术语与校对规则 | [文案约定](docs/COPY-GUIDE.md) · [校对记录](docs/COPY-REVIEW.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
