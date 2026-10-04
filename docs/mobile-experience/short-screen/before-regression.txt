@@ -1,0 +1,31 @@
+$ node --import tsx scripts/mobile-ux-test.mjs
+PASS seven phone sizes have immediately reachable inventory and detail exits
+PASS placement cancel and close/reopen keep inventory selectable and unchanged
+PASS success toast does not cover nearby text, warning or combat buttons
+AssertionError [ERR_ASSERTION]: 640x300: nearby 2
++ actual - expected
+
++ [
++   {
++     area: 551.25,
++     text: '水产站：信号接通。撤离点已标记在地图上，别等到最后一分钟。'
++   },
++   {
++     area: 3840,
++     text: '持续流血 · 点「治疗」止血'
++   }
++ ]
+- []
+
+    at clearFeedback (file:///workspace/scratch/f0b9338a4f95/escape-bincov/scripts/mobile-ux-test.mjs:63:11)
+    at async file:///workspace/scratch/f0b9338a4f95/escape-bincov/scripts/mobile-ux-test.mjs:76:4
+    at async step (file:///workspace/scratch/f0b9338a4f95/escape-bincov/scripts/mobile-ux-test.mjs:17:87)
+    at async file:///workspace/scratch/f0b9338a4f95/escape-bincov/scripts/mobile-ux-test.mjs:51:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+[ELIFECYCLE] Command failed with exit code 1.
