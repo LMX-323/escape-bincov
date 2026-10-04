@@ -143,6 +143,7 @@ export class RaidScene extends Phaser.Scene {
         this.cameras.main.setRoundPixels(true);
         this.input.mouse!.disableContextMenu();
         if (!app.checkpoint) throw new Error('Missing deployment checkpoint');
+        this.releaseInput();
         this.restore(app.checkpoint);
         saveSession.attachRaid({ capture: () => this.snapshot(), restore: value => this.restore(value) });
         this.events.once('shutdown', () => { saveSession.attachRaid(null); playerInput.clear(); });
@@ -174,6 +175,8 @@ export class RaidScene extends Phaser.Scene {
             bullets: this.bullets.map(({ sprite, ...b }) => ({ ...b, ...actor(sprite) })),
         });
     }
+    /** Synchronous transaction rollback preserves held inputs and the foreground clock.
+     * Loading a raid, pausing and losing focus release input at their lifecycle boundaries. */
     restore(c: RaidCheckpoint) {
         app.loadout = structuredClone(c.loadout);
         for (const key of ['hp','stamina','pollution','bleeding','kills','elapsed','highTide','knife','reloadLeft','fireCooldown',
@@ -190,7 +193,7 @@ export class RaidScene extends Phaser.Scene {
         });
         this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[l.id].color) }));
         this.bullets = c.bullets.map(({ x, y, rotation, ...b }) => ({ ...b, sprite: this.add.image(x, y, 'bullet').setRotation(rotation).setDepth(10).setTint(b.enemy ? 0xe48c64 : 0xffffff) }));
-        this.drawFlood(); this.releaseInput();
+        this.drawFlood();
     }
     get paused() { return this.locked || ['pause', 'help', 'abandon', 'rotate', 'checkpoint-error'].includes(app.overlay); }
     get currentWeapon() { return D.WEAPONS[!this.knife && app.loadout?.weapon ? app.loadout.weapon : 'knife']; }
