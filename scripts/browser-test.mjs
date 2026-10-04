@@ -119,7 +119,7 @@ async function suite(viewport) {
   }
 
   try {
-    await step('offline menu and integer canvas scaling', async () => {
+    await step('offline viewport title and fixed logical canvas', async () => {
       await page.goto(url, { waitUntil: 'load' });
       await page.waitForFunction(() => window.__bincov?.app.game?.canvas && window.__bincov.app.game.scene.isActive('Menu'));
       await action('enter').waitFor();
@@ -128,16 +128,20 @@ async function suite(viewport) {
         const canvas = window.__bincov.app.game.canvas, rect = canvas.getBoundingClientRect();
         return { width: rect.width, height: rect.height, x: rect.x, y: rect.y, logicalWidth: canvas.width, logicalHeight: canvas.height };
       });
-      const scale = Math.floor(Math.min(viewport.width / 960, viewport.height / 540));
       assert.equal(bounds.logicalWidth, 960); assert.equal(bounds.logicalHeight, 540);
-      assert.equal(bounds.width, 960 * scale); assert.equal(bounds.height, 540 * scale);
-      assert.equal(bounds.x, (viewport.width - bounds.width) / 2);
-      assert.equal(bounds.y, (viewport.height - bounds.height) / 2);
+      assert.equal(bounds.width, viewport.width); assert.equal(bounds.height, viewport.height);
+      assert.equal(bounds.x, 0); assert.equal(bounds.y, 0);
       await screenshot('menu');
       return bounds;
     });
     await step('hideout, merchant price and native inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
+      // The responsive title must not change the existing game/inventory geometry.
+      const bounds = await page.locator('#game canvas').boundingBox();
+      const frameScale = Math.floor(Math.min(viewport.width / 960, viewport.height / 540));
+      assert.equal(bounds.width, 960 * frameScale); assert.equal(bounds.height, 540 * frameScale);
+      assert.equal(bounds.x, (viewport.width - bounds.width) / 2);
+      assert.equal(bounds.y, (viewport.height - bounds.height) / 2);
       const initial = await state();
       assert.equal(initial.bag.w, 6); assert.equal(initial.bag.h, 5);
       assert.equal(initial.safe.w, 2); assert.equal(initial.safe.h, 2);

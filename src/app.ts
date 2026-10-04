@@ -14,6 +14,7 @@ export const app = {
     mobileContainer: 'bag', inventoryGrid: false, placement: false,
     pendingImport: null as SaveDataV1 | null,
     pendingRecoveryImport: null as SessionRecord | null,
+    menuMotion: true,
 };
 
 export const audio = new SynthAudio();

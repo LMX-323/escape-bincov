@@ -1,0 +1,66 @@
+{
+  "baseline": "a4de2421115d56d491c7eed34ba1293ba8ceae73",
+  "initialBaseline": "f4c50bdf1ae7cd6a1c1309ea77aa765169ac4b6b",
+  "branch": "agent/harbor-title-screen",
+  "node": "24.19.0",
+  "pnpm": "11.25.0",
+  "browser": "Chromium 138.0.7204.0",
+  "unitTests": {
+    "passed": 59,
+    "failed": 0
+  },
+  "regressions": {
+    "browser": {
+      "checks": 24,
+      "passed": true,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T07:33:47.520Z"
+    },
+    "ui": {
+      "checks": 38,
+      "passed": true,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T07:34:03.717Z"
+    },
+    "save": {
+      "checks": 9,
+      "passed": true,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T07:34:19.592Z"
+    },
+    "portable": {
+      "checks": 6,
+      "passed": true,
+      "errors": [],
+      "externalRequests": [],
+      "finishedAt": "2026-10-04T07:34:56.349Z"
+    }
+  },
+  "finalArtifacts": {
+    "version": "0.1.1",
+    "htmlBytes": 1626522,
+    "htmlSha256": "30904b1ce6a8c305b97c077c90c4cc553a42c0b5e7c7a952f7f60940d4805e26",
+    "artifacts": {
+      "dist/index.html": {
+        "bytes": 1626522,
+        "sha256": "30904b1ce6a8c305b97c077c90c4cc553a42c0b5e7c7a952f7f60940d4805e26"
+      },
+      "start the game.html": {
+        "bytes": 1626522,
+        "sha256": "30904b1ce6a8c305b97c077c90c4cc553a42c0b5e7c7a952f7f60940d4805e26"
+      },
+      "release/Escape-Bincov-portable.zip": {
+        "bytes": 388657,
+        "sha256": "db5e0ff54d9944a4f06fb38a1890a6afcfe1f97606d30ccae34d1f8a22c2db03"
+      },
+      "release/Escape-Bincov-web.zip": {
+        "bytes": 387116,
+        "sha256": "83160b874a7680b12b127af2aee8f1a7e0ea149288e5459320fd346cd828d6de"
+      }
+    }
+  },
+  "note": "All suites rerun after adapting to main with PR #3 merged. Phone sizes are emulated; no physical-device performance claim."
+}

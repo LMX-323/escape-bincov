@@ -6,6 +6,7 @@ import { SESSION_MAX_BYTES } from './recovery-store';
 import { playerInput } from './input';
 import { app, audio, saveSession } from './app';
 import type { SessionMutation } from './session';
+import { titleScreen } from './title-screen';
 const ui = () => document.getElementById('ui')!;
 export function toast(message: string) { const el = document.getElementById('toast')!; el.textContent = message; el.style.opacity = '1'; clearTimeout((toast as any).timer); (toast as any).timer = setTimeout(() => el.style.opacity = '0', 3300); }
 function saved(ok: boolean): boolean {
@@ -66,9 +67,23 @@ export function render() {
     document.documentElement.dataset.overlay = app.overlay;
     document.documentElement.dataset.container = app.mobileContainer;
     document.dispatchEvent(new Event('bincov-ui'));
+    document.body.dataset.screen = app.state;
+    app.game?.scale.updateBounds();
     if (app.state === 'menu') {
-        ui().innerHTML = `<div class="menu"><div class="menu-location">滨科夫县 <span>沿海封锁区</span></div><h1>逃离<br>滨科夫</h1><div class="subtitle">ESCAPE BINCOV</div><p class="intro">台风过后，海没有退去。<br>带上最后一匣子弹，穿过盐雾与封锁线。<br>找到补给，活着回到水产站。</p>${btn(app.checkpoint ? '继续上次行动 <span aria-hidden="true">→</span>' : '进入水产站 <span aria-hidden="true">→</span>', 'enter', 'primary')}<footer>单人撤离生存 <span>进度保存在本机</span></footer>${btn('操作指南', 'help', 'text-button')}</div><div class="version"><span>北纬 27° · 赤潮封锁第 17 天</span><span class="build-number">ESCAPE BINCOV / 0.1.1</span><a class="repo-link" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub · 反馈 / 参与开发 ↗</a></div>${overlayHtml()}`;
+        const focusedAction = (document.activeElement as HTMLElement | null)?.dataset.action;
+        const overlay = overlayHtml();
+        ui().innerHTML = titleScreen({ runs: app.save.stats.runs, extracts: app.save.stats.extracts, motion: app.menuMotion,
+            overlay: !!overlay, storageOK: app.storageOK, resume: !!app.checkpoint, touch: playerInput.touch }) + overlay;
         bind();
+        if (overlay) {
+            const modal = ui().querySelector<HTMLElement>('.modal');
+            modal?.setAttribute('role', 'dialog');
+            modal?.setAttribute('aria-modal', 'true');
+            modal?.setAttribute('aria-label', modal.querySelector('h2')?.textContent || '行动指南');
+            modal?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+        } else if (focusedAction === 'close' || focusedAction === 'title-motion') {
+            ui().querySelector<HTMLButtonElement>(`[data-action="${focusedAction === 'close' ? 'help' : 'title-motion'}"]`)?.focus({ preventScroll: true });
+        }
         return;
     }
     if (app.state === 'hideout')
@@ -136,7 +151,7 @@ function overlayHtml() {
         return `<div class="overlay"><div class="panel modal"><div class="section-label">行动暂停 · 电台静默</div><h2>暂时隐蔽</h2><p>行动已暂停。刷新后可从最近成功保存的检查点继续，少量未保存进度可能回退。</p><label class="small">音量 <span id="volume-label">${Math.round(app.save.settings.volume * 100)}%</span><input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.05" value="${app.save.settings.volume}"></label><div class="actions">${btn('继续行动', 'close', 'primary')}${btn('操作指南', 'help')}${btn('放弃行动', 'abandon', 'danger')}${btn('导出行动备份', 'export-save')}</div></div></div>`;
     if (app.overlay === 'abandon')
         return `<div class="overlay"><div class="panel modal"><h2>放弃这次行动？</h2><p>你会失去携带与搜到的物资。安全箱里的东西会保留。</p><div class="actions">${btn('继续隐蔽', 'pause', 'primary')}${btn('确认放弃', 'confirm-abandon', 'danger')}</div></div></div>`;
-    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">水产站 · 随身手册</div><h2>行动指南</h2>${playerInput.touch ? '<p class="touch-guide">左盘移动，推到外圈冲刺。右盘内圈瞄准、外圈持续开火，松开即停。靠近物资点「搜刮」，撤离区内停稳并按住「撤离」3 秒。地图和背包不暂停，整理时仍可能受击。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '射击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '拾取 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>先在水产站整备，备用弹药放入背包。搜刮地上的黄色物资，沿永久高架路抵达绿色撤离点。站稳并按住 E，读条 3 秒即可回家。</p><p>潮汐翻转前会广播预警；涉水会积累污染。按 Q 优先止血，背包内可使用解毒剂。主动放弃、死亡、超时会失去携带物资。刷新可恢复最近成功保存的检查点。</p>${btn('明白了', 'close', 'primary')}</div></div>`;
+    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">水产站 · 随身手册</div><h2>行动指南</h2>${playerInput.touch ? '<p class="touch-guide">左盘移动，推到外圈冲刺。右盘内圈瞄准、外圈持续开火，松开即停。靠近物资点「搜刮」，撤离区内停稳并按住「撤离」3 秒。地图和背包不暂停，整理时仍可能受击。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '射击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '拾取 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>先在水产站整备，备用弹药放入背包。搜刮地上的黄色物资，沿永久高架路抵达绿色撤离点。站稳并按住${playerInput.touch ? '撤离按钮' : ' E'}，读条 3 秒即可回家。</p><p>潮汐翻转前会广播预警；涉水会积累污染。${playerInput.touch ? '点治疗' : '按 Q'}优先止血，背包内可使用解毒剂。主动放弃、死亡、超时会失去携带物资。刷新可恢复最近成功保存的检查点。</p>${btn('明白了', 'close', 'primary')}</div></div>`;
 }
 export function setOverlay(value: string) {
     if (app.overlay === 'checkpoint-error' && value !== 'checkpoint-error' && !app.storageOK) return;
@@ -234,6 +249,15 @@ function bind() {
                 break;
             }
             case 'retry-checkpoint': if (app.raid?.checkpoint()) { app.overlay = 'pause'; render(); } break;
+            case 'title-motion':
+                if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    toast('系统已开启「减少动态效果」，景物保持静止。');
+                    break;
+                }
+                app.menuMotion = !app.menuMotion;
+                app.game?.scene.getScene('Menu').events.emit('title-motion', app.menuMotion);
+                render();
+                break;
             case 'retry-save': retrySettlement(); break;
             case 'export-save': exportSave(); break;
             case 'import-save': document.getElementById('backup-file')?.click(); break;

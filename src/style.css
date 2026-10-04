@@ -37,25 +37,6 @@ button.text-button:hover:not(:disabled) { border-color: transparent; background:
 .eyebrow { font-family: var(--mono); }
 .panel { pointer-events: auto; background: #15221ff7; border: 1px solid #4c6050; box-shadow: 0 12px 32px #0005; }
 
-/* Title screen: keep the port and its single light visible. */
-.menu { position: absolute; left: 60px; top: 66px; width: 390px; pointer-events: auto; }
-.menu-location { display: flex; align-items: center; gap: 12px; font-size: 11px; color: #c6d0b4; letter-spacing: 2px; }
-.menu-location::before { content: ""; width: 5px; height: 5px; background: #bfca8e; }
-.menu-location span { color: #91a394; padding-left: 12px; border-left: 1px solid #526659; }
-.menu h1 { font-size: 52px; letter-spacing: 5px; line-height: 1.18; margin: 20px 0 9px; text-shadow: 3px 3px #122022; font-weight: 900; }
-.menu .subtitle { font: 11px var(--mono); letter-spacing: 5px; color: #b7c0a7; }
-.menu .intro { font-size: 12px; line-height: 2; color: #b3c0af; margin: 25px 0 24px; }
-.menu .primary { width: 224px; padding: 13px 16px; display: flex; justify-content: space-between; letter-spacing: 1px; }
-.menu .primary span { font-size: 16px; line-height: 16px; }
-.menu footer { display: flex; gap: 10px; margin: 14px 0 9px; font-size: 10px; color: #9bad99; }
-.menu footer span { border-left: 1px solid #526357; padding-left: 10px; color: #8b9e90; }
-.menu .text-button { font-size: 11px; }
-.version { position: absolute; right: 28px; bottom: 24px; text-align: right; color: #9aafa0; font-size: 10px; letter-spacing: 1px; line-height: 1.6; }
-.version > span { display: block; }
-.version .build-number { margin-top: 10px; font-family: var(--mono); font-size: 9px; color: #8fa18d; letter-spacing: 2px; }
-.repo-link { display: inline-block; margin-top: 9px; color: #c0cd93; pointer-events: auto; text-decoration: none; font-size: 10px; }
-.repo-link:hover { color: #e1e8ac; text-decoration: underline; text-underline-offset: 3px; }
-
 /* Hideout uses a fixed header/footer and a separately scrollable working area. */
 .hideout { position: absolute; inset: 16px; display: flex; flex-direction: column; }
 .topbar { min-height: 64px; padding: 12px 20px; display: flex; align-items: center; gap: 16px; background: #101d1bf2; border-bottom: 1px solid var(--line); }
@@ -261,20 +242,12 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile #frame { width: 100%; height: 100%; transform: none; }
 .mobile #game { inset: auto; width: 960px; height: 540px; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(var(--world-scale, .5)); transform-origin: center; touch-action: none; }
 .mobile #ui, .mobile #touch-controls, .mobile #world-labels { inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
-.mobile button { min-height: 48px; font-size: 14px; padding: 10px 12px; touch-action: manipulation; }
+.mobile body:not([data-screen="menu"]) button { min-height: 48px; font-size: 14px; padding: 10px 12px; touch-action: manipulation; }
 .mobile input { min-height: 48px; font-size: 16px; }
 .mobile .small, .mobile .inv-help, .mobile .content-note { font-size: 12px; }
 .mobile .section-label, .mobile .eyebrow { font-size: 11px; }
 .mobile .section-title { font-size: 15px; }
 .mobile .section-title span { font-size: 11px; white-space: normal; }
-.mobile .menu { left: 24px; top: max(28px, 8%); width: min(390px, calc(100% - 48px)); bottom: 16px; overflow: auto; }
-.mobile .menu h1 { font-size: clamp(38px, 10vw, 52px); }
-.mobile .menu .intro { font-size: 14px; }
-.mobile .menu .primary { min-height: 54px; width: min(100%, 290px); }
-.mobile .menu footer { font-size: 12px; }
-.mobile .version { bottom: 16px; right: 24px; }
-.mobile .version > span { display: none; }
-.mobile .repo-link { font-size: 12px; min-height: 48px; display: flex; align-items: center; }
 .mobile .hideout { inset: 6px; }
 .mobile .topbar { padding: 10px 12px; min-height: 58px; }
 .mobile .topbar h2 { font-size: 18px; }
@@ -375,9 +348,6 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile:not([data-state="run"]) #world-labels, .mobile:not([data-overlay=""]) #world-labels { display: none; }
 .mobile #toast { bottom: max(15px, var(--safe-bottom)); max-width: calc(100vw - 24px); font-size: 13px; z-index: 100; }
 @media (orientation: landscape) {
-  .mobile .menu { top: 20px; }
-  .mobile .menu h1 { margin: 12px 0 8px; font-size: 40px; }
-  .mobile .menu .intro { margin: 12px 0; }
   .mobile .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .mobile .quests { grid-template-columns: repeat(2, 1fr); }
   .mobile .help-grid { grid-template-columns: 1fr 1fr; }

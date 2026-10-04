@@ -10,6 +10,7 @@ import { installControls } from './mobile';
 async function boot() {
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
+    app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
     app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
     const coarse = matchMedia('(any-pointer: coarse)');
     const controls = installControls(setOverlay, () => app.state === 'run', () => audio.start());
@@ -39,6 +40,14 @@ async function boot() {
     }
     addEventListener('resize', resize); visualViewport?.addEventListener('resize', resize); coarse.addEventListener('change', resize);
     app.game.events.once('ready', resize); resize();
+    matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+        if (!e.matches) return;
+        app.menuMotion = false;
+        if (app.state === 'menu') {
+            app.game?.scene.getScene('Menu').events.emit('title-motion', false);
+            render();
+        }
+    });
     const suspend = () => {
         app.raid?.releaseInput(); playerInput.clear(); controls(); audio.stop();
         if (app.state === 'run' && !app.pendingSettlement) setOverlay('pause');
@@ -58,7 +67,16 @@ async function boot() {
     addEventListener('pointercancel', () => { playerInput.clear(); controls(); });
     addEventListener('keydown', e => {
         if (/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)) return;
-        if (['Tab', ' ', 'Escape'].includes(e.key)) e.preventDefault();
+        const modal = app.state === 'menu' ? document.querySelector<HTMLElement>('#ui [aria-modal="true"]') : null;
+        if (modal && e.key === 'Tab') {
+            const targets = Array.from(modal.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+            const index = targets.indexOf(document.activeElement as HTMLButtonElement);
+            if (index < 0 || (e.shiftKey ? index === 0 : index === targets.length - 1)) {
+                e.preventDefault(); targets[e.shiftKey ? targets.length - 1 : 0]?.focus();
+            }
+            return;
+        }
+        if (app.state === 'run' && ['Tab', ' ', 'Escape'].includes(e.key)) e.preventDefault();
         if (e.repeat) return;
         if (app.state === 'run') {
             if (e.key === 'Tab') setOverlay(app.overlay === 'inventory' ? '' : 'inventory');
