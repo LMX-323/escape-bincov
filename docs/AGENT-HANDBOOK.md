@@ -77,7 +77,9 @@ git push -u origin agent/short-task-name
 | --- | --- | --- |
 | `src/main.ts` | Phaser 初始化、缩放、全局输入、窗口切换、存档冲突 | 普通入口无测试接口，画布边界与像素缩放 |
 | `src/game.ts` | 场景、移动、射击、敌人、潮汐、撤离与 HUD | 行动锁定、帧更新、计时、生命周期和输入坐标 |
-| `src/ui.ts` | 菜单、整备、交易、任务、背包、导入导出、结算 | 持久化时序、事务回滚、多窗口冲突 |
+| `src/app.ts` | 组装共享状态、音效和存档会话 | 唯一状态来源；Phaser/场景仅类型依赖 |
+| `src/session.ts` | 出击提交、事务回滚、结算重试、导入和存储冲突状态 | 无 DOM/Phaser；写入成功后提交；失败回滚 |
+| `src/ui.ts` | 菜单、整备、交易、任务、背包、导入导出、结算展示 | 调用会话接口；世界副作用放在提交之后 |
 | `src/domain.ts` | 物品/武器/敌人、交易、任务、存档和结算 | 保持纯逻辑、物品守恒、旧存档兼容 |
 | `src/save-backup.ts` | 备份格式、校验、编码与解码 | 上限、非法物品、堆叠、边界、重叠、UID 与活动行动 |
 | `src/balance.ts` | 负重、耐力、污染、治疗等生存数值 | 玩法变化须验证真实计时与失败场景 |
@@ -88,6 +90,8 @@ git push -u origin agent/short-task-name
 | `scripts/build.mjs` | esbuild 打包、HTML 内联与开发服务 | 两个 HTML 字节一致，第三方声明保留 |
 | `scripts/package.mjs` | 标准 ZIP 和制品清单 | 内部入口名、中文文件名、CRC、可复现打包 |
 | `.github/workflows/ci-pages.yml` | CI、报告和 Pages 部署 | PR 仅读取权限，部署只发生在 main 验证之后 |
+
+应用状态与会话接口的职责、提交顺序和扩展示例见 [架构说明](ARCHITECTURE.md)。
 
 主要接口：`ItemDef`、`WeaponDef`、`EnemyDef`、`LootTable`、`RunConfig`、`SaveDataV1`。逻辑画面 960×540，地图 72×52 格，每格 32 像素。当前状态流：菜单、藏身处、行动、结算。
 
