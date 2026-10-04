@@ -50,11 +50,11 @@ async function boot() {
     addEventListener('beforeunload', e => { app.raid?.checkpoint(); if (app.pendingSettlement || !app.storageOK) { e.preventDefault(); e.returnValue = ''; } });
     document.addEventListener('contextmenu', e => { if ((e.target as HTMLElement).closest('#game, #touch-controls')) e.preventDefault(); });
     addEventListener('pointermove', e => { if (e.pointerType === 'mouse') playerInput.pointer = { x: e.clientX, y: e.clientY }; });
-    document.getElementById('game')!.addEventListener('pointerdown', e => {
-        if (e.pointerType !== 'mouse' || app.overlay) return;
+    document.getElementById('game')!.addEventListener('mousedown', e => {
+        if (playerInput.touch || app.overlay) return;
         playerInput.pointer = { x: e.clientX, y: e.clientY }; playerInput.mouse(e.button, true); audio.start();
     });
-    addEventListener('pointerup', e => { if (e.pointerType === 'mouse') playerInput.mouse(e.button, false); });
+    addEventListener('mouseup', e => playerInput.mouse(e.button, false));
     addEventListener('pointercancel', () => { playerInput.clear(); controls(); });
     addEventListener('keydown', e => {
         if (/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)) return;

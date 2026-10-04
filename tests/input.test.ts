@@ -29,6 +29,6 @@ test('desktop remains press-to-fire; command repeats and lost releases are clear
 test('clock counts a 125ms frame in full and resets across pause', () => {
   const clock = new ActiveClock(); clock.tick(1000);
   const frame = clock.tick(1125); assert.equal(frame.seconds, .125); assert.equal(frame.steps, 4);
-  assert.equal(clock.tick(2125).stalled, true);
+  assert.equal(clock.tick(4125).stalled, true);
   clock.reset(); assert.equal(clock.tick(90000).seconds, 0);
 });

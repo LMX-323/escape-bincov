@@ -79,6 +79,6 @@ export class ActiveClock {
   tick(now: number) {
     const seconds = this.previous === null ? 0 : Math.max(0, (now - this.previous) / 1000);
     this.previous = now;
-    return { seconds, stalled: seconds > .5, steps: Math.max(1, Math.ceil(Math.min(seconds, .5) / .04)) };
+    return { seconds, stalled: seconds > 2, steps: Math.max(1, Math.ceil(Math.min(seconds, 2) / .04)) };
   }
 }
