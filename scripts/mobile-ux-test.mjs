@@ -48,6 +48,45 @@ try {
   }
   await page.evaluate(()=>{for(const key of ['--safe-left','--safe-right','--safe-bottom'])document.documentElement.style.removeProperty(key);dispatchEvent(new Event('resize'))});
  });
+ await step('three nearby items keep bleeding warnings clear after pickup on short phones',async()=>{
+  report.threeItemFeedback=[];
+  await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
+  const cases=[[640,300],[640,340],[640,341],[667,375],[740,300],[740,340],[740,341],[844,390],[915,412],[932,430],[640,300,true],[640,341,true],[740,300,true]];
+  async function clearFeedback(label){
+   const geometry=await page.evaluate(()=>{
+    const toast=document.getElementById('toast'),a=toast.getBoundingClientRect(),warning=document.querySelector('.banner'),w=warning.getBoundingClientRect();
+    const targets=['#interaction','.banner','#radio','.vitals','.weapon-hud','.hud-top','#touch-controls button','.stick'];
+    const visible=[...document.querySelectorAll(targets.join(','))].filter(el=>{const s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'});
+    const overlap=visible.map(el=>{const b=el.getBoundingClientRect();return {text:el.textContent,area:Math.max(0,Math.min(a.right,b.right)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y))}}).filter(x=>x.area>0);
+    const warningOverlap=visible.filter(el=>el!==warning).map(el=>{const b=el.getBoundingClientRect();return {text:el.textContent,area:Math.max(0,Math.min(w.right,b.right)-Math.max(w.x,b.x))*Math.max(0,Math.min(w.bottom,b.bottom)-Math.max(w.y,b.y))}}).filter(x=>x.area>0);
+    return {toast:{text:toast.textContent,...a.toJSON()},warning:w.toJSON(),interaction:document.getElementById('interaction').getBoundingClientRect().toJSON(),overlap,warningOverlap,width:innerWidth,height:innerHeight};
+   });
+   report.threeItemFeedback.push({label,...geometry});
+   assert.deepEqual(geometry.overlap,[],label);
+   assert.deepEqual(geometry.warningOverlap,[],`${label}: warning and controls`);
+   assert.ok(geometry.toast.x>=0&&geometry.toast.right<=geometry.width&&geometry.toast.y>=0&&geometry.toast.bottom<=geometry.height,label);
+   assert.match(await page.locator('#warning').innerText(),/持续流血.*治疗/);
+   assert.doesNotMatch(await page.locator('#warning').innerText(),/Q/);
+  }
+  for(const [width,height,safe] of cases){
+   await resize(width,height);
+   await page.evaluate(safe=>{const s=document.documentElement.style;for(const [key,value] of [['--safe-left','44px'],['--safe-right','12px'],['--safe-bottom','20px']]){if(safe)s.setProperty(key,value);else s.removeProperty(key)}dispatchEvent(new Event('resize'));},safe);
+   if(await action('close').count())await action('close').tap();await fixture();
+   await page.evaluate(()=>{const {app}=__bincov,r=app.raid;r.hp=53;r.bleeding=1;r.loot.forEach(l=>l.sprite.destroy());r.loot=[];app.loadout.bag.items=[];r.spawnLoot(700,784,'fuse',1);r.spawnLoot(720,784,'water',1);r.spawnLoot(730,784,'bandage',1);});
+   await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 3');
+   await page.locator('#touch-interact').tap();
+   await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 2'&&getComputedStyle(document.getElementById('toast')).opacity==='1');
+   await clearFeedback(`${width}x${height}${safe?' safe':''}: nearby 2`);assert.ok(await reachable('[data-action="nearby"]'));
+   if(width===640&&height===300)await shot(safe?'feedback-640-safe':'feedback-640');
+   await action('nearby').tap();assert.equal(await action('pickup-loot').count(),2);assert.ok(await reachable('[data-action="close"]'));await action('close').tap();
+   await page.locator('#touch-interact').tap();
+   await page.waitForFunction(()=>!document.querySelector('[data-action="nearby"]')&&document.getElementById('toast').textContent.includes('× 2'));
+   await clearFeedback(`${width}x${height}${safe?' safe':''}: repeated pickup`);
+   await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0'&&!document.documentElement.dataset.toastKind);
+   assert.equal(await page.locator('#radio').evaluate(el=>getComputedStyle(el).visibility),'visible');
+  }
+  await page.evaluate(()=>{for(const key of ['--safe-left','--safe-right','--safe-bottom'])document.documentElement.style.removeProperty(key);dispatchEvent(new Event('resize'))});
+ });
  await step('short phone reading remains visible with reachable exit and a live clock',async()=>{
   for(const height of [300,340,341]){
   await resize(740,height);await fixture();await page.evaluate(n=>{const r=__bincov.app.raid;r.loot.forEach(l=>l.sprite.destroy());r.loot=[];r.player.setPosition(n.x,n.y);},WORLD.notes[0]);
