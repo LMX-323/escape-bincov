@@ -62,7 +62,7 @@ M0 原型：Linux、Chromium 138、headless、初始 25 名敌人与 60 件物�
 
 ## 本地验收结果
 
-环境为 Linux x64、Node 24.19.0、pnpm 11.25.0、Chromium 138.0.7204.0 / SwiftShader；仓库与 CI 仍固定 pnpm 11.19.0。最新单文件 HTML 为 **1,666,134 字节**，与原版精修基线相比约增加 62 KiB，未增加运行时请求。两个 HTML、两个 ZIP 与 SHA-256 清单由 `pnpm package` 生成。
+环境为 Linux x64、Node 24.19.0、pnpm 11.25.0、Chromium 138.0.7204.0 / SwiftShader；仓库与 CI 仍固定 pnpm 11.19.0。最新单文件 HTML 为 **1,666,285 字节**，与原版精修基线相比约增加 62 KiB，未增加运行时请求。两个 HTML、两个 ZIP 与 SHA-256 清单由 `pnpm package` 生成。
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ M0 原型：Linux、Chromium 138、headless、初始 25 名敌人与 60 件物�
 | 旧/新两份真实 HTML 共存 | 3/3 通过 | [legacy-compat-report.json](mobile/legacy-compat-report.json) |
 | 自然计时自动游玩 | 约 10 分 23 秒，两次撤离、30 击杀 | [natural-play-report.json](mobile/natural-play-report.json) |
 
-长流程使用真实键鼠输入，测试钩子只读取状态，不改血量、时间、种子或敌人；它在接入 PR #4 主菜单之前运行。主菜单同步后复跑了上表全部短流程，没有重复长流程；不能将自动玩家当真人手感评价。汇总与当前 HTML 哈希见 [verification.json](mobile/verification.json)。GitHub CI 以 PR 最新 Actions 为准。
+长流程使用真实键鼠输入，测试钩子只读取状态，不改血量、时间、种子或敌人；它在接入 PR #4 主菜单之前运行。主菜单同步后复跑了上表全部短流程，没有重复长流程；不能将自动玩家当真人手感评价。汇总与当前 HTML 哈希见 [verification.json](mobile/verification.json)。最后统一主菜单帮助/存档保护弹窗的 48 px 触控目标，并补跑标题、移动和便携三组，全部通过；其余报告保留该纯样式调整前的完整复测时间与构建信息。GitHub CI 会对最终提交重跑全部短回归，以 PR 最新 Actions 为准。
 
 验证中还修复了桌面右键瞄准＋左键开火的组合事件、短屏武器信息遮挡、地图高度和边缘标签裁切。旧浏览器测试曾直接返回整个 Phaser 对象，导致驱动序列化阻塞画面并触发停顿保护；改为只返回必要数据。故障注入分别覆盖检查点失败和终局失败，避免先触发周期保存而误测另一条路径。
 

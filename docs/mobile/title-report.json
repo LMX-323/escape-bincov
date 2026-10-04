@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-10-04T08:29:08.477Z",
+  "startedAt": "2026-10-04T08:50:00.454Z",
   "checks": [
     {
       "name": "composition, help, input and round-trip 1280x720",
@@ -130,16 +130,16 @@
         [
           0,
           0,
-          0.9999615808747122
+          0.9999938528572943
         ],
         [
           893,
           189,
-          0.9999343017692222
+          0.999989488041355
         ],
         [
-          -16.07941176470588,
-          -23.788235294117648,
+          -16.031764705882352,
+          -23.915294117647058,
           1
         ]
       ]
@@ -149,8 +149,8 @@
       "status": "passed",
       "frames": 120,
       "medianMs": 16.699999999999818,
-      "p95Ms": 33.399999999999636,
-      "actualFps": 53.828125
+      "p95Ms": 33.40000000000009,
+      "actualFps": 48.58203125
     },
     {
       "name": "orientation changes, including an open help dialog",
@@ -161,13 +161,13 @@
   "externalRequests": [],
   "methodology": "Offline, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 is only used for motion/lifecycle/performance inspection. No gameplay or save fixtures.",
   "browser": "138.0.7204.0",
-  "htmlBytes": 1666134,
+  "htmlBytes": 1666285,
   "frameSample": {
     "frames": 120,
     "medianMs": 16.699999999999818,
-    "p95Ms": 33.399999999999636,
-    "actualFps": 53.828125
+    "p95Ms": 33.40000000000009,
+    "actualFps": 48.58203125
   },
   "status": "passed",
-  "finishedAt": "2026-10-04T08:29:39.001Z"
+  "finishedAt": "2026-10-04T08:50:27.292Z"
 }

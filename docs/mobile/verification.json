@@ -9,8 +9,8 @@
     "pnpm": "11.25.0 (repository and CI remain pinned to 11.19.0)",
     "chromium": "138.0.7204.0, headless, SwiftShader"
   },
-  "htmlBytes": 1666134,
-  "htmlSha256": "c7aa7bf3686370bddd6eec5bd49d7837c807b3bc9d3596e9857793ebca3c37c1",
+  "htmlBytes": 1666285,
+  "htmlSha256": "1ff8a71924318369ff994225f58e23896dd16a5ba04845aa03b433cd5844554b",
   "checks": {
     "unit": 69,
     "browser": 24,
@@ -35,5 +35,14 @@
     "iOS native file download/import and audio interruptions",
     "China mainland carrier access",
     "HarmonyOS and WeChat"
-  ]
+  ],
+  "finalStyleRecheck": {
+    "change": "48 CSS px touch targets in title help and save-protection dialogs",
+    "passed": [
+      "test:title",
+      "test:mobile",
+      "test:portable"
+    ],
+    "otherChecks": "Full short regression passed before this CSS-only adjustment; latest PR CI repeats the full suite."
+  }
 }
