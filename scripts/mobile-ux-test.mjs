@@ -52,6 +52,10 @@ try {
   report.threeItemFeedback=[];
   await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');
   const cases=[[640,300],[640,340],[640,341],[667,375],[740,300],[740,340],[740,341],[844,390],[915,412],[932,430],[640,300,true],[640,341,true],[740,300,true]];
+  async function threeItems(){
+   await page.evaluate(()=>{const {app}=__bincov,r=app.raid;r.hp=53;r.bleeding=1;r.loot.forEach(l=>l.sprite.destroy());r.loot=[];app.loadout.bag.items=[];r.spawnLoot(700,784,'fuse',1);r.spawnLoot(720,784,'water',1);r.spawnLoot(730,784,'bandage',1);});
+   await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 3');
+  }
   async function clearFeedback(label){
    const geometry=await page.evaluate(()=>{
     const toast=document.getElementById('toast'),a=toast.getBoundingClientRect(),warning=document.querySelector('.banner'),w=warning.getBoundingClientRect();
@@ -72,13 +76,17 @@ try {
    await resize(width,height);
    await page.evaluate(safe=>{const s=document.documentElement.style;for(const [key,value] of [['--safe-left','44px'],['--safe-right','12px'],['--safe-bottom','20px']]){if(safe)s.setProperty(key,value);else s.removeProperty(key)}dispatchEvent(new Event('resize'));},safe);
    if(await action('close').count())await action('close').tap();await fixture();
-   await page.evaluate(()=>{const {app}=__bincov,r=app.raid;r.hp=53;r.bleeding=1;r.loot.forEach(l=>l.sprite.destroy());r.loot=[];app.loadout.bag.items=[];r.spawnLoot(700,784,'fuse',1);r.spawnLoot(720,784,'water',1);r.spawnLoot(730,784,'bandage',1);});
-   await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 3');
+   await threeItems();
    await page.locator('#touch-interact').tap();
    await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 2'&&getComputedStyle(document.getElementById('toast')).opacity==='1');
    await clearFeedback(`${width}x${height}${safe?' safe':''}: nearby 2`);assert.ok(await reachable('[data-action="nearby"]'));
    if(width===640&&height===300)await shot(safe?'feedback-640-safe':'feedback-640');
    await action('nearby').tap();assert.equal(await action('pickup-loot').count(),2);assert.ok(await reachable('[data-action="close"]'));await action('close').tap();
+   // Panel round-trips and screenshots may outlast the real 1.5s success window.
+   // Check coalescing separately with two immediate trusted pickup taps.
+   await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0'&&!document.documentElement.dataset.toastKind);
+   await threeItems();await page.locator('#touch-interact').tap();
+   await page.waitForFunction(()=>document.querySelector('[data-action="nearby"]')?.textContent==='附近 2');
    await page.locator('#touch-interact').tap();
    await page.waitForFunction(()=>!document.querySelector('[data-action="nearby"]')&&document.getElementById('toast').textContent.includes('× 2'));
    await clearFeedback(`${width}x${height}${safe?' safe':''}: repeated pickup`);

@@ -1,0 +1,69 @@
+{
+  "startedAt": "2026-10-04T14:16:44.974Z",
+  "method": "Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures. Includes failure injection; not physical phone validation.",
+  "steps": [
+    {
+      "name": "seven phone sizes have immediately reachable inventory and detail exits",
+      "status": "passed"
+    },
+    {
+      "name": "placement cancel and close/reopen keep inventory selectable and unchanged",
+      "status": "passed"
+    },
+    {
+      "name": "success toast does not cover nearby text, warning or combat buttons",
+      "status": "passed"
+    },
+    {
+      "name": "three nearby items keep bleeding warnings clear after pickup on short phones",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 12000ms exceeded.\n    at /home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:83:15\n    at async step (/home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:17:87)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:51:2"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "threeItemFeedback": [
+    {
+      "label": "640x300: nearby 2",
+      "toast": {
+        "text": "物资已收入背包。",
+        "x": 155,
+        "y": 65,
+        "width": 280,
+        "height": 34,
+        "top": 65,
+        "right": 435,
+        "bottom": 99,
+        "left": 155
+      },
+      "warning": {
+        "x": 190.859375,
+        "y": 116,
+        "width": 208.28125,
+        "height": 32,
+        "top": 116,
+        "right": 399.140625,
+        "bottom": 148,
+        "left": 190.859375
+      },
+      "interaction": {
+        "x": 270,
+        "y": 212.203125,
+        "width": 165,
+        "height": 79.796875,
+        "top": 212.203125,
+        "right": 435,
+        "bottom": 292,
+        "left": 270
+      },
+      "overlap": [],
+      "warningOverlap": [],
+      "width": 640,
+      "height": 300
+    }
+  ],
+  "status": "failed",
+  "failure": "page.waitForFunction: Timeout 12000ms exceeded.\n    at /home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:83:15\n    at async step (/home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:17:87)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/mobile-ux-test.mjs:51:2",
+  "finishedAt": "2026-10-04T14:17:36.177Z"
+}
