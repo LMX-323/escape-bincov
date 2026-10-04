@@ -156,9 +156,11 @@ function overlayHtml() {
 export function setOverlay(value: string) {
     if (app.overlay === 'checkpoint-error' && value !== 'checkpoint-error' && !app.storageOK) return;
     if (!value && playerInput.touch && app.state === 'run' && (innerWidth < innerHeight || innerHeight < 280)) value = 'rotate';
+    const wasPaused = app.state === 'run' && app.raid?.paused;
     app.raid?.releaseInput(); playerInput.clear();
     app.overlay = app.pendingSettlement ? 'save-error' : value; app.selected = '';
     if (['pause','help','abandon','rotate'].includes(app.overlay)) { app.raid?.checkpoint(); audio.stop(); }
+    else if (wasPaused && app.raid && !app.raid.paused) audio.start();
     render();
 }
 export function finish(outcome: 'extract' | 'death' | 'timeout') {
