@@ -59,6 +59,8 @@
 
 ![手机横屏的双摇杆与战斗按钮](docs/mobile/combat-844.png)
 
+PR #7 候选修复增加药品与附近物品入口、可取消的格位整理和旋转收纳，并修复提示遮挡与短屏反馈；[查看实际画面和验证](docs/MOBILE-EXPERIENCE-FIXES.md)。等待审阅，正式试玩仍以 main 为准。
+
 手机触控已随 **v0.2.0** 提供，目前为尝鲜功能：通过 Chromium 触控仿真，尚未完成 iPhone/Android 真机验收。玩法、恢复协议、竖屏/短屏截图及测试结果见 [移动适配实现记录](docs/MOBILE-IMPLEMENTATION.md)。
 
 ## ▶️ 开始你的第一局
@@ -122,6 +124,7 @@ pnpm dev
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:portable` | 实际解压 ZIP，验证离线启动与操作 |
 | `pnpm test:mobile` | 手机视口、多指输入、检查点恢复与故障回滚 |
+| `pnpm test:mobile-ux` | 背包出口、附近物品、药品来源、旋转与提示避让回归 |
 | `pnpm test:play` | 约 10 分钟真实计时自动玩家，适用于玩法改动 |
 
 浏览器测试前执行 `pnpm exec playwright install chromium`；Linux CI 使用 `--with-deps`。已有 Chrome 可通过 `BINCOV_CHROME` 指定路径。Linux/macOS 的便携包检查还需要 Python 3；更多说明见 [开发手册](docs/AGENT-HANDBOOK.md)。
@@ -171,7 +174,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 手机目标、触控方案、实施阶段与验收门槛 | [2026 移动端适配计划](docs/MOBILE-ADAPTATION-PLAN.md) |
 | 移动端操作、完整恢复协议与验证边界 | [移动适配实现](docs/MOBILE-IMPLEMENTATION.md) |
 | PR #2 桌面回归修复与前后对照 | [桌面回归修复](docs/DESKTOP-REGRESSION-FIXES.md) |
-| 移动体验：背包、搜刮、用药和战斗提示 | [关联排查与修改计划](docs/PLAYER-FEEDBACK-PLAN.md)（尚未实现） |
+| 移动体验：背包、搜刮、用药和战斗提示 | [修复记录](docs/MOBILE-EXPERIENCE-FIXES.md)（PR #7 待审） · [基线排查与原计划](docs/PLAYER-FEEDBACK-PLAN.md) |
 | 夜港主界面、手机布局与性能取舍 | [主界面重制记录](docs/TITLE-SCREEN.md) |
 | 玩家文案、统一术语与校对规则 | [文案约定](docs/COPY-GUIDE.md) · [校对记录](docs/COPY-REVIEW.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
