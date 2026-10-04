@@ -54,6 +54,7 @@ pnpm test
 pnpm package
 pnpm exec playwright install chromium
 pnpm test:browser
+pnpm test:desktop-input
 pnpm test:save-browser
 pnpm test:portable
 pnpm test:mobile

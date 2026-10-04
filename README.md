@@ -116,6 +116,7 @@ pnpm dev
 | `pnpm build` | 严格类型检查，生成两个独立 HTML 入口 |
 | `pnpm package` | 构建游戏，生成离线包、网页包与制品清单 |
 | `pnpm test:browser` | 两种分辨率的浏览器回归 |
+| `pnpm test:desktop-input` | 触屏电脑键鼠、Esc 音频恢复、无效治疗与输入释放回归 |
 | `pnpm test:ui` | 界面布局检查与双分辨率截图 |
 | `pnpm test:title` | 12 种主界面视口、键盘/点击、动态开关和场景往返检查 |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
@@ -166,6 +167,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 界面设计、前后对照与本轮验证 | [界面精修记录](docs/UI-POLISH.md) |
 | 手机目标、触控方案、实施阶段与验收门槛 | [2026 移动端适配计划](docs/MOBILE-ADAPTATION-PLAN.md) |
 | 移动端操作、完整恢复协议与验证边界 | [移动适配实现](docs/MOBILE-IMPLEMENTATION.md) |
+| PR #2 桌面回归修复与前后对照 | [桌面回归修复](docs/DESKTOP-REGRESSION-FIXES.md) |
 | 夜港主界面、手机布局与性能取舍 | [主界面重制记录](docs/TITLE-SCREEN.md) |
 | 玩家文案、统一术语与校对规则 | [文案约定](docs/COPY-GUIDE.md) · [校对记录](docs/COPY-REVIEW.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |

@@ -1,0 +1,137 @@
+{
+  "baselineMain": "193007318ea7d8cdc9e23a5fe812be65ff3bfdb0",
+  "beforePr2": "585705a9ce86363cb8f039a4ee02b7bbe18bc21a",
+  "testedTree": "79a462706fa6ccd7bc62a5a6a882f875d19a864c",
+  "environment": {
+    "os": "Linux x64",
+    "node": "24.19.0",
+    "pnpm": "11.25.0",
+    "browser": "Chromium 138.0.7204.0 / SwiftShader"
+  },
+  "suites": [
+    {
+      "command": "pnpm test",
+      "checks": 71,
+      "status": "passed"
+    },
+    {
+      "command": "pnpm test:browser",
+      "checks": 24,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:46:31.846Z",
+      "finishedAt": "2026-10-04T09:47:08.898Z"
+    },
+    {
+      "command": "pnpm test:ui",
+      "checks": 38,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:47:36.932Z",
+      "finishedAt": "2026-10-04T09:47:45.317Z"
+    },
+    {
+      "command": "pnpm test:title",
+      "checks": 16,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:47:46.010Z",
+      "finishedAt": "2026-10-04T09:47:58.708Z"
+    },
+    {
+      "command": "pnpm test:save-browser",
+      "checks": 9,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:47:59.471Z",
+      "finishedAt": "2026-10-04T09:48:08.696Z"
+    },
+    {
+      "command": "pnpm test:mobile",
+      "checks": 10,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:48:53.391Z",
+      "finishedAt": "2026-10-04T09:49:08.237Z"
+    },
+    {
+      "command": "pnpm test:portable",
+      "checks": 6,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:49:08.961Z",
+      "finishedAt": "2026-10-04T09:49:12.370Z"
+    },
+    {
+      "command": "pnpm test:desktop-input",
+      "checks": 10,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:49:13.159Z",
+      "finishedAt": null
+    },
+    {
+      "command": "node scripts/legacy-compat-test.mjs test-results/baseline/index.html",
+      "checks": 3,
+      "status": "passed",
+      "startedAt": "2026-10-04T09:49:29.093Z",
+      "finishedAt": "2026-10-04T09:49:31.045Z"
+    }
+  ],
+  "totalShortChecks": 187,
+  "artifacts": {
+    "version": "0.1.1",
+    "htmlBytes": 1669035,
+    "htmlSha256": "f633620886bc9cad70a36bfd1bd8dc809d87b47af7906e8bdb80b43de1a8d5ae",
+    "artifacts": {
+      "dist/index.html": {
+        "bytes": 1669035,
+        "sha256": "f633620886bc9cad70a36bfd1bd8dc809d87b47af7906e8bdb80b43de1a8d5ae"
+      },
+      "start the game.html": {
+        "bytes": 1669035,
+        "sha256": "f633620886bc9cad70a36bfd1bd8dc809d87b47af7906e8bdb80b43de1a8d5ae"
+      },
+      "release/Escape-Bincov-portable.zip": {
+        "bytes": 400049,
+        "sha256": "089fdbf6f4bba85f758a5c4fae011cc4decc971f38add315d63812996408711f"
+      },
+      "release/Escape-Bincov-web.zip": {
+        "bytes": 398120,
+        "sha256": "18fbe8e47b4f91236b0977cf9d21f7f6124361298e83af269ea8ad024f0a6d89"
+      }
+    }
+  },
+  "notes": [
+    "Browser input is real; positions and enemy cooldowns are fixtures.",
+    "Native AudioContext state is observed under normal autoplay policy; physical audible output is not certified.",
+    "Touch-capable desktops and phones are Chromium emulation, not physical devices."
+  ],
+  "naturalPlay": {
+    "status": "passed",
+    "startedAt": "2026-10-04T09:49:31.896Z",
+    "finishedAt": "2026-10-04T09:59:54.737Z",
+    "outcomes": [
+      {
+        "outcome": "extract",
+        "kills": 25,
+        "keptValue": 4421,
+        "lostValue": 0,
+        "seed": 42,
+        "recovered": false,
+        "message": "成功撤离，装备和物资已带回水产站。"
+      },
+      {
+        "outcome": "death",
+        "kills": 15,
+        "keptValue": 0,
+        "lostValue": 4206,
+        "seed": 43,
+        "recovered": false,
+        "message": "撤离失败，背包物资和主武器丢失。安全箱内的物品和水手匕首保留。"
+      }
+    ],
+    "finalStats": {
+      "runs": 2,
+      "extracts": 1,
+      "kills": 40
+    },
+    "methodology": "Automated real-time session. Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse. This is not a human fun/balance evaluation.",
+    "durationSeconds": 622.841
+  },
+  "mainHtmlSha256": "51fd63753dd4d34a69ffa2a1d1326b7eec9e43102b8081f21aebea56c1520391",
+  "beforeHtmlSha256": "c58705cbe206482364f7b46b383ff588f05129815d2496548cb7c44586bce7bc"
+}
