@@ -76,6 +76,16 @@ try {
     assert.deepEqual((await state()).save, expected);
     await page.screenshot({ path: resolve(out, 'save-home.png') });
   });
+  await step('failed deployment stays in the hideout with equipment and run count intact', async () => {
+    await action('tab', 'gear').click(); await page.locator('#seed').fill('42');
+    const before = (await state()).save;
+    await failStorage(true); await action('deploy').click();
+    assert.equal((await state()).state, 'hideout');
+    assert.deepEqual((await state()).save, before);
+    assert.equal(await page.evaluate(() => window.__bincov.app.loadout), null);
+    assert.equal(await page.evaluate(() => window.__bincov.app.game.scene.isActive('Raid')), false);
+    await failStorage(false);
+  });
   await step('failed safe transfer rolls back live containers', async () => {
     await action('tab', 'gear').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
     await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
@@ -136,6 +146,52 @@ try {
       await p.goto('https://bincov.test/updated/index.html');
       assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.save.v1'))), saved);
     } finally { await fresh.close(); }
+  });
+  await step('a real cross-window storage event protects a pending settlement and its backup', async () => {
+    const shared = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true, acceptDownloads: true });
+    try {
+      const html = await readFile(resolve('dist/index.html'), 'utf8');
+      // Both pages share a browser origin; all responses are fulfilled locally.
+      await shared.route('https://bincov.test/**', route => route.fulfill({
+        status: 200, contentType: 'text/html; charset=utf-8',
+        body: new URL(route.request().url()).pathname === '/writer' ? '<!doctype html><title>Storage peer</title>' : html,
+      }));
+      const p = await shared.newPage();
+      p.on('pageerror', error => report.errors.push(error.message));
+      p.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
+      await p.goto('https://bincov.test/game?test=1');
+      await p.locator('[data-action="enter"]').click();
+      await p.locator('[data-action="deploy"]').click();
+      await p.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+      await p.keyboard.press('Escape');
+      await p.evaluate(() => {
+        window.__realStorageWrite = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          if (key === 'escape-bincov.save.v1') throw new DOMException('Injected quota failure', 'QuotaExceededError');
+          return window.__realStorageWrite.call(this, key, value);
+        };
+      });
+      await p.locator('[data-action="abandon"]').click();
+      await p.locator('[data-action="confirm-abandon"]').click();
+      await p.getByRole('heading', { name: '结算尚未保存' }).waitFor();
+      const pending = await p.evaluate(() => window.__bincov.app.pendingSettlement);
+      assert.ok(pending);
+      const latest = structuredClone(pending); latest.cash += 111;
+      const peer = await shared.newPage();
+      await peer.goto('https://bincov.test/writer');
+      await peer.evaluate(save => localStorage.setItem('escape-bincov.save.v1', JSON.stringify(save)), latest);
+      await p.waitForFunction(() => window.__bincov.app.conflict && !window.__bincov.app.storageOK);
+      await p.evaluate(() => { Storage.prototype.setItem = window.__realStorageWrite; });
+      assert.equal(await p.locator('[data-action="retry-save"]').isDisabled(), true);
+      assert.equal(await p.evaluate(() => window.__bincov.persist()), false);
+      assert.deepEqual(await p.evaluate(() => window.__bincov.app.pendingSettlement), pending);
+      assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.save.v1'))), latest);
+      const downloadPromise = p.waitForEvent('download');
+      await p.locator('[data-action="export-save"]').click();
+      const file = resolve(out, 'conflict-settlement-backup.json');
+      await (await downloadPromise).saveAs(file);
+      assert.deepEqual(JSON.parse(await readFile(file, 'utf8')).save, pending);
+    } finally { await shared.close(); }
   });
   report.status = 'passed';
 } catch (error) { report.status = 'failed'; report.failure = error.stack; console.error(error); process.exitCode = 1; await page.screenshot({ path: resolve(out, 'save-regression-failure.png') }).catch(() => {}); }
