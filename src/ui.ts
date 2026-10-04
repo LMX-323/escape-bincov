@@ -43,23 +43,28 @@ function occupied(inv: D.Inventory) {
     return inv.items.reduce((sum, item) => sum + D.ITEMS[item.id].w * D.ITEMS[item.id].h, 0);
 }
 function grid(inv: D.Inventory, source: string, cell = 36) {
+    if (playerInput.touch) cell = 52;
+    if (playerInput.touch && source === 'stash' && !app.inventoryGrid)
+        return `<div class="inventory-list">${inv.items.map(i => `<button class="inventory-row" data-uid="${i.uid}" data-source="${source}" aria-pressed="${app.selected === i.uid}">${itemIcon(i.id)}<span><strong>${D.ITEMS[i.id].name}</strong><small>${D.ITEMS[i.id].w} × ${D.ITEMS[i.id].h} 格 · ${(D.ITEMS[i.id].weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</small></span><b>× ${i.qty}</b></button>`).join('') || '<p class="muted">仓库空置</p>'}</div>`;
+
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${inv.items.map(i => {
         const d = D.ITEMS[i.id];
-        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} · ${i.qty} 件 · ${(d.weight * i.qty).toFixed(2)} kg" draggable="true" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${d.w * cell - 3}px;height:${d.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} · ${i.qty} 件 · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${d.w * cell - 3}px;height:${d.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('')}${!inv.items.length ? '<div class="empty-hint">空置</div>' : ''}</div>`;
 }
 function details() {
-    const item = app.selected ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
+    const item = app.selected && !app.placement ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
     if (!item) return `<aside class="details details-empty"><div class="section-label">${app.state === 'run' ? '随身物资' : '出发前检查'}</div><h3>选中一件物品</h3><p class="muted">查看用途、重量与可用操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>备用弹药放进背包。<br>出发前装备主武器。</dd></div><div><dt>安全箱</dt><dd>重要小件放进这里，失败后也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
     const actions = app.state === 'run'
         ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run', 'primary') : ''}${['bandage', 'medkit', 'antidote', 'water', 'food'].includes(item.id) ? btn('使用', 'use', 'primary') : ''}${btn(app.selectedSource === 'safe' ? '移至背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
         : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '装进背包' : '收入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '移至背包', 'secure')}${!item.relief ? btn('出售', 'sell') : ''}`;
-    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div></div><p class="item-description">${d.description}</p><dl class="item-facts"><div><dt>占用</dt><dd>${d.w} × ${d.h} 格</dd></div><div><dt>总重</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>回收价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 仅供自用</p>' : ''}<div class="item-actions">${actions}</div></aside>`;
+    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div></div><p class="item-description">${d.description}</p><dl class="item-facts"><div><dt>占用</dt><dd>${d.w} × ${d.h} 格</dd></div><div><dt>总重</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>回收价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 仅供自用</p>' : ''}<div class="item-actions">${actions}${playerInput.touch ? btn('移动格位', 'place-item') + btn('关闭详情', 'clear-selection') : ''}</div></aside>`;
 }
 export function render() {
     document.documentElement.dataset.state = app.state;
     document.documentElement.dataset.overlay = app.overlay;
+    document.documentElement.dataset.container = app.mobileContainer;
     document.dispatchEvent(new Event('bincov-ui'));
     if (app.state === 'menu') {
         ui().innerHTML = `<div class="menu"><div class="menu-location">滨科夫县 <span>沿海封锁区</span></div><h1>逃离<br>滨科夫</h1><div class="subtitle">ESCAPE BINCOV</div><p class="intro">台风过后，海没有退去。<br>带上最后一匣子弹，穿过盐雾与封锁线。<br>找到补给，活着回到水产站。</p>${btn(app.checkpoint ? '继续上次行动 <span aria-hidden="true">→</span>' : '进入水产站 <span aria-hidden="true">→</span>', 'enter', 'primary')}<footer>单人撤离生存 <span>进度保存在本机</span></footer>${btn('操作指南', 'help', 'text-button')}</div><div class="version"><span>北纬 27° · 赤潮封锁第 17 天</span><span class="build-number">ESCAPE BINCOV / 0.1.1</span><a class="repo-link" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub · 反馈 / 参与开发 ↗</a></div>${overlayHtml()}`;
@@ -87,7 +92,7 @@ function renderHideout() {
     let body = '';
     if (app.tab === 'gear') {
         const weight = preparedWeight();
-        body = `<div class="columns gear-columns"><section class="stash-section"><h3 class="section-title">物资仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '扩建储物架 · 10 × 9' : '基础储物架 · 10 × 6'}</div></section><section><h3 class="section-title">行动背包 <span>${occupied(s.bag)} / ${s.bag.w * s.bag.h} 格</span></h3>${grid(s.bag, 'bag')}<div class="load-meter ${weight > SURVIVAL.carryLimit ? 'overloaded' : ''}"><span>携行重量</span><strong>${weight.toFixed(1)} <small>/ ${SURVIVAL.carryLimit} kg</small></strong><i style="width:${Math.min(100, weight / SURVIVAL.carryLimit * 100)}%"></i></div><div class="inv-help">含主武器、弹匣与安全箱</div></section><section class="safe-section"><h3 class="section-title">安全箱</h3>${grid(s.safe, 'safe')}<div class="inv-help protected">撤离失败保留</div><div class="equip"><div class="section-label">主武器</div><div class="equipped-icon">${itemIcon(s.equipment.weapon || 'knife')}</div><strong>${D.WEAPONS[s.equipment.weapon || 'knife'].name}</strong>${s.equipment.weapon ? `<div class="inv-help">弹匣 ${s.equipment.ammo} 发</div>${btn('卸下', 'unequip', 'text-button')}` : '<div class="inv-help">始终保留</div>'}</div></section>${details()}</div>`;
+        body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>${app.placement ? '<p class="placement-hint">点选目标格位，物品将按原占格移动。</p>' + btn('取消移动', 'clear-selection') : ''}` : ''}<div class="columns gear-columns"><section class="stash-section"><h3 class="section-title">物资仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '扩建储物架 · 10 × 9' : '基础储物架 · 10 × 6'}</div></section><section class="bag-section"><h3 class="section-title">行动背包 <span>${occupied(s.bag)} / ${s.bag.w * s.bag.h} 格</span></h3>${grid(s.bag, 'bag')}<div class="load-meter ${weight > SURVIVAL.carryLimit ? 'overloaded' : ''}"><span>携行重量</span><strong>${weight.toFixed(1)} <small>/ ${SURVIVAL.carryLimit} kg</small></strong><i style="width:${Math.min(100, weight / SURVIVAL.carryLimit * 100)}%"></i></div><div class="inv-help">含主武器、弹匣与安全箱</div></section><section class="safe-section"><h3 class="section-title">安全箱</h3>${grid(s.safe, 'safe')}<div class="inv-help protected">撤离失败保留</div><div class="equip"><div class="section-label">主武器</div><div class="equipped-icon">${itemIcon(s.equipment.weapon || 'knife')}</div><strong>${D.WEAPONS[s.equipment.weapon || 'knife'].name}</strong>${s.equipment.weapon ? `<div class="inv-help">弹匣 ${s.equipment.ammo} 发</div>${btn('卸下', 'unequip', 'text-button')}` : '<div class="inv-help">始终保留</div>'}</div></section>${details()}</div>`;
     } else if (app.tab === 'arms' || app.tab === 'med') {
         const merchant = D.MERCHANTS[app.tab];
         body = `<div class="merchant-heading"><div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>${app.tab === 'arms' ? '“枪能响，路就还没断。”' : '“先止血，再说别的。”'}</p></div><span class="small muted">购买后收入仓库</span></div><div class="shop-grid">${merchant.stock.map(id => {
@@ -214,6 +219,10 @@ function bind() {
         audio.click();
         if (app.pendingSettlement && a !== 'export-save' && a !== 'retry-save') return;
         switch (a) {
+            case 'container': app.mobileContainer = id; app.selected = ''; app.placement = false; render(); break;
+            case 'grid-mode': app.inventoryGrid = !app.inventoryGrid; app.placement = false; app.selected = ''; render(); break;
+            case 'place-item': app.placement = true; if (app.selectedSource === 'stash') app.inventoryGrid = true; render(); break;
+            case 'clear-selection': app.placement = false; app.selected = ''; render(); break;
             case 'refresh': location.reload(); break;
             case 'export-original': {
                 try {
@@ -331,11 +340,17 @@ function bind() {
             }
         }
     });
-    ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(el => { el.onclick = () => { app.selected = el.dataset.uid!; app.selectedSource = el.dataset.source!; ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(node => { const active = node.dataset.uid === app.selected; node.classList.toggle('selected', active); node.setAttribute('aria-pressed', String(active)); }); const panel = ui().querySelector('.details'); if (panel)
+    ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(el => { el.onclick = () => { if (app.placement) return; app.selected = el.dataset.uid!; app.selectedSource = el.dataset.source!; ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(node => { const active = node.dataset.uid === app.selected; node.classList.toggle('selected', active); node.setAttribute('aria-pressed', String(active)); }); const panel = ui().querySelector('.details'); if (panel)
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
         el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict)
         return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); }; el.ondragstart = e => { e.dataTransfer!.setData('text/plain', JSON.stringify({ uid: el.dataset.uid, source: el.dataset.source })); e.dataTransfer!.effectAllowed = 'move'; }; });
     ui().querySelectorAll<HTMLElement>('[data-grid]').forEach(el => {
+        el.onclick = e => {
+            if (!app.placement || !app.selected || app.selectedSource !== el.dataset.grid) return;
+            const r = el.getBoundingClientRect(), cell = Number(el.dataset.cell);
+            const x = Math.floor((e.clientX - r.left) / (r.width / el.offsetWidth) / cell), y = Math.floor((e.clientY - r.top) / (r.height / el.offsetHeight) / cell);
+            if (mutate(() => D.moveItem(inventory(app.selectedSource), app.selected, x, y))) { app.placement = false; render(); }
+        };
         el.ondragover = e => { e.preventDefault(); e.dataTransfer!.dropEffect = 'move'; }; el.ondrop = e => { e.preventDefault(); if (app.conflict)
         return; try {
         const d = JSON.parse(e.dataTransfer!.getData('text/plain'));
@@ -367,7 +382,7 @@ function bind() {
     };
 }
 export function drawMap() { const canvas = document.getElementById('map') as HTMLCanvasElement; if (!canvas)
-    return; const ctx = canvas.getContext('2d')!, sx = canvas.width / WORLD_W, sy = canvas.height / WORLD_H; ctx.fillStyle = '#0e1a1b'; ctx.fillRect(0, 0, canvas.width, canvas.height); WORLD.tiles.forEach((row, y) => row.forEach((t, x) => { ctx.fillStyle = ['#384b3e', '#849178', '#12363b', '#141e1b', app.raid?.highTide ? '#724840' : '#44665a', '#69735d', '#8e805b'][t] || '#222'; ctx.fillRect(x * 32 * sx, y * 32 * sy, 32 * sx + 1, 32 * sy + 1); })); ctx.font = '11px "Microsoft YaHei"'; ctx.textAlign = 'center'; WORLD.zones.forEach(z => { ctx.fillStyle = '#f0e4b8'; ctx.fillText(z.name, (z.x + z.w / 2) * sx, (z.y + z.h / 2) * sy); }); app.raid?.config.exits.forEach(e => { ctx.strokeStyle = '#d7ed90'; ctx.lineWidth = 2; ctx.strokeRect(e.x * sx - 6, e.y * sy - 6, 12, 12); ctx.fillStyle = '#d7ed90'; ctx.fillText(e.name, e.x * sx, e.y * sy - 12); }); if (app.raid) {
+    return; const ctx = canvas.getContext('2d')!, sx = canvas.width / WORLD_W, sy = canvas.height / WORLD_H; ctx.fillStyle = '#0e1a1b'; ctx.fillRect(0, 0, canvas.width, canvas.height); WORLD.tiles.forEach((row, y) => row.forEach((t, x) => { ctx.fillStyle = ['#384b3e', '#849178', '#12363b', '#141e1b', app.raid?.highTide ? '#724840' : '#44665a', '#69735d', '#8e805b'][t] || '#222'; ctx.fillRect(x * 32 * sx, y * 32 * sy, 32 * sx + 1, 32 * sy + 1); })); ctx.font = `${playerInput.touch ? Math.ceil(12 * canvas.width / canvas.getBoundingClientRect().width) : 11}px "Microsoft YaHei"`; ctx.textAlign = 'center'; WORLD.zones.forEach(z => { ctx.fillStyle = '#f0e4b8'; ctx.fillText(z.name, (z.x + z.w / 2) * sx, (z.y + z.h / 2) * sy); }); app.raid?.config.exits.forEach(e => { ctx.strokeStyle = '#d7ed90'; ctx.lineWidth = 2; ctx.strokeRect(e.x * sx - 6, e.y * sy - 6, 12, 12); ctx.fillStyle = '#d7ed90'; ctx.fillText(e.name, e.x * sx, e.y * sy - 12); }); if (app.raid) {
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.arc(app.raid.player.x * sx, app.raid.player.y * sy, 4, 0, Math.PI * 2);
