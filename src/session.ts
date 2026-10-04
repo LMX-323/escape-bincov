@@ -173,8 +173,9 @@ export class SaveSession {
     }
 
     /**
-     * Actions are synchronous domain/medical mutations. No world drops, scene
-     * changes or other irreversible effects belong inside this callback.
+     * Actions are synchronous. With an attached scene, matching world changes
+     * belong in this transaction and roll back with its checkpoint. External
+     * effects and scene transitions must wait until the commit succeeds.
      * A rejected action, failed write or exception restores all participants.
      */
     mutate(action: SessionMutation, player: PlayerVitals | null = null): MutationResult {

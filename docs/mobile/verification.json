@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-04",
+  "status": "local-passed",
+  "releaseStatus": "mobile-candidate-awaiting-physical-device-acceptance",
+  "base": "702692a0c6d79ea5d51a291eac60f16013ab0688",
+  "environment": {
+    "os": "Linux x64",
+    "node": "24.19.0",
+    "pnpm": "11.25.0 (repository and CI remain pinned to 11.19.0)",
+    "chromium": "138.0.7204.0, headless, SwiftShader"
+  },
+  "htmlBytes": 1666134,
+  "htmlSha256": "c7aa7bf3686370bddd6eec5bd49d7837c807b3bc9d3596e9857793ebca3c37c1",
+  "checks": {
+    "unit": 69,
+    "browser": 24,
+    "ui": 38,
+    "mobile": 9,
+    "saveBrowser": 9,
+    "portable": 6,
+    "title": 16,
+    "legacyCoexistence": 3
+  },
+  "naturalPlay": {
+    "phase": "mobile gameplay before integration of the accepted PR #4 title screen",
+    "durationSeconds": 623,
+    "runs": 2,
+    "extracts": 2,
+    "kills": 30,
+    "fixtureChanges": false
+  },
+  "notVerified": [
+    "physical iPhone Safari and Android browsers",
+    "20 minute heat and power measurements",
+    "iOS native file download/import and audio interruptions",
+    "China mainland carrier access",
+    "HarmonyOS and WeChat"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "methodology": "Two actual bundled builds on one locally fulfilled HTTPS origin, followed by a second current-build window. Fixture changes use each build’s own persistence function. No external server.",
+  "legacySha256": "33215dd8260b37fde6fb74856aa324fa9bf8ce7ffe8bb94a1c58bf1b461b88bb",
+  "currentSha256": "c7aa7bf3686370bddd6eec5bd49d7837c807b3bc9d3596e9857793ebca3c37c1",
+  "startedAt": "2026-10-04T08:41:48.723Z",
+  "steps": [
+    {
+      "name": "actual v1 build migrates without altering its original bytes",
+      "status": "passed"
+    },
+    {
+      "name": "stale v1 writes stop the current window but cannot overwrite v2 progress",
+      "status": "passed"
+    },
+    {
+      "name": "a second new-build window cannot become a writer until ownership is released",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "browser": "138.0.7204.0",
+  "status": "passed",
+  "finishedAt": "2026-10-04T08:42:02.994Z"
+}
