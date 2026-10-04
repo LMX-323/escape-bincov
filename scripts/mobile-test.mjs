@@ -51,6 +51,20 @@ try{
   await shot('combat-844');await touch('touchEnd',[]);const stopped=(await runtime()).raid;await page.waitForTimeout(650);
   const later=(await runtime()).raid;assert.equal(later.mag,stopped.mag);assert.ok(Math.abs(later.x-stopped.x)<1);
  });
+ await step('rejected healing preserves the other thumb movement without consuming medicine',async()=>{
+  await page.evaluate(()=>{const r=__bincov.app.raid;r.hp=100;r.bleeding=0;r.player.setPosition(700,784);});
+  const before=await page.evaluate(()=>__bincov.app.loadout.bag),left=await center('.move-stick'),heal=await center('[data-command="heal"]');
+  const held={id:4,x:left.x+32,y:left.y};
+  await touch('touchStart',[held]);await page.waitForTimeout(150);
+  await touch('touchStart',[held,{id:5,...heal}]);await page.waitForTimeout(150);
+  // CDP touchMove carries the remaining active points; touchEnd would release every finger.
+  await touch('touchMove',[held]);const rejected=(await runtime()).raid;
+  await page.waitForTimeout(350);const after=(await runtime()).raid;
+  await touch('touchEnd',[]);
+  assert.match(await page.locator('#toast').innerText(),/生命已满/);
+  assert.equal(after.hp,100);assert.ok(after.x>rejected.x+15,JSON.stringify({rejected,after}));
+  assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),before);
+ });
  await step('pointer cancellation and rotation never leave movement, fire or extraction held',async()=>{
   const right=await center('.aim-stick');await touch('touchStart',[{id:3,x:right.x+34,y:right.y}]);await page.waitForTimeout(100);await touch('touchCancel',[]);
   const mag=(await runtime()).raid.mag;await page.waitForTimeout(400);assert.equal((await runtime()).raid.mag,mag);
