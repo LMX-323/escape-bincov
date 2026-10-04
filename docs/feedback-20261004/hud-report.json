@@ -1,0 +1,216 @@
+{
+  "baseline": "4d7e6173a0a3a6ee0df3d7e113d4f0a984e364b2",
+  "method": "Rebuilt baseline HTML, offline Chromium touch emulation, trusted touch pickup. Synthetic HP, bleeding and world positions through ?test=1. Not physical phone validation.",
+  "checks": [
+    {
+      "name": "toast-covers-nearby-667x375",
+      "status": "defect-reproduced",
+      "mobile": true,
+      "toast": "物资已收入背包。",
+      "nearby": "附近物资　净水瓶 × 1",
+      "warning": "持续流血 · Q 止血",
+      "toastRect": {
+        "x": 262.4921875,
+        "y": 317.203125,
+        "width": 142.015625,
+        "height": 42.796875,
+        "right": 404.5078125,
+        "bottom": 360
+      },
+      "nearbyRect": {
+        "x": 190.1015625,
+        "y": 323.40625,
+        "width": 286.796875,
+        "height": 39.59375,
+        "right": 476.8984375,
+        "bottom": 363
+      },
+      "nearbyTextRect": {
+        "x": 273.4765625,
+        "y": 334.40625,
+        "width": 120.046875,
+        "height": 17,
+        "right": 393.5234375,
+        "bottom": 351.40625
+      },
+      "panelOverlapArea": 5196.88427734375,
+      "textOverlapArea": 2040.796875,
+      "textCoveredRatio": 1,
+      "toastZIndex": "100"
+    },
+    {
+      "name": "toast-covers-nearby-740x300",
+      "status": "defect-reproduced",
+      "mobile": true,
+      "toast": "物资已收入背包。",
+      "nearby": "附近物资　净水瓶 × 1",
+      "warning": "持续流血 · Q 止血",
+      "toastRect": {
+        "x": 298.9921875,
+        "y": 242.203125,
+        "width": 142.015625,
+        "height": 42.796875,
+        "right": 441.0078125,
+        "bottom": 285
+      },
+      "nearbyRect": {
+        "x": 215,
+        "y": 252.40625,
+        "width": 310,
+        "height": 39.59375,
+        "right": 525,
+        "bottom": 292
+      },
+      "nearbyTextRect": {
+        "x": 309.96875,
+        "y": 263.40625,
+        "width": 120.046875,
+        "height": 17,
+        "right": 430.015625,
+        "bottom": 280.40625
+      },
+      "panelOverlapArea": 4628.82177734375,
+      "textOverlapArea": 2040.796875,
+      "textCoveredRatio": 1,
+      "toastZIndex": "100"
+    },
+    {
+      "name": "toast-covers-nearby-844x390",
+      "status": "defect-reproduced",
+      "mobile": true,
+      "toast": "物资已收入背包。",
+      "nearby": "附近物资　净水瓶 × 1",
+      "warning": "持续流血 · Q 止血",
+      "toastRect": {
+        "x": 350.9921875,
+        "y": 332.203125,
+        "width": 142.015625,
+        "height": 42.796875,
+        "right": 493.0078125,
+        "bottom": 375
+      },
+      "nearbyRect": {
+        "x": 267,
+        "y": 338.40625,
+        "width": 310,
+        "height": 39.59375,
+        "right": 577,
+        "bottom": 378
+      },
+      "nearbyTextRect": {
+        "x": 361.96875,
+        "y": 349.40625,
+        "width": 120.046875,
+        "height": 17,
+        "right": 482.015625,
+        "bottom": 366.40625
+      },
+      "panelOverlapArea": 5196.88427734375,
+      "textOverlapArea": 2040.796875,
+      "textCoveredRatio": 1,
+      "toastZIndex": "100"
+    },
+    {
+      "name": "toast-covers-nearby-915x412",
+      "status": "defect-reproduced",
+      "mobile": true,
+      "toast": "物资已收入背包。",
+      "nearby": "附近物资　净水瓶 × 1",
+      "warning": "持续流血 · Q 止血",
+      "toastRect": {
+        "x": 386.4921875,
+        "y": 354.203125,
+        "width": 142.015625,
+        "height": 42.796875,
+        "right": 528.5078125,
+        "bottom": 397
+      },
+      "nearbyRect": {
+        "x": 302.5,
+        "y": 360.40625,
+        "width": 310,
+        "height": 39.59375,
+        "right": 612.5,
+        "bottom": 400
+      },
+      "nearbyTextRect": {
+        "x": 397.46875,
+        "y": 371.40625,
+        "width": 120.046875,
+        "height": 17,
+        "right": 517.515625,
+        "bottom": 388.40625
+      },
+      "panelOverlapArea": 5196.88427734375,
+      "textOverlapArea": 2040.796875,
+      "textCoveredRatio": 1,
+      "toastZIndex": "100"
+    },
+    {
+      "name": "toast-covers-nearby-932x430",
+      "status": "defect-reproduced",
+      "mobile": true,
+      "toast": "物资已收入背包。",
+      "nearby": "附近物资　净水瓶 × 1",
+      "warning": "持续流血 · Q 止血",
+      "toastRect": {
+        "x": 394.9921875,
+        "y": 372.203125,
+        "width": 142.015625,
+        "height": 42.796875,
+        "right": 537.0078125,
+        "bottom": 415
+      },
+      "nearbyRect": {
+        "x": 311,
+        "y": 378.40625,
+        "width": 310,
+        "height": 39.59375,
+        "right": 621,
+        "bottom": 418
+      },
+      "nearbyTextRect": {
+        "x": 405.96875,
+        "y": 389.40625,
+        "width": 120.046875,
+        "height": 17,
+        "right": 526.015625,
+        "bottom": 406.40625
+      },
+      "panelOverlapArea": 5196.88427734375,
+      "textOverlapArea": 2040.796875,
+      "textCoveredRatio": 1,
+      "toastZIndex": "100"
+    },
+    {
+      "name": "touch-bleeding-instruction",
+      "status": "defect-reproduced",
+      "text": "持续流血 · Q 止血"
+    },
+    {
+      "name": "touch-bandage-description",
+      "status": "defect-reproduced",
+      "text": "止血，恢复 16 点生命。放在背包中可按 Q 使用。"
+    },
+    {
+      "name": "touch-canvas-extraction-instruction",
+      "status": "scene-text-residue-confirmed",
+      "note": "The old canvas text remains in the camera viewport; mobile DOM labels can visually cover it. This observation does not prove the E instruction is readable to the player.",
+      "labels": [
+        {
+          "text": "北线检查口\n按住 E 3 秒 · 撤离",
+          "intersectsView": true
+        },
+        {
+          "text": "南堤信号灯\n按住 E 3 秒 · 撤离",
+          "intersectsView": false
+        }
+      ],
+      "domInstruction": "北线检查口　·　停稳，按住撤离按钮"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "138.0.7204.0",
+  "status": "completed"
+}
