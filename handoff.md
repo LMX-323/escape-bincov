@@ -2,6 +2,16 @@
 
 更新：2026-10-04。权威仓库：https://github.com/xuys2025/escape-bincov 。公开发布后以仓库最新 `main` 为基线；所有后续任务先读 `AGENTS.md` 和 `docs/AGENT-HANDBOOK.md`，通过独立分支与 PR 交付。
 
+## 2026-10-04 v0.2.0 发布准备
+
+维护者要求把前五个 PR 合并为一个版本，并提供全面、面向玩家的发版公告。本轮唯一基线为最新 main `ba2d3cdc28923d09d0e45612ff4098e0aef592fe`；已确认 PR #1–#5 均已合并且在基线历史中，main 的 CI & Pages 运行 `37194627674` 成功。以下关于「PR #2 未合并」的表述均是历史阶段记录。
+
+独立分支 `release/v0.2.0` 将 package、主菜单版本和当前游玩说明统一为 0.2.0；新增 [完整发版公告](docs/releases/v0.2.0.md)，将 CHANGELOG 从移动候选汇总扩展为前五个 PR 的整版记录，修正 README 中已经过时的待合并说明。公告覆盖界面、夜港、手机触控、行动恢复、存档保护、桌面修复、下载升级和已知限制；手机仍明确为尝鲜，未声称真机验收完成。游戏源码仅改版本标签，没有改动玩法、存档格式或依赖。
+
+本轮实际验证：`pnpm test` 71 项、`pnpm test:title` 16 项、`pnpm test:desktop-input` 10 项、`pnpm test:portable` 6 项均通过；`pnpm package` 包含严格类型检查并重新生成两个 HTML、两个 ZIP 及发布清单。ZIP CRC、入口逐字节一致性、文件大小与 SHA-256 全部核对通过，两个桌面尺寸的真实主菜单截图已人工查看，均显示 v0.2.0。环境为 Linux、Node 24.19.0、pnpm 11.25.0、Chromium 138.0.7204.0；仓库和 CI 仍固定 pnpm 11.19.0。本地截图和报告位于忽略的 `test-results/`，PR CI 将重新生成完整可下载证据。
+
+本轮未重跑十分钟自然实战；未改战斗规则，历史 PR #2 已有相关证据。iPhone/Android 真机、系统打断、持续热负载和大陆网络仍待验收。发布准备通过 PR 合入；GitHub Release、标签和 Pages 的实际发布状态应查对应 GitHub 记录，不以本条准备记录代替发布成功证据。
+
 ## 2026-10-04 PR #2 桌面回归修复
 
 本轮以最新 main `1930073` 为唯一已接受基线，读取根规范和开发手册，在独立本地分支 `fix/pr2-desktop-regressions` 修复原 PR #2 `585705a`。交付仍追加到 `docs/mobile-adaptation-2026`，不新开重复 PR，不强推、不合并 main。三处核心用例先在 main 通过，再在原 PR #2 全部复现失败，修复后全部通过。

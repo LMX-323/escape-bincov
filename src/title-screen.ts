@@ -38,7 +38,7 @@ export function titleScreen(options: { runs: number; extracts: number; motion: b
                 <button class="title-link title-motion" data-action="title-motion" aria-pressed="${motion}" aria-label="动态景物">${motionIcon}<span>动态景物 <b>${motion ? '开' : '关'}</b></span></button>
                 <a class="title-link title-repo" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
             </nav>
-            <div class="title-edition"><span class="title-input-note">${touch ? '手机横屏战斗 · 触控候选版' : '键盘与鼠标 · 手机支持触控'}</span><span class="title-build">v0.1.1</span></div>
+            <div class="title-edition"><span class="title-input-note">${touch ? '手机横屏战斗 · 触控候选版' : '键盘与鼠标 · 手机支持触控'}</span><span class="title-build">v0.2.0</span></div>
         </footer>
     </section>`;
 }
