@@ -135,7 +135,7 @@ async function suite(viewport) {
       await screenshot('menu');
       return bounds;
     });
-    await step('hideout, merchant price and native inventory drag', async () => {
+    await step('hideout, merchant price and pointer inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
       // The responsive title must not change the existing game/inventory geometry.
       const bounds = await page.locator('#game canvas').boundingBox();

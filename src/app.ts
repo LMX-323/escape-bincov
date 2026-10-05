@@ -18,6 +18,7 @@ export const app = {
     pendingImport: null as SaveDataV1 | null,
     pendingRecoveryImport: null as SessionRecord | null,
     menuMotion: true,
+    selectedExit: '', tasksExpanded: false,
     shop: null as ShopCart | null,
     shopLeave: null as { action: 'tab' | 'deploy' | 'menu'; id: string } | null,
 };

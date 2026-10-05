@@ -65,6 +65,18 @@ async function suite(viewport, touch = false) {
       await page.reload(); await action('enter').click(); assert.equal((await save()).cash, before.cash + 105);
     });
     if (process.argv.includes('--shop-only')) return;
+    await step('departure shows missing matching ammo and safe-only treatment without blocking light deployment', async () => {
+      await page.evaluate(() => {
+        const {app,persist,setOverlay}=window.__bincov;
+        app.save.equipment = {weapon:'pistol',ammo:8,ammoRelief:0,relief:false};
+        app.save.bag.items=[{uid:'warning-shell',id:'shell',qty:4,x:0,y:0}];
+        app.save.safe.items=[{uid:'warning-bandage',id:'bandage',qty:1,x:0,y:0}]; persist();setOverlay('');
+      });
+      assert.match(await page.locator('#departure-warnings').innerText(),/备用9 毫米弹.*仅在安全箱/);
+      assert.equal(await action('deploy').isEnabled(),true);
+      const box=await action('deploy').boundingBox(); assert.ok(box.y>=0 && box.y+box.height<=viewport.height);
+      await page.screenshot({path:resolve(out,`qol-departure-${label}.png`)});
+    });
     await step('loot rotation and quantity previews cancel cleanly; split and partial merge preserve remainders', async () => {
       await page.evaluate(() => {
         const { app, persist } = window.__bincov;
@@ -112,9 +124,34 @@ async function suite(viewport, touch = false) {
       await page.evaluate(()=>{const r=window.__bincov.app.raid;r.mag=4;r.syncMagazine();});
       await page.keyboard.press('r'); await page.waitForFunction(()=>window.__bincov.app.raid.reloadLeft>0);
     });
+    await step('exit choice shows straight-line bearing; collapsed quests separate stored and carried goods; hit directions expire', async () => {
+      assert.equal(await page.locator('#raid-quests').getAttribute('open'),null);
+      await action('map').click();
+      const exit = await page.evaluate(()=>window.__bincov.app.raid.config.exits[0]);
+      await page.locator('#exit-choice').selectOption(exit.name); await action('close').click();
+      assert.match(await page.locator('#exit-navigation').innerText(),/直线 [0-9.]+ 格/);
+      assert.ok((await page.locator('#exit-navigation').innerText()).includes(exit.name));
+      await page.evaluate(()=>{
+        const {app}=window.__bincov;
+        app.save.stash.items=[{uid:'tracking-stored',id:'scrap',qty:2,x:0,y:0}];
+        app.loadout.bag.items.push({uid:'tracking-carried',id:'scrap',qty:1,x:0,y:1});
+        app.raid.checkpoint();app.raid.updateHud();
+      });
+      await page.locator('#raid-quests summary').click();
+      assert.equal(await page.locator('#raid-quest-list section').count(),3);
+      if (touch) assert.ok(await page.locator('#raid-quests').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('#touch-controls button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
+      assert.match(await page.locator('#raid-quest-list').innerText(),/泵机零件：站内 2 · 本局 1 \/ 需 3/);
+      await page.evaluate(()=>{const r=window.__bincov.app.raid;r.hurt(1,{x:r.player.x+100,y:r.player.y});r.hurt(1,{x:r.player.x,y:r.player.y-100});r.bleeding=0;r.updateHud();});
+      assert.equal(await page.locator('#hit-directions i').count(),2);
+      await page.screenshot({path:resolve(out,`qol-information-${label}.png`)});
+      await page.waitForFunction(()=>document.querySelectorAll('#hit-directions i').length===0);
+      const hp=await page.evaluate(()=>{const r=window.__bincov.app.raid;r.bleeding=1;r.pollution=80;return r.hp;});
+      await page.waitForFunction(hp=>window.__bincov.app.raid.hp<hp,hp);
+      assert.equal(await page.locator('#hit-directions i').count(),0);
+    });
   } finally { await context.close(); }
 }
 try {
   await suite({ width: 1280, height: 720 }); await suite({ width: 1920, height: 1080 });
-  await suite({ width: 844, height: 390 }, true);
+  await suite({ width: 844, height: 390 }, true); await suite({ width: 667, height: 375 }, true);
 } finally { await writeFile(resolve(out, 'qol-report.json'), JSON.stringify(report, null, 2)); await browser.close(); }

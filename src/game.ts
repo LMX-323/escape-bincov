@@ -1,3 +1,4 @@
+import { exitBearing, questProgress } from './qol';
 import Phaser from 'phaser';
 import { createTextures, drawWorld, drawBackdrop } from './art';
 import { drawTitleBackdrop } from './title-art';
@@ -101,6 +102,7 @@ export class RaidScene extends Phaser.Scene {
     private extracted = false;
     private hitTime = 0;
     private hitNotice = 0;
+    private hitDirections: { sector: number; angle: number; left: number }[] = [];
     private noteSeen = new Set<string>();
     private exhausted = false;
     private lootTargetId = '';
@@ -111,7 +113,7 @@ export class RaidScene extends Phaser.Scene {
         this.enemies = [];
         this.loot = [];
         this.containers = [];
-        this.lootTargetId = '';
+        this.lootTargetId = ''; app.selectedExit = ''; app.tasksExpanded = false; this.hitDirections = [];
         this.containerSprites = [];
         this.bullets = [];
         this.hp = B.maxHealth;
@@ -388,8 +390,14 @@ export class RaidScene extends Phaser.Scene {
         for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
         this.createLootContainer(`corpse-${e.uid}`, 'corpse', `${D.ENEMIES[e.id].name}遗体`, e.sprite.x, e.sprite.y, drops);
     } }
-    hurt(amount: number) { if (this.extracted)
-        return; this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.hitNotice = 1; this.extractTime = 0; if (this.random() < B.bleedChance)
+    hurt(amount: number, source?: Point) { if (this.extracted)
+        return;
+        if (source) {
+            const angle = Math.atan2(source.y - this.player.y, source.x - this.player.x), sector = (Math.round(angle / (Math.PI / 4)) + 8) % 8;
+            this.hitDirections = this.hitDirections.filter(hit => hit.sector !== sector);
+            this.hitDirections.push({ sector, angle, left: 1 });
+        }
+        this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.hitNotice = 1; this.extractTime = 0; if (this.random() < B.bleedChance)
         this.bleeding = 1; audio.hit(); this.cameras.main.shake(100, .002); if (this.hp <= 0)
         finish('death'); }
     update(_time: number, _delta: number) {
@@ -413,6 +421,7 @@ export class RaidScene extends Phaser.Scene {
         this.noiseTime = Math.max(0, this.noiseTime - dt);
         this.hitTime = Math.max(0, this.hitTime - dt);
         this.hitNotice = Math.max(0, this.hitNotice - dt);
+        this.hitDirections = this.hitDirections.map(hit => ({ ...hit, left: hit.left - dt })).filter(hit => hit.left > 0);
         this.fx.clear();
         if (this.elapsed >= this.config.duration) {
             this.extracted = true;
@@ -584,7 +593,7 @@ export class RaidScene extends Phaser.Scene {
                     audio.shot('enemy');
                 }
                 else
-                    this.hurt(def.damage);
+                    this.hurt(def.damage, e.sprite);
             }
             return;
         }
@@ -621,7 +630,7 @@ export class RaidScene extends Phaser.Scene {
             }
             if (b.enemy) {
                 if (distance(b.sprite, this.player) < 12) {
-                    this.hurt(b.damage);
+                    this.hurt(b.damage, { x: this.player.x - b.vx, y: this.player.y - b.vy });
                     remove = true;
                     break;
                 }
@@ -793,9 +802,20 @@ export class RaidScene extends Phaser.Scene {
         css('stamina', Math.round(this.stamina).toString());
         css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : ''].filter(Boolean).join(' · ') || '状态正常');
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
+        const directions = document.getElementById('hit-directions');
+        if (directions) directions.innerHTML = this.hitDirections.map(hit => `<i style="left:${50 + Math.cos(hit.angle) * 47}%;top:${50 + Math.sin(hit.angle) * 45}%;transform:translate(-50%,-50%) rotate(${hit.angle * 180 / Math.PI + 90}deg);opacity:${Math.min(1,hit.left * 2)}">▲</i>`).join('');
+        const exit = this.config.exits.find(e => e.name === app.selectedExit);
+        if (exit) { const bearing = exitBearing(this.player, exit); css('exit-navigation', `${exit.name} · ${bearing.direction} · 直线 ${bearing.distance.toFixed(1)} 格`); }
+        else css('exit-navigation', '选择撤离点');
+        const progress = questProgress(app.save, app.loadout), questList = document.getElementById('raid-quest-list');
+        css('raid-quest-count', `· ${progress.length} 项未完成`);
+        if (questList) {
+            const html = progress.map(q => `<section><strong>${q.name}</strong>${q.needs.map(n => `<p>${D.ITEMS[n.id].name}：站内 ${n.stored} · 本局 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
+            if (questList.innerHTML !== html) questList.innerHTML = html;
+        }
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
-        css('loot-condition', [this.bleeding ? '流血：持续失去生命' : '', this.pollution > 0 ? `污染 ${Math.round(this.pollution)}%${this.pollution >= B.pollutionDamageThreshold ? '：持续失去生命' : ''}` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行');
+        css('loot-condition', [this.bleeding ? '流血：持续失去生命' : '', this.pollution > 0 ? `污染 ${Math.round(this.pollution)}%${this.pollution > B.pollutionDamageThreshold ? '：持续失去生命' : ''}` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行');
         css('loot-hit', this.hitNotice > 0 ? '正在遭受攻击！' : '');
         document.querySelector('.loot-header')?.classList.toggle('under-attack', this.hitNotice > 0);
         css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);

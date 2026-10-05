@@ -544,3 +544,37 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 .mobile .shopping .bottom-bar { min-height: 58px; padding: 6px 0; flex-wrap: nowrap; }
 .mobile .shopping .shop-checkout { flex-wrap: nowrap; gap: 8px; }
 .mobile .shopping .shop-checkout button { margin: 0; min-width: 105px; }
+
+.departure-check { display: flex; align-items: center; gap: 12px; }
+.departure-check p { max-width: 220px; margin: 0; color: #d2b081; font-size: 11px; line-height: 1.6; }
+.raid-information { position: absolute; right: 22px; top: 100px; width: 270px; pointer-events: auto; font-size: 11px; }
+.raid-information > button { width: 100%; padding: 8px; text-align: left; }
+#raid-quests { margin-top: 6px; padding: 8px; background: #101d18ee; border: 1px solid var(--line); }
+#raid-quests summary { cursor: pointer; min-height: 24px; }
+#raid-quest-list { max-height: 30vh; overflow: auto; }
+#raid-quest-list section { border-top: 1px solid var(--line); padding-top: 8px; }
+#raid-quest-list p { margin: 4px 0; }
+#raid-quests small { color: var(--muted); }
+#hit-directions { position: absolute; inset: 0; pointer-events: none; }
+#hit-directions i { position: absolute; color: #ff8668; font-style: normal; font-size: 28px; text-shadow: 0 0 5px #511c10; }
+.exit-choice { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 11px; }
+.exit-choice select { background: #192b22; color: var(--ink); padding: 6px; }
+.mobile .departure-check { justify-content: space-between; width: 100%; }
+.mobile .departure-check p { max-width: none; flex: 1; font-size: 12px; }
+.mobile .raid-information { right: max(120px, var(--safe-right)); top: 58px; width: 220px; font-size: 11px; }
+.mobile .raid-information > button { min-height: 36px; font-size: 11px; padding: 5px; }
+.mobile #raid-quests summary { min-height: 32px; }
+.mobile .exit-choice { flex-wrap: wrap; }
+.mobile .exit-choice span { display: none; }
+html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden; }
+.map-modal { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; height: min(calc(100% - 20px), 540px); }
+.map-modal canvas { width: 100%; height: 100%; min-height: 0; object-fit: contain; margin: 0; }
+.mobile .map-modal { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+@media (max-width: 600px) {
+  .mobile .shopping .bottom-bar { flex-wrap: wrap; }
+}
+.hud { isolation: isolate; }
+#hit-directions { z-index: 1; }
+.mobile .raid-information #exit-navigation { min-height: 44px; padding: 6px; font-size: 11px; white-space: nowrap; }
+.mobile #raid-quest-list { max-height: clamp(20px, calc(100dvh - 330px), 160px); }
+.mobile .radio { right: max(350px, var(--safe-right)); overflow: auto; pointer-events: auto; }
