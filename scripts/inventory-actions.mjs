@@ -2,6 +2,9 @@
 export async function placeAt(page, source, id, target, x = 0, y = 0) {
   await page.locator(`[data-source="${source}"][data-item-id="${id}"]`).first().click();
   await page.locator('[data-action="place-item"]').click();
+  await clickSlot(page, target, x, y);
+}
+export async function clickSlot(page, target, x = 0, y = 0) {
   const grid = page.locator(`[data-grid="${target}"]`);
   await grid.scrollIntoViewIfNeeded();
   const slot = await grid.evaluate((el, { x, y }) => {

@@ -1,23 +1,23 @@
 {
   "version": "0.2.0",
-  "htmlBytes": 1712835,
-  "htmlSha256": "6a59603a80fff7eb08a43ce7c4f11d2601e21b4c22d5524f8f8f1caf6409af9c",
+  "htmlBytes": 1714813,
+  "htmlSha256": "398fac15747e1eddd8f997d662992c5b02e3f355655b2793f25324812fd06e14",
   "artifacts": {
     "dist/index.html": {
-      "bytes": 1712835,
-      "sha256": "6a59603a80fff7eb08a43ce7c4f11d2601e21b4c22d5524f8f8f1caf6409af9c"
+      "bytes": 1714813,
+      "sha256": "398fac15747e1eddd8f997d662992c5b02e3f355655b2793f25324812fd06e14"
     },
     "start the game.html": {
-      "bytes": 1712835,
-      "sha256": "6a59603a80fff7eb08a43ce7c4f11d2601e21b4c22d5524f8f8f1caf6409af9c"
+      "bytes": 1714813,
+      "sha256": "398fac15747e1eddd8f997d662992c5b02e3f355655b2793f25324812fd06e14"
     },
     "release/Escape-Bincov-portable.zip": {
-      "bytes": 413013,
-      "sha256": "e3529e15726e72439f9cd5c8f28949682e4c378324d362680a942847180dcdb6"
+      "bytes": 413610,
+      "sha256": "a600a70af70f17469ecd74fdfc6b129a824b8cd8e4aa7cbb3eafb87402efa2f1"
     },
     "release/Escape-Bincov-web.zip": {
-      "bytes": 410286,
-      "sha256": "dcc5978442341f41524861de55cd51eeea6fc387f898cfedea409142d9215b36"
+      "bytes": 410883,
+      "sha256": "684ccb743daf851592c048e15e300162e3695bf2e5cf145456b5773ba3869e57"
     }
   }
 }

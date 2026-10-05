@@ -499,3 +499,9 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile .shop-checkout span { width: 100%; }
 /* Keep confirmation dialogs above sticky cart controls. */
 html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideout { isolation: isolate; z-index: 0; }
+
+.split-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.split-control input { width: 64px; padding: 6px; }
+.mobile .loot-details .placement-controls { display: flex; flex-wrap: wrap; width: 100%; }
+.mobile .loot-details .placement-hint { flex: 1 1 180px; }
+.mobile .loot-details.details-empty > .placement-controls { display: flex; }

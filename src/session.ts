@@ -1,5 +1,5 @@
 import * as D from './domain';
-import { placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
+import { moveQuantity, placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
 import { RecoveryStore, type SessionRecord } from './recovery-store';
@@ -189,8 +189,8 @@ export class SaveSession {
         const result = this.mutate(() => {
             const endpoints = { container: staged, bag: s.loadout!.bag, safe: s.loadout!.safe };
             const from = endpoints[request.from], to = endpoints[request.to];
-            if (placementError(from, to, request.uid, request.x, request.y)) return false;
-            return D.transferItem(from, to, request.uid, request.x, request.y);
+            if (placementError(from, to, request.uid, request.x, request.y, request.rotated, request.quantity)) return false;
+            return moveQuantity(from, to, request.uid, request.x, request.y, request.rotated, request.quantity);
         }, null, () => {
             checkpoint.loadout = structuredClone(s.loadout!);
             recorded.inventory = staged;

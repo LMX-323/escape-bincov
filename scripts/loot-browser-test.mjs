@@ -144,10 +144,13 @@ async function suite(viewport) {
       await drag('container', 'transfer-fuse', 'container', 0, 3);
       assert.equal((await snapshot()).containers.find(x => x.id === c.id).inventory.items.find(i => i.uid === 'transfer-fuse').y, 3); await screenshot('crate-returned');
     });
-    await step('stacks merge while overflow, occupied cells and out-of-bounds shapes preserve items', async () => {
+    await step('stacks accept partial merges while occupied cells and out-of-bounds shapes preserve items', async () => {
       const c = await fixture({ items: [item('stack-ammo', 'ammo9', 8), item('wide-gun', 'pistol', 1, 1), item('overflow-ammo', 'ammo9', 30, 3)], bag: [item('bag-ammo', 'ammo9', 10)] });
       await open(c.id); await drag('container', 'stack-ammo', 'bag', 0, 0); assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 18);
-      for (const [uid, x, y] of [['overflow-ammo', 0, 0], ['wide-gun', 0, 0], ['wide-gun', 5, 4]]) {
+      await drag('container', 'overflow-ammo', 'bag', 0, 0);
+      assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 40);
+      assert.equal((await snapshot()).containers.find(i => i.id === c.id).inventory.items.find(i => i.uid === 'overflow-ammo').qty, 8);
+      for (const [uid, x, y] of [['wide-gun', 0, 0], ['wide-gun', 5, 4]]) {
         const before = participants(await snapshot()); await drag('container', uid, 'bag', x, y); assert.deepEqual(participants(await snapshot()), before);
       }
     });

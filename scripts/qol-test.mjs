@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { placeAt } from './inventory-actions.mjs';
+import { placeAt, clickSlot } from './inventory-actions.mjs';
 const url = new URL(process.env.BINCOV_TEST_URL || pathToFileURL(resolve('dist/index.html')).href);
 if (url.protocol !== 'file:' && !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))) throw Error('Only offline or loopback test URLs are supported');
 url.searchParams.set('test', '1');
@@ -62,6 +62,33 @@ async function suite(viewport, touch = false) {
       await page.evaluate(() => { Storage.prototype.setItem = window.__realWrite; });
       await action('checkout').click(); await action('checkout-confirm').click(); assert.equal((await save()).cash, before.cash + 105);
       await page.reload(); await action('enter').click(); assert.equal((await save()).cash, before.cash + 105);
+    });
+    await step('loot rotation and quantity previews cancel cleanly; split and partial merge preserve remainders', async () => {
+      await page.evaluate(() => {
+        const { app, persist } = window.__bincov;
+        app.save.equipment = {weapon:'pistol',ammo:8,ammoRelief:0,relief:false};
+        app.save.bag.items = [{ uid: 'qol-ammo', id: 'ammo9', qty: 35, x: 0, y: 0 }]; app.save.safe.items = []; persist();
+      });
+      await page.locator('#seed').fill('42'); await action('deploy').click();
+      await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+      const id = await page.evaluate(() => {
+        const a = window.__bincov.app, r = a.raid, c = r.containers[0];
+        r.enemies.forEach(e => { e.sprite.setPosition(208,1456); e.home = e.target = {x:208,y:1456}; e.timer = e.cooldown = 9999; e.path = []; });
+        c.inventory.items = [{uid:'qol-water',id:'water',qty:2,x:0,y:0},{uid:'qol-incoming',id:'ammo9',qty:12,x:1,y:0}];
+        r.player.setPosition(c.x,c.y); r.hp=100; r.bleeding=0; r.checkpoint(); return c.id;
+      });
+      if (touch) await page.locator(`[data-loot-target="${id}"] button`).tap(); else await page.keyboard.press('e');
+      const inventoryState = () => page.evaluate(id => ({bag:window.__bincov.app.loadout.bag, safe:window.__bincov.app.loadout.safe, source:window.__bincov.app.raid.getLootContainer(id).inventory}), id);
+      const before = await inventoryState();
+      await page.locator('[data-uid="qol-water"]').click(); await action('rotate-item').click();
+      assert.deepEqual(await inventoryState(), before); await action('clear-selection').click(); assert.deepEqual(await inventoryState(), before);
+      await page.locator('[data-uid="qol-water"]').click(); await page.locator('#split-quantity').fill('1'); await action('split-item').click();
+      await action('rotate-preview').click(); await clickSlot(page,'safe',0,0);
+      let after = await inventoryState(); assert.equal(after.source.items.find(i=>i.uid==='qol-water').qty,1);
+      assert.equal(after.safe.items[0].rotated,true); assert.equal(after.safe.items[0].qty,1); assert.notEqual(after.safe.items[0].uid,'qol-water');
+      await placeAt(page,'container','ammo9','bag',0,0); after = await inventoryState();
+      assert.equal(after.bag.items.find(i=>i.uid==='qol-ammo').qty,40); assert.equal(after.source.items.find(i=>i.uid==='qol-incoming').qty,7);
+      await page.screenshot({path:resolve(out,`qol-inventory-${label}.png`)}); await action('close').click();
     });
   } finally { await context.close(); }
 }

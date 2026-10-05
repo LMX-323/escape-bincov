@@ -13,7 +13,7 @@ export const app = {
     raid: null as RaidScene | null,
     tab: 'gear', overlay: '', helpReturn: '', selected: '', selectedSource: '', seed: '',
     lootContext: null as { containerId: string; runId: string } | null,
-    mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined,
+    mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined, placementQuantity: undefined as number | undefined,
     reading: null as { title: string; text: string } | null,
     pendingImport: null as SaveDataV1 | null,
     pendingRecoveryImport: null as SessionRecord | null,
