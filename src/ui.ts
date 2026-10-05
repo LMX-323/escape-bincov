@@ -273,7 +273,7 @@ export function setOverlay(value: string) {
     else if (wasPaused && app.raid && !app.raid.paused) audio.start();
     render();
 }
-export function finish(outcome: 'extract' | 'death' | 'timeout') {
+export function finish(outcome: 'extract' | 'death' | 'timeout' | 'abandon') {
     if (app.state !== 'run' || !app.loadout || app.conflict || app.pendingSettlement) return;
     app.raid?.syncMagazine();
     if (!saveSession.prepareSettlement(outcome, app.raid?.kills || 0)) return;
@@ -291,7 +291,11 @@ export function retrySettlement(): boolean {
 export function exportSave() {
     try {
         let text: string;
-        if (app.pendingSettlement) text = encodeBackup(app.pendingSettlement);
+        if (app.expansion) {
+            const record = saveSession.backupRecord(app.raid?.snapshot() ?? app.checkpoint);
+            if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
+            text = encodeRecoveryBackup(record);
+        } else if (app.pendingSettlement) text = encodeBackup(app.pendingSettlement);
         else if (app.save.activeRun) {
             const record = saveSession.currentRecord();
             if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
@@ -487,7 +491,7 @@ function bind() {
                 setOverlay('abandon');
                 break;
             case 'confirm-abandon':
-                finish('death');
+                finish('abandon');
                 break;
             case 'tab':
                 app.tab = id;

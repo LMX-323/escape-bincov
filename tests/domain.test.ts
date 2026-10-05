@@ -7,8 +7,9 @@ import {
   submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
 } from '../src/domain';
 
-test('20 original items have coherent footprints, stacks and prices', () => {
-  assert.equal(Object.keys(ITEMS).length, 20);
+test('20 original items and production cloth have coherent footprints, stacks and prices', () => {
+  assert.equal(Object.keys(ITEMS).filter(id => id !== 'cloth').length, 20);
+  assert.equal(Object.keys(ITEMS).length, 21);
   for (const def of Object.values(ITEMS)) {
     assert.ok(def.w > 0 && def.h > 0 && def.stack > 0);
     if (def.buy) assert.ok(def.sell <= def.buy);

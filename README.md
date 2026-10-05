@@ -168,6 +168,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 游戏规则、任务、物品与旧存档迁移 | [完整游玩手册](docs/PLAYING.md) |
 | RPG 状态、属性成长、随机爆头、声望、幸运与基地（设计待实现） | [系统逻辑与首版数值](docs/RPG-SYSTEM-DESIGN.md) |
 | 建筑、RPG 与商场完整实现任务（待实现） | [总实施计划](docs/IMPLEMENTATION-PLAN.md) |
+| PR16 第一批状态/兼容原型与73项正式验收状态 | [M0 实施记录](docs/M0-STATE-AND-COMPAT.md) · [逐项登记](docs/PR16-ACCEPTANCE-REGISTER.md) |
 | Agent 必须遵守的规则 | [AGENTS.md](AGENTS.md) |
 | 架构、开发流程、验证与交接 | [Agent 开发手册](docs/AGENT-HANDBOOK.md) |
 | 应用状态、存档事务与后续扩展 | [架构说明](docs/ARCHITECTURE.md) |

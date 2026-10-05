@@ -51,6 +51,12 @@ jobs:
         run: pnpm test:title
       - name: Save reliability regression
         run: pnpm test:save-browser
+      - name: Obtain actual pre-expansion client
+        run: |
+          mkdir -p test-results
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/49738b89cc8556a0b39d339239bf09945e44ab9e/dist/index.html --output test-results/pre-m0.html
+      - name: Expansion storage and actual old-client regression
+        run: pnpm test:expansion
       - name: Crate and corpse inventory regression
         run: pnpm test:loot
       - name: Mobile input and recovery regression

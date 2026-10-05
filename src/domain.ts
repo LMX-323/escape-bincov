@@ -52,6 +52,7 @@ export const ITEMS: Record<string, ItemDef> = {
   antidote: item('antidote', '除藻药剂', '除藻剂', 1, 1, 0.2, 3, 120, 50, 'medical', '降低 55 点污染。', 0x8bb4a0),
   water: item('water', '净水瓶', '净水', 1, 2, 0.6, 2, 35, 14, 'food', '恢复全部耐力，降低 12 点污染。', 0x83a9ba),
   food: item('food', '鱼松罐头', '罐头', 1, 1, 0.3, 3, 50, 20, 'food', '恢复 12 点生命和 50 点耐力。', 0xcbaa76),
+  cloth: item('cloth', '清洁布料', '布料', 1, 1, 0.1, 10, 15, 5, 'part', '制作绷带所需的清洁布料。', 0xcac5ae),
   scrap: item('scrap', '泵机零件', '零件', 1, 1, 0.55, 5, 85, 35, 'part', '水产站维修用零件，共需 3 个。泵壳上还留着盐渍。', 0x9caaa0),
   wire: item('wire', '绝缘线圈', '线圈', 1, 1, 0.25, 5, 65, 28, 'part', '水产站维修用线圈，共需 2 卷。铜芯还完好。', 0xbf8054),
   fuse: item('fuse', '陶瓷保险管', '保险管', 1, 1, 0.1, 4, 100, 45, 'part', '水产站维修用保险管，共需 1 支。', 0xd0c5a1),
@@ -133,7 +134,7 @@ function space(inv: Inventory, id: string, rotated = false, autoRotate = true): 
     if (fits(inv, id, x, y, undefined, direction)) return { x, y, ...(direction ? { rotated: true } : {}) };
   return null;
 }
-export function addItem(inv: Inventory, id: string, qty = 1, relief = false, rotated = false, autoRotate = true): number {
+export function addItem(inv: Inventory, id: string, qty = 1, relief = false, rotated = false, autoRotate = true, allocate = uid): number {
   let left = integer(qty);
   const def = Object.hasOwn(ITEMS, id) ? ITEMS[id] : undefined;
   if (!def) return left;
@@ -148,7 +149,7 @@ export function addItem(inv: Inventory, id: string, qty = 1, relief = false, rot
     const pos = space(inv, id, rotated, autoRotate);
     if (!pos) break;
     const take = Math.min(left, def.stack);
-    inv.items.push({ uid: uid(), id, qty: take, ...pos, ...(relief ? { relief: true } : {}) });
+    inv.items.push({ uid: allocate(), id, qty: take, ...pos, ...(relief ? { relief: true } : {}) });
     left -= take;
   }
   return left;

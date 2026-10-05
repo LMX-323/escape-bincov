@@ -1,5 +1,15 @@
 # 《逃离滨科夫》交接记录
 
+## 2026-10-05 PR16 M0 第一批实施
+
+- 唯一基线 main `49738b89cc8556a0b39d339239bf09945e44ab9e`；独立 `feat/buildings-rpg-mall` 正常合并原 #16 文档历史，未推送/合并 main。按 [规划 PR #17](https://github.com/xuys2025/escape-bincov/pull/17) 顺序推进，总 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 保持 Draft。
+- 新增 v4 同主档扩展状态、严格多图/身体/成长/队列校验、升级前原字节、完整待结算备份和私有候选票据；原型验证离层弹道、单次尸体/实际枪伤训练量、唯一追击移交、生产游标的原子提交。正常入口仍是海岸，不自动启用未完成功能。
+- `pnpm test` 122项通过（原109项 + 新13项）；`pnpm package` 类型检查及两HTML/两ZIP通过。browser、desktop-input、ui、title、save-browser、loot、mobile、mobile-ux、portable 全部实际通过；最终包再次通过 save-browser、portable 与扩展专项。
+- `pnpm test:expansion` 5个真实新旧HTML/同源所有权/导入/待结算流程通过；`pnpm test:expansion-benchmark` 两负载各60次实测通过。主档约32/129KB；最终常规解码/同步写入p95约2.03/1.00ms。报告和双分辨率实际截图位于 docs/evidence/pr16-m0，细节见 [M0记录](docs/M0-STATE-AND-COMPAT.md)。
+- 初次布料目录计数与严格类型空值检查失败已修复；默认沙箱浏览器 crashpad/socket 权限问题通过必要网络权限恢复，浏览器仍离线。无未修复的本地短检查失败；CI以本次提交的PR检查为准，不借用旧头成功结果。
+- 原总计划M0部分项目完成；[73项正式验收](docs/PR16-ACCEPTANCE-REGISTER.md)仍未完成，M1–M7待实施。下一批是居民楼布局、门操作、纯交互排序和真实场景/输入接线；随后补追击抵达/投影/潮位改路和换层UI。
+- `pnpm test:play` 未运行：新的弹道核仅在纯规则夹具中，尚未接入正常场景；新世界600秒/连续三局留到M2/M7。真机与真人平衡未运行，商场原两张参考图仍缺，完整生产收益重复导入场景待M5-F。不得转Ready、宣称新玩法已上线或自动合并。
+
 更新：2026-10-05。权威仓库：https://github.com/xuys2025/escape-bincov 。公开发布后以仓库最新 `main` 为基线；所有后续任务先读 `AGENTS.md` 和 `docs/AGENT-HANDBOOK.md`，通过独立分支与 PR 交付。
 
 ## 2026-10-05 建筑、RPG 与商场总实施 PR（待实现）
