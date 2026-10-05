@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-05T19:17:28.025Z",
+  "methodology": "Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors; this does not claim natural travel or human balance.",
+  "steps": [
+    {
+      "name": "native deployment saves all three maps with one global roster and body",
+      "status": "passed"
+    },
+    {
+      "name": "failed door write leaves the closed door and original bytes; retry opens exactly once",
+      "status": "passed"
+    },
+    {
+      "name": "one held E switches once, releases held movement, and keeps global time and saved doors",
+      "status": "passed"
+    },
+    {
+      "name": "refresh restores upstairs and all maps; reverse and basement entries return to paired anchors",
+      "status": "passed"
+    },
+    {
+      "name": "native touch entry and map panel at 844x390",
+      "status": "passed"
+    },
+    {
+      "name": "native touch entry and map panel at 640x300",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "status": "passed",
+  "finishedAt": "2026-10-05T19:17:54.846Z"
+}

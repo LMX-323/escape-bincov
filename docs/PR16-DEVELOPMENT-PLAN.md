@@ -1,12 +1,12 @@
 # PR #16 功能范围研究与详细开发计划
 
-> **计划状态：待实施。** 本文细化工作包、依赖、源码落点与验收门槛，不改变原需求，也不表示玩法已经实现。玩法仍由 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 承接并保持 Draft；本文的文档 PR 只交付规划。
+> **历史规划，已用于本轮实施。** 本文来自规划 [PR #17](https://github.com/xuys2025/escape-bincov/pull/17)，保留当时的研究事实与工作包。M0–M6现已在 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 接入，实际实现和验证以 [实施记录](PR16-IMPLEMENTATION.md)、[逐项登记](PR16-ACCEPTANCE-REGISTER.md) 为准；原计划不替代完成证据。
 
 研究日期：2026-10-05。唯一实现基线：上游 main `49738b89cc8556a0b39d339239bf09945e44ab9e`。已按顺序阅读 [AGENTS.md](../AGENTS.md)、[开发手册](AGENT-HANDBOOK.md)、README、handoff，再核对源码与测试。正式动工时重新 fetch 最新 main，记录新的 SHA，保留后来合入的修复。
 
 ## 1. 研究结论与完整范围
 
-PR #16 当前头提交为 `0bd2e81e29f70f3172daf557841ef7465e9ba355`，仅改变 README、handoff 和 `docs/IMPLEMENTATION-PLAN.md` 三份文档，没有新玩法代码。已有总计划包含 M0–M7 共 **68 项未完成任务**。该提交的 [Build and test](https://github.com/xuys2025/escape-bincov/actions/runs/37305479176/job/111747999779) 已成功，Pages 部署跳过；这只是现有游戏回归证据。
+研究时 PR #16 头提交为 `0bd2e81e29f70f3172daf557841ef7465e9ba355`，仅改变 README、handoff 和 `docs/IMPLEMENTATION-PLAN.md` 三份文档，没有新玩法代码。当时总计划包含 M0–M7 共 **68 项未完成任务**。该提交的 [Build and test](https://github.com/xuys2025/escape-bincov/actions/runs/37305479176/job/111747999779) 已成功，Pages 部署跳过；这只是当时游戏回归证据。
 
 完整需求由以下原文共同定义，本文摘要不能替代原表格、数值或验收条目：
 
