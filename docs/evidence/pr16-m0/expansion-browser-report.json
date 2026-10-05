@@ -1,8 +1,8 @@
 {
-  "startedAt": "2026-10-05T13:02:29.408Z",
+  "startedAt": "2026-10-05T17:38:01.158Z",
   "baseline": "49738b89cc8556a0b39d339239bf09945e44ab9e",
   "legacySha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
-  "currentSha256": "619c48c61e7b828071a18d084eb6f263682e641c56a71f94ceb4163814b326e2",
+  "currentSha256": "e77365efe153fa521f50245e61f94962b40e2ca7fae2d0b76abb38ba6b4e008f",
   "steps": [
     {
       "name": "the actual v3 main client creates progress; new client respects its lock then takes over",
@@ -30,5 +30,5 @@
   "methodology": "Real pinned main HTML and current bundle on one locally fulfilled HTTPS origin, offline; explicit test-only extension fixture. No new map/gameplay/UI acceptance is claimed.",
   "browser": "153.0.8010.12",
   "status": "passed",
-  "finishedAt": "2026-10-05T13:02:39.207Z"
+  "finishedAt": "2026-10-05T17:38:13.082Z"
 }

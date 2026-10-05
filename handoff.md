@@ -4,6 +4,7 @@
 
 - 唯一基线 main `49738b89cc8556a0b39d339239bf09945e44ab9e`；独立 `feat/buildings-rpg-mall` 正常合并原 #16 文档历史，未推送/合并 main。按 [规划 PR #17](https://github.com/xuys2025/escape-bincov/pull/17) 顺序推进，总 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 保持 Draft。
 - 新增 v4 同主档扩展状态、严格多图/身体/成长/队列校验、升级前原字节、完整待结算备份和私有候选票据；原型验证离层弹道、单次尸体/实际枪伤训练量、唯一追击移交、生产游标的原子提交。正常入口仍是海岸，不自动启用未完成功能。
+- 结算/待结算导入及启动恢复也采用单调生产游标；追加未来60秒游标的回拨边界，防止直接赋值Date.now降低游标。
 - `pnpm test` 122项通过（原109项 + 新13项）；`pnpm package` 类型检查及两HTML/两ZIP通过。browser、desktop-input、ui、title、save-browser、loot、mobile、mobile-ux、portable 全部实际通过；最终包再次通过 save-browser、portable 与扩展专项。
 - `pnpm test:expansion` 5个真实新旧HTML/同源所有权/导入/待结算流程通过；`pnpm test:expansion-benchmark` 两负载各60次实测通过。主档约32/129KB；最终常规解码/同步写入p95约2.03/1.00ms。报告和双分辨率实际截图位于 docs/evidence/pr16-m0，细节见 [M0记录](docs/M0-STATE-AND-COMPAT.md)。
 - 初次布料目录计数与严格类型空值检查失败已修复；默认沙箱浏览器 crashpad/socket 权限问题通过必要网络权限恢复，浏览器仍离线。无未修复的本地短检查失败；CI以本次提交的PR检查为准，不借用旧头成功结果。

@@ -115,12 +115,15 @@ test('strict imports reject corruption without changing stored bytes or silently
 
 test('expanded settled/live/pending backups preserve growth and queues; imports replace complete state', () => {
     const f = deployed(); f.state.expansion!.growth.progress.technique = .2; f.state.expansion!.body.hp = 37;
+    const futureCursor = Date.now() + 60_000;
+    f.state.expansion!.base.cursor = futureCursor;
     assert.equal(f.session.persist(), true);
     const portable = decodePortableBackup(encodeRecoveryBackup(f.session.backupRecord()!, f.resolve), f.resolve);
     assert.equal(portable.kind, 'session'); if (portable.kind !== 'session') return;
     const target = fixture(); assert.equal(target.session.importRecord(portable.record), true);
     assert.deepEqual(target.state.expansion, f.state.expansion);
     assert.equal(f.session.prepareSettlement('abandon', 0), true);
+    assert.equal(f.state.pendingExpansion!.base.cursor, futureCursor, 'Clock rollback cannot lower the cursor while preparing settlement');
     const pending = structuredClone(f.state.pendingExpansion); f.deny(true);
     assert.equal(f.session.retrySettlement(), false); assert.deepEqual(f.state.pendingExpansion, pending);
     assert.equal(f.state.expansion!.raid!.currentMap, 'downstairs'); assert.equal(f.state.result, null);
@@ -131,11 +134,14 @@ test('expanded settled/live/pending backups preserve growth and queues; imports 
     f.deny(false); assert.equal(f.session.retrySettlement(), true); assert.equal(f.session.retrySettlement(), false);
     assert.equal(f.state.expansion!.body.hp, 37, 'M0 retains the actual abandon body; death-body rules arrive in M3/M5');
     assert.equal(f.state.expansion!.base.location, 'base'); assert.equal(f.state.expansion!.raid, null);
+    assert.equal(f.state.expansion!.base.cursor, futureCursor, 'Retry preserves the monotonic cursor');
     f.state.state = 'hideout';
     const settled = f.session.backupRecord()!, settledBytes = f.bytes;
     assert.equal(f.session.importSave(D.newSave()), false); assert.equal(f.bytes, settledBytes, 'Profile-only imports cannot erase v4 fields');
     assert.equal(f.session.importRecord(settled), true); assert.equal(f.session.importRecord(settled), true);
     assert.equal(f.state.save.stats.runs, 1); assert.equal(f.state.expansion!.growth.progress.technique, .2);
+    assert.equal(f.session.importRecord(backup.record), true);
+    assert.equal(f.state.expansion!.base.cursor, futureCursor, 'Importing pending results must not regress the cursor');
     const importedPending = fixture(f.world, JSON.stringify(backup.record));
     assert.equal(importedPending.state.expansion!.base.location, 'base');
     assert.ok(importedPending.state.expansion!.base.cursor >= backup.record.expansion!.base.cursor);

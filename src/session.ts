@@ -95,7 +95,7 @@ export class SaveSession {
             const loaded = this.store.load();
             s.save = loaded.save; s.checkpoint = loaded.raid; s.expansion = loaded.expansion; s.recovery = loaded.legacyRecovery;
             if (s.expansion?.base.location === 'settlement' && !s.save.activeRun) {
-                s.expansion.base.location = 'base'; s.expansion.base.cursor = Date.now();
+                s.expansion.base.location = 'base'; s.expansion.base.cursor = Math.max(s.expansion.base.cursor, Date.now());
             }
             s.lastSavedAt = this.store.record?.savedAt ?? 0;
             if (!owned) {
@@ -218,7 +218,7 @@ export class SaveSession {
             if (old) Object.assign(s.pendingExpansion.body, { hp: old.hp, stamina: old.stamina, pollution: old.pollution, bleeding: !!old.bleeding, exhausted: old.exhausted });
             s.pendingExpansion.raid = null;
             s.pendingExpansion.base.location = 'settlement';
-            s.pendingExpansion.base.cursor = Date.now();
+            s.pendingExpansion.base.cursor = Math.max(s.pendingExpansion.base.cursor, Date.now());
         }
         return true;
     }
@@ -229,7 +229,7 @@ export class SaveSession {
         if (!candidate) return false;
         const expansion = structuredClone(s.pendingExpansion);
         // Waiting for storage is not time spent recovering in the base.
-        if (expansion) { expansion.base.location = 'base'; expansion.base.cursor = Date.now(); }
+        if (expansion) { expansion.base.location = 'base'; expansion.base.cursor = Math.max(expansion.base.cursor, Date.now()); }
         if (!this.persist(candidate, null, { runId: s.save.activeRun!.runId!, outcome: candidate.lastResult!.outcome,
             ...(expansion ? { reason: s.pendingReason! } : {}) }, expansion)) return false;
         s.save = candidate;
@@ -253,7 +253,7 @@ export class SaveSession {
         const s = this.session;
         const expansion = structuredClone(record.expansion ?? null);
         if (expansion?.base.location === 'settlement' && !record.profile.activeRun) {
-            expansion.base.location = 'base'; expansion.base.cursor = Date.now();
+            expansion.base.location = 'base'; expansion.base.cursor = Math.max(expansion.base.cursor, Date.now());
         }
         if (s.state !== 'hideout' || s.pendingSettlement || s.save.activeRun || !this.persist(record.profile, record.raid, record.terminal, expansion)) return false;
         s.save = structuredClone(record.profile); s.recovery = false; s.loadout = null;
