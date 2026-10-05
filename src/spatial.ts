@@ -7,10 +7,47 @@ export interface DoorDefinition {
 }
 export interface EntryDefinition {
     id: string; at: Point; targetMap: string; targetEntry: string; landing: Point;
+    label?: string;
 }
 export interface SpaceDefinition {
     id: string; name: string; floor: string; tile: number; cells: Cell[][];
     doors: DoorDefinition[]; entries: EntryDefinition[];
+    regions?: { x: number; y: number; w: number; h: number; name: string; id?: string; inside?: boolean; theme?: number; sealed?: boolean }[];
+    /** B blocks every channel, M blocks bodies, V is purely visual. */
+    decorations?: { x: number; y: number; kind: 'B' | 'M' | 'V'; name: string }[];
+}
+
+export function doorAnchor(context: SpaceContext, id: string, player: Point): Point | null {
+    const door = context.definition.doors.find(d => d.id === id);
+    if (!door) return null;
+    return [...door.anchors].sort((a, b) => separation(a, player) - separation(b, player))
+        .find(at => separation(player, at) < 43 && corridor(context, player, at, 'body', 10)) ?? null;
+}
+/** Loot, corpses and bullets do not occupy a doorway. Living bodies do. */
+export function toggleDoor(context: SpaceContext, id: string, player: Point, living: readonly Point[]): 'opened' | 'closed' | 'occupied' | 'unreachable' {
+    const door = context.definition.doors.find(d => d.id === id);
+    if (!door || !doorAnchor(context, id, player)) return 'unreachable';
+    if (context.doors[id]) {
+        const left = door.x * context.definition.tile, top = door.y * context.definition.tile;
+        const occupied = [player, ...living].some(p => {
+            const x = Math.max(left, Math.min(left + context.definition.tile, p.x));
+            const y = Math.max(top, Math.min(top + context.definition.tile, p.y));
+            return Math.hypot(p.x - x, p.y - y) < 10;
+        });
+        if (occupied) return 'occupied';
+    }
+    context.doors[id] = !context.doors[id];
+    return context.doors[id] ? 'opened' : 'closed';
+}
+
+export type Interaction = { id: string; kind: 'exit' | 'entry' | 'door' | 'ground' | 'container' | 'note'; at: Point; label: string };
+/** One target is shared by the displayed hint, touch label, and performed action. */
+export function interactionTarget(context: SpaceContext, player: Point, candidates: readonly Interaction[]): Interaction | null {
+    const ranks = { entry: 0, door: 1, ground: 2, container: 2, note: 3, exit: -1 };
+    const eligible = candidates.filter(t => separation(player, t.at) < (t.kind === 'exit' ? 48 : 43)
+        && corridor(context, player, t.at, 'body', 10));
+    return eligible.sort((a, b) => Number(b.kind === 'exit') - Number(a.kind === 'exit')
+        || separation(player, a.at) - separation(player, b.at) || ranks[a.kind] - ranks[b.kind] || a.id.localeCompare(b.id, 'en'))[0] ?? null;
 }
 export type SpaceContext = { definition: SpaceDefinition; doors: Record<string, boolean>; highTide: boolean };
 export type Channel = 'body' | 'sight' | 'bullet' | 'path';
@@ -81,7 +118,7 @@ export function spacePath(context: SpaceContext, from: Point, to: Point, openDoo
 /** Specified landing first; then a 64px circle, distance / row / column order. */
 export function findLanding(context: SpaceContext, at: Point, occupied: readonly Point[], radius = 10): Point | null {
     const valid = (p: Point) => traversable(context, p, 'body', radius) && occupied.every(actor => separation(actor, p) >= radius + 10);
-    if (valid(at)) return { ...at };
+    if (valid(at)) return { x: at.x, y: at.y };
     const map = context.definition, candidates: Point[] = [];
     for (let row = Math.max(0, Math.floor((at.y - 64) / map.tile)); row <= Math.min(map.cells.length - 1, Math.floor((at.y + 64) / map.tile)); row++) {
         for (let col = Math.max(0, Math.floor((at.x - 64) / map.tile)); col <= Math.min(map.cells[0].length - 1, Math.floor((at.x + 64) / map.tile)); col++) {

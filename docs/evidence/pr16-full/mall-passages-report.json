@@ -1,0 +1,3497 @@
+{
+  "startedAt": "2026-10-05T19:02:45.671Z",
+  "methodology": "Offline built mall. Explicit candidates position the player 40px outside each passage and keep enemies on long attack cooldowns. Keyboard walking/sprinting crosses the actual scene geometry ten round trips per mode; health/stamina are reset between sprint loops. This checks geometry/input and conservation, not combat, natural travel or human/reference-image recognition.",
+  "passages": [
+    {
+      "id": "P-N",
+      "map": "mall-f1",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 1936,
+            "y": 168,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "121,10:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 正门广场 · 室外"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 1909.2323891068872,
+            "y": 193.15481089411466,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "119,12:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 1936,
+            "y": 168,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "121,10:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 正门广场 · 室外"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 1916.889595573857,
+            "y": 182.29020442300282,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "119,11:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 正门广场 · 室外"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-W",
+      "map": "mall-f1",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 232,
+            "y": 432,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "14,27:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 弧形步行街 · 室外"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 245.36641291382278,
+            "y": 416.2143870868454,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "15,26:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 弧形步行街 · 室外"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 232,
+            "y": 432,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "14,27:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 弧形步行街 · 室外"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 237.6969018013903,
+            "y": 406.2412982006239,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "14,25:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 弧形步行街 · 室外"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-S",
+      "map": "mall-f1",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 1328,
+            "y": 1512,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "83,94:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 收银及南门厅"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 1309.5789301186385,
+            "y": 1528.2258698811936,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "81,95:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 收银及南门厅"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 1328,
+            "y": 1512,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "83,94:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 收银及南门厅"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 1306.7597139566099,
+            "y": 1530.5224860431301,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "81,95:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 收银及南门厅"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-E",
+      "map": "mall-f1",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 2024,
+            "y": 1264,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,79:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 收银及南门厅"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 2049.515685632122,
+            "y": 1226.9707143677924,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "128,76:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 2024,
+            "y": 1264,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,79:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 老陈五金"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 2035.2741357327243,
+            "y": 1244.7078642674132,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,77:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 老陈五金"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-L",
+      "map": "mall-f1",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 2024,
+            "y": 1456,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,91:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 东南大堂"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 2038.1604706873052,
+            "y": 1436.7323293112827,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,89:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 东南大堂"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f1",
+            "x": 2024,
+            "y": 1456,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,91:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 东南大堂"
+          },
+          "after": {
+            "map": "mall-f1",
+            "x": 2039.2372605858477,
+            "y": 1434.7871394128006,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,89:{}",
+            "zone": "滨湾商场 · 一层 / 地面室外 / 东南大堂"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-TN",
+      "map": "mall-f2",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f2",
+            "x": 2024,
+            "y": 912,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,57:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          },
+          "after": {
+            "map": "mall-f2",
+            "x": 2044.9174476592366,
+            "y": 893.6361523416775,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,55:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f2",
+            "x": 2024,
+            "y": 912,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,57:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          },
+          "after": {
+            "map": "mall-f2",
+            "x": 2038.146738164198,
+            "y": 893.5284618359765,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,55:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P-TS",
+      "map": "mall-f2",
+      "modes": [
+        {
+          "sprint": false,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f2",
+            "x": 2024,
+            "y": 1392,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,87:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          },
+          "after": {
+            "map": "mall-f2",
+            "x": 2042.8155543254666,
+            "y": 1370.754045674198,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,85:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          }
+        },
+        {
+          "sprint": true,
+          "roundTrips": 10,
+          "before": {
+            "map": "mall-f2",
+            "x": 2024,
+            "y": 1392,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "126,87:{}",
+            "zone": "滨湾商场 · 二层 / 东南二层大堂"
+          },
+          "after": {
+            "map": "mall-f2",
+            "x": 2034.6332876563886,
+            "y": 1368.820112342399,
+            "roster": [
+              {
+                "uid": "enemy-0",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-1",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-2",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-3",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-4",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-5",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-6",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-7",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-8",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-9",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-10",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-11",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-12",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-13",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-14",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-15",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-16",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-17",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-18",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-19",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-20",
+                "id": "creature"
+              },
+              {
+                "uid": "enemy-21",
+                "id": "salt"
+              },
+              {
+                "uid": "enemy-22",
+                "id": "scav"
+              },
+              {
+                "uid": "enemy-23",
+                "id": "elite"
+              },
+              {
+                "uid": "enemy-24",
+                "id": "elite"
+              }
+            ],
+            "counts": {
+              "mall-f1": {
+                "enemies": 16,
+                "loot": 26,
+                "containers": 7
+              },
+              "mall-f2": {
+                "enemies": 9,
+                "loot": 14,
+                "containers": 3
+              }
+            },
+            "roof": "127,85:{}",
+            "zone": "滨湾商场 · 二层 / 潮汐家居馆"
+          }
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "status": "passed",
+  "finishedAt": "2026-10-05T19:06:58.766Z"
+}

@@ -18,7 +18,7 @@ jobs:
   verify:
     name: Build and test
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -57,6 +57,14 @@ jobs:
           curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/49738b89cc8556a0b39d339239bf09945e44ab9e/dist/index.html --output test-results/pre-m0.html
       - name: Expansion storage and actual old-client regression
         run: pnpm test:expansion
+      - name: Buildings and floor controls
+        run: pnpm test:buildings
+      - name: RPG, station and mall transactions
+        run: pnpm test:systems
+      - name: Repeated same-layer mall passages
+        run: pnpm test:mall-passages
+      - name: Mall landing congestion and held input
+        run: pnpm test:mall-landing
       - name: Crate and corpse inventory regression
         run: pnpm test:loot
       - name: Mobile input and recovery regression

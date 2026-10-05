@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { MapData } from './world';
+import type { SpaceDefinition } from './spatial';
 
 // All artwork is drawn here from original pixel primitives; no external assets.
 const P = {
@@ -59,10 +60,27 @@ function human(c: Ctx, coat: string, trim: string, elite = false, weapon = 'pist
   }
 }
 
-const iconIds = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'];
+const iconIds = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger', 'cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet'];
 function itemIcon(c: Ctx, id: string): void {
   const r = (color: string, x: number, y: number, w: number, h: number) => rect(c, color, x, y, w, h);
-  if (id === 'knife') {
+  if (id === 'cloth') {
+    r('#222e28', 4, 7, 25, 23); r('#aaa78b', 5, 6, 22, 21); r('#d8cfaa', 6, 7, 20, 3);
+    for (let y = 12; y < 27; y += 5) r('#777d68', 6, y, 19, 1);
+  } else if (id.endsWith('Dose') || id === 'focus') {
+    const color = id === 'strengthDose' ? '#b67959' : id === 'constitutionDose' ? '#8aa477' : '#769caa';
+    r('#26372f', 9, 6, 14, 24); r('#c3c9b4', 11, 8, 10, 17); r(color, 12, 17, 8, 7);
+    r('#d4cba7', 13, 3, 6, 5); r('#526c61', 14, 25, 4, 5);
+  } else if (id === 'analgesic') {
+    r('#27382e', 5, 6, 22, 24); r('#a0aa98', 6, 7, 20, 21);
+    for (const x of [10, 20]) for (const y of [12, 22]) { r('#667463', x - 3, y - 3, 7, 6); r('#e0dac0', x - 2, y - 2, 5, 4); }
+  } else if (id.endsWith('Charm')) {
+    r('#8b7252', 15, 2, 2, 14); r('#263b31', 8, 14, 17, 16);
+    r(id === 'luckyCharm' ? '#b5b782' : '#85765f', 9, 14, 14, 13); r('#526d53', 12, 17, 8, 7);
+    r('#d2c694', 14, 16, 3, 3); if (id === 'unluckyCharm') r('#302e28', 16, 18, 2, 9);
+  } else if (id.endsWith('Sachet')) {
+    r('#605d43', 12, 3, 8, 7); r(id === 'luckySachet' ? '#89946e' : '#756857', 7, 11, 19, 17);
+    r('#c2b489', 9, 10, 15, 3); r('#465543', 11, 15, 10, 9); r('#ad9a66', 15, 16, 2, 7);
+  } else if (id === 'knife') {
     r('#131d20', 4, 17, 24, 5); r('#866248', 4, 17, 8, 4); r('#40514e', 11, 14, 2, 10);
     r('#aebbad', 13, 17, 11, 4); r('#d7dfc4', 13, 17, 15, 1); r('#72857e', 24, 18, 3, 2);
   } else if (['pistol', 'shotgun', 'carbine'].includes(id)) {
@@ -193,7 +211,7 @@ function groundTile(c: Ctx, value: number, x: number, y: number, tx: number, ty:
 
 let mapTextureSequence = 0;
 /** A single static canvas map keeps rendering cheap even with many entities. */
-export function drawWorld(scene: Phaser.Scene, world: MapData): Phaser.GameObjects.Container {
+export function drawWorld(scene: Phaser.Scene, world: MapData, space?: SpaceDefinition): Phaser.GameObjects.Container {
   const cols = world.tiles[0]?.length ?? 0, rows = world.tiles.length;
   const tile = (x: number, y: number): number => world.tiles[y]?.[x] ?? 2;
   const key = `bincov-world-${scene.sys.settings.key}-${++mapTextureSequence}`;
@@ -216,6 +234,55 @@ export function drawWorld(scene: Phaser.Scene, world: MapData): Phaser.GameObjec
       if (value === 3 && noise(tx, ty, 72) > 0.92) {
         rect(c, '#293934', x + 8, y + 7, 17, 14); rect(c, '#788479', x + 7, y + 6, 16, 13);
         for (let i = 0; i < 4; i++) rect(c, '#43514b', x + 9, y + 9 + i * 2, 12, 1);
+      }
+    }
+    if (space) {
+      space.cells.forEach((row, ty) => row.forEach((cell, tx) => {
+        if (cell !== 'low') return;
+        rect(c, '#4b503c', tx * 32 + 2, ty * 32 + 10, 28, 21);
+        rect(c, '#9a8863', tx * 32 + 3, ty * 32 + 10, 26, 4);
+      }));
+      for (const d of space.decorations ?? []) {
+        const x = d.x - 14, y = d.y - 14, name = d.name;
+        if (d.kind === 'V') {
+          rect(c, '#c3bb9170', x + 5, y + 7, 18, 11);
+          for (let n = 0; n < 3; n++) rect(c, '#415941', x + 7, y + 9 + n * 3, 11 + n, 1);
+          continue;
+        }
+        rect(c, '#172d23', x, y, 28, 28);
+        rect(c, d.kind === 'M' ? '#867755' : '#718071', x + 1, y + (d.kind === 'M' ? 10 : 2), 26, d.kind === 'M' ? 16 : 24);
+        if (/药房/.test(name)) {
+          rect(c, '#ccd4b1', x + 3, y + 4, 21, 20); rect(c, '#749271', x + 11, y + 7, 5, 14); rect(c, '#749271', x + 7, y + 11, 13, 5);
+        } else if (/炸鸡/.test(name)) {
+          rect(c, '#a27147', x + 4, y + 12, 19, 11); rect(c, '#c3a179', x + 4, y + 12, 19, 3);
+          for (let n = 0; n < 3; n++) { rect(c, '#484e43', x + 5 + n * 7, y + 3, 4, 7); rect(c, '#ddaf71', x + 6 + n * 7, y + 17, 3, 4); }
+        } else if (/服装/.test(name)) {
+          rect(c, '#9eac91', x + 3, y + 5, 22, 2); rect(c, '#4f5148', x + 5, y + 5, 2, 20); rect(c, '#4f5148', x + 23, y + 5, 2, 20);
+          for (let n = 0; n < 3; n++) { rect(c, ['#9482a0','#ac9474','#879d90'][n], x + 7 + n * 5, y + 9, 4, 12); rect(c, '#c4c3a1', x + 8 + n * 5, y + 7, 2, 3); }
+        } else if (/生鲜|冷藏/.test(name)) {
+          rect(c, '#b6cabe', x + 3, y + 10, 22, 14); rect(c, '#446f73', x + 5, y + 13, 18, 9);
+          for (let n = 0; n < 3; n++) rect(c, '#bed6cf', x + 7 + n * 5, y + 16, 4, 2);
+        } else if (/数码/.test(name)) {
+          rect(c, '#627e85', x + 3, y + 10, 22, 14); rect(c, '#b3c9b9', x + 4, y + 11, 20, 2);
+          for (let n = 0; n < 3; n++) { rect(c, '#203a40', x + 6 + n * 6, y + 15, 4, 6); rect(c, '#76b0ad', x + 7 + n * 6, y + 16, 2, 3); }
+        } else if (/五金|电房|配电/.test(name)) {
+          rect(c, '#344c48', x + 3, y + 3, 22, 22); rect(c, '#c4a160', x + 5, y + 6, 4, 4); rect(c, '#b56b54', x + 17, y + 6, 4, 4);
+          for (let n = 0; n < 3; n++) rect(c, '#889d86', x + 5, y + 15 + n * 3, 16, 1);
+        } else if (/财务/.test(name)) {
+          rect(c, '#586c64', x + 3, y + 3, 22, 22); rect(c, '#c4b791', x + 12, y + 11, 6, 6); rect(c, '#2e453b', x + 14, y + 6, 2, 16); rect(c, '#2e453b', x + 8, y + 14, 14, 2);
+        } else if (/办公室|仓库/.test(name)) {
+          for (let n = 0; n < 3; n++) { rect(c, /办公室/.test(name) ? '#8e9f88' : '#ac8c5d', x + 3, y + 4 + n * 7, 21, 5); rect(c, '#344b3b', x + 12, y + 6 + n * 7, 5, 1); }
+        } else if (/家居|露台/.test(name)) {
+          rect(c, '#a29c7c', x + 3, y + 12, 21, 10); rect(c, '#747f61', x + 2, y + 9, 24, 4); rect(c, '#cbc4a3', x + 4, y + 14, 7, 6); rect(c, '#cab997', x + 14, y + 14, 7, 6);
+        } else if (/厕所/.test(name)) {
+          rect(c, '#bdd0bd', x + 4, y + 11, 20, 13); rect(c, '#446c65', x + 7, y + 14, 14, 6); rect(c, '#b5b58b', x + 13, y + 8, 3, 8);
+        } else if (/竹木/.test(name)) {
+          for (let n = 0; n < 4; n++) { rect(c, '#aaa875', x + 3 + n * 6, y + 4, 3, 21); rect(c, '#5c7248', x + 3 + n * 6, y + 11, 3, 2); }
+        } else if (/大堂|广场|服务|门厅/.test(name)) {
+          rect(c, '#d2cba5', x + 4, y + 12, 20, 11); rect(c, '#4c7556', x + 6, y + 16, 13, 3); rect(c, '#4c7556', x + 17, y + 13, 3, 9);
+        } else {
+          for (let n = 0; n < 3; n++) { rect(c, ['#c5ae79','#74998b','#a07461'][n], x + 3 + n * 7, y + 7, 5, 16); rect(c, '#d7cfa9', x + 3 + n * 7, y + 8, 5, 2); }
+        }
       }
     }
     for (const b of world.buildings) {
@@ -291,7 +358,7 @@ export function drawWorld(scene: Phaser.Scene, world: MapData): Phaser.GameObjec
       }
     }
     // Empty fishing boats sit beyond the walkable jetty, reinforcing the shoreline.
-    for (const [sx, sy, rust] of [[67 * 32, 20 * 32, 0], [68 * 32, 35 * 32, 1], [67 * 32, 43 * 32, 0]]) {
+    for (const [sx, sy, rust] of !space || space.id === 'coast' ? [[67 * 32, 20 * 32, 0], [68 * 32, 35 * 32, 1], [67 * 32, 43 * 32, 0]] : []) {
       rect(c, '#122c2f', sx + 5, sy + 4, 36, 103);
       rect(c, '#122c2f', sx - 1, sy + 21, 48, 65);
       rect(c, rust ? '#9e7650' : '#829082', sx + 4, sy + 14, 36, 76);

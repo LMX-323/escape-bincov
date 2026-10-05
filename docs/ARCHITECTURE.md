@@ -88,3 +88,9 @@ mutate(() => {
 - 既有领域、地图、双分辨率浏览器、界面和 ZIP 检查继续执行。测试入口及 CI 流程沿用现有约定。
 
 输入已拆到 `input.ts`，触控绑定在稳定的 `mobile.ts` 根节点，场景保留战斗与 HUD；没有引入事件总线、状态框架或通用插件系统。后续主界面或移动输入改动应复用本会话接口，并从届时最新 `main` 开始。
+
+## PR16 扩展状态与场景
+
+建筑/商场用 `SpaceDefinition` 注册不可变格网和成对入口，session v4 中保存每图独立的门、实体、弹丸、噪声与本地时间。`ExpansionState` 是身体/成长/基地/整局的唯一来源；RaidScene 与 BaseScene 只通过 `attachExpansion` 的完整捕获/恢复端口参与会话。恢复中的旧海岸继续使用原检查点端口。
+
+新规则分在 `spatial`、`rpg`、`reputation-luck`、`base`、`pursuit` 与 `layer-transition` 中，无Phaser/DOM依赖。普通子弹飞行和离层结算共用有限首碰撞/伤害内核；不可见层不执行普通AI，已登记追击事件按全局行动钟推进。候选事务完整校验后单次写入，成功才恢复表现；跨图、物品、身体、训练、RNG与生产游标不能拆开提交。实施/格式/内容边界见 [PR16记录](PR16-IMPLEMENTATION.md)。

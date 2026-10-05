@@ -471,3 +471,24 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
   .mobile .map-modal .section-title { margin-bottom: 5px; }
   .mobile .map-modal .legend { font-size: 11px; }
 }
+
+/* Building and station controls share the existing inventory and touch surfaces. */
+.rpg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.rpg-cards > div { min-width: 100px; padding: 12px; border: 1px solid #526349; display: flex; flex-direction: column; gap: 6px; }
+.rpg-cards strong { font-size: 22px; color: #d8dbad; }
+.facility-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.production-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #3c4e3b; padding: 12px 0; }
+.base-hud { pointer-events: none; position: absolute; inset: 0; padding: 18px 24px; color: #e2e4bd; }
+.base-hud > div { display: flex; flex-direction: column; gap: 5px; }
+.base-hud nav { pointer-events: auto; position: absolute; right: 20px; top: 18px; display: flex; gap: 8px; }
+.base-hud p { position: absolute; left: 50%; bottom: 15px; transform: translateX(-50%); background: #10231eee; padding: 10px 16px; width: max-content; max-width: 60%; }
+.base-modal { width: min(720px, 95%); max-height: 90%; overflow-y: auto; padding: 20px; }
+.base-modal header { display: flex; justify-content: space-between; align-items: center; }
+.mobile[data-base-walking="true"][data-overlay=""] #touch-controls { display: block; }
+.mobile[data-base-walking="true"] .aim-stick, .mobile[data-base-walking="true"] .touch-tools, .mobile[data-base-walking="true"] .touch-top, .mobile[data-base-walking="true"] [data-command="reload"] { display: none; }
+.mobile[data-base-walking="true"] .touch-combat { right: 30px; }
+.mobile .base-hud { padding: 12px; }
+.mobile .base-hud nav { right: 12px; top: 10px; }
+.mobile .base-hud p { bottom: 4px; max-width: 55%; font-size: 12px; }
+.mobile .rpg-cards { gap: 6px; margin: 8px 0; }
+.mobile .rpg-cards > div { min-width: 85px; padding: 8px; }

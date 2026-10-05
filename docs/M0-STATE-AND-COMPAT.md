@@ -1,5 +1,6 @@
 # PR16 M0：状态、兼容与候选事务
 
+> 历史第一批记录：后续建筑、RPG、基地与商场已接入，当前状态与证据见 [正式实施记录](PR16-IMPLEMENTATION.md)。本页原型数字保留对应阶段事实，不作当前总完成声明。
 2026-10-05，基线 `49738b89cc8556a0b39d339239bf09945e44ab9e`。实施分支 `feat/buildings-rpg-mall`，继续由 [Draft PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 承接。详细顺序见 [规划 PR #17](https://github.com/xuys2025/escape-bincov/pull/17)。本文记录第一批基础实现；不表示建筑、RPG、基地或商场已可玩。
 
 ## 1. 已落地边界

@@ -20,7 +20,12 @@
     "test:title": "node scripts/title-review.mjs",
     "test:loot": "node scripts/loot-browser-test.mjs",
     "test:expansion": "node scripts/expansion-browser-test.mjs",
-    "test:expansion-benchmark": "node --import tsx scripts/expansion-benchmark.mjs"
+    "test:expansion-benchmark": "node --import tsx scripts/expansion-benchmark.mjs",
+    "test:buildings": "node scripts/building-browser-test.mjs",
+    "test:systems": "node --import tsx scripts/systems-browser-test.mjs",
+    "test:layered-play": "node --import tsx scripts/layered-play.mjs",
+    "test:mall-passages": "node --import tsx scripts/mall-passages.mjs",
+    "test:mall-landing": "node --import tsx scripts/mall-landing.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

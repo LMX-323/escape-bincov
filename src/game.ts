@@ -1,13 +1,22 @@
 import Phaser from 'phaser';
 import { createTextures, drawWorld, drawBackdrop } from './art';
 import { drawTitleBackdrop } from './title-art';
-import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point } from './world';
+import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point, type MapData } from './world';
 import * as D from './domain';
 import type { LootContainer } from './loot';
 import { SURVIVAL as B } from './balance';
 import { app, audio, saveSession } from './app';
 import { playerInput, ActiveClock, type InputFrame } from './input';
-import { WORLD_VERSION, type RaidCheckpoint } from './checkpoint';
+import { WORLD_VERSION, type RaidCheckpoint, type EnemyState } from './checkpoint';
+import { mapPresentation } from './building-world';
+import { resolveExpansionWorld } from './expansion-worlds';
+import type { ExpansionState, WorldDefinition } from './expansion-state';
+import { derivedLimits, entityUid } from './expansion-state';
+import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from './rpg';
+import { corridor, doorAnchor, interactionTarget, spacePath, spaceSize, toggleDoor, traversable, type Interaction, type SpaceContext } from './spatial';
+import { advanceLayerShots, changeLayer, damageLayerEnemy } from './layer-transition';
+import { advancePursuits } from './pursuit';
+import type { ExpansionTransaction } from './session';
 import { render, setOverlay, openLoot, finish, toast, drawMap, refreshQuickPanel } from './ui';
 export class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
@@ -54,11 +63,20 @@ type Bullet = {
     left: number;
     damage: number;
     enemy: boolean;
+    owner?: string;
 };
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const css = (id: string, text: string) => { const el = document.getElementById(id); if (el)
     el.textContent = text; };
 export class RaidScene extends Phaser.Scene {
+    private layered: ExpansionState | null = null;
+    private worldArt: Phaser.GameObjects.Container | null = null;
+    private worldLabels: Phaser.GameObjects.GameObject[] = [];
+    private pendingLayer: ExpansionTransaction | null = null;
+    private inputSuppressed = false;
+    private mapCache = new Map<string, MapData>();
+    private roof: Phaser.GameObjects.Graphics | null = null;
+    private roofSignature = '';
     config!: RunConfig;
     player!: Phaser.GameObjects.Image;
     enemies: Enemy[] = [];
@@ -105,6 +123,8 @@ export class RaidScene extends Phaser.Scene {
     constructor() { super('Raid'); }
     create() {
         this.config = this.registry.get('runConfig');
+        this.layered = app.expansion?.raid ? structuredClone(app.expansion) : null;
+        this.pendingLayer = null;
         app.raid = this;
         this.enemies = [];
         this.loot = [];
@@ -134,24 +154,27 @@ export class RaidScene extends Phaser.Scene {
         this.noiseTime = 0;
         this.random = D.seededRandom(this.config.seed + 771);
         this.highTide = this.config.initialHigh;
-        drawWorld(this, WORLD).setDepth(0);
         this.flood = this.add.graphics().setDepth(2);
-        this.drawFlood();
-        WORLD.notes.forEach(n => { this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3); this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3); });
-        this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3).setData('exit', e.name); });
+        this.drawEnvironment();
         this.player = this.add.image(this.config.spawn.x, this.config.spawn.y, 'player').setDepth(8);
         this.fx = this.add.graphics().setDepth(9);
         this.weather = this.add.graphics().setDepth(20).setScrollFactor(0);
         this.cross = this.add.graphics().setDepth(30).setScrollFactor(0);
-        this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+        const mapSize = this.space ? spaceSize(this.space.definition) : { width: WORLD_W, height: WORLD_H };
+        this.setMapBounds(mapSize);
         this.cameras.main.startFollow(this.player, true, .14, .14);
         this.cameras.main.setRoundPixels(true);
         this.input.mouse!.disableContextMenu();
-        if (!app.checkpoint) throw new Error('Missing deployment checkpoint');
         this.releaseInput();
-        this.restore(app.checkpoint);
-        saveSession.attachRaid({ capture: () => this.snapshot(), restore: value => this.restore(value) });
-        this.events.once('shutdown', () => { saveSession.attachRaid(null); playerInput.clear(); });
+        if (this.layered) {
+            this.restoreExpansion(this.layered);
+            saveSession.attachExpansion({ capture: () => this.snapshotExpansion(), restore: value => this.restoreExpansion(value) });
+        } else {
+            if (!app.checkpoint) throw new Error('Missing deployment checkpoint');
+            this.restore(app.checkpoint);
+            saveSession.attachRaid({ capture: () => this.snapshot(), restore: value => this.restore(value) });
+        }
+        this.events.once('shutdown', () => { saveSession.attachRaid(null); saveSession.attachExpansion(null); playerInput.clear(); });
         this.checkpointAt = this.elapsed;
         audio.start();
         render();
@@ -163,6 +186,145 @@ export class RaidScene extends Phaser.Scene {
     suppressHeldInput(extraKey?: string): void {
         playerInput.suppressHeld(extraKey);
         this.extractTime = 0;
+        this.inputSuppressed = true;
+    }
+    get layeredWorld(): WorldDefinition | null { return this.layered?.raid ? resolveExpansionWorld(this.layered.raid.worldVersion) ?? null : null; }
+    get space(): SpaceContext | null {
+        const raid = this.layered?.raid, world = this.layeredWorld;
+        return raid && world ? { definition: world.maps[raid.currentMap], doors: raid.maps[raid.currentMap].doors, highTide: this.highTide } : null;
+    }
+    get mapData(): MapData {
+        const map = this.space?.definition;
+        if (!map) return WORLD;
+        if (!this.mapCache.has(map.id)) this.mapCache.set(map.id, mapPresentation(map));
+        return this.mapCache.get(map.id)!;
+    }
+    get visibleExits() { return !this.space || ['coast', 'mall-f1'].includes(this.space.definition.id) ? this.config.exits : []; }
+    private walkable(x: number, y: number, highTide = false, radius = 10): boolean {
+        return this.space ? traversable({ ...this.space, highTide }, { x, y }, 'body', radius) : isWalkable(x, y, highTide, radius);
+    }
+    private sight(a: Point, b: Point, highTide = false, radius = 0): boolean {
+        return this.space ? corridor({ ...this.space, highTide }, a, b, radius ? 'body' : 'sight', radius) : lineOfSight(a, b, highTide, radius);
+    }
+    private path(from: Point, to: Point, highTide = false): Point[] {
+        return this.space ? spacePath({ ...this.space, highTide }, from, to, true) : findPath(from, to, highTide);
+    }
+    private dryRefuge(from: Point): Point | null {
+        if (!this.space) return findDryRefuge(from);
+        const context = { ...this.space, highTide: true }, map = context.definition, points: Point[] = [];
+        for (let y = 0; y < map.cells.length; y++) for (let x = 0; x < map.cells[y].length; x++) {
+            const point = { x: x * 32 + 16, y: y * 32 + 16 };
+            if (traversable(context, point, 'body', 10)) points.push(point);
+        }
+        points.sort((a, b) => distance(from, a) - distance(from, b) || a.y - b.y || a.x - b.x);
+        return points.find(p => spacePath({ ...context, highTide: false }, from, p, true).length) ?? null;
+    }
+    private setMapBounds(size: { width: number; height: number }): void {
+        this.cameras.main.setBounds(-Math.max(0, (960 - size.width) / 2), -Math.max(0, (540 - size.height) / 2), Math.max(960, size.width), Math.max(540, size.height));
+    }
+    private drawEnvironment(): void {
+        this.roof?.destroy(); this.roof = null; this.roofSignature = '';
+        this.worldArt?.destroy(); this.worldLabels.forEach(l => l.destroy()); this.worldLabels = [];
+        this.worldArt = drawWorld(this, this.mapData, this.space?.definition).setDepth(0);
+        this.mapData.notes.forEach(n => {
+            this.worldLabels.push(this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3),
+                this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3));
+        });
+        this.visibleExits.forEach(e => {
+            const g = this.add.graphics().setDepth(3);
+            g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48);
+            this.worldLabels.push(g, this.add.text(e.x, e.y - 70, `${e.name}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3).setData('exit', e.name));
+        });
+        if (this.space) {
+            const map = this.space.definition, g = this.add.graphics().setDepth(3); this.worldLabels.push(g);
+            this.roof = this.add.graphics().setDepth(11);
+            map.regions?.forEach(r => {
+                const color = [0x748c64, 0x6f9795, 0x98775c, 0x7c7794, 0x959261, 0x668580][(r.theme ?? 0) % 6];
+                g.fillStyle(color, r.inside === false ? .03 : .12).fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+                g.lineStyle(1, color, .45).strokeRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+                this.worldLabels.push(this.add.text(r.x + r.w / 2, r.y + 16, r.name, { fontSize: '11px', color: '#dedebd', backgroundColor: '#13241ed9' }).setOrigin(.5).setDepth(3));
+                // Distinct floor motifs: clothing diamond, food price bands, wet tile lines,
+                // workshop cable marks and diagonal promotion paint remain visual only.
+                for (let i = 0; i < 4; i++) {
+                    const x = r.x + 32 + i * Math.max(12, (r.w - 64) / 4), y = r.y + r.h - 22;
+                    if (/服装/.test(r.name)) g.lineStyle(1, color, .7).strokeTriangle(x, y - 8, x - 7, y, x + 7, y);
+                    else if (/促销|五金|卸货/.test(r.name)) g.lineStyle(2, color, .7).lineBetween(x, y, x + 9, y - 7);
+                    else g.fillStyle(color, .7).fillRect(x, y, 8, (r.theme ?? 0) % 3 + 2);
+                }
+            });
+            map.cells.forEach((row, y) => row.forEach((cell, x) => {
+                if (cell === 'window') { g.fillStyle(0x679a9b).fillRect(x * 32 + 3, y * 32 + 10, 26, 12); g.lineStyle(2, 0xa5c4b6).strokeRect(x * 32 + 3, y * 32 + 10, 26, 12); }
+                if (cell === 'low' && !map.decorations?.some(d => Math.floor(d.x / 32) === x && Math.floor(d.y / 32) === y)) { g.fillStyle(0x6e5c44).fillRect(x * 32 + 3, y * 32 + 3, 26, 26); g.lineStyle(2, 0x9b8970).strokeRect(x * 32 + 3, y * 32 + 3, 26, 26); }
+            }));
+            map.doors.forEach(d => { const open = this.space!.doors[d.id]; g.fillStyle(open ? 0x9fbd82 : 0x916c4a).fillRect(d.x * 32 + (open ? 2 : 5), d.y * 32 + 3, open ? 4 : 22, 26); });
+            map.decorations?.filter(d => d.kind === 'V').forEach(d => {
+                g.fillStyle(0xc7b995, .45).fillRect(d.x - 7, d.y - 4, 14, 8);
+                g.lineStyle(1, 0x415c43).lineBetween(d.x - 4, d.y, d.x + 4, d.y);
+            });
+            map.entries.forEach(e => {
+                g.lineStyle(2, 0xd1b778).strokeRect(e.at.x - 13, e.at.y - 13, 26, 26);
+                for (let y = -9; y <= 9; y += 6) g.lineBetween(e.at.x - 10, e.at.y + y, e.at.x + 10, e.at.y + y);
+                this.worldLabels.push(this.add.text(e.at.x, e.at.y - 30, e.label ?? '楼层入口', { fontSize: '11px', color: '#f0dfb0', backgroundColor: '#19281ee6', padding: { x: 3, y: 2 } }).setOrigin(.5).setDepth(3));
+            });
+            this.setMapBounds(spaceSize(map));
+        }
+        this.drawFlood();
+    }
+
+    private drawRoofs(): void {
+        if (!this.roof || !this.space) return;
+        const signature = `${Math.floor(this.player.x / 16)},${Math.floor(this.player.y / 16)}:${JSON.stringify(this.space.doors)}`;
+        if (signature === this.roofSignature) return;
+        this.roofSignature = signature; this.roof.clear();
+        for (const r of this.space.definition.regions ?? []) {
+            if (r.inside === false) continue;
+            const inside = this.player.x >= r.x && this.player.x < r.x + r.w && this.player.y >= r.y && this.player.y < r.y + r.h;
+            const near = { x: Math.max(r.x + 40, Math.min(r.x + r.w - 40, this.player.x)), y: Math.max(r.y + 40, Math.min(r.y + r.h - 40, this.player.y)) };
+            if (!r.sealed && (inside || distance(this.player, near) < 80 && this.sight(this.player, near))) continue;
+            this.roof.fillStyle(0x263f32, .97).fillRect(r.x, r.y, r.w, r.h);
+            this.roof.lineStyle(2, 0x70816a, .5).strokeRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
+        }
+    }
+
+    snapshotExpansion(): ExpansionState {
+        if (!this.layered?.raid) throw new Error('没有多层行动。');
+        const state = structuredClone(this.layered), raid = state.raid!, c = this.snapshot(), layer = raid.maps[raid.currentMap];
+        Object.assign(state.body, { hp: this.hp, stamina: this.stamina, pollution: this.pollution, bleeding: !!this.bleeding, exhausted: this.exhausted });
+        Object.assign(raid, { player: c.player, loadout: c.loadout, elapsed: c.elapsed, highTide: c.highTide, warned: c.warned, tideChanged: c.tideChanged,
+            kills: c.kills, rng: c.rng, nextEntity: c.nextEntity, reloadLeft: c.reloadLeft, fireCooldown: c.fireCooldown, knife: c.knife, hitTime: c.hitTime });
+        const projected = raid.pursuits.filter(p => p.sourceMap === raid.currentMap);
+        layer.enemies = c.enemies.filter(e => !projected.some(p => p.enemy.uid === e.uid));
+        projected.forEach(p => { const enemy = c.enemies.find(e => e.uid === p.enemy.uid); if (enemy) p.enemy = enemy; });
+        Object.assign(layer, { loot: c.loot, containers: c.containers!, bullets: c.bullets,
+            noise: c.shotNoise && c.noiseTime > 0 ? { at: c.shotNoise, radius: c.noiseRadius, remaining: c.noiseTime } : null });
+        return state;
+    }
+    restoreExpansion(state: ExpansionState): void {
+        const oldMap = this.layered?.raid?.currentMap; this.layered = structuredClone(state);
+        // A durable terminal write restores body/base state before the scene stops.
+        if (!this.layered.raid) return;
+        const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
+        if (oldMap !== raid.currentMap) this.drawEnvironment();
+        this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
+            hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
+            kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
+            warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
+            hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
+            enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+    }
+    retryLayerMutation(): boolean {
+        if (!this.pendingLayer) return this.checkpoint();
+        const result = saveSession.commitExpansionMutation(this.pendingLayer);
+        if (result !== 'committed') return false;
+        this.pendingLayer = null; this.drawEnvironment(); this.suppressHeldInput(); this.updateHud(); return true;
+    }
+    private layerMutation(action: (state: ExpansionState) => boolean | void, suppress = false): boolean {
+        const ticket = saveSession.prepareExpansionMutation(draft => action(draft.expansion));
+        if (!ticket) return false;
+        const result = saveSession.commitExpansionMutation(ticket);
+        if (result === 'save-failed') { this.pendingLayer = ticket; setOverlay('checkpoint-error'); return false; }
+        if (result !== 'committed') return false;
+        this.drawEnvironment(); if (suppress) this.suppressHeldInput(); return true;
     }
     getLootContainer(id: string): LootContainer | undefined { return this.containers.find(container => container.id === id); }
     canLootContainer(id: string, runId: string): boolean {
@@ -170,8 +332,8 @@ export class RaidScene extends Phaser.Scene {
         return !!container && !!runId && !!this.player && app.state === 'run' && app.raid === this && this.scene.isActive()
             && app.loadout?.runId === runId && app.save.activeRun?.runId === runId && container.runId === runId
             && !this.locked && !this.extracted && this.hp > 0 && !app.pendingSettlement && !app.conflict
-            && distance(this.player, container) < 43 && isWalkable(container.x, container.y, this.highTide)
-            && lineOfSight(this.player, container, this.highTide, 10);
+            && distance(this.player, container) < 43 && this.walkable(container.x, container.y, this.highTide)
+            && this.sight(this.player, container, this.highTide, 10);
     }
     private createLootContainer(id: string, kind: LootContainer['kind'], name: string, x: number, y: number, items: { id: string; qty: number }[]): void {
         if (this.getLootContainer(id)) return;
@@ -217,6 +379,29 @@ export class RaidScene extends Phaser.Scene {
         this.mag = c.loadout.ammo; this.magRelief = c.loadout.ammoRelief;
         this.player.setTexture('player-' + this.currentWeapon.id);
         this.random = D.seededRandom(c.rng); this.noteSeen = new Set(c.noteSeen); this.shotNoise = c.shotNoise ? { ...c.shotNoise } : null;
+        if (this.layered) {
+            const sync = <T extends { uid: string; sprite: Phaser.GameObjects.Image }, S extends { uid: string }>(old: T[], states: S[], create: (state: S) => T, update: (entity: T, state: S) => void): T[] => {
+                const existing = new Map(old.map(e => [e.uid, e]));
+                const result = states.map(state => { const entity = existing.get(state.uid) ?? create(state); existing.delete(state.uid); update(entity, state); return entity; });
+                existing.forEach(e => e.sprite.destroy()); return result;
+            };
+            this.enemies = sync(this.enemies, c.enemies, e => ({ ...structuredClone(e), sprite: this.add.image(e.x, e.y, e.id) }), (e, state) => {
+                const { x, y, rotation, ...values } = state; Object.assign(e, structuredClone(values));
+                e.sprite.setPosition(x, y).setRotation(rotation).setDepth(e.hp > 0 ? 6 : 3).setAlpha(e.hp > 0 ? 1 : .6).setTint(e.hp > 0 ? 0xffffff : 0x403d34);
+            });
+            this.loot = sync(this.loot, c.loot, l => ({ ...l, sprite: this.add.image(l.x, l.y, 'loot').setDepth(4) }), (l, state) => {
+                const { x, y, ...values } = state; Object.assign(l, values); l.sprite.setPosition(x, y).setTint(D.ITEMS[l.id].color);
+            });
+            this.bullets = sync(this.bullets, c.bullets, b => ({ ...b, sprite: this.add.image(b.x, b.y, 'bullet').setDepth(10) }), (b, state) => {
+                const { x, y, rotation, ...values } = state; Object.assign(b, values); b.sprite.setPosition(x, y).setRotation(rotation).setTint(b.enemy ? 0xe48c64 : 0xffffff);
+            });
+            const oldCrates = this.containers.filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y]);
+            const newCrates = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y]);
+            if (JSON.stringify(oldCrates) !== JSON.stringify(newCrates)) {
+                this.containerSprites.forEach(s => s.destroy()); this.containerSprites = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => this.add.image(c.x, c.y, 'loot-crate').setDepth(4));
+            }
+            this.containers = structuredClone(c.containers ?? []); this.drawFlood(); return;
+        }
         for (const entity of [...this.enemies, ...this.loot, ...this.bullets]) entity.sprite.destroy();
         this.enemies = c.enemies.map(({ x, y, rotation, ...e }) => {
             const sprite = this.add.image(x, y, e.id).setRotation(rotation).setDepth(e.hp > 0 ? 6 : 3);
@@ -233,16 +418,17 @@ export class RaidScene extends Phaser.Scene {
     }
     get paused() { return this.locked || ['pause', 'help', 'abandon', 'rotate', 'checkpoint-error'].includes(app.overlay); }
     get currentWeapon() { return D.WEAPONS[!this.knife && app.loadout?.weapon ? app.loadout.weapon : 'knife']; }
-    drawFlood() { this.flood.clear(); for (let y = 0; y < WORLD.tiles.length; y++)
-        for (let x = 0; x < WORLD.tiles[y].length; x++)
-            if (WORLD.tiles[y][x] === 4) {
+    drawFlood() { this.flood.clear(); for (let y = 0; y < this.mapData.tiles.length; y++)
+        for (let x = 0; x < this.mapData.tiles[y].length; x++)
+            if (this.mapData.tiles[y][x] === 4) {
                 this.flood.fillStyle(this.highTide ? 0x345958 : 0x665446, this.highTide ? .87 : .2).fillRect(x * TILE, y * TILE, TILE, TILE);
                 if (this.highTide) {
                     this.flood.lineStyle(1, 0xa96a54, .45).lineBetween(x * TILE + 4, y * TILE + 12, x * TILE + 25, y * TILE + 12);
                 }
             } }
-    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[id]?.color || 0xc7b889), id, qty, relief }); }
-    nearbyLoot() { return this.loot.filter(l => distance(l.sprite, this.player) < 43 && lineOfSight(l.sprite, this.player)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player) || a.uid.localeCompare(b.uid)); }
+    private allocateEntityUid() { const serial = this.nextEntity++; return this.layered?.raid ? entityUid(this.layered.raid, serial) : `entity-${serial}`; }
+    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[id]?.color || 0xc7b889), id, qty, relief }); }
+    nearbyLoot() { return this.loot.filter(l => distance(l.sprite, this.player) < 43 && this.sight(l.sprite, this.player, this.highTide, this.space ? 10 : 0)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player) || a.uid.localeCompare(b.uid)); }
     pickupLoot(uid: string) {
         const loot = this.nearbyLoot().find(l => l.uid === uid);
         if (!loot) { toast('这件物资已不在拾取范围内。'); return false; }
@@ -267,12 +453,22 @@ export class RaidScene extends Phaser.Scene {
         toast('无法装备，背包装不下换下的武器和弹药。请先腾出空间。');
         return false;
     } this.mag = app.loadout!.ammo; this.magRelief = app.loadout!.ammoRelief; this.knife = false; this.reloadLeft = 0; this.startReload(); this.player.setTexture('player-' + this.currentWeapon.id); toast('已装备' + this.currentWeapon.name); return true; }
-    carriedWeight() { const l = app.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.mag : 0); }
+    carriedWeight() { const l = app.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.mag : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
+    carryLimit() { return this.layered ? derivedLimits(this.layered).carry : B.carryLimit; }
     say(message: string, seconds = 7) { css('radio', message); const el = document.getElementById('radio'); if (el)
         el.style.display = 'block'; this.radioTime = seconds; audio.radio(); }
     useItem(id: string, inv: D.Inventory = app.loadout!.bag, itemUid?: string) {
         const chosen = itemUid ? inv.items.find(i => i.uid === itemUid && i.id === id && i.qty > 0) : null;
         if (itemUid && !chosen) return false;
+        if (this.layered) {
+            if (!D.count(inv, id)) return false;
+            const state = this.snapshotExpansion();
+            if (!useRpgItem(state, id)) { toast('当前状态无需使用这件补给。'); return false; }
+            if (chosen) { chosen.qty--; if (!chosen.qty) inv.items = inv.items.filter(i => i.uid !== chosen.uid); }
+            else D.removeItem(inv, id, 1);
+            state.raid!.loadout = structuredClone(app.loadout!); this.restoreExpansion(state);
+            return true;
+        }
         if (!['bandage', 'medkit', 'water', 'food', 'antidote'].includes(id) || !D.count(inv, id))
             return false;
         if (id === 'bandage') {
@@ -308,11 +504,13 @@ export class RaidScene extends Phaser.Scene {
         return true;
     }
     heal() { const bag = app.loadout!.bag; const id = this.bleeding && D.count(bag, 'bandage') ? 'bandage' : D.count(bag, 'medkit') ? 'medkit' : D.count(bag, 'bandage') ? 'bandage' : null; if (id) {
-        if (saveSession.mutate(() => this.useItem(id), this) === 'save-failed') setOverlay('checkpoint-error');
+        const result = saveSession.mutate(() => this.useItem(id), this);
+        if (result === 'save-failed') setOverlay('checkpoint-error');
+        else if (result === 'committed' && this.layered) toast(`已使用${D.ITEMS[id].name}`);
     } else
         toast('背包中没有绷带或急救包。'); }
-    move(sprite: Phaser.GameObjects.Image, dx: number, dy: number, canEscapeFlood = false) { const escaping = canEscapeFlood && !isWalkable(sprite.x, sprite.y, true, 10) && isWalkable(sprite.x, sprite.y, false, 10); const high = this.highTide && !escaping; if (isWalkable(sprite.x + dx, sprite.y, high, 10))
-        sprite.x += dx; if (isWalkable(sprite.x, sprite.y + dy, high, 10))
+    move(sprite: Phaser.GameObjects.Image, dx: number, dy: number, canEscapeFlood = false) { const escaping = canEscapeFlood && !this.walkable(sprite.x, sprite.y, true, 10) && this.walkable(sprite.x, sprite.y, false, 10); const high = this.highTide && !escaping; if (this.walkable(sprite.x + dx, sprite.y, high, 10))
+        sprite.x += dx; if (this.walkable(sprite.x, sprite.y + dy, high, 10))
         sprite.y += dy; }
     startReload() { const w = this.currentWeapon; if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
         if (!D.count(app.loadout!.bag, w.ammo)) {
@@ -333,7 +531,7 @@ export class RaidScene extends Phaser.Scene {
         this.fireCooldown = w.cooldown;
         if (!w.ammo) {
             audio.shot('knife');
-            const hit = this.enemies.find(e => e.hp > 0 && distance(e.sprite, this.player) < w.range && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(e.sprite.y - this.player.y, e.sprite.x - this.player.x) - this.player.rotation)) < 1.15 && lineOfSight(this.player, e.sprite));
+            const hit = this.enemies.find(e => e.hp > 0 && distance(e.sprite, this.player) < w.range && Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(e.sprite.y - this.player.y, e.sprite.x - this.player.x) - this.player.rotation)) < 1.15 && this.sight(this.player, e.sprite, this.highTide, this.space ? 10 : 0));
             if (hit)
                 this.damageEnemy(hit, w.damage);
             this.fx.lineStyle(3, 0xe4debb, .85).beginPath().arc(this.player.x, this.player.y, 32, this.player.rotation - .7, this.player.rotation + .7).strokePath();
@@ -347,15 +545,22 @@ export class RaidScene extends Phaser.Scene {
         this.shotNoise = { x: this.player.x, y: this.player.y };
         this.noiseRadius = B.gunNoiseRange;
         this.noiseTime = .6;
-        const aim = this.inputFrame.precise ? .35 : 1;
+        const aim = (this.inputFrame.precise ? .35 : 1) * (this.layered ? rpgMultipliers(this.snapshotExpansion()).recoil : 1);
         for (let i = 0; i < w.pellets; i++) {
             const angle = this.player.rotation + (this.random() - .5) * w.spread * aim;
-            this.bullets.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(this.player.x + Math.cos(angle) * 17, this.player.y + Math.sin(angle) * 17, 'bullet').setRotation(angle).setDepth(10), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range, damage: w.damage, enemy: false });
+            this.bullets.push({ uid: this.allocateEntityUid(), sprite: this.add.image(this.player.x + Math.cos(angle) * 17, this.player.y + Math.sin(angle) * 17, 'bullet').setRotation(angle).setDepth(10), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range, damage: w.damage, enemy: false });
         }
         this.fx.fillStyle(0xffe5a0, 1).fillCircle(this.player.x + Math.cos(this.player.rotation) * 23, this.player.y + Math.sin(this.player.rotation) * 23, 4);
         this.cameras.main.shake(40, .0008);
     }
-    damageEnemy(e: Enemy, damage: number) { if (e.hp <= 0) return; e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active && e.hp > 0)
+    damageEnemy(e: Enemy, damage: number) { if (e.hp <= 0) return;
+        if (this.layered) {
+            const state = this.snapshotExpansion(), raid = state.raid!, mapId = raid.currentMap;
+            const enemy = raid.maps[mapId].enemies.find(actor => actor.uid === e.uid) ?? raid.pursuits.find(p => p.enemy.uid === e.uid)?.enemy;
+            if (enemy) { damageLayerEnemy(state, this.layeredWorld!.maps[mapId].id, enemy, damage, false); this.restoreExpansion(state); audio.hit(); }
+            return;
+        }
+        e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active && e.hp > 0)
         e.sprite.clearTint(); }); e.state = 'chase'; e.alert = 6; e.target = { x: this.player.x, y: this.player.y }; audio.hit(); if (e.hp <= 0) {
         this.kills++;
         e.sprite.setTint(0x403d34).setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(.6).setDepth(3);
@@ -364,8 +569,13 @@ export class RaidScene extends Phaser.Scene {
         for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
         this.createLootContainer(`corpse-${e.uid}`, 'corpse', `${D.ENEMIES[e.id].name}遗体`, e.sprite.x, e.sprite.y, drops);
     } }
-    hurt(amount: number) { if (this.extracted)
-        return; this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.extractTime = 0; if (this.random() < B.bleedChance)
+    hurt(amount: number, owner?: string) { if (this.extracted)
+        return;
+        if (this.layered) {
+            const state = this.snapshotExpansion(); enemyDamage(state, amount, owner, this.random()); state.raid!.rng = this.random.getState();
+            this.restoreExpansion(state); this.extractTime = 0; audio.hit(); if (this.hp <= 0) finish('death'); return;
+        }
+        this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.extractTime = 0; if (this.random() < B.bleedChance)
         this.bleeding = 1; audio.hit(); this.cameras.main.shake(100, .002); if (this.hp <= 0)
         finish('death'); }
     update(_time: number, _delta: number) {
@@ -376,15 +586,21 @@ export class RaidScene extends Phaser.Scene {
         if (tick.stalled) { this.lastStall = { seconds: tick.seconds, at: performance.now() }; setOverlay('pause'); toast('画面暂时停顿，行动已暂停。准备好后继续。'); return; }
         this.elapsed += tick.seconds;
         if (this.elapsed >= this.config.duration) { this.extracted = true; finish('timeout'); return; }
-        const frame = playerInput.read(!app.overlay);
+        const frame = playerInput.read(!app.overlay); this.inputSuppressed = false;
         for (let i = 0; i < tick.steps; i++) {
             if (app.state !== 'run' || this.paused) break;
             this.inputFrame = i === 0 ? frame : { ...frame, actions: new Set(), firePressed: false, fireHeld: false };
+            if (this.inputSuppressed) this.inputFrame = { ...this.inputFrame, x: 0, y: 0, sprint: false, aim: null, firePressed: false, fireHeld: false, interactHeld: false, actions: new Set() };
             this.step(tick.seconds / tick.steps);
         }
         if (app.state === 'run' && !this.paused && this.elapsed - this.checkpointAt >= 2) this.checkpoint();
     }
     private step(dt: number) {
+        const tideFlipped = !this.tideChanged && this.elapsed >= this.config.tideAt;
+        if (this.layered?.raid) {
+            const layer = this.layered.raid.maps[this.layered.raid.currentMap];
+            layer.localTime = Math.min(this.elapsed, layer.localTime + dt);
+        }
         this.fireCooldown = Math.max(0, this.fireCooldown - dt);
         this.noiseTime = Math.max(0, this.noiseTime - dt);
         this.hitTime = Math.max(0, this.hitTime - dt);
@@ -398,19 +614,19 @@ export class RaidScene extends Phaser.Scene {
             this.warned = true;
             this.say('潮汐预警：30 秒后潮位变化。请离开浅滩，走高架路或海堤。', 12);
         }
-        if (!this.tideChanged && this.elapsed >= this.config.tideAt) {
+        if (tideFlipped) {
             this.tideChanged = true;
             this.highTide = !this.highTide;
             this.drawFlood();
             for (const e of this.enemies) {
                 e.path = [];
                 e.repath = 0;
-                if (this.highTide && !isWalkable(e.sprite.x, e.sprite.y, true, 10)) {
-                    const refuge = findDryRefuge(e.sprite);
+                if (this.highTide && !this.walkable(e.sprite.x, e.sprite.y, true, 10)) {
+                    const refuge = this.dryRefuge(e.sprite);
                     if (refuge) {
                         e.target = refuge;
                         e.state = 'return';
-                        e.path = findPath(e.sprite, refuge, false);
+                        e.path = this.path(e.sprite, refuge, false);
                     }
                 }
             }
@@ -431,8 +647,10 @@ export class RaidScene extends Phaser.Scene {
             this.exhausted = true;
         if (this.stamina >= B.sprintRecoveryAt)
             this.exhausted = false;
-        const moving = !!(dx || dy), over = Math.max(0, this.carriedWeight() - B.carryLimit), sprint = input && frame.sprint && moving && !this.exhausted;
-        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg);
+        const beforeMove = { x: this.player.x, y: this.player.y };
+        const limits = this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit };
+        const moving = !!(dx || dy), over = Math.max(0, this.carriedWeight() - limits.carry), sprint = input && frame.sprint && moving && !this.exhausted;
+        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg) * (this.layered ? rpgMultipliers(this.layered).movement : 1);
         if (moving) {
             const len = Math.max(1, Math.hypot(dx, dy));
             this.move(this.player, dx / len * speed * dt, dy / len * speed * dt, true);
@@ -447,7 +665,11 @@ export class RaidScene extends Phaser.Scene {
                 }
             }
         }
-        this.stamina = Phaser.Math.Clamp(this.stamina + (sprint ? -(B.sprintDrain + over) : B.staminaRecovery) * dt, 0, B.maxStamina);
+        if (this.layered) {
+            const state = this.snapshotExpansion(), flooded = this.space!.definition.cells[Math.floor(this.player.y / 32)]?.[Math.floor(this.player.x / 32)] === 'tide';
+            const spent = advanceRaidBody(state, dt, sprint, this.carriedWeight(), flooded);
+            recordMotion(state, beforeMove, this.player, dt, spent, this.carriedWeight()); this.restoreExpansion(state);
+        } else this.stamina = Phaser.Math.Clamp(this.stamina + (sprint ? -(B.sprintDrain + over) : B.staminaRecovery) * dt, 0, B.maxStamina);
         if (input) {
             if (frame.touch) {
                 if (frame.aim) this.player.rotation = Math.atan2(frame.aim.y, frame.aim.x);
@@ -465,15 +687,24 @@ export class RaidScene extends Phaser.Scene {
                 audio.click();
             }
         }
-        const flooded = WORLD.tiles[Math.floor(this.player.y / TILE)]?.[Math.floor(this.player.x / TILE)] === 4;
-        this.pollution = Phaser.Math.Clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
-        this.hp -= dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0));
+        const flooded = this.mapData.tiles[Math.floor(this.player.y / TILE)]?.[Math.floor(this.player.x / TILE)] === 4;
+        if (!this.layered) {
+            this.pollution = Phaser.Math.Clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
+            this.hp -= dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0));
+        }
         if (this.hp <= 0) {
             finish('death');
             return;
         }
+        if (this.layered) {
+            const state = this.snapshotExpansion();
+            const changed = advancePursuits(state, this.layeredWorld!, tideFlipped);
+            if (changed) { if (!this.layerMutation(candidate => { Object.assign(candidate, state); })) return; }
+            else this.restoreExpansion(state);
+        }
         for (const e of this.enemies)
             if (e.hp > 0) {
+                if (this.layered?.raid?.pursuits.some(p => p.enemy.uid === e.uid)) continue;
                 this.updateEnemy(e, dt);
                 if (app.state !== 'run' || this.locked)
                     return;
@@ -485,6 +716,7 @@ export class RaidScene extends Phaser.Scene {
         if (app.state !== 'run' || this.locked)
             return;
         this.drawEffects(dt);
+        this.drawRoofs();
         this.radioTime -= dt;
         if (this.radioTime <= 0) {
             const el = document.getElementById('radio');
@@ -500,17 +732,17 @@ export class RaidScene extends Phaser.Scene {
         }
     }
     updateEnemy(e: Enemy, dt: number) {
-        const def = D.ENEMIES[e.id], dist = distance(e.sprite, this.player), sees = dist < def.vision && lineOfSight(e.sprite, this.player);
+        const def = D.ENEMIES[e.id], dist = distance(e.sprite, this.player), sees = dist < def.vision && this.sight(e.sprite, this.player);
         e.timer -= dt;
         e.cooldown -= dt;
         e.repath -= dt;
         e.alert = Math.max(0, e.alert - dt);
-        const escaping = this.highTide && !isWalkable(e.sprite.x, e.sprite.y, true, 10);
+        const escaping = this.highTide && !this.walkable(e.sprite.x, e.sprite.y, true, 10);
         if (escaping) {
-            const refuge = findDryRefuge(e.sprite);
+            const refuge = this.dryRefuge(e.sprite);
             if (refuge) {
                 if (!e.path.length || e.repath <= 0) {
-                    e.path = findPath(e.sprite, refuge, false);
+                    e.path = this.path(e.sprite, refuge, false);
                     e.repath = 1;
                 }
                 while (e.path.length && distance(e.sprite, e.path[0]) < 10)
@@ -545,7 +777,7 @@ export class RaidScene extends Phaser.Scene {
         }
         if (e.state === 'patrol' && e.timer <= 0) {
             const p = { x: e.home.x + (this.random() - .5) * 170, y: e.home.y + (this.random() - .5) * 170 };
-            if (isWalkable(p.x, p.y, this.highTide))
+            if (this.walkable(p.x, p.y, this.highTide))
                 e.target = p;
             e.timer = 3 + this.random() * 4;
         }
@@ -555,21 +787,21 @@ export class RaidScene extends Phaser.Scene {
                 e.cooldown = def.cooldown;
                 const angle = e.sprite.rotation + (this.random() - .5) * .16;
                 if (e.id === 'salt' || e.id === 'elite') {
-                    this.bullets.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(e.sprite.x + Math.cos(angle) * 18, e.sprite.y + Math.sin(angle) * 18, 'bullet').setTint(0xe48c64).setRotation(angle).setDepth(10), vx: Math.cos(angle) * 365, vy: Math.sin(angle) * 365, left: def.range + 70, damage: def.damage, enemy: true });
+                    this.bullets.push({ uid: this.allocateEntityUid(), sprite: this.add.image(e.sprite.x + Math.cos(angle) * 18, e.sprite.y + Math.sin(angle) * 18, 'bullet').setTint(0xe48c64).setRotation(angle).setDepth(10), vx: Math.cos(angle) * 365, vy: Math.sin(angle) * 365, left: def.range + 70, damage: def.damage, enemy: true, ...(this.layered ? { owner: e.uid } : {}) });
                     audio.shot('enemy');
                 }
-                else
-                    this.hurt(def.damage);
+                else if (!this.space || this.sight(e.sprite, this.player, this.highTide, 10))
+                    this.hurt(def.damage, e.uid);
             }
             return;
         }
         if (distance(e.sprite, e.target) > 12) {
             if (e.repath <= 0) {
-                e.path = findPath(e.sprite, e.target, this.highTide);
+                e.path = this.path(e.sprite, e.target, this.highTide);
                 e.repath = .9 + this.random() * .6;
             }
             let target = e.target;
-            if (!lineOfSight(e.sprite, target, this.highTide, 10) || !isWalkable(target.x, target.y, this.highTide)) {
+            if (!this.sight(e.sprite, target, this.highTide, 10) || !this.walkable(target.x, target.y, this.highTide)) {
                 while (e.path.length && distance(e.sprite, e.path[0]) < 14)
                     e.path.shift();
                 if (e.path.length)
@@ -578,18 +810,35 @@ export class RaidScene extends Phaser.Scene {
                     return;
             }
             const angle = Math.atan2(target.y - e.sprite.y, target.x - e.sprite.x);
+            if (this.space) {
+                const next = { x: e.sprite.x + Math.cos(angle) * (def.speed * dt + 12), y: e.sprite.y + Math.sin(angle) * (def.speed * dt + 12) };
+                const door = this.space.definition.doors.find(d => Math.floor(next.x / 32) === d.x && Math.floor(next.y / 32) === d.y);
+                if (door && !this.space.doors[door.id]) {
+                    this.layerMutation(state => { state.raid!.maps[state.raid!.currentMap].doors[door.id] = true; }); return;
+                }
+            }
             e.sprite.rotation = angle;
             this.move(e.sprite, Math.cos(angle) * def.speed * dt, Math.sin(angle) * def.speed * dt, true);
         }
     }
-    updateBullets(dt: number) { for (let i = this.bullets.length - 1; i >= 0; i--) {
+    updateBullets(dt: number) {
+        if (this.layered) {
+            const state = this.snapshotExpansion(); advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, (uid, critical) => {
+                audio.hit(); if (critical) {
+                    const enemy = this.enemies.find(e => e.uid === uid);
+                    if (enemy) { const text = this.add.text(enemy.sprite.x, enemy.sprite.y - 35, '爆头', { fontSize: '12px', color: '#ffd596', backgroundColor: '#392a20' }).setOrigin(.5).setDepth(15); this.time.delayedCall(500, () => text.destroy()); }
+                }
+            });
+            this.restoreExpansion(state); if (this.hp <= 0) finish('death'); return;
+        }
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
         const b = this.bullets[i], speed = Math.hypot(b.vx, b.vy), steps = Math.ceil(speed * dt / 7);
         let remove = false;
         for (let j = 0; j < steps; j++) {
             b.sprite.x += b.vx * dt / steps;
             b.sprite.y += b.vy * dt / steps;
             b.left -= speed * dt / steps;
-            const t = WORLD.tiles[Math.floor(b.sprite.y / TILE)]?.[Math.floor(b.sprite.x / TILE)];
+            const t = this.mapData.tiles[Math.floor(b.sprite.y / TILE)]?.[Math.floor(b.sprite.x / TILE)];
             if (t === 3 || t === undefined || b.left <= 0) {
                 remove = true;
                 break;
@@ -618,11 +867,12 @@ export class RaidScene extends Phaser.Scene {
             return;
     } }
     interact(dt: number, input: boolean, moving: boolean) {
+        if (this.layered) { this.interactLayered(dt, input, moving); return; }
         const el = document.getElementById('interaction');
         if (!el)
             return;
         let text = '';
-        const exit = this.config.exits.find(e => distance(e, this.player) < 48);
+        const exit = this.visibleExits.find(e => distance(e, this.player) < 48);
         const nearby = this.nearbyLoot();
         const candidates: { point: Point; ground?: Ground; container?: LootContainer; key: string }[] = [
             ...nearby.map(ground => ({ point: ground.sprite, ground, key: ground.uid })),
@@ -632,7 +882,7 @@ export class RaidScene extends Phaser.Scene {
         candidates.sort((a, b) => distance(a.point, this.player) - distance(b.point, this.player)
             || a.point.x - b.point.x || a.point.y - b.point.y || a.key.localeCompare(b.key));
         const loot = candidates[0]?.ground, container = candidates[0]?.container;
-        const note = WORLD.notes.find(n => distance(n, this.player) < 43);
+        const note = this.mapData.notes.find(n => distance(n, this.player) < 43);
         const touchButton = document.getElementById('touch-interact');
         if (touchButton) touchButton.textContent = exit ? '按住撤离' : container ? '搜刮' : loot ? '拾取' : note ? '阅读' : '交互';
         if (exit) {
@@ -685,12 +935,57 @@ export class RaidScene extends Phaser.Scene {
         if (document.documentElement.style.getPropertyValue('--interaction-height') !== height)
             document.documentElement.style.setProperty('--interaction-height', height);
     }
+    private interactLayered(dt: number, input: boolean, moving: boolean): void {
+        const context = this.space!, map = context.definition, candidates: Interaction[] = [
+            ...this.visibleExits.map(e => ({ id: e.id, kind: 'exit' as const, at: e, label: e.name })),
+            ...map.entries.map(e => ({ id: e.id, kind: 'entry' as const, at: e.at, label: e.label ?? '楼层入口' })),
+            ...this.loot.map(l => ({ id: l.uid, kind: 'ground' as const, at: l.sprite, label: `拾取 · ${D.ITEMS[l.id].name} × ${l.qty}` })),
+            ...this.containers.map(c => ({ id: c.id, kind: 'container' as const, at: c, label: `搜刮 · ${c.name}${c.inventory.items.length ? '' : ' · 已搜空'}` })),
+            ...this.mapData.notes.map(n => ({ id: n.title, kind: 'note' as const, at: n, label: `阅读 · ${n.title}` })),
+        ];
+        for (const door of map.doors) {
+            const at = doorAnchor(context, door.id, this.player);
+            if (at) candidates.push({ id: door.id, kind: 'door', at, label: context.doors[door.id] ? '关门' : '开门' });
+        }
+        const target = interactionTarget(context, this.player, candidates), touch = document.getElementById('touch-interact');
+        if (touch) { touch.textContent = target?.kind === 'exit' ? '按住撤离' : target?.label.split(' · ')[0] ?? '交互'; touch.setAttribute('aria-label', target?.label ?? '交互'); }
+        let text = target ? `${playerInput.touch ? '点' : 'E'} ${target.label}` : '';
+        if (target?.kind === 'exit') {
+            text = `${target.label} · ${playerInput.touch ? '停稳，按住「撤离」3 秒' : '站稳并按住 E 3 秒撤离'}`;
+            if (input && this.inputFrame.interactHeld && !moving && !this.hitTime) {
+                this.extractTime += dt; text = `正在撤离　${Math.min(3, this.extractTime).toFixed(1)} / 3.0 秒`;
+                if (this.extractTime >= 3) { this.extracted = true; finish('extract'); return; }
+            } else this.extractTime = 0;
+        } else {
+            this.extractTime = 0;
+            if (input && target && this.inputFrame.actions.has('interact')) {
+                if (target.kind === 'entry') {
+                    if (!this.layerMutation(state => changeLayer(state, this.layeredWorld!, target.id), true) && app.storageOK) toast('入口被挡住，暂时无法进入。');
+                } else if (target.kind === 'door') {
+                    this.layerMutation(state => {
+                        const raid = state.raid!, layer = raid.maps[raid.currentMap];
+                        const living = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)].filter(e => e.hp > 0);
+                        const result = toggleDoor({ definition: map, doors: layer.doors, highTide: raid.highTide }, target.id, raid.player, living);
+                        if (result === 'occupied') { toast('门口有人，暂时不能关门。'); return false; }
+                        return result !== 'unreachable';
+                    }, true);
+                } else if (target.kind === 'ground') this.pickupLoot(target.id);
+                else if (target.kind === 'container') openLoot(target.id, app.loadout!.runId!);
+                else if (target.kind === 'note') {
+                    const note = this.mapData.notes.find(n => n.title === target.id)!; this.say(`${note.title}：${note.text}`, 14);
+                    if (playerInput.touch) { app.reading = { title: note.title, text: note.text }; setOverlay('reading'); }
+                }
+            }
+        }
+        const el = document.getElementById('interaction');
+        if (el) { el.textContent = text; el.style.display = text && !app.overlay ? 'block' : 'none'; document.documentElement.style.setProperty('--interaction-height', `${el.offsetHeight}px`); }
+    }
     drawEffects(dt: number) {
         this.weather.clear();
         const cam = this.cameras.main;
         this.weather.fillStyle(0x0c242a, .12).fillRect(0, 0, 960, 540);
         this.weather.lineStyle(1, 0x9bbdb5, .1);
-        for (let i = 0; i < 45; i++) {
+        for (let i = 0; i < (this.space && this.space.definition.id !== 'coast' ? 0 : 45); i++) {
             const x = (i * 137 + this.elapsed * 48) % 1000 - 20, y = (i * 97 + this.elapsed * 155) % 570 - 15;
             this.weather.lineBetween(x, y, x - 5, y + 13);
         }
@@ -714,6 +1009,7 @@ export class RaidScene extends Phaser.Scene {
     }
     updateHud() {
         refreshQuickPanel();
+        const limits = this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina };
         for (const child of this.children.list) if (child instanceof Phaser.GameObjects.Text && child.getData('exit')) {
             const label = `${child.getData('exit')}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`;
             if (child.text !== label) child.setText(label);
@@ -721,7 +1017,7 @@ export class RaidScene extends Phaser.Scene {
         const labels = document.getElementById('world-labels');
         if (labels && playerInput.touch) {
             const rect = this.game.canvas.getBoundingClientRect(), parent = labels.getBoundingClientRect(), scale = rect.width / 960;
-            labels.innerHTML = this.config.exits.map(e => {
+            labels.innerHTML = this.visibleExits.map(e => {
                 const x = (e.x - this.cameras.main.scrollX) * scale + rect.left - parent.left;
                 const y = (e.y - this.cameras.main.scrollY - 45) * scale + rect.top - parent.top;
                 return x > 70 && x < parent.width - 70 && y > 28 && y < parent.height ? `<span style="left:${x}px;top:${y}px">${e.name} · 撤离</span>` : '';
@@ -729,16 +1025,16 @@ export class RaidScene extends Phaser.Scene {
         }
         const t = Math.max(0, Math.ceil(this.config.duration - this.elapsed));
         css('timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
-        css('hp', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
+        css('hp', `${Math.max(0, Math.ceil(this.hp))} / ${limits.hp}`);
         css('stamina', Math.round(this.stamina).toString());
-        css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : ''].filter(Boolean).join(' · ') || '状态正常');
+        css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : '', this.layered ? `精神 ${Math.round(this.layered.body.mental)} · 水分 ${Math.round(this.layered.body.water)} · 饱食 ${Math.round(this.layered.body.satiety)}` : '', this.layered?.body.effects.pain ? '疼痛' : '', this.layered?.body.effects.energized ? '精力充沛' : '', this.layered?.body.effects.focus ? '专注' : '', this.layered?.body.effects.injectionFatigue ? '注射后疲劳' : ''].filter(Boolean).join(' · ') || '状态正常');
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
-        css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
+        css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${limits.hp}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
         css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
-        if (hp) hp.style.width = Math.max(0,this.hp)/B.maxHealth*100 + '%';
-        if (st) st.style.width = this.stamina/B.maxStamina*100 + '%';
+        if (hp) hp.style.width = Math.max(0,this.hp)/limits.hp*100 + '%';
+        if (st) st.style.width = this.stamina/limits.stamina*100 + '%';
         const w = this.currentWeapon;
         css('gunname', w.name);
         const ammo = document.getElementById('ammo');
@@ -749,8 +1045,9 @@ export class RaidScene extends Phaser.Scene {
         for (const command of ['knife', 'primary']) document.querySelector(`[data-command="${command}"]`)?.setAttribute('aria-pressed', String(command === 'knife' ? !w.ammo : !!w.ammo));
         const healButton = document.querySelector<HTMLElement>('[data-command="heal"]');
         if (healButton) { const qty = D.count(app.loadout!.bag, 'bandage') + D.count(app.loadout!.bag, 'medkit'); healButton.textContent = `治疗 ${qty}`; healButton.setAttribute('aria-label', `快捷治疗，背包可用${qty}件`); }
-        const zone = WORLD.zones.find(z => this.player.x >= z.x && this.player.x < z.x + z.w && this.player.y >= z.y && this.player.y < z.y + z.h);
-        css('zone', zone?.name || '沿海封锁区');
+        const zone = this.mapData.zones.find(z => this.player.x >= z.x && this.player.x < z.x + z.w && this.player.y >= z.y && this.player.y < z.y + z.h);
+        const region = this.space?.definition.regions?.filter(z => this.player.x >= z.x && this.player.x < z.x + z.w && this.player.y >= z.y && this.player.y < z.y + z.h).sort((a,b) => a.w * a.h - b.w * b.h)[0];
+        css('zone', this.space?.definition.id !== 'coast' && this.space ? `${this.space.definition.name} · ${this.space.definition.floor}${region ? ' / ' + region.name : ''}` : region?.name || zone?.name || '沿海封锁区');
         css('tide', `${this.highTide ? '高潮位 · 浅滩封闭' : '低潮位 · 捷径开放'}　/　${this.tideChanged ? '高架路可通行' : '出击 5 分钟后换潮'}`);
         const warning = document.getElementById('warning');
         if (warning) warning.innerHTML = this.warned && !this.tideChanged ? '<div class="banner">潮汐预警 · 请离开浅滩</div>' : this.bleeding ? `<div class="banner">持续流血 · ${playerInput.touch ? '点「治疗」止血' : 'Q 止血'}</div>` : '';

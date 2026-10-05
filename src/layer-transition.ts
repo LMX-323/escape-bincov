@@ -1,10 +1,16 @@
 import * as D from './domain';
 import type { BulletState, EnemyState } from './checkpoint';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
+import type { Point } from './world';
+import { SURVIVAL } from './balance';
+import { criticalChance, enemyDamage, trainingEfficiency } from './rpg';
+import { effectiveAttributes, entityUid } from './expansion-state';
+import { luckInventory } from './reputation-luck';
+import { pursuitPosition } from './pursuit';
 import { corridor, findLanding, separation, spacePath, traversable, type SpaceContext } from './spatial';
 
 /** Distance to the first opaque grid boundary along a finite ray (windows transmit bullets). */
-function barrier(context: SpaceContext, bullet: BulletState, dx: number, dy: number): number {
+export function shotBarrier(context: SpaceContext, bullet: BulletState, dx: number, dy: number): number {
     const tile = context.definition.tile;
     let x = Math.floor(bullet.x / tile), y = Math.floor(bullet.y / tile);
     const clear = (cx: number, cy: number) => traversable(context, { x: (cx + .5) * tile, y: (cy + .5) * tile }, 'bullet');
@@ -25,7 +31,7 @@ function barrier(context: SpaceContext, bullet: BulletState, dx: number, dy: num
 }
 
 /** Exact first circle intersection; distance is measured along the existing remaining trajectory. */
-export function shotIntersection(bullet: BulletState, enemy: EnemyState, dx: number, dy: number, radius = 14): number | null {
+export function shotIntersection(bullet: BulletState, enemy: Point, dx: number, dy: number, radius = 14): number | null {
     const x = enemy.x - bullet.x, y = enemy.y - bullet.y, projected = x * dx + y * dy;
     const perpendicular2 = x * x + y * y - projected * projected;
     if (perpendicular2 > radius * radius) return null;
@@ -35,11 +41,13 @@ export function shotIntersection(bullet: BulletState, enemy: EnemyState, dx: num
     return distance <= bullet.left ? distance : null;
 }
 
-/** M0 nucleus: no critical hits/luck yet. M4 must use the same damage path for on/off-layer shots. */
-function damage(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number): void {
+/** Actual damage and corpse ownership shared by ordinary and departing shots. */
+export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true): void {
+    if (enemy.hp <= 0 || amount <= 0) return;
     const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, amount);
     enemy.hp -= actual;
-    raid.training.quantity.technique += actual / 400;
+    if (mapId === raid.currentMap) { enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: raid.player.x, y: raid.player.y }; }
+    if (gun) raid.training.quantity.technique += actual / 400 * (raid.version === 2 ? trainingEfficiency(state) : 1);
     if (enemy.hp > 0) return;
     raid.kills++;
     const event = raid.pursuits.find(p => p.enemy.uid === enemy.uid);
@@ -51,27 +59,68 @@ function damage(state: ExpansionState, mapId: string, enemy: EnemyState, amount:
     const drops = D.rollLoot(raid.seed + raid.kills * 47, enemy.id === 'elite' ? 3 : 1);
     const random = D.seededRandom(raid.rng);
     for (const drop of drops) {
-        if (D.addItem(inventory, drop.id, drop.qty, false, false, true, () => `entity-${raid.nextEntity++}`)) throw new Error('尸体容器容量不足。');
+        if (D.addItem(inventory, drop.id, drop.qty, false, false, true, () => entityUid(raid, raid.nextEntity++))) throw new Error('尸体容器容量不足。');
         random(); random();
     }
     raid.rng = random.getState();
+    if (raid.version === 2) luckInventory(state, mapId, inventory, enemy);
     layer.containers.push({ id: `corpse-${enemy.uid}`, runId: raid.runId, kind: 'corpse',
         name: `${D.ENEMIES[enemy.id].name}遗体`, x: enemy.x, y: enemy.y, inventory });
+}
+
+export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, mapId: string, bullet: BulletState, playerPresent: boolean, hitFeedback?: (uid: string, critical: boolean) => void): boolean {
+    const raid = state.raid!, layer = raid.maps[mapId], speed = Math.hypot(bullet.vx, bullet.vy);
+    if (speed === 0 || bullet.left <= 0 || bullet.damage <= 0) return false;
+    const dx = bullet.vx / speed, dy = bullet.vy / speed;
+    const stop = shotBarrier({ definition: world.maps[mapId], doors: layer.doors, highTide: raid.highTide }, bullet, dx, dy);
+    if (bullet.enemy) {
+        if (playerPresent) {
+            const hit = shotIntersection(bullet, raid.player, dx, dy, 12);
+            if (hit !== null && hit < stop) {
+                const random = D.seededRandom(raid.rng);
+                if (raid.version === 2) enemyDamage(state, bullet.damage, bullet.owner, random());
+                else { state.body.hp = Math.max(0, state.body.hp - bullet.damage); raid.hitTime = .25; if (random() < SURVIVAL.bleedChance) state.body.bleeding = true; }
+                raid.rng = random.getState();
+                return true;
+            }
+        }
+    } else {
+        const actors = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
+        const hits = actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(bullet, enemy, dx, dy) }))
+            .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
+            .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
+        if (hits[0]) {
+            let critical = false;
+            if (raid.version === 2) {
+                const enemy = hits[0].enemy, perpendicular = Math.abs((enemy.x - bullet.x) * dy - (enemy.y - bullet.y) * dx);
+                const chance = criticalChance(effectiveAttributes(state).technique, 1 - Math.min(1, perpendicular / 14), state.body.effects.focus > 0 ? .05 : 0);
+                const random = D.seededRandom(raid.rng); critical = random() < chance; raid.rng = random.getState();
+            }
+            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? 1.5 : 1));
+            hitFeedback?.(hits[0].enemy.uid, critical); return true;
+        }
+    }
+    return stop <= bullet.left;
+}
+
+/** The finite segment kernel is shared by normal flight and one-time departure settlement. */
+export function advanceLayerShots(state: ExpansionState, world: WorldDefinition, mapId: string, dt: number, hitFeedback?: (uid: string, critical: boolean) => void): void {
+    const layer = state.raid!.maps[mapId], survivors: BulletState[] = [];
+    for (const bullet of [...layer.bullets].sort((a, b) => a.uid.localeCompare(b.uid, 'en'))) {
+        const speed = Math.hypot(bullet.vx, bullet.vy), length = Math.min(bullet.left, speed * dt);
+        if (speed === 0) continue;
+        if (resolveLayerShot(state, world, mapId, { ...bullet, left: length }, true, hitFeedback)) continue;
+        bullet.x += bullet.vx / speed * length; bullet.y += bullet.vy / speed * length; bullet.left -= length;
+        if (bullet.left > 0) survivors.push(bullet);
+    }
+    layer.bullets = survivors;
 }
 
 /** Resolve only existing source projectiles, then remove them. No ordinary AI or local time advances. */
 export function settleDepartingShots(state: ExpansionState, world: WorldDefinition, mapId: string): void {
     const raid = state.raid!, layer = raid.maps[mapId];
-    const context = { definition: world.maps[mapId], doors: layer.doors, highTide: raid.highTide };
     for (const bullet of [...layer.bullets].sort((a, b) => a.uid.localeCompare(b.uid, 'en'))) {
-        const speed = Math.hypot(bullet.vx, bullet.vy);
-        if (bullet.enemy || speed === 0 || bullet.left === 0 || bullet.damage === 0) continue;
-        const dx = bullet.vx / speed, dy = bullet.vy / speed, stop = barrier(context, bullet, dx, dy);
-        const actors = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
-        const hits = actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(bullet, enemy, dx, dy) }))
-            .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
-            .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
-        if (hits[0]) damage(state, mapId, hits[0].enemy, bullet.damage);
+        resolveLayerShot(state, world, mapId, bullet, false);
     }
     layer.bullets = [];
 }
@@ -85,9 +134,11 @@ export function changeLayer(state: ExpansionState, world: WorldDefinition, entry
     const sourceContext = { definition: from, doors: source.doors, highTide: raid.highTide };
     if (!entry || separation(raid.player, entry.at) >= 43 || !corridor(sourceContext, raid.player, entry.at, 'body', 10)) return false;
     const target = raid.maps[entry.targetMap], targetMap = world.maps[entry.targetMap];
-    const landing = findLanding({ definition: targetMap, doors: target.doors, highTide: raid.highTide }, entry.landing, target.enemies.filter(e => e.hp > 0));
+    const occupied: Point[] = target.enemies.filter(e => e.hp > 0);
+    occupied.push(...raid.pursuits.filter(p => p.sourceMap === entry.targetMap && p.enemy.hp > 0).map(p => pursuitPosition(p, raid.elapsed)));
+    const landing = findLanding({ definition: targetMap, doors: target.doors, highTide: raid.highTide }, entry.landing, occupied);
     if (!landing) return false; // No damage, RNG draws, entity allocations, or pursuit registration before this point.
-    const witnesses = source.enemies.filter(e => e.hp > 0 && separation(e, raid.player) <= D.ENEMIES[e.id].vision
+    const witnesses = source.enemies.filter(e => e.hp > 0 && (e.state === 'chase' || e.state === 'attack') && e.alert > 0 && separation(e, raid.player) <= D.ENEMIES[e.id].vision
         && corridor(sourceContext, e, raid.player, 'sight'));
     raid.player = { ...landing, rotation: raid.player.rotation };
     raid.currentMap = entry.targetMap;

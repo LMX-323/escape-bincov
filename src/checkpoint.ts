@@ -12,7 +12,7 @@ export interface EnemyState extends ActorState {
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
 }
 export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean }
-export interface BulletState extends ActorState { uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean }
+export interface BulletState extends ActorState { uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string }
 export interface RaidCheckpoint {
   version: 2; worldVersion: typeof WORLD_VERSION; seed: number; runId: string;
   loadout: D.RunLoadout; player: ActorState;

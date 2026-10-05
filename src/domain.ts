@@ -1,5 +1,5 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
-export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest';
+export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory';
 export interface ItemDef {
   id: string; name: string; short: string; w: number; h: number; weight: number;
   stack: number; buy: number; sell: number; kind: ItemKind; description: string; color: number;
@@ -53,6 +53,15 @@ export const ITEMS: Record<string, ItemDef> = {
   water: item('water', '净水瓶', '净水', 1, 2, 0.6, 2, 35, 14, 'food', '恢复全部耐力，降低 12 点污染。', 0x83a9ba),
   food: item('food', '鱼松罐头', '罐头', 1, 1, 0.3, 3, 50, 20, 'food', '恢复 12 点生命和 50 点耐力。', 0xcbaa76),
   cloth: item('cloth', '清洁布料', '布料', 1, 1, 0.1, 10, 15, 5, 'part', '制作绷带所需的清洁布料。', 0xcac5ae),
+  analgesic: item('analgesic', '镇痛片', '镇痛', 1, 1, .05, 3, 80, 30, 'medical', '镇痛180秒，暂时压制疼痛。不能止血或恢复生命。', 0xd5c7aa),
+  focus: item('focus', '专注剂', '专注', 1, 1, .1, 2, 140, 50, 'medical', '专注120秒，随机爆头概率增加5个百分点。', 0xb0cdb7),
+  strengthDose: item('strengthDose', '力量强化针剂', '力量针', 1, 1, .1, 1, 0, 150, 'medical', '力量临时增加5，持续180秒；结束后疲劳120秒。', 0xc99569),
+  constitutionDose: item('constitutionDose', '体质强化针剂', '体质针', 1, 1, .1, 1, 0, 150, 'medical', '体质临时增加5，持续180秒；结束后疲劳120秒。', 0x9fac72),
+  techniqueDose: item('techniqueDose', '技巧强化针剂', '技巧针', 1, 1, .1, 1, 0, 150, 'medical', '技巧临时增加5，持续180秒；结束后疲劳120秒。', 0x8eb7bb),
+  luckyCharm: item('luckyCharm', '旧护身符', '护身符', 1, 1, .05, 1, 0, 80, 'accessory', '戴上后，近来似乎更顺利。', 0xc1b48a),
+  unluckyCharm: item('unluckyCharm', '破损护符', '残护符', 1, 1, .05, 1, 0, 80, 'accessory', '戴上后，总觉得有些不安。', 0x9c8275),
+  luckySachet: item('luckySachet', '旧香包', '香包', 1, 1, .05, 1, 0, 40, 'medical', '使用后，一阵熟悉的香气让人安心。效果持续300秒。', 0xc3b192),
+  unluckySachet: item('unluckySachet', '潮湿香包', '潮香包', 1, 1, .05, 1, 0, 40, 'medical', '使用后，一股潮湿的气味挥之不去。效果持续300秒。', 0x929b89),
   scrap: item('scrap', '泵机零件', '零件', 1, 1, 0.55, 5, 85, 35, 'part', '水产站维修用零件，共需 3 个。泵壳上还留着盐渍。', 0x9caaa0),
   wire: item('wire', '绝缘线圈', '线圈', 1, 1, 0.25, 5, 65, 28, 'part', '水产站维修用线圈，共需 2 卷。铜芯还完好。', 0xbf8054),
   fuse: item('fuse', '陶瓷保险管', '保险管', 1, 1, 0.1, 4, 100, 45, 'part', '水产站维修用保险管，共需 1 支。', 0xd0c5a1),

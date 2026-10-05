@@ -51,7 +51,7 @@ export interface PursuitState {
     path: Point[]; distance: number; speed: number; registeredAt: number; arrivalAt: number; waiting: boolean;
 }
 export interface LayeredRaid {
-    version: 1; worldVersion: string; layoutRevision: string; seed: number; runId: string;
+    version: 1 | 2; worldVersion: string; layoutRevision: string; seed: number; runId: string;
     currentMap: string; player: ActorState; loadout: D.RunLoadout;
     elapsed: number; initialHigh: boolean; highTide: boolean; warned: boolean; tideChanged: boolean;
     kills: number; rng: number; nextEntity: number; maps: Record<string, LayerState>; pursuits: PursuitState[];
@@ -59,9 +59,18 @@ export interface LayeredRaid {
     /** Stable birth roster prevents ownership transfer from changing the population. */
     roster: { uid: string; id: string }[];
     eventRolled: boolean;
+    mapEvent?: 'none' | 'neutral' | 'good' | 'bad';
+    /** v2 RPG checkpoint: last qualifying shock, measured on the global action clock. */
+    shockAt?: number;
+}
+/** v2 generated identities stay unique when loot survives into another action. */
+export function entityUid(raid: Pick<LayeredRaid, 'version' | 'runId'>, serial: number): string {
+    return raid.version === 2 ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
 }
 export interface ExpansionState {
-    version: 1; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
+    version: 1 | 2; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
+    charm?: D.Item | null;
+    awards?: string[];
 }
 export interface WorldDefinition {
     id: string; revision: string; maps: Record<string, SpaceDefinition>;
@@ -128,9 +137,18 @@ function batch(value: ProductionBatch) {
 /** Complete validation is shared by imports and the single-record commit, before publishing state. */
 export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
     const state = value as ExpansionState;
-    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid']);
-    if (state.version !== EXPANSION_VERSION || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
+    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(state.version === 2 ? ['charm', 'awards'] : [])]);
+    if (![EXPANSION_VERSION, 2].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
     const { body, growth, base } = state;
+    if (state.version === 2) {
+        if (!Array.isArray(state.awards) || state.awards.length > 1000 || state.awards.some(id => !identity(id)) || new Set(state.awards).size !== state.awards.length) fail();
+        const charm = state.charm;
+        if (charm !== null) {
+            if (!obj(charm) || !identity(charm.uid) || !['luckyCharm', 'unluckyCharm'].includes(charm.id) || charm.qty !== 1 || charm.x !== 0 || charm.y !== 0 || charm.rotated !== undefined || charm.relief !== undefined
+                || [profile.stash, profile.bag, profile.safe, state.raid?.loadout.bag].filter(Boolean).some(inv => inv!.items.some(i => i.uid === charm.uid))) fail();
+            exactKeys(charm, ['uid', 'id', 'qty', 'x', 'y']);
+        }
+    }
     exactKeys(body, ['hp', 'stamina', 'mental', 'water', 'satiety', 'pollution', 'bleeding', 'exhausted', 'effects', 'treatment', 'luckEffect']);
     exactKeys(growth, ['permanent', 'progress', 'reputation', 'luck']);
     exactKeys(base, ['facilities', 'queue', 'completed', 'nextBatch', 'cursor', 'location', 'restSeconds', 'energizedGranted', 'extractedPearl', 'training']);
@@ -174,10 +192,10 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (legacyRaid || base.location !== 'raid') fail();
     const raid = state.raid;
     if (!obj(raid)) return fail();
-    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled']);
+    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version === 2 ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    if (raid.version !== 1 || raid.layoutRevision !== world.revision || !integer(raid.seed, 1, 0xffffffff)
+    if (![1, 2].includes(raid.version) || (raid.version === 2 && (!n(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !integer(raid.seed, 1, 0xffffffff)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
@@ -194,9 +212,13 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     const bodyFits = (mapId: string, p: Point) => traversable({ definition: world.maps[mapId], doors: raid.maps[mapId]?.doors ?? {}, highTide: false }, p, 'body', 10);
     if (!bodyFits(raid.currentMap, raid.player)) fail();
     for (const key of ['reloadLeft', 'fireCooldown', 'hitTime'] as const) if (!n(raid[key], 0, 10)) fail();
-    const invIds = new Set<string>();
+    const invIds = new Set<string>(state.charm ? [state.charm.uid] : []);
     const allocated = (id: string) => {
-        const match = /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
+        const prefix = `entity-${raid.runId}-`;
+        const match = raid.version === 2 && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
+            : /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
+        if (raid.version === 2 && id.startsWith(prefix) && !match) fail();
+        if (raid.version === 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
         if (match && (!integer(Number(match[1]), 1) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
@@ -254,10 +276,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             inventory(c.inventory, 6, 5); containers.push({ container: c, mapId });
         }
         for (const b of layer.bullets) {
-            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy']);
+            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version === 2 && b.enemy ? ['owner'] : [])]);
             entity(b.uid); point(b, map);
             if (!n(b.vx, -1000, 1000) || !n(b.vy, -1000, 1000) || !n(b.left, 0, 2000) || !n(b.damage, 0, 1000)
-                || !n(b.rotation, -100, 100) || typeof b.enemy !== 'boolean') fail();
+                || !n(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
+                || (raid.version === 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
         }
         if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!n(layer.noise.radius, 0, 2000) || !n(layer.noise.remaining, 0, 10)) fail(); }
     }
