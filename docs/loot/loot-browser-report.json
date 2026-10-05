@@ -1,0 +1,346 @@
+{
+  "startedAt": "2026-10-04T19:24:30.560Z",
+  "status": "passed",
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "steps": [
+        {
+          "name": "25 enemies and original 60 loot entries remain conserved",
+          "status": "passed",
+          "detail": {
+            "enemies": 25,
+            "ground": 42,
+            "crates": 9,
+            "entries": 60,
+            "configuredUnits": 168,
+            "liveUnits": 168,
+            "samples": 1,
+            "ledgers": 1
+          },
+          "durationMs": 5
+        },
+        {
+          "name": "native crate ↔ bag and crate ↔ safe transfers use exact displayed cells",
+          "status": "passed",
+          "durationMs": 502
+        },
+        {
+          "name": "stacks merge while overflow, occupied cells and out-of-bounds shapes preserve items",
+          "status": "passed",
+          "durationMs": 340
+        },
+        {
+          "name": "full inventory rejects transfer atomically",
+          "status": "passed",
+          "durationMs": 226
+        },
+        {
+          "name": "external selection exposes no direct use or equip; double-click never consumes loot",
+          "status": "passed",
+          "durationMs": 234
+        },
+        {
+          "name": "reopening preserves remaining loot and permits an empty container",
+          "status": "passed",
+          "durationMs": 460
+        },
+        {
+          "name": "Escape, Tab, E, close button and map clear loot context",
+          "status": "passed",
+          "durationMs": 581
+        },
+        {
+          "name": "native drag previews exact legal and illegal shapes; blur cancels the pending transfer",
+          "status": "passed",
+          "durationMs": 253
+        },
+        {
+          "name": "loot suppresses movement, fire, reload and quick-use while clock and AI continue",
+          "status": "passed",
+          "durationMs": 1017
+        },
+        {
+          "name": "actual enemy damage keeps loot open",
+          "status": "passed",
+          "durationMs": 160
+        },
+        {
+          "name": "invalid range and rising tide close external inventory",
+          "status": "passed",
+          "durationMs": 245
+        },
+        {
+          "name": "failed writes roll back both directions and safe checkpoints; retry commits once",
+          "status": "passed",
+          "durationMs": 1241
+        },
+        {
+          "name": "stale native drag payload cannot mutate a different container",
+          "status": "passed",
+          "durationMs": 298
+        },
+        {
+          "name": "scattered ground loot still uses immediate E pickup",
+          "status": "passed",
+          "durationMs": 116
+        },
+        {
+          "name": "real kill produces one searchable corpse; repeated damage never generates another",
+          "status": "passed",
+          "detail": {
+            "id": "corpse-enemy-1",
+            "count": 2,
+            "ground": 41,
+            "kills": 2,
+            "items": 1
+          },
+          "durationMs": 943
+        },
+        {
+          "name": "three refreshes restore remaining crate/corpse loot and never duplicate taken items",
+          "status": "passed",
+          "durationMs": 1840
+        },
+        {
+          "name": "a real second-window storage event closes loot and protects the newer record",
+          "status": "passed",
+          "durationMs": 720
+        },
+        {
+          "name": "death while looting closes context, loses bag loot and retains safe loot",
+          "status": "passed",
+          "durationMs": 280
+        },
+        {
+          "name": "real three-second extraction keeps dragged container loot",
+          "status": "passed",
+          "durationMs": 3288
+        },
+        {
+          "name": "timeout while looting closes context and resolves as failure",
+          "status": "passed",
+          "durationMs": 417
+        }
+      ],
+      "screenshots": [
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-crate-open.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-crate-returned.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-full-bag.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-external-details.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-empty-crate.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-drag-valid.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-drag-invalid.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-under-attack.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-corpse.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-restored-crate.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1280x720-death-result.png"
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "runIds": [
+        "bc-muu7mhht-b",
+        "bc-muu7moxq-6",
+        "bc-muu7mrgy-p"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "steps": [
+        {
+          "name": "25 enemies and original 60 loot entries remain conserved",
+          "status": "passed",
+          "detail": {
+            "enemies": 25,
+            "ground": 42,
+            "crates": 9,
+            "entries": 60,
+            "configuredUnits": 168,
+            "liveUnits": 168,
+            "samples": 1,
+            "ledgers": 1
+          },
+          "durationMs": 1
+        },
+        {
+          "name": "native crate ↔ bag and crate ↔ safe transfers use exact displayed cells",
+          "status": "passed",
+          "durationMs": 591
+        },
+        {
+          "name": "stacks merge while overflow, occupied cells and out-of-bounds shapes preserve items",
+          "status": "passed",
+          "durationMs": 369
+        },
+        {
+          "name": "full inventory rejects transfer atomically",
+          "status": "passed",
+          "durationMs": 233
+        },
+        {
+          "name": "external selection exposes no direct use or equip; double-click never consumes loot",
+          "status": "passed",
+          "durationMs": 251
+        },
+        {
+          "name": "reopening preserves remaining loot and permits an empty container",
+          "status": "passed",
+          "durationMs": 525
+        },
+        {
+          "name": "Escape, Tab, E, close button and map clear loot context",
+          "status": "passed",
+          "durationMs": 575
+        },
+        {
+          "name": "native drag previews exact legal and illegal shapes; blur cancels the pending transfer",
+          "status": "passed",
+          "durationMs": 278
+        },
+        {
+          "name": "loot suppresses movement, fire, reload and quick-use while clock and AI continue",
+          "status": "passed",
+          "durationMs": 1017
+        },
+        {
+          "name": "actual enemy damage keeps loot open",
+          "status": "passed",
+          "durationMs": 177
+        },
+        {
+          "name": "invalid range and rising tide close external inventory",
+          "status": "passed",
+          "durationMs": 257
+        },
+        {
+          "name": "failed writes roll back both directions and safe checkpoints; retry commits once",
+          "status": "passed",
+          "durationMs": 1249
+        },
+        {
+          "name": "stale native drag payload cannot mutate a different container",
+          "status": "passed",
+          "durationMs": 292
+        },
+        {
+          "name": "scattered ground loot still uses immediate E pickup",
+          "status": "passed",
+          "durationMs": 116
+        },
+        {
+          "name": "real kill produces one searchable corpse; repeated damage never generates another",
+          "status": "passed",
+          "detail": {
+            "id": "corpse-enemy-1",
+            "count": 2,
+            "ground": 41,
+            "kills": 2,
+            "items": 1
+          },
+          "durationMs": 966
+        },
+        {
+          "name": "three refreshes restore remaining crate/corpse loot and never duplicate taken items",
+          "status": "passed",
+          "durationMs": 1716
+        },
+        {
+          "name": "a real second-window storage event closes loot and protects the newer record",
+          "status": "passed",
+          "durationMs": 820
+        },
+        {
+          "name": "death while looting closes context, loses bag loot and retains safe loot",
+          "status": "passed",
+          "durationMs": 352
+        },
+        {
+          "name": "real three-second extraction keeps dragged container loot",
+          "status": "passed",
+          "durationMs": 3293
+        },
+        {
+          "name": "timeout while looting closes context and resolves as failure",
+          "status": "passed",
+          "durationMs": 389
+        }
+      ],
+      "screenshots": [
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-crate-open.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-crate-returned.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-full-bag.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-external-details.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-empty-crate.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-drag-valid.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-drag-invalid.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-under-attack.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-corpse.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-restored-crate.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-1920x1080-death-result.png"
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "runIds": [
+        "bc-muu7ms8h-b",
+        "bc-muu7mzx5-6",
+        "bc-muu7n2ge-p"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "mode": "touch",
+      "steps": [
+        {
+          "name": "trusted touch interaction opens the same live source and character grids",
+          "status": "passed"
+        },
+        {
+          "name": "select and tap transfers only to the chosen backpack cell",
+          "status": "passed"
+        },
+        {
+          "name": "touch safe and return operations preserve the whole stack",
+          "status": "passed"
+        },
+        {
+          "name": "touch close and reload retain container contents and clear selection",
+          "status": "passed"
+        }
+      ],
+      "screenshots": [
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-844x390-open.png",
+        "E:\\GAME\\Eascape from Bincov\\test-results\\loot-844x390-returned.png"
+      ],
+      "errors": [],
+      "externalRequests": []
+    },
+    {
+      "mode": "actual-old-main",
+      "steps": [
+        {
+          "name": "actual old main restores loose loot once; old HTML refuses the container world without overwrite",
+          "status": "passed"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "methodology": [
+    "Fresh offline file:// contexts at 1280×720 and 1920×1080; browser errors and external requests fail acceptance.",
+    "Positions, inventories, enemy readiness and elapsed time are controlled fixtures. E opening, closing, transfers, combat and extraction use real browser keys/mouse.",
+    "Native dragTo uses displayed grid geometry. Stale-payload checks replay data captured from a real native drag after its context closes.",
+    "Quota injection starts at capture of the trusted drop event, so periodic saves remain writable until the transfer. Failed transfers compare inventories and the exact pre-drop session bytes.",
+    "Repeated refreshes restore matching container, corpse and carried inventories. Three consecutive completed runs verify lifecycle isolation. This is not a natural-play balance test."
+  ],
+  "browser": "154.0.8037.93",
+  "finishedAt": "2026-10-04T19:25:02.673Z"
+}

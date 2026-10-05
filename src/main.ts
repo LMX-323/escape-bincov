@@ -86,7 +86,8 @@ async function boot() {
         if (app.state === 'run' && ['Tab', ' ', 'Escape'].includes(e.key)) e.preventDefault();
         if (e.repeat) return;
         if (app.state === 'run') {
-            if (e.key === 'Tab') setOverlay(app.overlay === 'inventory' ? '' : 'inventory');
+            if (e.key === 'Tab') setOverlay(['inventory', 'loot'].includes(app.overlay) ? '' : 'inventory');
+            else if (e.key.toLowerCase() === 'e' && app.overlay === 'loot') { app.raid?.suppressHeldInput('E'); setOverlay(''); }
             else if (e.key.toLowerCase() === 'm') setOverlay(app.overlay === 'map' ? '' : 'map');
             else if (e.key === 'Escape') setOverlay(app.overlay ? '' : 'pause');
             else if (!app.overlay) playerInput.key(e.key, true);

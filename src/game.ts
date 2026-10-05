@@ -3,11 +3,12 @@ import { createTextures, drawWorld, drawBackdrop } from './art';
 import { drawTitleBackdrop } from './title-art';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point } from './world';
 import * as D from './domain';
+import type { LootContainer } from './loot';
 import { SURVIVAL as B } from './balance';
 import { app, audio, saveSession } from './app';
 import { playerInput, ActiveClock, type InputFrame } from './input';
-import { type RaidCheckpoint } from './checkpoint';
-import { render, setOverlay, finish, toast, drawMap, refreshQuickPanel } from './ui';
+import { WORLD_VERSION, type RaidCheckpoint } from './checkpoint';
+import { render, setOverlay, openLoot, finish, toast, drawMap, refreshQuickPanel } from './ui';
 export class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
     create() { createTextures(this); this.scene.start('Menu'); }
@@ -62,6 +63,8 @@ export class RaidScene extends Phaser.Scene {
     player!: Phaser.GameObjects.Image;
     enemies: Enemy[] = [];
     loot: Ground[] = [];
+    containers: LootContainer[] = [];
+    private containerSprites: Phaser.GameObjects.Image[] = [];
     bullets: Bullet[] = [];
     hp: number = B.maxHealth;
     stamina: number = B.maxStamina;
@@ -105,6 +108,8 @@ export class RaidScene extends Phaser.Scene {
         app.raid = this;
         this.enemies = [];
         this.loot = [];
+        this.containers = [];
+        this.containerSprites = [];
         this.bullets = [];
         this.hp = B.maxHealth;
         this.stamina = B.maxStamina;
@@ -154,17 +159,43 @@ export class RaidScene extends Phaser.Scene {
     }
     lock() { this.locked = true; this.releaseInput(); }
     releaseInput() { playerInput.clear(); this.clock.reset(); this.extractTime = 0; }
+    /** A panel close must wait for existing presses to be released before gameplay resumes. */
+    suppressHeldInput(extraKey?: string): void {
+        playerInput.suppressHeld(extraKey);
+        this.extractTime = 0;
+    }
+    getLootContainer(id: string): LootContainer | undefined { return this.containers.find(container => container.id === id); }
+    canLootContainer(id: string, runId: string): boolean {
+        const container = this.getLootContainer(id);
+        return !!container && !!runId && !!this.player && app.state === 'run' && app.raid === this && this.scene.isActive()
+            && app.loadout?.runId === runId && app.save.activeRun?.runId === runId && container.runId === runId
+            && !this.locked && !this.extracted && this.hp > 0 && !app.pendingSettlement && !app.conflict
+            && distance(this.player, container) < 43 && isWalkable(container.x, container.y, this.highTide)
+            && lineOfSight(this.player, container, this.highTide, 10);
+    }
+    private createLootContainer(id: string, kind: LootContainer['kind'], name: string, x: number, y: number, items: { id: string; qty: number }[]): void {
+        if (this.getLootContainer(id)) return;
+        const inventory = D.createInventory(6, 5);
+        for (const item of items) {
+            if (D.addItem(inventory, item.id, item.qty)) throw new Error('战利品超过容器容量');
+        }
+        this.containers.push({ id, runId: app.loadout!.runId!, kind, name, x, y, inventory });
+    }
+    private validateLootContext(): void {
+        const context = app.lootContext;
+        if (context && !this.canLootContainer(context.containerId, context.runId)) setOverlay('');
+    }
     checkpoint(): boolean {
         if (this.locked || this.extracted || app.pendingSettlement || app.conflict) return false;
         const ok = saveSession.persist();
         if (ok) this.checkpointAt = this.elapsed;
-        else { app.overlay = 'checkpoint-error'; this.releaseInput(); audio.stop(); render(); }
+        else { setOverlay('checkpoint-error'); audio.stop(); }
         return ok;
     }
     snapshot(): RaidCheckpoint {
         this.syncMagazine();
         const actor = (sprite: Phaser.GameObjects.Image) => ({ x: sprite.x, y: sprite.y, rotation: sprite.rotation });
-        return structuredClone({ version: 2, worldVersion: 'coast-v1', seed: this.config.seed, runId: app.loadout!.runId!,
+        return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: app.loadout!.runId!,
             loadout: app.loadout!, player: actor(this.player), hp: this.hp, stamina: this.stamina, pollution: this.pollution,
             bleeding: this.bleeding, kills: this.kills, elapsed: this.elapsed, highTide: this.highTide, knife: this.knife,
             reloadLeft: this.reloadLeft, fireCooldown: this.fireCooldown, warned: this.warned, tideChanged: this.tideChanged,
@@ -172,6 +203,7 @@ export class RaidScene extends Phaser.Scene {
             exhausted: this.exhausted, stepTime: this.stepTime, noteSeen: [...this.noteSeen], rng: this.random.getState(), nextEntity: this.nextEntity,
             enemies: this.enemies.map(({ sprite, ...e }) => ({ ...e, ...actor(sprite) })),
             loot: this.loot.map(({ sprite, ...l }) => ({ ...l, x: sprite.x, y: sprite.y, relief: !!l.relief })),
+            containers: this.containers,
             bullets: this.bullets.map(({ sprite, ...b }) => ({ ...b, ...actor(sprite) })),
         });
     }
@@ -192,6 +224,10 @@ export class RaidScene extends Phaser.Scene {
             return { ...structuredClone(e), sprite };
         });
         this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[l.id].color) }));
+        for (const sprite of this.containerSprites) sprite.destroy();
+        this.containers = structuredClone(c.containers ?? []);
+        this.containerSprites = this.containers.filter(container => container.kind === 'crate')
+            .map(container => this.add.image(container.x, container.y, 'loot-crate').setDepth(4));
         this.bullets = c.bullets.map(({ x, y, rotation, ...b }) => ({ ...b, sprite: this.add.image(x, y, 'bullet').setRotation(rotation).setDepth(10).setTint(b.enemy ? 0xe48c64 : 0xffffff) }));
         this.drawFlood();
     }
@@ -319,19 +355,22 @@ export class RaidScene extends Phaser.Scene {
         this.fx.fillStyle(0xffe5a0, 1).fillCircle(this.player.x + Math.cos(this.player.rotation) * 23, this.player.y + Math.sin(this.player.rotation) * 23, 4);
         this.cameras.main.shake(40, .0008);
     }
-    damageEnemy(e: Enemy, damage: number) { e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active)
+    damageEnemy(e: Enemy, damage: number) { if (e.hp <= 0) return; e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active && e.hp > 0)
         e.sprite.clearTint(); }); e.state = 'chase'; e.alert = 6; e.target = { x: this.player.x, y: this.player.y }; audio.hit(); if (e.hp <= 0) {
         this.kills++;
         e.sprite.setTint(0x403d34).setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(.6).setDepth(3);
         const drops = D.rollLoot(this.config.seed + this.kills * 47, e.id === 'elite' ? 3 : 1);
-        for (const l of drops)
-            this.spawnLoot(e.sprite.x + (this.random() - .5) * 18, e.sprite.y + (this.random() - .5) * 18, l.id, l.qty);
+        // Keep the old scatter-offset random calls so later combat rolls do not shift.
+        for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
+        this.createLootContainer(`corpse-${e.uid}`, 'corpse', `${D.ENEMIES[e.id].name}遗体`, e.sprite.x, e.sprite.y, drops);
     } }
     hurt(amount: number) { if (this.extracted)
         return; this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.extractTime = 0; if (this.random() < B.bleedChance)
         this.bleeding = 1; audio.hit(); this.cameras.main.shake(100, .002); if (this.hp <= 0)
         finish('death'); }
     update(_time: number, _delta: number) {
+        if (this.player) this.validateLootContext();
+        if (app.overlay === 'loot') this.suppressHeldInput();
         if (app.state !== 'run' || !this.player || this.extracted || this.paused) { this.clock.reset(); return; }
         const tick = this.clock.tick(performance.now());
         if (tick.stalled) { this.lastStall = { seconds: tick.seconds, at: performance.now() }; setOverlay('pause'); toast('画面暂时停顿，行动已暂停。准备好后继续。'); return; }
@@ -376,9 +415,10 @@ export class RaidScene extends Phaser.Scene {
                 }
             }
             this.say(this.highTide ? '涨潮了，浅滩无法通行。高架路和海堤仍可通行。' : '退潮了，浅滩可以通行。涉水仍会积累污染。', 10);
+            this.validateLootContext();
         }
         const input = !app.overlay, frame = this.inputFrame;
-        const dx = frame.x, dy = frame.y;
+        const dx = input ? frame.x : 0, dy = input ? frame.y : 0;
         if (input) {
             if (frame.actions.has('reload')) this.startReload();
             if (frame.actions.has('heal')) this.heal();
@@ -583,10 +623,18 @@ export class RaidScene extends Phaser.Scene {
             return;
         let text = '';
         const exit = this.config.exits.find(e => distance(e, this.player) < 48);
-        const nearby = this.nearbyLoot(), loot = nearby[0];
+        const nearby = this.nearbyLoot();
+        const candidates: { point: Point; ground?: Ground; container?: LootContainer; key: string }[] = [
+            ...nearby.map(ground => ({ point: ground.sprite, ground, key: ground.uid })),
+            ...this.containers.filter(container => this.canLootContainer(container.id, container.runId))
+                .map(container => ({ point: container, container, key: container.id })),
+        ];
+        candidates.sort((a, b) => distance(a.point, this.player) - distance(b.point, this.player)
+            || a.point.x - b.point.x || a.point.y - b.point.y || a.key.localeCompare(b.key));
+        const loot = candidates[0]?.ground, container = candidates[0]?.container;
         const note = WORLD.notes.find(n => distance(n, this.player) < 43);
         const touchButton = document.getElementById('touch-interact');
-        if (touchButton) touchButton.textContent = exit ? '按住撤离' : loot ? '拾取' : note ? '阅读' : '交互';
+        if (touchButton) touchButton.textContent = exit ? '按住撤离' : container ? '搜刮' : loot ? '拾取' : note ? '阅读' : '交互';
         if (exit) {
             text = `${exit.name}　·　站稳并按住 E 3 秒撤离`;
             if (input && this.inputFrame.interactHeld && !moving && !this.hitTime) {
@@ -604,7 +652,11 @@ export class RaidScene extends Phaser.Scene {
         }
         else {
             this.extractTime = 0;
-            if (loot) {
+            if (container) {
+                text = `E 搜刮　${container.name}${container.inventory.items.length ? '' : ' · 已搜空'}`;
+                if (input && this.inputFrame.actions.has('interact')) openLoot(container.id, container.runId);
+            }
+            else if (loot) {
                 text = `E 拾取　${D.ITEMS[loot.id].name} × ${loot.qty}`;
                 if (input && this.inputFrame.actions.has('interact')) {
                     this.pickupLoot(loot.uid);
@@ -619,12 +671,12 @@ export class RaidScene extends Phaser.Scene {
                 }
             }
         }
-        text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
+        text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 搜刮', '点「搜刮」').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
         const signature = text + ':' + nearby.length;
         if (el.dataset.content !== signature) {
             el.dataset.content = signature; el.replaceChildren();
             const description = document.createElement('span'); description.textContent = text; el.append(description);
-            if (nearby.length > 1 || (exit && nearby.length)) {
+            if (nearby.length > 1 || ((exit || container) && nearby.length)) {
                 const button = document.createElement('button'); button.textContent = `附近 ${nearby.length}`; button.dataset.action = 'nearby'; button.onclick = () => setOverlay('nearby'); el.append(button);
             }
         }
@@ -681,6 +733,9 @@ export class RaidScene extends Phaser.Scene {
         css('stamina', Math.round(this.stamina).toString());
         css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : ''].filter(Boolean).join(' · ') || '状态正常');
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
+        css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
+        css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
+        css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
         if (hp) hp.style.width = Math.max(0,this.hp)/B.maxHealth*100 + '%';
         if (st) st.style.width = this.stamina/B.maxStamina*100 + '%';

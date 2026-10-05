@@ -19,13 +19,19 @@ export class PlayerInput {
   private pressed = false;
   private precise = false;
   private interaction: number | null = null;
+  private suppressedKeys = new Set<string>();
+  private suppressedButtons = new Set<number>();
 
   key(key: string, down: boolean) {
     key = key.toLowerCase();
-    if (down && !this.keys.has(key) && actionKeys[key]) this.actions.add(actionKeys[key]);
-    if (down) this.keys.add(key); else this.keys.delete(key);
+    if (!down) { this.suppressedKeys.delete(key); this.keys.delete(key); return; }
+    if (this.suppressedKeys.has(key)) return;
+    if (!this.keys.has(key) && actionKeys[key]) this.actions.add(actionKeys[key]);
+    this.keys.add(key);
   }
   mouse(button: number, down: boolean) {
+    if (!down) this.suppressedButtons.delete(button);
+    else if (this.suppressedButtons.has(button)) return;
     if (button === 0) { if (down && !this.mouseFire) this.pressed = true; this.mouseFire = down; }
     if (button === 2) this.precise = down;
   }
@@ -49,7 +55,16 @@ export class PlayerInput {
     for (const [kind, stick] of this.sticks) if (stick.id === id) this.sticks.delete(kind);
     if (this.interaction === id) this.interaction = null;
   }
+  /** Panel transitions suppress held physical controls until their release events arrive. */
+  suppressHeld(extraKey?: string) {
+    for (const key of this.keys) this.suppressedKeys.add(key);
+    if (extraKey) this.suppressedKeys.add(extraKey.toLowerCase());
+    if (this.mouseFire) this.suppressedButtons.add(0);
+    if (this.precise) this.suppressedButtons.add(2);
+    this.clear();
+  }
   clear() {
+    // Keep suppression across the UI's input reset; only a release rearms that control.
     this.keys.clear(); this.actions.clear(); this.sticks.clear();
     this.mouseFire = this.pressed = this.precise = false; this.interaction = null;
   }

@@ -51,6 +51,8 @@ jobs:
         run: pnpm test:title
       - name: Save reliability regression
         run: pnpm test:save-browser
+      - name: Crate and corpse inventory regression
+        run: pnpm test:loot
       - name: Mobile input and recovery regression
         run: pnpm test:mobile
       - name: Mobile inventory and feedback regression

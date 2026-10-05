@@ -138,6 +138,16 @@ export function createTextures(scene: Phaser.Scene): void {
     rect(c, '#bea071', 3, 5, 14, 3); rect(c, '#b09260', 5, 4, 2, 13);
     rect(c, '#b09260', 13, 4, 2, 13); rect(c, '#e5d19a', 9, 8, 3, 3);
   });
+  makeCanvas(scene, 'loot-crate', 32, 32, c => {
+    // A broad military-green case with metal corners distinguishes containers from loose loot.
+    rect(c, '#111e1cb0', 2, 8, 28, 22);
+    rect(c, '#344d3e', 3, 5, 26, 23); rect(c, '#72906a', 3, 5, 26, 5);
+    rect(c, '#adc28c', 4, 5, 24, 2); rect(c, '#23392e', 4, 12, 24, 3);
+    rect(c, '#55744f', 5, 17, 22, 7); rect(c, '#294335', 7, 19, 18, 2);
+    for (const x of [4, 24]) { rect(c, '#98a08a', x, 8, 4, 18); rect(c, '#d0ceb0', x, 9, 2, 3); }
+    rect(c, '#22352b', 12, 10, 8, 6); rect(c, '#d6b575', 14, 10, 4, 5);
+    rect(c, '#b3c095', 12, 22, 8, 2); rect(c, '#dbe0b7', 15, 20, 2, 6);
+  });
   makeCanvas(scene, 'bullet', 10, 4, c => { rect(c, '#d39b5c', 0, 1, 10, 2); rect(c, '#fff2bd', 5, 1, 5, 2); });
   iconIds.forEach(id => makeCanvas(scene, `item-${id}`, 32, 32, c => itemIcon(c, id)));
 }

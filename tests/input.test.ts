@@ -60,3 +60,44 @@ test('active sticks take priority without discarding held physical keys', () => 
   assert.equal(physical.fireHeld, false);
   input.clear(); assert.equal(input.read().x, 0); assert.equal(input.read().precise, false);
 });
+
+test('closing a loot panel does not reuse held movement, fire, aim or interaction', () => {
+  const input = new PlayerInput();
+  input.key('w', true); input.key('shift', true); input.key('e', true);
+  input.mouse(0, true); input.mouse(2, true);
+  input.suppressHeld(); input.clear();
+  input.key('w', true); input.key('shift', true); input.key('e', true);
+  input.mouse(0, true); input.mouse(2, true);
+  const blocked = input.read();
+  assert.equal(blocked.y, 0); assert.equal(blocked.sprint, false); assert.equal(blocked.interactHeld, false);
+  assert.equal(blocked.firePressed, false); assert.equal(blocked.precise, false); assert.equal(blocked.actions.size, 0);
+  input.key('d', true); assert.equal(input.read().x, 1);
+  input.key('w', false); input.key('shift', false); input.key('e', false);
+  input.mouse(0, false); input.mouse(2, false);
+  input.key('w', true); input.key('shift', true); input.key('e', true);
+  input.mouse(0, true); input.mouse(2, true);
+  const fresh = input.read();
+  assert.equal(fresh.y, -1); assert.equal(fresh.sprint, true); assert.equal(fresh.interactHeld, true);
+  assert.equal(fresh.firePressed, true); assert.equal(fresh.precise, true); assert.ok(fresh.actions.has('interact'));
+});
+
+test('the E press used to close loot is blocked even when the overlay did not forward keydown', () => {
+  const input = new PlayerInput();
+  input.suppressHeld('E'); input.clear(); input.key('e', true);
+  assert.equal(input.read().interactHeld, false);
+  input.key('e', false); input.key('e', true);
+  assert.equal(input.read().interactHeld, true);
+});
+
+test('opening loot cancels active touch sticks and does not resume them on pointer movement', () => {
+  const input = new PlayerInput(); input.touch = true;
+  input.beginStick('move', 1); input.beginStick('aim', 2); input.interact(3);
+  input.moveStick('move', 1, 1, 0); input.moveStick('aim', 2, 1, 0);
+  input.suppressHeld();
+  input.moveStick('move', 1, 1, 0); input.moveStick('aim', 2, 1, 0);
+  const blocked = input.read();
+  assert.equal(blocked.x, 0); assert.equal(blocked.fireHeld, false); assert.equal(blocked.interactHeld, false);
+  input.release(1); input.release(2); input.release(3);
+  assert.ok(input.beginStick('move', 1)); input.moveStick('move', 1, 1, 0);
+  assert.equal(input.read().x, 1);
+});

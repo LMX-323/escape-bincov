@@ -1,4 +1,5 @@
 import * as D from './domain';
+import { placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
 import { RecoveryStore, type SessionRecord } from './recovery-store';
@@ -58,7 +59,7 @@ export class SaveSession {
         if (this.session.conflict || !this.owned) return false;
         try {
             if (!this.store) throw new Error('存档尚未加载，请刷新重试。');
-            const checkpoint = save.activeRun ? (snapshot ?? this.raid?.capture() ?? this.session.checkpoint) : null;
+            const checkpoint = save.activeRun ? structuredClone(snapshot ?? this.raid?.capture() ?? this.session.checkpoint) : null;
             if (checkpoint && snapshot === undefined && this.session.loadout) checkpoint.loadout = structuredClone(this.session.loadout);
             if (checkpoint) D.checkpointSafe(save, checkpoint.loadout.safe, checkpoint.runId);
             const committed = this.store.commit(save, checkpoint, terminal);
@@ -172,13 +173,40 @@ export class SaveSession {
         return true;
     }
 
+    /** Commit staged container contents and character gear in one recovery record. */
+    transferLoot(container: LootContainer, request: LootTransfer): MutationResult {
+        const s = this.session;
+        if (s.state !== 'run' || !s.loadout || !s.save.activeRun || s.conflict || s.pendingSettlement) return 'blocked';
+        if (!request.runId || request.runId !== s.loadout.runId || request.runId !== s.save.activeRun.runId ||
+            request.runId !== container.runId || !container.id || request.containerId !== container.id) return 'rejected';
+        const validEndpoint = (endpoint: LootEndpoint) => endpoint === 'container' || endpoint === 'bag' || endpoint === 'safe';
+        if (!validEndpoint(request.from) || !validEndpoint(request.to)) return 'rejected';
+        const checkpoint = structuredClone(this.raid?.capture() ?? s.checkpoint);
+        const recorded = checkpoint?.containers?.find(entry => entry.id === container.id);
+        if (!checkpoint || !recorded || recorded.runId !== request.runId ||
+            JSON.stringify(recorded.inventory) !== JSON.stringify(container.inventory)) return 'rejected';
+        const staged = structuredClone(container.inventory);
+        const result = this.mutate(() => {
+            const endpoints = { container: staged, bag: s.loadout!.bag, safe: s.loadout!.safe };
+            const from = endpoints[request.from], to = endpoints[request.to];
+            if (placementError(from, to, request.uid, request.x, request.y)) return false;
+            return D.transferItem(from, to, request.uid, request.x, request.y);
+        }, null, () => {
+            checkpoint.loadout = structuredClone(s.loadout!);
+            recorded.inventory = staged;
+            return checkpoint;
+        });
+        if (result === 'committed' && (request.from === 'container' || request.to === 'container')) container.inventory = staged;
+        return result;
+    }
+
     /**
      * Actions are synchronous. With an attached scene, matching world changes
      * belong in this transaction and roll back with its checkpoint. External
      * effects and scene transitions must wait until the commit succeeds.
      * A rejected action, failed write or exception restores all participants.
      */
-    mutate(action: SessionMutation, player: PlayerVitals | null = null): MutationResult {
+    mutate(action: SessionMutation, player: PlayerVitals | null = null, stagedWorld?: () => RaidCheckpoint): MutationResult {
         const s = this.session;
         if (s.conflict || s.pendingSettlement || !this.owned) return 'blocked';
         const before = structuredClone(s.save);
@@ -201,7 +229,7 @@ export class SaveSession {
             }
             if (s.state === 'run' && s.loadout) D.checkpointSafe(s.save, s.loadout.safe, s.loadout.runId);
             else D.grantRelief(s.save);
-            if (!this.persist()) {
+            if (!this.persist(s.save, stagedWorld?.())) {
                 rollback();
                 return 'save-failed';
             }

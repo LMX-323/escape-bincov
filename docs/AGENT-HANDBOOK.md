@@ -82,6 +82,7 @@ git push -u origin agent/short-task-name
 | `src/checkpoint.ts` / `src/recovery-store.ts` | 完整快照校验、迁移、单记录提交与写入所有权 | 不拆分档案和世界的提交点；拒绝未知数据 |
 | `src/app.ts` | 组装共享状态、音效和存档会话 | 唯一状态来源；Phaser/场景仅类型依赖 |
 | `src/session.ts` | 出击提交、事务回滚、结算重试、导入和存储冲突状态 | 无 DOM/Phaser；写入成功后提交；失败回滚 |
+| `src/loot.ts` | 局内容器类型、精确落格与整堆转移校验 | 无 DOM/Phaser；双端守恒、救济标记；`SaveSession.transferLoot` 提交容器 |
 | `src/ui.ts` | 菜单、整备、交易、任务、背包、导入导出、结算展示 | 调用会话接口；世界副作用放在提交之后 |
 | `src/domain.ts` | 物品/武器/敌人、交易、任务、存档和结算 | 保持纯逻辑、物品守恒、旧存档兼容 |
 | `src/save-backup.ts` | 备份格式、校验、编码与解码 | 上限、非法物品、堆叠、边界、重叠、UID 与活动行动 |
@@ -113,7 +114,7 @@ git push -u origin agent/short-task-name
 
 ### 行动
 
-每局 10 分钟，初始 25 名敌人、60 件地面物资、两个启用撤离点；第 4 分 30 秒预警，第 5 分钟翻转潮位。背包和地图不暂停，Esc 暂停。撤离需在有效范围内停稳并按住 E 3 秒。产品需求可以修改这些数值，但必须同步文档及相关验证。
+每局 10 分钟，初始 25 名敌人、60 份物资、两个启用撤离点；其中最多 20 份原物资归入 10 个箱子，其余散落，箱内允许堆叠。第 4 分 30 秒预警，第 5 分钟翻转潮位。搜刮、背包和地图不暂停，Esc 关闭面板后再按才暂停。箱子和尸体按 E 打开双栏拖放，地面物资仍 E 快捷拾取。撤离需在有效范围内停稳并按住 E 3 秒。产品需求可以修改这些数值，但必须同步文档及相关验证。
 
 ### 发布
 
@@ -140,6 +141,7 @@ pnpm test:desktop-input
 pnpm test:ui
 pnpm test:title
 pnpm test:save-browser
+pnpm test:loot
 pnpm test:portable
 pnpm test:mobile
 pnpm test:mobile-ux

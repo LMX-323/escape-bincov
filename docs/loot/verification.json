@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-05",
+  "base": "0a69908313c483d38f99f9260536055706beea94",
+  "branch": "codex/loot-containers",
+  "environment": {
+    "os": "Windows",
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "chrome": "154.0.8037.93"
+  },
+  "htmlSha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+  "checks": [
+    {
+      "command": "pnpm test",
+      "status": "passed",
+      "result": 109
+    },
+    {
+      "command": "pnpm package",
+      "status": "passed",
+      "result": "strict TypeScript + 2 HTML + 2 ZIP + manifest"
+    },
+    {
+      "command": "pnpm test:browser",
+      "status": "passed",
+      "result": 24
+    },
+    {
+      "command": "pnpm test:desktop-input",
+      "status": "passed",
+      "result": 10
+    },
+    {
+      "command": "pnpm test:ui",
+      "status": "passed",
+      "result": 38
+    },
+    {
+      "command": "pnpm test:title",
+      "status": "passed",
+      "result": 16
+    },
+    {
+      "command": "pnpm test:save-browser",
+      "status": "passed",
+      "result": 9
+    },
+    {
+      "command": "pnpm test:mobile",
+      "status": "passed",
+      "result": 10
+    },
+    {
+      "command": "pnpm test:mobile-ux",
+      "status": "passed",
+      "result": 11
+    },
+    {
+      "command": "pnpm test:loot",
+      "status": "passed",
+      "result": 45
+    },
+    {
+      "command": "pnpm test:portable",
+      "status": "passed",
+      "result": 6
+    },
+    {
+      "command": "pnpm test:play",
+      "status": "passed",
+      "result": {
+        "seconds": 619,
+        "opened": 42,
+        "transfers": 35,
+        "finalStats": {
+          "runs": 2,
+          "extracts": 2,
+          "kills": 32
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Loot suite includes 40 desktop checks, 4 touch checks and 1 optional actual-old-main migration check with BINCOV_LOOT_LEGACY_HTML. Default CI runs 44 loot checks.",
+    "Mobile UX suite ran its 11 default checks; optional actual v0.2.0 rotation migration case was not repeated. The loot suite separately used actual latest-main 0a69908 HTML.",
+    "Browser suites use setup fixtures; natural play reads state and sends real input, without changing time, health or world. Neither establishes human game feel or real-phone compatibility."
+  ],
+  "ci": {
+    "status": "action_required",
+    "reason": "PR #9 is open. GitHub requires upstream maintainer approval for the first external contribution; CI tests have not started.",
+    "pullRequest": "https://github.com/xuys2025/escape-bincov/pull/9",
+    "checksUrl": "https://github.com/xuys2025/escape-bincov/pull/9/checks"
+  }
+}

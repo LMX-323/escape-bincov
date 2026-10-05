@@ -45,7 +45,8 @@ test('100 seeds: both chosen exits remain reachable before and after tide change
   for (let seed = 0; seed < 100; seed++) {
     const run = generateRun(seed);
     assert.equal(run.enemies.length, 25);
-    assert.equal(run.loot.length, 60);
+    assert.ok(run.loot.length >= 40);
+    assert.equal(run.loot.length + run.containers.reduce((total, container) => total + container.items.length, 0), 60);
     assert.equal(run.exits.length, 2);
     assert.ok(run.enemies.every(p => isWalkable(p.x, p.y, true)));
     assert.ok(run.enemies.every(p => Math.hypot(p.x - run.spawn.x, p.y - run.spawn.y) > 240));
