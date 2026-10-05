@@ -1,0 +1,12 @@
+$ node scripts/ui-review.mjs
+page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at file:///workspace/escape-bincov/dist/index.html?test=1
+Call log:
+[2m  - navigating to "file:///workspace/escape-bincov/dist/index.html?test=1", waiting until "load"[22m
+
+    at /workspace/escape-bincov/scripts/ui-review.mjs:38:18 {
+  log: [
+    '  - navigating to "file:///workspace/escape-bincov/dist/index.html?test=1", waiting until "load"'
+  ],
+  name: 'Error'
+}
+[ELIFECYCLE] Command failed with exit code 1.
