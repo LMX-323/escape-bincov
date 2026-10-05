@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { createTextures, drawWorld, drawBackdrop } from './art';
-import { drawTitleBackdrop } from './title-art';
+import { createTextures, drawWorld } from './art';
+import { drawTitleBackdrop, drawStationBackdrop } from './title-art';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point } from './world';
 import * as D from './domain';
 import type { LootContainer } from './loot';
@@ -19,11 +19,11 @@ export class MenuScene extends Phaser.Scene {
 }
 export class HideoutScene extends Phaser.Scene {
     constructor() { super('Hideout'); }
-    create() { drawBackdrop(this); this.add.rectangle(480, 270, 960, 540, 0x081211, .55); render(); }
+    create() { drawStationBackdrop(this); this.add.rectangle(480, 270, 960, 540, 0x081211, .55); render(); }
 }
 export class ResultScene extends Phaser.Scene {
     constructor() { super('Result'); }
-    create() { drawBackdrop(this); render(); }
+    create() { drawStationBackdrop(this); render(); }
 }
 type Enemy = {
     uid: string;
@@ -137,7 +137,7 @@ export class RaidScene extends Phaser.Scene {
         drawWorld(this, WORLD).setDepth(0);
         this.flood = this.add.graphics().setDepth(2);
         this.drawFlood();
-        WORLD.notes.forEach(n => { this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3); this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3); });
+        WORLD.notes.forEach(n => this.add.image(n.x, n.y, 'note').setDepth(3));
         this.config.exits.forEach(e => { const g = this.add.graphics().setDepth(3); g.lineStyle(2, 0xb4ce7d, .75).strokeCircle(e.x, e.y, 48); g.lineStyle(1, 0xb4ce7d, .4).strokeCircle(e.x, e.y, 54); g.fillStyle(0xb4ce7d, .08).fillCircle(e.x, e.y, 48); this.add.text(e.x, e.y - 70, `${e.name}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`, { fontFamily: 'Microsoft YaHei', fontSize: '12px', color: '#dae5aa', align: 'center', backgroundColor: '#19281ee6', padding: { x: 8, y: 4 } }).setOrigin(.5).setDepth(3).setData('exit', e.name); });
         this.player = this.add.image(this.config.spawn.x, this.config.spawn.y, 'player').setDepth(8);
         this.fx = this.add.graphics().setDepth(9);
@@ -220,14 +220,14 @@ export class RaidScene extends Phaser.Scene {
         for (const entity of [...this.enemies, ...this.loot, ...this.bullets]) entity.sprite.destroy();
         this.enemies = c.enemies.map(({ x, y, rotation, ...e }) => {
             const sprite = this.add.image(x, y, e.id).setRotation(rotation).setDepth(e.hp > 0 ? 6 : 3);
-            if (e.hp <= 0) sprite.setTint(0x403d34).setAlpha(.6);
+            if (e.hp <= 0) sprite.setTexture(`corpse-${e.id}`);
             return { ...structuredClone(e), sprite };
         });
-        this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[l.id].color) }));
+        this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, `loot-${l.id}`).setDepth(4) }));
         for (const sprite of this.containerSprites) sprite.destroy();
         this.containers = structuredClone(c.containers ?? []);
         this.containerSprites = this.containers.filter(container => container.kind === 'crate')
-            .map(container => this.add.image(container.x, container.y, 'loot-crate').setDepth(4));
+            .map(container => this.add.image(container.x, container.y, container.inventory.items.length ? 'loot-crate' : 'loot-crate-empty').setDepth(4).setData('containerId', container.id));
         this.bullets = c.bullets.map(({ x, y, rotation, ...b }) => ({ ...b, sprite: this.add.image(x, y, 'bullet').setRotation(rotation).setDepth(10).setTint(b.enemy ? 0xe48c64 : 0xffffff) }));
         this.drawFlood();
     }
@@ -241,7 +241,7 @@ export class RaidScene extends Phaser.Scene {
                     this.flood.lineStyle(1, 0xa96a54, .45).lineBetween(x * TILE + 4, y * TILE + 12, x * TILE + 25, y * TILE + 12);
                 }
             } }
-    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[id]?.color || 0xc7b889), id, qty, relief }); }
+    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: `entity-${this.nextEntity++}`, sprite: this.add.image(x, y, `loot-${id}`).setDepth(4), id, qty, relief }); }
     nearbyLoot() { return this.loot.filter(l => distance(l.sprite, this.player) < 43 && lineOfSight(l.sprite, this.player)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player) || a.uid.localeCompare(b.uid)); }
     pickupLoot(uid: string) {
         const loot = this.nearbyLoot().find(l => l.uid === uid);
@@ -358,7 +358,7 @@ export class RaidScene extends Phaser.Scene {
     damageEnemy(e: Enemy, damage: number) { if (e.hp <= 0) return; e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active && e.hp > 0)
         e.sprite.clearTint(); }); e.state = 'chase'; e.alert = 6; e.target = { x: this.player.x, y: this.player.y }; audio.hit(); if (e.hp <= 0) {
         this.kills++;
-        e.sprite.setTint(0x403d34).setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(.6).setDepth(3);
+        e.sprite.setTexture(`corpse-${e.id}`).clearTint().setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(1).setDepth(3);
         const drops = D.rollLoot(this.config.seed + this.kills * 47, e.id === 'elite' ? 3 : 1);
         // Keep the old scatter-offset random calls so later combat rolls do not shift.
         for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
@@ -713,6 +713,11 @@ export class RaidScene extends Phaser.Scene {
             }
     }
     updateHud() {
+        for (const sprite of this.containerSprites) {
+            const container = this.containers.find(c => c.id === sprite.getData('containerId'));
+            if (container) sprite.setTexture(container.inventory.items.length ? 'loot-crate' : 'loot-crate-empty');
+        }
+
         refreshQuickPanel();
         for (const child of this.children.list) if (child instanceof Phaser.GameObjects.Text && child.getData('exit')) {
             const label = `${child.getData('exit')}\n${playerInput.touch ? '停稳，按住撤离 3 秒' : '按住 E 3 秒 · 撤离'}`;

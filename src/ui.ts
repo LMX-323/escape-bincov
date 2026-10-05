@@ -8,6 +8,7 @@ import { app, audio, saveSession } from './app';
 import type { SessionMutation } from './session';
 import { titleScreen } from './title-screen';
 import { placementError, type LootEndpoint } from './loot';
+import { PIXEL_FONT } from './font';
 type InventoryDrag = { uid: string; source: string; token: number; runId: string | null; containerId: string | null };
 let activeDrag: InventoryDrag | null = null;
 let dragToken = 0;
@@ -48,11 +49,24 @@ const btn = (label: string, action: string, cls = '', extra = '') => `<button cl
 export const weaponName = () => D.WEAPONS[app.loadout?.weapon || 'knife']?.name || '水手匕首';
 function preparedWeight(){const s=app.save,w=D.WEAPONS[s.equipment.weapon||'knife'];return D.weight(s.bag)+D.weight(s.safe)+D.ITEMS.knife.weight+(s.equipment.weapon?D.ITEMS[s.equipment.weapon].weight:0)+(w.ammo?D.ITEMS[w.ammo].weight*s.equipment.ammo:0);}
 const iconCache = new Map<string, string>();
-function itemIcon(id: string) { let url = iconCache.get(id); if (!url && app.game?.textures.exists('item-' + id)) {
-    const source = app.game.textures.get('item-' + id).getSourceImage() as HTMLCanvasElement;
-    url = source.toDataURL();
-    iconCache.set(id, url);
-} return url ? `<img class="item-icon" alt="" src="${url}">` : ''; }
+function itemIcon(id: string, small = false) {
+    const key = `item-${small ? 'small-' : ''}${id}`;
+    let url = iconCache.get(key);
+    if (!url && app.game?.textures.exists(key)) {
+        url = (app.game.textures.get(key).getSourceImage() as HTMLCanvasElement).toDataURL();
+        iconCache.set(key, url);
+    }
+    return url ? `<img class="item-icon${small ? ' compact-icon' : ''}" width="${small ? 24 : 32}" height="${small ? 24 : 32}" alt="" src="${url}">` : '';
+}
+function merchantPortrait(id: string): string {
+    const key = `portrait-${id}`;
+    let url = iconCache.get(key);
+    if (!url && app.game?.textures.exists(key)) {
+        url = (app.game.textures.get(key).getSourceImage() as HTMLCanvasElement).toDataURL();
+        iconCache.set(key, url);
+    }
+    return url ? `<img class="merchant-portrait" width="48" height="48" alt="" src="${url}">` : '';
+}
 function activeLoot() {
     const context = app.lootContext;
     if (!context || app.state !== 'run' || app.loadout?.runId !== context.runId) return undefined;
@@ -79,15 +93,15 @@ const kindName: Record<D.ItemKind, string> = {
 function occupied(inv: D.Inventory) {
     return inv.items.reduce((sum, item) => sum + D.ITEMS[item.id].w * D.ITEMS[item.id].h, 0);
 }
-function grid(inv: D.Inventory, source: string, cell = 36) {
-    if (playerInput.touch) cell = 52;
+function grid(inv: D.Inventory, source: string, cell = 54) {
+    if (playerInput.touch) cell = 54;
     if (playerInput.touch && source === 'stash' && !app.inventoryGrid)
         return `<div class="inventory-list">${inv.items.map(i => `<button class="inventory-row" data-uid="${i.uid}" data-source="${source}" aria-pressed="${app.selected === i.uid}">${itemIcon(i.id)}<span><strong>${D.ITEMS[i.id].name}</strong><small>${D.itemSize(i).w} × ${D.itemSize(i).h} 格 · ${(D.ITEMS[i.id].weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</small></span><b>× ${i.qty}</b></button>`).join('') || '<p class="muted">仓库空置</p>'}</div>`;
 
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${inv.items.map(i => {
         const d = D.ITEMS[i.id];
         const size = D.itemSize(i);
-        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id, size.w === 1 && size.h === 1)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('')}${placementCells(inv, source, cell)}${!inv.items.length ? '<div class="empty-hint">暂无物品</div>' : ''}</div>`;
 }
 function placementCells(inv: D.Inventory, source: string, cell: number) {
@@ -151,7 +165,7 @@ function lootHtml() {
     const container = activeLoot(), loadout = app.loadout;
     if (!container || !loadout) return '';
     const remaining = Math.max(0, Math.ceil((app.raid?.config.duration || 600) - (app.raid?.elapsed || 0)));
-    return `<div class="overlay loot-overlay"><section class="panel loot-modal" role="dialog" aria-modal="true" aria-label="搜刮物资"><header class="loot-header"><div><div class="section-label orange">${container.kind === 'corpse' ? '现场搜身' : '物资搜集'}</div><h2>${esc(container.name)}</h2></div><div class="loot-risk"><span>生命 <strong id="loot-health">${Math.ceil(app.raid?.hp || 0)}</strong></span><span>封锁倒计时 <strong id="loot-timer">${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}</strong></span><small>世界仍在运行，请留意周围。</small></div>${btn('关闭 ×', 'close', '', 'aria-label="关闭搜刮"')}</header><div class="loot-columns"><section class="loot-source"><h3 class="section-title">${container.kind === 'corpse' ? '尸体物品栏' : '箱子物品栏'} <span>${container.inventory.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${grid(container.inventory, 'container', 40)}<div class="inv-help">${container.inventory.items.length ? (playerInput.touch ? '选中物品，点移动格位，再点目标格。' : '拖动物品至右侧，完成拾取。') : '已搜空 · 仍可放入物品。'}<br>留在这里的物资仅保留至本局结束。</div></section><section class="loot-player"><h3 class="section-title">角色物品栏 <span>背包 6 × 5</span></h3><div class="loot-carried"><div>${grid(loadout.bag, 'bag', 40)}<div class="inv-help">携行重量 <strong id="loot-weight">${app.raid?.carriedWeight().toFixed(1) || '0.0'}</strong> / ${SURVIVAL.carryLimit} kg · 含装备</div></div><div class="loot-safe"><h4>安全箱</h4>${grid(loadout.safe, 'safe', 40)}<p class="inv-help protected">撤离失败保留</p></div></div></section></div>${details()}<footer class="loot-footer"><span class="loot-status" role="status" aria-live="polite">${playerInput.touch ? '选中物品 → 移动格位 → 点目标格' : '拖入指定格子 · 绿色可放置，红色不可放置'}</span>${playerInput.touch ? '' : '<span><kbd>E</kbd> / <kbd>Tab</kbd> / <kbd>Esc</kbd> 关闭</span>'}</footer></section></div>`;
+    return `<div class="overlay loot-overlay"><section class="panel loot-modal" role="dialog" aria-modal="true" aria-label="搜刮物资"><header class="loot-header"><div><div class="section-label orange">${container.kind === 'corpse' ? '现场搜身' : '物资搜集'}</div><h2>${esc(container.name)}</h2></div><div class="loot-risk"><span>生命 <strong id="loot-health">${Math.ceil(app.raid?.hp || 0)}</strong></span><span>封锁倒计时 <strong id="loot-timer">${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}</strong></span><small>世界仍在运行，请留意周围。</small></div>${btn('关闭 ×', 'close', '', 'aria-label="关闭搜刮"')}</header><div class="loot-columns"><section class="loot-source"><h3 class="section-title">${container.kind === 'corpse' ? '尸体物品栏' : '箱子物品栏'} <span>${container.inventory.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${grid(container.inventory, 'container', 54)}<div class="inv-help">${container.inventory.items.length ? (playerInput.touch ? '选中物品，点移动格位，再点目标格。' : '拖动物品至右侧，完成拾取。') : '已搜空 · 仍可放入物品。'}<br>留在这里的物资仅保留至本局结束。</div></section><section class="loot-player"><h3 class="section-title">角色物品栏 <span>背包 6 × 5</span></h3><div class="loot-carried"><div>${grid(loadout.bag, 'bag', 54)}<div class="inv-help">携行重量 <strong id="loot-weight">${app.raid?.carriedWeight().toFixed(1) || '0.0'}</strong> / ${SURVIVAL.carryLimit} kg · 含装备</div></div><div class="loot-safe"><h4>安全箱</h4>${grid(loadout.safe, 'safe', 54)}<p class="inv-help protected">撤离失败保留</p></div></div></section></div>${details()}<footer class="loot-footer"><span class="loot-status" role="status" aria-live="polite">${playerInput.touch ? '选中物品 → 移动格位 → 点目标格' : '拖入指定格子 · 绿色可放置，红色不可放置'}</span>${playerInput.touch ? '' : '<span><kbd>E</kbd> / <kbd>Tab</kbd> / <kbd>Esc</kbd> 关闭</span>'}</footer></section></div>`;
 }
 export function render() {
     activeDrag = null;
@@ -202,7 +216,7 @@ function renderHideout() {
         body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="columns gear-columns"><section class="stash-section"><h3 class="section-title">仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'}</div></section><section class="bag-section"><h3 class="section-title">背包 <span>${occupied(s.bag)} / ${s.bag.w * s.bag.h} 格</span></h3>${grid(s.bag, 'bag')}<div class="load-meter ${weight > SURVIVAL.carryLimit ? 'overloaded' : ''}"><span>负重</span><strong>${weight.toFixed(1)} <small>/ ${SURVIVAL.carryLimit} kg</small></strong><i style="width:${Math.min(100, weight / SURVIVAL.carryLimit * 100)}%"></i></div><div class="inv-help">含装备、弹药与安全箱</div></section><section class="safe-section"><h3 class="section-title">安全箱</h3>${grid(s.safe, 'safe')}<div class="inv-help protected">撤离失败也保留</div><div class="equip"><div class="section-label">${s.equipment.weapon ? '主武器' : '随身匕首'}</div><div class="equipped-icon">${itemIcon(s.equipment.weapon || 'knife')}</div><strong>${D.WEAPONS[s.equipment.weapon || 'knife'].name}</strong>${s.equipment.weapon ? `<div class="inv-help">弹匣 ${s.equipment.ammo} 发</div>${btn('卸下', 'unequip', 'text-button')}` : '<div class="inv-help">始终保留</div>'}</div></section>${details()}</div>`;
     } else if (app.tab === 'arms' || app.tab === 'med') {
         const merchant = D.MERCHANTS[app.tab];
-        body = `<div class="merchant-heading"><div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>${app.tab === 'arms' ? '“枪带上，备用弹药也别忘了。”' : '“先止血，再说别的。”'}</p></div><span class="small muted">购买后放入仓库</span></div><div class="shop-grid">${merchant.stock.map(id => {
+        body = `<div class="merchant-heading">${merchantPortrait(app.tab)}<div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>${app.tab === 'arms' ? '“枪带上，备用弹药也别忘了。”' : '“先止血，再说别的。”'}</p></div><span class="small muted">购买后放入仓库</span></div><div class="shop-grid">${merchant.stock.map(id => {
             const d = D.ITEMS[id], qty = D.buyQuantity(id);
             return `<div class="shop-card"><div class="shop-icon">${itemIcon(id)}</div><div class="shop-description"><strong>${d.name}</strong><span class="small">${d.kind === 'ammo' ? '每包 ' + qty + ' 发' : kindName[d.kind] + ' · 每份 1 件'}</span></div>${btn('¥ ' + d.buy * qty, 'buy', '', `data-id="${id}" aria-label="购买${d.name}，${d.buy * qty}元" ${s.cash < d.buy * qty ? 'disabled' : ''}`)}</div>`;
         }).join('')}</div><p class="content-note">出售物资：在「整备」中选中物品，点击「出售」。救济物资不可出售。</p>`;
@@ -610,14 +624,15 @@ export function drawMap() {
         ctx.fillRect(x * 32 * sx, y * 32 * sy, 32 * sx + 1, 32 * sy + 1);
     }));
     const bounds = canvas.getBoundingClientRect();
-    const fontSize = playerInput.touch ? Math.ceil(12 / Math.min(bounds.width / canvas.width, bounds.height / canvas.height)) : 11;
-    ctx.font = `${fontSize}px "Microsoft YaHei"`; ctx.textAlign = 'center';
+    const fontSize = playerInput.touch ? Math.ceil(12 / Math.min(bounds.width / canvas.width, bounds.height / canvas.height)) : 16;
+    ctx.font = `${fontSize}px ${playerInput.touch ? '"Microsoft YaHei", sans-serif' : PIXEL_FONT}`; ctx.textAlign = 'center';
     const label = (name: string, x: number, y: number) => {
         if (playerInput.touch) {
             const half = ctx.measureText(name).width / 2 + 3;
             x = Math.max(half, Math.min(canvas.width - half, x));
             y = Math.max(fontSize + 3, Math.min(canvas.height - 4, y));
         }
+        ctx.strokeStyle = '#172e35'; ctx.lineWidth = 3; ctx.strokeText(name, x, y);
         ctx.fillText(name, x, y);
     };
     WORLD.zones.forEach(z => { ctx.fillStyle = '#f0e4b8'; label(z.name, (z.x + z.w / 2) * sx, (z.y + z.h / 2) * sy); });

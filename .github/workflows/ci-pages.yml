@@ -49,6 +49,8 @@ jobs:
         run: pnpm test:ui
       - name: Responsive title and motion regression
         run: pnpm test:title
+      - name: Pixel art, embedded font and scene evidence
+        run: pnpm test:art
       - name: Save reliability regression
         run: pnpm test:save-browser
       - name: Crate and corpse inventory regression

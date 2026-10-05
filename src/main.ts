@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadPixelFont } from './font';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { app, audio, saveSession } from './app';
 import { initSave, setOverlay, persist, toast, render } from './ui';
@@ -8,6 +9,7 @@ import { playerInput } from './input';
 import { installControls } from './mobile';
 
 async function boot() {
+    await loadPixelFont();
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;

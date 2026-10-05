@@ -1,0 +1,110 @@
+/* Native-size art: quiet blue-black slots separate materials from selection states. */
+:root { --surface:#142429; --ink:#e7e6cf; --muted:#b3c3b9; --line:#395259; --pixel:"Bincov Text", "Microsoft YaHei", "PingFang SC", sans-serif; }
+.item { background:#14242b; border-color:#52696c; }
+.item[data-kind="ammo"] { background:#252b26; border-color:#8c7954; }
+.item[data-kind="medical"] { background:#242a2b; border-color:#94746a; }
+.item[data-kind="quest"] { background:#2e2628; border-color:#ba886b; }
+.item[data-kind="valuable"] { border-color:#b4a479; }
+.item:hover { background:#293e41; border-color:#ced8b6; }
+.item.selected { background:#2c4144; outline:2px solid #e9d5a1; outline-offset:-2px; border-color:#e9d5a1; }
+.item-icon { width:32px; height:32px; flex-shrink:0; }
+.item > .item-icon { width:32px; height:32px; left:50%; top:calc(50% - 9px); }
+.item > .compact-icon { width:24px; height:24px; left:4px; top:3px; transform:none; }
+.item-label, .mobile .item-label { font:16px/18px var(--pixel); padding:0; text-align:center; background:#0a171fe8; color:#f0e9cd; }
+.item .qty, .mobile .item .qty { top:2px; right:2px; min-width:10px; padding:0 1px; font:12px/14px var(--mono); color:#f4e9ca; background:#0a161d; }
+.shop-icon, .detail-icon { width:44px; height:44px; background:#0f1e25; border:1px solid #496068; }
+.shop-card { min-height:74px; gap:12px; border-bottom-color:#415355; }
+.shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 24px; }
+.shop-card strong { font:16px/24px var(--pixel); color:#f0e4c3; }
+.shop-card .small { font-size:12px; color:#b3c2b6; }
+.shop-card button { min-width:86px; font-size:14px; }
+.item-heading h3 { font:16px/24px var(--pixel); color:#f0e4c3; }
+.item-description { font:16px/24px var(--pixel); color:#c9d5c3; }
+.item-actions button { font:16px/20px var(--pixel); }
+.tabs button { font:16px/24px var(--pixel); padding-top:8px; padding-bottom:8px; }
+.section-title { font:16px/24px var(--pixel); }
+.section-title span { font:12px/20px var(--mono); }
+.section-label, .eyebrow, .inv-help { color:#afc0b4; }
+.quest p, .quest-needs li { font:16px/24px var(--pixel); }
+.quest { height:auto; min-height:292px; padding:12px; }
+.quest h3 { font:16px/24px var(--pixel); }
+.quest-needs strong { font:14px/24px var(--mono); }
+.quest-footer { flex-wrap:wrap; }
+.quest-footer button { font:16px/20px var(--pixel); }
+.merchant-heading h3 { font:16px/24px var(--pixel); }
+.merchant-heading { justify-content:flex-start; gap:14px; }
+.merchant-heading > .small { margin-left:auto; }
+.merchant-portrait { image-rendering:pixelated; width:48px; height:48px; flex-shrink:0; background:#1b3036; border-bottom:2px solid #bdac80; }
+.ui-symbol { width:24px; height:24px; flex-shrink:0; vertical-align:middle; }
+.title-location svg, .title-enter svg, .title-link svg { width:24px; height:24px; }
+.title-link svg { color:#c1cfb2; }
+.title-enter strong, .title-link { font:16px/24px var(--pixel); }
+.title-link b { font-family:var(--mono); }
+.title-enter { gap:12px; }
+.station-copy, .station-log .tide-notes dd { font:16px/24px var(--pixel); }
+.content-note { font-size:12px; }
+.details { min-height:0; }
+.detail-icon { flex-shrink:0; }
+.details-empty { color:#b3c3b9; }
+.result .stamp, .result .stats span { font-size:12px; }
+.result h2 { font:32px/40px var(--pixel); }
+.result p { font:16px/26px var(--pixel); }
+.result { border-top:3px solid #cab584; background:#17282cf7; }
+html:not(.mobile) .vital-row { font-size:12px; }
+html:not(.mobile) .weapon-hud .eyebrow { font:16px/22px var(--pixel); }
+html:not(.mobile) .radio { font-size:12px; }
+.drop-preview { border-style:dashed; }
+.drop-preview.invalid { background:repeating-linear-gradient(135deg,#c2604738 0 5px,#4e282f55 5px 10px); border-style:solid; }
+@media (prefers-reduced-motion:no-preference) { .item { transition:background .1s; } }
+
+/* Larger slots retain every saved row/column. Details precede the working grids. */
+html:not(.mobile) body[data-screen="hideout"] #frame { width:100vw; height:100dvh; max-width:1440px; max-height:960px; transform:none !important; }
+html:not(.mobile) body[data-screen="hideout"] #game canvas { width:100% !important; height:100% !important; object-fit:cover; }
+html:not(.mobile) .gear-columns { display:grid; grid-template-columns:540px 324px minmax(108px,1fr); gap:12px 16px; align-items:start; }
+html:not(.mobile) .gear-columns > .details { grid-row:1; grid-column:1 / -1; position:sticky; top:-1px; z-index:4; background:#142429; border:1px solid #496068; padding:10px 12px; display:flex; align-items:flex-start; gap:20px; }
+html:not(.mobile) .gear-columns > .details > .item-heading { width:210px; flex-shrink:0; }
+html:not(.mobile) .gear-columns .detail-body { display:grid; grid-template-columns:1fr 230px; gap:4px 18px; flex:1; }
+html:not(.mobile) .gear-columns .item-description { margin:0; }
+html:not(.mobile) .gear-columns .item-facts { grid-column:1; grid-template-columns:repeat(4,1fr); padding:4px 0 0; margin:0; border:0; gap:10px; }
+html:not(.mobile) .gear-columns .item-actions { grid-column:2; grid-row:1 / 3; align-self:start; }
+html:not(.mobile) .gear-columns .detail-body > .small { grid-column:1; margin:2px 0; }
+html:not(.mobile) .gear-columns > .details-empty { min-height:56px; display:block; padding:8px 12px; }
+html:not(.mobile) .gear-columns > .details-empty .section-label, html:not(.mobile) .gear-columns > .details-empty .inv-help { display:none; }
+html:not(.mobile) .gear-columns > .details-empty .field-notes { display:none; }
+html:not(.mobile) .gear-columns > .details-empty h3 { margin:0; font-size:16px; }
+html:not(.mobile) .gear-columns > .details-empty p { margin:3px 0; }
+html:not(.mobile) .gear-columns > .stash-section { grid-column:1; grid-row:2; }
+html:not(.mobile) .gear-columns > .bag-section { grid-column:2; grid-row:2; position:static; }
+html:not(.mobile) .gear-columns > .safe-section { grid-column:3; grid-row:2; position:static; width:auto; }
+html:not(.mobile) .gear-columns .safe-section .equip { margin-top:12px; padding-top:12px; }
+html:not(.mobile) .gear-columns .safe-section .protected { white-space:normal; }
+html:not(.mobile) .inventory-modal { width:908px; }
+html:not(.mobile) .inventory-modal .safe-section { width:108px; }
+html:not(.mobile) .inventory-modal .columns { gap:18px; }
+html:not(.mobile) .loot-modal { width:932px; max-height:516px; display:flex; flex-direction:column; padding:10px 16px; }
+html:not(.mobile) .loot-header { gap:18px; padding-bottom:8px; flex-shrink:0; }
+html:not(.mobile) .loot-columns { display:flex; gap:24px; overflow:auto; min-height:0; padding:10px 0; }
+html:not(.mobile) .loot-source { padding-right:24px; }
+html:not(.mobile) .loot-carried { gap:24px; }
+html:not(.mobile) .loot-source > .section-title, html:not(.mobile) .loot-player > .section-title { width:324px; }
+html:not(.mobile) .loot-safe .protected { max-width:108px; }
+html:not(.mobile) .loot-details { flex-shrink:0; min-height:68px; padding-top:8px; }
+html:not(.mobile) .loot-details p { font-size:12px; }
+html:not(.mobile) .loot-footer { flex-shrink:0; margin-top:6px; padding-top:6px; font-size:11px; }
+.mobile .shop-grid { grid-template-columns:1fr; }
+.mobile .shop-card strong, .mobile .item-heading h3 { font:16px/24px var(--pixel); }
+.mobile .item-description { font:16px/24px var(--pixel); }
+.mobile .loot-details:not(.details-empty) { top:calc(90px + var(--safe-top)); max-height:calc(var(--view-height,100dvh) - 110px - var(--safe-top) - var(--safe-bottom)); }
+.mobile .loot-details .item-description { font:16px/24px var(--pixel); }
+@media (orientation:landscape) { .mobile .shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:1150px) {
+  html:not(.mobile) .gear-columns { grid-template-columns:540px 324px; }
+  html:not(.mobile) .gear-columns > .stash-section { grid-row:2 / 4; }
+  html:not(.mobile) .gear-columns > .safe-section { grid-column:2; grid-row:3; }
+}
+@media (max-width:960px) {
+  html:not(.mobile) .gear-columns { display:flex; flex-wrap:wrap; }
+  html:not(.mobile) .gear-columns > section { max-width:100%; overflow-x:auto; }
+  html:not(.mobile) .gear-columns > .details { width:100%; flex-wrap:wrap; position:static; }
+  html:not(.mobile) .gear-columns .detail-body { display:block; }
+}

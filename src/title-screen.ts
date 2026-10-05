@@ -1,10 +1,7 @@
-// The title UI lives in viewport space; raid and inventory retain their 960×540 layout.
-// These tiny original line icons are inline, so the portable HTML stays self-contained.
-const icon = (path: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${path}</svg>`;
-const book = icon('<path d="M3 5h7l2 2 2-2h7v14h-7l-2 2-2-2H3V5Z"/><path d="M12 7v14M6 9h3M6 12h3M15 9h3M15 12h3"/>');
-const motionIcon = icon('<path d="M3 8h12a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h6"/>');
-const arrow = icon('<path d="M4 12h15M13 6l6 6-6 6"/>');
-const compass = icon('<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="7"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/>');
+import { uiIcon } from './art/symbols';
+
+// Menu and hideout use viewport space; raids retain their logical 960×540 layout.
+const book=uiIcon('guide'), motionIcon=uiIcon('motion'), arrow=uiIcon('arrow'), compass=uiIcon('compass');
 
 export function titleScreen(options: { runs: number; extracts: number; motion: boolean; overlay: boolean; storageOK: boolean; resume: boolean; touch: boolean }) {
     const { runs, extracts, motion, overlay, storageOK, resume, touch } = options;
@@ -36,7 +33,7 @@ export function titleScreen(options: { runs: number; extracts: number; motion: b
             <nav aria-label="主菜单选项">
                 <button class="title-link" data-action="help">${book}<span>行动指南</span></button>
                 <button class="title-link title-motion" data-action="title-motion" aria-pressed="${motion}" aria-label="动态景物">${motionIcon}<span>动态景物 <b>${motion ? '开' : '关'}</b></span></button>
-                <a class="title-link title-repo" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+                <a class="title-link title-repo" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub ${uiIcon('external')}</a>
             </nav>
             <div class="title-edition"><span class="title-input-note">${touch ? '手机横屏战斗 · 触控候选版' : '键盘与鼠标 · 手机支持触控'}</span><span class="title-build">v0.2.0</span></div>
         </footer>
