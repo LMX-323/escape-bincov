@@ -14,7 +14,9 @@
 
 所有新增能力均为拟议设计，数值待试玩验证；本轮不修改源码、存档协议、现有游玩说明、版本号、HTML、ZIP、发布清单或部署。文档中的验收表是未来实现门槛，不是已运行的游戏测试；未运行 `pnpm test`、浏览器测试或 `pnpm package`，纯设计文档不需要游戏打包。
 
-Windows、Node 24.19.0 下实际完成 62 个相对链接及锚点检查、30 个公式与示例计算检查、7 行幸运概率计算、18 张表格共 141 行的列数检查及 11 项基线常量核对，均通过；`git diff --check`、`git diff --cached --check` 与三份文档的变更范围检查通过，提交前再次 fetch，main 未变化。未宣称真人平衡性已验证。普通沙箱终端启动失败，错误为 `helper_unknown_error: setup refresh had errors`，Node REPL 也未能启动；改用获批终端完成工作区检查、源码核对和文档验证。期间出现的其他未跟踪文档同样保留，不纳入本轮提交。PR 交付结果在完成后补记；不自行合并或发布。
+Windows、Node 24.19.0 下实际完成 62 个相对链接及锚点检查、30 个公式与示例计算检查、7 行幸运概率计算、18 张表格共 141 行的列数检查及 11 项基线常量核对，均通过；`git diff --check`、`git diff --cached --check` 与三份文档的变更范围检查通过，提交前再次 fetch，main 未变化。未宣称真人平衡性已验证。普通沙箱终端启动失败，错误为 `helper_unknown_error: setup refresh had errors`，Node REPL 也未能启动；改用获批终端完成工作区检查、源码核对和文档验证。期间出现的其他未跟踪文档同样保留，不纳入本轮提交。
+
+终端缺少 GitHub 推送凭据，已用已认证连接器上传 `LMX-323/escape-bincov:docs/rpg-system-design` 并向上游提交 [PR #13](https://github.com/xuys2025/escape-bincov/pull/13)。初始远端提交 `f8f8a6cd910b5f3c7585ae9aebac8640249a0d47` 与本地验收提交 `2fdcffa908fd95fa6860aa57c11cf16170f86a21` 的完整文件树均为 `ba0c421e2cf3f51e46ff639faa53f1e2205c69bf`；随后仅补记本交付记录。创建 PR 后已确认可合并且 CI 已开始运行，最终结果以 [PR 检查页](https://github.com/xuys2025/escape-bincov/pull/13/checks)为准；未自行合并、未更新 Pages，所有 RPG 能力仍待实现与平衡验证。
 
 ## 2026-10-05 箱子与尸体双栏搜刮
 
