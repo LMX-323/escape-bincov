@@ -62,6 +62,9 @@ async function boot() {
     document.addEventListener('contextmenu', e => { if ((e.target as HTMLElement).closest('#game, #touch-controls')) e.preventDefault(); });
     addEventListener('pointermove', e => { if (e.pointerType === 'mouse') playerInput.pointer = { x: e.clientX, y: e.clientY }; });
     const game = document.getElementById('game')!;
+    game.addEventListener('wheel', e => {
+        if (app.state === 'run' && app.raid?.cycleLootTarget(e.deltaY)) e.preventDefault();
+    }, { passive: false });
     let pointerType = '';
     game.addEventListener('pointerdown', e => { pointerType = e.pointerType; });
     // Mouse chords emit mousedown for each button; pointerdown only fires for the first.

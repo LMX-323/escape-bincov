@@ -18,7 +18,8 @@
     "test:mobile": "node scripts/mobile-test.mjs",
     "test:mobile-ux": "node --import tsx scripts/mobile-ux-test.mjs",
     "test:title": "node scripts/title-review.mjs",
-    "test:loot": "node scripts/loot-browser-test.mjs"
+    "test:loot": "node scripts/loot-browser-test.mjs",
+    "test:loot-target": "node --import tsx scripts/loot-target-test.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

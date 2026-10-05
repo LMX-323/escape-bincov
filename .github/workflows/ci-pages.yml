@@ -53,6 +53,8 @@ jobs:
         run: pnpm test:save-browser
       - name: Crate and corpse inventory regression
         run: pnpm test:loot
+      - name: Nearby loot target selection
+        run: pnpm test:loot-target
       - name: Mobile input and recovery regression
         run: pnpm test:mobile
       - name: Mobile inventory and feedback regression

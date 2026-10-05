@@ -102,6 +102,7 @@ export class RaidScene extends Phaser.Scene {
     private hitTime = 0;
     private noteSeen = new Set<string>();
     private exhausted = false;
+    private lootTargetId = '';
     constructor() { super('Raid'); }
     create() {
         this.config = this.registry.get('runConfig');
@@ -109,6 +110,7 @@ export class RaidScene extends Phaser.Scene {
         this.enemies = [];
         this.loot = [];
         this.containers = [];
+        this.lootTargetId = '';
         this.containerSprites = [];
         this.bullets = [];
         this.hp = B.maxHealth;
@@ -172,6 +174,27 @@ export class RaidScene extends Phaser.Scene {
             && !this.locked && !this.extracted && this.hp > 0 && !app.pendingSettlement && !app.conflict
             && distance(this.player, container) < 43 && isWalkable(container.x, container.y, this.highTide)
             && lineOfSight(this.player, container, this.highTide, 10);
+    }
+    private lootTargets(): LootContainer[] {
+        const targets = this.containers.filter(container => this.canLootContainer(container.id, container.runId));
+        // Stable ties preserve creation order, including the numbers on overlapping corpses.
+        targets.sort((a, b) => distance(a, this.player) - distance(b, this.player));
+        if (!targets.some(container => container.id === this.lootTargetId)) this.lootTargetId = targets[0]?.id || '';
+        return targets;
+    }
+    /** Selection is local UI state; opening still rechecks the current run, range and tide. */
+    cycleLootTarget(delta: number): boolean {
+        if (!Number.isFinite(delta) || !delta || playerInput.touch || app.overlay || this.paused
+            || this.config.exits.some(exit => distance(exit, this.player) < 48)) return false;
+        const targets = this.lootTargets();
+        if (targets.length < 2) return false;
+        const index = targets.findIndex(container => container.id === this.lootTargetId);
+        this.lootTargetId = targets[(index + Math.sign(delta) + targets.length) % targets.length].id;
+        return true;
+    }
+    private lootTargetName(container: LootContainer): string {
+        const sameName = this.containers.filter(other => other.name === container.name);
+        return sameName.length > 1 ? `${container.name} ${sameName.findIndex(other => other.id === container.id) + 1}` : container.name;
     }
     private createLootContainer(id: string, kind: LootContainer['kind'], name: string, x: number, y: number, items: { id: string; qty: number }[]): void {
         if (this.getLootContainer(id)) return;
@@ -624,14 +647,17 @@ export class RaidScene extends Phaser.Scene {
         let text = '';
         const exit = this.config.exits.find(e => distance(e, this.player) < 48);
         const nearby = this.nearbyLoot();
+        const targets = this.lootTargets();
         const candidates: { point: Point; ground?: Ground; container?: LootContainer; key: string }[] = [
             ...nearby.map(ground => ({ point: ground.sprite, ground, key: ground.uid })),
-            ...this.containers.filter(container => this.canLootContainer(container.id, container.runId))
+            ...targets
                 .map(container => ({ point: container, container, key: container.id })),
         ];
         candidates.sort((a, b) => distance(a.point, this.player) - distance(b.point, this.player)
             || a.point.x - b.point.x || a.point.y - b.point.y || a.key.localeCompare(b.key));
-        const loot = candidates[0]?.ground, container = candidates[0]?.container;
+        // Touch selection is not decided yet. Keep its existing nearest-item interaction.
+        const container = playerInput.touch ? candidates[0]?.container : targets.find(target => target.id === this.lootTargetId);
+        const loot = playerInput.touch ? candidates[0]?.ground : nearby[0];
         const note = WORLD.notes.find(n => distance(n, this.player) < 43);
         const touchButton = document.getElementById('touch-interact');
         if (touchButton) touchButton.textContent = exit ? '按住撤离' : container ? '搜刮' : loot ? '拾取' : note ? '阅读' : '交互';
@@ -672,15 +698,39 @@ export class RaidScene extends Phaser.Scene {
             }
         }
         text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 搜刮', '点「搜刮」').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
-        const signature = text + ':' + nearby.length;
+        const listedTargets = !playerInput.touch && !exit ? targets.map(target => ({
+            id: target.id, name: this.lootTargetName(target), empty: !target.inventory.items.length,
+        })) : [];
+        if (listedTargets.length) text = listedTargets.length > 1
+            ? `滚轮切换 · E 搜刮　${listedTargets.findIndex(target => target.id === this.lootTargetId) + 1} / ${listedTargets.length}`
+            : 'E 搜刮';
+        const signature = JSON.stringify([text, nearby.length, listedTargets, this.lootTargetId]);
         if (el.dataset.content !== signature) {
             el.dataset.content = signature; el.replaceChildren();
             const description = document.createElement('span'); description.textContent = text; el.append(description);
+            if (listedTargets.length) {
+                const list = document.createElement('ul'); list.className = 'loot-targets'; list.setAttribute('aria-label', '附近可搜刮的箱子和尸体');
+                for (const target of listedTargets) {
+                    const row = document.createElement('li'); row.dataset.lootTarget = target.id;
+                    const selected = target.id === this.lootTargetId;
+                    if (selected) row.setAttribute('aria-current', 'true');
+                    row.textContent = `${selected ? '▶ ' : ''}${target.name}${target.empty ? ' · 已搜空' : ''}`;
+                    list.append(row);
+                }
+                el.append(list);
+            }
             if (nearby.length > 1 || ((exit || container) && nearby.length)) {
                 const button = document.createElement('button'); button.textContent = `附近 ${nearby.length}`; button.dataset.action = 'nearby'; button.onclick = () => setOverlay('nearby'); el.append(button);
             }
         }
         el.style.display = text && !app.overlay ? 'block' : 'none';
+        const selectedRow = el.querySelector<HTMLElement>('.loot-targets [aria-current="true"]');
+        if (selectedRow && el.style.display !== 'none') {
+            const list = selectedRow.parentElement!;
+            if (selectedRow.offsetTop < list.scrollTop) list.scrollTop = selectedRow.offsetTop;
+            else if (selectedRow.offsetTop + selectedRow.offsetHeight > list.scrollTop + list.clientHeight)
+                list.scrollTop = selectedRow.offsetTop + selectedRow.offsetHeight - list.clientHeight;
+        }
         const height = `${el.offsetHeight}px`;
         if (document.documentElement.style.getPropertyValue('--interaction-height') !== height)
             document.documentElement.style.setProperty('--interaction-height', height);
