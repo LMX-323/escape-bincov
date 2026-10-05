@@ -1,3 +1,4 @@
+import * as Shop from './shop';
 import * as D from './domain';
 import { WORLD, WORLD_W, WORLD_H, generateRun } from './world';
 import { SURVIVAL } from './balance';
@@ -59,7 +60,13 @@ function activeLoot() {
     const container = app.raid?.getLootContainer(context.containerId);
     return container?.runId === context.runId ? container : undefined;
 }
+function shopping() { return app.state === 'hideout' && ['arms', 'med'].includes(app.tab); }
+function cart() {
+    if (!app.shop || app.shop.merchant !== app.tab) app.shop = Shop.createCart(app.save, app.tab as Shop.Merchant);
+    return app.shop;
+}
 function inventory(source: string): D.Inventory {
+    if (shopping() && ['merchant', 'buy', 'sell', 'stash'].includes(source)) return Shop.shopInventory(cart(), source as Shop.ShopSource);
     if (source === 'container') {
         const container = activeLoot();
         if (!container || app.overlay !== 'loot') throw new Error('搜刮来源已关闭。');
@@ -81,21 +88,21 @@ function occupied(inv: D.Inventory) {
 }
 function grid(inv: D.Inventory, source: string, cell = 36) {
     if (playerInput.touch) cell = 52;
-    if (playerInput.touch && source === 'stash' && !app.inventoryGrid)
-        return `<div class="inventory-list">${inv.items.map(i => `<button class="inventory-row" data-uid="${i.uid}" data-source="${source}" aria-pressed="${app.selected === i.uid}">${itemIcon(i.id)}<span><strong>${D.ITEMS[i.id].name}</strong><small>${D.itemSize(i).w} × ${D.itemSize(i).h} 格 · ${(D.ITEMS[i.id].weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</small></span><b>× ${i.qty}</b></button>`).join('') || '<p class="muted">仓库空置</p>'}</div>`;
+    if (playerInput.touch && source === 'stash' && !app.inventoryGrid && !shopping())
+        return `<div class="inventory-list">${inv.items.map(i => `<button class="inventory-row" data-uid="${i.uid}" data-item-id="${i.id}" data-source="${source}" aria-pressed="${app.selected === i.uid}">${itemIcon(i.id)}<span><strong>${D.ITEMS[i.id].name}</strong><small>${D.itemSize(i).w} × ${D.itemSize(i).h} 格 · ${(D.ITEMS[i.id].weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</small></span><b>× ${i.qty}</b></button>`).join('') || '<p class="muted">仓库空置</p>'}</div>`;
 
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${inv.items.map(i => {
         const d = D.ITEMS[i.id];
         const size = D.itemSize(i);
-        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-item-id="${i.id}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('')}${placementCells(inv, source, cell)}${!inv.items.length ? '<div class="empty-hint">暂无物品</div>' : ''}</div>`;
 }
 function placementCells(inv: D.Inventory, source: string, cell: number) {
-    const item = app.placement && (app.overlay === 'loot' || source === app.selectedSource) ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
+    const item = app.placement && (shopping() || app.overlay === 'loot' || source === app.selectedSource) ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
     if (!item) return '';
     return Array.from({ length: inv.w * inv.h }, (_, index) => {
         const x = index % inv.w, y = Math.floor(index / inv.w);
-        return (app.overlay === 'loot' ? !placementError(inventory(app.selectedSource), inv, item.uid, x, y) : D.fits(inv, item.id, x, y, item.uid, app.placementRotated ?? !!item.rotated))
+        return (shopping() ? !Shop.shopPlacementError(cart(), app.selectedSource as Shop.ShopSource, source as Shop.ShopSource, item.uid, x, y) : app.overlay === 'loot' ? !placementError(inventory(app.selectedSource), inv, item.uid, x, y) : D.fits(inv, item.id, x, y, item.uid, app.placementRotated ?? !!item.rotated))
             ? `<i class="placement-cell" style="left:${x * cell}px;top:${y * cell}px;width:${cell}px;height:${cell}px"></i>` : '';
     }).join('');
 }
@@ -131,14 +138,29 @@ export function refreshQuickPanel() {
 }
 function details() {
     const item = app.selected && !app.placement ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
+    if (shopping()) return shopDetails(item);
     if (app.overlay === 'loot') return lootDetails(item);
     if (!item) return `<aside class="details details-empty"><div class="section-label">${app.state === 'run' ? '随身物资' : '出发前检查'}</div><h3>选中一件物品</h3><p class="muted">查看用途、重量和操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>换弹只使用背包内的弹药。</dd></div><div><dt>安全箱</dt><dd>放入这里的物品，撤离失败也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
     const actions = app.state === 'run'
         ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run', 'primary') : ''}${['bandage', 'medkit', 'antidote', 'water', 'food'].includes(item.id) ? btn('使用', 'use', 'primary') : ''}${btn(app.selectedSource === 'safe' ? '放入背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
-        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('出售', 'sell') : ''}`;
+        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
     const size = D.itemSize(item);
     return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${playerInput.touch ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}<div class="item-actions">${actions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${playerInput.touch ? btn('移动格位', 'place-item') : ''}</div></div></aside>`;
+}
+function deploy() {
+    const cfg = generateRun(app.seed || Date.now());
+    if (!saved(saveSession.beginRun(cfg.seed))) return;
+    app.shop = null; app.game!.registry.set('runConfig', cfg); changeState('run');
+}
+function checkout() {
+    const current = cart(); app.overlay = '';
+    if (mutate(() => Shop.settleCart(app.save, current), '交易完成，物资已存入仓库。', '交易未完成，请检查现金、仓库空间和清单。')) { app.shop = null; render(); }
+}
+function shopDetails(item: D.Item | null | undefined) {
+    if (!item) return `<aside class="details shop-details details-empty"><p>从商人拖到待买区，从仓库拖到待卖区。选中物品可查看用途，再点「移动格位」选择位置。</p></aside>`;
+    const def = D.ITEMS[item.id], size = D.itemSize(item), buying = ['merchant', 'buy'].includes(app.selectedSource), uses = Shop.questUses(app.save, item.id);
+    return `<aside class="details shop-details"><h3>${def.name} × ${item.qty}</h3><p>${def.description}</p><p>${size.w} × ${size.h} 格 · ${(def.weight * item.qty).toFixed(2)} kg · ${buying ? '购买' : '出售'} ¥ ${(buying ? def.buy : def.sell) * item.qty}${item.relief ? ' · 救济，不可出售' : ''}</p>${uses.length ? `<p class="orange">任务用途：${uses.join('、')}</p>` : ''}<div class="item-actions">${btn('移动格位', 'place-item')}${btn('关闭详情', 'clear-selection')}</div></aside>`;
 }
 function lootDetails(item: D.Item | null | undefined) {
     if (app.placement) return `<aside class="details loot-details details-empty"><p>点选目标物品栏的虚线格位，整组转移到该位置。</p>${btn('取消移动', 'clear-selection')}</aside>`;
@@ -201,11 +223,8 @@ function renderHideout() {
         const weight = preparedWeight();
         body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="columns gear-columns"><section class="stash-section"><h3 class="section-title">仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'}</div></section><section class="bag-section"><h3 class="section-title">背包 <span>${occupied(s.bag)} / ${s.bag.w * s.bag.h} 格</span></h3>${grid(s.bag, 'bag')}<div class="load-meter ${weight > SURVIVAL.carryLimit ? 'overloaded' : ''}"><span>负重</span><strong>${weight.toFixed(1)} <small>/ ${SURVIVAL.carryLimit} kg</small></strong><i style="width:${Math.min(100, weight / SURVIVAL.carryLimit * 100)}%"></i></div><div class="inv-help">含装备、弹药与安全箱</div></section><section class="safe-section"><h3 class="section-title">安全箱</h3>${grid(s.safe, 'safe')}<div class="inv-help protected">撤离失败也保留</div><div class="equip"><div class="section-label">${s.equipment.weapon ? '主武器' : '随身匕首'}</div><div class="equipped-icon">${itemIcon(s.equipment.weapon || 'knife')}</div><strong>${D.WEAPONS[s.equipment.weapon || 'knife'].name}</strong>${s.equipment.weapon ? `<div class="inv-help">弹匣 ${s.equipment.ammo} 发</div>${btn('卸下', 'unequip', 'text-button')}` : '<div class="inv-help">始终保留</div>'}</div></section>${details()}</div>`;
     } else if (app.tab === 'arms' || app.tab === 'med') {
-        const merchant = D.MERCHANTS[app.tab];
-        body = `<div class="merchant-heading"><div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>${app.tab === 'arms' ? '“枪带上，备用弹药也别忘了。”' : '“先止血，再说别的。”'}</p></div><span class="small muted">购买后放入仓库</span></div><div class="shop-grid">${merchant.stock.map(id => {
-            const d = D.ITEMS[id], qty = D.buyQuantity(id);
-            return `<div class="shop-card"><div class="shop-icon">${itemIcon(id)}</div><div class="shop-description"><strong>${d.name}</strong><span class="small">${d.kind === 'ammo' ? '每包 ' + qty + ' 发' : kindName[d.kind] + ' · 每份 1 件'}</span></div>${btn('¥ ' + d.buy * qty, 'buy', '', `data-id="${id}" aria-label="购买${d.name}，${d.buy * qty}元" ${s.cash < d.buy * qty ? 'disabled' : ''}`)}</div>`;
-        }).join('')}</div><p class="content-note">出售物资：在「整备」中选中物品，点击「出售」。救济物资不可出售。</p>`;
+        const c = cart(), merchant = D.MERCHANTS[c.merchant], totals = Shop.cartTotals(c);
+        body = `<div class="merchant-heading"><div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>先选物品，再一起结算。放回原侧可取消。</p></div></div>${placementControls()}<div class="shop-layout"><section><h3>商人物品 · 按包购买</h3>${grid(c.catalog, 'merchant', 36)}</section><section class="shop-buffer"><h3>待买 · ¥ ${totals.buy}</h3>${grid(c.buy, 'buy', 36)}<h3>待卖 · ¥ ${totals.sell}</h3>${grid(c.sell, 'sell', 36)}</section><section><h3>仓库 · 整组出售</h3>${grid(c.stash, 'stash', 36)}</section></div><div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) ? '' : 'disabled')}<span>背包、安全箱物品请先移入仓库。救济物资不可出售。</span></div>${details()}`;
     } else if (app.tab === 'quests') {
         body = `<div class="quests">${Object.entries(D.QUESTS).map(([id, q], i) => {
             const complete = s.quests[id];
@@ -235,6 +254,8 @@ function overlayHtml() {
         return `<div class="overlay"><div class="panel modal"><h2>导入这份存档？</h2><p>现金 ¥ ${(app.pendingImport || app.pendingRecoveryImport!.profile).cash} · 累计出击 ${(app.pendingImport || app.pendingRecoveryImport!.profile).stats.runs} 次</p><p>导入会替换此浏览器中本游戏的进度，两个存档不会合并。请先导出当前存档。</p><div class="actions">${btn('先导出当前存档', 'export-save')}${btn('确认导入', 'confirm-import', 'primary')}${btn('取消', 'close')}</div></div></div>`;
     if (!app.overlay)
         return '';
+    if (app.overlay === 'shop-leave') return `<div class="overlay"><section class="panel modal"><h2>放弃未结算的清单？</h2><p>待买、待卖和仓库位置会恢复。现金与物资尚未改变。</p><div class="actions">${btn('继续挑选', 'close')}${btn('放弃清单并离开', 'shop-leave-confirm', 'danger')}</div></section></div>`;
+    if (app.overlay === 'shop-quest') return `<div class="overlay"><section class="panel modal"><h2>这些任务物资会不够交付</h2><ul>${Shop.saleWarnings(app.save, cart()).map(w => `<li>「${w.quest}」需要 ${D.ITEMS[w.id].name} ${w.needed} 件；本次卖出 ${w.sold} 件，整笔交易后剩 ${w.remaining} 件。</li>`).join('')}</ul><div class="actions">${btn('取消，继续挑选', 'close')}${btn('仍要结算', 'checkout-confirm', 'danger')}</div></section></div>`;
     if (app.overlay === 'loot') return lootHtml();
     if (['nearby', 'supplies', 'reading'].includes(app.overlay))
         return `<div class="overlay"><div class="panel quick-modal"><header class="inventory-header"><div><strong>${app.overlay === 'nearby' ? '附近物品' : app.overlay === 'supplies' ? '药品与补给' : esc(app.reading?.title || '附近记录')}</strong><span class="small">不暂停行动</span></div>${btn('关闭', 'close')}</header><div class="quick-body">${quickContent()}</div></div></div>`;
@@ -359,7 +380,7 @@ function previewDrop(el: HTMLElement, e: DragEvent) {
     const item = from.items.find(i => i.uid === activeDrag!.uid);
     if (!item) return;
     const { x, y, cell } = dropPosition(el, e), def = D.ITEMS[item.id], size = D.itemSize(item);
-    const error = placementError(from, to, item.uid, x, y);
+    const error = shopping() ? Shop.shopPlacementError(cart(), activeDrag.source as Shop.ShopSource, el.dataset.grid as Shop.ShopSource, item.uid, x, y) : placementError(from, to, item.uid, x, y);
     const preview = document.createElement('div');
     preview.className = 'drop-preview' + (error ? ' invalid' : '');
     preview.dataset.valid = String(!error);
@@ -387,11 +408,12 @@ function commitDrop(el: HTMLElement, e: DragEvent) {
         const drag = JSON.parse(e.dataTransfer?.getData('text/plain') || 'null') as InventoryDrag | null;
         if (!drag || !dragContextValid(drag)) return;
         const target = el.dataset.grid!, { x, y } = dropPosition(el, e);
-        const error = placementError(inventory(drag.source), inventory(target), drag.uid, x, y);
+        const error = shopping() ? Shop.shopPlacementError(cart(), drag.source as Shop.ShopSource, target as Shop.ShopSource, drag.uid, x, y) : placementError(inventory(drag.source), inventory(target), drag.uid, x, y);
         // Consume the browser drag once, including rejected placements.
         activeDrag = null;
         if (error) { toast(error); render(); return; }
-        if (app.overlay === 'loot') {
+        if (shopping()) { Shop.moveShopItem(cart(), drag.source as Shop.ShopSource, target as Shop.ShopSource, drag.uid, x, y); clearSelection(); render(); }
+        else if (app.overlay === 'loot') {
             transferLootItem(drag.source, target, drag.uid, x, y);
         } else {
             mutate(() => drag.source === target ? D.moveItem(inventory(target), drag.uid, x, y) : D.transferItem(inventory(drag.source), inventory(target), drag.uid, x, y));
@@ -409,7 +431,19 @@ function bind() {
         audio.click();
         if (app.pendingSettlement && a !== 'export-save' && a !== 'retry-save') return;
         if (app.selectedSource === 'container' && ['equip', 'equip-run', 'use', 'secure', 'drop', 'sell', 'transfer'].includes(a)) return;
+        if (shopping() && ['tab', 'deploy', 'menu'].includes(a) && !(a === 'tab' && id === app.tab) && Shop.cartDirty(cart())) {
+            app.shopLeave = { action: a as 'tab' | 'deploy' | 'menu', id }; setOverlay('shop-leave'); return;
+        }
         switch (a) {
+            case 'checkout': if (Shop.saleWarnings(app.save, cart()).length) setOverlay('shop-quest'); else checkout(); break;
+            case 'checkout-confirm': checkout(); break;
+            case 'shop-leave-confirm': {
+                const next = app.shopLeave; app.shopLeave = null; app.shop = null; app.overlay = ''; clearSelection();
+                if (next?.action === 'tab') { app.tab = next.id; render(); }
+                else if (next?.action === 'menu') changeState('menu');
+                else if (next?.action === 'deploy') deploy();
+                break;
+            }
             case 'container': app.mobileContainer = id; clearSelection(); render(); break;
             case 'run-container': app.runContainer = id; clearSelection(); render(); break;
             case 'grid-mode': app.inventoryGrid = !app.inventoryGrid; clearSelection(); render(); break;
@@ -492,20 +526,12 @@ function bind() {
                 finish('death');
                 break;
             case 'tab':
+                if (app.tab !== id) app.shop = null;
                 app.tab = id;
                 clearSelection();
                 render();
                 break;
-            case 'deploy': {
-                const cfg = generateRun(app.seed || Date.now());
-                if (!saved(saveSession.beginRun(cfg.seed))) break;
-                app.game!.registry.set('runConfig', cfg);
-                changeState('run');
-                break;
-            }
-            case 'buy':
-                mutate(() => D.buy(app.save, id, app.tab === 'arms' ? 'arms' : 'med'), '物资已放入仓库。', '购买失败，请检查现金和仓库空间。');
-                break;
+            case 'deploy': deploy(); break;
             case 'quest':
                 mutate(() => D.submitQuest(app.save, id), D.QUESTS[id].radio, '物资还没凑齐，请查看任务清单。');
                 break;
@@ -519,7 +545,8 @@ function bind() {
                 mutate(() => D.grantRelief(app.save), '救济物资已放入背包或仓库，放不下的留在水产站。', '暂时领不了救济补给，请先整理背包或仓库。');
                 break;
             case 'sell':
-                mutate(() => D.sell(app.save, app.selected), '物品已出售。', '这件物品无法出售。');
+                toast(app.selectedSource === 'stash' ? '将物品放进待卖区，再统一结算。' : '先在整备中移入仓库，再到商店出售。');
+                app.tab = 'arms'; app.shop = null; clearSelection(); render();
                 break;
             case 'equip':
                 mutate(() => D.equip(app.save, app.selected), '主武器已装备。', '无法装备，请给换下的武器和弹药腾出空间。');
@@ -557,7 +584,7 @@ function bind() {
     });
     ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(el => { el.onclick = () => { if (app.placement) return; app.selected = el.dataset.uid!; app.selectedSource = el.dataset.source!; ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(node => { const active = node.dataset.uid === app.selected; node.classList.toggle('selected', active); node.setAttribute('aria-pressed', String(active)); }); const panel = ui().querySelector('.details'); if (panel)
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
-        el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict)
+        el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict || shopping())
         return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); };
         el.ondragstart = e => {
             if (app.conflict || app.pendingSettlement || !e.dataTransfer) { e.preventDefault(); return; }
@@ -568,9 +595,10 @@ function bind() {
     });
     ui().querySelectorAll<HTMLElement>('[data-grid]').forEach(el => {
         el.onclick = e => {
-            if (!app.placement || !app.selected || (app.overlay !== 'loot' && app.selectedSource !== el.dataset.grid)) return;
+            if (!app.placement || !app.selected || (!shopping() && app.overlay !== 'loot' && app.selectedSource !== el.dataset.grid)) return;
             const r = el.getBoundingClientRect(), cell = Number(el.dataset.cell);
             const x = Math.floor((e.clientX - r.left) / (r.width / el.offsetWidth) / cell), y = Math.floor((e.clientY - r.top) / (r.height / el.offsetHeight) / cell);
+            if (shopping()) { if (Shop.moveShopItem(cart(), app.selectedSource as Shop.ShopSource, el.dataset.grid as Shop.ShopSource, app.selected, x, y)) { clearSelection(); render(); } else toast('请按清单规则放入有效空格。'); return; }
             if (app.overlay === 'loot') { transferLootItem(app.selectedSource, el.dataset.grid!, app.selected, x, y); return; }
             if (mutate(() => D.moveItem(inventory(app.selectedSource), app.selected, x, y, app.placementRotated))) { clearSelection(); render(); }
         };

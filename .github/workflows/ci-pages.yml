@@ -55,6 +55,8 @@ jobs:
         run: pnpm test:loot
       - name: Nearby loot target selection
         run: pnpm test:loot-target
+      - name: QOL transactions and information regression
+        run: pnpm test:qol
       - name: Mobile input and recovery regression
         run: pnpm test:mobile
       - name: Mobile inventory and feedback regression

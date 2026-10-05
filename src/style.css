@@ -487,3 +487,15 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile .loot-targets { max-height: min(144px, 30vh); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
 .mobile .loot-targets li { padding: 0; }
 .mobile .loot-targets button { width: 100%; min-height: 44px; text-align: left; }
+
+.shop-layout { display: grid; grid-template-columns: max-content max-content max-content; gap: 22px; align-items: start; overflow: auto; }
+.shop-layout h3 { font-size: 12px; font-weight: 500; color: var(--accent); }
+.shop-buffer h3:not(:first-child) { margin-top: 18px; }
+.shop-checkout { display: flex; align-items: center; gap: 16px; padding: 12px 0; position: sticky; bottom: 0; background: #15231f; z-index: 5; }
+.shop-checkout span { font-size: 11px; color: var(--muted); }
+.shop-details { min-height: 0; border-left: 0; border-top: 1px solid var(--line); padding: 10px 0; }
+.mobile .shop-layout { gap: 18px; }
+.mobile .shop-checkout { flex-wrap: wrap; }
+.mobile .shop-checkout span { width: 100%; }
+/* Keep confirmation dialogs above sticky cart controls. */
+html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideout { isolation: isolate; z-index: 0; }

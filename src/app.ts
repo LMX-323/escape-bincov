@@ -1,3 +1,4 @@
+import type { ShopCart } from './shop';
 import type Phaser from 'phaser';
 import type { RaidScene } from './game';
 import type { SaveDataV1 } from './domain';
@@ -17,6 +18,8 @@ export const app = {
     pendingImport: null as SaveDataV1 | null,
     pendingRecoveryImport: null as SessionRecord | null,
     menuMotion: true,
+    shop: null as ShopCart | null,
+    shopLeave: null as { action: 'tab' | 'deploy' | 'menu'; id: string } | null,
 };
 
 export const audio = new SynthAudio();
