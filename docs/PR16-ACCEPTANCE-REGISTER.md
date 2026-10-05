@@ -91,4 +91,3 @@
 | P-01 | [无页面错误；计时/潮汐/终局各一次；帧时间与实体稳定](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L381) | M7 | 正常三局采样通过；性能需复核 | [最终包正常三局报告](evidence/pr16-full/layered-play-report.json)；600.156秒超时、109.331秒死亡、57.878秒撤离；[帧时间/有限内存边界](PR16-IMPLEMENTATION.md) |
 | P-02 | [跨局清理旧实体；下一局无旧尸体/容器；内存无持续累积证据](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L382) | M7 | 三局清理采样通过；长期泄漏未判定 | [最终包正常三局报告](evidence/pr16-full/layered-play-report.json)；600.156秒超时、109.331秒死亡、57.878秒撤离；[帧时间/有限内存边界](PR16-IMPLEMENTATION.md) |
 | P-03 | [无运行必需外部请求；普通入口不暴露测试接口](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L383) | M7 | 自动通过 | [解压ZIP普通入口](evidence/pr16-full/portable-report.json)；[普通离线商场部署、移动、地图及刷新](evidence/pr16-full/systems-browser-report.json)，无测试接口、无HTTP请求 |
-
