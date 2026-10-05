@@ -12,7 +12,7 @@
 
 本地 Windows、Node 24.19.0、pnpm 11.19.0、Chrome 154.0.8037.93：规则109/109、严格类型及打包、浏览器24/24、桌面输入10/10、UI38/38、主菜单16/16、存档9/9、手机恢复10/10、手机体验11/11、便携6/6通过。最终搜刮45/45通过（桌面40+触控4+真实旧main迁移1）；包括占格预览、失焦取消和真实跨窗口事件。自动试玩约10分19秒，两局均撤离，打开42个容器、完成35次转移、击败32名敌人，未出现页面错误或外部请求。完整行为与证据见 [docs/LOOTING.md](docs/LOOTING.md)。
 
-GitHub 当前连接账号为 LMX-323，对上游只有读取权限；维护者已选择 fork 路线，但 `LMX-323/escape-bincov` 尚不可见。连接器没有创建 fork 的能力，浏览器连接未能启动。源代码、离线包与可审阅提交在本地；完成 fork 后从任务分支发起上游 PR 并检查 CI。未推送或合并 main，未更新 Pages。手机真机和真人手感仍未验证。
+已通过 `LMX-323/escape-bincov:codex/loot-containers` 向上游提交 [PR #9](https://github.com/xuys2025/escape-bincov/pull/9)。终端缺少 GitHub 凭据，改用已认证连接器上传；初始远端提交 `25fb59baef221db34b928bfab75e0ab00cb93b53` 的整棵文件树与本地验收提交 `21ae1e2` 完全一致（`d2e81a9016a5389742d4fd8d875c6c858a1c42ee`），随后仅更新交付记录。GitHub CI 因首次外部贡献等待上游维护者批准，状态 `action_required`，尚未执行；最新结果见 [PR 检查页](https://github.com/xuys2025/escape-bincov/pull/9/checks)。未推送或合并 main，未更新 Pages。手机真机和真人手感仍未验证。
 
 ## 2026-10-04 PR #7 合并后：移动故障注入测试时序补修
 

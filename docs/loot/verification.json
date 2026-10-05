@@ -86,7 +86,9 @@
     "Browser suites use setup fixtures; natural play reads state and sends real input, without changing time, health or world. Neither establishes human game feel or real-phone compatibility."
   ],
   "ci": {
-    "status": "not_run",
-    "reason": "Fork LMX-323/escape-bincov remains inaccessible (404); PR not submitted."
+    "status": "action_required",
+    "reason": "PR #9 is open. GitHub requires upstream maintainer approval for the first external contribution; CI tests have not started.",
+    "pullRequest": "https://github.com/xuys2025/escape-bincov/pull/9",
+    "checksUrl": "https://github.com/xuys2025/escape-bincov/pull/9/checks"
   }
 }

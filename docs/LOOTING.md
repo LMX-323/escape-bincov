@@ -52,7 +52,7 @@
 | `pnpm test:mobile` / `pnpm test:mobile-ux` | 10/10、11/11（默认用例） |
 | `pnpm test:play` | 约10分19秒，两局均撤离，42个容器打开记录、35次转移、32击败 |
 
-[验收摘要](loot/verification.json)、[搜刮报告](loot/loot-browser-report.json)、[自动试玩报告](loot/natural-play-report.json)。CI 尚未运行：fork未就绪，PR未提交。已有主线能力的真机验收仍待补充；本轮触控为Chrome模拟，自动试玩不替代真人手感评价。
+[验收摘要](loot/verification.json)、[搜刮报告](loot/loot-browser-report.json)、[自动试玩报告](loot/natural-play-report.json)。已提交 [PR #9](https://github.com/xuys2025/escape-bincov/pull/9)；GitHub CI 因首次外部贡献等待上游维护者批准（`action_required`），尚未执行，最新状态见 [PR 检查页](https://github.com/xuys2025/escape-bincov/pull/9/checks)。已有主线能力的真机验收仍待补充；本轮触控为Chrome模拟，自动试玩不替代真人手感评价。
 
 旧main HTML兼容检查通过 `BINCOV_LOOT_LEGACY_HTML` 指定 `0a69908` 的实际生成物；默认 CI 搜刮检查为44项。基准短时战斗样本平均约138/140 FPS，仅代表本机浏览器，不是设备性能保证。
 
