@@ -63,7 +63,7 @@ async function suite(viewport) {
   });
   const run = () => page.evaluate(() => {
     const raid = window.__bincov.app.raid;
-    return { x: raid.player.x, y: raid.player.y, rotation: raid.player.rotation, elapsed: raid.elapsed, hp: raid.hp, mag: raid.mag, high: raid.highTide, enemies: raid.enemies.length, alive: raid.enemies.filter(e => e.hp > 0).length, loot: raid.loot.length, seed: raid.config.seed };
+    return { x: raid.player.x, y: raid.player.y, rotation: raid.player.rotation, elapsed: raid.elapsed, hp: raid.hp, mag: raid.mag, high: raid.highTide, enemies: raid.enemies.length, alive: raid.enemies.filter(e => e.hp > 0).length, loot: raid.loot.length, crates: raid.config.containers.length, originalLootEntries: raid.loot.length + raid.config.containers.reduce((sum, container) => sum + container.items.length, 0), seed: raid.config.seed };
   });
   async function step(name, task) {
     const start = performance.now();
@@ -169,10 +169,11 @@ async function suite(viewport) {
       await screenshot('hideout');
       return { purchasedRounds: 12, charged: 84, nativeDragCell: [5, 4], safeBandages: bandage.qty };
     });
-    await step('seeded deployment: 25 enemies and 60 pieces of ground loot', async () => {
+    await step('seeded deployment: 25 enemies and 60 original loot entries across ground and crates', async () => {
       await deploy(42);
       const current = await run();
-      assert.equal(current.enemies, 25); assert.equal(current.loot, 60);
+      assert.equal(current.enemies, 25); assert.equal(current.originalLootEntries, 60);
+      assert.ok(current.crates > 0 && current.crates <= 10);
       const committed = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, SAVE_KEY);
       assert.ok(committed.activeRun); assert.equal(committed.bag.items.length, 0);
       await screenshot('raid');
@@ -200,7 +201,7 @@ async function suite(viewport) {
       assert.ok(error < 0.12, `Pointer direction mismatch at ${label}: ${error}`);
       return { movementX: rounded(right.x - before.x), movementY: rounded(up.y - right.y), aimErrorRadians: rounded(error) };
     });
-    await step('25-enemy, 60-loot battle performance sample', async () => {
+    await step('25-enemy, 60-original-loot battle performance sample', async () => {
       await page.evaluate(() => {
         const raid = window.__bincov.app.raid;
         raid.player.setPosition(700, 784); raid.hp = 100; raid.bleeding = 0;
@@ -209,7 +210,7 @@ async function suite(viewport) {
       });
       await settleCamera();
       const before = await run();
-      assert.equal(before.alive, 25); assert.equal(before.loot, 60);
+      assert.equal(before.alive, 25); assert.equal(before.originalLootEntries, 60);
       record.fps = await page.evaluate(() => new Promise(resolveSample => {
         const start = performance.now(), values = [], intervals = [];
         let previous = start, frames = 0, stayedInRun = true;

@@ -10,6 +10,8 @@ export interface Building { x: number; y: number; w: number; h: number; name: st
 export interface Zone extends Building { sub: string }
 export interface Exit extends Point { id: string; name: string }
 export interface Note extends Point { title: string; text: string }
+export interface GroundLoot extends Point { id: string; qty: number }
+export interface CrateConfig extends Point { id: string; name: string; items: { id: string; qty: number }[] }
 export interface MapData {
   tiles: number[][];
   buildings: Building[];
@@ -29,7 +31,8 @@ export interface RunConfig {
   spawn: Point;
   exits: Exit[];
   enemies: (Point & { id: string })[];
-  loot: (Point & { id: string; qty: number })[];
+  loot: GroundLoot[];
+  containers: CrateConfig[];
 }
 
 const center = (x: number, y: number): Point => ({ x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 });
@@ -229,7 +232,8 @@ export function normalizeSeed(seed: number | string): number {
   return hash >>> 0;
 }
 
-export function generateRun(seed: number | string): RunConfig {
+/** Original run generation, before grouping: random calls and item positions stay stable. */
+export function generateRunBase(seed: number | string): Omit<RunConfig, 'containers'> {
   const normalized = normalizeSeed(seed);
   let state = normalized;
   const random = () => {
@@ -263,4 +267,48 @@ export function generateRun(seed: number | string): RunConfig {
   });
   loot.push({ ...center(52, 10), id: 'sample', qty: 1 }, { ...center(51, 29), id: 'ledger', qty: 1 });
   return { seed: normalized, duration: 600, tideAt: 300, warningAt: 270, initialHigh, spawn, exits, enemies, loot };
+}
+
+/** Group existing nearby supplies without rolling, adding, or discarding any loot. */
+export function partitionRunLoot(entries: readonly GroundLoot[]): Pick<RunConfig, 'loot' | 'containers'> {
+  const zones = entries.map(p => WORLD.zones.findIndex(z => p.x >= z.x && p.x < z.x + z.w && p.y >= z.y && p.y < z.y + z.h));
+  const eligible = entries.map((p, i) => zones[i] >= 0 && p.id !== 'sample' && p.id !== 'ledger'
+    && isWalkable(p.x, p.y, true)
+    && WORLD.exits.every(exit => Math.hypot(exit.x - p.x, exit.y - p.y) >= 48)
+    && WORLD.notes.every(note => Math.hypot(note.x - p.x, note.y - p.y) >= 43));
+  const used = new Set<number>();
+  const containers: CrateConfig[] = [];
+  for (let anchor = 0; anchor < entries.length && containers.length < 10; anchor++) {
+    if (!eligible[anchor] || used.has(anchor)) continue;
+    const point = entries[anchor];
+    // One bounded breadth-first search per anchor measures the actual permanent route.
+    const tileKey = (p: Point) => Math.floor(p.y / TILE) * COLS + Math.floor(p.x / TILE);
+    const distances = new Map<number, number>([[tileKey(point), 0]]);
+    const queue = [center(Math.floor(point.x / TILE), Math.floor(point.y / TILE))];
+    for (let i = 0; i < queue.length; i++) {
+      const current = queue[i], steps = distances.get(tileKey(current))!;
+      if (steps === 6) continue;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+        const next = { x: current.x + dx * TILE, y: current.y + dy * TILE }, key = tileKey(next);
+        if (distances.has(key) || !isWalkable(next.x, next.y, true)) continue;
+        distances.set(key, steps + 1);
+        queue.push(next);
+      }
+    }
+    const partners = entries.map((p, i) => ({ index: i, point: p, steps: distances.get(tileKey(p)) }))
+      .filter(p => p.index > anchor && eligible[p.index] && !used.has(p.index) && zones[p.index] === zones[anchor] && p.steps !== undefined)
+      .sort((a, b) => a.steps! - b.steps! || a.point.x - b.point.x || a.point.y - b.point.y || a.index - b.index);
+    const partner = partners[0];
+    if (!partner) continue;
+    used.add(anchor);
+    used.add(partner.index);
+    containers.push({ id: `crate-${anchor}`, name: `${WORLD.zones[zones[anchor]].name}物资箱`, x: point.x, y: point.y,
+      items: [point, partner.point].map(({ id, qty }) => ({ id, qty })) });
+  }
+  return { loot: entries.filter((_p, i) => !used.has(i)).map(p => ({ ...p })), containers };
+}
+
+export function generateRun(seed: number | string): RunConfig {
+  const run = generateRunBase(seed);
+  return { ...run, ...partitionRunLoot(run.loot) };
 }
