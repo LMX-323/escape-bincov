@@ -44,6 +44,13 @@ async function suite(viewport, touch = false) {
       assert.match(await page.locator('.shop-checkout').innerText(), /可得 ¥ 156/);
       for (const source of ['buy', 'sell']) assert.ok(await page.locator(`[data-source="${source}"]`).first().evaluate(el => { const r=el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); }), `${source} item center must remain visible and clickable`);
       await page.screenshot({ path: resolve(out, `qol-shop-${label}.png`) });
+      if (touch && viewport.height <= 340) {
+        await page.locator('[data-source="merchant"][data-item-id="ammo9"]').click(); await action('place-item').click();
+        const cancel = await action('clear-selection').boundingBox();
+        assert.ok(cancel.y >= 0 && cancel.y + cancel.height <= viewport.height, 'Cancel placement must remain on screen');
+        await page.screenshot({ path: resolve(out, `qol-shop-placement-${label}.png`) });
+        await action('clear-selection').click(); assert.deepEqual(await save(), before);
+      }
       await action('tab', 'med').click(); assert.equal(await overlay(), 'shop-leave');
       await action('close').click(); assert.deepEqual(await save(), before);
       await placeAt(page, 'buy', 'ammo9', 'merchant'); await placeAt(page, 'sell', 'watch', 'stash');
@@ -140,6 +147,7 @@ async function suite(viewport, touch = false) {
       await page.locator('#raid-quests summary').click();
       assert.equal(await page.locator('#raid-quest-list section').count(),3);
       if (touch) assert.ok(await page.locator('#raid-quests').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('#touch-controls button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
+      if (touch) assert.ok(await page.locator('.radio').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.raid-information').getBoundingClientRect(); return r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom; }), 'Radio and navigation must remain readable without overlap');
       assert.match(await page.locator('#raid-quest-list').innerText(),/泵机零件：站内 2 · 本局 1 \/ 需 3/);
       await page.evaluate(()=>{const r=window.__bincov.app.raid;r.hurt(1,{x:r.player.x+100,y:r.player.y});r.hurt(1,{x:r.player.x,y:r.player.y-100});r.bleeding=0;r.updateHud();});
       assert.equal(await page.locator('#hit-directions i').count(),2);
@@ -154,4 +162,5 @@ async function suite(viewport, touch = false) {
 try {
   await suite({ width: 1280, height: 720 }); await suite({ width: 1920, height: 1080 });
   await suite({ width: 844, height: 390 }, true); await suite({ width: 667, height: 375 }, true);
+  await suite({ width: 740, height: 300 }, true);
 } finally { await writeFile(resolve(out, 'qol-report.json'), JSON.stringify(report, null, 2)); await browser.close(); }

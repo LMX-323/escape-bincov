@@ -112,6 +112,31 @@
       "viewport": "667x375-touch",
       "name": "exit choice shows straight-line bearing; collapsed quests separate stored and carried goods; hit directions expire",
       "status": "passed"
+    },
+    {
+      "viewport": "740x300-touch",
+      "name": "mixed transaction stays provisional, cancels both ways, confirms leaving and uses net cash",
+      "status": "passed"
+    },
+    {
+      "viewport": "740x300-touch",
+      "name": "quest sale explains final shortage; cancel and save failure preserve the whole transaction",
+      "status": "passed"
+    },
+    {
+      "viewport": "740x300-touch",
+      "name": "departure shows missing matching ammo and safe-only treatment without blocking light deployment",
+      "status": "passed"
+    },
+    {
+      "viewport": "740x300-touch",
+      "name": "loot rotation and quantity previews cancel cleanly; split and partial merge preserve remainders",
+      "status": "passed"
+    },
+    {
+      "viewport": "740x300-touch",
+      "name": "exit choice shows straight-line bearing; collapsed quests separate stored and carried goods; hit directions expire",
+      "status": "passed"
     }
   ]
 }

@@ -578,3 +578,20 @@ html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden
 .mobile .raid-information #exit-navigation { min-height: 44px; padding: 6px; font-size: 11px; white-space: nowrap; }
 .mobile #raid-quest-list { max-height: clamp(20px, calc(100dvh - 330px), 160px); }
 .mobile .radio { right: max(350px, var(--safe-right)); overflow: auto; pointer-events: auto; }
+
+/* Choosing a shop slot replaces the footer action instead of shrinking its grids. */
+.shopping .shop-placement { flex: 0 1 280px; min-width: 220px; }
+.mobile .shopping .departure-check { width: auto; flex: 1; min-width: 0; }
+.shopping .shop-placement .placement-controls { margin: 0; gap: 8px; }
+.shopping .shop-placement .placement-hint { max-width: 250px; font-size: 11px; }
+.shopping:has(.shop-placement) .seed-label { display: none; }
+@media (max-height: 340px) and (orientation: landscape) {
+  .mobile .shopping .cash > span, .mobile .shop-content > .merchant-heading { display: none; }
+  .mobile .shopping .shop-buffer { gap: 4px; }
+  .mobile .shopping .shop-buffer h3 { padding: 2px 0; line-height: 1.25; margin-bottom: 2px; }
+  .mobile .raid-information { right: max(215px, var(--safe-right)); }
+  .mobile .radio { right: max(445px, var(--safe-right)); }
+  .mobile #raid-quests { padding: 4px; }
+  .mobile #raid-quests summary { min-height: 24px; }
+  .mobile #raid-quest-list { max-height: 44px; }
+}
