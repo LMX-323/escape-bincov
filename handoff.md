@@ -1,3 +1,9 @@
+## 2026-10-05 · PR #10 QOL 决议第一组
+
+基线同步至 `49738b8`。按 [LMX 定稿](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-5995536156) 实现手机按名称打开具体箱子/尸体、搜刮固定危险栏（生命、倒计时、流血/污染、敌人受击）、指南关闭返回原面板。搜刮不中断世界；空容器、编号、距离/视线/潮位与撤离优先规则保留。补给无收益时仍可消耗，按决议不改治疗规则。
+
+验证：`pnpm test`、`pnpm package` 通过；系统 Chromium 151 下经 localhost 运行 `test:loot-target`，24 项通过，包含 1280×720、1920×1080、844×390。系统浏览器禁止 file://，此处是 HTTP 诊断，离线验收仍需原 PR CI。后续商店、物品操作和局内信息按同一决议继续。
+
 # 《逃离滨科夫》交接记录
 
 更新：2026-10-05。权威仓库：https://github.com/xuys2025/escape-bincov 。公开发布后以仓库最新 `main` 为基线；所有后续任务先读 `AGENTS.md` 和 `docs/AGENT-HANDBOOK.md`，通过独立分支与 PR 交付。

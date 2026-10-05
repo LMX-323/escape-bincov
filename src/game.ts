@@ -100,6 +100,7 @@ export class RaidScene extends Phaser.Scene {
     private locked = false;
     private extracted = false;
     private hitTime = 0;
+    private hitNotice = 0;
     private noteSeen = new Set<string>();
     private exhausted = false;
     private lootTargetId = '';
@@ -130,7 +131,7 @@ export class RaidScene extends Phaser.Scene {
         this.radioTime = 12;
         this.locked = false;
         this.extracted = false;
-        this.hitTime = 0;
+        this.hitTime = 0; this.hitNotice = 0;
         this.noteSeen = new Set();
         this.shotNoise = null;
         this.noiseTime = 0;
@@ -388,7 +389,7 @@ export class RaidScene extends Phaser.Scene {
         this.createLootContainer(`corpse-${e.uid}`, 'corpse', `${D.ENEMIES[e.id].name}遗体`, e.sprite.x, e.sprite.y, drops);
     } }
     hurt(amount: number) { if (this.extracted)
-        return; this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.extractTime = 0; if (this.random() < B.bleedChance)
+        return; this.hp = D.applyDamage(this.hp, amount); this.hitTime = .25; this.hitNotice = 1; this.extractTime = 0; if (this.random() < B.bleedChance)
         this.bleeding = 1; audio.hit(); this.cameras.main.shake(100, .002); if (this.hp <= 0)
         finish('death'); }
     update(_time: number, _delta: number) {
@@ -411,6 +412,7 @@ export class RaidScene extends Phaser.Scene {
         this.fireCooldown = Math.max(0, this.fireCooldown - dt);
         this.noiseTime = Math.max(0, this.noiseTime - dt);
         this.hitTime = Math.max(0, this.hitTime - dt);
+        this.hitNotice = Math.max(0, this.hitNotice - dt);
         this.fx.clear();
         if (this.elapsed >= this.config.duration) {
             this.extracted = true;
@@ -655,7 +657,7 @@ export class RaidScene extends Phaser.Scene {
         ];
         candidates.sort((a, b) => distance(a.point, this.player) - distance(b.point, this.player)
             || a.point.x - b.point.x || a.point.y - b.point.y || a.key.localeCompare(b.key));
-        // Touch selection is not decided yet. Keep its existing nearest-item interaction.
+        // The touch interaction button keeps nearest-item behavior; source names open exact containers.
         const container = playerInput.touch ? candidates[0]?.container : targets.find(target => target.id === this.lootTargetId);
         const loot = playerInput.touch ? candidates[0]?.ground : nearby[0];
         const note = WORLD.notes.find(n => distance(n, this.player) < 43);
@@ -698,10 +700,10 @@ export class RaidScene extends Phaser.Scene {
             }
         }
         text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 搜刮', '点「搜刮」').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
-        const listedTargets = !playerInput.touch && !exit ? targets.map(target => ({
+        const listedTargets = !exit ? targets.map(target => ({
             id: target.id, name: this.lootTargetName(target), empty: !target.inventory.items.length,
         })) : [];
-        if (listedTargets.length) text = listedTargets.length > 1
+        if (listedTargets.length) text = playerInput.touch ? '点名称搜刮' : listedTargets.length > 1
             ? `滚轮切换 · E 搜刮　${listedTargets.findIndex(target => target.id === this.lootTargetId) + 1} / ${listedTargets.length}`
             : 'E 搜刮';
         const signature = JSON.stringify([text, nearby.length, listedTargets, this.lootTargetId]);
@@ -715,6 +717,14 @@ export class RaidScene extends Phaser.Scene {
                     const selected = target.id === this.lootTargetId;
                     if (selected) row.setAttribute('aria-current', 'true');
                     row.textContent = `${selected ? '▶ ' : ''}${target.name}${target.empty ? ' · 已搜空' : ''}`;
+                    if (playerInput.touch) {
+                        const button = document.createElement('button'); button.textContent = row.textContent;
+                        button.onclick = () => {
+                            if (app.overlay || this.paused || this.config.exits.some(e => distance(e, this.player) < 48)) return;
+                            openLoot(target.id, app.loadout!.runId!);
+                        };
+                        row.replaceChildren(button);
+                    }
                     list.append(row);
                 }
                 el.append(list);
@@ -725,7 +735,7 @@ export class RaidScene extends Phaser.Scene {
         }
         el.style.display = text && !app.overlay ? 'block' : 'none';
         const selectedRow = el.querySelector<HTMLElement>('.loot-targets [aria-current="true"]');
-        if (selectedRow && el.style.display !== 'none') {
+        if (!playerInput.touch && selectedRow && el.style.display !== 'none') {
             const list = selectedRow.parentElement!;
             if (selectedRow.offsetTop < list.scrollTop) list.scrollTop = selectedRow.offsetTop;
             else if (selectedRow.offsetTop + selectedRow.offsetHeight > list.scrollTop + list.clientHeight)
@@ -785,6 +795,9 @@ export class RaidScene extends Phaser.Scene {
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
+        css('loot-condition', [this.bleeding ? '流血：持续失去生命' : '', this.pollution > 0 ? `污染 ${Math.round(this.pollution)}%${this.pollution >= B.pollutionDamageThreshold ? '：持续失去生命' : ''}` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行');
+        css('loot-hit', this.hitNotice > 0 ? '正在遭受攻击！' : '');
+        document.querySelector('.loot-header')?.classList.toggle('under-attack', this.hitNotice > 0);
         css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
         if (hp) hp.style.width = Math.max(0,this.hp)/B.maxHealth*100 + '%';

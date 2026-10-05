@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { app, audio, saveSession } from './app';
-import { initSave, setOverlay, persist, toast, render } from './ui';
+import { initSave, closeOverlay, setOverlay, persist, toast, render } from './ui';
 import { SAVE_KEY } from './domain';
 import { SESSION_KEY, ownSession } from './recovery-store';
 import { playerInput } from './input';
@@ -92,9 +92,9 @@ async function boot() {
             if (e.key === 'Tab') setOverlay(['inventory', 'loot'].includes(app.overlay) ? '' : 'inventory');
             else if (e.key.toLowerCase() === 'e' && app.overlay === 'loot') { app.raid?.suppressHeldInput('E'); setOverlay(''); }
             else if (e.key.toLowerCase() === 'm') setOverlay(app.overlay === 'map' ? '' : 'map');
-            else if (e.key === 'Escape') setOverlay(app.overlay ? '' : 'pause');
+            else if (e.key === 'Escape') { if (app.overlay) closeOverlay(); else setOverlay('pause'); }
             else if (!app.overlay) playerInput.key(e.key, true);
-        } else if (e.key === 'Escape') setOverlay('');
+        } else if (e.key === 'Escape') closeOverlay();
     });
     addEventListener('keyup', e => playerInput.key(e.key, false));
     addEventListener('storage', e => {

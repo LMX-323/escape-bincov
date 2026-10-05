@@ -10,7 +10,7 @@ export const app = {
     ...createSessionState(),
     game: null as Phaser.Game | null,
     raid: null as RaidScene | null,
-    tab: 'gear', overlay: '', selected: '', selectedSource: '', seed: '',
+    tab: 'gear', overlay: '', helpReturn: '', selected: '', selectedSource: '', seed: '',
     lootContext: null as { containerId: string; runId: string } | null,
     mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined,
     reading: null as { title: string; text: string } | null,

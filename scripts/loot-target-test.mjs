@@ -72,13 +72,37 @@ async function suite(viewport, touch = false) {
       if (!r.checkpoint()) throw new Error('Overlapping fixture must pass strict checkpoint validation');
       return { crate: crate.id, corpses: corpses.map(c => c.id), name: corpses[0].name, x: crate.x, y: crate.y };
     });
+    await step('guide returns to pause on close and Escape; loot danger stays above item details', async () => {
+      await page.keyboard.press('Escape'); await action('help').click();
+      let elapsed = (await state()).elapsed;
+      await action('close').click(); assert.equal((await state()).overlay, 'pause');
+      await page.waitForTimeout(100); assert.equal((await state()).elapsed, elapsed);
+      await action('help').click(); await page.keyboard.press('Escape'); assert.equal((await state()).overlay, 'pause');
+      await action('close').click();
+      if (touch) await page.locator(`[data-loot-target="${fixture.corpses[1]}"] button`).tap();
+      else { for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100); await page.keyboard.press('e'); }
+      await page.locator('[data-uid="target-fuse"]').click();
+      await page.evaluate(() => { const r = window.__bincov.app.raid; r.hurt(3); r.bleeding = 1; r.pollution = 80; r.updateHud(); });
+      assert.equal((await state()).overlay, 'loot');
+      assert.match(await page.locator('#loot-hit').innerText(), /攻击/);
+      assert.match(await page.locator('#loot-condition').innerText(), /流血.*污染/);
+      const header = await page.locator('.loot-header').boundingBox(), detail = await page.locator('.loot-details').boundingBox();
+      assert.ok(header.y >= 0 && header.y + header.height <= viewport.height);
+      assert.ok(detail.y >= header.y + header.height - 1, 'Details must not cover fixed danger header');
+      elapsed = (await state()).elapsed; await page.waitForTimeout(200); assert.ok((await state()).elapsed > elapsed);
+      await page.screenshot({ path: resolve(out, `loot-danger-${label}.png`) });
+      await page.evaluate(() => { const r = window.__bincov.app.raid; r.bleeding = 0; r.pollution = 0; r.hp = 100; });
+      await action('close').click();
+    });
     if (touch) {
-      await step('phone keeps its existing single-target prompt and touch interaction', async () => {
+      await step('phone taps an exact source, including an empty corpse, and closes before choosing another', async () => {
         await page.waitForFunction(() => document.querySelector('#touch-interact')?.textContent === '搜刮');
-        assert.equal(await page.locator('.loot-targets').count(), 0);
-        await wheel(100); await page.locator('#touch-interact').tap();
+        assert.equal(await page.locator('[data-loot-target]').count(), 3);
+        await page.locator(`[data-loot-target="${fixture.corpses[0]}"] button`).tap();
         await page.waitForFunction(() => window.__bincov.app.overlay === 'loot');
-        const id = (await state()).target; await wheel(100); assert.equal((await state()).target, id);
+        const id = (await state()).target; assert.equal(id, fixture.corpses[0]); await wheel(100); assert.equal((await state()).target, id);
+        await action('close').tap(); await page.locator(`[data-loot-target="${fixture.corpses[1]}"] button`).tap();
+        assert.equal((await state()).target, fixture.corpses[1]);
       });
       return;
     }

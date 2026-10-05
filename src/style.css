@@ -474,3 +474,16 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
   .mobile .map-modal .section-title { margin-bottom: 5px; }
   .mobile .map-modal .legend { font-size: 11px; }
 }
+
+/* Loot danger remains visible above every scrolling inventory or detail panel. */
+.loot-modal { max-height: calc(100% - 24px); display: flex; flex-direction: column; overflow: hidden; }
+.loot-header { flex-shrink: 0; position: relative; z-index: 2; background: #15231f; }
+.loot-header.under-attack { outline: 2px solid #ef8168; background: #522c26; }
+#loot-hit { grid-column: 1 / -1; color: #ffd2b8; min-height: 1em; }
+.loot-columns { min-height: 0; overflow: auto; }
+.loot-details { flex-shrink: 0; max-height: 30vh; overflow: auto; }
+.loot-footer { flex-shrink: 0; }
+.mobile .loot-details:not(.details-empty) { position: static; width: auto; max-height: 40vh; flex-shrink: 1; padding: 8px; box-shadow: none; overflow: auto; }
+.mobile .loot-targets { max-height: min(144px, 30vh); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
+.mobile .loot-targets li { padding: 0; }
+.mobile .loot-targets button { width: 100%; min-height: 44px; text-align: left; }

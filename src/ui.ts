@@ -151,7 +151,7 @@ function lootHtml() {
     const container = activeLoot(), loadout = app.loadout;
     if (!container || !loadout) return '';
     const remaining = Math.max(0, Math.ceil((app.raid?.config.duration || 600) - (app.raid?.elapsed || 0)));
-    return `<div class="overlay loot-overlay"><section class="panel loot-modal" role="dialog" aria-modal="true" aria-label="搜刮物资"><header class="loot-header"><div><div class="section-label orange">${container.kind === 'corpse' ? '现场搜身' : '物资搜集'}</div><h2>${esc(container.name)}</h2></div><div class="loot-risk"><span>生命 <strong id="loot-health">${Math.ceil(app.raid?.hp || 0)}</strong></span><span>封锁倒计时 <strong id="loot-timer">${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}</strong></span><small>世界仍在运行，请留意周围。</small></div>${btn('关闭 ×', 'close', '', 'aria-label="关闭搜刮"')}</header><div class="loot-columns"><section class="loot-source"><h3 class="section-title">${container.kind === 'corpse' ? '尸体物品栏' : '箱子物品栏'} <span>${container.inventory.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${grid(container.inventory, 'container', 40)}<div class="inv-help">${container.inventory.items.length ? (playerInput.touch ? '选中物品，点移动格位，再点目标格。' : '拖动物品至右侧，完成拾取。') : '已搜空 · 仍可放入物品。'}<br>留在这里的物资仅保留至本局结束。</div></section><section class="loot-player"><h3 class="section-title">角色物品栏 <span>背包 6 × 5</span></h3><div class="loot-carried"><div>${grid(loadout.bag, 'bag', 40)}<div class="inv-help">携行重量 <strong id="loot-weight">${app.raid?.carriedWeight().toFixed(1) || '0.0'}</strong> / ${SURVIVAL.carryLimit} kg · 含装备</div></div><div class="loot-safe"><h4>安全箱</h4>${grid(loadout.safe, 'safe', 40)}<p class="inv-help protected">撤离失败保留</p></div></div></section></div>${details()}<footer class="loot-footer"><span class="loot-status" role="status" aria-live="polite">${playerInput.touch ? '选中物品 → 移动格位 → 点目标格' : '拖入指定格子 · 绿色可放置，红色不可放置'}</span>${playerInput.touch ? '' : '<span><kbd>E</kbd> / <kbd>Tab</kbd> / <kbd>Esc</kbd> 关闭</span>'}</footer></section></div>`;
+    return `<div class="overlay loot-overlay"><section class="panel loot-modal" role="dialog" aria-modal="true" aria-label="搜刮物资"><header class="loot-header"><div><div class="section-label orange">${container.kind === 'corpse' ? '现场搜身' : '物资搜集'}</div><h2>${esc(container.name)}</h2></div><div class="loot-risk"><span>生命 <strong id="loot-health">${Math.ceil(app.raid?.hp || 0)}</strong></span><span>封锁倒计时 <strong id="loot-timer">${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}</strong></span><small id="loot-condition">世界仍在运行，请留意周围。</small><strong id="loot-hit" role="status" aria-live="polite"></strong></div>${btn('关闭 ×', 'close', '', 'aria-label="关闭搜刮"')}</header><div class="loot-columns"><section class="loot-source"><h3 class="section-title">${container.kind === 'corpse' ? '尸体物品栏' : '箱子物品栏'} <span>${container.inventory.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${grid(container.inventory, 'container', 40)}<div class="inv-help">${container.inventory.items.length ? (playerInput.touch ? '选中物品，点移动格位，再点目标格。' : '拖动物品至右侧，完成拾取。') : '已搜空 · 仍可放入物品。'}<br>留在这里的物资仅保留至本局结束。</div></section><section class="loot-player"><h3 class="section-title">角色物品栏 <span>背包 6 × 5</span></h3><div class="loot-carried"><div>${grid(loadout.bag, 'bag', 40)}<div class="inv-help">携行重量 <strong id="loot-weight">${app.raid?.carriedWeight().toFixed(1) || '0.0'}</strong> / ${SURVIVAL.carryLimit} kg · 含装备</div></div><div class="loot-safe"><h4>安全箱</h4>${grid(loadout.safe, 'safe', 40)}<p class="inv-help protected">撤离失败保留</p></div></div></section></div>${details()}<footer class="loot-footer"><span class="loot-status" role="status" aria-live="polite">${playerInput.touch ? '选中物品 → 移动格位 → 点目标格' : '拖入指定格子 · 绿色可放置，红色不可放置'}</span>${playerInput.touch ? '' : '<span><kbd>E</kbd> / <kbd>Tab</kbd> / <kbd>Esc</kbd> 关闭</span>'}</footer></section></div>`;
 }
 export function render() {
     activeDrag = null;
@@ -261,6 +261,7 @@ export function openLoot(containerId: string, runId: string): boolean {
     setOverlay('loot');
     return true;
 }
+export function closeOverlay() { setOverlay(app.overlay === 'help' ? app.helpReturn : ''); }
 export function setOverlay(value: string) {
     if (app.overlay === 'checkpoint-error' && value !== 'checkpoint-error' && !app.storageOK) return;
     if (!value && playerInput.touch && app.state === 'run' && (innerWidth < innerHeight || innerHeight < 280)) value = 'rotate';
@@ -268,6 +269,7 @@ export function setOverlay(value: string) {
     if (value !== 'loot') clearLootContext();
     else app.raid?.suppressHeldInput();
     app.raid?.releaseInput(); playerInput.clear();
+    if (value === 'help' && app.overlay !== 'help') app.helpReturn = app.overlay;
     app.overlay = app.pendingSettlement ? 'save-error' : value; clearSelection();
     if (['pause','help','abandon','rotate'].includes(app.overlay)) { app.raid?.checkpoint(); audio.stop(); }
     else if (wasPaused && app.raid && !app.raid.paused) audio.start();
@@ -478,7 +480,7 @@ function bind() {
                 setOverlay('help');
                 break;
             case 'close':
-                setOverlay('');
+                closeOverlay();
                 break;
             case 'pause':
                 setOverlay('pause');
