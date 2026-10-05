@@ -168,9 +168,12 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | v0.2.0 更新亮点、下载与升级 | [完整发版公告](docs/releases/v0.2.0.md) · [更新记录](CHANGELOG.md) |
 | 箱子与尸体搜刮、操作与验收 | [搜刮说明](docs/LOOTING.md) |
 | 游戏规则、任务、物品与旧存档迁移 | [完整游玩手册](docs/PLAYING.md) |
+| RPG 状态、属性成长、随机爆头、声望、幸运与基地（设计待实现） | [系统逻辑与首版数值](docs/RPG-SYSTEM-DESIGN.md) |
 | Agent 必须遵守的规则 | [AGENTS.md](AGENTS.md) |
 | 架构、开发流程、验证与交接 | [Agent 开发手册](docs/AGENT-HANDBOOK.md) |
 | 应用状态、存档事务与后续扩展 | [架构说明](docs/ARCHITECTURE.md) |
+| 建筑布局、互动门窗与跨层追击设计 | [建筑逻辑设计](docs/BUILDING-LOGIC.md)（设计待实现） |
+| 滨湾商场室内外、两层地图与验收场景 | [商场验证地图](docs/MALL-VALIDATION-MAP.md)（设计待实现） |
 | 如何贡献、提交 PR | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | GitHub Pages 发布、更新与回退 | [部署手册](docs/DEPLOYMENT.md) |
 | 大陆网络下的托管选择 | [大陆在线游玩指南](docs/ONLINE-CHINA.md) |
