@@ -90,6 +90,26 @@ async function suite(viewport, touch = false) {
       assert.equal(after.bag.items.find(i=>i.uid==='qol-ammo').qty,40); assert.equal(after.source.items.find(i=>i.uid==='qol-incoming').qty,7);
       await page.screenshot({path:resolve(out,`qol-inventory-${label}.png`)}); await action('close').click();
     });
+    if (!touch) await step('R rotates the held drag preview; Escape cancels; dropping commits; normal R reloads', async () => {
+      await page.keyboard.press('e');
+      const snapshot = () => page.evaluate(() => ({bag:window.__bincov.app.loadout.bag, containers:window.__bincov.app.raid.containers.map(c=>c.inventory)}));
+      const before = await snapshot();
+      async function start() {
+        const source = await page.locator('[data-uid="qol-water"]').boundingBox(), grid = await page.locator('[data-grid="bag"]').boundingBox(), cell = grid.width/6;
+        await page.mouse.move(source.x+10,source.y+10); await page.mouse.down(); await page.mouse.move(source.x+25,source.y+20,{steps:4});
+        await page.mouse.move(grid.x+3.4*cell,grid.y+4.4*cell,{steps:8});
+        await page.locator('.drop-preview[data-valid="false"]').waitFor(); await page.keyboard.press('r');
+        await page.locator('.drop-preview[data-valid="true"]').waitFor();
+        const box = await page.locator('.drop-preview').boundingBox(); assert.ok(Math.abs(box.width/box.height-2)<.05);
+      }
+      await start(); assert.deepEqual(await snapshot(),before); await page.keyboard.press('Escape'); await page.mouse.up();
+      assert.equal(await overlay(),'loot'); assert.deepEqual(await snapshot(),before);
+      await start(); await page.mouse.up();
+      assert.equal((await snapshot()).bag.items.find(i=>i.uid==='qol-water').rotated,true);
+      await action('close').click();
+      await page.evaluate(()=>{const r=window.__bincov.app.raid;r.mag=4;r.syncMagazine();});
+      await page.keyboard.press('r'); await page.waitForFunction(()=>window.__bincov.app.raid.reloadLeft>0);
+    });
   } finally { await context.close(); }
 }
 try {

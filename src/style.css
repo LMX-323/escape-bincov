@@ -505,3 +505,7 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 .mobile .loot-details .placement-controls { display: flex; flex-wrap: wrap; width: 100%; }
 .mobile .loot-details .placement-hint { flex: 1 1 180px; }
 .mobile .loot-details.details-empty > .placement-controls { display: flex; }
+
+.item, .item img { user-select: none; -webkit-user-drag: none; }
+.inventory-dragging, .inventory-dragging * { cursor: grabbing !important; }
+.inventory-drag-ghost { position: fixed; z-index: 100; pointer-events: none; background: #526345b8; border: 1px solid #d9e4a0; color: #f0f4d1; font-size: 11px; padding: 4px; opacity: .85; }

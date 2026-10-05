@@ -12,6 +12,9 @@ import { moveQuantity, placementError, type LootEndpoint } from './loot';
 type InventoryDrag = { uid: string; source: string; token: number; runId: string | null; containerId: string | null; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
 let dragToken = 0;
+let pointerDrag: { pointerId: number; drag: InventoryDrag; startX: number; startY: number; x: number; y: number; cell: number; started: boolean } | null = null;
+let dragGhost: HTMLElement | null = null;
+let suppressDragClick = false;
 const ui = () => document.getElementById('ui')!;
 let toastTimer: ReturnType<typeof setTimeout>, lastSuccess = '', successCount = 0;
 export function toast(message: string, kind: 'info' | 'success' = 'info') {
@@ -53,7 +56,7 @@ function itemIcon(id: string) { let url = iconCache.get(id); if (!url && app.gam
     const source = app.game.textures.get('item-' + id).getSourceImage() as HTMLCanvasElement;
     url = source.toDataURL();
     iconCache.set(id, url);
-} return url ? `<img class="item-icon" alt="" src="${url}">` : ''; }
+} return url ? `<img class="item-icon" alt="" draggable="false" src="${url}">` : ''; }
 function activeLoot() {
     const context = app.lootContext;
     if (!context || app.state !== 'run' || app.loadout?.runId !== context.runId) return undefined;
@@ -94,7 +97,7 @@ function grid(inv: D.Inventory, source: string, cell = 36) {
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${inv.items.map(i => {
         const d = D.ITEMS[i.id];
         const size = D.itemSize(i);
-        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch}" data-uid="${i.uid}" data-item-id="${i.id}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+        return `<div tabindex="0" role="button" aria-label="${d.name} × ${i.qty}" aria-pressed="${app.selected === i.uid}" title="${d.name} × ${i.qty} · ${(d.weight * i.qty).toFixed(2)} kg" draggable="${!playerInput.touch && shopping()}" data-uid="${i.uid}" data-item-id="${i.id}" data-source="${source}" data-kind="${d.kind}" class="item ${app.selected === i.uid ? 'selected' : ''}" style="left:${i.x * cell + 2}px;top:${i.y * cell + 2}px;width:${size.w * cell - 3}px;height:${size.h * cell - 3}px">${itemIcon(i.id)}<span class="item-label ${i.relief ? 'relief' : ''}">${d.short || d.name}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('')}${placementCells(inv, source, cell)}${!inv.items.length ? '<div class="empty-hint">暂无物品</div>' : ''}</div>`;
 }
 function placementCells(inv: D.Inventory, source: string, cell: number) {
@@ -176,7 +179,7 @@ function lootHtml() {
     return `<div class="overlay loot-overlay"><section class="panel loot-modal" role="dialog" aria-modal="true" aria-label="搜刮物资"><header class="loot-header"><div><div class="section-label orange">${container.kind === 'corpse' ? '现场搜身' : '物资搜集'}</div><h2>${esc(container.name)}</h2></div><div class="loot-risk"><span>生命 <strong id="loot-health">${Math.ceil(app.raid?.hp || 0)}</strong></span><span>封锁倒计时 <strong id="loot-timer">${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}</strong></span><small id="loot-condition">世界仍在运行，请留意周围。</small><strong id="loot-hit" role="status" aria-live="polite"></strong></div>${btn('关闭 ×', 'close', '', 'aria-label="关闭搜刮"')}</header><div class="loot-columns"><section class="loot-source"><h3 class="section-title">${container.kind === 'corpse' ? '尸体物品栏' : '箱子物品栏'} <span>${container.inventory.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${grid(container.inventory, 'container', 40)}<div class="inv-help">${container.inventory.items.length ? (playerInput.touch ? '选中物品，点移动格位，再点目标格。' : '拖动物品至右侧，完成拾取。') : '已搜空 · 仍可放入物品。'}<br>留在这里的物资仅保留至本局结束。</div></section><section class="loot-player"><h3 class="section-title">角色物品栏 <span>背包 6 × 5</span></h3><div class="loot-carried"><div>${grid(loadout.bag, 'bag', 40)}<div class="inv-help">携行重量 <strong id="loot-weight">${app.raid?.carriedWeight().toFixed(1) || '0.0'}</strong> / ${SURVIVAL.carryLimit} kg · 含装备</div></div><div class="loot-safe"><h4>安全箱</h4>${grid(loadout.safe, 'safe', 40)}<p class="inv-help protected">撤离失败保留</p></div></div></section></div>${details()}<footer class="loot-footer"><span class="loot-status" role="status" aria-live="polite">${playerInput.touch ? '选中物品 → 移动格位 → 点目标格' : '拖入指定格子 · 绿色可放置，红色不可放置'}</span>${playerInput.touch ? '' : '<span><kbd>E</kbd> / <kbd>Tab</kbd> / <kbd>Esc</kbd> 关闭</span>'}</footer></section></div>`;
 }
 export function render() {
-    activeDrag = null;
+    cancelInventoryDrag();
     document.documentElement.dataset.state = app.state;
     document.documentElement.dataset.overlay = app.overlay;
     document.documentElement.dataset.container = app.mobileContainer;
@@ -362,6 +365,66 @@ export function mutate(action: SessionMutation, message = '', rejectionMessage: 
 function splitControl(item: D.Item) {
     return item.qty > 1 ? `<label class="split-control">拆分数量 <input id="split-quantity" type="number" min="1" max="${item.qty - 1}" step="1" value="1" aria-label="拆分数量"></label>${btn('拆分并放置', 'split-item')}` : '';
 }
+function beginDrag(uid: string, source: string): InventoryDrag {
+    return { uid, source, token: ++dragToken, runId: app.state === 'run' ? app.loadout?.runId || null : null,
+        containerId: app.lootContext?.containerId || null, rotated: inventory(source).items.find(i => i.uid === uid)?.rotated };
+}
+export function cancelInventoryDrag() {
+    pointerDrag = null; activeDrag = null; dragGhost?.remove(); dragGhost = null;
+    document.documentElement.classList.remove('inventory-dragging'); clearPlacementPreview();
+}
+function drawPointerDrag() {
+    if (!pointerDrag || !activeDrag || !dragContextValid(activeDrag)) { cancelInventoryDrag(); return; }
+    const item = inventory(activeDrag.source).items.find(i => i.uid === activeDrag!.uid);
+    if (!item) { cancelInventoryDrag(); return; }
+    const size = D.itemSize({ ...item, rotated: activeDrag.rotated ?? item.rotated });
+    if (!dragGhost) { dragGhost = document.createElement('div'); dragGhost.className = 'inventory-drag-ghost'; document.body.append(dragGhost); }
+    dragGhost.textContent = `${D.ITEMS[item.id].short} × ${item.qty}`;
+    const dangerBottom = app.overlay === 'loot' ? document.querySelector('.loot-header')?.getBoundingClientRect().bottom || 0 : 0;
+    Object.assign(dragGhost.style, { left: `${pointerDrag.x + 10}px`, top: `${Math.max(pointerDrag.y + 10, dangerBottom + 4)}px`, width: `${size.w * pointerDrag.cell}px`, height: `${size.h * pointerDrag.cell}px` });
+    const target = document.elementFromPoint(pointerDrag.x, pointerDrag.y)?.closest<HTMLElement>('[data-grid]');
+    if (target && ui().contains(target)) previewDrop(target, { clientX: pointerDrag.x, clientY: pointerDrag.y } as DragEvent);
+    else clearPlacementPreview();
+}
+/** Pointer dragging keeps keyboard events available for R. Native shop drag still uses the same commit guard. */
+export function installInventoryDrag() {
+    addEventListener('pointermove', e => {
+        if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+        if (!(e.buttons & 1)) { cancelInventoryDrag(); return; }
+        pointerDrag.x = e.clientX; pointerDrag.y = e.clientY;
+        if (!pointerDrag.started && Math.hypot(e.clientX - pointerDrag.startX, e.clientY - pointerDrag.startY) < 5) return;
+        pointerDrag.started = true; activeDrag = pointerDrag.drag;
+        document.documentElement.classList.add('inventory-dragging'); drawPointerDrag();
+    });
+    addEventListener('pointerup', e => {
+        if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+        const started = pointerDrag.started, drag = activeDrag;
+        if (started) {
+            suppressDragClick = true; setTimeout(() => { suppressDragClick = false; }, 0);
+            const target = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('[data-grid]');
+            if (target && ui().contains(target) && drag && dragContextValid(drag)) {
+                const dataTransfer = new DataTransfer(); dataTransfer.setData('text/plain', JSON.stringify(drag));
+                commitDrop(target, new DragEvent('drop', { clientX: e.clientX, clientY: e.clientY, dataTransfer }));
+            }
+        }
+        cancelInventoryDrag();
+    });
+    addEventListener('click', e => { if (suppressDragClick) { e.preventDefault(); e.stopImmediatePropagation(); suppressDragClick = false; } }, true);
+    addEventListener('keydown', e => {
+        if (!pointerDrag?.started || !activeDrag) return;
+        if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); cancelInventoryDrag(); }
+        else if (e.key.toLowerCase() === 'r') {
+            e.preventDefault(); e.stopImmediatePropagation();
+            if (e.repeat || !dragContextValid(activeDrag)) return;
+            activeDrag.rotated = !(activeDrag.rotated ?? false); drawPointerDrag();
+        }
+    }, true);
+    addEventListener('pointercancel', cancelInventoryDrag);
+    addEventListener('blur', cancelInventoryDrag);
+    addEventListener('pagehide', cancelInventoryDrag);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelInventoryDrag(); });
+    document.addEventListener('pointerout', e => { if (!e.relatedTarget) cancelInventoryDrag(); });
+}
 function clearPlacementPreview() {
     ui().querySelectorAll('.drop-preview').forEach(node => node.remove());
 }
@@ -447,8 +510,8 @@ function bind() {
                 else if (next?.action === 'deploy') deploy();
                 break;
             }
-            case 'container': app.mobileContainer = id; clearSelection(); render(); break;
-            case 'run-container': app.runContainer = id; clearSelection(); render(); break;
+            case 'container': app.mobileContainer = id; if (!app.placement) clearSelection(); render(); break;
+            case 'run-container': app.runContainer = id; if (!app.placement) clearSelection(); render(); break;
             case 'grid-mode': app.inventoryGrid = !app.inventoryGrid; clearSelection(); render(); break;
             case 'place-item': app.placement = true; app.placementQuantity = undefined; app.placementRotated = undefined; if (app.selectedSource === 'stash') app.inventoryGrid = true; render(); break;
             case 'split-item': {
@@ -595,9 +658,17 @@ function bind() {
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
         el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict || shopping())
         return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); };
+        el.onpointerdown = e => {
+            if (playerInput.touch || shopping() || e.button !== 0 || app.placement || app.conflict || app.pendingSettlement) return;
+            const grid = el.closest<HTMLElement>('[data-grid]'); if (!grid) return;
+            const drag = beginDrag(el.dataset.uid!, el.dataset.source!);
+            pointerDrag = { pointerId: e.pointerId, drag, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY,
+                cell: Number(grid.dataset.cell) * grid.getBoundingClientRect().width / grid.offsetWidth, started: false };
+            el.setPointerCapture(e.pointerId);
+        };
         el.ondragstart = e => {
             if (app.conflict || app.pendingSettlement || !e.dataTransfer) { e.preventDefault(); return; }
-            activeDrag = { uid: el.dataset.uid!, source: el.dataset.source!, token: ++dragToken, runId: app.state === 'run' ? app.loadout?.runId || null : null, containerId: app.lootContext?.containerId || null, rotated: inventory(el.dataset.source!).items.find(i => i.uid === el.dataset.uid)?.rotated };
+            activeDrag = beginDrag(el.dataset.uid!, el.dataset.source!);
             e.dataTransfer.setData('text/plain', JSON.stringify(activeDrag)); e.dataTransfer.effectAllowed = 'move';
         };
         el.ondragend = () => { activeDrag = null; clearPlacementPreview(); };

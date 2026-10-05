@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { app, audio, saveSession } from './app';
-import { initSave, closeOverlay, setOverlay, persist, toast, render } from './ui';
+import { initSave, installInventoryDrag, closeOverlay, setOverlay, persist, toast, render } from './ui';
 import { SAVE_KEY } from './domain';
 import { SESSION_KEY, ownSession } from './recovery-store';
 import { playerInput } from './input';
@@ -13,6 +13,7 @@ async function boot() {
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
     app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
     const coarse = matchMedia('(pointer: coarse)'), fine = matchMedia('(any-pointer: fine)');
+    installInventoryDrag();
     const controls = installControls(setOverlay, () => app.state === 'run', () => audio.start());
     let previousWidth = 0, previousHeight = 0;
     function resize() {
