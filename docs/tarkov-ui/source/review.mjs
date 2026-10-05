@@ -14,6 +14,8 @@ try {
   const c=await browser.newContext({viewport,offline:true});c.on('request',r=>{if(/^https?:/.test(r.url()))report.externalRequests.push(r.url());});
   const p=await c.newPage();p.on('pageerror',e=>report.errors.push(String(e)));
   await p.goto(pathToFileURL(`${dir}/review.html`).href);await p.evaluate(()=>document.fonts.ready);
+  assert.equal(await p.locator('#font-mode').inputValue(),'pixel','Approved B should be selected on first open');
+  assert.equal(await p.locator('.mock').getAttribute('data-font'),'pixel','First screen must render B');report.defaultFont='pixel';
   for(const view of ['gear','loot'])for(const mode of ['hybrid','pixel']){
    await p.locator(`[data-view="${view}"]`).click();await p.locator('#font-mode').selectOption(mode);await p.evaluate(()=>document.fonts.ready);
    const name=`${view}-${mode}-${viewport.width}.png`;await p.screenshot({path:`${dir}/${name}`});report.screenshots.push(name);

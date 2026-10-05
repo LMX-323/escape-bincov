@@ -427,6 +427,7 @@
     "notes-1920.png"
   ],
   "browser": "153.0.8010.12",
+  "defaultFont": "pixel",
   "status": "passed",
-  "htmlSha256": "11edfeb3b6a015d25724ed73c8ad1b496f43ec0ea254f119f271998a69bc735e"
+  "htmlSha256": "27a3c44c01c5c64dd5914a5088eb998d9b196e643205cee9b6d37f24901bfc0e"
 }
