@@ -15,7 +15,7 @@ function sell(c: S.ShopCart, id: string, x = 0, y = 0) {
     assert.ok(S.moveShopItem(c, 'stash', 'sell', c.stash.items.find(i => i.id === id)!.uid, x, y));
 }
 test('cart conserves goods before checkout; pack return and sale return cancel without touching save', () => {
-    const save = fixture(); D.addItem(save.stash, 'watch', 2); const before = structuredClone(save), c = S.createCart(save, 'arms');
+    const save = fixture(); D.addItem(save.stash, 'watch', 2); D.addItem(save.stash, 'scrap'); const before = structuredClone(save), c = S.createCart(save, 'arms');
     buy(c, 'ammo9'); sell(c, 'watch'); assert.deepEqual(save, before);
     assert.ok(S.moveShopItem(c, 'buy', 'merchant', c.buy.items[0].uid, 999, 999));
     assert.ok(S.moveShopItem(c, 'sell', 'stash', c.sell.items[0].uid, 0, 0));

@@ -509,3 +509,38 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 .item, .item img { user-select: none; -webkit-user-drag: none; }
 .inventory-dragging, .inventory-dragging * { cursor: grabbing !important; }
 .inventory-drag-ghost { position: fixed; z-index: 100; pointer-events: none; background: #526345b8; border: 1px solid #d9e4a0; color: #f0f4d1; font-size: 11px; padding: 4px; opacity: .85; }
+
+/* Independent scrolling keeps both trade buffers usable on short screens. */
+.shop-content { display: flex; flex-direction: column; overflow: hidden; }
+.shop-content .merchant-heading { flex-shrink: 0; margin-bottom: 8px; }
+.shop-layout { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+.shop-layout > section { height: 100%; overflow: auto; overscroll-behavior: contain; padding-bottom: 4px; }
+.shop-content .shop-checkout { position: static; flex-shrink: 0; padding: 6px 0; }
+.shop-content .shop-details { max-height: 100px; flex: 0 0 auto; overflow: auto; }
+.shop-content .shop-details.details-empty { min-height: 0; padding: 0; }
+.shop-content .shop-details.details-empty p { margin: 4px 0; }
+.mobile .shop-content { padding: 6px 12px; }
+.mobile .shop-content .merchant-heading { margin: 0; }
+.mobile .shop-content .merchant-heading h3 { margin: 0 0 4px; font-size: 14px; }
+.mobile .shop-content .merchant-heading p { display: none; }
+.mobile .shop-content .shop-checkout { flex-wrap: nowrap; gap: 8px; }
+.mobile .shop-content .shop-checkout span { display: none; }
+.mobile .shop-content .shop-checkout button { min-height: 40px; }
+.mobile .shop-content .shop-details:not(.details-empty) { max-height: calc(100dvh - 32px); }
+
+.shop-buffer { display: flex; flex-direction: column; gap: 8px; }
+.shop-buffer > div { flex: 1; min-height: 0; overflow: auto; }
+.shop-buffer h3 { position: sticky; top: 0; z-index: 4; background: #15231f; margin: 0 0 6px; padding: 4px 0; }
+.mobile .shopping .topbar { padding: 6px 12px; min-height: 0; }
+.mobile .shopping .topbar h2 { font-size: 16px; }
+.mobile .shopping .tabs button { min-height: 40px; padding: 8px 16px; }
+.mobile .shopping .bottom-bar { padding: 6px 12px; }
+.mobile .shopping .seed-label { display: none; }
+.mobile .shop-content .merchant-heading h3 span { display: inline; margin-left: 10px; font-size: 11px; }
+
+.shopping .shop-checkout { position: static; padding: 0; flex-shrink: 0; }
+.shopping .shop-checkout span { display: none; }
+.shopping .bottom-bar { gap: 12px; }
+.mobile .shopping .bottom-bar { min-height: 58px; padding: 6px 0; flex-wrap: nowrap; }
+.mobile .shopping .shop-checkout { flex-wrap: nowrap; gap: 8px; }
+.mobile .shopping .shop-checkout button { margin: 0; min-width: 105px; }

@@ -11,7 +11,7 @@ if (url.protocol !== 'file:' && !(url.protocol === 'http:' && ['127.0.0.1', 'loc
 url.searchParams.set('test', '1');
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
-const report = { mode: url.protocol === 'file:' ? 'offline' : 'local HTTP diagnostic', browser: browser.version(), results: [] };
+const report = { mode: url.protocol === 'file:' ? 'offline' : 'local HTTP diagnostic', browser: browser.version(), scope: process.argv.includes('--shop-only') ? 'shop' : 'all', results: [] };
 async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
   const context = await browser.newContext({ viewport, hasTouch: touch, isMobile: touch, offline: url.protocol === 'file:' });
@@ -42,6 +42,7 @@ async function suite(viewport, touch = false) {
       await placeAt(page, 'stash', 'watch', 'sell');
       assert.deepEqual(await save(), before);
       assert.match(await page.locator('.shop-checkout').innerText(), /可得 ¥ 156/);
+      for (const source of ['buy', 'sell']) assert.ok(await page.locator(`[data-source="${source}"]`).first().evaluate(el => { const r=el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); }), `${source} item center must remain visible and clickable`);
       await page.screenshot({ path: resolve(out, `qol-shop-${label}.png`) });
       await action('tab', 'med').click(); assert.equal(await overlay(), 'shop-leave');
       await action('close').click(); assert.deepEqual(await save(), before);
@@ -63,6 +64,7 @@ async function suite(viewport, touch = false) {
       await action('checkout').click(); await action('checkout-confirm').click(); assert.equal((await save()).cash, before.cash + 105);
       await page.reload(); await action('enter').click(); assert.equal((await save()).cash, before.cash + 105);
     });
+    if (process.argv.includes('--shop-only')) return;
     await step('loot rotation and quantity previews cancel cleanly; split and partial merge preserve remainders', async () => {
       await page.evaluate(() => {
         const { app, persist } = window.__bincov;

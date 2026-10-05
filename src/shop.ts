@@ -16,7 +16,8 @@ export function createCart(save: D.SaveDataV1, merchant: Merchant): ShopCart {
     return { merchant, original: JSON.stringify(save.stash), catalog, buy: D.createInventory(4, 3), sell: D.createInventory(4, 3), stash: structuredClone(save.stash) };
 }
 export const shopInventory = (cart: ShopCart, source: ShopSource) => source === 'merchant' ? cart.catalog : cart[source];
-export const cartDirty = (cart: ShopCart) => !!(cart.buy.items.length || cart.sell.items.length || JSON.stringify(cart.stash) !== cart.original);
+const positions = (inv: D.Inventory) => JSON.stringify({ ...inv, items: [...inv.items].sort((a, b) => a.uid.localeCompare(b.uid)) });
+export const cartDirty = (cart: ShopCart) => !!(cart.buy.items.length || cart.sell.items.length || positions(cart.stash) !== positions(JSON.parse(cart.original)));
 export function shopPlacementError(cart: ShopCart, from: ShopSource, to: ShopSource, uid: string, x: number, y: number): string | null {
     const item = shopInventory(cart, from)?.items.find(i => i.uid === uid);
     if (!item) return '请重新选择物品。';

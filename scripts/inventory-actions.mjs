@@ -6,10 +6,6 @@ export async function placeAt(page, source, id, target, x = 0, y = 0) {
 }
 export async function clickSlot(page, target, x = 0, y = 0) {
   const grid = page.locator(`[data-grid="${target}"]`);
-  await grid.scrollIntoViewIfNeeded();
-  const slot = await grid.evaluate((el, { x, y }) => {
-    const r = el.getBoundingClientRect(), cell = Number(el.dataset.cell) * r.width / el.offsetWidth;
-    return { x: r.x + (x + .5) * cell, y: r.y + (y + .5) * cell };
-  }, { x, y });
-  await page.mouse.click(slot.x, slot.y);
+  const cell = await grid.evaluate(el => Number(el.dataset.cell) * el.getBoundingClientRect().width / el.offsetWidth);
+  await grid.click({ position: { x: (x + .5) * cell, y: (y + .5) * cell } });
 }
