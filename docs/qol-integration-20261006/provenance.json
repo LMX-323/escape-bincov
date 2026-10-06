@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-06",
+  "baseline": "07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb",
+  "qolHtmlSha256": "ca0cc76ae530f0ec8a76629b6f579435b599236b6bba4bebb130d6d13388d3a6",
+  "method": "Local HTTP diagnostics, explicit inventories/positions/damage fixtures; touch is emulated; blur and background use lifecycle event fixtures. Other reports capture the integration before the final scroll-only fix. Latest-head offline acceptance is the PR CI.",
+  "reports": [
+    "qol.json",
+    "tactical.json",
+    "art.json",
+    "loot.json",
+    "targets.json",
+    "ui.json"
+  ]
+}

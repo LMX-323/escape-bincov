@@ -1,6 +1,8 @@
 # QOL 定稿实施记录 · PR #10
 
-本轮按 [LMX-323 的 11 项定稿](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-5995536156)实施。基线为 `49738b89cc8556a0b39d339239bf09945e44ab9e`，保留原 PR 标题、发现记录及先前 D1 提交；没有向 main 推送或合并。
+2026-10-06 已按[补充结论](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-6010682822)更新任务栏名称，并将 QOL 整合到 main `07b1414` 的战术界面。最新代码、验证与真机清单见 [QOL-INTEGRATION.md](QOL-INTEGRATION.md)。下方 2026-10-05 的测试和截图保留为历史证据。
+
+上一轮按 [LMX-323 的 11 项定稿](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-5995536156)实施。基线为 `49738b89cc8556a0b39d339239bf09945e44ab9e`，保留原 PR 标题、发现记录及先前 D1 提交；没有向 main 推送或合并。
 
 原始问题与旧版证据见 [QOL-DISCOVERY.md](QOL-DISCOVERY.md)，第一阶段桌面目标选择见 [QOL-IMPLEMENTATION.md](QOL-IMPLEMENTATION.md)。它们是注明阶段的历史记录，本页说明后续决定的落实情况。
 
@@ -18,11 +20,11 @@
 | 商店 | 左商人、中间上买下卖、右仓库；按包买、整组卖、净额一次结算；放回取消、离开确认；整备入口引导到商店 | [shop.ts](../src/shop.ts)：`createCart`、`moveShopItem`、`settleCart`；[ui.ts](../src/ui.ts)：`checkout` |
 | 部分合并/拆分 | 只补足兼容堆叠的容量，余量留在来源；手选数量后摆格，拆出新 UID，取消不写档 | [loot.ts](../src/loot.ts)：`placementError`、`moveQuantity`；[session.ts](../src/session.ts)：`transferLoot` |
 | 受击/撤离指引 | 敌人命中触发约一秒边缘方向，多方向并存；流血/污染不触发；地图选择有效出口后显示方位和直线格距 | [game.ts](../src/game.ts)：近战/弹丸命中、`hitDirections`；[qol.ts](../src/qol.ts)：`exitBearing` |
-| 任务追踪 | 默认收起，展开可滚动查看全部未完成任务，站内与本局携带分列，仍需回水产站交付 | [qol.ts](../src/qol.ts)：`questProgress`；[game.ts](../src/game.ts)：`updateHud` |
+| 任务追踪 | 默认收起，展开可滚动查看全部未完成任务，仓库与携带分列，仍需回水产站交付 | [qol.ts](../src/qol.ts)：`questProgress`；[game.ts](../src/game.ts)：`updateHud` |
 
-任务栏的“站内”是仓库数量，“本局”是本次背包与安全箱数量（包含带入的物资），不把安全箱检查点再算一遍。导航距离按现有地图格计算，1 格 = 32 世界像素；不新增现实距离比例或路线规划。
+任务栏的“仓库”是仓库数量，“携带”是本次背包与安全箱数量（包含带入的物资），不把安全箱检查点再算一遍。导航距离按现有地图格计算，1 格 = 32 世界像素；不新增现实距离比例或路线规划。
 
-Chrome 原生拖拽期间不会向页面派发 R 键，因此桌面物品改用页面指针拖拽；商店继续使用原生拖放。两者复用同一提交校验，真实浏览器输入验证了旋转、失焦、取消和换来源保护。[实现说明与给 LMX 的评论](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-5999993580)。
+Chrome 原生拖拽期间不会向页面派发 R 键，因此桌面物品改用页面指针拖拽；商店继续使用原生拖放。LMX 已接受页面拖动方案，不要求浏览器内置拖放。两者复用同一提交校验，真实浏览器输入验证了旋转、失焦、取消和换来源保护。[实现说明与给 LMX 的评论](https://github.com/xuys2025/escape-bincov/pull/10#issuecomment-5999993580)。
 
 ## 验证与截图
 
@@ -56,4 +58,4 @@ Chrome 原生拖拽期间不会向页面派发 R 键，因此桌面物品改用�
 
 没有改变存档版本、键名、安全箱/救济规则或结算流程，没有新增依赖和运行时网络请求。商店清单只保存在内存，刷新会丢弃未结算清单；拥有的物资和现金不受影响。结算仍先由会话保存成功，再显示成功；失败整笔回滚。局内容器与背包/安全箱仍写入同一个恢复记录。
 
-已定的功能均已实施；iPhone Safari、Android 实机的触控手感和十分钟真人游玩尚未验收。请 LMX 审阅指针拖拽的兼容性要求、手机短屏的阅读/滚动体验，以及“站内/本局”的任务数量表述；这些实机结论不由桌面自动化代替。PR 仍等待维护者审阅，不代表已合并或上线。
+已定的功能均已实施；iPhone Safari、Android 实机的触控手感和十分钟真人游玩尚未验收。任务统计口径及页面拖动方案已按补充结论确定；具体设备和负责人仍待维护者安排，这些实机结论不由桌面自动化代替。PR 仍等待维护者审阅，不代表已合并或上线。
