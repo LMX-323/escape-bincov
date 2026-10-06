@@ -5,6 +5,56 @@ import { prototypeRaid, prototypeWorld } from './fixtures/layered';
 import { changeLayer, settleDepartingShots, advanceLayerShots } from '../src/layer-transition';
 import { advancePursuits, pursuitPosition } from '../src/pursuit';
 import { validateExpansion } from '../src/expansion-state';
+import { toggleDoor } from '../src/spatial';
+
+test('追击敌人走过门后，玩家关门，后续帧、刷新及连接等待不得重开身后的门', () => {
+    const world = prototypeWorld(), profile = D.newSave();
+    world.maps.downstairs.doors.push({ id: 'gate', x: 2, y: 1, anchors: [{ x: 48, y: 48 }, { x: 112, y: 48 }] });
+    const state = prototypeRaid(profile, world), raid = state.raid!;
+    raid.maps.downstairs.bullets = []; raid.maps.downstairs.doors.gate = true;
+    raid.maps.downstairs.enemies[1].alert = 0;
+    assert.equal(changeLayer(state, world, 'up'), true);
+    const event = raid.pursuits[0], arrival = event.arrivalAt, hp = event.enemy.hp, rng = raid.rng;
+    raid.elapsed = event.registeredAt + event.distance / event.speed;
+    advancePursuits(state, world);
+    assert.equal(raid.pursuits.length, 1, 'Still waiting for the one-second connector delay');
+    raid.currentMap = 'downstairs'; raid.player = { x: 112, y: 48, rotation: 0 };
+    const context = { definition: world.maps.downstairs, doors: raid.maps.downstairs.doors, highTide: false };
+    assert.equal(toggleDoor(context, 'gate', raid.player, [event.enemy]), 'closed');
+    raid.elapsed += 1 / 60;
+    assert.equal(advancePursuits(state, world), false);
+    assert.equal(context.doors.gate, false, 'A distant pursuit cannot reopen a door it already passed');
+    assert.equal(event.arrivalAt, arrival); assert.equal(event.enemy.hp, hp); assert.equal(raid.rng, rng);
+    const restored = validateExpansion(JSON.parse(JSON.stringify(state)), profile, null, () => world)!;
+    restored.raid!.elapsed += 1 / 60; advancePursuits(restored, world);
+    assert.equal(restored.raid!.maps.downstairs.doors.gate, false);
+    restored.raid!.elapsed = arrival; advancePursuits(restored, world);
+    assert.equal(restored.raid!.pursuits.length, 0);
+    assert.equal(restored.raid!.maps.downstairs.doors.gate, false);
+    assert.equal(restored.raid!.maps.upstairs.enemies.filter(e => e.uid === event.enemy.uid).length, 1);
+});
+
+test('一帧跨过弯道和多扇门时仍打开新路段的门，越过后不再处理旧门', () => {
+    const world = prototypeWorld(), profile = D.newSave();
+    world.spawn = { x: 48, y: 112 }; world.maps.downstairs.entries[0].at = { ...world.spawn };
+    world.maps.downstairs.doors.push(
+        { id: 'horizontal', x: 2, y: 3, anchors: [{ x: 48, y: 112 }, { x: 112, y: 112 }] },
+        { id: 'vertical', x: 3, y: 2, anchors: [{ x: 112, y: 48 }, { x: 112, y: 112 }] });
+    const state = prototypeRaid(profile, world), raid = state.raid!, source = raid.maps.downstairs;
+    source.bullets = []; source.enemies[1].alert = 0;
+    Object.assign(source.doors, { horizontal: true, vertical: true });
+    assert.equal(changeLayer(state, world, 'up'), true);
+    const event = raid.pursuits[0], arrival = event.arrivalAt;
+    Object.assign(source.doors, { horizontal: false, vertical: false });
+    raid.elapsed = event.registeredAt + (event.distance - 2) / event.speed;
+    assert.equal(advancePursuits(state, world), true);
+    assert.deepEqual(source.doors, { horizontal: true, vertical: true });
+    Object.assign(source.doors, { horizontal: false, vertical: false });
+    raid.elapsed += 1 / 60; assert.equal(advancePursuits(state, world), false);
+    assert.deepEqual(source.doors, { horizontal: false, vertical: false });
+    assert.equal(event.arrivalAt, arrival);
+    validateExpansion(state, profile, null, () => world);
+});
 
 test('追击进度、途经开门和抵达只移交一个原身份，冷却/生命不重置，返回不改变旧目标', () => {
     const world = prototypeWorld(), profile = D.newSave(), state = prototypeRaid(profile, world);

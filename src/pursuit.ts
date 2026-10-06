@@ -12,6 +12,20 @@ export function pursuitPosition(event: PursuitState, elapsed: number): Point {
     return { ...event.path.at(-1)! };
 }
 
+/** The saved enemy projection is the previous frame's progress, including after reload. */
+function previousProgress(event: PursuitState, current: number): number {
+    let offset = 0, progress = 0, nearest = Infinity;
+    for (let i = 1; i < event.path.length && offset <= current; i++) {
+        const a = event.path[i - 1], b = event.path[i], length = separation(a, b);
+        const fraction = length === 0 ? 0 : Math.max(0, Math.min(1, (current - offset) / length,
+            ((event.enemy.x - a.x) * (b.x - a.x) + (event.enemy.y - a.y) * (b.y - a.y)) / (length * length)));
+        const distance = separation(event.enemy, { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction });
+        if (distance < nearest) { nearest = distance; progress = offset + fraction * length; }
+        offset += length;
+    }
+    return progress;
+}
+
 function refuge(context: SpaceContext, from: Point): Point | null {
     if (traversable(context, from, 'body', 10)) return { ...from };
     const map = context.definition, cells: Point[] = [];
@@ -46,18 +60,23 @@ export function advancePursuits(state: ExpansionState, world: WorldDefinition, t
             event.registeredAt = raid.elapsed; event.arrivalAt = raid.elapsed + event.distance / event.speed + 1; event.waiting = false;
             changed = true;
         }
-        // Include every traversed segment, rather than just the final frame's tile.
-        let covered = Math.max(0, Math.min(event.distance, (raid.elapsed - event.registeredAt) * event.speed + 10));
-        for (let i = 1; i < event.path.length && covered >= 0; i++) {
-            const a = event.path[i - 1], b = event.path[i], segment = separation(a, b), length = Math.min(segment, covered);
-            const steps = Math.max(1, Math.ceil(length / 4));
+        // Scan only newly traversed segments and the body's clearance, never the old route prefix.
+        // Retain intermediate segments when a frame crosses a turn or several doors.
+        const current = Math.max(0, Math.min(event.distance, (raid.elapsed - event.registeredAt) * event.speed));
+        const from = Math.max(0, previousProgress(event, current) - 10), to = Math.min(event.distance, current + 10);
+        let offset = 0;
+        for (let i = 1; i < event.path.length && offset <= to; i++) {
+            const a = event.path[i - 1], b = event.path[i], segment = separation(a, b);
+            const start = Math.max(0, from - offset), end = Math.min(segment, to - offset);
+            offset += segment;
+            if (end < start) continue;
+            const steps = Math.max(1, Math.ceil((end - start) / 4));
             for (let step = 0; step <= steps; step++) {
-                const fraction = segment === 0 ? 0 : length / segment * step / steps;
+                const fraction = segment === 0 ? 0 : (start + (end - start) * step / steps) / segment;
                 const x = Math.floor((a.x + (b.x - a.x) * fraction) / map.tile), y = Math.floor((a.y + (b.y - a.y) * fraction) / map.tile);
                 const door = map.doors.find(d => d.x === x && d.y === y);
                 if (door && !source.doors[door.id]) { source.doors[door.id] = true; changed = true; }
             }
-            covered -= segment;
         }
         Object.assign(event.enemy, position);
         if (raid.elapsed < event.arrivalAt) continue;
