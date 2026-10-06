@@ -1,6 +1,7 @@
 {
-  "startedAt": "2026-10-05T19:17:08.539Z",
-  "methodology": "Offline built HTML; native buttons, keyboard, touch and reload. Explicit fixtures fund ordinary materials, restore damaged body, position at registered mall anchors, extend enemy attack cooldowns for transaction/connector checks, trigger terminal conditions and rewind the saved base cursor to verify offline recovery. They do not prove natural balance or reference-image fidelity. Ordinary entry has a separate context without test hooks.",
+  "startedAt": "2026-10-06T01:57:51.753Z",
+  "htmlSha256": "76cc5602c730de38235846e9b6610a103bf004798cdf4626fb4ced1a9dd3122b",
+  "methodology": "Offline built HTML; native buttons, keyboard, touch and reload. Explicit fixtures fund ordinary materials, restore damaged body, position at registered mall anchors, extend enemy attack cooldowns for transaction/connector checks, trigger terminal conditions and rewind the saved base cursor to verify offline recovery. Scoped write failures target the intended bag, floor or terminal transaction while allowing unrelated periodic checkpoints. These fixtures do not prove natural balance or reference-image fidelity. Ordinary entry has a separate context without test hooks.",
   "steps": [
     {
       "name": "station movement is real, blocked movement earns no practice; menus close and rearm input",
@@ -28,6 +29,10 @@
     },
     {
       "name": "mall native crate transfer keeps both inventories atomic and persists remaining contents after a floor round trip",
+      "status": "passed"
+    },
+    {
+      "name": "map and backpack block a nearby connector; a failed floor write preserves successful loot and retries once",
       "status": "passed"
     },
     {
@@ -67,5 +72,5 @@
   "requests": [],
   "browser": "153.0.8010.12",
   "status": "passed",
-  "finishedAt": "2026-10-05T19:19:35.338Z"
+  "finishedAt": "2026-10-06T01:59:21.125Z"
 }

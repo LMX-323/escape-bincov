@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
-const report = { startedAt: new Date().toISOString(), methodology: 'Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors; this does not claim natural travel or human balance.', steps: [], errors: [], requests: [] };
+const report = { startedAt: new Date().toISOString(), methodology: 'Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors, set indoor clock boundaries and extend enemy cooldowns to isolate the indoor warning/tide/terminal transaction; this does not claim natural travel, another unaccelerated 600-second run or human balance.', htmlSha256: createHash('sha256').update(await readFile(resolve('dist/index.html'))).digest('hex'), steps: [], errors: [], requests: [] };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });
 context.on('request', r => { if (/^https?:/.test(r.url())) report.requests.push(r.url()); });
@@ -61,6 +62,57 @@ try {
         await page.waitForFunction(() => window.__bincov.app.raid.space.definition.id === 'resident-b1');
         await page.keyboard.press('e'); await page.waitForFunction(() => window.__bincov.app.raid.space.definition.id === 'coast');
         assert.ok((await info()).elapsed >= before.elapsed);
+    });
+    await step('indoor warning and tide use the global clock; failed upstairs timeout retains its candidate and retries once', async () => {
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        if (await action('close').count()) await action('close').click();
+        await stand(560, 272); await page.keyboard.press('e');
+        await page.waitForFunction(() => window.__bincov.app.raid.space.definition.id === 'resident-f2');
+        const boundary = elapsed => page.evaluate(elapsed => {
+            const s = window.__bincov.saveSession, ticket = s.prepareExpansionMutation(d => {
+                const r = d.expansion.raid;
+                Object.assign(r, { elapsed, initialHigh: false, highTide: false, warned: elapsed >= 270, tideChanged: false });
+                for (const m of Object.values(r.maps)) for (const e of m.enemies) e.cooldown = 1000;
+                for (const p of r.pursuits) p.enemy.cooldown = 1000;
+            });
+            if (!ticket || s.commitExpansionMutation(ticket) !== 'committed') throw new Error('Indoor boundary fixture rejected');
+        }, elapsed);
+        const indoor = () => page.evaluate(() => {
+            const a = window.__bincov.app, s = a.raid.snapshotExpansion();
+            return { map: s.raid.currentMap, elapsed: s.raid.elapsed, warned: s.raid.warned, tideChanged: s.raid.tideChanged, high: s.raid.highTide, pollution: s.body.pollution, hp: s.body.hp, frozenCoastTime: s.raid.maps.coast.localTime };
+        });
+        await boundary(269.95); const before = await indoor();
+        await page.waitForFunction(() => window.__bincov.app.raid.warned && window.__bincov.app.raid.elapsed >= 270);
+        const warning = await indoor(); assert.equal(warning.map, 'resident-f2'); assert.equal(warning.high, false);
+        assert.equal(warning.pollution, before.pollution); assert.equal(warning.frozenCoastTime, before.frozenCoastTime);
+        await boundary(299.95);
+        await page.waitForFunction(() => window.__bincov.app.raid.tideChanged && window.__bincov.app.raid.elapsed >= 300);
+        const tide = await indoor(); assert.equal(tide.map, 'resident-f2'); assert.equal(tide.high, true);
+        assert.equal(tide.pollution, before.pollution); assert.equal(tide.frozenCoastTime, before.frozenCoastTime);
+        const runId = await page.evaluate(() => window.__bincov.app.save.activeRun.runId);
+        await page.evaluate(() => {
+            window.__buildingTerminalSet = Storage.prototype.setItem;
+            Storage.prototype.setItem = function(k, v) {
+                if (k === 'escape-bincov.session.v2' && JSON.parse(v).terminal) { window.__buildingTerminalRaw = localStorage.getItem(k); throw new DOMException('Indoor terminal fault', 'QuotaExceededError'); }
+                return window.__buildingTerminalSet.call(this, k, v);
+            };
+            window.__bincov.app.raid.elapsed = 599.95;
+        });
+        await page.waitForFunction(() => window.__bincov.app.pendingSettlement);
+        assert.equal(await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2')), await page.evaluate(() => window.__buildingTerminalRaw));
+        assert.equal(await page.evaluate(() => window.__bincov.app.expansion.raid.currentMap), 'resident-f2');
+        assert.equal(await page.evaluate(() => window.__bincov.app.pendingExpansion.base.location), 'settlement');
+        assert.ok(await page.evaluate(() => !!window.__bincov.app.save.activeRun));
+        await page.screenshot({ path: resolve(out, 'building-indoor-timeout-error-1280x720.png') });
+        await page.evaluate(() => { Storage.prototype.setItem = window.__buildingTerminalSet; });
+        await action('retry-save').click(); await page.waitForFunction(() => window.__bincov.app.state === 'result');
+        const terminal = await page.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2')));
+        assert.equal(terminal.terminal.runId, runId); assert.equal(terminal.profile.lastResult.outcome, 'timeout');
+        assert.equal(terminal.profile.activeRun, null); assert.equal(terminal.expansion.raid, null);
+        assert.equal(await page.evaluate(() => window.__bincov.saveSession.retrySettlement()), false);
+        report.indoor = { warning, tide, terminal: { runId, outcome: terminal.profile.lastResult.outcome, body: terminal.expansion.body } };
+        await action('return').click();
     });
     for (const viewport of [{ width: 844, height: 390 }, { width: 640, height: 300 }]) {
         await step(`native touch entry and map panel at ${viewport.width}x${viewport.height}`, async () => {

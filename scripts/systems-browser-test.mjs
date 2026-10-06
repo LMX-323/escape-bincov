@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -8,14 +9,14 @@ import { spacePath } from '../src/spatial.ts';
 import { MALL_WORLD, MALL_ANCHORS } from '../src/mall-world.ts';
 import { browserOptions } from './browser-options.mjs';
 const out = resolve('test-results'); await mkdir(out, {recursive:true});
-const report = {startedAt:new Date().toISOString(), methodology:'Offline built HTML; native buttons, keyboard, touch and reload. Explicit fixtures fund ordinary materials, restore damaged body, position at registered mall anchors, extend enemy attack cooldowns for transaction/connector checks, trigger terminal conditions and rewind the saved base cursor to verify offline recovery. They do not prove natural balance or reference-image fidelity. Ordinary entry has a separate context without test hooks.', steps:[],errors:[],requests:[]};
+const report = {startedAt:new Date().toISOString(), htmlSha256:createHash('sha256').update(await readFile(resolve('dist/index.html'))).digest('hex'), methodology:'Offline built HTML; native buttons, keyboard, touch and reload. Explicit fixtures fund ordinary materials, restore damaged body, position at registered mall anchors, extend enemy attack cooldowns for transaction/connector checks, trigger terminal conditions and rewind the saved base cursor to verify offline recovery. Scoped write failures target the intended bag, floor or terminal transaction while allowing unrelated periodic checkpoints. These fixtures do not prove natural balance or reference-image fidelity. Ordinary entry has a separate context without test hooks.', steps:[],errors:[],requests:[]};
 const browser = await chromium.launch(browserOptions); report.browser=browser.version();
 const ctx = await browser.newContext({viewport:{width:1280,height:720},offline:true});
 const page = await ctx.newPage(); page.setDefaultTimeout(12000); page.on('pageerror',e=>report.errors.push(e.stack ?? e.message)); ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
 const action=(name,id)=>page.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
 const state=()=>page.evaluate(()=>{const a=window.__bincov.app;return {raw:localStorage.getItem('escape-bincov.session.v2'),profile:a.save,expansion:a.raid?.space?a.raid.snapshotExpansion():a.base?.snapshotExpansion()??a.expansion,overlay:a.overlay};});
 async function step(name,task){const row={name,status:'running'};report.steps.push(row);try{await task();assert.deepEqual(report.errors,[]);assert.deepEqual(report.requests,[]);row.status='passed';console.log('PASS',name);}catch(e){row.status='failed';row.error=e.stack;throw e;}}
-const fault=(scope='any')=>page.evaluate(scope=>{window.__systemSet=Storage.prototype.setItem;const baseline=JSON.stringify(window.__bincov.app.loadout?.bag);Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2'&&(scope==='any'||JSON.stringify(JSON.parse(v).expansion?.raid?.loadout.bag)!==baseline)){window.__systemPreFailureRaw=localStorage.getItem(k);throw new DOMException('System fixture failure','QuotaExceededError');}return window.__systemSet.call(this,k,v);};},scope);
+const fault=(scope='any')=>page.evaluate(scope=>{window.__systemSet=Storage.prototype.setItem;const baseline=JSON.stringify(window.__bincov.app.loadout?.bag),map=window.__bincov.app.raid?.space?.definition.id;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2'){const record=JSON.parse(v),blocked=scope==='any'||scope==='bag'&&JSON.stringify(record.expansion?.raid?.loadout.bag)!==baseline||scope==='layer'&&record.expansion?.raid?.currentMap!==map||scope==='terminal'&&!!record.terminal;if(blocked){window.__systemPreFailureRaw=localStorage.getItem(k);throw new DOMException('System fixture failure','QuotaExceededError');}}return window.__systemSet.call(this,k,v);};},scope);
 const recover=()=>page.evaluate(()=>{Storage.prototype.setItem=window.__systemSet;});
 async function stand(p){await page.evaluate(p=>{const a=window.__bincov.app;a.raid.player.setPosition(p.x,p.y);if(!a.raid.checkpoint())throw new Error('Anchor checkpoint failed');},p);}
 try {
@@ -63,6 +64,23 @@ try {
   await fault('bag');await drop();assert.equal((await state()).raw,await page.evaluate(()=>window.__systemPreFailureRaw));assert.deepEqual((await state()).expansion.raid.loadout.bag,before.expansion.raid.loadout.bag);assert.deepEqual((await state()).expansion.raid.maps['mall-f1'].containers.find(c=>c.id===container.id).inventory,container.inventory);await recover();await action('retry-checkpoint').click();await action('close').click();await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.overlay==='loot');await drop();assert.equal((await state()).expansion.raid.maps['mall-f1'].containers.find(c=>c.id===container.id).inventory.items.some(i=>i.uid===item.uid),false);
   await action('close').click();const stairs=MALL_WORLD.maps['mall-f1'].entries[0];await stand(stairs.at);await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.expansion.raid.currentMap==='mall-f2');await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.expansion.raid.currentMap==='mall-f1');assert.equal((await state()).expansion.raid.maps['mall-f1'].containers.find(c=>c.id===container.id).inventory.items.some(i=>i.uid===item.uid),false);
  });
+ await step('map and backpack block a nearby connector; a failed floor write preserves successful loot and retries once',async()=>{
+  const entry=MALL_WORLD.maps['mall-f1'].entries.find(e=>e.id==='S-W-up');await stand(entry.at);
+  for(const key of ['m','Tab']){
+   await page.keyboard.press(key);await page.waitForFunction(()=>!!window.__bincov.app.overlay);const before=await state();
+   await page.keyboard.down('e');await page.keyboard.down('w');await page.waitForTimeout(200);
+   const panel=await state();assert.equal(panel.expansion.raid.currentMap,'mall-f1');assert.deepEqual({x:panel.expansion.raid.player.x,y:panel.expansion.raid.player.y},{x:before.expansion.raid.player.x,y:before.expansion.raid.player.y});
+   await action('close').click();await page.waitForTimeout(250);const held=await state();assert.equal(held.expansion.raid.currentMap,'mall-f1');assert.deepEqual({x:held.expansion.raid.player.x,y:held.expansion.raid.player.y},{x:before.expansion.raid.player.x,y:before.expansion.raid.player.y});
+   await page.keyboard.up('e');await page.keyboard.up('w');
+  }
+  const before=await state();await fault('layer');await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.overlay==='checkpoint-error');
+  const failed=await state();assert.equal(failed.raw,await page.evaluate(()=>window.__systemPreFailureRaw));assert.equal(failed.expansion.raid.currentMap,'mall-f1');assert.deepEqual(failed.expansion.raid.loadout,before.expansion.raid.loadout);assert.deepEqual(failed.expansion.raid.maps['mall-f1'].containers,before.expansion.raid.maps['mall-f1'].containers);
+  await recover();await action('retry-checkpoint').click();const retried=await state();assert.equal(retried.expansion.raid.currentMap,'mall-f2');assert.deepEqual(retried.expansion.raid.loadout,before.expansion.raid.loadout);assert.deepEqual(retried.expansion.raid.maps['mall-f1'].containers,before.expansion.raid.maps['mall-f1'].containers);
+  if(await action('close').count())await action('close').click();await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.expansion.raid.currentMap==='mall-f1');
+  assert.ok(await page.evaluate(()=>window.__bincov.app.raid.checkpoint()));await page.reload();await action('enter').click();await page.waitForFunction(()=>window.__bincov.app.raid?.player?.active);
+  const restored=await state();assert.equal(restored.expansion.raid.currentMap,'mall-f1');assert.deepEqual(restored.expansion.raid.loadout,before.expansion.raid.loadout);assert.deepEqual(restored.expansion.raid.maps['mall-f1'].containers,before.expansion.raid.maps['mall-f1'].containers);
+  if(await action('close').count())await action('close').click();
+ });
  await step('all four paired mall connectors support ten round trips each with no duplicated population',async()=>{
   for(const entry of MALL_WORLD.maps['mall-f1'].entries)for(let i=0;i<10;i++){
    await stand(entry.at);const before=(await state()).expansion.raid.elapsed;await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.expansion.raid.currentMap==='mall-f2');await page.keyboard.press('e');await page.waitForFunction(()=>window.__bincov.app.expansion.raid.currentMap==='mall-f1');const s=(await state()).expansion.raid;assert.ok(s.elapsed>=before);assert.equal(s.roster.length,25);
@@ -98,7 +116,7 @@ try {
   for(const reason of ['timeout','death','abandon','extract']){
    await action('return').click();await page.evaluate(()=>{const s=window.__bincov.saveSession,t=s.prepareExpansionMutation(d=>Object.assign(d.expansion.body,{hp:100,stamina:100,mental:80,water:80,satiety:80,pollution:0,bleeding:false,exhausted:false}));if(!t||s.commitExpansionMutation(t)!=='committed')throw new Error('Terminal body fixture rejected');});await page.locator('#run-world').selectOption('mall');await page.locator('#seed').fill('42');await action('deploy').click();await page.waitForFunction(()=>window.__bincov.app.raid?.player?.active);await page.evaluate(()=>{const s=window.__bincov.saveSession,t=s.prepareExpansionMutation(d=>{for(const m of Object.values(d.expansion.raid.maps))for(const e of m.enemies)e.cooldown=1000;});if(!t||s.commitExpansionMutation(t)!=='committed')throw new Error('Terminal combat fixture rejected');});
    const before=await stats(),beforeState=await state(),runId=beforeState.profile.activeRun.runId;
-   if(reason==='timeout'){await fault();await page.evaluate(()=>{window.__bincov.app.raid.elapsed=599.95;});await page.waitForFunction(()=>window.__bincov.app.pendingSettlement);assert.equal(await stats(),before);assert.ok((await state()).profile.activeRun);await recover();await action('retry-save').click();}
+   if(reason==='timeout'){await fault('terminal');await page.evaluate(()=>{window.__bincov.app.raid.elapsed=599.95;});await page.waitForFunction(()=>window.__bincov.app.pendingSettlement);assert.equal((await state()).raw,await page.evaluate(()=>window.__systemPreFailureRaw));assert.equal(await stats(),before);assert.ok((await state()).profile.activeRun);await recover();await action('retry-save').click();}
    else if(reason==='death')await page.evaluate(()=>window.__bincov.app.raid.hurt(1000));
    else if(reason==='abandon'){await page.keyboard.press('Escape');await action('abandon').click();await action('confirm-abandon').click();}
    else{const exit=await page.evaluate(()=>{window.__bincov.app.raid.hp=100;window.__bincov.app.raid.bleeding=0;return window.__bincov.app.raid.visibleExits[0];});await stand(exit);await page.keyboard.down('e');await page.waitForTimeout(3400);await page.keyboard.up('e');}
