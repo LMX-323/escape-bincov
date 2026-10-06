@@ -1,19 +1,19 @@
 import { uiIcon } from './art/symbols';
-import wordmark from '../assets/title/title-wordmark.png';
 
 // The menu is real HTML over the layered Phaser scene; nothing interactive is baked into art.
+// The wordmark image arrives as the --title-wordmark CSS variable (src/title/assets.ts).
 export function titleScreen(options: { runs: number; extracts: number; motion: boolean; overlay: boolean; storageOK: boolean; resume: boolean; touch: boolean }) {
     const { runs, extracts, motion, overlay, storageOK, resume, touch } = options;
-    const detail = resume ? '恢复后暂停，确认后继续' : runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '';
+    const detail = resume ? '继续未结束的行动 · 恢复后暂停' : runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '';
     return `<section class="title-screen" aria-label="游戏主菜单" ${overlay ? 'inert' : ''}>
         <div class="title-shade" aria-hidden="true"></div>
         <header class="title-masthead"><span>滨科夫县</span><span aria-hidden="true">·</span><span>沿海封锁区</span></header>
         <div class="title-layout">
-            <h1 class="title-mark"><img src="${wordmark}" alt="逃离滨科夫" width="163" height="93" draggable="false"></h1>
+            <h1 class="title-mark"><span class="title-mark-art" aria-hidden="true"></span><span class="title-mark-text">逃离 滨科夫</span></h1>
             <div class="title-english" lang="en">ESCAPE BINCOV</div>
             <nav class="title-menu" aria-label="主菜单">
-                <button class="title-enter" data-action="enter"><span class="title-marker" aria-hidden="true"></span><span class="title-label">${resume ? '继续上次行动' : '进入水产站'}</span>${detail ? `<small>${detail}</small>` : ''}</button>
-                <button class="title-option" data-action="help"><span class="title-marker" aria-hidden="true"></span><span class="title-label">行动指南</span></button>
+                <button class="title-enter" data-action="enter"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">${resume ? '继续上次行动' : '进入水产站'}</strong>${detail ? `<small>${detail}</small>` : ''}</button>
+                <button class="title-option" data-action="help"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">行动指南</strong></button>
                 ${!storageOK ? '<p class="title-storage-note" role="status">浏览器无法保存进度，暂时不能出击。</p>' : ''}
             </nav>
         </div>

@@ -1,8 +1,8 @@
 /** Room layer: duty-room walls, ceiling beam, open door, poster pillar, window, floor and stores. */
-import { Pix, bayer, hash } from './pix.ts';
-import { R, A, c, type RampName } from './palette.ts';
-import { LAYERS, OPENINGS, ANCHORS } from '../../src/title/layout.ts';
-import { lamp, vignette } from './light.ts';
+import { Pix, bayer, hash } from './pix';
+import { R, A, c, type RampName } from './palette';
+import { LAYERS, OPENINGS, ANCHORS } from '../../src/title/layout';
+import { lamp, vignette } from './light';
 
 const VP = { x: 430, y: 196 };
 export const FLOOR_Y = 392;
@@ -128,7 +128,7 @@ function windowWall(p: Pix) {
     for (let i = 0; i < 26; i++) {
         const onMullion = i % 2 === 0, x = onMullion ? 719 + Math.floor(hash(i, 5) * 7) : W.x - 7 + Math.floor(hash(i, 6) * 5);
         const y = W.y + 6 + Math.floor(hash(i, 7) * (W.h - 12));
-        p.rect(c('wood', 5), x, y, 1 + (i % 3 === 0 ? 1 : 0), 2);
+        p.rect(c('wood', 3), x, y, 1 + (i % 3 === 0 ? 1 : 0), 2);
     }
     // Sill: lit top face, shadowed front face.
     p.rect(c('wood', 5), W.x - 14, W.y + W.h, W.w + 28, 7); p.hline(c('wood', 8), W.x - 14, W.y + W.h, W.w + 28);

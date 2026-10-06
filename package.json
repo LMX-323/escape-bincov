@@ -18,6 +18,8 @@
     "test:mobile": "node scripts/mobile-test.mjs",
     "test:mobile-ux": "node --import tsx scripts/mobile-ux-test.mjs",
     "test:title": "node scripts/title-review.mjs",
+    "title:art": "node --import tsx scripts/title-art/generate.ts",
+    "title:evidence": "node scripts/title-evidence.mjs",
     "test:loot": "node scripts/loot-browser-test.mjs",
     "test:loot-target": "node --import tsx scripts/loot-target-test.mjs",
     "test:qol": "node scripts/qol-test.mjs",
@@ -30,7 +32,8 @@
     "test:mall-passages": "node --import tsx scripts/mall-passages.mjs",
     "test:mall-landing": "node --import tsx scripts/mall-landing.mjs",
     "test:art": "node --import tsx scripts/art-review.mjs",
-    "test:tactical": "node --import tsx scripts/tactical-review.mjs"
+    "test:tactical": "node --import tsx scripts/tactical-review.mjs",
+    "test:title-water": "node --import tsx scripts/title-water-review.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

@@ -1,30 +1,34 @@
 import Phaser from 'phaser';
 import { LAYERS, type LayerName } from './layout';
-import sky from '../../assets/title/title-sky.png';
-import fogHigh from '../../assets/title/title-fog-high.png';
-import fogLow from '../../assets/title/title-fog-low.png';
-import harbor from '../../assets/title/title-pier.png';
-import boat from '../../assets/title/title-boat.png';
-import mooring from '../../assets/title/title-mooring.png';
-import room from '../../assets/title/title-room.png';
-import lamp from '../../assets/title/title-lamp.png';
-import desk from '../../assets/title/title-desk.png';
-import light from '../../assets/title/title-light.png';
-import radioFx from '../../assets/title/title-radio-fx.png';
-import chair from '../../assets/title/title-chair.png';
-import fore from '../../assets/title/title-fore.png';
-import sparks from '../../assets/title/title-sparks.png';
-import rain from '../../assets/title/title-rain.png';
-import wordmark from '../../assets/title/title-wordmark.png';
+import sky from '../../assets/title/title-sky-ready.png';
+import fogHigh from '../../assets/title/title-fog-high-new.png';
+import fogLow from '../../assets/title/title-fog-low-new.png';
+import harbor from '../../assets/title/title-harbor-ready.png';
+import pierFront from '../../assets/title/title-pier-occluders-new.png';
+import boat from '../../assets/title/title-boat-new.png';
+import mooring from '../../assets/title/title-mooring-new.png';
+import room from '../../assets/title/title-room-ready.png';
+import lamp from '../../assets/title/title-lamp-new.png';
+import desk from '../../assets/title/title-desk-new.png';
+import light from '../../assets/title/title-light-new.png';
+import radioFx from '../../assets/title/title-radio-fx-new.png';
+import chair from '../../assets/title/title-chair-new.png';
+import fore from '../../assets/title/title-fore-new.png';
+import sparks from '../../assets/title/title-sparks-new.png';
+import rain from '../../assets/title/title-rain-new.png';
+import wordmark from '../../assets/title/title-wordmark-industrial.png';
 
 /** Inline data URLs; the build checks each file against assets/title/manifest.json. */
-export const TITLE_ART: Record<LayerName, string> = { sky, fogHigh, fogLow, harbor, boat, mooring, room, lamp, desk, light, radioFx, chair, fore, sparks, rain, wordmark };
+export const TITLE_ART: Record<LayerName, string> = { sky, fogHigh, fogLow, harbor, boat, mooring, pierFront, room, lamp, desk, light, radioFx, chair, fore, sparks, rain, wordmark };
 
 const decoded = new Map<LayerName, HTMLImageElement>();
 let failure = '';
 
 /** Decode every title layer before Phaser starts, so the first menu frame is complete. */
 export async function loadTitleArt(): Promise<void> {
+    // The HTML wordmark is drawn from a CSS variable so menu markup never imports binary assets.
+    document.documentElement.style.setProperty('--title-wordmark', `url("${TITLE_ART.wordmark}")`);
+    const started = performance.now();
     await Promise.all((Object.keys(TITLE_ART) as LayerName[]).map(async name => {
         if (LAYERS[name].html) return;
         const image = new Image();
@@ -32,6 +36,7 @@ export async function loadTitleArt(): Promise<void> {
         try { await image.decode(); decoded.set(name, image); }
         catch (error) { failure ||= `${name}: ${error instanceof Error ? error.message : String(error)}`; }
     }));
+    performance.measure('title-art-decode', { start: started, end: performance.now() });
     if (failure) console.error('Title artwork failed to decode; showing the plain menu backdrop.', failure);
 }
 

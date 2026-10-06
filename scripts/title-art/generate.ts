@@ -1,97 +1,74 @@
-/**
- * Title asset generator. Paints every layer deterministically and writes indexed PNGs
- * plus assets/title/manifest.json (sizes, frames, groups, file and pixel SHA-256).
- *
- *   node --import tsx scripts/title-art/generate.ts            write assets
- *   node --import tsx scripts/title-art/generate.ts --check    verify committed assets match the generator
- *   node --import tsx scripts/title-art/generate.ts --preview  also write review composites to test-results/title-art
- */
+/** Prepare derived art; source PNGs are never overwritten by this command. */
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { Pix } from './pix.ts';
-import { PALETTE } from './palette.ts';
-import { paintSky, paintFog } from './sky.ts';
-import { paintHarbor, paintBoat, paintMooring } from './harbor.ts';
-import { paintRoom } from './room.ts';
-import { paintDesk, paintLamp, paintLight, paintChair, paintFore, paintSparks, paintRain, paintRadioFx } from './desk.ts';
-import { paintWordmark } from './wordmark.ts';
-import { LAYERS, type LayerName } from '../../src/title/layout.ts';
-import { compose, rgbaPng, type Placed } from './preview.ts';
-
-const painters: Record<LayerName, () => Pix | Pix[]> = {
-    sky: paintSky, fogHigh: () => paintFog('fogHigh'), fogLow: () => paintFog('fogLow'),
-    harbor: paintHarbor, boat: paintBoat, mooring: paintMooring, room: paintRoom,
-    lamp: paintLamp, desk: paintDesk, light: paintLight, radioFx: paintRadioFx,
-    chair: paintChair, fore: paintFore, sparks: paintSparks, rain: paintRain, wordmark: paintWordmark,
-};
-
-export function paintAll() {
-    const out = {} as Record<LayerName, Pix>;
-    for (const name of Object.keys(LAYERS) as LayerName[]) {
-        const spec = LAYERS[name], painted = painters[name]();
-        const pix = Array.isArray(painted) ? Pix.sheet(painted) : painted;
-        const frames = spec.frames ?? 1;
-        if (!spec.html && (pix.w !== spec.w * frames || pix.h !== spec.h)) throw new Error(`${name}: painted ${pix.w}×${pix.h}, expected ${spec.w * frames}×${spec.h}`);
-        out[name] = pix;
-    }
-    return out;
+import { LAYERS, type LayerName } from '../../src/title/layout';
+import { decodePng, encodePng, extrude, type RGBA } from './png';
+const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
+const path = (name: string) => 'assets/title/' + name + '.png';
+const read = (name: string) => decodePng(readFileSync(path(name)));
+const file = (name: LayerName) => path(LAYERS[name].key);
+const sourceFiles = ['title-sky-new', 'title-pier-new', 'title-room-new', 'sources/wordmark-industrial'];
+function wordmark(): RGBA {
+    const src = read('sources/wordmark-industrial'), ink = (p: number) => src.data[p + 3] >= 192 && src.data[p] > 190 && src.data[p + 1] > 172 && src.data[p + 2] > 130;
+    let x0 = src.w, y0 = src.h, x1 = 0, y1 = 0;
+    for (let y = 0; y < src.h; y++)
+        for (let x = 0; x < src.w; x++)
+            if (ink((y * src.w + x) * 4)) {
+                x0 = Math.min(x0, x);
+                y0 = Math.min(y0, y);
+                x1 = Math.max(x1, x);
+                y1 = Math.max(y1, y);
+            }
+    const { w, h } = LAYERS.wordmark, data = new Uint8Array(w * h * 4), s = Math.min((w - 2) / (x1 - x0 + 1), (h - 2) / (y1 - y0 + 1)), dw = Math.round((x1 - x0 + 1) * s), dh = Math.round((y1 - y0 + 1) * s);
+    for (let y = 0; y < dh; y++)
+        for (let x = 0; x < dw; x++) {
+            const p = (Math.min(y1, y0 + Math.floor((y + .5) / s)) * src.w + Math.min(x1, x0 + Math.floor((x + .5) / s))) * 4;
+            if (ink(p))
+                data.set([228, 218, 184, 255], ((y + 1) * w + x + 1) * 4);
+        }
+    return { w, h, data };
 }
-
-const file = (name: LayerName) => `assets/title/${LAYERS[name].key}.png`;
-const sha = (b: Buffer | Uint8Array) => createHash('sha256').update(b).digest('hex');
-
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop()!)) {
-    const check = process.argv.includes('--check'), preview = process.argv.includes('--preview');
-    const layers = paintAll();
-    const manifest = {
-        generator: 'scripts/title-art/generate.ts', palette: { entries: PALETTE.length, sha256: sha(Buffer.from(JSON.stringify(PALETTE))) },
-        note: 'Deterministic procedural pixel art; no external images. Pixel hash covers palette indices, so it is independent of zlib output.',
-        layers: {} as Record<string, unknown>,
-    };
-    let failed = false, rgbaBytes = 0, pngBytes = 0;
-    for (const name of Object.keys(layers) as LayerName[]) {
-        const pix = layers[name], spec = LAYERS[name], png = pix.png();
-        const frames = spec.frames ?? 1;
-        rgbaBytes += pix.w * pix.h * 4; pngBytes += png.length;
-        manifest.layers[name] = {
-            file: file(name), key: spec.key, group: spec.group, x: spec.x, y: spec.y,
-            frameWidth: spec.html ? pix.w : spec.w, frameHeight: pix.h, frames, colours: pix.colours(),
-            bytes: png.length, sha256: sha(png), pixelSha256: pix.pixelHash(),
-        };
-        if (check) {
-            if (!existsSync(file(name))) { console.error(`missing ${file(name)}`); failed = true; continue; }
-            const committed = Pix.decode(readFileSync(file(name)));
-            if (committed.pixelHash() !== pix.pixelHash()) { console.error(`${file(name)} differs from the generator`); failed = true; }
-        } else {
-            mkdirSync('assets/title', { recursive: true });
-            writeFileSync(file(name), png);
-        }
+export function validateTitleArt() {
+    const manifest = JSON.parse(readFileSync('assets/title/manifest.json', 'utf8'));
+    if (manifest.schema !== 2)
+        throw new Error('Title manifest must describe imported art (schema 2)');
+    if (Object.keys(manifest.layers).sort().join() !== Object.keys(LAYERS).sort().join())
+        throw new Error('Title layer manifest is incomplete');
+    for (const name of Object.keys(LAYERS) as LayerName[]) {
+        const spec = LAYERS[name], e = manifest.layers[name], bytes = readFileSync(file(name)), png = decodePng(bytes);
+        if (e.file !== file(name) || e.key !== spec.key || e.sha256 !== sha(bytes) || e.pixelSha256 !== sha(png.data))
+            throw new Error(name + ': asset integrity mismatch');
+        if (png.w !== spec.w * (spec.frames ?? 1) || png.h !== spec.h || e.x !== spec.x || e.y !== spec.y || e.frames !== (spec.frames ?? 1))
+            throw new Error(name + ': layout/size/frame mismatch');
     }
-    Object.assign(manifest, { totals: { pngBytes, rgbaBytes, note: 'rgbaBytes = Σ width × height × 4; decoded texture estimate, not total GPU memory.' } });
-    if (check) {
-        const committed = JSON.parse(readFileSync('assets/title/manifest.json', 'utf8'));
-        for (const [name, layer] of Object.entries(manifest.layers) as [string, any][]) {
-            if (committed.layers[name]?.pixelSha256 !== layer.pixelSha256) { console.error(`manifest pixel hash differs for ${name}`); failed = true; }
-        }
-        if (failed) process.exit(1);
-        console.log(`title assets match the generator (${Object.keys(layers).length} layers)`);
-    } else {
-        writeFileSync('assets/title/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
-        console.log(`wrote ${Object.keys(layers).length} layers, ${(pngBytes / 1024).toFixed(1)} KiB PNG, ${(rgbaBytes / 1048576).toFixed(2)} MiB RGBA`);
+    for (const [p, digest] of Object.entries(manifest.sources))
+        if (sha(readFileSync(p)) !== digest)
+            throw new Error('Source artwork changed: ' + p);
+    return manifest;
+}
+if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
+    if (process.argv.includes('--check')) {
+        validateTitleArt();
+        console.log('Imported title assets and derivatives verified');
     }
-    if (preview) {
-        mkdirSync('test-results/title-art', { recursive: true });
-        const L = layers, place = (name: LayerName, frame = 0, dx = 0, dy = 0, extra: Partial<Placed> = {}): Placed =>
-            ({ pix: L[name], x: LAYERS[name].x + dx, y: LAYERS[name].y + dy, frame, frames: LAYERS[name].frames ?? 1, ...extra });
-        const scene = (k: number): Placed[] => {
-            const g = (n: LayerName) => { const m = { far: 1, harbor: 3, room: 5, lamp: 6, desk: 7, chair: 9, fore: 12 }[LAYERS[n].group]; return [Math.round(m * k), Math.round(m * k * .4)] as const; };
-            const tile = (n: 'fogHigh' | 'fogLow') => Array.from({ length: Math.ceil(960 / LAYERS[n].w) + 1 }, (_, i) => place(n, 0, i * LAYERS[n].w + g(n)[0], g(n)[1], { alpha: .75 }));
-            return [place('sky', 0, ...g('sky')), ...tile('fogHigh'), ...tile('fogLow'), place('boat', 0, ...g('boat')), place('mooring', 1, ...g('mooring')), place('harbor', 0, ...g('harbor')),
-                place('room', 0, ...g('room')), place('lamp', 2, ...g('lamp')), place('desk', 0, ...g('desk')), place('light', 0, ...g('light'), { add: true }),
-                place('chair', 0, ...g('chair')), place('fore', 2, ...g('fore'))];
-        };
-        for (const [name, k] of [['rest', 0], ['left', -1], ['right', 1]] as const) writeFileSync(`test-results/title-art/scene-${name}.png`, rgbaPng(960, 540, compose(960, 540, scene(k)), name === 'rest' ? 2 : 1));
-        const wm = L.wordmark; writeFileSync('test-results/title-art/wordmark.png', rgbaPng(wm.w, wm.h, compose(wm.w, wm.h, [{ pix: wm, x: 0, y: 0 }], [12, 22, 26]), 4));
-        console.log('previews in test-results/title-art');
+    else {
+        const derived: Record<string, RGBA> = { 'title-sky-ready': extrude(read('title-sky-new'), 2, 2), 'title-harbor-ready': extrude(read('title-pier-new'), 4, 3), 'title-room-ready': extrude(read('title-room-new'), 6, 4), 'title-wordmark-industrial': wordmark() };
+        for (const [name, im] of Object.entries(derived))
+            writeFileSync(path(name), encodePng(im));
+        const layers: Record<string, unknown> = {};
+        let pngBytes = 0, rgbaBytes = 0;
+        for (const name of Object.keys(LAYERS) as LayerName[]) {
+            const spec = LAYERS[name], bytes = readFileSync(file(name)), im = decodePng(bytes);
+            if (im.w !== spec.w * (spec.frames ?? 1) || im.h !== spec.h)
+                throw new Error(name + ': invalid image size');
+            pngBytes += bytes.length;
+            rgbaBytes += im.w * im.h * 4;
+            layers[name] = { file: file(name), ...spec, frameWidth: spec.w, frameHeight: spec.h, frames: spec.frames ?? 1, bytes: bytes.length, sha256: sha(bytes), pixelSha256: sha(im.data), provenance: name === 'wordmark' ? 'ImageGen, one-ink nearest-neighbour preparation' : name === 'sky' || name === 'harbor' || name === 'room' ? 'Imported image with edge extrusion' : name === 'sparks' || name === 'rain' || name === 'radioFx' || name.startsWith('fog') ? 'Existing deterministic effect sprite' : 'Imported ImageGen pixel layer' };
+        }
+        const sources = Object.fromEntries(sourceFiles.map(n => [path(n), sha(readFileSync(path(n)))]));
+        mkdirSync('assets/title', { recursive: true });
+        writeFileSync('assets/title/manifest.json', JSON.stringify({ schema: 2, generator: 'scripts/title-art/generate.ts', note: 'Imported artwork is immutable. Preparation writes only four derived PNGs and this manifest. All runtime imports are validated.', sources, layers, totals: { pngBytes, rgbaBytes } }, null, 2) + '\n');
+        validateTitleArt();
+        console.log('Prepared borders, flat industrial wordmark and verified runtime manifest');
     }
 }

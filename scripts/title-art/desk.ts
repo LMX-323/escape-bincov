@@ -1,8 +1,8 @@
 /** Desk group (desk, radio, map, rifle, bag, mug), lamp frames, light pool, chair, foreground rope and FX sprites. */
-import { Pix, bayer, hash } from './pix.ts';
-import { R, A, c, type RampName } from './palette.ts';
-import { LAYERS, ANCHORS } from '../../src/title/layout.ts';
-import type { Placed } from './preview.ts';
+import { Pix, bayer, hash } from './pix';
+import { R, A, c, type RampName } from './palette';
+import { LAYERS, ANCHORS } from '../../src/title/layout';
+import type { Placed } from './preview';
 
 /** Desk-top lamp pool (scene coordinates) in ramp steps. */
 export const POOL = { x: 628, y: 366, rx: 196, ry: 96 };
@@ -122,10 +122,10 @@ function map(p: Pix) {
         if (col !== c('paper', 3)) return;
         const u = (x - 476 - (y - 350) * .3) / 190, v = (y - 350 + (x - 476) * .03) / 62;
         const coast = .42 + Math.sin(v * 7.3) * .07 + Math.sin(v * 17 + 1) * .03 - (v > .6 ? .12 : 0);
-        if (u > coast + .32 && v < .55) return c('teal', 4);
+        if (u > coast + .32 && v < .55) return c('steel', 8);
         if (u < coast) return (Math.round(u * 60) + Math.round(v * 30)) % 9 === 0 ? c('paper', 3) : undefined;
-        if (u < coast + .02) return c('teal', 3);
-        return c('teal', 5);
+        if (u < coast + .02) return c('steel', 6);
+        return c('steel', 9);
     }, 480, 330, 230, 130);
     for (const f of [.33, .66]) for (let t = 0; t < 1; t += .004) {
         const ax = quad[0][0] + (quad[1][0] - quad[0][0]) * f, ay = quad[0][1] + (quad[1][1] - quad[0][1]) * f;
@@ -141,7 +141,7 @@ function map(p: Pix) {
     p.rect(c('rust', 5), 545, 379, 3, 3);
     // Folded corner; the part past the desk edge hangs down in shadow.
     p.poly(c('paper', 6), [[664, 344], [678, 352], [668, 358]]);
-    p.each((x, y, col) => col && y > FRONT(x) + 1 && x > 470 && y < 440 ? c('paper', 1 + ((x + y) % 7 === 0 ? 1 : 0)) : undefined, 470, 340, 240, 100);
+    p.each((x, y, col) => col && y > FRONT(x) + 1 && x > 470 && y < 440 ? c('paper', y > FRONT(x) + 8 ? 1 : 2) : undefined, 470, 340, 240, 100);
     for (let x = 476; x < 560; x++) { const y = Math.round(FRONT(x) + 1); if (p.get(x, y)) p.set(c('paper', 5), x, y); }
     // Pencil across the sheet.
     p.line(c('brass', 5), 566, 398, 610, 386, 2); p.set(c('rust', 5), 565, 399);
@@ -174,17 +174,17 @@ function bagMugCup(p: Pix) {
 
 function rifle(p: Pix) {
     // Old bolt-action hunting rifle lying across the desk, muzzle toward the radio, stock over the edge.
-    const [x0, y0] = on(676, .78), [x1, y1] = [886, 478];
+    const [x0, y0] = on(690, .7), [x1, y1] = [884, 474];
     const len = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / len, uy = (y1 - y0) / len, nx = -uy, ny = ux;
     // Profile: [start, end, thickness at start, thickness at end, ramp, base level].
     const parts: [number, number, number, number, RampName, number][] = [
-        [0, .4, 3, 3, 'steel', 3], [.36, .58, 5, 6, 'wood', 5], [.56, .7, 6, 6, 'steel', 3], [.7, .78, 6, 9, 'wood', 5], [.78, 1, 9, 15, 'wood', 5],
+        [0, .4, 4, 4, 'steel', 3], [.36, .58, 6, 7, 'wood', 6], [.56, .7, 7, 7, 'steel', 4], [.7, .78, 7, 10, 'wood', 6], [.78, 1, 10, 18, 'wood', 6],
     ];
     for (const [a, b, ta, tb, ramp, lv] of parts) for (let s = a * len; s <= b * len; s += .5) {
         const k = (s / len - a) / (b - a), t = ta + (tb - ta) * k;
         for (let q = 0; q < t; q += .5) {
             const x = x0 + ux * s - nx * q, y = y0 + uy * s - ny * q;
-            const level = q < 1 ? lv + 3 : q < 2 ? lv + 1 : q > t - 1.5 ? lv - 2 : lv;
+            const level = q < 1 ? lv + 2 : q > t - 1.5 ? lv - 2 : lv;
             p.set(c(ramp, level), x, y);
         }
     }
@@ -212,8 +212,6 @@ function books(p: Pix) {
         p.poly(c(ramp, lv), [[x, y + 3], [x + w, y + w * .351 + 3], [x + w, y + w * .351 + h], [x, y + h]]);
         p.line(c('paper', 5), x + 1, y + h - 2, x + w - 1, y + w * .351 + h - 2);
     };
-    book(...on(712, .42), 96, 10, 'teal', 2); book(...on(720, .5), 82, 9, 'rust', 3);
-    const n = on(728, .58); p.poly(c('paper', 5), [n, [n[0] + 64, n[1] + 22], [n[0] + 58, n[1] + 27], [n[0] - 6, n[1] + 5]]);
     book(906, 396, 62, 12, 'cloth', 3); book(914, 388, 54, 9, 'steel', 4);
 }
 
@@ -223,7 +221,7 @@ export function paintDesk(): Pix {
     p.light((x, y) => y < FRONT(x) + 2 && x > 404 ? pool(x, y) : pool(x, y, 2.2) - .6 - Math.max(0, (y - FRONT(x)) / 60));
     const props = new Pix(L.w, L.h).origin(L.x, L.y);
     papers(props); radio(props); map(props); bagMugCup(props); books(props); rifle(props);
-    props.light((x, y) => pool(x, y, 2.6) - .4 - (x > 800 ? (x - 800) / 80 : 0));
+    props.light((x, y) => pool(x, y, 2.6) - .4 - (x > 840 ? (x - 840) / 90 : 0));
     p.blit(props);
     return p;
 }
@@ -247,15 +245,17 @@ export function paintLamp(): Pix[] {
         p.poly(c('teal', 2), dome);
         p.each((x, y, col) => {
             if (col !== c('teal', 2)) return;
-            const u = (x - cx) / 56, v = (rim - y) / 36;
             if (y >= rim) return c('brass', 3);
-            if (u < -.15 && u > -.62 && v > .25 && v < .75) return c('teal', 4);
-            if (u < -.05 && u > -.72 && v > .15 && v < .85) return bayer(x, y) < .5 ? c('teal', 3) : undefined;
-            if (u > .45) return c('teal', 1);
-            if (v < .1) return c('teal', 3);
+            const u = (x - cx) / 56, top = rim - Math.pow(Math.sin((u + 1) / 2 * Math.PI), .55) * 36, v = (rim - y) / Math.max(1, rim - top);
+            // A curved sheen follows the dome; the far side and the lip fall into shadow.
+            const band = u + v * .28;
+            if (band > -.52 && band < -.3 && v > .18 && v < .92) return c('teal', 4);
+            if (band > -.6 && band < -.2 && v > .12 && v < .96) return bayer(x, y) < .5 ? c('teal', 3) : undefined;
+            if (u > .5 || (u > .3 && bayer(x, y) < (u - .3) * 5)) return c('teal', 1);
+            if (v < .14) return c('teal', 1);
         }, cx - 58, 60, 118, 44);
         p.hline(c('brass', 5), cx - 54, rim, 108); p.hline(c('brass', 4), cx - 56, rim + 1, 112); p.hline(c('teal', 5), cx - 30, rim - 34, 34);
-        for (let i = 0; i < 9; i++) p.rect(c('rust', hash(i, 91) > .5 ? 4 : 3), cx - 48 + Math.floor(hash(i, 92) * 96), rim - 4 - Math.floor(hash(i, 93) * 26), 2, 1 + (i & 1));
+        for (const [ux, uy] of [[-34, 8], [12, 6], [30, 14], [-8, 22]]) p.rect(c('rust', 3), cx + ux, rim - uy, 2, 1);
         // Underside glow and the bulb.
         p.rect(c('brass', 6), cx - 44, rim + 2, 88, 2); p.rect(c('brass', 7), cx - 26, rim + 2, 52, 2);
         p.ellipse(c('brass', 7), cx - 7, rim - 2, 14, 14); p.ellipse(c('brass', 8), cx - 4, rim + 1, 8, 8);
@@ -268,45 +268,45 @@ export function paintLamp(): Pix[] {
 export function paintLight(): Pix {
     const L = LAYERS.light, p = new Pix(L.w, L.h).origin(L.x, L.y);
     p.each((x, y) => {
-        const d = Math.hypot((x - POOL.x) / (POOL.rx * .8), (y - POOL.y) / (POOL.ry * .7));
+        const d = Math.hypot((x - POOL.x) / (POOL.rx * .7), (y - POOL.y) / (POOL.ry * .62));
         const edge = (r: number) => d < r - .03 || (d < r + .03 && bayer(x, y) < (r + .03 - d) / .06);
         if (edge(.34)) return A.glow[2];
         if (edge(.62)) return A.glow[1];
         if (edge(.92)) return A.glow[0];
-        // A tight glow just under the shade.
-        const g = Math.hypot((x - ANCHORS.lampBulb.x) / 70, (y - ANCHORS.lampBulb.y - 6) / 26);
-        if (y > ANCHORS.lampBulb.y && g < .6) return A.glow[1];
-        if (y > ANCHORS.lampBulb.y - 2 && g < 1) return A.glow[0];
     });
     return p;
 }
 
 export function paintChair(): Pix {
     const L = LAYERS.chair, p = new Pix(L.w, L.h).origin(L.x, L.y);
-    // Tubular steel office chair seen from behind: curved back panel, seat, splayed legs.
-    const tube = (pts: [number, number][], lv = 2) => { for (let i = 0; i + 1 < pts.length; i++) { p.line(c('teal', lv), pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], 4); p.line(c('teal', lv + 2), pts[i][0] + 1, pts[i][1] - 1, pts[i + 1][0] + 1, pts[i + 1][1] - 1); } };
-    // Seat (toward the desk) and front legs.
-    p.poly(c('teal', 1), [[300, 470], [420, 462], [436, 478], [314, 490]]); p.line(c('teal', 3), 300, 470, 420, 462);
-    p.poly(c('teal', 0), [[314, 490], [436, 478], [436, 484], [314, 496]]);
-    tube([[424, 480], [432, 548]], 2); tube([[322, 494], [314, 548]], 2);
-    // Back legs.
-    tube([[276, 384], [270, 470], [258, 548]]); tube([[396, 378], [400, 462], [410, 548]]);
-    // Back panel: rounded top, painted metal with rust and a lit right edge.
-    const panel: [number, number][] = [];
-    for (let a = 0; a <= 20; a++) { const t = a / 20; panel.push([274 + t * 126, 386 - Math.sin(t * Math.PI) * 10 - t * 6]); }
-    panel.push([398, 436], [278, 444]);
-    p.poly(c('teal', 2), panel);
+    // Tubular steel chair seen from behind, turned toward the desk: posts, bent back panel, seat, legs.
+    const tube = (x0: number, y0: number, x1: number, y1: number, w = 4) => {
+        p.line(c('teal', 1), x0, y0, x1, y1, w);
+        p.line(c('teal', 3), x0 + Math.floor(w / 2), y0, x1 + Math.floor(w / 2), y1);
+        p.line(c('teal', 0), x0 - Math.floor((w - 1) / 2), y0, x1 - Math.floor((w - 1) / 2), y1);
+    };
+    // Seat beyond the back (toward the desk) and its front legs.
+    tube(430, 480, 436, 548, 3); tube(320, 486, 314, 548, 3);
+    p.poly(c('teal', 1), [[298, 466], [424, 458], [440, 474], [314, 484]]);
+    p.line(c('teal', 3), 298, 466, 424, 458); p.line(c('teal', 4), 360, 462, 424, 458);
+    p.poly(c('teal', 0), [[314, 484], [440, 474], [440, 479], [314, 489]]);
+    // Rear posts carry the back panel.
+    tube(272, 388, 264, 548); tube(390, 382, 398, 548);
+    tube(268, 474, 394, 468, 3);
+    // Bent back panel: curved top rail, sheen near the lamp side, worn paint.
+    const top = (x: number) => 388 - Math.sin((x - 268) / 126 * Math.PI) * 7 - (x - 268) * .05;
+    p.poly(c('teal', 2), [...Array.from({ length: 22 }, (_, i) => { const x = 268 + i * 6; return [x, top(x)] as [number, number]; }), [394, 432], [268, 440]]);
     p.each((x, y, col) => {
         if (col !== c('teal', 2)) return;
-        if (x > 390) return c('teal', 4);
-        if (x < 284) return c('teal', 1);
-        if (y < 386 - Math.sin((x - 274) / 126 * Math.PI) * 10 - (x - 274) / 21 + 3) return c('teal', 3);
-    }, 270, 360, 132, 90);
-    for (let i = 0; i < 22; i++) p.rect(c('rust', hash(i, 3) > .5 ? 2 : 3), 282 + Math.floor(hash(i, 4) * 108), 380 + Math.floor(hash(i, 5) * 56), 1 + (i % 3 === 0 ? 1 : 0), 1 + (i & 1));
-    p.rect(c('teal', 1), 278, 440, 120, 4);
-    for (const x of [300, 372]) { p.rect(c('steel', 2), x, 412, 3, 3); p.set(c('steel', 6), x, 412); }
-    // Cross brace.
-    p.line(c('teal', 1), 272, 470, 400, 462, 3);
+        const t = top(x);
+        if (y < t + 2) return x > 300 ? c('teal', 5) : c('teal', 3);
+        if (y < t + 4) return c('teal', 3);
+        if (x > 382 && bayer(x, y) < .6) return c('teal', 3);
+        if (x < 280) return c('teal', 1);
+        if (y > 426) return c('teal', 1);
+    }, 266, 370, 132, 74);
+    for (const [x, y] of [[300, 404], [352, 398], [372, 418], [318, 424]]) { p.rect(c('rust', 2), x, y, 2, 1); p.set(c('rust', 3), x + 1, y + 1); }
+    for (const x of [292, 368]) { p.rect(c('steel', 1), x, 408, 3, 3); p.set(c('steel', 6), x, 408); }
     return p;
 }
 

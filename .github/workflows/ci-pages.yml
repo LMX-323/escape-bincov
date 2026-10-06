@@ -51,7 +51,7 @@ jobs:
       - name: Tactical inventory and pixel artwork regression
         run: pnpm test:tactical && pnpm test:art
       - name: Responsive title and motion regression
-        run: pnpm test:title
+        run: pnpm test:title && pnpm test:title-water
       - name: Save reliability regression
         run: pnpm test:save-browser
       - name: Obtain actual pre-expansion client

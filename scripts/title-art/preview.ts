@@ -1,7 +1,7 @@
 /** Review helper: composite indexed layers to an RGBA PNG (not shipped; previews only). */
 import { deflateSync, crc32 } from 'node:zlib';
-import { Pix } from './pix.ts';
-import { PALETTE } from './palette.ts';
+import { Pix } from './pix';
+import { PALETTE } from './palette';
 
 export type Placed = { pix: Pix; x: number; y: number; frame?: number; frames?: number; alpha?: number; add?: boolean };
 

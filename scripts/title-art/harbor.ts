@@ -1,7 +1,7 @@
 /** Harbour layer (pier through the door, pilings through the window), boat and mooring line. */
-import { Pix, bayer, hash } from './pix.ts';
-import { R, c } from './palette.ts';
-import { LAYERS, ANCHORS } from '../../src/title/layout.ts';
+import { Pix, bayer, hash } from './pix';
+import { R, c } from './palette';
+import { LAYERS, ANCHORS } from '../../src/title/layout';
 
 const VP = { x: 430, y: 196 };
 export const PIER_EDGE = 290;
@@ -111,7 +111,7 @@ export function paintBoat(): Pix {
     const wl = 288; // waterline (mostly hidden by the pier lip)
     // Hull: sheer line rises toward the bow on the left.
     const sheer = (x: number) => 236 - Math.round(Math.max(0, 404 - x) * .2);
-    p.poly(c('teal', 2), [[360, sheer(360) - 2], [500, 240], [494, wl], [376, wl], [362, 262]]);
+    p.poly(c('teal', 2), [[358, sheer(358) - 3], [500, 240], [494, wl], [394, wl], [370, 256]]);
     p.each((x, y, col) => {
         if (col !== c('teal', 2)) return;
         if (y < sheer(x) + 3) return c('teal', 4);

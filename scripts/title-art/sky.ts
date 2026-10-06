@@ -1,12 +1,12 @@
 /** Far layer: overcast dusk, fogged coast, cranes, ships and open water. */
-import { Pix, bayer, hash } from './pix.ts';
-import { R, c } from './palette.ts';
-import { LAYERS, ANCHORS, FAR_LIGHTS } from '../../src/title/layout.ts';
+import { Pix, bayer, hash } from './pix';
+import { R, A, c } from './palette';
+import { LAYERS, ANCHORS, FAR_LIGHTS } from '../../src/title/layout';
 
 const H = ANCHORS.horizon;
 
 /** Fractional ramp level → whole level with a narrow ordered-dither seam. */
-function step(level: number, x: number, y: number, band = .34) {
+function step(level: number, x: number, y: number, band = .2) {
     const base = Math.floor(level), f = level - base, t = (f - (.5 - band / 2)) / band;
     return base + (t <= 0 ? 0 : t >= 1 ? 1 : bayer(x, y) < t ? 1 : 0);
 }
@@ -114,23 +114,23 @@ export function paintSky(): Pix {
     return p;
 }
 
-/** Seamless fog band: periodic in x, stepped alpha bands, darker underside. */
-export function paintFog(key: 'fogHigh' | 'fogLow'): Pix {
-    const L = LAYERS[key], p = new Pix(L.w, L.h);
-    const period = L.w, mist = (k: number) => [0, 1, 2, 3][k];
+/** Seamless fog band: exactly periodic in x (`periods` > 1 only for tests), stepped alpha bands. */
+export function paintFog(key: 'fogHigh' | 'fogLow', periods = 1): Pix {
+    const L = LAYERS[key], p = new Pix(L.w * periods, L.h);
+    const period = L.w;
+    if (period % 4) throw new Error('Fog period must be a multiple of the 4 px dither cell');
     const salt = key === 'fogHigh' ? 11 : 23;
     const wave = (x: number, f: number, s: number) => Math.sin((x / period) * Math.PI * 2 * f + hash(s, salt) * 6.283);
-    for (let x = 0; x < L.w; x++) {
+    for (let px = 0; px < p.w; px++) {
+        const x = px % period;
         const centre = L.h / 2 + wave(x, 2, 1) * 5 + wave(x, 5, 2) * 2;
         const thick = (L.h / 2 - 6) * (.65 + .35 * wave(x, 3, 3)) + wave(x, 7, 4) * 2;
         for (let y = 0; y < L.h; y++) {
             const d = Math.abs(y - centre) / Math.max(4, thick);
             if (d >= 1) continue;
             const v = (1 - d) * 3.6, level = Math.floor(v) + (bayer(x, y) < v - Math.floor(v) - .3 ? 1 : 0);
-            if (level > 0) p.data[y * L.w + x] = A_MIST[mist(Math.min(3, level - 1))];
+            if (level > 0) p.data[y * p.w + px] = A.mist[Math.min(3, level - 1)];
         }
     }
     return p;
 }
-import { A } from './palette.ts';
-const A_MIST = A.mist;

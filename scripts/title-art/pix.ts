@@ -1,7 +1,7 @@
 /** Indexed pixel canvas: whole-pixel primitives, ramp lighting and a deterministic PNG encoder. */
 import { deflateSync, inflateSync, crc32 } from 'node:zlib';
 import { createHash } from 'node:crypto';
-import { PALETTE, RAMP_OF, shift } from './palette.ts';
+import { PALETTE, RAMP_OF, shift } from './palette';
 
 export type Pt = readonly [number, number];
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);

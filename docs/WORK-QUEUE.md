@@ -23,6 +23,7 @@
 | [#16](https://github.com/xuys2025/escape-bincov/pull/16) · `feat/buildings-rpg-mall` | 最终头 `c558888` 已复核，完整 CI 通过，合并为 `9045139`；建筑/RPG/基地/商场进入主线 | [73 项验收登记](PR16-ACCEPTANCE-REGISTER.md)保留原图、真人、真机、独立性能及扩展组合缺口；已合并不代表这些全部通过 |
 | [#17](https://github.com/xuys2025/escape-bincov/pull/17) · `docs/pr16-development-plan` · `d0b6bd8` | M0–M7、68 项任务及 16+23+34 条验收已由 #16 完整采纳；逐行比较仅两段开头说明更新为历史事实 | 按“内容已由 #16 采纳”关闭，未再次合并旧说明。保留原分支、提交和[原规划交接](https://github.com/xuys2025/escape-bincov/blob/d0b6bd8259a2b102a565ae1c714c97edebf58bfc/handoff.md) |
 | [#18](https://github.com/xuys2025/escape-bincov/pull/18) · `docs/tarkov-ui-study` | 34 份原型、许可和证据已通过完整 CI 并合并为 `912aadc` | 原型仍非游戏；旧截图重采在历史 `baa8335` 工作区，不覆盖当前发布包 |
+| 主界面像素重做 · `feat/pixel-title-parallax`（PR 见下一行更新） | 按用户 2026-10-06 认可的像素概念与本地实施计划，独立重做主菜单：分层像素素材、2.5D 视差、环境动态、统一点阵字体、多端排布与离线打包 | 新建独立 PR，等待维护者审阅；真机、物理设备性能和最终审美确认保留为未验收项。详见 [像素主界面记录](title-parallax/README.md) |
 | [#20](https://github.com/xuys2025/escape-bincov/pull/20) · `feat/tactical-pixel-ui` | 战术界面、字体 B、统一美术已合并为 `9fe189c` | #10 整合继续保留布局、30 件库存美术和回归 |
 | [#19 流程整理](https://github.com/xuys2025/escape-bincov/pull/19) · `docs/pr-workflow-consolidation` | 统一任务入口及 #11 来源归档，完整 CI 通过后合并为 `07b1414` | 默认复用原 PR、需求先登记、最多两条新实现线等约定继续生效 |
 

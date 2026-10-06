@@ -3,8 +3,8 @@
  * see assets/fonts) so it shares the game's lettering: integer upscale, half-step bolding,
  * filled diagonal stairs, a few deterministic chips and a hard shadow. Interactive text stays HTML.
  */
-import { Pix, hash } from './pix.ts';
-import { c } from './palette.ts';
+import { Pix, hash } from './pix';
+import { c } from './palette';
 
 /** 16-row bitmaps sampled from assets/fonts/bincov-text.woff2 at its native 16 px ('#' = ink). */
 export const GLYPHS: Record<string, string[]> = {

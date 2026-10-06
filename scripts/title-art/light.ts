@@ -1,5 +1,5 @@
 /** Shared lighting model for the static paint: one warm lamp, cool daylight through the openings. */
-import { ANCHORS } from '../../src/title/layout.ts';
+import { ANCHORS } from '../../src/title/layout';
 
 export const LAMP = { x: ANCHORS.lampBulb.x, y: ANCHORS.lampBulb.y + 2 };
 
