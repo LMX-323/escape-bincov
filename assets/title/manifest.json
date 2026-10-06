@@ -1,12 +1,15 @@
 {
   "schema": 2,
   "generator": "scripts/title-art/generate.ts",
-  "note": "Imported artwork is immutable. Preparation writes only four derived PNGs and this manifest. All runtime imports are validated.",
+  "note": "Imported source artwork is immutable. Preparation samples reviewed source images, extrudes borders and writes seven derived PNGs plus this manifest. All runtime imports are validated.",
   "sources": {
     "assets/title/title-sky-new.png": "1b51cef97ddbf98b7ef3701a6060a76439fa9bbf7e6fa8b0f0e6f103ece8fafd",
-    "assets/title/title-pier-new.png": "aef6386aad3ca6405001d6207e02e514e7711e6e7db274190865afb33f63c33a",
     "assets/title/title-room-new.png": "c60459dde0bfca5f9906bb32efb5351dd0c622a4370388bcf8697cabb0e529b4",
-    "assets/title/sources/wordmark-industrial.png": "5b203e925184635e79ba76fe219df5d2599f225201706e081f2de9d5b2758d5c"
+    "assets/title/sources/wordmark-industrial.png": "5b203e925184635e79ba76fe219df5d2599f225201706e081f2de9d5b2758d5c",
+    "assets/title/sources/chair-depth-v2.png": "0e6c9a0f2f135639a710f7389661691527b53f537ca4b9ca423f63d8ef7eac92",
+    "assets/title/sources/desk-depth-v2.png": "73d8d9247301d58c895253218e01323321c515cc343d4259bdf5c828769a5898",
+    "assets/title/sources/boat-depth-v2.png": "f764484591118950310e63ea34e2d6d4500b1bd74afd9f4ba8bf215f54ae73ae",
+    "assets/title/sources/harbor-depth-v2.png": "99a1437ff179991dc52f96440f8ef91105bdb31e20285891b54bd510433e4a92"
   },
   "layers": {
     "sky": {
@@ -20,9 +23,9 @@
       "frameWidth": 964,
       "frameHeight": 424,
       "frames": 1,
-      "bytes": 866191,
-      "sha256": "c425eb8a378cf3e770b5e301e63ce7be7a0b447a4db644ade546715f5f1a8364",
-      "pixelSha256": "e1f183dee7acd38839d46cabd4ca86edaf317aafc1bef07b9553a440eb31acc0",
+      "bytes": 724921,
+      "sha256": "409f06b4c6e2329b088e0af2362687a319f1cd3ac1a75b9a744d440c45de73ee",
+      "pixelSha256": "b16805e78b6cf10b3aad6a8e3a0e8e0282a0b8842880d44fa9c3831377481285",
       "provenance": "Imported image with edge extrusion"
     },
     "harbor": {
@@ -36,9 +39,9 @@
       "frameWidth": 968,
       "frameHeight": 426,
       "frames": 1,
-      "bytes": 911400,
-      "sha256": "81b68739c62e5e32055849113cea25a92374c79b4133e091ec538092a1e77bea",
-      "pixelSha256": "4e4e2a9bf98b6afc8ae5267361284e6c117ff0a48ddd5e98e3c96970fb2508d9",
+      "bytes": 725802,
+      "sha256": "63f24a0644868803be65557b8a03dc166007f091d25a7379c323374675264728",
+      "pixelSha256": "b0270ff072f8f5e097e9032a0b45fc2fef3ac42599c9e0eb471817db2d0bc3d4",
       "provenance": "Imported image with edge extrusion"
     },
     "fogHigh": {
@@ -74,19 +77,19 @@
       "provenance": "Existing deterministic effect sprite"
     },
     "boat": {
-      "file": "assets/title/title-boat-new.png",
-      "key": "title-boat-new",
+      "file": "assets/title/title-boat-depth-v2.png",
+      "key": "title-boat-depth-v2",
       "group": "harbor",
-      "x": 352,
-      "y": 86,
-      "w": 156,
-      "h": 216,
-      "frameWidth": 156,
-      "frameHeight": 216,
+      "x": 335,
+      "y": 79,
+      "w": 164,
+      "h": 218,
+      "frameWidth": 164,
+      "frameHeight": 218,
       "frames": 1,
-      "bytes": 34116,
-      "sha256": "b7fd40205abf151686bb228589be7b4884697e5bb1a710d14719db74f0039832",
-      "pixelSha256": "051175f19405a85af5fd705d13ee95a7838bbde6f7551114760283d39ce1ac32",
+      "bytes": 32287,
+      "sha256": "9e353f184853323e51c3a9e458e933895a4bd4d38dac231f03c8bf99504973a6",
+      "pixelSha256": "58c528437aae1b8da4c0e23ebb51fd16ef1b4bb6c1f250e8ca5c4505e6eab85d",
       "provenance": "Imported ImageGen pixel layer"
     },
     "mooring": {
@@ -154,19 +157,19 @@
       "provenance": "Imported ImageGen pixel layer"
     },
     "desk": {
-      "file": "assets/title/title-desk-new.png",
-      "key": "title-desk-new",
+      "file": "assets/title/title-desk-depth-v2.png",
+      "key": "title-desk-depth-v2",
       "group": "desk",
-      "x": 392,
-      "y": 232,
-      "w": 576,
-      "h": 312,
-      "frameWidth": 576,
-      "frameHeight": 312,
+      "x": 350,
+      "y": 206,
+      "w": 656,
+      "h": 346,
+      "frameWidth": 656,
+      "frameHeight": 346,
       "frames": 1,
-      "bytes": 260670,
-      "sha256": "121c890fe1417b10cc05d899c8d7a723acc512d11a574d4ea946ad0ecd71888f",
-      "pixelSha256": "647938af9ecd4330b4fb7dcae4722648b859f74151f9255e6d58805c24fe2084",
+      "bytes": 396859,
+      "sha256": "2c965b11213e9bf2be8d3ce9e9e6ec7b465c6b2149b84e7aa0efc7a80ee644dc",
+      "pixelSha256": "15518234ccfcbb16473bc612c95de06f0842bc0c2944a5911606b4350efc6b4d",
       "provenance": "Imported ImageGen pixel layer"
     },
     "light": {
@@ -202,27 +205,27 @@
       "provenance": "Existing deterministic effect sprite"
     },
     "chair": {
-      "file": "assets/title/title-chair-new.png",
-      "key": "title-chair-new",
+      "file": "assets/title/title-chair-depth-v2.png",
+      "key": "title-chair-depth-v2",
       "group": "chair",
-      "x": 244,
-      "y": 352,
-      "w": 196,
-      "h": 196,
-      "frameWidth": 196,
-      "frameHeight": 196,
+      "x": 247,
+      "y": 377,
+      "w": 292,
+      "h": 226,
+      "frameWidth": 292,
+      "frameHeight": 226,
       "frames": 1,
-      "bytes": 30988,
-      "sha256": "3af385cda4997eefda969fc99f06c6f4a9dd20219c00aa1fbc82071537f44f01",
-      "pixelSha256": "d1a9f30a06459f43f4c6cf612f88ddcc12d4135f7e00dbb0134376ce777c1695",
+      "bytes": 79107,
+      "sha256": "0a38b28a00a26af72b87a02062d36efb2e54a3f8b0a4b5e45b4633d57d5e243d",
+      "pixelSha256": "fe9de64e8befac546ca63783ae32f3355f82fe99f1da9e57b96f85f569d1141c",
       "provenance": "Imported ImageGen pixel layer"
     },
     "fore": {
       "file": "assets/title/title-fore-new.png",
       "key": "title-fore-new",
       "group": "fore",
-      "x": 862,
-      "y": -6,
+      "x": 787,
+      "y": -24,
       "w": 112,
       "h": 552,
       "frames": 5,
@@ -284,7 +287,7 @@
     }
   },
   "totals": {
-    "pngBytes": 3257344,
-    "rgbaBytes": 10365696
+    "pngBytes": 3112955,
+    "rgbaBytes": 10673280
   }
 }

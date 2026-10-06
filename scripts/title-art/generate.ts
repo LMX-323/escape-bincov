@@ -7,7 +7,16 @@ const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const path = (name: string) => 'assets/title/' + name + '.png';
 const read = (name: string) => decodePng(readFileSync(path(name)));
 const file = (name: LayerName) => path(LAYERS[name].key);
-const sourceFiles = ['title-sky-new', 'title-pier-new', 'title-room-new', 'sources/wordmark-industrial'];
+const sourceFiles = ['title-sky-new', 'title-room-new', 'sources/wordmark-industrial', 'sources/chair-depth-v2', 'sources/desk-depth-v2', 'sources/boat-depth-v2', 'sources/harbor-depth-v2'];
+/** Texture preparation only: preserve generated pixels/alpha with nearest sampling. */
+function sampled(src: RGBA, w: number, h: number): RGBA {
+    const data = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const p = (Math.min(src.h - 1, Math.floor((y + .5) * src.h / h)) * src.w + Math.min(src.w - 1, Math.floor((x + .5) * src.w / w))) * 4;
+        data.set(src.data.subarray(p, p + 4), (y * w + x) * 4);
+    }
+    return { w, h, data };
+}
 function wordmark(): RGBA {
     const src = read('sources/wordmark-industrial'), ink = (p: number) => src.data[p + 3] >= 192 && src.data[p] > 190 && src.data[p + 1] > 172 && src.data[p + 2] > 130;
     let x0 = src.w, y0 = src.h, x1 = 0, y1 = 0;
@@ -52,7 +61,16 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
         console.log('Imported title assets and derivatives verified');
     }
     else {
-        const derived: Record<string, RGBA> = { 'title-sky-ready': extrude(read('title-sky-new'), 2, 2), 'title-harbor-ready': extrude(read('title-pier-new'), 4, 3), 'title-room-ready': extrude(read('title-room-new'), 6, 4), 'title-wordmark-industrial': wordmark() };
+        const harbor = sampled(read('sources/harbor-depth-v2'), 960, 420);
+        const derived: Record<string, RGBA> = {
+            'title-sky-ready': extrude(harbor, 2, 2),
+            'title-harbor-ready': extrude(harbor, 4, 3),
+            'title-room-ready': extrude(read('title-room-new'), 6, 4),
+            'title-wordmark-industrial': wordmark(),
+            'title-chair-depth-v2': sampled(read('sources/chair-depth-v2'), LAYERS.chair.w, LAYERS.chair.h),
+            'title-desk-depth-v2': sampled(read('sources/desk-depth-v2'), LAYERS.desk.w, LAYERS.desk.h),
+            'title-boat-depth-v2': sampled(read('sources/boat-depth-v2'), LAYERS.boat.w, LAYERS.boat.h),
+        };
         for (const [name, im] of Object.entries(derived))
             writeFileSync(path(name), encodePng(im));
         const layers: Record<string, unknown> = {};
@@ -67,7 +85,7 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
         }
         const sources = Object.fromEntries(sourceFiles.map(n => [path(n), sha(readFileSync(path(n)))]));
         mkdirSync('assets/title', { recursive: true });
-        writeFileSync('assets/title/manifest.json', JSON.stringify({ schema: 2, generator: 'scripts/title-art/generate.ts', note: 'Imported artwork is immutable. Preparation writes only four derived PNGs and this manifest. All runtime imports are validated.', sources, layers, totals: { pngBytes, rgbaBytes } }, null, 2) + '\n');
+        writeFileSync('assets/title/manifest.json', JSON.stringify({ schema: 2, generator: 'scripts/title-art/generate.ts', note: 'Imported source artwork is immutable. Preparation samples reviewed source images, extrudes borders and writes seven derived PNGs plus this manifest. All runtime imports are validated.', sources, layers, totals: { pngBytes, rgbaBytes } }, null, 2) + '\n');
         validateTitleArt();
         console.log('Prepared borders, flat industrial wordmark and verified runtime manifest');
     }

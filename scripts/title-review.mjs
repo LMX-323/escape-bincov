@@ -142,7 +142,7 @@ try {
     const corner = await snap();
     await page.mouse.move(0, 0, { steps: 8 }); await page.waitForTimeout(1600);
     const opposite = await snap();
-    const maxima = { far: [1, 1], harbor: [3, 2], room: [5, 3], lamp: [6, 3], desk: [7, 3], chair: [9, 4], fore: [12, 5] };
+    const maxima = { far: [1, 1], harbor: [3, 2], room: [5, 3], lamp: [6, 3], desk: [8, 4], chair: [16, 7], fore: [24, 10] };
     for (const [name, [x, y]] of Object.entries(maxima)) {
       assert.deepEqual(corner.groups[name], [-x, -y], `${name} at bottom-right corner`);
       assert.deepEqual(opposite.groups[name], [x, y], `${name} at top-left corner`);

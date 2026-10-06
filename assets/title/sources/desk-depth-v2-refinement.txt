@@ -1,0 +1,8 @@
+Use case: precise-object-edit.
+Asset type: final candidate transparent midground pixel desk layer.
+Image 1 is the desk edit target. Image 2 is the approved whole scene, perspective and lighting authority.
+Preserve the desk's overall silhouette and its broad slanted tabletop from image 1. Make three tightly constrained corrections toward image 2:
+1. Keep the left corner and table width fixed, but extend the lower cabinet/front boards downward by about 12 percent of image height. These boards are cropped at bottom; no full legs or floor. This is a slightly taller landscape canvas about 1.75:1, extra area is at the bottom only.
+2. Shift the radio group with its small receiver and headphones about 7 percent of canvas width LEFT along the back edge of the tabletop; make that group 8 percent smaller. The bag is also about 12 percent smaller and stays to its right. Preserve the rifle and map positions and shape.
+3. Unify light: amber lamp pool mainly on upper-left/centre paper map, warmer top edge of radio; the lower-right forward table face and underside fall decisively into cool deep charcoal shadows. The front table rim has a few broken amber chips, not an unbroken bright orange outline. Preserve visible contact/cast shadows under each object and paper folds. Restrained material noise, deliberate solid clusters of pixel art.
+Everything else unchanged. True transparent background. No room, window, chair, rope, lamp, text, blur, antialias, gradient overlay or water. Pixel art matching the concept; preserve crisp hard clusters.

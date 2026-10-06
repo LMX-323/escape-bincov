@@ -79,7 +79,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         boat = img('boat');
         groups.harbor.add(waterSurface.front);
         mooring = img('mooring', 1);
-        img('pierFront');
+        img('pierFront').setTint(0xa7b5bd);
         for (let i = 0; i < 8; i++) glints.push({ img: img('sparks', i & 1 ? SPARK.coolLong : SPARK.cool, Math.round(OPENINGS.door.x + 4 + rng() * (OPENINGS.door.w - 16)), Math.round(PIER.top + 8 + rng() * (PIER.bottom - PIER.top - 12))), period: 2200 + rng() * 2600, phase: rng(), still: 0 });
         for (let i = 0; i < 70; i++) {
             const d: Drop = { img: img('rain', 0, 0, 0), x: 0, y: 0, speed: 0, floor: 0 };
@@ -87,19 +87,26 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         }
 
         // ---- Room, lamp, desk (with radio needle, status lamp, light pool, dust), chair, rope ----
-        img('room');
+        // The painted room is behind the desk. Keep its amber edges subordinate to the lamp pool.
+        img('room').setTint(0xc8cdcf);
         lamp = img('lamp', 2);
         img('desk');
         needle = img('radioFx', 1, ANCHORS.radioDial.x - 8, ANCHORS.radioDial.y - 9);
         led = img('radioFx', 3, ANCHORS.radioLed.x - 7, ANCHORS.radioLed.y - 3);
-        light = img('light').setBlendMode(Phaser.BlendModes.ADD);
+        // The desk already contains directional lighting and contact shadows. Add only a breath.
+        light = img('light').setBlendMode(Phaser.BlendModes.ADD).setAlpha(.055);
         for (let i = 0; i < 14; i++) {
             const m: Mote = { img: img('sparks', SPARK.mote, 0, 0), x: 0, y: 0, vx: 0, vy: 0, phase: rng() };
             groups.desk.add(m.img);
             respawnMote(m, true); motes.push(m);
         }
         img('chair');
-        rope = img('fore', 2);
+        // Near-camera silhouettes crop out of frame, as in the approved composition.
+        // Scale both axes together: the rope's braid size must grow with its apparent thickness.
+        const jamb = scene.add.graphics().fillStyle(0x091519, .96);
+        jamb.fillPoints([{x:966,y:-20},{x:990,y:-20},{x:990,y:570},{x:893,y:570},{x:922,y:430},{x:932,y:230}], true);
+        groups.fore.add(jamb);
+        rope = img('fore', 2).setScale(2.5).setTint(0xa5aba6);
     }
     function spawnDrop(d: Drop, initial: boolean) {
         const panes = [OPENINGS.door, OPENINGS.door, OPENINGS.window, OPENINGS.window, OPENINGS.windowLeft, OPENINGS.windowTopLeft, OPENINGS.windowTopRight, OPENINGS.doorGlass];
@@ -177,7 +184,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         const sway = poseFrame(wave(clock, 9400, .1), 5) - 2;
         place(sway);
         // Lamp: steady with a rare, short dip, never a strobe.
-        light?.setAlpha(blink(clock, 11300, .012, .4) ? .82 : 1);
+        light?.setAlpha(blink(clock, 11300, .012, .4) ? .035 : .055);
         // Boat bob (1 px each way) with the bow line following, rope end swaying on its own period.
         const bob = Math.round(wave(clock, 7300, .6) * 1.2);
         const b = Math.max(-1, Math.min(1, bob));
