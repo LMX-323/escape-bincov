@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-06",
+  "baselineMain": "49738b89cc8556a0b39d339239bf09945e44ab9e",
+  "branch": "feat/tactical-pixel-ui",
+  "html": {
+    "bytes": 1791037,
+    "sha256": "e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc"
+  },
+  "environment": {
+    "os": "Linux x64",
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "chromium": "153.0.8010.12",
+    "mode": "headless; offline file HTML; touch emulation"
+  },
+  "checks": [
+    {
+      "command": "pnpm test",
+      "status": "passed",
+      "testFiles": 11
+    },
+    {
+      "command": "pnpm package",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm test:browser",
+      "status": "passed",
+      "checks": 24
+    },
+    {
+      "command": "pnpm test:desktop-input",
+      "status": "passed",
+      "checks": 10
+    },
+    {
+      "command": "pnpm test:ui",
+      "status": "passed",
+      "checks": 38
+    },
+    {
+      "command": "pnpm test:title",
+      "status": "passed",
+      "checks": 16
+    },
+    {
+      "command": "pnpm test:save-browser",
+      "status": "passed",
+      "checks": 9
+    },
+    {
+      "command": "pnpm test:loot",
+      "status": "passed",
+      "checks": 44
+    },
+    {
+      "command": "pnpm test:mobile",
+      "status": "passed",
+      "checks": 10
+    },
+    {
+      "command": "pnpm test:mobile-ux",
+      "status": "passed",
+      "checks": 11
+    },
+    {
+      "command": "pnpm test:portable",
+      "status": "passed",
+      "checks": 6
+    },
+    {
+      "command": "pnpm test:tactical",
+      "status": "passed",
+      "checks": 8
+    },
+    {
+      "command": "pnpm test:art",
+      "status": "passed",
+      "textures": 100,
+      "checks": [
+        "All 20 24px item textures present, nonempty and unique",
+        "All 20 32px item textures present, nonempty and unique",
+        "All 20 proportioned inventory textures are present and unique",
+        "Five actor identities, four separate corpses and distinct full/empty crate textures",
+        "Embedded Bincov Text font ready before the game starts",
+        "Death/checkpoint restore retains corpse art; loose loot body remains untinted",
+        "Empty crate appearance survives checkpoint restore and a validated write"
+      ]
+    }
+  ],
+  "naturalPlay": {
+    "status": "passed",
+    "minutes": 10,
+    "startedAt": "2026-10-05T19:53:50.842Z",
+    "finishedAt": "2026-10-05T20:04:04.757Z",
+    "stats": {
+      "runs": 10,
+      "extracts": 5,
+      "kills": 60
+    },
+    "openedContainers": 48,
+    "transfers": 61,
+    "errors": [],
+    "externalRequests": [],
+    "scope": "真实时间流程覆盖本轮战斗/素材；之后商人目录与 SVG 尺寸修正已由最终界面专项复测。自动玩家不是真人审美或手感评测。"
+  },
+  "performance": {
+    "status": "passed",
+    "method": "Sequential ABBA at each viewport, isolated offline contexts, real seed-42 deployment, read-only state access, 120 warm-up RAF frames and 180 sampled intervals; no other local browser suites running. Headless measurement, not a real-device guarantee.",
+    "summary": [
+      {
+        "width": 1280,
+        "baselineMeanFps": 59.34,
+        "candidateMeanFps": 59.84
+      },
+      {
+        "width": 1920,
+        "baselineMeanFps": 59.03,
+        "candidateMeanFps": 59.51
+      }
+    ]
+  },
+  "font": {
+    "choice": "B",
+    "family": "Bincov Text",
+    "characters": 739,
+    "license": "SIL OFL 1.1",
+    "runtime": "Embedded WOFF2; no external request"
+  },
+  "unchanged": [
+    "domain rules",
+    "world grid",
+    "balance",
+    "session",
+    "checkpoint",
+    "recovery store",
+    "lockfile"
+  ],
+  "screenshots": {
+    "after-1280x720.png": "313c8c39268f2de9a038845c95b3d75900a4beb0de21085ac0c485c15ebd096a",
+    "after-1920x1080.png": "5c8874d5acd0e887214e548da6cf920ffe1202fa808023a775b4c6bf840a1fb8",
+    "before-main-1280x720.png": "f1e149faca491c5daf54706185bd9514f8a28459baea2a489c4c838e21645d51",
+    "combat-844.png": "33916b2daf2461c2b03c5b684ff02297c3dc847a94a0f9be63e3a461d8376f4f",
+    "high-tide-1280.png": "5c8a4cc7fe096d4756c944e21f938e11408b0c61299082318212650cea08c516",
+    "home-1280.png": "7c01396387414d3aed50e4efddc82271db3805746df739e6e1935badef842619",
+    "inventory-atlas.png": "3a02e94e710baef3a602f8402fe582968d0ff2435597f573b5fcb71b01b91392",
+    "loot-1920x1080.png": "a4fa92a3a85578bfd13b047b00d5886673c351b879047f6abad8b0e5baf5cbc6",
+    "map-1280.png": "18f0a92fff110c37b2bcbd4108f8a325fbcbc3695e59c51e1f0c43bdb1bf9ce1",
+    "mobile-844.png": "69a2d525cef23df75f023306f319248ddd860ef36d7a10425976ab89603f48a4",
+    "quests-1280.png": "b6edd8e1ffd78ea1068ba10f944b24f56b03c7f45e4271b3964833aa70d87439",
+    "raid-1280.png": "1339579d7f0c00cdd48f15fc773701c0884749e78aa6a9a706e946b435f36a6e",
+    "title-1920.png": "928619c5c2c2b786d793bc6c43c02ad6ba7fee8bff98baaf54d91bcf4fe24941",
+    "trader-1920x1080.png": "5ae6ee139f4c14bca624242e4815a5eba9f4317f6d05742c9af8aae4d2da968b"
+  },
+  "limitations": [
+    "iOS Safari / Android real devices not tested",
+    "No player recognition blind test or human balance evaluation",
+    "No China ISP testing",
+    "PR CI status is reported by GitHub; local evidence does not substitute for it"
+  ]
+}

@@ -90,6 +90,9 @@ async function suite(viewport) {
     await waitState('run');
     await page.waitForFunction(() => window.__bincov.app.raid?.player?.active && window.__bincov.app.raid.enemies.length === 25);
     assert.equal((await run()).seed, seed);
+    const combat = await page.locator('#game canvas').boundingBox();
+    const scale = Math.floor(Math.min(viewport.width / 960, viewport.height / 540));
+    assert.equal(combat.width, 960 * scale); assert.equal(combat.height, 540 * scale);
     const sceneKeys = await page.evaluate(() => window.__bincov.app.game.scene.getScenes(true).map(scene => scene.scene.key));
     assert.deepEqual(sceneKeys, ['Raid'], 'Only the current scene may continue running');
   }
@@ -137,10 +140,9 @@ async function suite(viewport) {
     });
     await step('hideout, merchant price and pointer inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
-      // The responsive title must not change the existing game/inventory geometry.
+      // Hideout panels use the viewport; combat retains the fixed logical canvas.
       const bounds = await page.locator('#game canvas').boundingBox();
-      const frameScale = Math.floor(Math.min(viewport.width / 960, viewport.height / 540));
-      assert.equal(bounds.width, 960 * frameScale); assert.equal(bounds.height, 540 * frameScale);
+      assert.equal(bounds.width, Math.min(viewport.width, 1808)); assert.equal(bounds.height, viewport.height);
       assert.equal(bounds.x, (viewport.width - bounds.width) / 2);
       assert.equal(bounds.y, (viewport.height - bounds.height) / 2);
       const initial = await state();

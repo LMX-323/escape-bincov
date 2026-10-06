@@ -20,7 +20,9 @@
     "test:title": "node scripts/title-review.mjs",
     "test:loot": "node scripts/loot-browser-test.mjs",
     "test:loot-target": "node --import tsx scripts/loot-target-test.mjs",
-    "test:qol": "node scripts/qol-test.mjs"
+    "test:qol": "node scripts/qol-test.mjs",
+    "test:art": "node --import tsx scripts/art-review.mjs",
+    "test:tactical": "node --import tsx scripts/tactical-review.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"

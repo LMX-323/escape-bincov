@@ -1,0 +1,562 @@
+{
+  "definitions": {
+    "knife": {
+      "id": "knife",
+      "name": "水手匕首",
+      "short": "匕首",
+      "w": 1,
+      "h": 2,
+      "weight": 0.35,
+      "stack": 1,
+      "buy": 0,
+      "sell": 0,
+      "kind": "weapon",
+      "description": "随身携带的旧匕首。撤离失败也不会丢失。",
+      "color": 11846591
+    },
+    "pistol": {
+      "id": "pistol",
+      "name": "旧式手枪",
+      "short": "手枪",
+      "w": 2,
+      "h": 1,
+      "weight": 0.8,
+      "stack": 1,
+      "buy": 320,
+      "sell": 150,
+      "kind": "weapon",
+      "description": "使用 9 毫米弹，弹匣容量 8 发。适合近距离交火。",
+      "color": 10988192
+    },
+    "shotgun": {
+      "id": "shotgun",
+      "name": "双管霰弹枪",
+      "short": "双管",
+      "w": 3,
+      "h": 1,
+      "weight": 2.7,
+      "stack": 1,
+      "buy": 780,
+      "sell": 370,
+      "kind": "weapon",
+      "description": "使用霰弹，可装填 2 发。近距离更容易让多枚弹丸命中。",
+      "color": 12944472
+    },
+    "carbine": {
+      "id": "carbine",
+      "name": "半自动卡宾枪",
+      "short": "卡宾",
+      "w": 3,
+      "h": 1,
+      "weight": 2.4,
+      "stack": 1,
+      "buy": 1200,
+      "sell": 580,
+      "kind": "weapon",
+      "description": "使用卡宾枪弹，弹匣容量 12 发。适合远距离点射。",
+      "color": 9608824
+    },
+    "ammo9": {
+      "id": "ammo9",
+      "name": "9 毫米弹",
+      "short": "9mm",
+      "w": 1,
+      "h": 1,
+      "weight": 0.012,
+      "stack": 40,
+      "buy": 7,
+      "sell": 3,
+      "kind": "ammo",
+      "description": "旧式手枪用弹药。商店按包出售，背包数量按发计算。",
+      "color": 13347180
+    },
+    "shell": {
+      "id": "shell",
+      "name": "霰弹",
+      "short": "霰弹",
+      "w": 1,
+      "h": 1,
+      "weight": 0.045,
+      "stack": 20,
+      "buy": 16,
+      "sell": 7,
+      "kind": "ammo",
+      "description": "双管霰弹枪用弹药。",
+      "color": 13067856
+    },
+    "ammoR": {
+      "id": "ammoR",
+      "name": "卡宾枪弹",
+      "short": "卡宾弹",
+      "w": 1,
+      "h": 1,
+      "weight": 0.022,
+      "stack": 30,
+      "buy": 12,
+      "sell": 5,
+      "kind": "ammo",
+      "description": "半自动卡宾枪用弹药。",
+      "color": 13352328
+    },
+    "bandage": {
+      "id": "bandage",
+      "name": "密封绷带",
+      "short": "绷带",
+      "w": 1,
+      "h": 1,
+      "weight": 0.12,
+      "stack": 4,
+      "buy": 45,
+      "sell": 18,
+      "kind": "medical",
+      "description": "止血，恢复 16 点生命。",
+      "color": 14342589
+    },
+    "medkit": {
+      "id": "medkit",
+      "name": "急救包",
+      "short": "急救包",
+      "w": 2,
+      "h": 1,
+      "weight": 0.65,
+      "stack": 2,
+      "buy": 160,
+      "sell": 65,
+      "kind": "medical",
+      "description": "恢复 55 点生命并止血。",
+      "color": 13199705
+    },
+    "antidote": {
+      "id": "antidote",
+      "name": "除藻药剂",
+      "short": "除藻剂",
+      "w": 1,
+      "h": 1,
+      "weight": 0.2,
+      "stack": 3,
+      "buy": 120,
+      "sell": 50,
+      "kind": "medical",
+      "description": "降低 55 点污染。",
+      "color": 9155744
+    },
+    "water": {
+      "id": "water",
+      "name": "净水瓶",
+      "short": "净水",
+      "w": 1,
+      "h": 2,
+      "weight": 0.6,
+      "stack": 2,
+      "buy": 35,
+      "sell": 14,
+      "kind": "food",
+      "description": "恢复全部耐力，降低 12 点污染。",
+      "color": 8628666
+    },
+    "food": {
+      "id": "food",
+      "name": "鱼松罐头",
+      "short": "罐头",
+      "w": 1,
+      "h": 1,
+      "weight": 0.3,
+      "stack": 3,
+      "buy": 50,
+      "sell": 20,
+      "kind": "food",
+      "description": "恢复 12 点生命和 50 点耐力。",
+      "color": 13347446
+    },
+    "scrap": {
+      "id": "scrap",
+      "name": "泵机零件",
+      "short": "零件",
+      "w": 1,
+      "h": 1,
+      "weight": 0.55,
+      "stack": 5,
+      "buy": 85,
+      "sell": 35,
+      "kind": "part",
+      "description": "水产站维修用零件，共需 3 个。泵壳上还留着盐渍。",
+      "color": 10267296
+    },
+    "wire": {
+      "id": "wire",
+      "name": "绝缘线圈",
+      "short": "线圈",
+      "w": 1,
+      "h": 1,
+      "weight": 0.25,
+      "stack": 5,
+      "buy": 65,
+      "sell": 28,
+      "kind": "part",
+      "description": "水产站维修用线圈，共需 2 卷。铜芯还完好。",
+      "color": 12550228
+    },
+    "fuse": {
+      "id": "fuse",
+      "name": "陶瓷保险管",
+      "short": "保险管",
+      "w": 1,
+      "h": 1,
+      "weight": 0.1,
+      "stack": 4,
+      "buy": 100,
+      "sell": 45,
+      "kind": "part",
+      "description": "水产站维修用保险管，共需 1 支。",
+      "color": 13682081
+    },
+    "battery": {
+      "id": "battery",
+      "name": "观测仪电池",
+      "short": "电池",
+      "w": 1,
+      "h": 2,
+      "weight": 0.8,
+      "stack": 2,
+      "buy": 160,
+      "sell": 75,
+      "kind": "part",
+      "description": "潮汐观测站的备用电池，还剩一些电。可出售。",
+      "color": 11115102
+    },
+    "watch": {
+      "id": "watch",
+      "name": "防水怀表",
+      "short": "怀表",
+      "w": 1,
+      "h": 1,
+      "weight": 0.15,
+      "stack": 2,
+      "buy": 0,
+      "sell": 240,
+      "kind": "valuable",
+      "description": "指针停在 03:17。表壳完好，可以卖个好价钱。",
+      "color": 13412969
+    },
+    "pearl": {
+      "id": "pearl",
+      "name": "雾色海珠",
+      "short": "海珠",
+      "w": 1,
+      "h": 1,
+      "weight": 0.08,
+      "stack": 3,
+      "buy": 0,
+      "sell": 360,
+      "kind": "valuable",
+      "description": "表面像蒙着一层雾，离水后仍泛着微光。可出售。",
+      "color": 11587264
+    },
+    "sample": {
+      "id": "sample",
+      "name": "赤潮封存样本",
+      "short": "样本",
+      "w": 1,
+      "h": 1,
+      "weight": 0.25,
+      "stack": 1,
+      "buy": 0,
+      "sell": 100,
+      "kind": "quest",
+      "description": "潮汐观测站封存的赤潮样本，用于任务「瓶中的潮声」。",
+      "color": 12740180
+    },
+    "ledger": {
+      "id": "ledger",
+      "name": "港口船册",
+      "short": "船册",
+      "w": 2,
+      "h": 1,
+      "weight": 0.45,
+      "stack": 1,
+      "buy": 0,
+      "sell": 130,
+      "kind": "quest",
+      "description": "旧渔港的值班船册，用于任务「未归的第七艘船」。",
+      "color": 13812630
+    }
+  },
+  "fixtures": {
+    "stash": {
+      "w": 10,
+      "h": 6,
+      "items": [
+        {
+          "id": "shotgun",
+          "qty": 1,
+          "x": 0,
+          "y": 0,
+          "uid": "study-stash-0"
+        },
+        {
+          "id": "carbine",
+          "qty": 1,
+          "x": 3,
+          "y": 0,
+          "uid": "study-stash-1"
+        },
+        {
+          "id": "pistol",
+          "qty": 1,
+          "x": 6,
+          "y": 0,
+          "uid": "study-stash-2"
+        },
+        {
+          "id": "ammo9",
+          "qty": 24,
+          "x": 8,
+          "y": 0,
+          "uid": "study-stash-3"
+        },
+        {
+          "id": "ammoR",
+          "qty": 20,
+          "x": 9,
+          "y": 0,
+          "uid": "study-stash-4"
+        },
+        {
+          "id": "medkit",
+          "qty": 2,
+          "x": 0,
+          "y": 1,
+          "uid": "study-stash-5"
+        },
+        {
+          "id": "bandage",
+          "qty": 4,
+          "x": 2,
+          "y": 1,
+          "uid": "study-stash-6"
+        },
+        {
+          "id": "antidote",
+          "qty": 2,
+          "x": 3,
+          "y": 1,
+          "uid": "study-stash-7"
+        },
+        {
+          "id": "water",
+          "qty": 2,
+          "x": 4,
+          "y": 1,
+          "uid": "study-stash-8"
+        },
+        {
+          "id": "food",
+          "qty": 3,
+          "x": 5,
+          "y": 1,
+          "uid": "study-stash-9"
+        },
+        {
+          "id": "shell",
+          "qty": 12,
+          "x": 6,
+          "y": 1,
+          "uid": "study-stash-10"
+        },
+        {
+          "id": "battery",
+          "qty": 1,
+          "x": 7,
+          "y": 1,
+          "uid": "study-stash-11"
+        },
+        {
+          "id": "wire",
+          "qty": 2,
+          "x": 8,
+          "y": 1,
+          "uid": "study-stash-12"
+        },
+        {
+          "id": "fuse",
+          "qty": 1,
+          "x": 9,
+          "y": 1,
+          "uid": "study-stash-13"
+        },
+        {
+          "id": "scrap",
+          "qty": 3,
+          "x": 0,
+          "y": 2,
+          "uid": "study-stash-14"
+        },
+        {
+          "id": "watch",
+          "qty": 1,
+          "x": 1,
+          "y": 2,
+          "uid": "study-stash-15"
+        },
+        {
+          "id": "pearl",
+          "qty": 1,
+          "x": 2,
+          "y": 2,
+          "uid": "study-stash-16"
+        },
+        {
+          "id": "sample",
+          "qty": 1,
+          "x": 0,
+          "y": 3,
+          "uid": "study-stash-17"
+        },
+        {
+          "id": "ledger",
+          "qty": 1,
+          "x": 1,
+          "y": 3,
+          "uid": "study-stash-18"
+        }
+      ]
+    },
+    "bag": {
+      "w": 6,
+      "h": 5,
+      "items": [
+        {
+          "id": "ammo9",
+          "qty": 32,
+          "x": 0,
+          "y": 0,
+          "uid": "study-bag-0"
+        },
+        {
+          "id": "bandage",
+          "qty": 2,
+          "x": 1,
+          "y": 0,
+          "uid": "study-bag-1"
+        },
+        {
+          "id": "water",
+          "qty": 1,
+          "x": 2,
+          "y": 0,
+          "uid": "study-bag-2"
+        },
+        {
+          "id": "medkit",
+          "qty": 1,
+          "x": 3,
+          "y": 0,
+          "uid": "study-bag-3"
+        },
+        {
+          "id": "food",
+          "qty": 1,
+          "x": 5,
+          "y": 0,
+          "uid": "study-bag-4"
+        },
+        {
+          "id": "antidote",
+          "qty": 1,
+          "x": 0,
+          "y": 1,
+          "uid": "study-bag-5"
+        },
+        {
+          "id": "wire",
+          "qty": 1,
+          "x": 3,
+          "y": 2,
+          "uid": "study-bag-6"
+        }
+      ]
+    },
+    "safe": {
+      "w": 2,
+      "h": 2,
+      "items": [
+        {
+          "id": "sample",
+          "qty": 1,
+          "x": 0,
+          "y": 0,
+          "uid": "study-safe-0"
+        },
+        {
+          "id": "pearl",
+          "qty": 1,
+          "x": 1,
+          "y": 0,
+          "uid": "study-safe-1"
+        }
+      ]
+    },
+    "container": {
+      "w": 6,
+      "h": 5,
+      "items": [
+        {
+          "id": "carbine",
+          "qty": 1,
+          "x": 0,
+          "y": 0,
+          "uid": "study-loot-0"
+        },
+        {
+          "id": "ammoR",
+          "qty": 20,
+          "x": 3,
+          "y": 0,
+          "uid": "study-loot-1"
+        },
+        {
+          "id": "watch",
+          "qty": 1,
+          "x": 4,
+          "y": 0,
+          "uid": "study-loot-2"
+        },
+        {
+          "id": "fuse",
+          "qty": 2,
+          "x": 5,
+          "y": 0,
+          "uid": "study-loot-3"
+        },
+        {
+          "id": "medkit",
+          "qty": 1,
+          "x": 0,
+          "y": 1,
+          "uid": "study-loot-4"
+        },
+        {
+          "id": "battery",
+          "qty": 1,
+          "x": 2,
+          "y": 1,
+          "uid": "study-loot-5"
+        },
+        {
+          "id": "wire",
+          "qty": 2,
+          "x": 3,
+          "y": 1,
+          "uid": "study-loot-6"
+        },
+        {
+          "id": "ledger",
+          "qty": 1,
+          "x": 0,
+          "y": 3,
+          "uid": "study-loot-7"
+        }
+      ]
+    }
+  }
+}

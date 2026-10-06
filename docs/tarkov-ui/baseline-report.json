@@ -1,0 +1,10 @@
+{
+  "main": "e7252e6a595022212a60bcec22ac75068173e480",
+  "mainHtmlSha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+  "artCommit": "09e07137948d8fc0ac5676b6f2369d7e218129c9",
+  "method": "Main HTML, test=1 fixtures. Inventories match design specimen; raid positioned at generated crate, simulation paused only to capture reproducibly. Art exported separately from PR #11 candidate, not main.",
+  "errors": [],
+  "externalRequests": [],
+  "browser": "153.0.8010.12",
+  "artHtmlSha256": "23e8eee5d6b2cca8579c2ae735f7f20cc649935d78236ed8187343b78d72e1ad"
+}
