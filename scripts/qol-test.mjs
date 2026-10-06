@@ -39,6 +39,18 @@ async function suite(viewport, touch = false) {
     await action('tab', 'arms').click();
     await step('mixed transaction stays provisional, cancels both ways, confirms leaving and uses net cash', async () => {
       const before = await save();
+      if (touch) {
+        const merchant = page.locator('[data-grid="merchant"]');
+        await page.locator('[data-source="merchant"][data-item-id="battery"]').click();
+        const scroll = await merchant.evaluate(el => { el.parentElement.scrollTop=70; return el.parentElement.scrollTop; });
+        assert.ok(scroll>0,'Short shop catalogue must exercise a real scroll position');
+        await action('place-item').click();
+        assert.equal(await merchant.evaluate(el=>el.parentElement.scrollTop),scroll,'Placement must keep the catalogue position');
+        await action('clear-selection').click();
+        assert.equal(await merchant.evaluate(el=>el.parentElement.scrollTop),scroll,'Cancelling must keep the catalogue position');
+        assert.deepEqual(await save(),before);
+        await merchant.evaluate(el=>{el.parentElement.scrollTop=0;});
+      }
       await placeAt(page, 'merchant', 'ammo9', 'buy');
       await placeAt(page, 'stash', 'watch', 'sell');
       assert.deepEqual(await save(), before);

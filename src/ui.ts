@@ -264,6 +264,10 @@ function shopCheckout() {
     return `<div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) ? '' : 'disabled')}<span>背包、安全箱物品请先移入仓库。救济物资不可出售。</span></div>`;
 }
 function renderHideout() {
+    const scrollPositions = new Map<string, number>();
+    ui().querySelectorAll<HTMLElement>(`.shop-layout[data-merchant="${app.tab}"] [data-grid]`).forEach(grid => {
+        scrollPositions.set(grid.dataset.grid!, grid.parentElement!.scrollTop);
+    });
     const s = app.save;
     let body = '';
     if (app.tab === 'gear') {
@@ -271,7 +275,7 @@ function renderHideout() {
         body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="columns gear-columns">${equipmentPanel(s.equipment, s.bag, s.safe)}${bagPanel(s.bag, weight)}<section class="stash-section"><h3 class="section-title"><b class="section-number">03</b>仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'} · 出击时留在水产站</div></section></div>${details()}`;
     } else if (app.tab === 'arms' || app.tab === 'med') {
         const c = cart(), merchant = D.MERCHANTS[c.merchant], totals = Shop.cartTotals(c);
-        body = `<div class="merchant-heading">${merchantPortrait(app.tab)}<div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>先选物品，再一起结算。放回原侧可取消。</p></div></div><div class="shop-layout"><section><h3>商人物品 · 按包购买</h3>${grid(c.catalog, 'merchant', 54)}</section><section class="shop-buffer"><div><h3>待买 · ¥ ${totals.buy}</h3>${grid(c.buy, 'buy', 54)}</div><div><h3>待卖 · ¥ ${totals.sell}</h3>${grid(c.sell, 'sell', 54)}</div></section><section><h3>仓库 · 整组出售</h3>${grid(c.stash, 'stash', 54)}</section></div>${details()}`;
+        body = `<div class="merchant-heading">${merchantPortrait(app.tab)}<div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>先选物品，再一起结算。放回原侧可取消。</p></div></div><div class="shop-layout" data-merchant="${app.tab}"><section><h3>商人物品 · 按包购买</h3>${grid(c.catalog, 'merchant', 54)}</section><section class="shop-buffer"><div><h3>待买 · ¥ ${totals.buy}</h3>${grid(c.buy, 'buy', 54)}</div><div><h3>待卖 · ¥ ${totals.sell}</h3>${grid(c.sell, 'sell', 54)}</div></section><section><h3>仓库 · 整组出售</h3>${grid(c.stash, 'stash', 54)}</section></div>${details()}`;
     } else if (app.tab === 'quests') {
         body = `<div class="quests">${Object.entries(D.QUESTS).map(([id, q], i) => {
             const complete = s.quests[id];
@@ -286,6 +290,9 @@ function renderHideout() {
     }
     ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站']].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>沿海封锁区 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label><div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
     bind();
+    ui().querySelectorAll<HTMLElement>('.shop-layout [data-grid]').forEach(grid => {
+        grid.parentElement!.scrollTop = scrollPositions.get(grid.dataset.grid!) || 0;
+    });
 }
 function overlayHtml() {
     if (!app.storageOK && app.state === 'menu')
