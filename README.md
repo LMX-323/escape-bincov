@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/copy/title-1920x1080.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
+  <img src="docs/tactical-ui/title-1920.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>
@@ -36,18 +36,20 @@
 | 枪械、弹药、匕首与医疗物资；枪声会吸引附近敌人。 | 第 4 分 30 秒预警，第 5 分钟潮位变化；涉水积累污染。 | 商人交易、3 项任务、仓库扩建，以及本地进度保存。 |
 | 背包空间与 24 kg 负重上限，需要做取舍。 | 浅滩捷径与部分物资随潮位变化，永久通路始终保留。 | 成功撤离保留战利品；失败丢失背包物资与主武器，安全箱内的物品和水手匕首保留。 |
 
+本分支已接入战术整备、双侧搜刮、商人仓库与字体 B；[查看实施、逐图审查和真实截图](docs/tactical-ui/README.txt)。
+
 ## 📸 封锁区现场
 
-![低潮时的沿海封锁区、道路与行动 HUD](docs/ui/hud.png)
+![低潮时的沿海封锁区、道路与行动 HUD](docs/tactical-ui/raid-1280.png)
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/ui/gear.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备、交易与安全箱</td>
-    <td width="50%"><img src="docs/ui/map.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
+    <td width="50%"><img src="docs/tactical-ui/after-1280x720.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备与安全箱（全物品展示夹具）</td>
+    <td width="50%"><img src="docs/tactical-ui/map-1280.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/ui/high-tide.png" alt="涨潮后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
-    <td width="50%"><img src="docs/ui/home.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
+    <td width="50%"><img src="docs/tactical-ui/high-tide-1280.png" alt="涨潮后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
+    <td width="50%"><img src="docs/tactical-ui/home-1280.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
   </tr>
 </table>
 
@@ -57,7 +59,7 @@
 
 左盘移动与冲刺，右盘瞄准与持续开火；整备支持点选物品和格位，旋转或切到后台会暂停。刷新后从最近检查点继续。
 
-![手机横屏的双摇杆与战斗按钮](docs/mobile/combat-844.png)
+![手机横屏的双摇杆与战斗按钮](docs/tactical-ui/combat-844.png)
 
 PR #7 候选修复增加药品与附近物品入口、可取消的格位整理和旋转收纳，并修复提示遮挡与短屏反馈；[查看实际画面和验证](docs/MOBILE-EXPERIENCE-FIXES.md)。等待审阅，正式试玩仍以 main 为准。
 
@@ -120,6 +122,8 @@ pnpm dev
 | `pnpm test:browser` | 两种分辨率的浏览器回归 |
 | `pnpm test:desktop-input` | 触屏电脑键鼠、Esc 音频恢复、无效治疗与输入释放回归 |
 | `pnpm test:ui` | 界面布局检查与双分辨率截图 |
+| `pnpm test:tactical` | 战术布局、字体 B、20 种物品、旋转裁切、商人买卖与搜刮拖放 |
+| `pnpm test:art` | 原生/灰度纹理图集、角色朝向、六区场景及美术恢复检查 |
 | `pnpm test:title` | 12 种主界面视口、键盘/点击、动态开关和场景往返检查 |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:loot` | 双栏拖放、指定格、保存回滚、箱子／尸体恢复与三局结算 |

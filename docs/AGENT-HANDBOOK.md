@@ -88,7 +88,8 @@ git push -u origin agent/short-task-name
 | `src/save-backup.ts` | 备份格式、校验、编码与解码 | 上限、非法物品、堆叠、边界、重叠、UID 与活动行动 |
 | `src/balance.ts` | 负重、耐力、污染、治疗等生存数值 | 玩法变化须验证真实计时与失败场景 |
 | `src/world.ts` | 地图、种子配置、碰撞、视线和寻路 | 潮位切换前后出生点、物资与撤离可达性 |
-| `src/art.ts` / `src/audio.ts` | 程序像素图形和合成音效 | 不增加离线运行时网络依赖 |
+| `src/art.ts` / `src/art/` / `src/audio.ts` | 缓存像素素材、独立库存/角色/场景绘制和合成音效 | 不增加离线运行时网络依赖，不消耗游戏 RNG |
+| `src/font.ts` / `src/tactical.css` / `assets/fonts/` | 字体 B、战术界面、OFL 子集与许可 | 字集变化运行 subset-font.py；不可直接编辑生成 HTML |
 | `src/title-art.ts` / `src/title-screen.ts` / `src/title.css` | 夜港主界面、缓存景物、视口布局 | 动态开关、减少动态效果、安全区；不改变局内缩放 |
 | `src/style.css` | 菜单、HUD、背包和对话框样式 | 两种分辨率、文字可读性、点击区域 |
 | `tests/` | 纯规则、地图与存档回归 | 风险对应断言，避免仅检查实现细节 |
@@ -139,6 +140,8 @@ pnpm package
 pnpm test:browser
 pnpm test:desktop-input
 pnpm test:ui
+pnpm test:tactical
+pnpm test:art
 pnpm test:title
 pnpm test:save-browser
 pnpm test:loot

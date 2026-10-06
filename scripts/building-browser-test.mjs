@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
-const report = { startedAt: new Date().toISOString(), methodology: 'Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors, set indoor clock boundaries and extend enemy cooldowns to isolate the indoor warning/tide/terminal transaction; this does not claim natural travel, another unaccelerated 600-second run or human balance.', htmlSha256: createHash('sha256').update(await readFile(resolve('dist/index.html'))).digest('hex'), steps: [], errors: [], requests: [] };
+const report = { startedAt: new Date().toISOString(), methodology: 'Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors, register one validated pursuit with a real map route and normal frame progression, set indoor clock boundaries and extend enemy cooldowns to isolate the indoor warning/tide/terminal transaction; this does not claim natural travel, another unaccelerated 600-second run or human balance.', htmlSha256: createHash('sha256').update(await readFile(resolve('dist/index.html'))).digest('hex'), steps: [], errors: [], requests: [] };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });
 context.on('request', r => { if (/^https?:/.test(r.url())) report.requests.push(r.url()); });
@@ -62,6 +62,60 @@ try {
         await page.waitForFunction(() => window.__bincov.app.raid.space.definition.id === 'resident-b1');
         await page.keyboard.press('e'); await page.waitForFunction(() => window.__bincov.app.raid.space.definition.id === 'coast');
         assert.ok((await info()).elapsed >= before.elapsed);
+    });
+    await step('native E closes a passed pursuit door; subsequent frames and reload keep it closed', async () => {
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        if (await action('close').count()) await action('close').click();
+        const fixture = await page.evaluate(() => {
+            const { app, saveSession } = window.__bincov, r = app.raid;
+            const start = { x: 464, y: 464 }, entry = r.space.definition.entries.find(e => e.id === 'resident-up');
+            const path = [start, ...r.path(start, entry.at, r.highTide), { ...entry.at }];
+            if (!path.some(p => Math.floor(p.x / 32) === 14 && Math.floor(p.y / 32) === 12)) throw new Error('Fixture route misses the doorway');
+            const distance = path.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - path[i].x, p.y - path[i].y), 0);
+            let id, uid;
+            const ticket = saveSession.prepareExpansionMutation(d => {
+                const raid = d.expansion.raid, source = raid.maps.coast;
+                for (const m of Object.values(raid.maps)) for (const e of m.enemies) e.cooldown = 1000;
+                for (const p of raid.pursuits) p.enemy.cooldown = 1000;
+                const index = source.enemies.findIndex(e => e.hp > 0), enemy = source.enemies.splice(index, 1)[0];
+                Object.assign(enemy, start, { target: { ...start }, home: { ...start }, path: [], repath: 0 });
+                id = `pursuit-${raid.nextEntity++}`; uid = enemy.uid;
+                source.doors['resident-front'] = false;
+                raid.player = { x: 464, y: 432, rotation: 0 };
+                raid.pursuits.push({ id, enemy, sourceMap: 'coast', targetMap: entry.targetMap, entry: entry.id,
+                    path, distance, speed: 32, registeredAt: raid.elapsed, arrivalAt: raid.elapsed + distance / 32 + 1, waiting: false });
+            });
+            if (!ticket || saveSession.commitExpansionMutation(ticket) !== 'committed') throw new Error('Pursuit fixture rejected');
+            return { id, uid, path, distance };
+        });
+        await page.waitForFunction(id => {
+            const s = window.__bincov.app.raid.snapshotExpansion().raid;
+            return s.maps.coast.doors['resident-front'] && s.pursuits.find(p => p.id === id)?.enemy.y < 364;
+        }, fixture.id);
+        const before = await info(); await page.keyboard.press('e');
+        await page.waitForFunction(() => !window.__bincov.app.raid.space.doors['resident-front']);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal((await info()).doors['resident-front'], false, 'The next rendered frames must not reopen the door');
+        await page.waitForTimeout(200); assert.equal((await info()).doors['resident-front'], false);
+        await page.evaluate(() => { if (!window.__bincov.app.raid.checkpoint()) throw new Error('Closed door checkpoint failed'); });
+        const closed = await info();
+        assert.equal(JSON.parse(closed.raw).expansion.raid.maps.coast.doors['resident-front'], false);
+        const readout = await page.evaluate(() => {
+            const status = document.getElementById('status').getBoundingClientRect(), weight = document.getElementById('weight').getBoundingClientRect();
+            return { statusBottom: status.bottom, weightTop: weight.top, weightHeight: weight.height, lineHeight: parseFloat(getComputedStyle(document.getElementById('weight')).lineHeight) };
+        });
+        assert.ok(readout.statusBottom <= readout.weightTop, 'Body status and weight must not share overlapping columns');
+        assert.ok(readout.weightHeight <= readout.lineHeight + 1, 'The weight and its unit fit on one line');
+        await page.screenshot({ path: resolve(out, 'building-pursuit-door-closed-1280x720.png') });
+        await page.reload(); await action('enter').click();
+        await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+        assert.equal((await info()).doors['resident-front'], false);
+        await action('close').click(); await page.waitForTimeout(200);
+        assert.equal((await info()).doors['resident-front'], false);
+        const restored = await page.evaluate(id => window.__bincov.app.raid.snapshotExpansion().raid.pursuits.find(p => p.id === id), fixture.id);
+        assert.equal(restored.enemy.uid, fixture.uid);
+        report.pursuitDoor = { fixture, elapsedBeforeClose: before.elapsed, elapsedSaved: closed.elapsed, restoredArrivalAt: restored.arrivalAt };
     });
     await step('indoor warning and tide use the global clock; failed upstairs timeout retains its candidate and retries once', async () => {
         await page.setViewportSize({ width: 1280, height: 720 });

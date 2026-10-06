@@ -9,8 +9,12 @@ const root = resolve('test-results'); await mkdir(root, { recursive: true });
 const oldPath = resolve(process.argv[2] ?? 'test-results/pre-m0.html');
 const [legacy, current] = await Promise.all([readFile(oldPath, 'utf8'), readFile(resolve('dist/index.html'), 'utf8')]);
 const hash = text => createHash('sha256').update(text).digest('hex');
-assert.equal(hash(legacy), '2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731', 'Use the actual bundled HTML from baseline 49738b8, not a simulated old decoder');
-const report = { startedAt: new Date().toISOString(), baseline: '49738b89cc8556a0b39d339239bf09945e44ab9e',
+const legacyClients = {
+    '2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731': '49738b89cc8556a0b39d339239bf09945e44ab9e',
+    'e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc': '9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34',
+};
+assert.ok(Object.hasOwn(legacyClients, hash(legacy)), 'Use an actual pinned pre-expansion main HTML, not a simulated old decoder');
+const report = { startedAt: new Date().toISOString(), baseline: legacyClients[hash(legacy)],
     legacySha256: hash(legacy), currentSha256: hash(current), steps: [], errors: [], unexpectedRequests: [],
     methodology: 'Real pinned main HTML and current bundle on one locally fulfilled HTTPS origin, offline; explicit test-only extension fixture. No new map/gameplay/UI acceptance is claimed.' };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();

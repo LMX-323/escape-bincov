@@ -1,8 +1,10 @@
-# PR16 实施验证证据
+# PR16 首次交付的历史验证证据
 
 2026-10-05，2026-10-06补充专项。Linux、Node.js 24.19.0、pnpm 11.19.0、无头 Chromium 153.0.8010.12。代码基线 main `49738b89cc8556a0b39d339239bf09945e44ab9e`；完整玩法源码提交 `375680497185ad97ec068b0fc064d2501bfa43e6`，树 `da36d9dfba3dcedbc02c10b5dc6034a3db920a13`。后续提交补充测试脚本、证据与文档，运行包未变。
 
-最终两份 HTML 均为 1,797,467 字节，SHA-256 `76cc5602c730de38235846e9b6610a103bf004798cdf4626fb4ced1a9dd3122b`；ZIP 哈希见 [发布清单](../../release-manifest.json)。报告原样保留测试方式和夹具说明。浏览器处于离线上下文；所需环境权限不代表游玩时联网。
+当时两份 HTML 均为 1,797,467 字节，SHA-256 `76cc5602c730de38235846e9b6610a103bf004798cdf4626fb4ced1a9dd3122b`；当时 ZIP 哈希见 [历史发布清单](https://github.com/xuys2025/escape-bincov/blob/7cc9236563f27afa5c5d1cfbfbd3054113bf8d19/docs/release-manifest.json)。报告原样保留测试方式和夹具说明。浏览器处于离线上下文；所需环境权限不代表游玩时联网。
+
+审阅修复与 PR #20 整合后的包另见[本轮证据](../pr16-review/README.md)，本目录报告与截图保留原始包哈希。
 
 ## 实际报告
 

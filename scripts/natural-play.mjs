@@ -1,7 +1,8 @@
 /** Real-time automated play: read game state, act only through keyboard/mouse. */
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { findPath, lineOfSight } from '../src/world.ts';
@@ -10,7 +11,7 @@ import { browserOptions } from './browser-options.mjs';
 
 const minutes = Number(process.env.BINCOV_PLAY_MINUTES || 10);
 assert.ok(minutes >= 1 && minutes <= 60);
-const report = { startedAt: new Date().toISOString(), minutes, methodology: 'Automated real-time session. Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.', containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
+const report = { htmlSha256: createHash('sha256').update(await readFile('dist/index.html')).digest('hex'), startedAt: new Date().toISOString(), minutes, methodology: 'Automated real-time session. Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.', containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });

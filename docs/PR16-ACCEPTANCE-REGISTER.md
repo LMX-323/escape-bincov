@@ -2,6 +2,8 @@
 
 2026-10-05，2026-10-06补充室内终局和面板/切层故障证据。共16条建筑、23条RPG、34条商场原始需求。B/R 编号仅用于登记，G/L/S/U/P 沿用商场原编号。M0–M6代码已接入；“自动通过”只表示下列规则/浏览器证据覆盖，不替代真人手感、真机或原图对照。“部分通过”明确保留该条未执行的更广操作。实施提交定位以本文件 Git 历史与 PR #16 各阶段提交为准。
 
+2026-10-06审阅修复：已整合最新 main `9fe189c`（PR #20），追击旧路径重开门的回归与最终包验证见[本轮证据](evidence/pr16-review/README.md)。下面原始需求链接和首次证据保持历史定位。
+
 正式行为、格式和首版取值见 [实施记录](PR16-IMPLEMENTATION.md)，M0历史专项见 [状态与兼容决策](M0-STATE-AND-COMPAT.md)。原始需求保持完整，以下不改写预期。
 
 ## BUILDING-LOGIC.md
@@ -65,7 +67,7 @@
 | G-06 | [仅对应端点换层；合法站位；无重复实体](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L340) | M1/M6-A～C | 自动通过 | [四组连接各10次往返与刷新](../scripts/systems-browser-test.mjs)；[平台尺寸/配对](../tests/mall.test.ts) |
 | G-07 | [一次按下只切一次；旧攻击/移动不延续](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L341) | M1/M6-A～C | 自动通过 | [商场五秒长按E/移动/攻击](../scripts/mall-landing.mjs)；[居民楼原生输入](../scripts/building-browser-test.mjs)；[报告](evidence/pr16-full/mall-landing-report.json) |
 | G-08 | [有空位按固定顺序落点；堵满时不切层](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L342) | M1/M6-A～C | 自动规则/原生通过 | [落点规则](../tests/layer-transition.test.ts)；[商场全部合法站位堵满/清开一个站位后重试](../scripts/mall-landing.mjs)；[报告与真实截图](evidence/pr16-full/mall-landing-report.json) |
-| G-09 | [独有陈设和材质可辨；纯装饰不提示开箱](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L343) | M1/M6-A～C | 已实现；辨店与原图对照未人工验收 | [程序陈设](../src/art.ts)；[区域登记](../src/mall-world.ts)；[真实实现截图](PR16-IMPLEMENTATION.md)，不能宣称精确原图还原 |
+| G-09 | [独有陈设和材质可辨；纯装饰不提示开箱](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L343) | M1/M6-A～C | 已实现；辨店与原图对照未人工验收 | [程序陈设](../src/art/spaces.ts)；[区域登记](../src/mall-world.ts)；[真实实现截图](PR16-IMPLEMENTATION.md)，不能宣称精确原图还原 |
 | L-01 | [只命中同层合法目标；子弹不跨楼板](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L349) | M2/M6-D/E | 自动规则/原生部分通过 | [商场同坐标敌人双向弹道/掉落/声源隔离](../tests/mall.test.ts)；[分层有限弹道](../tests/layer-transition.test.ts)；全部同坐标视觉夹具组合未逐一录制 |
 | L-02 | [只能操作当前层；另一层数量和已搜空状态不变](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L350) | M2/M6-D/E | 自动规则/原生部分通过 | [分层弹道与唯一实体](../tests/layer-transition.test.ts)；[场景层隔离](../src/game.ts)；[商场拖放/余量恢复](../scripts/systems-browser-test.mjs)；全部同坐标夹具组合未逐一录制 |
 | L-03 | [只同层调查声源；无全局声源串层](https://github.com/xuys2025/escape-bincov/blob/49738b89cc8556a0b39d339239bf09945e44ab9e/docs/MALL-VALIDATION-MAP.md#L351) | M2/M6-D/E | 自动规则/原生部分通过 | [分层弹道与唯一实体](../tests/layer-transition.test.ts)；[场景层隔离](../src/game.ts)；[商场拖放/余量恢复](../scripts/systems-browser-test.mjs)；全部同坐标夹具组合未逐一录制 |

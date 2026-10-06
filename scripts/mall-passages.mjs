@@ -1,13 +1,14 @@
 /** Repeated real input across each same-layer entrance; explicit spatial fixtures. */
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { MALL_PASSAGES } from '../src/mall-world.ts';
 import { browserOptions } from './browser-options.mjs';
 const out=resolve('test-results');await mkdir(out,{recursive:true});
-const report={startedAt:new Date().toISOString(),methodology:'Offline built mall. Explicit candidates position the player 40px outside each passage and keep enemies on long attack cooldowns. Keyboard walking/sprinting crosses the actual scene geometry ten round trips per mode; health/stamina are reset between sprint loops. This checks geometry/input and conservation, not combat, natural travel or human/reference-image recognition.',passages:[],errors:[],requests:[]};
+const report={htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),startedAt:new Date().toISOString(),methodology:'Offline built mall. Explicit candidates position the player 40px outside each passage and keep enemies on long attack cooldowns. Keyboard walking/sprinting crosses the actual scene geometry ten round trips per mode; health/stamina are reset between sprint loops. This checks geometry/input and conservation, not combat, natural travel or human/reference-image recognition.',passages:[],errors:[],requests:[]};
 const browser=await chromium.launch(browserOptions);report.browser=browser.version();const ctx=await browser.newContext({viewport:{width:1280,height:720},offline:true}),page=await ctx.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.stack??e.message));ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
 const snapshot=()=>page.evaluate(()=>{const r=window.__bincov.app.raid,s=r.snapshotExpansion();return{map:s.raid.currentMap,x:r.player.x,y:r.player.y,roster:s.raid.roster,counts:Object.fromEntries(Object.entries(s.raid.maps).map(([id,m])=>[id,{enemies:m.enemies.length,loot:m.loot.length,containers:m.containers.length}])),roof:r.roofSignature,zone:document.getElementById('zone').textContent};});
 try{

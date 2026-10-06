@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { MALL_WORLD } from '../src/mall-world.ts';
 import { traversable } from '../src/spatial.ts';
 import { browserOptions } from './browser-options.mjs';
 const out=resolve('test-results');await mkdir(out,{recursive:true});
-const report={startedAt:new Date().toISOString(),methodology:'Offline native mall E input. Explicit candidates move the original 25 enemy identities to obstruct target landing slots, set long attack cooldowns, and then clear exactly one slot. No fabricated enemy identities or reset population.',steps:[],errors:[],requests:[]};
+const report={htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),startedAt:new Date().toISOString(),methodology:'Offline native mall E input. Explicit candidates move the original 25 enemy identities to obstruct target landing slots, set long attack cooldowns, and then clear exactly one slot. No fabricated enemy identities or reset population.',steps:[],errors:[],requests:[]};
 const browser=await chromium.launch(browserOptions);report.browser=browser.version();const ctx=await browser.newContext({viewport:{width:1280,height:720},offline:true}),page=await ctx.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.stack??e.message));ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
 const entry=MALL_WORLD.maps['mall-f1'].entries.find(e=>e.id==='S-N-up'),at=entry.landing,slots=[];
 for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++){const p={x:at.x+x*32,y:at.y+y*32};if(Math.hypot(p.x-at.x,p.y-at.y)<=64&&traversable({definition:MALL_WORLD.maps['mall-f2'],doors:{},highTide:true},p,'body',10))slots.push(p);}

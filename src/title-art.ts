@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 // Original, deterministic pixel scenery. Four cached textures, no external assets,
-// shaders, particles or per-frame Canvas drawing. Gameplay keeps its existing art.
+// shaders, particles or per-frame Canvas drawing. Shared by title, hideout and result.
 type Context = CanvasRenderingContext2D;
 const random = (n: number, salt = 0) => {
     let v = Math.imul(n + salt * 137, 374761393);
@@ -170,7 +170,7 @@ function paintHarbor(c: Context) {
     polygon(c, '#192d28', [[652, 324], [784, 317], [784, 343], [652, 350]]);
     line(c, '#899773', 653, 324, 783, 317, 2);
     c.save(); c.translate(661, 342); c.transform(1, -.053, 0, 1, 0, 0);
-    c.font = 'bold 16px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
+    c.font = '16px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
     c.fillStyle = '#c2c99a'; c.fillText('滨科夫水产站', 0, 0); c.restore();
     // Amber window, blinds and spill on the wet wharf.
     rect(c, '#b0955430', 647, 348, 62, 57);
@@ -274,4 +274,10 @@ export function drawTitleBackdrop(scene: Phaser.Scene, motion: boolean) {
         reduced.removeEventListener('change', applyMotion);
         scene.events.off('title-motion', toggle);
     });
+}
+
+/** Station and result share the same harbor painting without menu animations. */
+export function drawStationBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Container {
+    texture(scene, 'title-harbor', 960, 540, paintHarbor);
+    return scene.add.container(0, 0, [scene.add.image(0, 0, 'title-harbor').setOrigin(0)]);
 }

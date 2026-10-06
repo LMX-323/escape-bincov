@@ -28,7 +28,8 @@ try {
           const frame = document.querySelector('#frame').getBoundingClientRect();
           return [...document.querySelectorAll('.hideout, .modal, .map-modal, .inventory-modal, .result')].filter(el => {
             const r = el.getBoundingClientRect();
-            return r.left < frame.left || r.top < frame.top || r.right > frame.right + 1 || r.bottom > frame.bottom + 1;
+            const bounds = el.matches(".inventory-modal") ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : frame;
+            return r.left < bounds.left || r.top < bounds.top || r.right > bounds.right + 1 || r.bottom > bounds.bottom + 1;
           }).map(el => el.className);
         });
         assert.deepEqual(escaped, [], `${name}: panel escaped the game frame`);

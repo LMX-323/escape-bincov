@@ -48,6 +48,8 @@ jobs:
         run: pnpm test:desktop-input
       - name: UI layout and screenshot review
         run: pnpm test:ui
+      - name: Tactical inventory and pixel artwork regression
+        run: pnpm test:tactical && pnpm test:art
       - name: Responsive title and motion regression
         run: pnpm test:title
       - name: Save reliability regression
@@ -55,7 +57,7 @@ jobs:
       - name: Obtain actual pre-expansion client
         run: |
           mkdir -p test-results
-          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/49738b89cc8556a0b39d339239bf09945e44ab9e/dist/index.html --output test-results/pre-m0.html
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34/dist/index.html --output test-results/pre-m0.html
       - name: Expansion storage and actual old-client regression
         run: pnpm test:expansion
       - name: Buildings and floor controls

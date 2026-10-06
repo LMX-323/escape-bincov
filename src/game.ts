@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { createTextures, drawWorld, drawBackdrop } from './art';
-import { drawTitleBackdrop } from './title-art';
+import { createTextures, drawWorld } from './art';
+import { drawTitleBackdrop, drawStationBackdrop } from './title-art';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point, type MapData } from './world';
 import * as D from './domain';
 import type { LootContainer } from './loot';
@@ -28,11 +28,11 @@ export class MenuScene extends Phaser.Scene {
 }
 export class HideoutScene extends Phaser.Scene {
     constructor() { super('Hideout'); }
-    create() { drawBackdrop(this); this.add.rectangle(480, 270, 960, 540, 0x081211, .55); render(); }
+    create() { drawStationBackdrop(this); this.add.rectangle(480, 270, 960, 540, 0x081211, .55); render(); }
 }
 export class ResultScene extends Phaser.Scene {
     constructor() { super('Result'); }
-    create() { drawBackdrop(this); render(); }
+    create() { drawStationBackdrop(this); render(); }
 }
 type Enemy = {
     uid: string;
@@ -227,8 +227,7 @@ export class RaidScene extends Phaser.Scene {
         this.worldArt?.destroy(); this.worldLabels.forEach(l => l.destroy()); this.worldLabels = [];
         this.worldArt = drawWorld(this, this.mapData, this.space?.definition).setDepth(0);
         this.mapData.notes.forEach(n => {
-            this.worldLabels.push(this.add.rectangle(n.x, n.y, 12, 15, 0xd5bc80).setStrokeStyle(2, 0x615937).setDepth(3),
-                this.add.text(n.x, n.y - 24, '▤', { fontSize: '13px', color: '#d8c58a' }).setOrigin(.5).setDepth(3));
+            this.worldLabels.push(this.add.image(n.x, n.y, 'note').setDepth(3));
         });
         this.visibleExits.forEach(e => {
             const g = this.add.graphics().setDepth(3);
@@ -387,32 +386,32 @@ export class RaidScene extends Phaser.Scene {
             };
             this.enemies = sync(this.enemies, c.enemies, e => ({ ...structuredClone(e), sprite: this.add.image(e.x, e.y, e.id) }), (e, state) => {
                 const { x, y, rotation, ...values } = state; Object.assign(e, structuredClone(values));
-                e.sprite.setPosition(x, y).setRotation(rotation).setDepth(e.hp > 0 ? 6 : 3).setAlpha(e.hp > 0 ? 1 : .6).setTint(e.hp > 0 ? 0xffffff : 0x403d34);
+                e.sprite.setPosition(x, y).setRotation(rotation).setTexture(e.hp > 0 ? e.id : `corpse-${e.id}`).setDepth(e.hp > 0 ? 6 : 3).setAlpha(1).clearTint();
             });
-            this.loot = sync(this.loot, c.loot, l => ({ ...l, sprite: this.add.image(l.x, l.y, 'loot').setDepth(4) }), (l, state) => {
-                const { x, y, ...values } = state; Object.assign(l, values); l.sprite.setPosition(x, y).setTint(D.ITEMS[l.id].color);
+            this.loot = sync(this.loot, c.loot, l => ({ ...l, sprite: this.add.image(l.x, l.y, `loot-${l.id}`).setDepth(4) }), (l, state) => {
+                const { x, y, ...values } = state; Object.assign(l, values); l.sprite.setPosition(x, y).setTexture(`loot-${l.id}`).clearTint();
             });
             this.bullets = sync(this.bullets, c.bullets, b => ({ ...b, sprite: this.add.image(b.x, b.y, 'bullet').setDepth(10) }), (b, state) => {
                 const { x, y, rotation, ...values } = state; Object.assign(b, values); b.sprite.setPosition(x, y).setRotation(rotation).setTint(b.enemy ? 0xe48c64 : 0xffffff);
             });
-            const oldCrates = this.containers.filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y]);
-            const newCrates = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y]);
+            const oldCrates = this.containers.filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y, c.inventory.items.length > 0]);
+            const newCrates = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => [c.id, c.x, c.y, c.inventory.items.length > 0]);
             if (JSON.stringify(oldCrates) !== JSON.stringify(newCrates)) {
-                this.containerSprites.forEach(s => s.destroy()); this.containerSprites = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => this.add.image(c.x, c.y, 'loot-crate').setDepth(4));
+                this.containerSprites.forEach(s => s.destroy()); this.containerSprites = (c.containers ?? []).filter(c => c.kind === 'crate').map(c => this.add.image(c.x, c.y, c.inventory.items.length ? 'loot-crate' : 'loot-crate-empty').setDepth(4).setData('containerId', c.id));
             }
             this.containers = structuredClone(c.containers ?? []); this.drawFlood(); return;
         }
         for (const entity of [...this.enemies, ...this.loot, ...this.bullets]) entity.sprite.destroy();
         this.enemies = c.enemies.map(({ x, y, rotation, ...e }) => {
             const sprite = this.add.image(x, y, e.id).setRotation(rotation).setDepth(e.hp > 0 ? 6 : 3);
-            if (e.hp <= 0) sprite.setTint(0x403d34).setAlpha(.6);
+            if (e.hp <= 0) sprite.setTexture(`corpse-${e.id}`);
             return { ...structuredClone(e), sprite };
         });
-        this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[l.id].color) }));
+        this.loot = c.loot.map(({ x, y, ...l }) => ({ ...l, sprite: this.add.image(x, y, `loot-${l.id}`).setDepth(4) }));
         for (const sprite of this.containerSprites) sprite.destroy();
         this.containers = structuredClone(c.containers ?? []);
         this.containerSprites = this.containers.filter(container => container.kind === 'crate')
-            .map(container => this.add.image(container.x, container.y, 'loot-crate').setDepth(4));
+            .map(container => this.add.image(container.x, container.y, container.inventory.items.length ? 'loot-crate' : 'loot-crate-empty').setDepth(4).setData('containerId', container.id));
         this.bullets = c.bullets.map(({ x, y, rotation, ...b }) => ({ ...b, sprite: this.add.image(x, y, 'bullet').setRotation(rotation).setDepth(10).setTint(b.enemy ? 0xe48c64 : 0xffffff) }));
         this.drawFlood();
     }
@@ -427,7 +426,7 @@ export class RaidScene extends Phaser.Scene {
                 }
             } }
     private allocateEntityUid() { const serial = this.nextEntity++; return this.layered?.raid ? entityUid(this.layered.raid, serial) : `entity-${serial}`; }
-    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), sprite: this.add.image(x, y, 'loot').setDepth(4).setTint(D.ITEMS[id]?.color || 0xc7b889), id, qty, relief }); }
+    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), sprite: this.add.image(x, y, `loot-${id}`).setDepth(4), id, qty, relief }); }
     nearbyLoot() { return this.loot.filter(l => distance(l.sprite, this.player) < 43 && this.sight(l.sprite, this.player, this.highTide, this.space ? 10 : 0)).sort((a, b) => distance(a.sprite, this.player) - distance(b.sprite, this.player) || a.uid.localeCompare(b.uid)); }
     pickupLoot(uid: string) {
         const loot = this.nearbyLoot().find(l => l.uid === uid);
@@ -563,7 +562,7 @@ export class RaidScene extends Phaser.Scene {
         e.hp = D.applyDamage(e.hp, damage); e.sprite.setTintFill(0xe9ccb5); this.time.delayedCall(70, () => { if (e.sprite.active && e.hp > 0)
         e.sprite.clearTint(); }); e.state = 'chase'; e.alert = 6; e.target = { x: this.player.x, y: this.player.y }; audio.hit(); if (e.hp <= 0) {
         this.kills++;
-        e.sprite.setTint(0x403d34).setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(.6).setDepth(3);
+        e.sprite.setTexture(`corpse-${e.id}`).clearTint().setRotation(e.sprite.rotation + Math.PI / 2).setAlpha(1).setDepth(3);
         const drops = D.rollLoot(this.config.seed + this.kills * 47, e.id === 'elite' ? 3 : 1);
         // Keep the old scatter-offset random calls so later combat rolls do not shift.
         for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
@@ -1008,6 +1007,11 @@ export class RaidScene extends Phaser.Scene {
             }
     }
     updateHud() {
+        for (const sprite of this.containerSprites) {
+            const container = this.containers.find(c => c.id === sprite.getData('containerId'));
+            if (container) sprite.setTexture(container.inventory.items.length ? 'loot-crate' : 'loot-crate-empty');
+        }
+
         refreshQuickPanel();
         const limits = this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina };
         for (const child of this.children.list) if (child instanceof Phaser.GameObjects.Text && child.getData('exit')) {
@@ -1031,7 +1035,8 @@ export class RaidScene extends Phaser.Scene {
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${limits.hp}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
-        css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);
+        css('loot-weight', this.carriedWeight().toFixed(1));
+        css('equipped-ammo', `${this.mag} / ${D.WEAPONS[app.loadout?.weapon || 'knife'].magazine}`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
         if (hp) hp.style.width = Math.max(0,this.hp)/limits.hp*100 + '%';
         if (st) st.style.width = this.stamina/limits.stamina*100 + '%';

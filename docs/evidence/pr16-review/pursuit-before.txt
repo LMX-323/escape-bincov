@@ -1,0 +1,35 @@
+✖ 追击敌人走过门后，玩家关门，后续帧、刷新及连接等待不得重开身后的门 (7.402009ms)
+✔ 追击进度、途经开门和抵达只移交一个原身份，冷却/生命不重置，返回不改变旧目标 (15.00552ms)
+✔ 堵塞目标稳定等待，腾出落点后抵达；不可见目标收到敌人但本地时间仍冻结 (1.030912ms)
+✔ 返回来源层时落点避开仍属于追击事件的活人投影 (2.221562ms)
+✔ 普通飞行与离层结算共用有限首碰撞内核，同一子弹伤害和掉落一致 (1.808124ms)
+✔ 潮位切断剩余路段时取消追击并归回来源，听声或未发现玩家不登记事件 (0.726667ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.555882
+
+✖ failing tests:
+
+test at tests/pursuit.test.ts:1:402
+✖ 追击敌人走过门后，玩家关门，后续帧、刷新及连接等待不得重开身后的门 (7.402009ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (/workspace/escape-bincov/tests/pursuit.test.ts:25:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
