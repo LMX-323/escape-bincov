@@ -1,0 +1,2122 @@
+{
+  "htmlSha256": "dc9d29e3d3dc6be8a4f85bc1349f8a19b9df6b93bade69cd91e47def77bc751c",
+  "method": "Actual offline game textures; independent diagnostic atlases at native / 3x sizes. Scene captures use fresh seed 42, an explicitly paused Phaser simulation and positioned player/camera. Rendering remains active. No screenshot editing. actor-headings is a diagnostic Phaser lineup, not natural gameplay.",
+  "checks": [
+    "All 30 24px item textures present, nonempty and unique",
+    "All 30 32px item textures present, nonempty and unique",
+    "All 30 proportioned inventory textures are present and unique",
+    "Five actor identities, four separate corpses and distinct full/empty crate textures",
+    "Embedded Bincov Text font ready before the game starts",
+    "Death/checkpoint restore retains corpse art; loose loot body remains untinted",
+    "Empty crate appearance survives checkpoint restore and a validated write",
+    "Layered sprite synchronization preserves separate corpse, item and empty crate art and passes strict checkpoint validation"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "browser": "153.0.8010.12",
+  "renderedFonts": [
+    {
+      "familyName": "Bincov Text",
+      "postScriptName": "BincovText-Regular",
+      "isCustomFont": true,
+      "glyphCount": 5
+    }
+  ],
+  "textures": [
+    {
+      "key": "portrait-arms",
+      "width": 48,
+      "height": 48,
+      "occupied": 1165,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 2,
+        "width": 38,
+        "height": 46
+      },
+      "pngSha256": "9b196cd540ab389d8f547b9fa7d958ed4cb401d466f8c4bd7d5a1a6bd8d8aead"
+    },
+    {
+      "key": "portrait-med",
+      "width": 48,
+      "height": 48,
+      "occupied": 1149,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 2,
+        "width": 38,
+        "height": 46
+      },
+      "pngSha256": "8985532e342c5d1c6d4b3089bf3164a5efbdb3ceba9570a189c23421cc8a0c67"
+    },
+    {
+      "key": "player",
+      "width": 32,
+      "height": 32,
+      "occupied": 541,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 30,
+        "height": 27
+      },
+      "pngSha256": "c99bf40170cd2c3c75ae71b2697f201acffd5adb779fb570be33399564efd1d5"
+    },
+    {
+      "key": "player-knife",
+      "width": 32,
+      "height": 32,
+      "occupied": 538,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 31,
+        "height": 27
+      },
+      "pngSha256": "f0e75244276538ec517626cacd76c9bb5becdbb0b861fd4c54f2bc87b43375e8"
+    },
+    {
+      "key": "player-pistol",
+      "width": 32,
+      "height": 32,
+      "occupied": 541,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 30,
+        "height": 27
+      },
+      "pngSha256": "c99bf40170cd2c3c75ae71b2697f201acffd5adb779fb570be33399564efd1d5"
+    },
+    {
+      "key": "player-shotgun",
+      "width": 32,
+      "height": 32,
+      "occupied": 556,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 31,
+        "height": 27
+      },
+      "pngSha256": "e81a7fbdca28e27708f87337e07ac38c32791ec82e06be1475a4568745ec95d8"
+    },
+    {
+      "key": "player-carbine",
+      "width": 32,
+      "height": 32,
+      "occupied": 555,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 31,
+        "height": 27
+      },
+      "pngSha256": "3f438691275c44ded0e31ec47bd1d4ea8555eba47e2c828797d0b5de8c94ac08"
+    },
+    {
+      "key": "scav",
+      "width": 32,
+      "height": 32,
+      "occupied": 526,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 32,
+        "height": 30
+      },
+      "pngSha256": "03b6bf4be63c26e3292d17c44f402f1149c16b938ea1b4c45ed463f0a77da276"
+    },
+    {
+      "key": "corpse-scav",
+      "width": 32,
+      "height": 32,
+      "occupied": 384,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 29,
+        "height": 20
+      },
+      "pngSha256": "3137e3e7ad9ba39ccf3e41dbb5441f8635cbe2bff07a9f66f3d8de31d6f43669"
+    },
+    {
+      "key": "salt",
+      "width": 32,
+      "height": 32,
+      "occupied": 525,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 2,
+        "width": 28,
+        "height": 28
+      },
+      "pngSha256": "4ff2420d43b10192d35847769adca6b4b41628345a3aaac819d40bcc2c9c658a"
+    },
+    {
+      "key": "corpse-salt",
+      "width": 32,
+      "height": 32,
+      "occupied": 384,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 29,
+        "height": 20
+      },
+      "pngSha256": "5fe2041bb70608b91dc235f96c41c91cb7d51a751b2dcac213fc196a7a878233"
+    },
+    {
+      "key": "elite",
+      "width": 32,
+      "height": 32,
+      "occupied": 709,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 32,
+        "height": 31
+      },
+      "pngSha256": "81c6b9fcd203721ac019ab1b43f5054f5849373f2440b5d2bdb35ade6d97fa3d"
+    },
+    {
+      "key": "corpse-elite",
+      "width": 32,
+      "height": 32,
+      "occupied": 384,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 29,
+        "height": 20
+      },
+      "pngSha256": "a6cece0f579a6dc77b8dcf01b6f8380a21214e46e8f61b3397d8a36fc66fe842"
+    },
+    {
+      "key": "creature",
+      "width": 32,
+      "height": 32,
+      "occupied": 494,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 3,
+        "width": 31,
+        "height": 27
+      },
+      "pngSha256": "09f65ce1e79a321ff5155d51f993c508091f99a0d83de17593938ab5c3c2a511"
+    },
+    {
+      "key": "corpse-creature",
+      "width": 32,
+      "height": 32,
+      "occupied": 420,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 6,
+        "width": 30,
+        "height": 22
+      },
+      "pngSha256": "bf18ebaa06d02c4657db0dd26771d59133a54710c0de85816fafe39f051bc7eb"
+    },
+    {
+      "key": "loot",
+      "width": 22,
+      "height": 22,
+      "occupied": 379,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 20,
+        "height": 20
+      },
+      "pngSha256": "fc170f4341fee8f347f17179101e68b9e502fae7f829b99e73c0a130cb5810ac"
+    },
+    {
+      "key": "loot-crate",
+      "width": 32,
+      "height": 32,
+      "occupied": 750,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 4,
+        "width": 30,
+        "height": 25
+      },
+      "pngSha256": "9bdac21f164bbeddd2b6136ada95a79cb17d5a212fc76aff3299f594c401360b"
+    },
+    {
+      "key": "loot-crate-empty",
+      "width": 32,
+      "height": 32,
+      "occupied": 750,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 4,
+        "width": 30,
+        "height": 25
+      },
+      "pngSha256": "96cfa6da9c8fb684967bf0455f9e6d24c52beb86dafa6b15574bd35de3673b6a"
+    },
+    {
+      "key": "note",
+      "width": 20,
+      "height": 24,
+      "occupied": 285,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 15,
+        "height": 20
+      },
+      "pngSha256": "c51efb775e5cb7c23f4a5abea4e0f50ea2d6d33e4b2821e23c67b2cbaaed7cf8"
+    },
+    {
+      "key": "bullet",
+      "width": 10,
+      "height": 4,
+      "occupied": 20,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 10,
+        "height": 2
+      },
+      "pngSha256": "dc7da9c3e1065519c75014af775b71a13ac2b0bda5ddf31b24871da5503aa4bb"
+    },
+    {
+      "key": "item-inventory-knife",
+      "width": 14,
+      "height": 32,
+      "occupied": 236,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 14,
+        "height": 32
+      },
+      "pngSha256": "12a23abf1be1b4015844ca13c6c39cb135b082da79e72b4291678adbfbbc2c7a"
+    },
+    {
+      "key": "item-knife",
+      "width": 32,
+      "height": 32,
+      "occupied": 279,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 28,
+        "height": 30
+      },
+      "pngSha256": "984a7580dc279ade2584eac9af4c4954755568a3403b537f8047f7a223050e49"
+    },
+    {
+      "key": "item-small-knife",
+      "width": 24,
+      "height": 24,
+      "occupied": 180,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 23
+      },
+      "pngSha256": "14df177e322cf5e9d5c5666da6b5888c2f0b6f07710cb44c94d0fd9af9bfc000"
+    },
+    {
+      "key": "loot-knife",
+      "width": 24,
+      "height": 24,
+      "occupied": 180,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 23
+      },
+      "pngSha256": "14df177e322cf5e9d5c5666da6b5888c2f0b6f07710cb44c94d0fd9af9bfc000"
+    },
+    {
+      "key": "item-inventory-pistol",
+      "width": 38,
+      "height": 17,
+      "occupied": 386,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 37,
+        "height": 16
+      },
+      "pngSha256": "e3d3b8ba00811e9d6f78a6c9af6472f7dd182c4204c266d36fe396e7678f74aa"
+    },
+    {
+      "key": "item-pistol",
+      "width": 32,
+      "height": 32,
+      "occupied": 411,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 6,
+        "width": 28,
+        "height": 24
+      },
+      "pngSha256": "9dd3486e2feccd05ea8363c5bb038c5bbf214baec086e35f4995cb736bba8a5c"
+    },
+    {
+      "key": "item-small-pistol",
+      "width": 24,
+      "height": 24,
+      "occupied": 285,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 22,
+        "height": 20
+      },
+      "pngSha256": "ca136bb0d91220d3b9ae0d8fa5ef202ce15b7687a09fa91e4d643a102db8c720"
+    },
+    {
+      "key": "loot-pistol",
+      "width": 24,
+      "height": 24,
+      "occupied": 285,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 22,
+        "height": 20
+      },
+      "pngSha256": "ca136bb0d91220d3b9ae0d8fa5ef202ce15b7687a09fa91e4d643a102db8c720"
+    },
+    {
+      "key": "item-inventory-shotgun",
+      "width": 78,
+      "height": 17,
+      "occupied": 590,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 2,
+        "width": 78,
+        "height": 15
+      },
+      "pngSha256": "fa1bf5091429b77854fb43bb3e5b463afd326c202814fea1687ca326dbdd08a9"
+    },
+    {
+      "key": "item-shotgun",
+      "width": 32,
+      "height": 32,
+      "occupied": 364,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 30,
+        "height": 19
+      },
+      "pngSha256": "fda1014d5ce50c2208d9fa91143270cbd89e36375d236f81bf87f84ef5a2c833"
+    },
+    {
+      "key": "item-small-shotgun",
+      "width": 24,
+      "height": 24,
+      "occupied": 241,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 17
+      },
+      "pngSha256": "b307951e4c738e5563b4230121863bf7df16f22fe0e96e3e7ed31c367b44d9d9"
+    },
+    {
+      "key": "loot-shotgun",
+      "width": 24,
+      "height": 24,
+      "occupied": 241,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 17
+      },
+      "pngSha256": "b307951e4c738e5563b4230121863bf7df16f22fe0e96e3e7ed31c367b44d9d9"
+    },
+    {
+      "key": "item-inventory-carbine",
+      "width": 78,
+      "height": 17,
+      "occupied": 540,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 2,
+        "width": 78,
+        "height": 15
+      },
+      "pngSha256": "0dbd1d437843ba0b8def098d062c6c95a8db6ef1c1cb7f875a57634eef7cc4a8"
+    },
+    {
+      "key": "item-carbine",
+      "width": 32,
+      "height": 32,
+      "occupied": 336,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 30,
+        "height": 21
+      },
+      "pngSha256": "6c0996bab390f36decc91742634c4688403f3822379ec56584ebc425ec170934"
+    },
+    {
+      "key": "item-small-carbine",
+      "width": 24,
+      "height": 24,
+      "occupied": 229,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 18
+      },
+      "pngSha256": "4d87385d61f6795aae8ecb30b9e49719cf660801b57cf3c22d47972bf597962c"
+    },
+    {
+      "key": "loot-carbine",
+      "width": 24,
+      "height": 24,
+      "occupied": 229,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 18
+      },
+      "pngSha256": "4d87385d61f6795aae8ecb30b9e49719cf660801b57cf3c22d47972bf597962c"
+    },
+    {
+      "key": "item-inventory-ammo9",
+      "width": 24,
+      "height": 24,
+      "occupied": 330,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 21,
+        "height": 23
+      },
+      "pngSha256": "5fd010317fcd842777a4beef550e44df5b1a64a5073eef75a1265ef80a923eef"
+    },
+    {
+      "key": "item-ammo9",
+      "width": 32,
+      "height": 32,
+      "occupied": 436,
+      "translucent": 0,
+      "bounds": {
+        "x": 4,
+        "y": 4,
+        "width": 23,
+        "height": 28
+      },
+      "pngSha256": "93184415204d547b4f0df1f3445a558aece8e4035e5033cb58817064fd2f5068"
+    },
+    {
+      "key": "item-small-ammo9",
+      "width": 24,
+      "height": 24,
+      "occupied": 330,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 21,
+        "height": 23
+      },
+      "pngSha256": "5fd010317fcd842777a4beef550e44df5b1a64a5073eef75a1265ef80a923eef"
+    },
+    {
+      "key": "loot-ammo9",
+      "width": 24,
+      "height": 24,
+      "occupied": 330,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 21,
+        "height": 23
+      },
+      "pngSha256": "5fd010317fcd842777a4beef550e44df5b1a64a5073eef75a1265ef80a923eef"
+    },
+    {
+      "key": "item-inventory-shell",
+      "width": 24,
+      "height": 24,
+      "occupied": 360,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 2,
+        "width": 22,
+        "height": 21
+      },
+      "pngSha256": "c03a4aaabb6b518ceaa608f29791cab0a2965e3ed6cc0e15bac50afa0718f8ca"
+    },
+    {
+      "key": "item-shell",
+      "width": 32,
+      "height": 32,
+      "occupied": 528,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 5,
+        "width": 28,
+        "height": 26
+      },
+      "pngSha256": "84386d401b67a96e21889310fed753f0563de3e0e7e3fd58bc77d79ff94dff8f"
+    },
+    {
+      "key": "item-small-shell",
+      "width": 24,
+      "height": 24,
+      "occupied": 360,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 2,
+        "width": 22,
+        "height": 21
+      },
+      "pngSha256": "c03a4aaabb6b518ceaa608f29791cab0a2965e3ed6cc0e15bac50afa0718f8ca"
+    },
+    {
+      "key": "loot-shell",
+      "width": 24,
+      "height": 24,
+      "occupied": 360,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 2,
+        "width": 22,
+        "height": 21
+      },
+      "pngSha256": "c03a4aaabb6b518ceaa608f29791cab0a2965e3ed6cc0e15bac50afa0718f8ca"
+    },
+    {
+      "key": "item-inventory-ammoR",
+      "width": 24,
+      "height": 24,
+      "occupied": 268,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 20,
+        "height": 23
+      },
+      "pngSha256": "8d78bfe03d55058680cb23a23c6c9b94f28b58861278e0cfc6c59b382b10a04f"
+    },
+    {
+      "key": "item-ammoR",
+      "width": 32,
+      "height": 32,
+      "occupied": 412,
+      "translucent": 0,
+      "bounds": {
+        "x": 4,
+        "y": 2,
+        "width": 24,
+        "height": 29
+      },
+      "pngSha256": "5ba7d03e1944ab3235aaa2f45931adac927de904cf5d069be2a77d71b1f8f228"
+    },
+    {
+      "key": "item-small-ammoR",
+      "width": 24,
+      "height": 24,
+      "occupied": 268,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 20,
+        "height": 23
+      },
+      "pngSha256": "8d78bfe03d55058680cb23a23c6c9b94f28b58861278e0cfc6c59b382b10a04f"
+    },
+    {
+      "key": "loot-ammoR",
+      "width": 24,
+      "height": 24,
+      "occupied": 268,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 20,
+        "height": 23
+      },
+      "pngSha256": "8d78bfe03d55058680cb23a23c6c9b94f28b58861278e0cfc6c59b382b10a04f"
+    },
+    {
+      "key": "item-inventory-bandage",
+      "width": 24,
+      "height": 24,
+      "occupied": 484,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "28ce5d56d884e6c885d34a9c424bc8e5b5c34236f3dabc9a01dfff85633c1956"
+    },
+    {
+      "key": "item-bandage",
+      "width": 32,
+      "height": 32,
+      "occupied": 763,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 29,
+        "height": 27
+      },
+      "pngSha256": "cdac24b08a09b047e29a633c38898db48f82fa7bf7ff12d343b2a7310347d221"
+    },
+    {
+      "key": "item-small-bandage",
+      "width": 24,
+      "height": 24,
+      "occupied": 484,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "28ce5d56d884e6c885d34a9c424bc8e5b5c34236f3dabc9a01dfff85633c1956"
+    },
+    {
+      "key": "loot-bandage",
+      "width": 24,
+      "height": 24,
+      "occupied": 484,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "28ce5d56d884e6c885d34a9c424bc8e5b5c34236f3dabc9a01dfff85633c1956"
+    },
+    {
+      "key": "item-inventory-medkit",
+      "width": 48,
+      "height": 16,
+      "occupied": 657,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 48,
+        "height": 16
+      },
+      "pngSha256": "49a1a8fe9794167fd3b02274dcfe4ddbca12c3794b8471954b3db8e3fb85fbe9"
+    },
+    {
+      "key": "item-medkit",
+      "width": 32,
+      "height": 32,
+      "occupied": 742,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 2,
+        "width": 30,
+        "height": 28
+      },
+      "pngSha256": "70b0e77cf2bb02047b5611096ca32075e1bde68e525b213be1f5eb95d9a309c8"
+    },
+    {
+      "key": "item-small-medkit",
+      "width": 24,
+      "height": 24,
+      "occupied": 487,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "be082ba2243938329e32b16517a5d7991eca100e59ef6c38fe754f1dca91c736"
+    },
+    {
+      "key": "loot-medkit",
+      "width": 24,
+      "height": 24,
+      "occupied": 487,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "be082ba2243938329e32b16517a5d7991eca100e59ef6c38fe754f1dca91c736"
+    },
+    {
+      "key": "item-inventory-antidote",
+      "width": 24,
+      "height": 24,
+      "occupied": 492,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 23,
+        "height": 24
+      },
+      "pngSha256": "7c5dd63fdf6d195a3b73f0181462dfb8ac487669aa52d9a8c5ffe58820e092b6"
+    },
+    {
+      "key": "item-antidote",
+      "width": 32,
+      "height": 32,
+      "occupied": 718,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 1,
+        "width": 27,
+        "height": 30
+      },
+      "pngSha256": "323b5c55876fd4c6973a7d5243dc75a7036aaacc1b49e33b0783b9f7b5aa25ea"
+    },
+    {
+      "key": "item-small-antidote",
+      "width": 24,
+      "height": 24,
+      "occupied": 492,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 23,
+        "height": 24
+      },
+      "pngSha256": "7c5dd63fdf6d195a3b73f0181462dfb8ac487669aa52d9a8c5ffe58820e092b6"
+    },
+    {
+      "key": "loot-antidote",
+      "width": 24,
+      "height": 24,
+      "occupied": 492,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 23,
+        "height": 24
+      },
+      "pngSha256": "7c5dd63fdf6d195a3b73f0181462dfb8ac487669aa52d9a8c5ffe58820e092b6"
+    },
+    {
+      "key": "item-inventory-water",
+      "width": 12,
+      "height": 32,
+      "occupied": 336,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 32
+      },
+      "pngSha256": "cd660c192a718acc3f0466cfcb491327061ac90cff328ef9242f5b88b721beb8"
+    },
+    {
+      "key": "item-water",
+      "width": 32,
+      "height": 32,
+      "occupied": 501,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 19,
+        "height": 30
+      },
+      "pngSha256": "98c313553dd2b9863568e6cb41b36416bc337f199dd03946fa41ddf9ab40090d"
+    },
+    {
+      "key": "item-small-water",
+      "width": 24,
+      "height": 24,
+      "occupied": 349,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 0,
+        "width": 17,
+        "height": 24
+      },
+      "pngSha256": "50c761378bcb0b580f18b3a6b7337d498d4567d56d71af57ef2e706cf5877f7f"
+    },
+    {
+      "key": "loot-water",
+      "width": 24,
+      "height": 24,
+      "occupied": 349,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 0,
+        "width": 17,
+        "height": 24
+      },
+      "pngSha256": "50c761378bcb0b580f18b3a6b7337d498d4567d56d71af57ef2e706cf5877f7f"
+    },
+    {
+      "key": "item-inventory-food",
+      "width": 24,
+      "height": 24,
+      "occupied": 442,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "79f12bf8ef52c404e676079e6376a8ec489adc2ad1104e320d180d825a34cebf"
+    },
+    {
+      "key": "item-food",
+      "width": 32,
+      "height": 32,
+      "occupied": 676,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 3,
+        "width": 28,
+        "height": 27
+      },
+      "pngSha256": "90af4836f754531f873216980fda28b0ac784aa8571f4785bac7d7ac33bc63fd"
+    },
+    {
+      "key": "item-small-food",
+      "width": 24,
+      "height": 24,
+      "occupied": 442,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "79f12bf8ef52c404e676079e6376a8ec489adc2ad1104e320d180d825a34cebf"
+    },
+    {
+      "key": "loot-food",
+      "width": 24,
+      "height": 24,
+      "occupied": 442,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 22
+      },
+      "pngSha256": "79f12bf8ef52c404e676079e6376a8ec489adc2ad1104e320d180d825a34cebf"
+    },
+    {
+      "key": "item-inventory-scrap",
+      "width": 24,
+      "height": 24,
+      "occupied": 416,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "afc0a5ab3260c7744da13b146d0fb7564ddbd02a8b80fced8617e84fb46d0551"
+    },
+    {
+      "key": "item-scrap",
+      "width": 32,
+      "height": 32,
+      "occupied": 665,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 29,
+        "height": 28
+      },
+      "pngSha256": "c79c437ea2ac90dede28fb9d664072fce6932c6b58392fcfa8c1c5504d82aa82"
+    },
+    {
+      "key": "item-small-scrap",
+      "width": 24,
+      "height": 24,
+      "occupied": 416,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "afc0a5ab3260c7744da13b146d0fb7564ddbd02a8b80fced8617e84fb46d0551"
+    },
+    {
+      "key": "loot-scrap",
+      "width": 24,
+      "height": 24,
+      "occupied": 416,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "afc0a5ab3260c7744da13b146d0fb7564ddbd02a8b80fced8617e84fb46d0551"
+    },
+    {
+      "key": "item-inventory-wire",
+      "width": 24,
+      "height": 24,
+      "occupied": 419,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24
+      },
+      "pngSha256": "67c58860a936795af48a760ff4ca0877e2e0fd3c2b6b426639e57e57257b6b66"
+    },
+    {
+      "key": "item-wire",
+      "width": 32,
+      "height": 32,
+      "occupied": 623,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 2,
+        "width": 30,
+        "height": 29
+      },
+      "pngSha256": "2f5755c72c4aa8fdb63707f6ea58f77ab618906c6bc2510787085880813b95b4"
+    },
+    {
+      "key": "item-small-wire",
+      "width": 24,
+      "height": 24,
+      "occupied": 419,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24
+      },
+      "pngSha256": "67c58860a936795af48a760ff4ca0877e2e0fd3c2b6b426639e57e57257b6b66"
+    },
+    {
+      "key": "loot-wire",
+      "width": 24,
+      "height": 24,
+      "occupied": 419,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 24
+      },
+      "pngSha256": "67c58860a936795af48a760ff4ca0877e2e0fd3c2b6b426639e57e57257b6b66"
+    },
+    {
+      "key": "item-inventory-fuse",
+      "width": 24,
+      "height": 24,
+      "occupied": 312,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 15
+      },
+      "pngSha256": "7932c975f7754f94a48f0a464bc9536b9dbacebe651c7db14816446dbe4de649"
+    },
+    {
+      "key": "item-fuse",
+      "width": 32,
+      "height": 32,
+      "occupied": 468,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 8,
+        "width": 30,
+        "height": 18
+      },
+      "pngSha256": "0daa3c6c8a3569da6e493a6171c200c0cf161cf29ff78cc04a80c5ba4f1ca5c4"
+    },
+    {
+      "key": "item-small-fuse",
+      "width": 24,
+      "height": 24,
+      "occupied": 312,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 15
+      },
+      "pngSha256": "7932c975f7754f94a48f0a464bc9536b9dbacebe651c7db14816446dbe4de649"
+    },
+    {
+      "key": "loot-fuse",
+      "width": 24,
+      "height": 24,
+      "occupied": 312,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 5,
+        "width": 24,
+        "height": 15
+      },
+      "pngSha256": "7932c975f7754f94a48f0a464bc9536b9dbacebe651c7db14816446dbe4de649"
+    },
+    {
+      "key": "item-inventory-battery",
+      "width": 22,
+      "height": 32,
+      "occupied": 648,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 32
+      },
+      "pngSha256": "f59e68dcba1e636a2e909ce2e26c51840730d44ac669a4b04d848d00ad4652f3"
+    },
+    {
+      "key": "item-battery",
+      "width": 32,
+      "height": 32,
+      "occupied": 747,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 27,
+        "height": 30
+      },
+      "pngSha256": "a55fea6ae9b2f3a65df973e8e5d6e6f52a7ff1d5ddd1d810ed5674f383d70606"
+    },
+    {
+      "key": "item-small-battery",
+      "width": 24,
+      "height": 24,
+      "occupied": 481,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "33c6a2632ccb332bfcb552266eac10c6364235e104419b48da030c1221751fe7"
+    },
+    {
+      "key": "loot-battery",
+      "width": 24,
+      "height": 24,
+      "occupied": 481,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "33c6a2632ccb332bfcb552266eac10c6364235e104419b48da030c1221751fe7"
+    },
+    {
+      "key": "item-inventory-watch",
+      "width": 24,
+      "height": 24,
+      "occupied": 369,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "c13174544f538ebbd9dea75b09fb121806753dfc14cd4edaafb231f2373666d7"
+    },
+    {
+      "key": "item-watch",
+      "width": 32,
+      "height": 32,
+      "occupied": 626,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 0,
+        "width": 28,
+        "height": 32
+      },
+      "pngSha256": "adf43da9ff775f684f69796a555cdafa7aa94c873f05434ace081231f9e0aaf5"
+    },
+    {
+      "key": "item-small-watch",
+      "width": 24,
+      "height": 24,
+      "occupied": 369,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "c13174544f538ebbd9dea75b09fb121806753dfc14cd4edaafb231f2373666d7"
+    },
+    {
+      "key": "loot-watch",
+      "width": 24,
+      "height": 24,
+      "occupied": 369,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "c13174544f538ebbd9dea75b09fb121806753dfc14cd4edaafb231f2373666d7"
+    },
+    {
+      "key": "item-inventory-pearl",
+      "width": 24,
+      "height": 24,
+      "occupied": 444,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "1fcbf9fa256edd00283c5d4e73ca4d02ca45ba165a8c28d1365db3099f791aa8"
+    },
+    {
+      "key": "item-pearl",
+      "width": 32,
+      "height": 32,
+      "occupied": 634,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 2,
+        "width": 28,
+        "height": 29
+      },
+      "pngSha256": "700e9f0da6ad0feb405af4ce414919efb935e108e79bc1ada7b119786f430bc4"
+    },
+    {
+      "key": "item-small-pearl",
+      "width": 24,
+      "height": 24,
+      "occupied": 444,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "1fcbf9fa256edd00283c5d4e73ca4d02ca45ba165a8c28d1365db3099f791aa8"
+    },
+    {
+      "key": "loot-pearl",
+      "width": 24,
+      "height": 24,
+      "occupied": 444,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 0,
+        "width": 22,
+        "height": 24
+      },
+      "pngSha256": "1fcbf9fa256edd00283c5d4e73ca4d02ca45ba165a8c28d1365db3099f791aa8"
+    },
+    {
+      "key": "item-inventory-sample",
+      "width": 24,
+      "height": 24,
+      "occupied": 491,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 23
+      },
+      "pngSha256": "3e62819d134842d3160aec1627c878ee1839a4d9376963d6bda180a36cf0bba8"
+    },
+    {
+      "key": "item-sample",
+      "width": 32,
+      "height": 32,
+      "occupied": 736,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 2,
+        "width": 26,
+        "height": 29
+      },
+      "pngSha256": "86650ed5e0eea2ab1df62fdae29101c9fe24212cc6c5b2066337e15e1aa4c6df"
+    },
+    {
+      "key": "item-small-sample",
+      "width": 24,
+      "height": 24,
+      "occupied": 491,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 23
+      },
+      "pngSha256": "3e62819d134842d3160aec1627c878ee1839a4d9376963d6bda180a36cf0bba8"
+    },
+    {
+      "key": "loot-sample",
+      "width": 24,
+      "height": 24,
+      "occupied": 491,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "width": 22,
+        "height": 23
+      },
+      "pngSha256": "3e62819d134842d3160aec1627c878ee1839a4d9376963d6bda180a36cf0bba8"
+    },
+    {
+      "key": "item-inventory-ledger",
+      "width": 48,
+      "height": 16,
+      "occupied": 714,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 48,
+        "height": 16
+      },
+      "pngSha256": "0af13ae2b71617867a5c5da4945ee7032f28155b7b797127ccaeb35d69364d87"
+    },
+    {
+      "key": "item-ledger",
+      "width": 32,
+      "height": 32,
+      "occupied": 773,
+      "translucent": 0,
+      "bounds": {
+        "x": 1,
+        "y": 3,
+        "width": 30,
+        "height": 27
+      },
+      "pngSha256": "1e0f66b1aaf7dfa13c41d283865e047940dae2864c7bf43fdb08e8f4e4b63781"
+    },
+    {
+      "key": "item-small-ledger",
+      "width": 24,
+      "height": 24,
+      "occupied": 516,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "ae3df9214b51c326ad8b7c74a8e4bf4d3bc28f941e1962d833f85166d412d6df"
+    },
+    {
+      "key": "loot-ledger",
+      "width": 24,
+      "height": 24,
+      "occupied": 516,
+      "translucent": 0,
+      "bounds": {
+        "x": 0,
+        "y": 1,
+        "width": 24,
+        "height": 23
+      },
+      "pngSha256": "ae3df9214b51c326ad8b7c74a8e4bf4d3bc28f941e1962d833f85166d412d6df"
+    },
+    {
+      "key": "item-inventory-cloth",
+      "width": 24,
+      "height": 24,
+      "occupied": 439,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 3,
+        "width": 21,
+        "height": 21
+      },
+      "pngSha256": "05dbcf0aa1f53c23ca2a01a435c78696ffce57ad7dc4c81167c1b717044de0f9"
+    },
+    {
+      "key": "item-cloth",
+      "width": 32,
+      "height": 32,
+      "occupied": 439,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 7,
+        "width": 21,
+        "height": 21
+      },
+      "pngSha256": "f28403f48960ef469930cb8ffc641037afb2d2c8b958ba560f53e6b360c939c2"
+    },
+    {
+      "key": "item-small-cloth",
+      "width": 24,
+      "height": 24,
+      "occupied": 439,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 3,
+        "width": 21,
+        "height": 21
+      },
+      "pngSha256": "05dbcf0aa1f53c23ca2a01a435c78696ffce57ad7dc4c81167c1b717044de0f9"
+    },
+    {
+      "key": "loot-cloth",
+      "width": 24,
+      "height": 24,
+      "occupied": 439,
+      "translucent": 0,
+      "bounds": {
+        "x": 2,
+        "y": 3,
+        "width": 21,
+        "height": 21
+      },
+      "pngSha256": "05dbcf0aa1f53c23ca2a01a435c78696ffce57ad7dc4c81167c1b717044de0f9"
+    },
+    {
+      "key": "item-inventory-analgesic",
+      "width": 24,
+      "height": 24,
+      "occupied": 418,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 2,
+        "width": 19,
+        "height": 22
+      },
+      "pngSha256": "95b3b3da4c71ec4424d38175899ed42d15688ae719c46c256bd5425d6bd72dac"
+    },
+    {
+      "key": "item-analgesic",
+      "width": 32,
+      "height": 32,
+      "occupied": 418,
+      "translucent": 0,
+      "bounds": {
+        "x": 7,
+        "y": 6,
+        "width": 19,
+        "height": 22
+      },
+      "pngSha256": "bb4b004e4a8c05a2b2fb18bca0faf6ba5040bf94dd2c6a42af32df0bb83ef68b"
+    },
+    {
+      "key": "item-small-analgesic",
+      "width": 24,
+      "height": 24,
+      "occupied": 418,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 2,
+        "width": 19,
+        "height": 22
+      },
+      "pngSha256": "95b3b3da4c71ec4424d38175899ed42d15688ae719c46c256bd5425d6bd72dac"
+    },
+    {
+      "key": "loot-analgesic",
+      "width": 24,
+      "height": 24,
+      "occupied": 418,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 2,
+        "width": 19,
+        "height": 22
+      },
+      "pngSha256": "95b3b3da4c71ec4424d38175899ed42d15688ae719c46c256bd5425d6bd72dac"
+    },
+    {
+      "key": "item-inventory-focus",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "6d1bbaf5d809febce97f6ca089d075bc76f8f9abc99834b8d8fc6ee7d4d8f7bd"
+    },
+    {
+      "key": "item-focus",
+      "width": 32,
+      "height": 32,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 10,
+        "y": 5,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "63a0c8b1a732412c8bfceba524bfef9cd419b057f014086c7c1dd1ba6017ed58"
+    },
+    {
+      "key": "item-small-focus",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "6d1bbaf5d809febce97f6ca089d075bc76f8f9abc99834b8d8fc6ee7d4d8f7bd"
+    },
+    {
+      "key": "loot-focus",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "6d1bbaf5d809febce97f6ca089d075bc76f8f9abc99834b8d8fc6ee7d4d8f7bd"
+    },
+    {
+      "key": "item-inventory-strengthDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "9d815791ffda815b12489ff52fe8b8fb545182e3ae8c93f9cdd3592194f77007"
+    },
+    {
+      "key": "item-strengthDose",
+      "width": 32,
+      "height": 32,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 10,
+        "y": 5,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "dee55bb2858c5ea9f07f08d5d7cb491f7dd5922e2cec29a5c92b5aa7832ab52d"
+    },
+    {
+      "key": "item-small-strengthDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "9d815791ffda815b12489ff52fe8b8fb545182e3ae8c93f9cdd3592194f77007"
+    },
+    {
+      "key": "loot-strengthDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "9d815791ffda815b12489ff52fe8b8fb545182e3ae8c93f9cdd3592194f77007"
+    },
+    {
+      "key": "item-inventory-constitutionDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "b522e2f771604dc103a74a6e9217879ee788975d091074139e8f4ab7e0f19417"
+    },
+    {
+      "key": "item-constitutionDose",
+      "width": 32,
+      "height": 32,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 10,
+        "y": 5,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "4d144fff4cd62cf45c4b38ba451d93f59507721c19a944c5aa369e61d6f0ca3e"
+    },
+    {
+      "key": "item-small-constitutionDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "b522e2f771604dc103a74a6e9217879ee788975d091074139e8f4ab7e0f19417"
+    },
+    {
+      "key": "loot-constitutionDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "b522e2f771604dc103a74a6e9217879ee788975d091074139e8f4ab7e0f19417"
+    },
+    {
+      "key": "item-inventory-techniqueDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "ba726c113f8465918f1d8f890e0263f029ca06843ce94ed8c02c2f775754fa49"
+    },
+    {
+      "key": "item-techniqueDose",
+      "width": 32,
+      "height": 32,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 10,
+        "y": 5,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "6b1b1a0889fbafb038a56b71b18d175146ed376c2ec1c94a5ebfb2b888b84c53"
+    },
+    {
+      "key": "item-small-techniqueDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "ba726c113f8465918f1d8f890e0263f029ca06843ce94ed8c02c2f775754fa49"
+    },
+    {
+      "key": "loot-techniqueDose",
+      "width": 24,
+      "height": 24,
+      "occupied": 249,
+      "translucent": 0,
+      "bounds": {
+        "x": 6,
+        "y": 1,
+        "width": 13,
+        "height": 23
+      },
+      "pngSha256": "ba726c113f8465918f1d8f890e0263f029ca06843ce94ed8c02c2f775754fa49"
+    },
+    {
+      "key": "item-inventory-luckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "3d1170071f71dc8753ea831febc8e4cd732bf27bf5f32502ad7a2703fc26344a"
+    },
+    {
+      "key": "item-luckyCharm",
+      "width": 32,
+      "height": 32,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 9,
+        "y": 4,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "a53cd3896f662085677e042cffbb0919b50326ef439bc025e2526bdcc36bd8a4"
+    },
+    {
+      "key": "item-small-luckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "3d1170071f71dc8753ea831febc8e4cd732bf27bf5f32502ad7a2703fc26344a"
+    },
+    {
+      "key": "loot-luckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "3d1170071f71dc8753ea831febc8e4cd732bf27bf5f32502ad7a2703fc26344a"
+    },
+    {
+      "key": "item-inventory-unluckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "69ca25342bff4e09a15339e6c82d7be7725938c2b8c034861d5f641ddcae117a"
+    },
+    {
+      "key": "item-unluckyCharm",
+      "width": 32,
+      "height": 32,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 9,
+        "y": 4,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "921cef22feb58435b92f1bf4defa98765529cf7d77ff7ce698a9d764b943ddc5"
+    },
+    {
+      "key": "item-small-unluckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "69ca25342bff4e09a15339e6c82d7be7725938c2b8c034861d5f641ddcae117a"
+    },
+    {
+      "key": "loot-unluckyCharm",
+      "width": 24,
+      "height": 24,
+      "occupied": 230,
+      "translucent": 0,
+      "bounds": {
+        "x": 5,
+        "y": 0,
+        "width": 15,
+        "height": 24
+      },
+      "pngSha256": "69ca25342bff4e09a15339e6c82d7be7725938c2b8c034861d5f641ddcae117a"
+    },
+    {
+      "key": "item-inventory-luckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "5dae936d5c3c30a13fc7dc70f065aa8b2bd972c2b19f245eb43bd0ce76b6b6f7"
+    },
+    {
+      "key": "item-luckySachet",
+      "width": 32,
+      "height": 32,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 7,
+        "y": 5,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "096fe203d5d710c5350edae55e56aebca53b5988d05fbd52236a831ce0146897"
+    },
+    {
+      "key": "item-small-luckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "5dae936d5c3c30a13fc7dc70f065aa8b2bd972c2b19f245eb43bd0ce76b6b6f7"
+    },
+    {
+      "key": "loot-luckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "5dae936d5c3c30a13fc7dc70f065aa8b2bd972c2b19f245eb43bd0ce76b6b6f7"
+    },
+    {
+      "key": "item-inventory-unluckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "a7b756f1a586e965f54efe821a40782b560ddfb3b6b61dd48170896431e570a6"
+    },
+    {
+      "key": "item-unluckySachet",
+      "width": 32,
+      "height": 32,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 7,
+        "y": 5,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "0c596f9f5c78c4c24f5ff3540c4e3c5f7683b0b0224d3d5d1f00a831cfa2af76"
+    },
+    {
+      "key": "item-small-unluckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "a7b756f1a586e965f54efe821a40782b560ddfb3b6b61dd48170896431e570a6"
+    },
+    {
+      "key": "loot-unluckySachet",
+      "width": 24,
+      "height": 24,
+      "occupied": 352,
+      "translucent": 0,
+      "bounds": {
+        "x": 3,
+        "y": 1,
+        "width": 19,
+        "height": 23
+      },
+      "pngSha256": "a7b756f1a586e965f54efe821a40782b560ddfb3b6b61dd48170896431e570a6"
+    }
+  ],
+  "worldViews": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "village",
+      "fixture": {
+        "x": 650,
+        "y": 464
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "market",
+      "fixture": {
+        "x": 650,
+        "y": 1072
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "observatory",
+      "fixture": {
+        "x": 1700,
+        "y": 600
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "harbor",
+      "fixture": {
+        "x": 1990,
+        "y": 944
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "pump",
+      "fixture": {
+        "x": 1750,
+        "y": 1520
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "station",
+      "fixture": {
+        "x": 500,
+        "y": 1520
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "village",
+      "fixture": {
+        "x": 650,
+        "y": 464
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "market",
+      "fixture": {
+        "x": 650,
+        "y": 1072
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "observatory",
+      "fixture": {
+        "x": 1700,
+        "y": 600
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "harbor",
+      "fixture": {
+        "x": 1990,
+        "y": 944
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "pump",
+      "fixture": {
+        "x": 1750,
+        "y": 1520
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "station",
+      "fixture": {
+        "x": 500,
+        "y": 1520
+      }
+    }
+  ],
+  "status": "passed"
+}

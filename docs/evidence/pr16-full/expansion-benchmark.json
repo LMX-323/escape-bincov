@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-10-05T18:52:39.713Z",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "fixture": {
+    "maps": {
+      "downstairs": {
+        "cols": 72,
+        "rows": 52
+      },
+      "upstairs": {
+        "cols": 64,
+        "rows": 48
+      },
+      "basement": {
+        "cols": 32,
+        "rows": 24
+      }
+    },
+    "enemies": 25,
+    "scattered": 40,
+    "originalContainerRecords": 20,
+    "containers": 10
+  },
+  "methodology": "Synthetic validated three-map snapshot, actual v3 coast checkpoint retained as pre-v4 archive. Repeated JSON encoding, strict decoding and real localStorage writes in headless Chromium. Not a gameplay frame/phone performance claim.",
+  "sizes": {
+    "budget": {
+      "mainBytes": 32286,
+      "preV4Bytes": 13168,
+      "mainWithoutArchivesBytes": 15602,
+      "portableBytes": 32356,
+      "limitBytes": 2097152
+    },
+    "validatorLimit": {
+      "mainBytes": 129226,
+      "preV4Bytes": 13168,
+      "mainWithoutArchivesBytes": 112542,
+      "portableBytes": 129296,
+      "limitBytes": 2097152
+    }
+  },
+  "timings": {
+    "budget": {
+      "encodeMilliseconds": {
+        "samples": 60,
+        "p50": 0.1378260000001319,
+        "p95": 0.2730389999999261,
+        "max": 1.2548890000000483
+      },
+      "strictDecodeMilliseconds": {
+        "samples": 60,
+        "p50": 1.049972999999909,
+        "p95": 2.3324029999998857,
+        "max": 6.251122000000123
+      },
+      "encodeAndLocalStorageMilliseconds": {
+        "samples": 60,
+        "p50": 0.19999999925494194,
+        "p95": 2.2999999970197678,
+        "max": 5
+      }
+    },
+    "validatorLimit": {
+      "encodeMilliseconds": {
+        "samples": 60,
+        "p50": 0.5837640000002011,
+        "p95": 1.3521650000000136,
+        "max": 2.321185999999898
+      },
+      "strictDecodeMilliseconds": {
+        "samples": 60,
+        "p50": 4.248063000000002,
+        "p95": 7.784878999999819,
+        "max": 12.707781000000068
+      },
+      "encodeAndLocalStorageMilliseconds": {
+        "samples": 60,
+        "p50": 0.5999999977648258,
+        "p95": 2.2999999970197678,
+        "max": 4
+      }
+    }
+  },
+  "browser": "153.0.8010.12",
+  "status": "passed",
+  "finishedAt": "2026-10-05T18:52:41.027Z"
+}

@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-10-05T19:17:06.869Z",
+  "baseline": "49738b89cc8556a0b39d339239bf09945e44ab9e",
+  "legacySha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+  "currentSha256": "76cc5602c730de38235846e9b6610a103bf004798cdf4626fb4ced1a9dd3122b",
+  "steps": [
+    {
+      "name": "the actual v3 main client creates progress; new client respects its lock then takes over",
+      "status": "passed"
+    },
+    {
+      "name": "activation quota failure preserves original bytes; retry retains one exact rollback record",
+      "status": "passed"
+    },
+    {
+      "name": "the actual old HTML rejects v4 both with and without the writer lock, preserving every byte",
+      "status": "passed"
+    },
+    {
+      "name": "settled native export includes the full extension; cancel/failure/confirmation preserve atomic import",
+      "status": "passed"
+    },
+    {
+      "name": "legacy coast still deploys/resumes; failed abandon exports pending body/growth and retries only once",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "unexpectedRequests": [],
+  "methodology": "Real pinned main HTML and current bundle on one locally fulfilled HTTPS origin, offline; explicit test-only extension fixture. No new map/gameplay/UI acceptance is claimed.",
+  "browser": "153.0.8010.12",
+  "status": "passed",
+  "finishedAt": "2026-10-05T19:17:27.141Z"
+}

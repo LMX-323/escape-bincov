@@ -10,9 +10,12 @@ export interface ShopCart {
     sell: D.Inventory;
     stash: D.Inventory;
 }
-export function createCart(save: D.SaveDataV1, merchant: Merchant): ShopCart {
+export function merchantStock(merchant: Merchant, rpg = false): string[] {
+    return [...D.MERCHANTS[merchant].stock, ...(rpg ? merchant === 'arms' ? ['cloth'] : ['analgesic', 'focus'] : [])];
+}
+export function createCart(save: D.SaveDataV1, merchant: Merchant, rpg = false): ShopCart {
     const catalog = D.createInventory(6, 5);
-    for (const id of D.MERCHANTS[merchant].stock) D.addItem(catalog, id, D.buyQuantity(id));
+    for (const id of merchantStock(merchant, rpg)) D.addItem(catalog, id, D.buyQuantity(id));
     return { merchant, original: JSON.stringify(save.stash), catalog, buy: D.createInventory(4, 3), sell: D.createInventory(4, 3), stash: structuredClone(save.stash) };
 }
 export const shopInventory = (cart: ShopCart, source: ShopSource) => source === 'merchant' ? cart.catalog : cart[source];
@@ -54,7 +57,7 @@ export function saleWarnings(save: D.SaveDataV1, cart: ShopCart) {
     }));
 }
 /** Validate again at checkout; a rejected transaction never mutates the save. */
-export function settleCart(save: D.SaveDataV1, cart: ShopCart): boolean {
+export function settleCart(save: D.SaveDataV1, cart: ShopCart, rpg = false): boolean {
     if (save.activeRun || JSON.stringify(save.stash) !== cart.original || !cartDirty(cart)) return false;
     const owned = [...cart.stash.items, ...cart.sell.items];
     if (owned.length !== save.stash.items.length || new Set(owned.map(i => i.uid)).size !== owned.length) return false;
@@ -63,7 +66,7 @@ export function settleCart(save: D.SaveDataV1, cart: ShopCart): boolean {
         if (!original || item.id !== original.id || item.qty !== original.qty || !!item.relief !== !!original.relief || !!item.rotated !== !!original.rotated) return false;
     }
     if (cart.sell.items.some(i => i.relief || D.ITEMS[i.id].sell <= 0)) return false;
-    if (cart.buy.items.some(i => i.relief || !D.MERCHANTS[cart.merchant].stock.includes(i.id) || i.qty !== D.buyQuantity(i.id))) return false;
+    if (cart.buy.items.some(i => i.relief || !merchantStock(cart.merchant, rpg).includes(i.id) || i.qty !== D.buyQuantity(i.id))) return false;
     const stash = structuredClone(cart.stash), { net } = cartTotals(cart);
     if (save.cash < net || !Number.isFinite(net)) return false;
     for (const item of stash.items) if (!D.fits(stash, item.id, item.x, item.y, item.uid, !!item.rotated)) return false;

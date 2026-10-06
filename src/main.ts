@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { loadPixelFont } from './font';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
+import { BaseScene } from './base-scene';
 import { app, audio, saveSession } from './app';
 import { initSave, installInventoryDrag, closeOverlay, setOverlay, persist, toast, render } from './ui';
 import { SAVE_KEY } from './domain';
@@ -13,10 +14,10 @@ async function boot() {
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-    app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
+    app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, BaseScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
     const coarse = matchMedia('(pointer: coarse)'), fine = matchMedia('(any-pointer: fine)');
     installInventoryDrag();
-    const controls = installControls(setOverlay, () => app.state === 'run', () => audio.start());
+    const controls = installControls(name => setOverlay(app.baseWalking ? 'base-menu' : name), () => app.state === 'run' || app.baseWalking, () => audio.start());
     let previousWidth = 0, previousHeight = 0;
     function resize() {
         const editing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
@@ -37,9 +38,9 @@ async function boot() {
         if (app.game?.canvas) app.game.scale.updateBounds();
         const changed = Math.abs(width - previousWidth) > 2 || Math.abs(height - previousHeight) > 2;
         previousWidth = width; previousHeight = height;
-        if ((changed || modeChanged) && app.state === 'run' && !editing) {
-            app.raid?.releaseInput(); controls();
-            if (!app.pendingSettlement && app.overlay !== 'checkpoint-error') setOverlay(touch && (innerWidth < innerHeight || height < 280) ? 'rotate' : 'pause');
+        if ((changed || modeChanged) && (app.state === 'run' || app.baseWalking) && !editing) {
+            app.raid?.releaseInput(); playerInput.clear(); const baseSaved = app.base?.checkpoint() ?? true; controls();
+            if (!app.pendingSettlement && app.overlay !== 'checkpoint-error') setOverlay(app.baseWalking ? baseSaved ? 'base-menu' : 'base-save-error' : touch && (innerWidth < innerHeight || height < 280) ? 'rotate' : 'pause');
         }
         if ((modeChanged || (changed && app.state === 'hideout' && !editing)) && app.game?.isBooted) render();
     }
@@ -54,14 +55,15 @@ async function boot() {
         }
     });
     const suspend = () => {
-        app.raid?.releaseInput(); playerInput.clear(); controls(); audio.stop();
+        app.raid?.releaseInput(); const baseSaved = app.base?.checkpoint() ?? true; playerInput.clear(); controls(); audio.stop();
+        if (!baseSaved) setOverlay('base-save-error');
         if (app.state === 'run' && !app.pendingSettlement) setOverlay('pause');
     };
     addEventListener('blur', suspend);
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
     addEventListener('pagehide', () => { suspend(); ownership.release(); });
     addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
-    addEventListener('beforeunload', e => { app.raid?.checkpoint(); if (app.pendingSettlement || !app.storageOK) { e.preventDefault(); e.returnValue = ''; } });
+    addEventListener('beforeunload', e => { app.raid?.checkpoint(); app.base?.checkpoint(); if (app.pendingSettlement || !app.storageOK) { e.preventDefault(); e.returnValue = ''; } });
     document.addEventListener('contextmenu', e => { if ((e.target as HTMLElement).closest('#game, #touch-controls')) e.preventDefault(); });
     addEventListener('pointermove', e => { if (e.pointerType === 'mouse') playerInput.pointer = { x: e.clientX, y: e.clientY }; });
     const game = document.getElementById('game')!;
@@ -96,6 +98,9 @@ async function boot() {
             else if (e.key.toLowerCase() === 'e' && app.overlay === 'loot') { app.raid?.suppressHeldInput('E'); setOverlay(''); }
             else if (e.key.toLowerCase() === 'm') setOverlay(app.overlay === 'map' ? '' : 'map');
             else if (e.key === 'Escape') { if (app.overlay) closeOverlay(); else setOverlay('pause'); }
+            else if (!app.overlay) playerInput.key(e.key, true);
+        } else if (app.baseWalking) {
+            if (e.key === 'Escape') { if (app.overlay) closeOverlay(); else setOverlay('base-menu'); }
             else if (!app.overlay) playerInput.key(e.key, true);
         } else if (e.key === 'Escape') closeOverlay();
     });

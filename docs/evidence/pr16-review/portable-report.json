@@ -1,0 +1,113 @@
+{
+  "portable": true,
+  "status": "passed",
+  "startedAt": "2026-10-06T05:46:12.110Z",
+  "archive": "/workspace/escape-bincov/release/Escape-Bincov-portable.zip",
+  "browser": "/workspace/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome",
+  "offline": true,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "steps": [
+    {
+      "name": "extract exactly the two portable files into a fresh Chinese and space path",
+      "status": "passed",
+      "detail": {
+        "files": [
+          "README-游玩说明.txt",
+          "start the game.html"
+        ],
+        "htmlBytes": 1895538,
+        "sha256": "dc9d29e3d3dc6be8a4f85bc1349f8a19b9df6b93bade69cd91e47def77bc751c"
+      }
+    },
+    {
+      "name": "normal offline entry shows the menu without exposing test hooks",
+      "status": "passed"
+    },
+    {
+      "name": "enter the safe house and deploy seed 42 using real buttons",
+      "status": "passed",
+      "detail": {
+        "atDeploy": "10:00",
+        "after": "09:59",
+        "countedDown": true
+      }
+    },
+    {
+      "name": "one real left click fires one round: 8 to 7",
+      "status": "passed",
+      "detail": {
+        "before": 8,
+        "after": 7,
+        "input": "real left mouse click",
+        "target": {
+          "x": 716.8,
+          "y": 360
+        }
+      }
+    },
+    {
+      "name": "Tab opens the action inventory and its close button dismisses it",
+      "status": "passed",
+      "detail": {
+        "openedWithTab": true,
+        "closedWithButton": true
+      }
+    },
+    {
+      "name": "Escape pauses play and the visible clock stays unchanged",
+      "status": "passed",
+      "detail": {
+        "before": "09:58",
+        "after": "09:58",
+        "observedMs": 1500,
+        "unchanged": true
+      }
+    }
+  ],
+  "externalRequests": [],
+  "unexpectedFileRequests": [],
+  "errors": [],
+  "methodology": "Extract the shared ZIP outside the workspace; open its file:// HTML without test hooks; use real buttons and keyboard/mouse input; read the visible HUD. No fixtures, original assets, server, screenshots, or internet access.",
+  "extractionDirectory": "/tmp/滨科夫 portable test JVEvc5",
+  "sha256": "dc9d29e3d3dc6be8a4f85bc1349f8a19b9df6b93bade69cd91e47def77bc751c",
+  "archiveSha256": "57da46fcd4de4e1d22866583ff6091759c9760a4485d0ca652d254b083cda479",
+  "htmlBytes": 1895538,
+  "archiveBytes": 491873,
+  "files": [
+    "README-游玩说明.txt",
+    "start the game.html"
+  ],
+  "entry": "file:///tmp/%E6%BB%A8%E7%A7%91%E5%A4%AB%20portable%20test%20JVEvc5/start%20the%20game.html",
+  "browserVersion": "153.0.8010.12",
+  "testHookAbsent": true,
+  "seed": 42,
+  "timer": {
+    "atDeploy": "10:00",
+    "after": "09:59",
+    "countedDown": true
+  },
+  "ammo": {
+    "before": 8,
+    "after": 7,
+    "input": "real left mouse click",
+    "target": {
+      "x": 716.8,
+      "y": 360
+    }
+  },
+  "inventory": {
+    "openedWithTab": true,
+    "closedWithButton": true
+  },
+  "pause": {
+    "before": "09:58",
+    "after": "09:58",
+    "observedMs": 1500,
+    "unchanged": true
+  },
+  "temporaryDirectoryRemoved": true,
+  "finishedAt": "2026-10-06T05:46:21.345Z"
+}

@@ -7,8 +7,10 @@ import {
   submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
 } from '../src/domain';
 
-test('20 original items have coherent footprints, stacks and prices', () => {
-  assert.equal(Object.keys(ITEMS).length, 20);
+test('20 original items plus production/RPG items have coherent footprints, stacks and prices', () => {
+  const original = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'];
+  assert.equal(original.length, 20); original.forEach(id => assert.ok(ITEMS[id]));
+  assert.equal(Object.keys(ITEMS).length, 30);
   for (const def of Object.values(ITEMS)) {
     assert.ok(def.w > 0 && def.h > 0 && def.stack > 0);
     if (def.buy) assert.ok(def.sell <= def.buy);

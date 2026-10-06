@@ -36,12 +36,12 @@ try {
   for (const size of [24,32]) {
     const entries = Object.keys(ITEMS).map(id => byKey[`item-${size===24?'small-':''}${id}`]);
     assert.ok(entries.every(t => t && t.width===size && t.height===size && t.occupied>0), `Missing ${size}px item art`);
-    assert.equal(new Set(entries.map(t => t.png)).size,20, `Two ${size}px item icons are identical`);
-    report.checks.push(`All 20 ${size}px item textures present, nonempty and unique`);
+    assert.equal(new Set(entries.map(t => t.png)).size,Object.keys(ITEMS).length, `Two ${size}px item icons are identical`);
+    report.checks.push(`All ${Object.keys(ITEMS).length} ${size}px item textures present, nonempty and unique`);
   }
   const inventoryArt = Object.keys(ITEMS).map(id => byKey[`item-inventory-${id}`]);
-  assert.equal(new Set(inventoryArt.map(t => t.png)).size, 20);
-  report.checks.push('All 20 proportioned inventory textures are present and unique');
+  assert.equal(new Set(inventoryArt.map(t => t.png)).size, Object.keys(ITEMS).length);
+  report.checks.push(`All ${Object.keys(ITEMS).length} proportioned inventory textures are present and unique`);
   assert.equal(new Set(['player','scav','salt','elite','creature'].map(k=>byKey[k].png)).size,5);
   for(const id of ['scav','salt','elite','creature'])assert.notEqual(byKey[id].png,byKey[`corpse-${id}`].png);
   assert.notEqual(byKey['loot-crate'].png,byKey['loot-crate-empty'].png);
@@ -71,7 +71,7 @@ try {
   await atlas('inventory-items',Object.entries(ITEMS).map(([id,item])=>({id,name:item.name,textures:[byKey[`item-inventory-${id}`]]})));
   const dropKeys=new Set(Object.keys(ITEMS).map(id=>`loot-${id}`));
   assert.ok([...dropKeys].every(key=>byKey[key]?.occupied>0));
-  assert.equal(new Set([...dropKeys].map(key=>byKey[key].png)).size, 20, 'Ground supplies must have distinct object silhouettes');
+  assert.equal(new Set([...dropKeys].map(key=>byKey[key].png)).size, Object.keys(ITEMS).length, 'Ground supplies must have distinct object silhouettes');
   await atlas('actors',textures.filter(t=>!t.key.startsWith('item-')&&!dropKeys.has(t.key)).map(t=>({id:t.key,name:t.key,textures:[t]})));
   await atlas('ground-supplies',Object.entries(ITEMS).map(([id,item])=>({id:`loot-${id}`,name:item.name,textures:[byKey[`loot-${id}`]]})));
   report.textures=textures.map(({png,...t})=>({...t,pngSha256:hash(Buffer.from(png.split(',')[1],'base64'))}));
@@ -130,6 +130,28 @@ try {
     });
   });
   await page.waitForTimeout(200);await page.screenshot({path:resolve(out,'actor-headings.png')});
+  // PR16's layered transaction rollback synchronizes existing sprites instead of recreating them.
+  const layered = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });
+  layered.on('request', req => { if (/^https?:/.test(req.url())) report.externalRequests.push(req.url()); });
+  const floor = await layered.newPage(); floor.on('pageerror', e => report.errors.push(String(e)));
+  await floor.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1');
+  await floor.locator('[data-action="enter"]').click(); await floor.locator('#run-world').selectOption('buildings');
+  await floor.locator('#seed').fill('42'); await floor.locator('[data-action="deploy"]').click();
+  await floor.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+  const restoredLayer = await floor.evaluate(() => {
+    const r = window.__bincov.app.raid; r.scene.pause();
+    r.damageEnemy(r.enemies.find(e => e.hp > 0), 999);
+    const c = r.containers.find(c => c.kind === 'crate' && c.inventory.items.length);
+    c.inventory.items = []; const checkpoint = r.snapshot(); r.restore(checkpoint); r.updateHud();
+    return { corpses: r.enemies.filter(e => e.hp <= 0).map(e => ({ texture: e.sprite.texture.key, expected: `corpse-${e.id}`, alpha: e.sprite.alpha, tint: e.sprite.tintTopLeft })),
+      loot: r.loot.map(l => ({ texture: l.sprite.texture.key, expected: `loot-${l.id}`, tint: l.sprite.tintTopLeft })),
+      crate: r.containerSprites.find(s => s.getData('containerId') === c.id)?.texture.key, saved: r.checkpoint() };
+  });
+  assert.ok(restoredLayer.corpses.length > 0 && restoredLayer.corpses.every(e => e.texture === e.expected && e.alpha === 1 && e.tint === 0xffffff));
+  assert.ok(restoredLayer.loot.length > 0 && restoredLayer.loot.every(e => e.texture === e.expected && e.tint === 0xffffff));
+  assert.equal(restoredLayer.crate, 'loot-crate-empty'); assert.equal(restoredLayer.saved, true);
+  report.checks.push('Layered sprite synchronization preserves separate corpse, item and empty crate art and passes strict checkpoint validation');
+  await layered.close();
   await context.close();
   assert.deepEqual(report.errors,[]);assert.deepEqual(report.externalRequests,[]);
   report.status='passed';console.log(JSON.stringify({checks:report.checks,textures:textures.length,errors:report.errors,externalRequests:report.externalRequests}));
