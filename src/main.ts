@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadPixelFont } from './font';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { app, audio, saveSession } from './app';
 import { initSave, setOverlay, persist, toast, render } from './ui';
@@ -8,6 +9,7 @@ import { playerInput } from './input';
 import { installControls } from './mobile';
 
 async function boot() {
+    await loadPixelFont();
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,7 +40,7 @@ async function boot() {
             app.raid?.releaseInput(); controls();
             if (!app.pendingSettlement && app.overlay !== 'checkpoint-error') setOverlay(touch && (innerWidth < innerHeight || height < 280) ? 'rotate' : 'pause');
         }
-        if (modeChanged && app.game?.isBooted) render();
+        if ((modeChanged || (changed && app.state === 'hideout' && !editing)) && app.game?.isBooted) render();
     }
     addEventListener('resize', resize); visualViewport?.addEventListener('resize', resize); coarse.addEventListener('change', resize); fine.addEventListener('change', resize);
     app.game.events.once('ready', resize); resize();
