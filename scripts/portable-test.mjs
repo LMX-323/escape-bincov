@@ -197,7 +197,9 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
   await step('Tab opens the action inventory and its close button dismisses it', async () => {
     await page.keyboard.press('Tab');
     await page.locator('.inventory-modal').waitFor({ state: 'visible' });
-    assert.match(await page.locator('.inventory-modal > .section-title').innerText(), /^背包/);
+    assert.equal(await page.locator('.inventory-modal .inventory-header strong').innerText(), '随身物资');
+    await page.locator('.inventory-modal [data-grid="bag"]').waitFor({ state: 'visible' });
+    await page.locator('.inventory-modal [data-grid="safe"]').waitFor({ state: 'visible' });
     await action('close').click();
     await page.locator('.inventory-modal').waitFor({ state: 'detached' });
     report.inventory = { openedWithTab: true, closedWithButton: true };
