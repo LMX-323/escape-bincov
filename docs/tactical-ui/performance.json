@@ -1,0 +1,117 @@
+{
+  "method": "Sequential ABBA at each viewport, isolated offline contexts, real seed-42 deployment, read-only state access, 120 warm-up RAF frames and 180 sampled intervals; no other local browser suites running. Headless measurement, not a real-device guarantee.",
+  "html": {
+    "baseline": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+    "candidate": "e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc"
+  },
+  "samples": [
+    {
+      "version": "baseline",
+      "width": 1280,
+      "height": 720,
+      "bootMs": 501.4033699999999,
+      "fps": 59.01639344262295,
+      "frameP95": 16.799999999999272,
+      "frameMax": 33.399999999999636,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 96,
+      "textureCount": 49
+    },
+    {
+      "version": "candidate",
+      "width": 1280,
+      "height": 720,
+      "bootMs": 502.0987320000004,
+      "fps": 60.0020000666689,
+      "frameP95": 16.700000000000728,
+      "frameMax": 16.800000000000182,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 91,
+      "textureCount": 111
+    },
+    {
+      "version": "candidate",
+      "width": 1280,
+      "height": 720,
+      "bootMs": 466.5449470000003,
+      "fps": 59.669826957501826,
+      "frameP95": 16.700000000000728,
+      "frameMax": 33.30000000000018,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 91,
+      "textureCount": 111
+    },
+    {
+      "version": "baseline",
+      "width": 1280,
+      "height": 720,
+      "bootMs": 446.7742679999974,
+      "fps": 59.671805072103425,
+      "frameP95": 16.700000000000728,
+      "frameMax": 33.399999999999636,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 96,
+      "textureCount": 49
+    },
+    {
+      "version": "baseline",
+      "width": 1920,
+      "height": 1080,
+      "bootMs": 461.7150419999998,
+      "fps": 59.66982695750183,
+      "frameP95": 16.800000000000182,
+      "frameMax": 33.30000000000018,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 96,
+      "textureCount": 49
+    },
+    {
+      "version": "candidate",
+      "width": 1920,
+      "height": 1080,
+      "bootMs": 529.457494000002,
+      "fps": 59.34131144298289,
+      "frameP95": 16.799999999999272,
+      "frameMax": 33.40000000000009,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 91,
+      "textureCount": 111
+    },
+    {
+      "version": "candidate",
+      "width": 1920,
+      "height": 1080,
+      "bootMs": 530.2920470000026,
+      "fps": 59.66982695750182,
+      "frameP95": 16.800000000000182,
+      "frameMax": 33.30000000000018,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 91,
+      "textureCount": 111
+    },
+    {
+      "version": "baseline",
+      "width": 1920,
+      "height": 1080,
+      "bootMs": 468.70333900000696,
+      "fps": 58.38090295796575,
+      "frameP95": 16.799999999999727,
+      "frameMax": 33.399999999999636,
+      "state": "run",
+      "overlay": "",
+      "sceneChildren": 96,
+      "textureCount": 49
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "browser": "153.0.8010.12",
+  "status": "passed"
+}

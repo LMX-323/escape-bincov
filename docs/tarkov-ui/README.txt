@@ -1,3 +1,8 @@
+归档更新（2026-10-06）：布局方向和字体 B 已由 PR #20 合入 main。
+当前游戏实施记录：../tactical-ui/README.txt；本目录保留独立研究原型、原图和历史证据。
+下文基线、测试及“未接入游戏”等表述描述原型交付时点，不代表当前主线进度。
+原型仍只作设计对照，不能把其演示操作当成游戏功能。
+
 滨科夫 · 塔科夫界面研究样稿
 日期：2026-10-05
 基线：xuys2025/escape-bincov main e7252e6a595022212a60bcec22ac75068173e480
@@ -24,7 +29,9 @@ main 的真实截图和设计稿明确区分；不是把概念稿当成已实现
   node docs/tarkov-ui/source/review.mjs
 浏览器选择沿用 scripts/browser-options.mjs 和 PLAYWRIGHT_BROWSERS_PATH。
 
-重新获取基线截图与候选物品图（可选；输入必须匹配报告哈希）
+重新获取基线截图与候选物品图（可选；仅在本 PR 历史提交 baa8335 的独立工作区运行）
+该脚本锁定历史 main HTML 和 PR #11 HTML 的哈希；当前 main 会被拒绝。
+不要用旧 HTML 覆盖当前工作区或已接受的发布包。
   node --import tsx docs/tarkov-ui/source/capture-baseline.mjs <PR-11-09e0713-HTML路径>
 当前 main 截图来自 e7252e6 的 dist/index.html；导出的 20 件物品各有 24/32px 两版，
 来自待审 PR #11 的 09e0713，未把候选美术当作已接受的 main。
