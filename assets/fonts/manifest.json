@@ -1,8 +1,8 @@
 {
   "sourceSha256": "9c699de0d24e482700fa0a08ce3abe58ef2ceaf6173323c77b767c72cd538512",
-  "sha256": "3a0e1b3f24289cd84b377070e062c0d305b4a4e367fd0b1415080bfea0104780",
-  "characters": 758,
-  "bytes": 31344,
+  "sha256": "c8e94c903ece5fa3a81928e020d9da649f2795b30d1dc748ce140cd45233065c",
+  "characters": 759,
+  "bytes": 31548,
   "family": "Bincov Text",
   "tools": "fonttools 4.61.1; brotli 1.2.0",
   "codepoints": [
@@ -723,6 +723,7 @@
     38144,
     38145,
     38190,
+    38376,
     38381,
     38388,
     38405,

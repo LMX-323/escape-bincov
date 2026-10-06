@@ -815,7 +815,7 @@ export class RaidScene extends Phaser.Scene {
         const progress = questProgress(app.save, app.loadout), questList = document.getElementById('raid-quest-list');
         css('raid-quest-count', `· ${progress.length} 项未完成`);
         if (questList) {
-            const html = progress.map(q => `<section><strong>${q.name}</strong>${q.needs.map(n => `<p>${D.ITEMS[n.id].name}：站内 ${n.stored} · 本局 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
+            const html = progress.map(q => `<section><strong>${q.name}</strong>${q.needs.map(n => `<p>${D.ITEMS[n.id].name}：仓库 ${n.stored} · 携带 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
             if (questList.innerHTML !== html) questList.innerHTML = html;
         }
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);

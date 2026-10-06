@@ -11,10 +11,11 @@ if (url.protocol !== 'file:' && !(url.protocol === 'http:' && ['127.0.0.1', 'loc
 url.searchParams.set('test', '1');
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
-const report = { mode: url.protocol === 'file:' ? 'offline' : 'local HTTP diagnostic', browser: browser.version(), scope: process.argv.includes('--shop-only') ? 'shop' : 'all', results: [] };
+const report = { mode: url.protocol === 'file:' ? 'offline' : 'local HTTP diagnostic', browser: browser.version(), method: 'Real mouse, keyboard and emulated touch input. Blur and background transitions use explicit lifecycle event fixtures; no physical-device certification.', scope: process.argv.includes('--shop-only') ? 'shop' : 'all', results: [] };
 async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
-  const context = await browser.newContext({ viewport, hasTouch: touch, isMobile: touch, offline: url.protocol === 'file:' });
+  const hybrid = !touch && viewport.width === 1280;
+  const context = await browser.newContext({ viewport, hasTouch: touch || hybrid, isMobile: touch, offline: url.protocol === 'file:' });
   const page = await context.newPage(), errors = []; page.setDefaultTimeout(12000);
   page.on('pageerror', e => errors.push(e.message));
   await context.route(/^https?:/, route => { if (url.protocol === 'http:' && new URL(route.request().url()).origin === url.origin) return route.continue(); errors.push('External request'); return route.abort(); });
@@ -22,7 +23,7 @@ async function suite(viewport, touch = false) {
   const save = () => page.evaluate(() => structuredClone(window.__bincov.app.save));
   const overlay = () => page.evaluate(() => window.__bincov.app.overlay);
   async function step(name, work) {
-    const row = { viewport: label, name, status: 'running' }; report.results.push(row);
+    const row = { viewport: label, input: hybrid ? 'hybrid mouse and touch' : touch ? 'phone touch' : 'desktop mouse', name, status: 'running' }; report.results.push(row);
     try { await work(); assert.deepEqual(errors, []); row.status = 'passed'; console.log('PASS', label, name); }
     catch (e) { row.status = 'failed'; row.error = e.stack; await page.screenshot({ path: resolve(out, `qol-failed-${label}.png`) }); throw e; }
   }
@@ -111,7 +112,7 @@ async function suite(viewport, touch = false) {
       assert.equal(after.bag.items.find(i=>i.uid==='qol-ammo').qty,40); assert.equal(after.source.items.find(i=>i.uid==='qol-incoming').qty,7);
       await page.screenshot({path:resolve(out,`qol-inventory-${label}.png`)}); await action('close').click();
     });
-    if (!touch) await step('R rotates the held drag preview; Escape cancels; dropping commits; normal R reloads', async () => {
+    if (!touch) await step('R previews rotation; Escape, outside release, blur and background cancel; hybrid touch placement and normal reload work', async () => {
       await page.keyboard.press('e');
       const snapshot = () => page.evaluate(() => ({bag:window.__bincov.app.loadout.bag, containers:window.__bincov.app.raid.containers.map(c=>c.inventory)}));
       const before = await snapshot();
@@ -125,8 +126,32 @@ async function suite(viewport, touch = false) {
       }
       await start(); assert.deepEqual(await snapshot(),before); await page.keyboard.press('Escape'); await page.mouse.up();
       assert.equal(await overlay(),'loot'); assert.deepEqual(await snapshot(),before);
+      await start(); await page.mouse.move(-30,-30); await page.mouse.up(); await page.mouse.move(20,20);
+      assert.equal(await page.locator('.inventory-drag-ghost').count(),0); assert.deepEqual(await snapshot(),before);
+      for (const event of ['blur','visibilitychange']) {
+        await start();
+        await page.evaluate(event => {
+          if (event === 'blur') window.dispatchEvent(new Event('blur'));
+          else {
+            Object.defineProperty(document,'hidden',{configurable:true,value:true});
+            try { document.dispatchEvent(new Event('visibilitychange')); } finally { delete document.hidden; }
+          }
+        },event);
+        await page.mouse.up(); assert.equal(await overlay(),'pause');
+        assert.equal(await page.locator('.inventory-drag-ghost').count(),0); assert.deepEqual(await snapshot(),before);
+        await page.keyboard.press('Escape'); await page.keyboard.press('e');
+      }
       await start(); await page.mouse.up();
       assert.equal((await snapshot()).bag.items.find(i=>i.uid==='qol-water').rotated,true);
+      if (hybrid) {
+        assert.equal(await page.locator('html').evaluate(el=>el.classList.contains('mobile')),false);
+        await page.locator('[data-uid="qol-water"]').tap(); await action('place-item').tap(); await action('rotate-preview').tap();
+        const slot=await page.locator('[data-grid="container"]').evaluate(el=>{const r=el.getBoundingClientRect(),c=Number(el.dataset.cell)*r.width/el.offsetWidth;return {x:r.x+c/2,y:r.y+c/2};});
+        await page.touchscreen.tap(slot.x,slot.y);
+        assert.equal(await page.locator('[data-source="container"][data-uid="qol-water"]').count(),1);
+        const afterTouch=await snapshot(); await start(); await page.keyboard.press('Escape'); await page.mouse.up();
+        assert.deepEqual(await snapshot(),afterTouch,'Mouse cancellation still works after touch placement');
+      }
       await action('close').click();
       await page.evaluate(()=>{const r=window.__bincov.app.raid;r.mag=4;r.syncMagazine();});
       await page.keyboard.press('r'); await page.waitForFunction(()=>window.__bincov.app.raid.reloadLeft>0);
@@ -148,7 +173,8 @@ async function suite(viewport, touch = false) {
       assert.equal(await page.locator('#raid-quest-list section').count(),3);
       if (touch) assert.ok(await page.locator('#raid-quests').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('#touch-controls button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
       if (touch) assert.ok(await page.locator('.radio').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.raid-information').getBoundingClientRect(); return r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom; }), 'Radio and navigation must remain readable without overlap');
-      assert.match(await page.locator('#raid-quest-list').innerText(),/泵机零件：站内 2 · 本局 1 \/ 需 3/);
+      assert.match(await page.locator('#raid-quest-list').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
+      assert.match(await page.locator('#raid-quests small').innerText(),/携带含带入物资/);
       await page.evaluate(()=>{const r=window.__bincov.app.raid;r.hurt(1,{x:r.player.x+100,y:r.player.y});r.hurt(1,{x:r.player.x,y:r.player.y-100});r.bleeding=0;r.updateHud();});
       assert.equal(await page.locator('#hit-directions i').count(),2);
       await page.screenshot({path:resolve(out,`qol-information-${label}.png`)});
