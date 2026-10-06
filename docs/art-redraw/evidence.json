@@ -1,0 +1,190 @@
+{
+  "date": "2026-10-05",
+  "baseCommit": "a34c7a1ba810919fc33d4fce158aba0a028a0f78",
+  "htmlSha256": "23e8eee5d6b2cca8579c2ae735f7f20cc649935d78236ed8187343b78d72e1ad",
+  "htmlBytes": 1774786,
+  "environment": "Linux / Node 24.19.0 / pnpm 11.19.0 / Playwright Chromium 153.0.8010.12 / DPR 1",
+  "method": "Original unedited game screenshots; explicitly identified texture atlases and eight-heading Phaser lineup are diagnostic views. Scene photographs use paused seed-42 fixtures. UI/browser suites use their documented fixtures; natural-play uses real-time keyboard/mouse only. Local checks span presentation-only pixel refinements; final PR CI checks the committed source and generated HTML. Absolute workspace paths in copied reports are normalized.",
+  "files": [
+    {
+      "path": "1280x720-gear.png",
+      "bytes": 57469,
+      "sha256": "36aba8fa73e62c2711b21e5f8baf72635c25edfdd795214157cc5f6a9450dfd7"
+    },
+    {
+      "path": "1280x720-harbor.png",
+      "bytes": 62522,
+      "sha256": "c43bf140b28f9f26f0801839452328059e99065692e160110b8ba5e23b287d27"
+    },
+    {
+      "path": "1280x720-item.png",
+      "bytes": 58785,
+      "sha256": "a608314dffedd905f14a3173c1b5c9d346ae9b971640c9935fc828c39f316654"
+    },
+    {
+      "path": "1280x720-map.png",
+      "bytes": 84004,
+      "sha256": "8cf1193db8209aebe9a8f0dec004278391dacd9edd6465a84abbf010095d61a7"
+    },
+    {
+      "path": "1280x720-market.png",
+      "bytes": 57917,
+      "sha256": "4762c07c7059d4cbf7eedbc1aacd2971e1c3822345c6c7aed8a04c10ca89bf3d"
+    },
+    {
+      "path": "1280x720-med.png",
+      "bytes": 61289,
+      "sha256": "8b3597cadb931ac8f9d96bd36f4933993316f14f34835b7aaa27368207b36fcf"
+    },
+    {
+      "path": "1280x720-pump.png",
+      "bytes": 67186,
+      "sha256": "d03888dc13da3076ab5c9eb43f14d50251656554d2af50b78e5bbdf9cc079040"
+    },
+    {
+      "path": "1280x720-result.png",
+      "bytes": 62208,
+      "sha256": "3332cd89800c092da34084aa2a9a2c2b18a4d3eef2d81fcc6389de13184db5b3"
+    },
+    {
+      "path": "1280x720-station.png",
+      "bytes": 59132,
+      "sha256": "7eb7e7ce9b7f6c2c887c22b8567ee152f80ef9a6b0512bd488c3d76b73fa6322"
+    },
+    {
+      "path": "1280x720-village.png",
+      "bytes": 61095,
+      "sha256": "2d48938554f839e80d65ea03e53fee3562ceecf4e4806a30c92105ed37f3bbcf"
+    },
+    {
+      "path": "1920x1080-gear.png",
+      "bytes": 74619,
+      "sha256": "d304600ae42988f58be3829a3547dd3b10cc643076082562acd8e6e0d94c9b7a"
+    },
+    {
+      "path": "1920x1080-high-tide.png",
+      "bytes": 104976,
+      "sha256": "f45a3b8e35cf9e0922a0d5ebc4df511fa1960a198b2c22a563d46e7b58068bf9"
+    },
+    {
+      "path": "1920x1080-observatory.png",
+      "bytes": 108237,
+      "sha256": "c743d73cb0554af106be43f2cb86292fda47c07280a9ab28eb8b832e73713666"
+    },
+    {
+      "path": "actor-headings.png",
+      "bytes": 71361,
+      "sha256": "f3d9ab9cb3a0f318e716bb4b5d004700650b0f47c5b486959eebefbe90f964b5"
+    },
+    {
+      "path": "actors-gray.png",
+      "bytes": 74358,
+      "sha256": "78ff8ff6587a0cfeebb10a5ba5e22a256fa055664bb1b9b2e640c69727389257"
+    },
+    {
+      "path": "actors.png",
+      "bytes": 74703,
+      "sha256": "061c8b0a585d87b0b581c8a7df453484c3bdf5c0c30cc0221104c0ab58b769ce"
+    },
+    {
+      "path": "art-report.json",
+      "bytes": 28463,
+      "sha256": "b256de3d1df3cc56f68999a1971d91f9a4d0b9fb0c20dc479b1a34a48986f043"
+    },
+    {
+      "path": "browser-report.json",
+      "bytes": 12057,
+      "sha256": "f37475874dc8381fca32e5bc0a9f6fe2aee23293612f4d289ff326b04d198e24"
+    },
+    {
+      "path": "desktop-input-report.json",
+      "bytes": 2576,
+      "sha256": "de8588c29d5d0041af114633101c41ae3ed9b1aaae7306712ce0787689668cc3"
+    },
+    {
+      "path": "ground-supplies.png",
+      "bytes": 80745,
+      "sha256": "de38c23fc6e9db4508bbd1dbbc0991556fd263c42e339ddb72255eba7e4928b6"
+    },
+    {
+      "path": "items-gray.png",
+      "bytes": 88894,
+      "sha256": "2ccf14b4014d2fe1fe0dac1c6be68f949c86c870c4bb616b40bfafe18cb5f6b8"
+    },
+    {
+      "path": "items.png",
+      "bytes": 89493,
+      "sha256": "ff685a171e211dae6e841e3474e3fbb144f2bbea7d5817d0feadccabb733f10b"
+    },
+    {
+      "path": "loot-1920x1080-crate-open.png",
+      "bytes": 143490,
+      "sha256": "24893ce813b91436f9f569f394773f1615b2c012e7cf3a007ae7a317b299e7bd"
+    },
+    {
+      "path": "loot-844x390-open.png",
+      "bytes": 40973,
+      "sha256": "490e715ac12251db78591056786cd0357225da45a589f9ec82910740c3c97cd3"
+    },
+    {
+      "path": "loot-report.json",
+      "bytes": 11248,
+      "sha256": "ff7d4bcbed227dcf313497edadc5758c34a3e6f359e11e350cd90df3d0cb37c2"
+    },
+    {
+      "path": "mobile-report.json",
+      "bytes": 1689,
+      "sha256": "a6f5256b5ebdffbaa5d4c812fed4ad13841cb7d44459a0bed6c15647cb6e1011"
+    },
+    {
+      "path": "mobile-ux-report.json",
+      "bytes": 22819,
+      "sha256": "1363dcf36c496b56696983528f8a383159a2574f6aae92765d57d6d4398f99c6"
+    },
+    {
+      "path": "natural-play-report.json",
+      "bytes": 23341,
+      "sha256": "bbecd600d9126f6f35c381d5dd5f9fe5ea94e4c8238c91aa86da885ecc777bcd"
+    },
+    {
+      "path": "package.txt",
+      "bytes": 374,
+      "sha256": "2d39cbcd9d766d5e414933cb7afd05b23b9848c6976173f86ea15c952dfc915f"
+    },
+    {
+      "path": "performance.json",
+      "bytes": 3136,
+      "sha256": "76f02fbaa11768d7860a4594bd1440f22b6993f2de80f0b8a4887555b77efb07"
+    },
+    {
+      "path": "portable-report.json",
+      "bytes": 3117,
+      "sha256": "89eb0e4ce76ce98e3be401a71e6a8fe336810658455e2c0d17007fd350668d93"
+    },
+    {
+      "path": "save-report.json",
+      "bytes": 1503,
+      "sha256": "0185bacea36f084e47f13c4cdf8ce432e47599958ef41fbb27cdeb81cff28d5a"
+    },
+    {
+      "path": "title-report.json",
+      "bytes": 4417,
+      "sha256": "01ac5ab01b909deb7e5ad640dd8db7f0607095508bd8f9f9d828d41f225c6cb2"
+    },
+    {
+      "path": "ui-report.json",
+      "bytes": 4018,
+      "sha256": "c26a40d6ec6d2e1f6cd62f2aee233378f9902ce9cbb4fb157995e90df11fc482"
+    },
+    {
+      "path": "unit-tests.txt",
+      "bytes": 10206,
+      "sha256": "b77f0912382ad4099b9c5134b5faa185b6261783ec1655edef8f45f1ecb30b18"
+    },
+    {
+      "path": "world.png",
+      "bytes": 172677,
+      "sha256": "b00796062756b0da2f6d57f71060cd60538833750d488cf259fddb5d9098a9e2"
+    }
+  ]
+}

@@ -11,7 +11,7 @@
 | 在线试玩 | https://xuys2025.github.io/escape-bincov/ |
 | 当前版本 | `package.json`；页面文案和发布清单应与其一致 |
 | 最新验证 | 当前提交的 Actions 结果；`docs/ACCEPTANCE.md` 是注明日期的历史验收 |
-| 待审工作 | GitHub Pull requests；不要重复实现已有 PR 的同一改动 |
+| 任务入口与待审工作 | [统一任务清单](WORK-QUEUE.md) → 相关 GitHub PR 的最新正文、提交和讨论；同一目标复用原 PR |
 | 本轮历史与遗留 | `handoff.md`、提交记录、相关 issue/PR |
 
 导入来源为此前已验证的 0.1.1 本地项目（修复提交 `ae84993`）。公开仓库建成后，旧 ZIP 只作历史备份，不再作为开发基线。旧包顶层 `Eascape from Bincov` 的拼写仅是历史文件名，不应据此另建工程。
@@ -24,21 +24,25 @@
 
 1. 阅读 `AGENTS.md` → 本文件 → README → `handoff.md`。
 2. 运行 `git status --short`、`git remote -v`，确认没有会被覆盖的他人工作。
-3. `git fetch origin`，检查 `origin/main` 最新提交和已有相关 PR。
-4. 在最新基线上建立独立分支，记录基线 SHA；将本次目标拆成可验收行为。
-5. 阅读涉及模块、测试和已知限制，再开始编辑。不要仅靠搜索命中或 README 推断行为。
+3. `git fetch origin`，记录 `origin/main` SHA；核对[统一任务清单](WORK-QUEUE.md)与相关开放 PR 的最新正文、提交、讨论和检查。标题可能仍叫“计划”，实现可能已在原 PR 内推进，不能只按标题判断。
+4. 有同一交付目标的开放 PR 时，确认 head 仓库、分支、最新 SHA 和写权限，继续原分支；没有承接 PR 且目标独立可验收时，才从最新 main 新建任务分支。将本次工作映射到已有阶段和验收项。
+5. 阅读涉及模块、测试和已知限制，再开始编辑。不要仅靠搜索命中或 README 推断行为。先遵守清单中的需求冻结与在途安排。
 
 ```bash
 git fetch origin
-git switch -c agent/short-task-name origin/main
 git rev-parse origin/main
+# 已有任务：确认目标分支后切换；本地没有时先取得 PR 的实际 head 分支
+git switch <已有任务分支>
+# 仅独立新交付使用以下命令，不与上一行连续执行
+# git switch -c agent/short-task-name origin/main
 ```
 
-已有工作分支时先检查状态再决定合并或 rebase；不要对公共分支强推。多人并行时约定文件边界，避免同时修改 `src/ui.ts`、生成物或同一手册段落。
+续作保留原分支提交和他人工作；需要同步 main 时正常合并并解决冲突，不强推或重写公共历史。多人接力须在任务清单/原 PR 留下当前负责环节与交接点；并行时约定文件边界，避免同时修改 `src/ui.ts`、生成物或同一手册段落。无法写入原 head 时报告阻塞并保留可移交补丁，不自动复制出第二个 PR。
 
 ### 实现
 
-- 一次 PR 聚焦一个问题或一组紧密相关的行为。保持已验收的存档、离线和输入行为。
+- 一次 PR 聚焦一个独立交付目标；范围内实现、修复、测试、说明和审阅反馈持续追加原 PR。新想法登记为待排期，不能顺手扩充当前验收范围。保持已验收的存档、离线和输入行为。
+- 大任务按已有阶段提交，每阶段记录完成条件、证据和未完成项；下一阶段依赖满足后仍在原 PR 推进。阶段通过不等于总任务完成，拆分合并须先确定独立范围与剩余承接入口。
 - 新规则尽量放在纯逻辑模块，由 UI 调用，不把交易/结算规则写进渲染模板。
 - 添加能捕捉实际风险的测试；不要为凑数写只重复实现的断言。
 - 画面或文案变化提供真实前后截图；说明截图是否使用了测试夹具。
@@ -52,10 +56,10 @@ git rev-parse origin/main
 ```bash
 git add <本次任务涉及的文件>
 git commit -m "fix: describe the player-visible problem"
-git push -u origin agent/short-task-name
+git push -u <任务远端> <任务分支>
 ```
 
-随后向 **`xuys2025/escape-bincov:main`** 发起 PR，可用 GitHub 网页或已认证的 `gh pr create`。没有本仓库写权限则 fork，并把 PR 的 base 指向本仓库。PR 正文应使用模板；CLI 长正文写入文件再用 `--body-file`。
+已有 PR 时推送到其 head，并更新原正文的实际范围、阶段、验证和剩余问题；实现从计划推进到代码后，标题也应反映当前交付。只有独立新交付才向 **`xuys2025/escape-bincov:main`** 发起 PR，可用 GitHub 网页或已认证的 `gh pr create`；此类新任务没有本仓库写权限则使用 fork。PR 正文使用模板，写明任务清单入口、关联 PR 及为何需要新 PR；CLI 长正文写入文件再用 `--body-file`。
 
 提交 PR 后等待 CI，修复自己引入的失败。**不得直接推送 `main` 或自行合并**，除非维护者对具体合并有明确授权。交付消息应附 PR 链接，不能只给补丁、ZIP 或一句“改好了”。
 
@@ -158,7 +162,7 @@ CI 对 PR 与 `main` 运行以上检查，并保存 14 天诊断附件。真实�
 
 PR 标题概括具体变化，如 `fix: keep extraction rewards when saving fails`。正文解释：为什么改、怎样改变玩家体验、关键实现选择、实际运行的验证、存档/离线兼容性、截图和未解决问题。
 
-修改 `handoff.md` 时保留有价值的历史，更新本轮日期、变化、证据和下一步。测试报告中注明平台、浏览器、版本/提交、测试方式；不要提交凭据或真实玩家个人存档。
+任务归属、范围或状态变化时同步[统一任务清单](WORK-QUEUE.md)；同一阶段的细节和测试结果更新原 PR/验收记录，不另复制一套进度表。修改 `handoff.md` 时保留有价值的历史，更新本轮日期、变化、证据和下一步。测试报告中注明平台、浏览器、版本/提交、测试方式；不要提交凭据或真实玩家个人存档。
 
 结束时提供：
 
@@ -179,4 +183,4 @@ PR 标题概括具体变化，如 `fix: keep extraction rewards when saving fail
 
 ## 9. 一句话交接提示词
 
-> 请以 https://github.com/xuys2025/escape-bincov 的最新 main 为唯一基线，先阅读 AGENTS.md 和 docs/AGENT-HANDBOOK.md，按我的需求在独立分支完成开发与验证并提交 PR，不直接推送或自行合并 main，最后汇报 PR 链接、测试结果及剩余问题。
+> 请以 https://github.com/xuys2025/escape-bincov 的最新 main 为已接受基线，先读 AGENTS.md、开发手册和 docs/WORK-QUEUE.md，核对相关开放 PR；同一目标继续原分支和 PR，只有独立交付才新建。遵守当前需求冻结范围，完成验证与交接，不直接推送或自行合并 main，最后汇报 PR 链接、测试结果及剩余问题。

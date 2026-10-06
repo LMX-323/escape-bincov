@@ -1,0 +1,24 @@
+{
+  "method": "Source-wide research specimen corpus, no runtime font requests. Both modified subsets renamed under OFL.",
+  "characters": 619,
+  "fonts": [
+    {
+      "source": "chill16.ttf",
+      "faceIndex": null,
+      "sourceSha256": "9c699de0d24e482700fa0a08ce3abe58ef2ceaf6173323c77b767c72cd538512",
+      "family": "Bincov Study Pixel",
+      "subsetSha256": "4dda27c4838b6fed107ff324392cdeab55ba177ace3ad94ea643f972b39c059f",
+      "bytes": 25988,
+      "missing": []
+    },
+    {
+      "source": "NotoSansCJK-Regular.ttc",
+      "faceIndex": 2,
+      "sourceSha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+      "family": "Bincov Study Sans",
+      "subsetSha256": "19fa5b2af8e829a51d83782046bc695a7925ee134129bd19a13186d9ef480a00",
+      "bytes": 169108,
+      "missing": []
+    }
+  ]
+}

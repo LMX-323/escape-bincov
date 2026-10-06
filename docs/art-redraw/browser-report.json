@@ -1,0 +1,386 @@
+{
+  "startedAt": "2026-10-05T07:32:38.376Z",
+  "mode": "full",
+  "entry": "file://dist/index.html?test=1",
+  "browser": "PLAYWRIGHT_BROWSERS_PATH/chromium-1243/chrome-linux64/chrome",
+  "offline": true,
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "steps": [
+        {
+          "name": "offline viewport title and fixed logical canvas",
+          "status": "passed",
+          "detail": {
+            "width": 1280,
+            "height": 720,
+            "x": 0,
+            "y": 0,
+            "logicalWidth": 960,
+            "logicalHeight": 540
+          },
+          "durationMs": 1753.63
+        },
+        {
+          "name": "hideout, merchant price and native inventory drag",
+          "status": "passed",
+          "detail": {
+            "purchasedRounds": 12,
+            "charged": 84,
+            "nativeDragCell": [
+              5,
+              4
+            ],
+            "safeBandages": 2
+          },
+          "durationMs": 3884.49
+        },
+        {
+          "name": "seeded deployment: 25 enemies and 60 original loot entries across ground and crates",
+          "status": "passed",
+          "detail": {
+            "x": 208,
+            "y": 1232,
+            "rotation": 0.35916132295068337,
+            "elapsed": 0.5090999999996275,
+            "hp": 100,
+            "mag": 8,
+            "high": false,
+            "enemies": 25,
+            "alive": 25,
+            "loot": 42,
+            "crates": 9,
+            "originalLootEntries": 60,
+            "seed": 42
+          },
+          "durationMs": 1365.46
+        },
+        {
+          "name": "real WASD movement and pointer mapping",
+          "status": "passed",
+          "detail": {
+            "movementX": 51.27,
+            "movementY": -53.24,
+            "aimErrorRadians": 0
+          },
+          "durationMs": 2444.13
+        },
+        {
+          "name": "25-enemy, 60-original-loot battle performance sample",
+          "status": "passed",
+          "detail": {
+            "measuredMs": 5012.699999999813,
+            "frames": 177,
+            "samples": 17,
+            "average": 34.31546837880331,
+            "minimum": 33.126399993896484,
+            "median": 33.50859999656677,
+            "frameIntervalP95Ms": 50,
+            "stayedInRun": true,
+            "target60ApproxMet": false
+          },
+          "durationMs": 5654.53
+        },
+        {
+          "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
+          "status": "passed",
+          "detail": {
+            "beforeAmmo": 8,
+            "afterAmmo": 7,
+            "damagedEnemyIndex": 1
+          },
+          "durationMs": 1146.11
+        },
+        {
+          "name": "real E pickup, pause, map and persisted volume controls",
+          "status": "passed",
+          "detail": {
+            "volume": 0.2,
+            "sampleLootedByKeyboard": true
+          },
+          "durationMs": 3090.81
+        },
+        {
+          "name": "tide warning, high-tide transition and real movement out of flood",
+          "status": "passed",
+          "detail": {
+            "warningAt": 270,
+            "tideAt": 300,
+            "xAfterFlip": 2032,
+            "xAfterMovement": 1964.63
+          },
+          "durationMs": 1736.88
+        },
+        {
+          "name": "first run: actual three-second extraction retains loot and gear",
+          "status": "passed",
+          "detail": {
+            "actualHoldMs": 3022.31,
+            "savedRuns": 1
+          },
+          "durationMs": 3803.4
+        },
+        {
+          "name": "second run: actual enemy attack causes death and protects the safe",
+          "status": "passed",
+          "durationMs": 1485.13
+        },
+        {
+          "name": "third run: timeout and three-run persistence after reload",
+          "status": "passed",
+          "detail": {
+            "completedRuns": 3,
+            "outcomes": [
+              "extract",
+              "death",
+              "timeout"
+            ],
+            "volumeAfterReload": 0.2
+          },
+          "durationMs": 2295.46
+        },
+        {
+          "name": "fourth run: midrun reload restores carried items and the matching world checkpoint",
+          "status": "passed",
+          "detail": {
+            "carriedMedkitRestored": true,
+            "safeSamplePreserved": true,
+            "noExtraSettlement": true
+          },
+          "durationMs": 5835.15
+        }
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "test-results/1280x720-menu.png",
+        "test-results/1280x720-hideout.png",
+        "test-results/1280x720-raid.png",
+        "test-results/1280x720-map.png",
+        "test-results/1280x720-high-tide.png",
+        "test-results/1280x720-result-extract.png",
+        "test-results/1280x720-result-death.png",
+        "test-results/1280x720-result-timeout.png",
+        "test-results/1280x720-recovered-raid.png"
+      ],
+      "fps": {
+        "measuredMs": 5012.699999999813,
+        "frames": 177,
+        "samples": 17,
+        "average": 34.31546837880331,
+        "minimum": 33.126399993896484,
+        "median": 33.50859999656677,
+        "frameIntervalP95Ms": 50,
+        "stayedInRun": true,
+        "target60ApproxMet": false
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "steps": [
+        {
+          "name": "offline viewport title and fixed logical canvas",
+          "status": "passed",
+          "detail": {
+            "width": 1920,
+            "height": 1080,
+            "x": 0,
+            "y": 0,
+            "logicalWidth": 960,
+            "logicalHeight": 540
+          },
+          "durationMs": 2134.53
+        },
+        {
+          "name": "hideout, merchant price and native inventory drag",
+          "status": "passed",
+          "detail": {
+            "purchasedRounds": 12,
+            "charged": 84,
+            "nativeDragCell": [
+              5,
+              4
+            ],
+            "safeBandages": 2
+          },
+          "durationMs": 3882.51
+        },
+        {
+          "name": "seeded deployment: 25 enemies and 60 original loot entries across ground and crates",
+          "status": "passed",
+          "detail": {
+            "x": 208,
+            "y": 1232,
+            "rotation": 0.3500313649919189,
+            "elapsed": 0.47670000000018625,
+            "hp": 100,
+            "mag": 8,
+            "high": false,
+            "enemies": 25,
+            "alive": 25,
+            "loot": 42,
+            "crates": 9,
+            "originalLootEntries": 60,
+            "seed": 42
+          },
+          "durationMs": 1355.23
+        },
+        {
+          "name": "real WASD movement and pointer mapping",
+          "status": "passed",
+          "detail": {
+            "movementX": 54.6,
+            "movementY": -53.91,
+            "aimErrorRadians": 0
+          },
+          "durationMs": 2405.44
+        },
+        {
+          "name": "25-enemy, 60-original-loot battle performance sample",
+          "status": "passed",
+          "detail": {
+            "measuredMs": 5009.6,
+            "frames": 153,
+            "samples": 15,
+            "average": 32.16320267468691,
+            "minimum": 31.25643813610077,
+            "median": 32.01924645155668,
+            "frameIntervalP95Ms": 50,
+            "stayedInRun": true,
+            "target60ApproxMet": false
+          },
+          "durationMs": 5646.43
+        },
+        {
+          "name": "actual aimed pistol shot consumes ammunition and hits an enemy",
+          "status": "passed",
+          "detail": {
+            "beforeAmmo": 8,
+            "afterAmmo": 7,
+            "damagedEnemyIndex": 1
+          },
+          "durationMs": 1103.66
+        },
+        {
+          "name": "real E pickup, pause, map and persisted volume controls",
+          "status": "passed",
+          "detail": {
+            "volume": 0.2,
+            "sampleLootedByKeyboard": true
+          },
+          "durationMs": 3303.34
+        },
+        {
+          "name": "tide warning, high-tide transition and real movement out of flood",
+          "status": "passed",
+          "detail": {
+            "warningAt": 270,
+            "tideAt": 300,
+            "xAfterFlip": 2032,
+            "xAfterMovement": 1963.44
+          },
+          "durationMs": 1817.86
+        },
+        {
+          "name": "first run: actual three-second extraction retains loot and gear",
+          "status": "passed",
+          "detail": {
+            "actualHoldMs": 3073.62,
+            "savedRuns": 1
+          },
+          "durationMs": 4062.57
+        },
+        {
+          "name": "second run: actual enemy attack causes death and protects the safe",
+          "status": "passed",
+          "durationMs": 2433.19
+        },
+        {
+          "name": "third run: timeout and three-run persistence after reload",
+          "status": "passed",
+          "detail": {
+            "completedRuns": 3,
+            "outcomes": [
+              "extract",
+              "death",
+              "timeout"
+            ],
+            "volumeAfterReload": 0.2
+          },
+          "durationMs": 3238.65
+        },
+        {
+          "name": "fourth run: midrun reload restores carried items and the matching world checkpoint",
+          "status": "passed",
+          "detail": {
+            "carriedMedkitRestored": true,
+            "safeSamplePreserved": true,
+            "noExtraSettlement": true
+          },
+          "durationMs": 5949.03
+        }
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "test-results/1920x1080-menu.png",
+        "test-results/1920x1080-hideout.png",
+        "test-results/1920x1080-raid.png",
+        "test-results/1920x1080-map.png",
+        "test-results/1920x1080-high-tide.png",
+        "test-results/1920x1080-result-extract.png",
+        "test-results/1920x1080-result-death.png",
+        "test-results/1920x1080-result-timeout.png",
+        "test-results/1920x1080-recovered-raid.png"
+      ],
+      "fps": {
+        "measuredMs": 5009.6,
+        "frames": 153,
+        "samples": 15,
+        "average": 32.16320267468691,
+        "minimum": 31.25643813610077,
+        "median": 32.01924645155668,
+        "frameIntervalP95Ms": 50,
+        "stayedInRun": true,
+        "target60ApproxMet": false
+      }
+    }
+  ],
+  "screenshots": [
+    "test-results/1280x720-menu.png",
+    "test-results/1280x720-hideout.png",
+    "test-results/1280x720-raid.png",
+    "test-results/1280x720-map.png",
+    "test-results/1280x720-high-tide.png",
+    "test-results/1280x720-result-extract.png",
+    "test-results/1280x720-result-death.png",
+    "test-results/1280x720-result-timeout.png",
+    "test-results/1280x720-recovered-raid.png",
+    "test-results/1920x1080-menu.png",
+    "test-results/1920x1080-hideout.png",
+    "test-results/1920x1080-raid.png",
+    "test-results/1920x1080-map.png",
+    "test-results/1920x1080-high-tide.png",
+    "test-results/1920x1080-result-extract.png",
+    "test-results/1920x1080-result-death.png",
+    "test-results/1920x1080-result-timeout.png",
+    "test-results/1920x1080-recovered-raid.png"
+  ],
+  "methodology": [
+    "Each viewport uses a fresh isolated browser context and the single file:// HTML; no development server.",
+    "HTTP(S) access is blocked and attempted requests fail acceptance.",
+    "Travel, enemy positions, health and elapsed time use explicit test fixtures. Movement, aiming, firing, looting, dragging and extraction use browser input.",
+    "Success, combat death and timeout are three consecutive runs per context, followed by reload and a fourth interrupted run.",
+    "FPS is sampled from Phaser actualFps and requestAnimationFrame in headless Chrome; this is not a claim about every physical GPU.",
+    "The test does not establish 30–60 minutes of subjective replay value or natural ten-minute difficulty balance."
+  ],
+  "browserVersion": "153.0.8010.12",
+  "status": "passed",
+  "finishedAt": "2026-10-05T07:33:51.182Z"
+}

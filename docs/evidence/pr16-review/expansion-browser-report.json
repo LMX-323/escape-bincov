@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-10-06T05:37:06.747Z",
-  "baseline": "9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34",
+  "startedAt": "2026-10-06T08:10:30.640Z",
+  "baseline": "07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb",
   "legacySha256": "e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc",
   "currentSha256": "dc9d29e3d3dc6be8a4f85bc1349f8a19b9df6b93bade69cd91e47def77bc751c",
   "steps": [
@@ -30,5 +30,5 @@
   "methodology": "Real pinned main HTML and current bundle on one locally fulfilled HTTPS origin, offline; explicit test-only extension fixture. No new map/gameplay/UI acceptance is claimed.",
   "browser": "153.0.8010.12",
   "status": "passed",
-  "finishedAt": "2026-10-06T05:37:25.526Z"
+  "finishedAt": "2026-10-06T08:10:42.515Z"
 }

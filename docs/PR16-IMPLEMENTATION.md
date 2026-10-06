@@ -1,6 +1,6 @@
 # PR16 建筑、RPG、基地与商场实施记录
 
-2026-10-05实施，2026-10-06补充专项与审阅修复。独立分支 `feat/buildings-rpg-mall`；当前唯一代码基线为合入 PR #20 后的 main `9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34`，通过普通合并保留已公开历史。按 [详细开发计划](PR16-DEVELOPMENT-PLAN.md) 实施 M0–M6，并完成最终包的主要M7自动回归、正常长测和截图归档；未逐项重复的扩展组合、真人平衡、物理手机与原参考图还原度分别登记。总 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 保持 Draft，未推送或合并 main，也未部署 Pages。
+2026-10-05实施，2026-10-06补充专项与审阅修复。独立分支 `feat/buildings-rpg-mall`；当前唯一代码基线为合入 PR #20、#18、#19 后的 main `07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb`，通过普通合并保留已公开历史。按 [详细开发计划](PR16-DEVELOPMENT-PLAN.md) 实施 M0–M6，并完成最终包的主要M7自动回归、正常长测和截图归档；未逐项重复的扩展组合、真人平衡、物理手机与原参考图还原度分别登记。总 [PR #16](https://github.com/xuys2025/escape-bincov/pull/16) 保持 Draft，未推送或合并 main，也未部署 Pages。
 
 ## 玩家入口与兼容边界
 

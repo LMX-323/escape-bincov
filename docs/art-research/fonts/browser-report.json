@@ -1,0 +1,282 @@
+{
+  "browser": "151.0.7922.173",
+  "method": "Injected experimental font CSS over unchanged main HTML; no production game files changed. Equal 16px shop layouts for Noto/Chill. Specimen font comparisons are not implemented UI.",
+  "samples": [
+    {
+      "file": "specimen-dpr1.png",
+      "dpr": 1,
+      "loaded": [
+        {
+          "family": "Research-noto",
+          "status": "loaded"
+        },
+        {
+          "family": "Research-fusion12",
+          "status": "loaded"
+        },
+        {
+          "family": "Research-chill16",
+          "status": "loaded"
+        }
+      ]
+    },
+    {
+      "file": "specimen-dpr2.png",
+      "dpr": 2,
+      "loaded": [
+        {
+          "family": "Research-noto",
+          "status": "loaded"
+        },
+        {
+          "family": "Research-fusion12",
+          "status": "loaded"
+        },
+        {
+          "family": "Research-chill16",
+          "status": "loaded"
+        }
+      ]
+    },
+    {
+      "file": "shop-noto-1280.png",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "family": "noto",
+      "facts": [
+        {
+          "name": "密封绷带",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "急救包",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "除藻药剂",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "净水瓶",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "鱼松罐头",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        }
+      ],
+      "actual": {
+        "fonts": [
+          {
+            "familyName": "Noto Sans CJK SC",
+            "postScriptName": "NotoSansCJKsc-Regular",
+            "isCustomFont": true,
+            "glyphCount": 4
+          }
+        ]
+      }
+    },
+    {
+      "file": "shop-chill16-1280.png",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "family": "chill16",
+      "facts": [
+        {
+          "name": "密封绷带",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "急救包",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "除藻药剂",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "净水瓶",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "鱼松罐头",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        }
+      ],
+      "actual": {
+        "fonts": [
+          {
+            "familyName": "寒蝉点阵体 16px",
+            "postScriptName": "ChillBitmap_16px",
+            "isCustomFont": true,
+            "glyphCount": 4
+          }
+        ]
+      }
+    },
+    {
+      "file": "shop-noto-1920.png",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "family": "noto",
+      "facts": [
+        {
+          "name": "密封绷带",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "急救包",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "除藻药剂",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "净水瓶",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "鱼松罐头",
+          "font": "Research-noto, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        }
+      ],
+      "actual": {
+        "fonts": [
+          {
+            "familyName": "Noto Sans CJK SC",
+            "postScriptName": "NotoSansCJKsc-Regular",
+            "isCustomFont": true,
+            "glyphCount": 4
+          }
+        ]
+      }
+    },
+    {
+      "file": "shop-chill16-1920.png",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "family": "chill16",
+      "facts": [
+        {
+          "name": "密封绷带",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "急救包",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "除藻药剂",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "净水瓶",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        },
+        {
+          "name": "鱼松罐头",
+          "font": "Research-chill16, sans-serif",
+          "size": "16px",
+          "overflow": false,
+          "descriptionOverflow": false
+        }
+      ],
+      "actual": {
+        "fonts": [
+          {
+            "familyName": "寒蝉点阵体 16px",
+            "postScriptName": "ChillBitmap_16px",
+            "isCustomFont": true,
+            "glyphCount": 4
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "archiveNote": "Four reviewed PNGs are archived: specimen DPR1 and the 1280 Noto/Chill plus 1920 Chill shop prototypes. Other images are in ignored test-results/font-research.",
+  "archivedScreenshots": [
+    {
+      "file": "shop-chill16-1280.png",
+      "sha256": "522ba173ac236b09e1cb5f1fb281d0d47d06ab45e3524c88a2634ae008613f78"
+    },
+    {
+      "file": "shop-chill16-1920.png",
+      "sha256": "d5224d45d21a6ea8ecc593fa04a960c4b7e706ec7f8c68b909b4d7aab4220b77"
+    },
+    {
+      "file": "shop-noto-1280.png",
+      "sha256": "7c898f08cec658048a63481e78cfae6a18eda4aaabfd2141a27200c1a1b128ee"
+    },
+    {
+      "file": "specimen-dpr1.png",
+      "sha256": "b879d60b5c1ad6c9bfaeeeebe98c53157642bc48124e307ee1fb88fbee47b848"
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "method": "Offline research HTML, DPR 1, identical synthetic inventory across both type modes. Browser screenshots are of a prototype, not game implementation. Source/font/position checks cannot prove human legibility.",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "view": "gear",
+      "mode": "hybrid",
+      "geometry": {
+        "width": 1280,
+        "height": 720,
+        "bodyWidth": 1280,
+        "frameBottom": 720,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 25,
+            "y": 440,
+            "width": 108,
+            "height": 108,
+            "top": 440,
+            "right": 133,
+            "bottom": 548,
+            "left": 25
+          },
+          {
+            "source": "bag",
+            "x": 365,
+            "y": 208,
+            "width": 324,
+            "height": 270,
+            "top": 208,
+            "right": 689,
+            "bottom": 478,
+            "left": 365
+          },
+          {
+            "source": "stash",
+            "x": 715,
+            "y": 208,
+            "width": 540,
+            "height": 324,
+            "top": 208,
+            "right": 1255,
+            "bottom": 532,
+            "left": 715
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "view": "gear",
+      "mode": "pixel",
+      "geometry": {
+        "width": 1280,
+        "height": 720,
+        "bodyWidth": 1280,
+        "frameBottom": 720,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 25,
+            "y": 440,
+            "width": 108,
+            "height": 108,
+            "top": 440,
+            "right": 133,
+            "bottom": 548,
+            "left": 25
+          },
+          {
+            "source": "bag",
+            "x": 365,
+            "y": 208,
+            "width": 324,
+            "height": 270,
+            "top": 208,
+            "right": 689,
+            "bottom": 478,
+            "left": 365
+          },
+          {
+            "source": "stash",
+            "x": 715,
+            "y": 208,
+            "width": 540,
+            "height": 324,
+            "top": 208,
+            "right": 1255,
+            "bottom": 532,
+            "left": 715
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "view": "loot",
+      "mode": "hybrid",
+      "geometry": {
+        "width": 1280,
+        "height": 720,
+        "bodyWidth": 1280,
+        "frameBottom": 720,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 25,
+            "y": 440,
+            "width": 108,
+            "height": 108,
+            "top": 440,
+            "right": 133,
+            "bottom": 548,
+            "left": 25
+          },
+          {
+            "source": "bag",
+            "x": 365,
+            "y": 208,
+            "width": 324,
+            "height": 270,
+            "top": 208,
+            "right": 689,
+            "bottom": 478,
+            "left": 365
+          },
+          {
+            "source": "container",
+            "x": 833.5,
+            "y": 223,
+            "width": 324,
+            "height": 270,
+            "top": 223,
+            "right": 1157.5,
+            "bottom": 493,
+            "left": 833.5
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "view": "loot",
+      "mode": "pixel",
+      "geometry": {
+        "width": 1280,
+        "height": 720,
+        "bodyWidth": 1280,
+        "frameBottom": 720,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 25,
+            "y": 440,
+            "width": 108,
+            "height": 108,
+            "top": 440,
+            "right": 133,
+            "bottom": 548,
+            "left": 25
+          },
+          {
+            "source": "bag",
+            "x": 365,
+            "y": 208,
+            "width": 324,
+            "height": 270,
+            "top": 208,
+            "right": 689,
+            "bottom": 478,
+            "left": 365
+          },
+          {
+            "source": "container",
+            "x": 833.5,
+            "y": 223,
+            "width": 324,
+            "height": 270,
+            "top": 223,
+            "right": 1157.5,
+            "bottom": 493,
+            "left": 833.5
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "view": "gear",
+      "mode": "hybrid",
+      "geometry": {
+        "width": 1920,
+        "height": 1080,
+        "bodyWidth": 1920,
+        "frameBottom": 1080,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 93,
+            "y": 560,
+            "width": 160,
+            "height": 160,
+            "top": 560,
+            "right": 253,
+            "bottom": 720,
+            "left": 93
+          },
+          {
+            "source": "bag",
+            "x": 515,
+            "y": 252,
+            "width": 480,
+            "height": 400,
+            "top": 252,
+            "right": 995,
+            "bottom": 652,
+            "left": 515
+          },
+          {
+            "source": "stash",
+            "x": 1027,
+            "y": 252,
+            "width": 800,
+            "height": 480,
+            "top": 252,
+            "right": 1827,
+            "bottom": 732,
+            "left": 1027
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "view": "gear",
+      "mode": "pixel",
+      "geometry": {
+        "width": 1920,
+        "height": 1080,
+        "bodyWidth": 1920,
+        "frameBottom": 1080,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 93,
+            "y": 560,
+            "width": 160,
+            "height": 160,
+            "top": 560,
+            "right": 253,
+            "bottom": 720,
+            "left": 93
+          },
+          {
+            "source": "bag",
+            "x": 515,
+            "y": 252,
+            "width": 480,
+            "height": 400,
+            "top": 252,
+            "right": 995,
+            "bottom": 652,
+            "left": 515
+          },
+          {
+            "source": "stash",
+            "x": 1027,
+            "y": 252,
+            "width": 800,
+            "height": 480,
+            "top": 252,
+            "right": 1827,
+            "bottom": 732,
+            "left": 1027
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "view": "loot",
+      "mode": "hybrid",
+      "geometry": {
+        "width": 1920,
+        "height": 1080,
+        "bodyWidth": 1920,
+        "frameBottom": 1080,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 93,
+            "y": 560,
+            "width": 160,
+            "height": 160,
+            "top": 560,
+            "right": 253,
+            "bottom": 720,
+            "left": 93
+          },
+          {
+            "source": "bag",
+            "x": 515,
+            "y": 252,
+            "width": 480,
+            "height": 400,
+            "top": 252,
+            "right": 995,
+            "bottom": 652,
+            "left": 515
+          },
+          {
+            "source": "container",
+            "x": 1200.5,
+            "y": 273,
+            "width": 480,
+            "height": 400,
+            "top": 273,
+            "right": 1680.5,
+            "bottom": 673,
+            "left": 1200.5
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "view": "loot",
+      "mode": "pixel",
+      "geometry": {
+        "width": 1920,
+        "height": 1080,
+        "bodyWidth": 1920,
+        "frameBottom": 1080,
+        "clipped": [],
+        "overlap": 0,
+        "panels": [
+          {
+            "source": "safe",
+            "x": 93,
+            "y": 560,
+            "width": 160,
+            "height": 160,
+            "top": 560,
+            "right": 253,
+            "bottom": 720,
+            "left": 93
+          },
+          {
+            "source": "bag",
+            "x": 515,
+            "y": 252,
+            "width": 480,
+            "height": 400,
+            "top": 252,
+            "right": 995,
+            "bottom": 652,
+            "left": 515
+          },
+          {
+            "source": "container",
+            "x": 1200.5,
+            "y": 273,
+            "width": 480,
+            "height": 400,
+            "top": 273,
+            "right": 1680.5,
+            "bottom": 673,
+            "left": 1200.5
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "screenshots": [
+    "gear-hybrid-1280.png",
+    "gear-pixel-1280.png",
+    "loot-hybrid-1280.png",
+    "loot-pixel-1280.png",
+    "fonts-1280.png",
+    "notes-1280.png",
+    "gear-hybrid-1920.png",
+    "gear-pixel-1920.png",
+    "loot-hybrid-1920.png",
+    "loot-pixel-1920.png",
+    "fonts-1920.png",
+    "notes-1920.png"
+  ],
+  "browser": "153.0.8010.12",
+  "defaultFont": "pixel",
+  "status": "passed",
+  "htmlSha256": "27a3c44c01c5c64dd5914a5088eb998d9b196e643205cee9b6d37f24901bfc0e"
+}

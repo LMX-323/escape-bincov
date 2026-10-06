@@ -1,0 +1,6 @@
+$ pnpm build && node scripts/package.mjs
+$ tsc --noEmit && node scripts/build.mjs
+Built dist/index.html and start the game.html (1.69 MB each), completely offline.
+Portable ZIP: release/Escape-Bincov-portable.zip (450650 bytes)
+Web upload ZIP: release/Escape-Bincov-web.zip (448048 bytes)
+Share the ZIP, or just start the game.html. No install, server or internet required.

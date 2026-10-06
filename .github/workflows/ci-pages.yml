@@ -57,7 +57,7 @@ jobs:
       - name: Obtain actual pre-expansion client
         run: |
           mkdir -p test-results
-          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34/dist/index.html --output test-results/pre-m0.html
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb/dist/index.html --output test-results/pre-m0.html
       - name: Expansion storage and actual old-client regression
         run: pnpm test:expansion
       - name: Buildings and floor controls

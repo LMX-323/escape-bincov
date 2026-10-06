@@ -11,7 +11,7 @@ const [legacy, current] = await Promise.all([readFile(oldPath, 'utf8'), readFile
 const hash = text => createHash('sha256').update(text).digest('hex');
 const legacyClients = {
     '2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731': '49738b89cc8556a0b39d339239bf09945e44ab9e',
-    'e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc': '9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34',
+    'e748efcbad1bb2cde79e3898d9faafc62085e9dee51411df64b2c2cd2d708efc': '07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb',
 };
 assert.ok(Object.hasOwn(legacyClients, hash(legacy)), 'Use an actual pinned pre-expansion main HTML, not a simulated old decoder');
 const report = { startedAt: new Date().toISOString(), baseline: legacyClients[hash(legacy)],

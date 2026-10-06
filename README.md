@@ -55,6 +55,8 @@
 
 <sub>截图来自 0.1.1 界面精修后的实际运行与自动验收场景。查看 [界面精修记录与前后对照](docs/UI-POLISH.md)。</sub>
 
+[美术研究与前后证据归档](docs/ART-REDRAW.md)保留 #11 的历史成果；核心美术及后续战术界面已由 #20 合入，当前实现见[战术界面记录](docs/tactical-ui/README.txt)。
+
 ## 📱 手机触控尝鲜
 
 左盘移动与冲刺，右盘瞄准与持续开火；整备支持点选物品和格位，旋转或切到后台会暂停。刷新后从最近检查点继续。
@@ -138,13 +140,13 @@ pnpm dev
 
 **本仓库是项目唯一权威来源，`main` 是已接受版本。所有后续改动通过 PR 交付。**
 
-先读 [AGENTS.md](AGENTS.md)，再读 [Agent 开发与交接手册](docs/AGENT-HANDBOOK.md) 和 [贡献指南](CONTRIBUTING.md)。它们说明源码结构、存档不可破坏的规则、分支命名、验证要求、PR 写法及后续方向。
+先读 [AGENTS.md](AGENTS.md)，再读 [Agent 开发与交接手册](docs/AGENT-HANDBOOK.md) 和 [贡献指南](CONTRIBUTING.md)。从[统一任务清单](docs/WORK-QUEUE.md)查找当前任务及承接 PR，同一目标继续原分支；新增想法先登记，独立可验收的交付才新开 PR。当前需求暂停约定、已有 PR 归属和收尾安排也在清单中。
 
 PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过后，自动将 `dist/` 发布到 GitHub Pages。PR 本身不会覆盖正式试玩。首次公开建仓为初始化导入，后续开发遵循上述流程。
 
 可以把这句话直接交给另一个 agent：
 
-> 请以 https://github.com/xuys2025/escape-bincov 的最新 main 为唯一基线，先阅读 AGENTS.md 和 docs/AGENT-HANDBOOK.md，按我的需求在独立分支完成开发与验证并提交 PR，不直接推送或自行合并 main，最后汇报 PR 链接、测试结果及剩余问题。
+> 请以 https://github.com/xuys2025/escape-bincov 的最新 main 为已接受基线，先读 AGENTS.md、开发手册和 docs/WORK-QUEUE.md，核对相关开放 PR；同一目标继续原分支和 PR，只有独立交付才新建。遵守当前需求冻结范围，完成验证与交接，不直接推送或自行合并 main，最后汇报 PR 链接、测试结果及剩余问题。
 
 ## ✅ 当前进度与下一步
 
@@ -173,6 +175,7 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | RPG 状态、成长、随机爆头、声望、幸运与基地规范 | [系统逻辑与首版数值](docs/RPG-SYSTEM-DESIGN.md) |
 | 建筑、RPG 与商场实施任务与验收 | [总实施计划](docs/IMPLEMENTATION-PLAN.md) |
 | PR16实施候选、详细计划与73项验收状态 | [实施记录](docs/PR16-IMPLEMENTATION.md) · [详细计划](docs/PR16-DEVELOPMENT-PLAN.md) · [逐项登记](docs/PR16-ACCEPTANCE-REGISTER.md) |
+| 当前任务、需求登记与 PR 归属 | [统一任务清单](docs/WORK-QUEUE.md) |
 | Agent 必须遵守的规则 | [AGENTS.md](AGENTS.md) |
 | 架构、开发流程、验证与交接 | [Agent 开发手册](docs/AGENT-HANDBOOK.md) |
 | 应用状态、存档事务与后续扩展 | [架构说明](docs/ARCHITECTURE.md) |

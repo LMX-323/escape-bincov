@@ -1,6 +1,6 @@
 # PR16 审阅修复与 PR #20 整合验证
 
-2026-10-06。本轮唯一已接受源码基线为 main `9fe189cbb7114a54dbfd7d1670524f0c7b3d2a34`（PR #20）；在 `feat/buildings-rpg-mall` 普通合并，保留原 PR 公开历史。未推送、合并 main 或部署 Pages。[首次交付证据](../pr16-full/README.md)保持历史包身份。
+2026-10-06。本轮唯一已接受源码基线为 main `07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb`（已含 PR #20、#18、#19）；在 `feat/buildings-rpg-mall` 普通合并，保留原 PR 公开历史。未推送、合并 main 或部署 Pages。[首次交付证据](../pr16-full/README.md)保持历史包身份。
 
 最终两份 HTML 字节相同，均为 **1,895,538 字节**，SHA-256 **`dc9d29e3d3dc6be8a4f85bc1349f8a19b9df6b93bade69cd91e47def77bc751c`**；ZIP 校验见[发布清单](../../release-manifest.json)。以下十份 JSON 全部实际通过，均记录该运行包哈希。环境为 Linux、Node.js 24.19.0、pnpm 11.19.0、无头 Chromium 153.0.8010.12；离线上下文及局部履行的旧客户端测试均无外部 HTTP 请求。
 
@@ -16,7 +16,7 @@
 | `pnpm test`，另按用例统计 | [167用例、0失败](rules-report.txt)；包含两条新追击回归 |
 | `pnpm package` | 类型检查、两 HTML、两 ZIP 与清单实际重建；两 HTML 一致 |
 | `pnpm test:buildings` | [8流程](building-browser-report.json)：原生关门、刷新、保存故障、上下与地下、270/300秒室内边界、超时单次重试和两触控尺寸 |
-| `pnpm test:expansion`（实际 PR #20 主线 HTML） | [5流程](expansion-browser-report.json)：main `9fe189c` 的真实旧客户端，所有权、原字节备份、v4拒绝覆盖、导入与待结算 |
+| `pnpm test:expansion`（实际 PR #20 主线 HTML） | [5流程](expansion-browser-report.json)：main `07b1414` 的真实旧客户端，所有权、原字节备份、v4拒绝覆盖、导入与待结算 |
 | `pnpm test:art` | [8项纹理/字体/恢复检查](art-report.json)：140纹理，30物品各类图标、实际中文字体渲染、经典及多层恢复、空箱状态 |
 | `pnpm test:tactical` | [两尺寸各4流程](tactical-report.json)：1280×720、1920×1080，30物品/八旋转形状不裁切，交易与原生双向拖放 |
 | `pnpm test:systems` | [16流程](systems-browser-report.json)：基地与有限生产、护符、双固定箱、切层故障/重试、四连接各十次往返、终局与触控 |
