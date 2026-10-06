@@ -1,0 +1,3050 @@
+{
+  "base": "a34c7a1ba810919fc33d4fce158aba0a028a0f78",
+  "browser": "151.0.7922.173",
+  "method": "Unmodified committed main HTML served over localhost HTTP; fresh saves; seed 42; reduced title motion; raid position and enemy readiness fixtures. CSS and screenshots are not modified.",
+  "views": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "title",
+      "file": "1280x720-title.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1280,
+            "h": 720
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".title-copy h1": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "98.56px",
+          "color": "rgb(230, 232, 202)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 70.390625,
+            "y": 156.390625,
+            "w": 334.28125,
+            "h": 186.0625
+          },
+          "effectiveFontPx": 98.56,
+          "text": "逃离滨科夫."
+        },
+        ".title-story": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "13.184px",
+          "color": "rgb(172, 191, 176)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 74.390625,
+            "y": 400.859375,
+            "w": 330.28125,
+            "h": 52.75
+          },
+          "effectiveFontPx": 13.184,
+          "text": "穿过盐雾与封锁线，带上找到的物资，活着回来。"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "gear",
+      "file": "1280x720-gear.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 200,
+            "y": 281.984375,
+            "w": 67,
+            "h": 12
+          },
+          "effectiveFontPx": 9,
+          "text": "急救包"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 285.984375,
+            "y": 263.984375,
+            "w": 16.015625,
+            "h": 11
+          },
+          "effectiveFontPx": 10,
+          "text": "24"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 221.5,
+            "y": 261.484375,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "item",
+      "file": "1280x720-item.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 200,
+            "y": 281.984375,
+            "w": 67,
+            "h": 12
+          },
+          "effectiveFontPx": 9,
+          "text": "急救包"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 285.984375,
+            "y": 263.984375,
+            "w": 16.015625,
+            "h": 11
+          },
+          "effectiveFontPx": 10,
+          "text": "24"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 221.5,
+            "y": 261.484375,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-actions button": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgb(35, 51, 42)",
+          "transform": "none",
+          "rect": {
+            "x": 908,
+            "y": 450.140625,
+            "w": 84.5,
+            "h": 30
+          },
+          "effectiveFontPx": 10,
+          "text": "放入仓库"
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 908,
+            "y": 277.984375,
+            "w": 175,
+            "h": 39.59375
+          },
+          "effectiveFontPx": 11,
+          "text": "止血，恢复 16 点生命。 放在背包中可按 Q 使用。"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "med",
+      "file": "1280x720-med.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 199,
+            "y": 295.984375,
+            "w": 28,
+            "h": 28
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".shop-card strong": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 289.984375,
+            "w": 169.328125,
+            "h": 16
+          },
+          "effectiveFontPx": 11,
+          "text": "密封绷带"
+        },
+        ".shop-card .small": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(145, 162, 135)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 314.984375,
+            "w": 85.0625,
+            "h": 13
+          },
+          "effectiveFontPx": 9,
+          "text": "医疗用品 · 每份 1 件"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "quests",
+      "file": "1280x720-quests.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".quest p": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(172, 184, 158)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 213,
+            "y": 301.984375,
+            "w": 254,
+            "h": 18
+          },
+          "effectiveFontPx": 10,
+          "text": "找齐维修物资，恢复水产站供电。完成后可扩建仓库。"
+        }
+      },
+      "platformFonts": {
+        "fonts": [
+          {
+            "familyName": "Noto Sans CJK SC",
+            "postScriptName": "NotoSansCJKsc-Bold",
+            "isCustomFont": false,
+            "glyphCount": 5
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "hud",
+      "file": "1280x720-hud.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 522,
+            "w": 176,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 586,
+            "w": 40,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 935,
+            "y": 584.703125,
+            "w": 150,
+            "h": 15.296875
+          },
+          "effectiveFontPx": 9,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1003.484375,
+            "y": 117,
+            "w": 83.015625,
+            "h": 30
+          },
+          "effectiveFontPx": 26,
+          "text": "10:00"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "map",
+      "file": "1280x720-map.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 522,
+            "w": 176,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 586,
+            "w": 40,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 935,
+            "y": 584.703125,
+            "w": 150,
+            "h": 15.296875
+          },
+          "effectiveFontPx": 9,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1003.484375,
+            "y": 117,
+            "w": 83.015625,
+            "h": 30
+          },
+          "effectiveFontPx": 26,
+          "text": "10:00"
+        },
+        "#map": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgb(18, 33, 33)",
+          "transform": "none",
+          "rect": {
+            "x": 295,
+            "y": 156,
+            "w": 690,
+            "h": 400
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "loot",
+      "file": "1280x720-loot.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 241,
+            "y": 252.5,
+            "w": 35,
+            "h": 12
+          },
+          "effectiveFontPx": 9,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 264.984375,
+            "y": 230.5,
+            "w": 10.015625,
+            "h": 11
+          },
+          "effectiveFontPx": 10,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 246.5,
+            "y": 230,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 522,
+            "w": 176,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 586,
+            "w": 40,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 935,
+            "y": 584.703125,
+            "w": 150,
+            "h": 15.296875
+          },
+          "effectiveFontPx": 9,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1003.484375,
+            "y": 117,
+            "w": 83.015625,
+            "h": 30
+          },
+          "effectiveFontPx": 26,
+          "text": "10:00"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 590.390625,
+            "y": 133,
+            "w": 176.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 128.5,
+            "w": 804,
+            "h": 56
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 477.5,
+            "w": 804,
+            "h": 86
+          },
+          "effectiveFontPx": 11,
+          "text": "取舍，由你决定选中物品查看详情把物品拖到另一侧的空格，或拖到可合并的同类物品上。整组转移 · 可放回箱子或尸体 · 不自动整理"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 573.5,
+            "w": 804,
+            "h": 23
+          },
+          "effectiveFontPx": 9,
+          "text": "拖入指定格子 · 绿色可放置，红色不可放置E / Tab / Esc 关闭"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "touch": false,
+      "view": "loot-detail",
+      "file": "1280x720-loot-detail.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 160,
+            "y": 90,
+            "w": 960,
+            "h": 540
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 241,
+            "y": 252.5,
+            "w": 35,
+            "h": 12
+          },
+          "effectiveFontPx": 9,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 264.984375,
+            "y": 230.5,
+            "w": 10.015625,
+            "h": 11
+          },
+          "effectiveFontPx": 10,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 246.5,
+            "y": 230,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 472,
+            "y": 495.5,
+            "w": 327,
+            "h": 17
+          },
+          "effectiveFontPx": 10,
+          "text": "双管霰弹枪用弹药。"
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 522,
+            "w": 176,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 194,
+            "y": 586,
+            "w": 40,
+            "h": 14
+          },
+          "effectiveFontPx": 10,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 935,
+            "y": 584.703125,
+            "w": 150,
+            "h": 15.296875
+          },
+          "effectiveFontPx": 9,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1003.484375,
+            "y": 117,
+            "w": 83.015625,
+            "h": 30
+          },
+          "effectiveFontPx": 26,
+          "text": "09:59"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 590.390625,
+            "y": 133,
+            "w": 176.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 128.5,
+            "w": 804,
+            "h": 56
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 477.5,
+            "w": 804,
+            "h": 86
+          },
+          "effectiveFontPx": 11,
+          "text": "来源物资 · 弹药霰弹1×1 格　2 件　0.09 kg双管霰弹枪用弹药。收入背包或安全箱后，才能使用或装备。"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 238,
+            "y": 573.5,
+            "w": 804,
+            "h": 23
+          },
+          "effectiveFontPx": 9,
+          "text": "拖入指定格子 · 绿色可放置，红色不可放置E / Tab / Esc 关闭"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "title",
+      "file": "1920x1080-title.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".title-copy h1": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "147.84px",
+          "color": "rgb(230, 232, 202)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 105.59375,
+            "y": 261.5625,
+            "w": 501.453125,
+            "h": 279.109375
+          },
+          "effectiveFontPx": 147.84,
+          "text": "逃离滨科夫."
+        },
+        ".title-story": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "17px",
+          "color": "rgb(172, 191, 176)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 109.59375,
+            "y": 612.046875,
+            "w": 497.453125,
+            "h": 68
+          },
+          "effectiveFontPx": 17,
+          "text": "穿过盐雾与封锁线，带上找到的物资，活着回来。"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "gear",
+      "file": "1920x1080-gear.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 80,
+            "y": 383.96875,
+            "w": 134,
+            "h": 24
+          },
+          "effectiveFontPx": 18,
+          "text": "急救包"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 251.96875,
+            "y": 347.96875,
+            "w": 32.03125,
+            "h": 22
+          },
+          "effectiveFontPx": 20,
+          "text": "24"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 123,
+            "y": 342.96875,
+            "w": 48,
+            "h": 48
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "item",
+      "file": "1920x1080-item.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 80,
+            "y": 383.96875,
+            "w": 134,
+            "h": 24
+          },
+          "effectiveFontPx": 18,
+          "text": "急救包"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 251.96875,
+            "y": 347.96875,
+            "w": 32.03125,
+            "h": 22
+          },
+          "effectiveFontPx": 20,
+          "text": "24"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 123,
+            "y": 342.96875,
+            "w": 48,
+            "h": 48
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-actions button": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgb(35, 51, 42)",
+          "transform": "none",
+          "rect": {
+            "x": 1496,
+            "y": 720.28125,
+            "w": 169,
+            "h": 60
+          },
+          "effectiveFontPx": 20,
+          "text": "放入仓库"
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1496,
+            "y": 375.96875,
+            "w": 350,
+            "h": 79.1875
+          },
+          "effectiveFontPx": 22,
+          "text": "止血，恢复 16 点生命。 放在背包中可按 Q 使用。"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "med",
+      "file": "1920x1080-med.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 78,
+            "y": 411.96875,
+            "w": 56,
+            "h": 56
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".shop-card strong": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 399.96875,
+            "w": 338.65625,
+            "h": 32
+          },
+          "effectiveFontPx": 22,
+          "text": "密封绷带"
+        },
+        ".shop-card .small": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(145, 162, 135)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 449.96875,
+            "w": 170.125,
+            "h": 26
+          },
+          "effectiveFontPx": 18,
+          "text": "医疗用品 · 每份 1 件"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "quests",
+      "file": "1920x1080-quests.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".quest p": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(172, 184, 158)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 106,
+            "y": 423.96875,
+            "w": 508,
+            "h": 36
+          },
+          "effectiveFontPx": 20,
+          "text": "找齐维修物资，恢复水产站供电。完成后可扩建仓库。"
+        }
+      },
+      "platformFonts": {
+        "fonts": [
+          {
+            "familyName": "Noto Sans CJK SC",
+            "postScriptName": "NotoSansCJKsc-Bold",
+            "isCustomFont": false,
+            "glyphCount": 5
+          }
+        ]
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "hud",
+      "file": "1920x1080-hud.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 864,
+            "w": 352,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 992,
+            "w": 80,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1550,
+            "y": 989.40625,
+            "w": 300,
+            "h": 30.59375
+          },
+          "effectiveFontPx": 18,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1686.96875,
+            "y": 54,
+            "w": 166.03125,
+            "h": 60
+          },
+          "effectiveFontPx": 52,
+          "text": "10:00"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "map",
+      "file": "1920x1080-map.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 864,
+            "w": 352,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 992,
+            "w": 80,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1550,
+            "y": 989.40625,
+            "w": 300,
+            "h": 30.59375
+          },
+          "effectiveFontPx": 18,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1686.96875,
+            "y": 54,
+            "w": 166.03125,
+            "h": 60
+          },
+          "effectiveFontPx": 52,
+          "text": "10:00"
+        },
+        "#map": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgb(18, 33, 33)",
+          "transform": "none",
+          "rect": {
+            "x": 270,
+            "y": 132,
+            "w": 1380,
+            "h": 800
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "loot",
+      "file": "1920x1080-loot.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 162,
+            "y": 325,
+            "w": 70,
+            "h": 24
+          },
+          "effectiveFontPx": 18,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 209.96875,
+            "y": 281,
+            "w": 20.03125,
+            "h": 22
+          },
+          "effectiveFontPx": 20,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 173,
+            "y": 280,
+            "w": 48,
+            "h": 48
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 864,
+            "w": 352,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 992,
+            "w": 80,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1550,
+            "y": 989.40625,
+            "w": 300,
+            "h": 30.59375
+          },
+          "effectiveFontPx": 18,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1686.96875,
+            "y": 54,
+            "w": 166.03125,
+            "h": 60
+          },
+          "effectiveFontPx": 52,
+          "text": "10:00"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 860.78125,
+            "y": 86,
+            "w": 353.0625,
+            "h": 68
+          },
+          "effectiveFontPx": 20,
+          "text": "生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 77,
+            "w": 1608,
+            "h": 112
+          },
+          "effectiveFontPx": 32,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 775,
+            "w": 1608,
+            "h": 172
+          },
+          "effectiveFontPx": 22,
+          "text": "取舍，由你决定选中物品查看详情把物品拖到另一侧的空格，或拖到可合并的同类物品上。整组转移 · 可放回箱子或尸体 · 不自动整理"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 967,
+            "w": 1608,
+            "h": 46
+          },
+          "effectiveFontPx": 18,
+          "text": "拖入指定格子 · 绿色可放置，红色不可放置E / Tab / Esc 关闭"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "touch": false,
+      "view": "loot-detail",
+      "file": "1920x1080-loot-detail.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(2, 0, 0, 2, 0, 0)",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1080
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 162,
+            "y": 325,
+            "w": 70,
+            "h": 24
+          },
+          "effectiveFontPx": 18,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "10px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 209.96875,
+            "y": 281,
+            "w": 20.03125,
+            "h": 22
+          },
+          "effectiveFontPx": 20,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 173,
+            "y": 280,
+            "w": 48,
+            "h": 48
+          },
+          "effectiveFontPx": 32,
+          "text": ""
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 624,
+            "y": 811,
+            "w": 654,
+            "h": 34
+          },
+          "effectiveFontPx": 20,
+          "text": "双管霰弹枪用弹药。"
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 864,
+            "w": 352,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 68,
+            "y": 992,
+            "w": 80,
+            "h": 28
+          },
+          "effectiveFontPx": 20,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1550,
+            "y": 989.40625,
+            "w": 300,
+            "h": 30.59375
+          },
+          "effectiveFontPx": 18,
+          "text": "R 换弹　1 主武器　2 匕首"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "26px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 1686.96875,
+            "y": 54,
+            "w": 166.03125,
+            "h": 60
+          },
+          "effectiveFontPx": 52,
+          "text": "09:59"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 860.78125,
+            "y": 86,
+            "w": 353.0625,
+            "h": 68
+          },
+          "effectiveFontPx": 20,
+          "text": "生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 77,
+            "w": 1608,
+            "h": 112
+          },
+          "effectiveFontPx": 32,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 775,
+            "w": 1608,
+            "h": 172
+          },
+          "effectiveFontPx": 22,
+          "text": "来源物资 · 弹药霰弹1×1 格　2 件　0.09 kg双管霰弹枪用弹药。收入背包或安全箱后，才能使用或装备。"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "9px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 156,
+            "y": 967,
+            "w": 1608,
+            "h": 46
+          },
+          "effectiveFontPx": 18,
+          "text": "拖入指定格子 · 绿色可放置，红色不可放置E / Tab / Esc 关闭"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "touch": true,
+      "view": "gear",
+      "file": "844x390-gear.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 844,
+            "h": 390
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 263.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "9mm"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 49.59375,
+            "y": 229.5,
+            "w": 18.40625,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "32"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "14px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "effectiveFontPx": 14,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "touch": true,
+      "view": "hud",
+      "file": "844x390-hud.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 844,
+            "h": 390
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 64,
+            "w": 126,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 130.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 662,
+            "y": 107.546875,
+            "w": 160,
+            "h": 18.6875
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 510.484375,
+            "y": 19,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "10:00"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "touch": true,
+      "view": "loot",
+      "file": "844x390-loot.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 844,
+            "h": 390
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 26,
+            "y": 165.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 60.796875,
+            "y": 131.5,
+            "w": 11.203125,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 37.5,
+            "y": 137,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 64,
+            "w": 126,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 130.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 662,
+            "y": 107.546875,
+            "w": 160,
+            "h": 18.6875
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 510.484375,
+            "y": 19,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "10:00"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 371.171875,
+            "y": 31,
+            "w": 166.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 24,
+            "w": 798,
+            "h": 57
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 330,
+            "w": 798,
+            "h": 6
+          },
+          "effectiveFontPx": 11,
+          "text": "取舍，由你决定选中物品查看详情把物品拖到另一侧的空格，或拖到可合并的同类物品上。整组转移 · 可放回箱子或尸体 · 不自动整理"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 341,
+            "w": 798,
+            "h": 26
+          },
+          "effectiveFontPx": 11,
+          "text": "选中物品 → 移动格位 → 点目标格"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "touch": true,
+      "view": "loot-detail",
+      "file": "844x390-loot-detail.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 844,
+            "h": 390
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 26,
+            "y": 165.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 60.796875,
+            "y": 131.5,
+            "w": 11.203125,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 37.5,
+            "y": 137,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-actions button": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "14px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgb(35, 51, 42)",
+          "transform": "none",
+          "rect": {
+            "x": 426,
+            "y": 257,
+            "w": 389,
+            "h": 48
+          },
+          "effectiveFontPx": 14,
+          "text": "移动格位"
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "12px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 29,
+            "y": 213.609375,
+            "w": 108.015625,
+            "h": 20.390625
+          },
+          "effectiveFontPx": 12,
+          "text": "双管霰弹枪用弹药。"
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 64,
+            "w": 126,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 24,
+            "y": 130.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 662,
+            "y": 107.546875,
+            "w": 160,
+            "h": 18.6875
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 510.484375,
+            "y": 19,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "09:59"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 371.171875,
+            "y": 31,
+            "w": 166.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 24,
+            "w": 798,
+            "h": 57
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 09:59世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(21, 35, 31, 0.984)",
+          "transform": "none",
+          "rect": {
+            "x": 12,
+            "y": 93.921875,
+            "w": 820,
+            "h": 284.078125
+          },
+          "effectiveFontPx": 11,
+          "text": "来源物资 · 弹药霰弹1×1 格　2 件　0.09 kg双管霰弹枪用弹药。收入背包或安全箱后，才能使用或装备。移动格位关闭详情"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 341,
+            "w": 798,
+            "h": 26
+          },
+          "effectiveFontPx": 11,
+          "text": "选中物品 → 移动格位 → 点目标格"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 740,
+        "height": 300
+      },
+      "touch": true,
+      "view": "gear",
+      "file": "740x300-gear.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 740,
+            "h": 300
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 263.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "9mm"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 49.59375,
+            "y": 229.5,
+            "w": 18.40625,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "32"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "14px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "effectiveFontPx": 14,
+          "text": ""
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 740,
+        "height": 300
+      },
+      "touch": true,
+      "view": "hud",
+      "file": "740x300-hud.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 740,
+            "h": 300
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 47,
+            "w": 112,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 113.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 406.484375,
+            "y": 13,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "10:00"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 740,
+        "height": 300
+      },
+      "touch": true,
+      "view": "loot",
+      "file": "740x300-loot.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 740,
+            "h": 300
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 26,
+            "y": 165.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 60.796875,
+            "y": 131.5,
+            "w": 11.203125,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 37.5,
+            "y": 137,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 47,
+            "w": 112,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 113.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 406.484375,
+            "y": 13,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "10:00"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 319.171875,
+            "y": 31,
+            "w": 166.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 24,
+            "w": 694,
+            "h": 57
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 240,
+            "w": 694,
+            "h": 6
+          },
+          "effectiveFontPx": 11,
+          "text": "取舍，由你决定选中物品查看详情把物品拖到另一侧的空格，或拖到可合并的同类物品上。整组转移 · 可放回箱子或尸体 · 不自动整理"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 251,
+            "w": 694,
+            "h": 26
+          },
+          "effectiveFontPx": 11,
+          "text": "选中物品 → 移动格位 → 点目标格"
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 740,
+        "height": 300
+      },
+      "touch": true,
+      "view": "loot-detail",
+      "file": "740x300-loot-detail.png",
+      "data": {
+        "#frame": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 740,
+            "h": 300
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-label": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(225, 229, 201)",
+          "background": "rgba(16, 27, 23, 0.81)",
+          "transform": "none",
+          "rect": {
+            "x": 26,
+            "y": 165.5,
+            "w": 47,
+            "h": 12
+          },
+          "effectiveFontPx": 11,
+          "text": "霰弹"
+        },
+        ".item .qty": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "12px",
+          "color": "rgb(238, 241, 205)",
+          "background": "rgba(17, 29, 21, 0.93)",
+          "transform": "none",
+          "rect": {
+            "x": 60.796875,
+            "y": 131.5,
+            "w": 11.203125,
+            "h": 11
+          },
+          "effectiveFontPx": 12,
+          "text": "2"
+        },
+        ".item-icon": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 227, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "matrix(1, 0, 0, 1, -12, -12)",
+          "rect": {
+            "x": 37.5,
+            "y": 137,
+            "w": 24,
+            "h": 24
+          },
+          "effectiveFontPx": 16,
+          "text": ""
+        },
+        ".item-actions button": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "14px",
+          "color": "rgb(203, 214, 198)",
+          "background": "rgb(35, 51, 42)",
+          "transform": "none",
+          "rect": {
+            "x": 374,
+            "y": 183.078125,
+            "w": 337,
+            "h": 48
+          },
+          "effectiveFontPx": 14,
+          "text": "移动格位"
+        },
+        ".item-description": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "12px",
+          "color": "rgb(167, 183, 157)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 29,
+            "y": 139.6875,
+            "w": 108.015625,
+            "h": 20.390625
+          },
+          "effectiveFontPx": 12,
+          "text": "双管霰弹枪用弹药。"
+        },
+        ".vital-row": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 47,
+            "w": 112,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "生命100 / 100"
+        },
+        "#status": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(196, 209, 184)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 22,
+            "y": 113.78125,
+            "w": 44,
+            "h": 15.390625
+          },
+          "effectiveFontPx": 11,
+          "text": "状态正常"
+        },
+        "#reload": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "effectiveFontPx": 11,
+          "text": "外圈持续开火"
+        },
+        ".timer strong": {
+          "font": "Consolas, \"Liberation Mono\", monospace",
+          "size": "24px",
+          "color": "rgb(224, 230, 199)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 406.484375,
+            "y": 13,
+            "w": 77.015625,
+            "h": 27
+          },
+          "effectiveFontPx": 24,
+          "text": "10:00"
+        },
+        ".loot-risk": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "10px",
+          "color": "rgb(188, 201, 171)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 319.171875,
+            "y": 31,
+            "w": 166.53125,
+            "h": 34
+          },
+          "effectiveFontPx": 10,
+          "text": "生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。"
+        },
+        ".loot-header": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "16px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 24,
+            "w": 694,
+            "h": 57
+          },
+          "effectiveFontPx": 16,
+          "text": "物资搜集潮汐观测站物资箱生命 100 / 100封锁倒计时 10:00世界仍在运行，请留意周围。关闭 ×"
+        },
+        ".loot-details": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(220, 226, 210)",
+          "background": "rgba(21, 35, 31, 0.984)",
+          "transform": "none",
+          "rect": {
+            "x": 12,
+            "y": 20,
+            "w": 716,
+            "h": 268
+          },
+          "effectiveFontPx": 11,
+          "text": "来源物资 · 弹药霰弹1×1 格　2 件　0.09 kg双管霰弹枪用弹药。收入背包或安全箱后，才能使用或装备。移动格位关闭详情"
+        },
+        ".loot-footer": {
+          "font": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+          "size": "11px",
+          "color": "rgb(153, 170, 155)",
+          "background": "rgba(0, 0, 0, 0)",
+          "transform": "none",
+          "rect": {
+            "x": 23,
+            "y": 251,
+            "w": 694,
+            "h": 26
+          },
+          "effectiveFontPx": 11,
+          "text": "选中物品 → 移动格位 → 点目标格"
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "archivedScreenshots": [
+    {
+      "file": "1280x720-title.png",
+      "sha256": "5882e07af4658a2bb5b1bd342bf01ca7c465fdd89b2d9bc4a99225dddc5e941b"
+    },
+    {
+      "file": "1280x720-item.png",
+      "sha256": "8b1270c17c29c10c2b8ed22106326112b7cefea946c5fa0dd871a243fe0ae7a0"
+    },
+    {
+      "file": "1280x720-med.png",
+      "sha256": "c3cfa7683e9f955c52cd6c8ff67aa68f08dbc91a7ee2d5a55d4536b635b8e9e3"
+    },
+    {
+      "file": "1280x720-hud.png",
+      "sha256": "4eaaf411e7b55359c02f01f5e1d432beaaf2cb962f76ace0abdb881d3491cea3"
+    },
+    {
+      "file": "1280x720-map.png",
+      "sha256": "0d38d19d51a572f084abbb354e82456a767ecd99ba1490a32fbc4fe844375bbc"
+    },
+    {
+      "file": "1920x1080-loot-detail.png",
+      "sha256": "16414499bd9dec2e9405e2047c4948947647c173fd98f809540ca98db3cd7d29"
+    },
+    {
+      "file": "844x390-hud.png",
+      "sha256": "e5bdce2f4acade17fd98d0045cc9158f43d34516e6250163a24013ccac020e98"
+    },
+    {
+      "file": "740x300-loot-detail.png",
+      "sha256": "96c0b6d052abe59c538f1c2607a6eda4d7a5f73455f02d0157f88ec6b7f4148d"
+    }
+  ],
+  "archiveNote": "Eight visually reviewed screenshots are archived here; all 26 capture filenames are relative to ignored test-results/art-audit after rerunning inspect-baseline.mjs."
+}

@@ -1,0 +1,427 @@
+{
+  "base": "a34c7a1ba810919fc33d4fce158aba0a028a0f78",
+  "htmlSha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+  "browser": "151.0.7922.173",
+  "method": "Unmodified main textures read through explicit test hook; separate diagnostic HTML contact sheet, native and nearest-neighbor 3x, DPR1. Not an in-game screenshot or proposed art.",
+  "screenshotSha256": "2196c83803764b9876451df829ff0aeb7f1c9ca70bed0c744dfb22b5764a20f7",
+  "textures": [
+    {
+      "key": "player",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 27,
+        "height": 23
+      },
+      "occupiedPixels": 484,
+      "pngSha256": "4bfc9add850542d1dff50c77aa93a94d2fa91358cf3f32e47f7d252b77652a48"
+    },
+    {
+      "key": "player-knife",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 28,
+        "height": 23
+      },
+      "occupiedPixels": 478,
+      "pngSha256": "0b25fa0730ac4fe6edb399b49129c4c2a8dbc55fbbb475bd382eb3330ef5a634"
+    },
+    {
+      "key": "player-pistol",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 27,
+        "height": 23
+      },
+      "occupiedPixels": 484,
+      "pngSha256": "4bfc9add850542d1dff50c77aa93a94d2fa91358cf3f32e47f7d252b77652a48"
+    },
+    {
+      "key": "player-shotgun",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 28,
+        "height": 23
+      },
+      "occupiedPixels": 485,
+      "pngSha256": "3e8d39ddd2af5c4655d9a9ab6f137478930164baa6065b2484cc58a40d75826f"
+    },
+    {
+      "key": "player-carbine",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 28,
+        "height": 23
+      },
+      "occupiedPixels": 491,
+      "pngSha256": "df90ee8650ecec352c7a40b5e9c2871beee4ee6840a4152937b80d755346dce0"
+    },
+    {
+      "key": "scav",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 28,
+        "height": 23
+      },
+      "occupiedPixels": 478,
+      "pngSha256": "b4a79b7e5c1a66be0bc37b30ee488b8c30881647ce2dbc3e0b8c9cf8f542bab4"
+    },
+    {
+      "key": "salt",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 27,
+        "height": 23
+      },
+      "occupiedPixels": 484,
+      "pngSha256": "4d64cc057f1acab924644fcc5e7133b1a380c6992cdaec245e8ab875f15c060e"
+    },
+    {
+      "key": "elite",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 4,
+        "width": 28,
+        "height": 23
+      },
+      "occupiedPixels": 498,
+      "pngSha256": "3bb801d9548aa9fb3dcb08ecf47e98aa5b745fb5e69301f07187a1b0038a59d3"
+    },
+    {
+      "key": "creature",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 1,
+        "y": 4,
+        "width": 30,
+        "height": 25
+      },
+      "occupiedPixels": 553,
+      "pngSha256": "c11efe7d28ebaba475dea00f7d7ae953193d41a16bcf96592ae56455918500e2"
+    },
+    {
+      "key": "loot",
+      "width": 20,
+      "height": 20,
+      "alphaBounds": {
+        "x": 2,
+        "y": 4,
+        "width": 16,
+        "height": 15
+      },
+      "occupiedPixels": 228,
+      "pngSha256": "c444df6a00d2ab6ad7123f1b349fe88cb743d838090876748713fc39c6c47786"
+    },
+    {
+      "key": "loot-crate",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 2,
+        "y": 5,
+        "width": 28,
+        "height": 25
+      },
+      "occupiedPixels": 694,
+      "pngSha256": "62e818c9fa2751287eb2a79250437a4aa9539f835b68925df361c86a3650d067"
+    },
+    {
+      "key": "bullet",
+      "width": 10,
+      "height": 4,
+      "alphaBounds": {
+        "x": 0,
+        "y": 1,
+        "width": 10,
+        "height": 2
+      },
+      "occupiedPixels": 20,
+      "pngSha256": "dc7da9c3e1065519c75014af775b71a13ac2b0bda5ddf31b24871da5503aa4bb"
+    },
+    {
+      "key": "item-ammo9",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 5,
+        "y": 7,
+        "width": 20,
+        "height": 20
+      },
+      "occupiedPixels": 360,
+      "pngSha256": "ecb69c25e141f3f3e33481532c76271e65375e16f10991670b626d15cc421954"
+    },
+    {
+      "key": "item-ammoR",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 5,
+        "y": 7,
+        "width": 20,
+        "height": 20
+      },
+      "occupiedPixels": 360,
+      "pngSha256": "ecb69c25e141f3f3e33481532c76271e65375e16f10991670b626d15cc421954"
+    },
+    {
+      "key": "item-antidote",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 9,
+        "y": 5,
+        "width": 14,
+        "height": 24
+      },
+      "occupiedPixels": 336,
+      "pngSha256": "6e8fb10850f53fa61f281cc50d588274b9892ce12fe697debf5c47f0dfc0de33"
+    },
+    {
+      "key": "item-bandage",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 6,
+        "width": 24,
+        "height": 23
+      },
+      "occupiedPixels": 552,
+      "pngSha256": "69c67bc4da5dc16ec2820fc1954d4ff5c874f4060de39519d9e175a98c5074e9"
+    },
+    {
+      "key": "item-battery",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 7,
+        "y": 6,
+        "width": 20,
+        "height": 23
+      },
+      "occupiedPixels": 436,
+      "pngSha256": "af85d8ea5dedf82cfb1612f6b899c030de4d0bc9992aec730472487e90ff08b8"
+    },
+    {
+      "key": "item-carbine",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 1,
+        "y": 11,
+        "width": 30,
+        "height": 15
+      },
+      "occupiedPixels": 292,
+      "pngSha256": "9d1fdc5cd8678fc577f5c96af47bbd8a61f33607549e7bc93340489cedf7e201"
+    },
+    {
+      "key": "item-food",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 6,
+        "y": 7,
+        "width": 21,
+        "height": 22
+      },
+      "occupiedPixels": 462,
+      "pngSha256": "e555a3346bad91335a5419d794073fb8df72224dcf0effe6f6cbadb4c8deb6bb"
+    },
+    {
+      "key": "item-fuse",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 5,
+        "y": 11,
+        "width": 23,
+        "height": 11
+      },
+      "occupiedPixels": 227,
+      "pngSha256": "6a08e0baa29ad69106a39a6d1aaed808e6f42be20b06c80a18d1507af354e90c"
+    },
+    {
+      "key": "item-knife",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 14,
+        "width": 24,
+        "height": 10
+      },
+      "occupiedPixels": 130,
+      "pngSha256": "d58593367c41a312c21e8a8b6423949ec58b5fbb6c3ba95c325454760cf7f4de"
+    },
+    {
+      "key": "item-ledger",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 6,
+        "y": 5,
+        "width": 22,
+        "height": 25
+      },
+      "occupiedPixels": 550,
+      "pngSha256": "5cfdafcda72d012b07ff370c770682c9e0dd46b9142cf72f02950c2f1616faa0"
+    },
+    {
+      "key": "item-medkit",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 5,
+        "width": 24,
+        "height": 24
+      },
+      "occupiedPixels": 562,
+      "pngSha256": "281e1b3cbbb2d722ed2331f0603ef1f6b3c289ee815400bdde37aca91a9c2f73"
+    },
+    {
+      "key": "item-pearl",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 8,
+        "width": 24,
+        "height": 19
+      },
+      "occupiedPixels": 304,
+      "pngSha256": "fbd5b02763d5cd55acac91515390b64ed6afafaac9f2db1ef9634ae62c28621a"
+    },
+    {
+      "key": "item-pistol",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 3,
+        "y": 13,
+        "width": 26,
+        "height": 13
+      },
+      "occupiedPixels": 240,
+      "pngSha256": "5e0595c73a1c5c5062cb1f904b559a38b3c6ccce258e504b04d56957854ec0c7"
+    },
+    {
+      "key": "item-sample",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 9,
+        "y": 5,
+        "width": 14,
+        "height": 24
+      },
+      "occupiedPixels": 336,
+      "pngSha256": "7443e52a4a79893272c27f42b8b2ccc651d95118bdd689e832ed636eda406778"
+    },
+    {
+      "key": "item-scrap",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 4,
+        "y": 7,
+        "width": 22,
+        "height": 19
+      },
+      "occupiedPixels": 356,
+      "pngSha256": "c7784e0a947f2ceebd54a6c8e51cde10579856c8b60c357eb92f57def5209b5c"
+    },
+    {
+      "key": "item-shell",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 5,
+        "y": 7,
+        "width": 20,
+        "height": 20
+      },
+      "occupiedPixels": 360,
+      "pngSha256": "ede59eff9dbfc8612e993a08de4f2200da12f4ff67ed04b454631df09f9157f0"
+    },
+    {
+      "key": "item-shotgun",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 1,
+        "y": 13,
+        "width": 30,
+        "height": 13
+      },
+      "occupiedPixels": 258,
+      "pngSha256": "eda6758398d1bbf0b3128c6858ff043e4dc795d2dcd1d5900dda86ba6d73f26a"
+    },
+    {
+      "key": "item-watch",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 9,
+        "y": 2,
+        "width": 16,
+        "height": 27
+      },
+      "occupiedPixels": 333,
+      "pngSha256": "a3770b6883d2e938cf52229317b8d919087869a6a8e8a390cb0a761fbd260f97"
+    },
+    {
+      "key": "item-water",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 9,
+        "y": 5,
+        "width": 14,
+        "height": 24
+      },
+      "occupiedPixels": 336,
+      "pngSha256": "1bafe898c31748db160703142b9c7361f5429a56f63c0e7c4f16f6af5f1a328a"
+    },
+    {
+      "key": "item-wire",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 5,
+        "y": 5,
+        "width": 25,
+        "height": 22
+      },
+      "occupiedPixels": 497,
+      "pngSha256": "0d49bb103b785038215ee6be2b03233c30326a7f0685ea7043f2eb7046bbf62c"
+    }
+  ],
+  "errors": [],
+  "externalRequests": []
+}

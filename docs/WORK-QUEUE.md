@@ -19,12 +19,12 @@
 | 任务 / 承接入口 | 核对时实际范围 | 下一步与范围边界 |
 | --- | --- | --- |
 | [#10](https://github.com/xuys2025/escape-bincov/pull/10) · `agent/qol-discovery-20261005` · `bbaabd1` | QOL 实现已覆盖具体搜刮目标、危险提示、暂停返回、批量交易确认、旋转拆分等；标题仍叫分析 | 原 agent 继续原 PR；与 #20 的战术界面存在冲突，需同步并验证交互、库存守恒及保存回滚，不能按旧快照退回 QOL-01 范围 |
-| [#11](https://github.com/xuys2025/escape-bincov/pull/11) · `docs/art-direction-research` · `5e5658f` | 核心美术已由 #20 采用；原 PR 已追加主线整合，剩余 63 个研究/截图/报告归档及状态说明 | 保留 #20 的运行代码、字体、战术样式、CI 和制品；等待整合提交 CI 后收尾合并。原历史提交与未完成真人/真机验收保留，不恢复旧 `art.css` |
+| [#11](https://github.com/xuys2025/escape-bincov/pull/11) · `docs/art-direction-research` · `5e5658f` | 核心美术已由 #20 采用；原 PR 已追加主线整合，剩余 63 个研究/截图/报告归档及状态说明 | 保留 #20 的运行代码、字体、战术样式、CI 和制品；原整合头 CI 已通过；最终由 #19 保留本头父历史并一起收尾，组合 CI 通过后合入。原历史提交与未完成真人/真机验收保留，不恢复旧 `art.css` |
 | [#16](https://github.com/xuys2025/escape-bincov/pull/16) · `feat/buildings-rpg-mall` · `7cc9236` | 建筑/RPG/基地/商场 M0–M6 已接入，原头完整 CI 通过；保持 Draft，主要 M7 自动证据已归档 | 原 agent 修复追击事件重开身后已关门的问题，整合 #20 主线冲突后重验；原图、真人、真机和扩展组合验收仍按登记处理。完整 #12–14 范围继续留在本 PR |
 | [#17](https://github.com/xuys2025/escape-bincov/pull/17) · `docs/pr16-development-plan` · `d0b6bd8` | #16 的详细工作包、依赖与验收门槛；同名计划文件已进入 #16 的实现分支 | 交接时比较原计划与 #16 实施记录，登记采纳、修订和未决项；后续进度归 #16。保留原入口直到成果与历史完整核对，本次不修改其分支或状态 |
-| [#18](https://github.com/xuys2025/escape-bincov/pull/18) · `docs/tarkov-ui-study` · `92437d7` | 布局和字体 B 已由 #20 采用；原 PR 已同步主线，保留 34 个独立原型、字体许可、截图和报告文件 | 等待整合提交 CI 后归档合并；原型仍非游戏。旧截图重采须在历史 `baa8335` 工作区运行，不覆盖当前发布包 |
+| [#18](https://github.com/xuys2025/escape-bincov/pull/18) · `docs/tarkov-ui-study` · `92437d7` | 布局和字体 B 已由 #20 采用；原 PR 已同步主线，保留 34 个独立原型、字体许可、截图和报告文件 | 已通过完整 CI 并合并为 `912aadc`；原型仍非游戏。旧截图重采须在历史 `baa8335` 工作区运行，不覆盖当前发布包 |
 | [#20](https://github.com/xuys2025/escape-bincov/pull/20) · `feat/tactical-pixel-ui` · `7a6f627` | 战术像素界面、字体 B、统一美术已合并；主线合并提交 `9fe189c` | 已接受实现作为后续共同基线；#11/#18 保留来源证据，#10/#16 集成时保留本次战术布局及相应回归 |
-| [#19 流程整理](https://github.com/xuys2025/escape-bincov/pull/19) · `docs/pr-workflow-consolidation` | 统一任务入口、原 PR 续作、需求暂停、模板与本次状态核对 | 在原 PR 解决 #20 后的文档冲突，完成七份文档一致性检查并以新 CI 收尾。其他在途任务不因并发限制被中断 |
+| [#19 流程整理](https://github.com/xuys2025/escape-bincov/pull/19) · `docs/pr-workflow-consolidation` | 统一任务入口、原 PR 续作、需求暂停、模板与本次状态核对 | 在原 PR 解决冲突并承接 #11 的档案收尾，完整保留两个 PR 的头历史；组合 CI 通过后合入。其他在途任务不因并发限制被中断 |
 
 本表中的测试结果应查看各 PR 当前提交的证据与 CI；本次登记没有重新验收他们的游戏实现。原 agent 后续推送可能使上述 SHA 过时，不能用它覆盖较新的提交。
 

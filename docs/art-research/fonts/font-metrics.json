@@ -1,0 +1,51 @@
+{
+  "method": "Conservative union of TypeScript string/template literals from src/*.ts, plus comparison labels; includes technical strings/HTML and is not a perfect runtime text extractor.",
+  "characters": 738,
+  "cjkCharacters": 633,
+  "fonts": [
+    {
+      "name": "chill16",
+      "originalBytes": 12636508,
+      "sourceSha256": "9c699de0d24e482700fa0a08ce3abe58ef2ceaf6173323c77b767c72cd538512",
+      "subsetBytes": 30928,
+      "subsetSha256": "8ad736aebf91f31d556af9bd7f00daac740e0c3a3efa1696474482c89b87b158",
+      "inlineCssBytes": 41364,
+      "missing": [],
+      "missingCJK": [],
+      "fontOnlyPrototypeHtmlBytes": 1743388,
+      "fontOnlyPrototypeZipBytes": 437183,
+      "zipDeltaBytes": 32457
+    },
+    {
+      "name": "fusion12",
+      "originalBytes": 666264,
+      "sourceSha256": "0ebd99e6f1e9b650a793a3f759c1c3dfa99f0c5b6502e78569b48ddb43767e40",
+      "subsetBytes": 23976,
+      "subsetSha256": "efc17b1bfde7da1ce5e517aeb6f85f6b42897454eb710b045f1027a36ec2addd",
+      "inlineCssBytes": 32093,
+      "missing": [
+        "✓"
+      ],
+      "missingCJK": [],
+      "fontOnlyPrototypeHtmlBytes": 1734117,
+      "fontOnlyPrototypeZipBytes": 430595,
+      "zipDeltaBytes": 25869
+    },
+    {
+      "name": "noto",
+      "originalBytes": 19484784,
+      "sourceSha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+      "subsetBytes": 208328,
+      "subsetSha256": "f885abc7970d856ee8718c510641fa435a67fd6ba66713f6023ff9c7ab6edca4",
+      "inlineCssBytes": 277893,
+      "missing": [],
+      "missingCJK": [],
+      "fontOnlyPrototypeHtmlBytes": 1979917,
+      "fontOnlyPrototypeZipBytes": 616535,
+      "zipDeltaBytes": 211809
+    }
+  ],
+  "baselineHtmlBytes": 1702024,
+  "baselineFontOnlyZipBytes": 404726,
+  "zipMethod": "One index.html member, Python zipfile ZIP_DEFLATED compresslevel=9; exploratory compression comparison, not pnpm package output; excludes notices and integration/layout code."
+}
