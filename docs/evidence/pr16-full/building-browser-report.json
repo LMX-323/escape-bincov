@@ -1,0 +1,93 @@
+{
+  "startedAt": "2026-10-06T01:53:19.892Z",
+  "methodology": "Offline built HTML; native region selector, keyboard/touch actions, storage fault and reload. Explicit fixtures position the player at named anchors, set indoor clock boundaries and extend enemy cooldowns to isolate the indoor warning/tide/terminal transaction; this does not claim natural travel, another unaccelerated 600-second run or human balance.",
+  "htmlSha256": "76cc5602c730de38235846e9b6610a103bf004798cdf4626fb4ced1a9dd3122b",
+  "steps": [
+    {
+      "name": "native deployment saves all three maps with one global roster and body",
+      "status": "passed"
+    },
+    {
+      "name": "failed door write leaves the closed door and original bytes; retry opens exactly once",
+      "status": "passed"
+    },
+    {
+      "name": "one held E switches once, releases held movement, and keeps global time and saved doors",
+      "status": "passed"
+    },
+    {
+      "name": "refresh restores upstairs and all maps; reverse and basement entries return to paired anchors",
+      "status": "passed"
+    },
+    {
+      "name": "indoor warning and tide use the global clock; failed upstairs timeout retains its candidate and retries once",
+      "status": "passed"
+    },
+    {
+      "name": "native touch entry and map panel at 844x390",
+      "status": "passed"
+    },
+    {
+      "name": "native touch entry and map panel at 640x300",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "indoor": {
+    "warning": {
+      "map": "resident-f2",
+      "elapsed": 270.0171000000015,
+      "warned": true,
+      "tideChanged": false,
+      "high": false,
+      "pollution": 0,
+      "hp": 100,
+      "frozenCoastTime": 1.6515999999865882
+    },
+    "tide": {
+      "map": "resident-f2",
+      "elapsed": 300.00129999999706,
+      "warned": true,
+      "tideChanged": true,
+      "high": true,
+      "pollution": 0,
+      "hp": 100,
+      "frozenCoastTime": 1.6515999999865882
+    },
+    "terminal": {
+      "runId": "bc-muw0yd5t-b",
+      "outcome": "timeout",
+      "body": {
+        "hp": 100,
+        "stamina": 100,
+        "mental": 99.96298150000018,
+        "water": 99.90128400000043,
+        "satiety": 99.9383025000004,
+        "pollution": 0,
+        "bleeding": false,
+        "exhausted": false,
+        "effects": {
+          "pain": 0,
+          "energized": 0,
+          "analgesia": 0,
+          "focus": 0,
+          "strength": 0,
+          "constitution": 0,
+          "technique": 0,
+          "injectionFatigue": 0,
+          "luck": 0
+        },
+        "treatment": {
+          "bleeding": 0,
+          "pain": 0,
+          "injectionFatigue": 0
+        },
+        "luckEffect": 0
+      }
+    }
+  },
+  "status": "passed",
+  "finishedAt": "2026-10-06T01:53:47.399Z"
+}

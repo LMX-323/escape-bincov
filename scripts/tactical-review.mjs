@@ -1,6 +1,7 @@
 /** Approved tactical layout: real offline UI input, with explicitly labelled inventory fixtures. */
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -8,7 +9,7 @@ import { browserOptions } from './browser-options.mjs';
 import * as D from '../src/domain.ts';
 const out = resolve('test-results/tactical');
 await mkdir(out, {recursive:true});
-const report = {checks:[], errors:[], externalRequests:[], method:'Unmodified offline game captures. The all-item and rotated inventories are declared fixtures; buying, selling, selection, and drag/drop use real browser input.'};
+const report = {htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),checks:[], errors:[], externalRequests:[], method:'Unmodified offline game captures. The all-item and rotated inventories are declared fixtures; buying, selling, selection, and drag/drop use real browser input.'};
 const browser = await chromium.launch(browserOptions);
 report.browser = browser.version();
 try {
@@ -40,7 +41,7 @@ try {
     for(const id of Object.keys(D.ITEMS))assert.equal(D.addItem(fixture,id,1),0);
     await page.evaluate(stash=>{window.__bincov.app.save.stash=stash;},fixture);
     await action('tab','gear').click();
-    assert.equal(await page.locator('[data-source="stash"] .inventory-art-image').count(),20);
+    assert.equal(await page.locator('[data-source="stash"] .inventory-art-image').count(),Object.keys(D.ITEMS).length);
     await shot('all-items');
     async function noClipping() {
       const bad=await page.locator('.item .inventory-art-image').evaluateAll(images=>images.filter(img=>{
@@ -55,7 +56,7 @@ try {
       assert.equal(D.addItem(rotated,id,1,false,true,false),0);
     }
     await page.evaluate(stash=>{window.__bincov.app.save.stash=stash;},rotated);await action('tab','gear').click();
-    await noClipping();await shot('rotated-items');check('20 inventory objects, eight rotated shapes, no clipped artwork');
+    await noClipping();await shot('rotated-items');check(`${Object.keys(D.ITEMS).length} inventory objects, eight rotated shapes, no clipped artwork`);
     // Transaction callbacks remain the existing save-backed implementation.
     await page.evaluate(()=>{const s=window.__bincov.app.save;s.stash.items=[];s.cash=5000;});
     await action('tab','arms').click();

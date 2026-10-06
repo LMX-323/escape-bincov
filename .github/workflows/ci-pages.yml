@@ -18,7 +18,8 @@ jobs:
   verify:
     name: Build and test
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Full browser coverage takes over 20 minutes on hosted runners.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -53,6 +54,20 @@ jobs:
         run: pnpm test:title
       - name: Save reliability regression
         run: pnpm test:save-browser
+      - name: Obtain actual pre-expansion client
+        run: |
+          mkdir -p test-results
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb/dist/index.html --output test-results/pre-m0.html
+      - name: Expansion storage and actual old-client regression
+        run: pnpm test:expansion
+      - name: Buildings and floor controls
+        run: pnpm test:buildings
+      - name: RPG, station and mall transactions
+        run: pnpm test:systems
+      - name: Repeated same-layer mall passages
+        run: pnpm test:mall-passages
+      - name: Mall landing congestion and held input
+        run: pnpm test:mall-landing
       - name: Crate and corpse inventory regression
         run: pnpm test:loot
       - name: Mobile input and recovery regression

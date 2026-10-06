@@ -35,7 +35,15 @@ PR #3 把存档流程从界面中拆出；PR #2 在合并后的 `a4de242` 基线
 
 `markConflict()` 将会话标记为冲突并禁止后续持久化。`main.ts` 继续负责锁定场景及告知玩家刷新/备份；待保存结算不会因此清空。新版同时使用页面生命周期 Web Lock 与写前记录比对。storage 事件还用于检测旧客户端或不遵守锁的写入者；未引入云存档。
 
-新版主键为 `escape-bincov.session.v2`，旧键 `escape-bincov.save.v1` 只作一次迁移来源并保留。死亡/超时/放弃仍结算失败，新版刷新可恢复最近检查点。已结算备份保持 v1，活动备份单独使用 v2 封套。
+新版主键为 `escape-bincov.session.v2`，旧键 `escape-bincov.save.v1` 只作一次迁移来源并保留。死亡/超时/放弃仍结算失败，新版刷新可恢复最近检查点。默认主档封套为 v3、档案与已结算备份为 v2，兼容旧 v1/v2 格式；扩展系统主档和完整备份使用 v4。
+
+## PR16 扩展事务（M0 原型）
+
+`ExpansionState` 将身体、永久成长、基地、队列、时间游标和可选 `LayeredRaid` 纳入同一 RecoveryStore 记录。旧海岸快照仍走原校验与场景；内置新地图解析器尚未注册正式布局，普通入口不自动启用扩展。
+
+`prepareExpansionMutation` 只修改候选克隆，严格验证后私有保留候选；`commitExpansionMutation` 检查候选基线、写入修订与当前状态，成功后发布。失败可重试同一票据，票据不能编辑；成功即失效，其他窗口或新事务已改变基线时拒绝旧票据。新掉落 UID 使用快照中的分配器，避免候选准备改变进程全局 UID。
+
+`pendingExpansion` 与 `pendingSettlement` 共同保留新身体/成长/队列结果。`backupRecord` 导出活动、已结算或待结算完整候选；升级一次保留 `systemsBackup` 原字节，v4 不接受缺少扩展字段的降级覆盖。时钟、迁移及目前未实现的场景接线详见 [M0 决策](M0-STATE-AND-COMPAT.md)。
 
 ## 容器恢复
 
@@ -80,3 +88,9 @@ mutate(() => {
 - 既有领域、地图、双分辨率浏览器、界面和 ZIP 检查继续执行。测试入口及 CI 流程沿用现有约定。
 
 输入已拆到 `input.ts`，触控绑定在稳定的 `mobile.ts` 根节点，场景保留战斗与 HUD；没有引入事件总线、状态框架或通用插件系统。后续主界面或移动输入改动应复用本会话接口，并从届时最新 `main` 开始。
+
+## PR16 扩展状态与场景
+
+建筑/商场用 `SpaceDefinition` 注册不可变格网和成对入口，session v4 中保存每图独立的门、实体、弹丸、噪声与本地时间。`ExpansionState` 是身体/成长/基地/整局的唯一来源；RaidScene 与 BaseScene 只通过 `attachExpansion` 的完整捕获/恢复端口参与会话。恢复中的旧海岸继续使用原检查点端口。
+
+新规则分在 `spatial`、`rpg`、`reputation-luck`、`base`、`pursuit` 与 `layer-transition` 中，无Phaser/DOM依赖。普通子弹飞行和离层结算共用有限首碰撞/伤害内核；不可见层不执行普通AI，已登记追击事件按全局行动钟推进。候选事务完整校验后单次写入，成功才恢复表现；跨图、物品、身体、训练、RNG与生产游标不能拆开提交。实施/格式/内容边界见 [PR16记录](PR16-IMPLEMENTATION.md)。

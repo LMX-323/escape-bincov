@@ -1,10 +1,11 @@
 import { brush, C, type PixelContext } from './pixel';
 
-export const ITEM_ART_IDS = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'] as const;
+export const ITEM_ART_IDS = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger', 'cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet'] as const;
 export type ItemArtId = typeof ITEM_ART_IDS[number];
 
 /** Authored 32px silhouettes. Texture identity never depends on a runtime tint. */
 export function paintItem(c: PixelContext, id: ItemArtId, size: 24 | 32): void {
+  if (paintRpgItem(c, id, size)) return;
   if (size === 24) { paintSmall(c, id); return; }
   const { r, p, e } = brush(c), S = C;
   switch (id) {
@@ -206,4 +207,48 @@ function paintSmall(c: PixelContext, id: ItemArtId): void {
       r(S.tealDark,2,2,20,17); r(S.teal,5,2,16,15); r(S.tealLight,5,2,15,2); r(S.wood,2,2,3,19);
       r(S.paper,8,6,11,8); p(S.tealDark,[[9,10],[18,10],[16,13],[11,13]]); r(S.tealDark,13,7,1,4); r(S.red,18,16,3,8); break;
   }
+}
+
+/** New supplies share the material ramps; integer layouts retain crisp compact icons. */
+function paintRpgItem(c: PixelContext, id: ItemArtId, size: 24 | 32): boolean {
+  if (!['cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet'].includes(id)) return false;
+  const S = C, base = brush(c).r, offset = size === 32 ? 4 : 0;
+  const r = (color: string, x: number, y: number, w: number, h: number) => base(color, x + offset, y + offset, w, h);
+  if (id === 'cloth') {
+    r(S.ink, 2, 4, 21, 20); r(S.clothDark, 3, 3, 19, 19); r(S.paperShade, 4, 3, 17, 17);
+    r(S.paper, 4, 4, 17, 2); r(S.cloth, 4, 17, 16, 3);
+    for (const y of [8, 12, 16]) r(S.clothDark, 4, y, 16, 1);
+    r(S.paper, 18, 7, 2, 9);
+  } else if (id === 'analgesic') {
+    r(S.ink, 3, 2, 19, 22); r(S.steel, 4, 3, 17, 19); r(S.steelLight, 5, 3, 15, 2);
+    for (const x of [6, 14]) for (const y of [7, 15]) {
+      r(S.steelDark, x, y, 6, 5); r(S.paperShade, x + 1, y + 1, 4, 3); r(S.paper, x + 1, y + 1, 4, 1);
+    }
+    r(S.red, 5, 21, 4, 1);
+  } else if (id === 'focus' || id.endsWith('Dose')) {
+    const colors = { focus: S.teal, strengthDose: S.red, constitutionDose: S.cloth, techniqueDose: S.brass };
+    const color = colors[id as keyof typeof colors];
+    r(S.ink, 6, 4, 13, 17); r(S.steelLight, 7, 5, 11, 15); r(color, 8, 12, 9, 7);
+    r(S.paper, 8, 6, 2, 10); r(S.steelDark, 10, 1, 5, 4); r(S.paperShade, 9, 2, 7, 2);
+    r(S.ink, 11, 20, 3, 4); r(S.steel, 12, 20, 1, 3);
+    // Labels differ in shape as well as colour, including in a grayscale view.
+    if (id === 'focus') { r(S.ink, 12, 13, 1, 5); r(S.ink, 10, 15, 5, 1); }
+    if (id === 'strengthDose') { r(S.ink, 10, 14, 5, 3); r(color, 11, 15, 3, 1); }
+    if (id === 'constitutionDose') { r(S.ink, 10, 13, 5, 2); r(S.ink, 11, 15, 3, 3); }
+    if (id === 'techniqueDose') { for (const y of [13, 15, 17]) r(S.ink, 10, y, 5, 1); }
+  } else if (id.endsWith('Charm')) {
+    r(S.wood, 11, 0, 2, 12); r(S.ink, 5, 10, 15, 14);
+    r(id === 'luckyCharm' ? S.clothLight : S.wood, 6, 11, 13, 11);
+    r(S.clothDark, 9, 13, 7, 7); r(S.brassLight, 11, 12, 3, 3);
+    if (id === 'luckyCharm') { r(S.paperShade, 10, 17, 5, 1); r(S.paperShade, 12, 15, 1, 5); }
+    else { r(S.ink, 13, 15, 2, 7); r(S.ink, 10, 17, 3, 1); }
+  } else {
+    r(S.woodDark, 8, 1, 8, 5); r(S.brass, 10, 2, 4, 6); r(S.ink, 3, 8, 19, 16);
+    r(id === 'luckySachet' ? S.cloth : S.wood, 4, 9, 17, 13);
+    r(S.paperShade, 5, 8, 15, 3); r(S.clothDark, 7, 12, 11, 9);
+    r(S.brassLight, 11, 14, 2, 5);
+    if (id === 'luckySachet') r(S.brassLight, 9, 16, 6, 1);
+    else { r(S.ink, 14, 13, 2, 7); r(S.ink, 9, 14, 2, 2); }
+  }
+  return true;
 }

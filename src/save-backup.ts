@@ -1,5 +1,6 @@
 import { ITEMS, WEAPONS, itemSize, migrateSave, type SaveDataV1 } from './domain';
 import { decodeSession, SESSION_MAX_BYTES, type SessionRecord } from './recovery-store';
+import type { WorldResolver } from './expansion-state';
 
 export const BACKUP_MAX_BYTES = 1024 * 1024;
 
@@ -51,18 +52,18 @@ export function decodeBackup(text: string): SaveDataV1 {
 }
 
 /** Live backups use a distinct envelope; this decoder also accepts legacy v1/v2 exports. */
-export function encodeRecoveryBackup(record: SessionRecord): string {
-  decodeSession(JSON.stringify(record));
-  return JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 3, record });
+export function encodeRecoveryBackup(record: SessionRecord, resolveWorld?: WorldResolver): string {
+  decodeSession(JSON.stringify(record), resolveWorld);
+  return JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: record.version, record });
 }
-export function decodePortableBackup(text: string): { kind: 'settled'; save: SaveDataV1 } | { kind: 'session'; record: SessionRecord } {
+export function decodePortableBackup(text: string, resolveWorld?: WorldResolver): { kind: 'settled'; save: SaveDataV1 } | { kind: 'session'; record: SessionRecord } {
   if (new TextEncoder().encode(text).length > SESSION_MAX_BYTES + 512) throw new Error('存档文件过大。');
   let parsed: any;
   try { parsed = JSON.parse(text); } catch { throw new Error('无法读取存档：文件不是有效的 JSON。'); }
   if (parsed?.format === 'escape-bincov-recovery-backup') {
-    if (![2, 3].includes(parsed.formatVersion) || parsed.record?.version !== parsed.formatVersion) throw new Error('此备份来自不兼容的版本，请使用兼容版本导入。');
-    return { kind: 'session', record: decodeSession(JSON.stringify(parsed.record)) };
+    if (![2, 3, 4].includes(parsed.formatVersion) || parsed.record?.version !== parsed.formatVersion) throw new Error('此备份来自不兼容的版本，请使用兼容版本导入。');
+    return { kind: 'session', record: decodeSession(JSON.stringify(parsed.record), resolveWorld) };
   }
-  if (parsed?.format === 'escape-bincov-session') return { kind: 'session', record: decodeSession(text) };
+  if (parsed?.format === 'escape-bincov-session') return { kind: 'session', record: decodeSession(text, resolveWorld) };
   return { kind: 'settled', save: decodeBackup(text) };
 }

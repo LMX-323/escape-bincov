@@ -87,7 +87,7 @@ function prop(c: PixelContext, kind: Prop, x:number,y:number, warm=false):void {
   c.restore();
 }
 
-function building(c:PixelContext,b:Building,world:MapData):void {
+function building(c:PixelContext,b:Building,world:MapData,coastal=true):void {
   const {r}=brush(c),tile=(x:number,y:number)=>world.tiles[y]?.[x];
   const industrial=['pump','utility','observatory','laboratory'].includes(b.kind);
   const market=b.kind==='market';
@@ -139,7 +139,7 @@ function boat(c:PixelContext,x:number,y:number,v:number):void {
   r('#a2936c',20,15,2,64);r('#a2936c',8,31,27,2);r('#516e67',10,84,22,2);c.restore();
 }
 
-export function paintWorld(c:PixelContext,world:MapData):void {
+export function paintWorld(c:PixelContext,world:MapData,coastal=true):void {
   const {r}=brush(c),tile=(x:number,y:number)=>world.tiles[y]?.[x]??2;
   for(let y=0;y<world.tiles.length;y++)for(let x=0;x<world.tiles[y].length;x++)ground(c,tile(x,y),x,y);
   for(let y=0;y<world.tiles.length;y++)for(let x=0;x<world.tiles[y].length;x++){
@@ -159,5 +159,5 @@ export function paintWorld(c:PixelContext,world:MapData):void {
     if(value===6&&tile(x+1,y)===2&&y%3===0){r('#20383e',px+20,py+9,9,14);r('#b4ad83',px+18,py+7,12,5);r('#75877a',px+20,py+7,3,3);}
   }
   world.buildings.forEach(b=>building(c,b,world));
-  [[67*32,20*32,0],[68*32,35*32,1],[67*32,43*32,2]].forEach(([x,y,v])=>boat(c,x,y,v));
+  if(coastal) [[67*32,20*32,0],[68*32,35*32,1],[67*32,43*32,2]].forEach(([x,y,v])=>boat(c,x,y,v));
 }

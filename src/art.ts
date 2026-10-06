@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import type { MapData } from './world';
+import type { SpaceDefinition } from './spatial';
+import { paintSpace } from './art/spaces';
 import { ITEM_ART_IDS, paintItem } from './art/items';
 import { paintActor, paintCorpse, paintLoot, paintPortrait } from './art/actors';
 import { paintWorld } from './art/world';
@@ -44,9 +46,9 @@ export function createTextures(scene: Phaser.Scene): void {
 
 let mapTextureSequence = 0;
 /** Static world composition uses the unchanged hand-authored collision map. */
-export function drawWorld(scene: Phaser.Scene, world: MapData): Phaser.GameObjects.Container {
+export function drawWorld(scene: Phaser.Scene, world: MapData, space?: SpaceDefinition): Phaser.GameObjects.Container {
   const key = `bincov-world-${scene.sys.settings.key}-${++mapTextureSequence}`;
-  makeCanvas(scene, key, world.tiles[0].length * 32, world.tiles.length * 32, c => paintWorld(c, world));
+  makeCanvas(scene, key, world.tiles[0].length * 32, world.tiles.length * 32, c => { paintWorld(c, world, !space || space.id === 'coast'); if (space) paintSpace(c, space); });
   const container = scene.add.container(0, 0, [scene.add.image(0, 0, key).setOrigin(0)]);
   container.once(Phaser.GameObjects.Events.DESTROY, () => { if (scene.textures.exists(key)) scene.textures.remove(key); });
   return container;
