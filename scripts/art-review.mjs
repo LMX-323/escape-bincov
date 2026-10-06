@@ -39,6 +39,9 @@ try {
     assert.equal(new Set(entries.map(t => t.png)).size,20, `Two ${size}px item icons are identical`);
     report.checks.push(`All 20 ${size}px item textures present, nonempty and unique`);
   }
+  const inventoryArt = Object.keys(ITEMS).map(id => byKey[`item-inventory-${id}`]);
+  assert.equal(new Set(inventoryArt.map(t => t.png)).size, 20);
+  report.checks.push('All 20 proportioned inventory textures are present and unique');
   assert.equal(new Set(['player','scav','salt','elite','creature'].map(k=>byKey[k].png)).size,5);
   for(const id of ['scav','salt','elite','creature'])assert.notEqual(byKey[id].png,byKey[`corpse-${id}`].png);
   assert.notEqual(byKey['loot-crate'].png,byKey['loot-crate-empty'].png);
@@ -57,6 +60,7 @@ try {
     const sheet=await context.newPage();await sheet.setViewportSize({width:1280,height:1100});
     await sheet.setContent(`<html lang="zh-CN"><style>*{box-sizing:border-box}body{margin:24px;background:#101c22;color:#eee4c5;font:16px sans-serif}h1{font-size:24px}p{font-size:14px;color:#c1cdbf}main{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}article{padding:12px;background:#1e3035;border-top:2px solid #617a7c;min-height:216px}b{display:block;font-size:16px;margin-bottom:8px}small{display:block;color:#a8c3ba;font:12px monospace}section{display:flex;align-items:center;gap:12px;margin-top:8px;height:100px}.native{height:34px;background:#0e191f}img{image-rendering:pixelated}</style><h1>${name} · 实际运行纹理审查</h1><p>上：原尺寸，下：3× 最近邻诊断放大；本图是纹理排列，不是游戏画面。</p><main></main></html>`);
     await sheet.evaluate(cards=>{for(const card of cards){const a=document.createElement('article'),b=document.createElement('b'),label=document.createElement('small');b.textContent=card.name;label.textContent=card.id;a.append(b,label);for(const scale of [1,3]){const row=document.createElement('section');if(scale===1)row.className='native';row.style.height=`${Math.max(...card.textures.map(t=>t.height))*scale+4}px`;for(const t of card.textures){const img=document.createElement('img');img.src=t.png;img.width=t.width*scale;img.height=t.height*scale;row.append(img);}a.append(row);}document.querySelector('main').append(a);}},cards);
+    if (name === 'inventory-items') await sheet.addStyleTag({content:'main{grid-template-columns:repeat(3,1fr)}'});
     await sheet.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode()));});
     await sheet.screenshot({path:resolve(out,`${name}.png`),fullPage:true});
     await sheet.addStyleTag({content:'article img{filter:grayscale(1)}'});
@@ -64,8 +68,10 @@ try {
     await sheet.close();
   }
   await atlas('items',Object.entries(ITEMS).map(([id,item])=>({id,name:item.name,textures:[byKey[`item-small-${id}`],byKey[`item-${id}`]]})));
+  await atlas('inventory-items',Object.entries(ITEMS).map(([id,item])=>({id,name:item.name,textures:[byKey[`item-inventory-${id}`]]})));
   const dropKeys=new Set(Object.keys(ITEMS).map(id=>`loot-${id}`));
   assert.ok([...dropKeys].every(key=>byKey[key]?.occupied>0));
+  assert.equal(new Set([...dropKeys].map(key=>byKey[key].png)).size, 20, 'Ground supplies must have distinct object silhouettes');
   await atlas('actors',textures.filter(t=>!t.key.startsWith('item-')&&!dropKeys.has(t.key)).map(t=>({id:t.key,name:t.key,textures:[t]})));
   await atlas('ground-supplies',Object.entries(ITEMS).map(([id,item])=>({id:`loot-${id}`,name:item.name,textures:[byKey[`loot-${id}`]]})));
   report.textures=textures.map(({png,...t})=>({...t,pngSha256:hash(Buffer.from(png.split(',')[1],'base64'))}));

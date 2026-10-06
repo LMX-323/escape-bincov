@@ -740,7 +740,8 @@ export class RaidScene extends Phaser.Scene {
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${B.maxHealth}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
-        css('loot-weight', `${this.carriedWeight().toFixed(1)} kg`);
+        css('loot-weight', this.carriedWeight().toFixed(1));
+        css('equipped-ammo', `${this.mag} / ${D.WEAPONS[app.loadout?.weapon || 'knife'].magazine}`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');
         if (hp) hp.style.width = Math.max(0,this.hp)/B.maxHealth*100 + '%';
         if (st) st.style.width = this.stamina/B.maxStamina*100 + '%';

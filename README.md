@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/copy/title-1920x1080.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
+  <img src="docs/tactical-ui/title-1920.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>
@@ -36,30 +36,32 @@
 | 枪械、弹药、匕首与医疗物资；枪声会吸引附近敌人。 | 第 4 分 30 秒预警，第 5 分钟潮位变化；涉水积累污染。 | 商人交易、3 项任务、仓库扩建，以及本地进度保存。 |
 | 背包空间与 24 kg 负重上限，需要做取舍。 | 浅滩捷径与部分物资随潮位变化，永久通路始终保留。 | 成功撤离保留战利品；失败丢失背包物资与主武器，安全箱内的物品和水手匕首保留。 |
 
+本分支已接入战术整备、双侧搜刮、商人仓库与字体 B；[查看实施、逐图审查和真实截图](docs/tactical-ui/README.txt)。
+
 ## 📸 封锁区现场
 
-![低潮时的沿海封锁区、道路与行动 HUD](docs/ui/hud.png)
+![低潮时的沿海封锁区、道路与行动 HUD](docs/tactical-ui/raid-1280.png)
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/ui/gear.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备、交易与安全箱</td>
-    <td width="50%"><img src="docs/ui/map.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
+    <td width="50%"><img src="docs/tactical-ui/after-1280x720.png" alt="水产站整备：仓库、背包和安全箱"><br><b>整备与取舍</b> · 格子背包、装备与安全箱（全物品展示夹具）</td>
+    <td width="50%"><img src="docs/tactical-ui/map-1280.png" alt="滨科夫县沿海管制图与当局撤离点"><br><b>路线与撤离</b> · 每局启用两个撤离点</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/ui/high-tide.png" alt="涨潮后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
-    <td width="50%"><img src="docs/ui/home.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
+    <td width="50%"><img src="docs/tactical-ui/high-tide-1280.png" alt="涨潮后的行动画面"><br><b>潮汐与风险</b> · 留意电台预警和污染积累</td>
+    <td width="50%"><img src="docs/tactical-ui/home-1280.png" alt="水产站任务进度与存档导入导出功能"><br><b>带着进度继续</b> · 本地保存与 JSON 备份迁移</td>
   </tr>
 </table>
 
 <sub>截图来自 0.1.1 界面精修后的实际运行与自动验收场景。查看 [界面精修记录与前后对照](docs/UI-POLISH.md)。</sub>
 
-美术重绘候选版已完成 20 件物品的两套像素图、角色与场景材质、离线点阵字体及库存布局；[查看逐图审查和真实前后截图](docs/ART-REDRAW.md)。正式试玩以已合并的 main 为准。
+[美术研究与前后证据归档](docs/ART-REDRAW.md)保留 #11 的历史成果；核心美术及后续战术界面已由 #20 合入，当前实现见[战术界面记录](docs/tactical-ui/README.txt)。
 
 ## 📱 手机触控尝鲜
 
 左盘移动与冲刺，右盘瞄准与持续开火；整备支持点选物品和格位，旋转或切到后台会暂停。刷新后从最近检查点继续。
 
-![手机横屏的双摇杆与战斗按钮](docs/mobile/combat-844.png)
+![手机横屏的双摇杆与战斗按钮](docs/tactical-ui/combat-844.png)
 
 PR #7 候选修复增加药品与附近物品入口、可取消的格位整理和旋转收纳，并修复提示遮挡与短屏反馈；[查看实际画面和验证](docs/MOBILE-EXPERIENCE-FIXES.md)。等待审阅，正式试玩仍以 main 为准。
 
@@ -122,6 +124,8 @@ pnpm dev
 | `pnpm test:browser` | 两种分辨率的浏览器回归 |
 | `pnpm test:desktop-input` | 触屏电脑键鼠、Esc 音频恢复、无效治疗与输入释放回归 |
 | `pnpm test:ui` | 界面布局检查与双分辨率截图 |
+| `pnpm test:tactical` | 战术布局、字体 B、20 种物品、旋转裁切、商人买卖与搜刮拖放 |
+| `pnpm test:art` | 原生/灰度纹理图集、角色朝向、六区场景及美术恢复检查 |
 | `pnpm test:title` | 12 种主界面视口、键盘/点击、动态开关和场景往返检查 |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:loot` | 双栏拖放、指定格、保存回滚、箱子／尸体恢复与三局结算 |
@@ -168,9 +172,12 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | v0.2.0 更新亮点、下载与升级 | [完整发版公告](docs/releases/v0.2.0.md) · [更新记录](CHANGELOG.md) |
 | 箱子与尸体搜刮、操作与验收 | [搜刮说明](docs/LOOTING.md) |
 | 游戏规则、任务、物品与旧存档迁移 | [完整游玩手册](docs/PLAYING.md) |
+| RPG 状态、属性成长、随机爆头、声望、幸运与基地（设计待实现） | [系统逻辑与首版数值](docs/RPG-SYSTEM-DESIGN.md) |
 | Agent 必须遵守的规则 | [AGENTS.md](AGENTS.md) |
 | 架构、开发流程、验证与交接 | [Agent 开发手册](docs/AGENT-HANDBOOK.md) |
 | 应用状态、存档事务与后续扩展 | [架构说明](docs/ARCHITECTURE.md) |
+| 建筑布局、互动门窗与跨层追击设计 | [建筑逻辑设计](docs/BUILDING-LOGIC.md)（设计待实现） |
+| 滨湾商场室内外、两层地图与验收场景 | [商场验证地图](docs/MALL-VALIDATION-MAP.md)（设计待实现） |
 | 如何贡献、提交 PR | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | GitHub Pages 发布、更新与回退 | [部署手册](docs/DEPLOYMENT.md) |
 | 大陆网络下的托管选择 | [大陆在线游玩指南](docs/ONLINE-CHINA.md) |

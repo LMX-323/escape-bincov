@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 import type { MapData } from './world';
 import { ITEM_ART_IDS, paintItem } from './art/items';
 import { paintActor, paintCorpse, paintLoot, paintPortrait } from './art/actors';
-import { ITEMS } from './domain';
 import { paintWorld } from './art/world';
+import { inventoryArtSize, paintInventoryItem } from './art/inventory';
 
 // Runtime artwork is original, deterministic and cached once per scene.
 type Ctx = CanvasRenderingContext2D;
@@ -34,13 +34,11 @@ export function createTextures(scene: Phaser.Scene): void {
   makeCanvas(scene, 'note', 20, 24, c => paintLoot(c, 'note'));
   makeCanvas(scene, 'bullet', 10, 4, c => { rect(c, '#d39b5c', 0, 1, 10, 2); rect(c, '#fff2bd', 5, 1, 5, 2); });
   for (const id of ITEM_ART_IDS) {
+    const [w, h] = inventoryArtSize(id);
+    makeCanvas(scene, `item-inventory-${id}`, w, h, c => paintInventoryItem(c, id));
     makeCanvas(scene, `item-${id}`, 32, 32, c => paintItem(c, id, 32));
     makeCanvas(scene, `item-small-${id}`, 24, 24, c => paintItem(c, id, 24));
-    makeCanvas(scene, `loot-${id}`, 22, 22, c => {
-      paintLoot(c, 'loose');
-      // The old category tint becomes a small label, preserving the bright package body.
-      rect(c, '#' + ITEMS[id].color.toString(16).padStart(6, '0'), 13, 14, 4, 3);
-    });
+    makeCanvas(scene, `loot-${id}`, 24, 24, c => paintItem(c, id, 24));
   }
 }
 
