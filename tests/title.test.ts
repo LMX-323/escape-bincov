@@ -78,9 +78,9 @@ test('full-screen layers cover their largest parallax travel, so edges never sho
         assert.ok(L.y <= -g.y, `${name} top margin`);
     }
     assert.ok(LAYERS.room.y + LAYERS.room.h >= SCENE_H + GROUPS.room.y);
-    // Harbour is cropped below the sky. Its original painting stays at (0,24).
+    // The unified master uses a complete 960x540 outdoor plate with no shifted horizon.
     assert.equal(LAYERS.harbor.x + 4, 0);
-    assert.equal(LAYERS.harbor.y + 3, 24);
+    assert.equal(LAYERS.harbor.y + 3, 0);
     assert.ok(LAYERS.harbor.y + LAYERS.harbor.h > OPENINGS.door.y + OPENINGS.door.h + GROUPS.harbor.y);
     const sky = decodePng(readFileSync(manifest.layers.sky.file));
     for (let x=0;x<sky.w;x++) assert.equal(sky.data[x*4+3],255,'painted top margin, not transparent padding');
@@ -108,6 +108,18 @@ test('the room layer is open at the door and window, and solid elsewhere', () =>
     assert.equal(at(OPENINGS.window.x + 40, OPENINGS.window.y + 100), 0);
     assert.notEqual(at(100, 200), 0);
     assert.notEqual(at(560, 300), 0);
+});
+
+test('exterior pier owns no interior floor below the threshold; room owns the floor', () => {
+    const pier = decodePng(readFileSync(manifest.layers.pierFront.file));
+    // First extraction accidentally included interior boards to the bottom of the canvas.
+    // The corrected source ends before row 402; downstream floor must be fully transparent.
+    for (let y = 405; y < pier.h; y++) for (let x = 0; x < pier.w; x++)
+        assert.equal(pier.data[(y * pier.w + x) * 4 + 3], 0, `indoor pixels in exterior pier at ${x},${y}`);
+    const room = decodePng(readFileSync(manifest.layers.room.file));
+    for (const [x,y] of [[360,432],[430,466],[280,510]])
+        assert.ok(room.data[((y - LAYERS.room.y) * room.w + x - LAYERS.room.x) * 4 + 3] >= 250, 'interior floor must be covered by room, allowing generated near-opaque alpha');
+    assert.ok(LAYERS.pierFront.group !== LAYERS.room.group, 'threshold and outside must retain independent depth');
 });
 
 test('every runtime title import matches the imported-art manifest', () => {

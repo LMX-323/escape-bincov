@@ -1,6 +1,6 @@
 # 像素值守室主界面：修订中
 
-最新状态：用户指出上一版透视、景深和光照未达标，[PR #21](https://github.com/xuys2025/escape-bincov/pull/21) 已改为草稿。**当前版本以 [空间光照返修](depth-v2/README.md) 与 [三图切换对照](depth-v2/compare.html) 为准，整体美术仍未验收。**
+最新状态：用户指出上一版透视、景深和光照未达标，[PR #21](https://github.com/xuys2025/escape-bincov/pull/21) 已改为草稿。**当前版本以 [同一母版分层返修 v3](master-v3/README.md) 与 [概念／母版／实装对照](master-v3/compare.html) 为准，整体美术仍未验收。** 上一轮独立物件方案保留为 [v2 历史记录](depth-v2/README.md)。
 
 以下保留第一次局部修复的历史记录。
 

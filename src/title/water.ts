@@ -25,7 +25,7 @@ export function mountWater(scene: Phaser.Scene, group: Phaser.GameObjects.Contai
         return { x, y, width: 2 + Math.floor(depth * 9 + rng() * 5), period: 2600 + rng() * 4200, phase: rng() };
     });
     // The actual window lamps: these broken bands remain tied to their light sources.
-    const bands = [{ x: 652, y: 185 }, { x: 842, y: 185 }, { x: 375, y: 190 }];
+    const bands = [{ x: 642, y: 190 }, { x: 766, y: 188 }, { x: 425, y: 190 }];
     let last = -1, lastBob = 0;
     function draw(ms: number, bob: number) {
         const step = Math.floor(ms / 120);

@@ -6,13 +6,14 @@
 
 ## 来源与派生
 
-- 当前空间返修使用 `sources/*-depth-v2.png`：椅子、桌台、船与远港由内置 ImageGen 依据同一已认可概念生成。首轮提示词见 `sources/depth-v2-prompts.md`，桌台最终二次修订提示词见 `sources/desk-depth-v2-refinement.txt`。前三者准备为对应 `title-*-depth-v2.png`，远港准备为天空/港口两张 ready 图。`*-new.png` 中被替换的原素材继续保留，但不进入运行包。
+- 当前使用 `sources/master-v3/`：从原概念生成一张无 UI 母版，再按同一坐标提取室内、桌台、椅子、前景、灯、船、码头和远港。原始 PNG、所有提示词、拒用原因和校准说明见 [prompts.md](sources/master-v3/prompts.md)。派生过程保留 alpha，以最近邻采样、裁切和边缘延展准备运行图；灯的 5 帧以固定悬点逐行偏移，系船绳的 3 帧为原生像素线。
+- `sources/*-depth-v2.png` 和对应运行图是上一轮独立物件方案，保留供比较／回退，已不进入运行包。`*-new.png` 中被替换的源素材同样保留。
 
 - `*-new.png`：2026-10-07 第三轮分层交付。原始生成图、提示词和交付清单位于本地 `设计提案/主界面重做-20261006/layers/`；仓库保存实际运行需要的 PNG。
 - `sources/wordmark-industrial.png`：本轮通过内置 ImageGen 生成的独立中文工业字标。准确文本为“逃离／滨科夫”；提示词见同目录 `wordmark-prompts.txt`。运行版缩至 144×66，最近邻采样后使用单色旧白和二值透明，避免柔边与浮雕效果。
 - `title-sky-ready.png`、`title-harbor-ready.png`、`title-room-ready.png`：从当前对应源 PNG 延展边缘像素，覆盖视差边界。透明补边不能代替画面延展。
 - `title-wordmark-industrial.png`：独立字标的运行版。正文继续使用 Bincov Text，字体来源与 OFL 许可见 [字体说明](../fonts/README.md)。
-- `title-pier-occluders-new.png`：位于船与船水关系之上的近码头遮挡，不能省略。
+- `title-pier-master-v3.png`：只包含室外湿码头、桩和护栏，位于船与船水关系之上；室内地板和门槛只属于 `title-room-ready.png`。首个错误包含室内地面的码头输出已拒用。
 - `src/title/water.ts`：从船体真实轮廓采样，绘制吃水边缘、暗水、受波纹打断的船影和局部反光；不是另一张不透明背景。
 
 ## 图层与验证
@@ -21,7 +22,7 @@
 
 绘制顺序：远背景 → 不透明港口底图 → 水面与船影、雾和远灯 → 船 → 吃水线 → 系船绳 → 近码头遮挡 → 雨 → 室内 → 吊灯 → 桌台与灯光 → 椅子 → 前景。
 
-`pnpm title:art` **只写七张派生 PNG 和清单**，不会重新绘制或覆盖 `*-new.png` 源图。旧绘制模块保留供历史参考及程序效果复用。
+`pnpm title:art` **只写十一张派生 PNG 和清单**，不会重新绘制或覆盖 `*-new.png` 源图。旧绘制模块保留供历史参考及程序效果复用。
 
 ```bash
 pnpm title:art
@@ -30,6 +31,7 @@ pnpm test
 pnpm package
 pnpm test:title
 pnpm test:title-water
+node scripts/title-depth-review.mjs
 ```
 
 构建校验所有运行时 PNG 的完整清单、尺寸及哈希。单元测试同时验证真正导入的图片、门窗透明度和不透明视差边缘。修改源图后须先审核差异，再更新派生与清单；不能只改哈希消除失败。

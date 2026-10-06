@@ -79,7 +79,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         boat = img('boat');
         groups.harbor.add(waterSurface.front);
         mooring = img('mooring', 1);
-        img('pierFront').setTint(0xa7b5bd);
+        img('pierFront');
         for (let i = 0; i < 8; i++) glints.push({ img: img('sparks', i & 1 ? SPARK.coolLong : SPARK.cool, Math.round(OPENINGS.door.x + 4 + rng() * (OPENINGS.door.w - 16)), Math.round(PIER.top + 8 + rng() * (PIER.bottom - PIER.top - 12))), period: 2200 + rng() * 2600, phase: rng(), still: 0 });
         for (let i = 0; i < 70; i++) {
             const d: Drop = { img: img('rain', 0, 0, 0), x: 0, y: 0, speed: 0, floor: 0 };
@@ -87,26 +87,22 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         }
 
         // ---- Room, lamp, desk (with radio needle, status lamp, light pool, dust), chair, rope ----
-        // The painted room is behind the desk. Keep its amber edges subordinate to the lamp pool.
-        img('room').setTint(0xc8cdcf);
+        // All planes retain the same master painting's palette and light direction.
+        img('room');
         lamp = img('lamp', 2);
         img('desk');
         needle = img('radioFx', 1, ANCHORS.radioDial.x - 8, ANCHORS.radioDial.y - 9);
         led = img('radioFx', 3, ANCHORS.radioLed.x - 7, ANCHORS.radioLed.y - 3);
         // The desk already contains directional lighting and contact shadows. Add only a breath.
-        light = img('light').setBlendMode(Phaser.BlendModes.ADD).setAlpha(.055);
+        light = img('light').setBlendMode(Phaser.BlendModes.ADD).setAlpha(.025);
         for (let i = 0; i < 14; i++) {
             const m: Mote = { img: img('sparks', SPARK.mote, 0, 0), x: 0, y: 0, vx: 0, vy: 0, phase: rng() };
             groups.desk.add(m.img);
             respawnMote(m, true); motes.push(m);
         }
         img('chair');
-        // Near-camera silhouettes crop out of frame, as in the approved composition.
-        // Scale both axes together: the rope's braid size must grow with its apparent thickness.
-        const jamb = scene.add.graphics().fillStyle(0x091519, .96);
-        jamb.fillPoints([{x:966,y:-20},{x:990,y:-20},{x:990,y:570},{x:893,y:570},{x:922,y:430},{x:932,y:230}], true);
-        groups.fore.add(jamb);
-        rope = img('fore', 2).setScale(2.5).setTint(0xa5aba6);
+        // Exact near-camera silhouette extracted from the master, including its timber jamb.
+        rope = img('fore');
     }
     function spawnDrop(d: Drop, initial: boolean) {
         const panes = [OPENINGS.door, OPENINGS.door, OPENINGS.window, OPENINGS.window, OPENINGS.windowLeft, OPENINGS.windowTopLeft, OPENINGS.windowTopRight, OPENINGS.doorGlass];
@@ -184,13 +180,13 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         const sway = poseFrame(wave(clock, 9400, .1), 5) - 2;
         place(sway);
         // Lamp: steady with a rare, short dip, never a strobe.
-        light?.setAlpha(blink(clock, 11300, .012, .4) ? .035 : .055);
+        light?.setAlpha(blink(clock, 11300, .012, .4) ? .015 : .025);
         // Boat bob (1 px each way) with the bow line following, rope end swaying on its own period.
         const bob = Math.round(wave(clock, 7300, .6) * 1.2);
         const b = Math.max(-1, Math.min(1, bob));
         boat?.setY(LAYERS.boat.y + b); mooring?.setFrame(b + 1);
         waterSurface?.draw(clock, b);
-        rope?.setFrame(poseFrame(wave(clock, 11700, .25), 5));
+        // Foreground has pointer parallax; the fixed jamb must never wobble with the rope.
         // Radio: the needle wanders between three positions; the status lamp blinks briefly.
         needleTimer -= ms;
         if (needleTimer <= 0) { needleFrame = Math.max(0, Math.min(2, needleFrame + (rng() < .5 ? -1 : 1))); needle?.setFrame(needleFrame); needleTimer = 900 + rng() * 1800; }
@@ -237,7 +233,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
             art, allowed: motionAllowed(gate), gate: { ...gate }, overlay, live, camera: [camera.x, camera.y], clock,
             groups: Object.fromEntries((Object.keys(GROUPS) as GroupName[]).map(n => [n, [groups[n].x, groups[n].y]])),
             lamp: lamp ? Number(lamp.frame.name) : null, lightX: light?.x ?? null, lightAlpha: light?.alpha ?? null, boatY: boat?.y ?? null, mooring: mooring ? Number(mooring.frame.name) : null,
-            rope: rope ? Number(rope.frame.name) : null, needle: needle ? Number(needle.frame.name) : null, led: led?.visible ?? null,
+            rope: rope?.x ?? null, needle: needle ? Number(needle.frame.name) : null, led: led?.visible ?? null,
             fog: fog.map(t => t.tilePositionX), waterFrame: waterSurface?.frame ?? null,
             glints: glints.map(g => g.img.alpha).join(','), lights: farLights.map(l => l.img.alpha).join(','),
             rain: drops.filter(d => d.img.visible).map(d => [d.img.x, d.img.y]),
