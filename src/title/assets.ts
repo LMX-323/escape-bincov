@@ -1,0 +1,51 @@
+import Phaser from 'phaser';
+import { LAYERS, type LayerName } from './layout';
+import sky from '../../assets/title/title-sky.png';
+import fogHigh from '../../assets/title/title-fog-high.png';
+import fogLow from '../../assets/title/title-fog-low.png';
+import harbor from '../../assets/title/title-pier.png';
+import boat from '../../assets/title/title-boat.png';
+import mooring from '../../assets/title/title-mooring.png';
+import room from '../../assets/title/title-room.png';
+import lamp from '../../assets/title/title-lamp.png';
+import desk from '../../assets/title/title-desk.png';
+import light from '../../assets/title/title-light.png';
+import radioFx from '../../assets/title/title-radio-fx.png';
+import chair from '../../assets/title/title-chair.png';
+import fore from '../../assets/title/title-fore.png';
+import sparks from '../../assets/title/title-sparks.png';
+import rain from '../../assets/title/title-rain.png';
+import wordmark from '../../assets/title/title-wordmark.png';
+
+/** Inline data URLs; the build checks each file against assets/title/manifest.json. */
+export const TITLE_ART: Record<LayerName, string> = { sky, fogHigh, fogLow, harbor, boat, mooring, room, lamp, desk, light, radioFx, chair, fore, sparks, rain, wordmark };
+
+const decoded = new Map<LayerName, HTMLImageElement>();
+let failure = '';
+
+/** Decode every title layer before Phaser starts, so the first menu frame is complete. */
+export async function loadTitleArt(): Promise<void> {
+    await Promise.all((Object.keys(TITLE_ART) as LayerName[]).map(async name => {
+        if (LAYERS[name].html) return;
+        const image = new Image();
+        image.src = TITLE_ART[name];
+        try { await image.decode(); decoded.set(name, image); }
+        catch (error) { failure ||= `${name}: ${error instanceof Error ? error.message : String(error)}`; }
+    }));
+    if (failure) console.error('Title artwork failed to decode; showing the plain menu backdrop.', failure);
+}
+
+/** Register decoded layers as nearest-filtered textures (idempotent). */
+export function registerTitleTextures(scene: Phaser.Scene) {
+    for (const [name, image] of decoded) {
+        const spec = LAYERS[name];
+        if (scene.textures.exists(spec.key)) continue;
+        const texture = (spec.frames ?? 1) > 1
+            ? scene.textures.addSpriteSheet(spec.key, image, { frameWidth: spec.w, frameHeight: spec.h })
+            : scene.textures.addImage(spec.key, image);
+        texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+}
+
+export const titleArtReady = () => !failure && decoded.size === Object.values(LAYERS).filter(layer => !layer.html).length;
+export const titleArtFailure = () => failure;

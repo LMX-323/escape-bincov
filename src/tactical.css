@@ -73,10 +73,8 @@ button:disabled { color:#95978b; background:#24271f; border-color:#42463c; }
 .modal p, .result p, .help-grid, .help-grid kbd, .quick-row p { font-size:16px; line-height:1.5; }
 .modal h2, .result h2 { font-size:32px; font-weight:400; }
 .help-grid kbd { width:116px; font-family:var(--mono); }
-.title-screen button strong { font-family:var(--pixel); font-weight:400; }
 #toast { font-size:16px; background:#242c20; border-color:#a49d74; color:#eee7d1; }
 .ui-symbol { width:24px; height:24px; vertical-align:middle; }
-.title-screen .ui-symbol { width:24px; height:24px; }
 html:not(.mobile) body[data-screen="hideout"] #frame { width:min(100vw,1808px); height:100dvh; transform:none!important; }
 html:not(.mobile) body[data-screen="hideout"] #game canvas { width:100%; height:100%; }
 html:not(.mobile) .hideout { inset:0; border-top:0; border-bottom:0; }
@@ -152,16 +150,9 @@ html:not(.mobile) .weapon-hud { min-width:208px; }
 html:not(.mobile) .field-notes dt { font-size:16px; }
 html:not(.mobile) .field-notes > div { margin-bottom:4px; }
 /* Small metadata uses a text face; bitmap glyphs stay on the native 16px grid. */
-.title-location, .title-day, .title-kicker, .title-enter small, .title-save-note, .title-fieldnote-rule, .title-radio-heading, .title-link, .title-input-note, .legend, .station-stats span, .result .stats span { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
-.title-screen .title-copy h1 { font-size:96px; font-weight:400; }
-.title-screen .title-escape { font-size:48px; }
-.title-screen .title-story, .title-screen .title-fieldnote p, .title-screen .title-enter strong { font-size:16px; line-height:1.5; }
-.title-screen .title-period { font-size:1em; }
+.legend, .station-stats span, .result .stats span { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
 .mobile .small, .mobile .inv-help, .mobile .content-note, .mobile .section-label, .mobile .eyebrow, .mobile .inventory-row small, .mobile .item-facts, .mobile .loot-footer, .mobile .placement-controls { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
 .mobile .item-description, .mobile .quest p, .mobile .quest-needs li, .mobile .station-copy, .mobile .tide-notes > div, .mobile .save-controls p { font-size:16px; }
-@media (min-width:1700px) and (min-height:900px) { .title-screen .title-copy h1 { font-size:144px; } .title-screen .title-escape { font-size:64px; } }
-@media (max-width:600px) { .title-screen .title-copy h1 { font-size:64px; } .title-screen .title-escape { font-size:32px; } }
-@media (max-height:600px) and (min-width:601px) { .title-screen .title-copy h1 { font-size:64px; } .title-screen .title-escape { font-size:32px; } }
 /* Keep inspected merchandise visible while the catalogue and warehouse scroll independently. */
 html:not(.mobile) .trade-layout { overflow:hidden; }
 html:not(.mobile) .trade-stock { display:flex; flex-direction:column; height:100%; min-height:0; }

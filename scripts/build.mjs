@@ -5,7 +5,11 @@ import { createHash } from 'node:crypto';
 import { fontCharacters } from './font-characters.mjs';
 
 async function compile() {
-  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',define:{'process.env.NODE_ENV':'"production"'}});
+  const titleManifest = JSON.parse(await readFile('assets/title/manifest.json','utf8'));
+  for (const layer of Object.values(titleManifest.layers)) {
+    if (createHash('sha256').update(await readFile(layer.file)).digest('hex') !== layer.sha256) throw new Error(`Title asset hash mismatch: ${layer.file}. Run node --import tsx scripts/title-art/generate.ts`);
+  }
+  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'}});
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
   if (createHash('sha256').update(font).digest('hex') !== manifest.sha256) throw new Error('Font manifest hash mismatch');
