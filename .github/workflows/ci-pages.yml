@@ -18,8 +18,8 @@ jobs:
   verify:
     name: Build and test
     runs-on: ubuntu-24.04
-    # Full browser coverage takes over 20 minutes on hosted runners.
-    timeout-minutes: 30
+    # Combined expansion and QOL suites retain both PRs' full browser coverage.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
@@ -62,6 +62,8 @@ jobs:
         run: pnpm test:expansion
       - name: Buildings and floor controls
         run: pnpm test:buildings
+      - name: QOL with RPG, base and layered inventory
+        run: pnpm test:qol-expansion
       - name: RPG, station and mall transactions
         run: pnpm test:systems
       - name: Repeated same-layer mall passages
@@ -70,6 +72,10 @@ jobs:
         run: pnpm test:mall-landing
       - name: Crate and corpse inventory regression
         run: pnpm test:loot
+      - name: Nearby loot target selection
+        run: pnpm test:loot-target
+      - name: QOL transactions and information regression
+        run: pnpm test:qol
       - name: Mobile input and recovery regression
         run: pnpm test:mobile
       - name: Mobile inventory and feedback regression

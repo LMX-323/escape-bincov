@@ -1,5 +1,5 @@
 import * as D from './domain';
-import { placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
+import { moveQuantity, placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
 import { decodeSession, RecoveryStore, type SessionRecord } from './recovery-store';
@@ -313,8 +313,8 @@ export class SaveSession {
                 if (!recorded || JSON.stringify(recorded.inventory) !== JSON.stringify(container.inventory)) return false;
                 const endpoints = { container: recorded.inventory, bag: raid.loadout.bag, safe: raid.loadout.safe };
                 const from = endpoints[request.from], to = endpoints[request.to];
-                if (placementError(from, to, request.uid, request.x, request.y)) return false;
-                return D.transferItem(from, to, request.uid, request.x, request.y);
+                if (placementError(from, to, request.uid, request.x, request.y, request.rotated, request.quantity)) return false;
+                return moveQuantity(from, to, request.uid, request.x, request.y, request.rotated, request.quantity);
             });
             return ticket ? this.commitExpansionMutation(ticket) : 'rejected';
         }
@@ -326,8 +326,8 @@ export class SaveSession {
         const result = this.mutate(() => {
             const endpoints = { container: staged, bag: s.loadout!.bag, safe: s.loadout!.safe };
             const from = endpoints[request.from], to = endpoints[request.to];
-            if (placementError(from, to, request.uid, request.x, request.y)) return false;
-            return D.transferItem(from, to, request.uid, request.x, request.y);
+            if (placementError(from, to, request.uid, request.x, request.y, request.rotated, request.quantity)) return false;
+            return moveQuantity(from, to, request.uid, request.x, request.y, request.rotated, request.quantity);
         }, null, () => {
             checkpoint.loadout = structuredClone(s.loadout!);
             recorded.inventory = staged;

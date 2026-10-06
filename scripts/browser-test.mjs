@@ -1,4 +1,5 @@
 /** Offline acceptance. Fixtures accelerate travel/time; input and settlement stay real. */
+import { placeAt } from './inventory-actions.mjs';
 import assert from 'node:assert/strict';
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
@@ -137,7 +138,7 @@ async function suite(viewport) {
       await screenshot('menu');
       return bounds;
     });
-    await step('hideout, merchant price and native inventory drag', async () => {
+    await step('hideout, merchant price and pointer inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
       // Hideout panels use the viewport; combat retains the fixed logical canvas.
       const bounds = await page.locator('#game canvas').boundingBox();
@@ -148,9 +149,10 @@ async function suite(viewport) {
       assert.equal(initial.bag.w, 6); assert.equal(initial.bag.h, 5);
       assert.equal(initial.safe.w, 2); assert.equal(initial.safe.h, 2);
       await action('tab', 'arms').click();
-      const buyButton = action('buy', 'ammo9');
-      assert.equal((await buyButton.innerText()).replace(/\s/g, ''), '¥84');
-      await buyButton.click();
+      await placeAt(page, 'merchant', 'ammo9', 'buy');
+      assert.match(await page.locator('.shop-checkout').innerText(), /需付 ¥ 84/);
+      assert.equal((await state()).cash, initial.cash);
+      await action('checkout').click();
       const purchased = await state();
       assert.equal(purchased.cash, initial.cash - 84);
       const count = inv => inv.items.filter(item => item.id === 'ammo9').reduce((sum, item) => sum + item.qty, 0);

@@ -172,8 +172,24 @@ html:not(.mobile) .trade-stash { height:100%; min-height:0; overflow:auto; }
 .shop-card { min-height:184px; }
 .shop-card .shop-inspect { flex:0 0 auto; font:16px/24px var(--pixel); }
 .shop-card .small { font:12px/18px "Microsoft YaHei","PingFang SC",sans-serif; }
+/* QOL panels share the accepted palette; compact metadata uses the text face. */
+.shop-layout h3, .departure-check p, .raid-information, .shop-placement .placement-hint {
+  font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+}
+html:not(.mobile) .shop-layout h3 { font-size:14px; }
+.shop-buffer h3 { background:var(--surface); }
+html:not(.mobile) .shop-checkout strong { font:16px/24px var(--pixel); }
+html:not(.mobile) .shop-content > .shop-details:not(.details-empty) { grid-template-columns:180px 1fr 240px; align-content:start; }
+html:not(.mobile) .shop-details .item-actions { grid-column:3; grid-row:1/4; }
 
 /* The extended body readout and weight each keep their own readable line. */
 .rpg-vitals .vital-status { display:block; }
 .rpg-vitals #status { display:block; font:12px/1.5 "Microsoft YaHei",sans-serif; }
 .rpg-vitals #weight { display:block; text-align:right; white-space:nowrap; }
+
+/* Keep the gear grids visible when region selection and departure checks share the footer. */
+@media (max-width:1500px) {
+  html:not(.mobile) .bottom-bar .departure-note strong { font-size:14px; }
+  html:not(.mobile) .bottom-bar .departure-note p { font-size:12px; }
+  html:not(.mobile) .bottom-bar .seed-label { font-size:14px; white-space:nowrap; }
+}

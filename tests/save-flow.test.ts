@@ -22,7 +22,7 @@ beforeEach(() => {
   for (const key of ['document', 'localStorage', 'innerWidth', 'innerHeight']) globals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
   Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: 1280 });
   Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 720 });
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { body: { dataset: {} }, documentElement: { dataset: {}, style: { setProperty() {} } }, dispatchEvent() {}, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { body: { dataset: {} }, documentElement: { dataset: {}, classList: { remove() {}, add() {} }, style: { setProperty() {} } }, dispatchEvent() {}, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     getItem: (key: string) => key === SESSION_KEY ? stored : null,
     setItem: (_key: string, value: string) => { if (failWrites) throw new Error('quota exceeded'); stored = value; writes++; },

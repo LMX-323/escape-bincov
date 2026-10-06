@@ -199,6 +199,9 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .keytips { position: absolute; bottom: 24px; left: 244px; color: #bfccaf; font-size: 9px; letter-spacing: 0; text-shadow: 1px 1px #081411; }
 .keytips kbd { border-bottom: 1px solid #74866a; padding: 2px 3px; margin-right: 3px; background: #16251de8; font-family: var(--mono); }
 .interaction { position: absolute; left: 50%; top: 65%; transform: translate(-50%, -50%); background: #18271fec; border: 1px solid #a3b87e; padding: 9px 16px; font-size: 12px; text-align: center; max-width: 470px; line-height: 1.8; }
+.loot-targets { position: relative; list-style: none; margin: 5px 0 0; padding: 0; max-height: 112px; overflow: hidden; text-align: left; min-width: 190px; }
+.loot-targets li { padding: 2px 8px; color: var(--muted); }
+.loot-targets [aria-current="true"] { color: #edf1c8; background: #3a4b32; box-shadow: inset 2px 0 var(--accent); }
 .radio { position: absolute; left: 20px; top: 99px; width: 272px; background: #101e1bdc; border-left: 2px solid #bb895d; padding: 8px 11px; font-size: 11px; line-height: 1.8; color: #c6d1b7; }
 .banner { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 7px 14px; background: #683c2ae8; border: 1px solid #b9825e; color: #f0d6b4; font-size: 11px; letter-spacing: 1px; }
 
@@ -472,6 +475,126 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
   .mobile .map-modal .legend { font-size: 11px; }
 }
 
+/* Loot danger remains visible above every scrolling inventory or detail panel. */
+.loot-modal { max-height: calc(100% - 24px); display: flex; flex-direction: column; overflow: hidden; }
+.loot-header { flex-shrink: 0; position: relative; z-index: 2; background: #15231f; }
+.loot-header.under-attack { outline: 2px solid #ef8168; background: #522c26; }
+#loot-hit { grid-column: 1 / -1; color: #ffd2b8; min-height: 1em; }
+.loot-columns { min-height: 0; overflow: auto; }
+.loot-details { flex-shrink: 0; max-height: 30vh; overflow: auto; }
+.loot-footer { flex-shrink: 0; }
+.mobile .loot-details:not(.details-empty) { position: static; width: auto; max-height: 40vh; flex-shrink: 1; padding: 8px; box-shadow: none; overflow: auto; }
+.mobile .loot-targets { max-height: min(144px, 30vh); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
+.mobile .loot-targets li { padding: 0; }
+.mobile .loot-targets button { width: 100%; min-height: 44px; text-align: left; }
+
+.shop-layout { display: grid; grid-template-columns: max-content max-content max-content; gap: 22px; align-items: start; overflow: auto; }
+.shop-layout h3 { font-size: 12px; font-weight: 500; color: var(--accent); }
+.shop-buffer h3:not(:first-child) { margin-top: 18px; }
+.shop-checkout { display: flex; align-items: center; gap: 16px; padding: 12px 0; position: sticky; bottom: 0; background: #15231f; z-index: 5; }
+.shop-checkout span { font-size: 11px; color: var(--muted); }
+.shop-details { min-height: 0; border-left: 0; border-top: 1px solid var(--line); padding: 10px 0; }
+.mobile .shop-layout { gap: 18px; }
+.mobile .shop-checkout { flex-wrap: wrap; }
+.mobile .shop-checkout span { width: 100%; }
+/* Keep confirmation dialogs above sticky cart controls. */
+html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideout { isolation: isolate; z-index: 0; }
+
+.split-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.split-control input { width: 64px; padding: 6px; }
+.mobile .loot-details .placement-controls { display: flex; flex-wrap: wrap; width: 100%; }
+.mobile .loot-details .placement-hint { flex: 1 1 180px; }
+.mobile .loot-details.details-empty > .placement-controls { display: flex; }
+
+.item, .item img { user-select: none; -webkit-user-drag: none; }
+.inventory-dragging, .inventory-dragging * { cursor: grabbing !important; }
+.inventory-drag-ghost { position: fixed; z-index: 100; pointer-events: none; background: #526345b8; border: 1px solid #d9e4a0; color: #f0f4d1; font-size: 11px; padding: 4px; opacity: .85; }
+
+/* Independent scrolling keeps both trade buffers usable on short screens. */
+.shop-content { display: flex; flex-direction: column; overflow: hidden; }
+.shop-content .merchant-heading { flex-shrink: 0; margin-bottom: 8px; }
+.shop-layout { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+.shop-layout > section { height: 100%; overflow: auto; overscroll-behavior: contain; padding-bottom: 4px; }
+.shop-content .shop-checkout { position: static; flex-shrink: 0; padding: 6px 0; }
+.shop-content .shop-details { max-height: 100px; flex: 0 0 auto; overflow: auto; }
+.shop-content .shop-details.details-empty { min-height: 0; padding: 0; }
+.shop-content .shop-details.details-empty p { margin: 4px 0; }
+.mobile .shop-content { padding: 6px 12px; }
+.mobile .shop-content .merchant-heading { margin: 0; }
+.mobile .shop-content .merchant-heading h3 { margin: 0 0 4px; font-size: 14px; }
+.mobile .shop-content .merchant-heading p { display: none; }
+.mobile .shop-content .shop-checkout { flex-wrap: nowrap; gap: 8px; }
+.mobile .shop-content .shop-checkout span { display: none; }
+.mobile .shop-content .shop-checkout button { min-height: 40px; }
+.mobile .shop-content .shop-details:not(.details-empty) { max-height: calc(100dvh - 32px); }
+
+.shop-buffer { display: flex; flex-direction: column; gap: 8px; }
+.shop-buffer > div { flex: 1; min-height: 0; overflow: auto; }
+.shop-buffer h3 { position: sticky; top: 0; z-index: 4; background: #15231f; margin: 0 0 6px; padding: 4px 0; }
+.mobile .shopping .topbar { padding: 6px 12px; min-height: 0; }
+.mobile .shopping .topbar h2 { font-size: 16px; }
+.mobile .shopping .tabs button { min-height: 40px; padding: 8px 16px; }
+.mobile .shopping .bottom-bar { padding: 6px 12px; }
+.mobile .shopping .seed-label { display: none; }
+.mobile .shop-content .merchant-heading h3 span { display: inline; margin-left: 10px; font-size: 11px; }
+
+.shopping .shop-checkout { position: static; padding: 0; flex-shrink: 0; }
+.shopping .shop-checkout span { display: none; }
+.shopping .bottom-bar { gap: 12px; }
+.mobile .shopping .bottom-bar { min-height: 58px; padding: 6px 0; flex-wrap: nowrap; }
+.mobile .shopping .shop-checkout { flex-wrap: nowrap; gap: 8px; }
+.mobile .shopping .shop-checkout button { margin: 0; min-width: 105px; }
+
+.departure-check { display: flex; align-items: center; gap: 12px; }
+.departure-check p { max-width: 220px; margin: 0; color: #d2b081; font-size: 11px; line-height: 1.6; }
+.raid-information { position: absolute; right: 22px; top: 100px; width: 270px; pointer-events: auto; font-size: 11px; }
+.raid-information > button { width: 100%; padding: 8px; text-align: left; }
+#raid-quests { margin-top: 6px; padding: 8px; background: #101d18ee; border: 1px solid var(--line); }
+#raid-quests summary { cursor: pointer; min-height: 24px; }
+#raid-quest-list { max-height: 30vh; overflow: auto; }
+#raid-quest-list section { border-top: 1px solid var(--line); padding-top: 8px; }
+#raid-quest-list p { margin: 4px 0; }
+#raid-quests small { color: var(--muted); }
+#hit-directions { position: absolute; inset: 0; pointer-events: none; }
+#hit-directions i { position: absolute; color: #ff8668; font-style: normal; font-size: 28px; text-shadow: 0 0 5px #511c10; }
+.exit-choice { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 11px; }
+.exit-choice select { background: #192b22; color: var(--ink); padding: 6px; }
+.mobile .departure-check { justify-content: space-between; width: 100%; }
+.mobile .departure-check p { max-width: none; flex: 1; font-size: 12px; }
+.mobile .raid-information { right: max(120px, var(--safe-right)); top: 58px; width: 220px; font-size: 11px; }
+.mobile .raid-information > button { min-height: 36px; font-size: 11px; padding: 5px; }
+.mobile #raid-quests summary { min-height: 32px; }
+.mobile .exit-choice { flex-wrap: wrap; }
+.mobile .exit-choice span { display: none; }
+html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden; }
+.map-modal { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; height: min(calc(100% - 20px), 540px); }
+.map-modal canvas { width: 100%; height: 100%; min-height: 0; object-fit: contain; margin: 0; }
+.mobile .map-modal { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+@media (max-width: 600px) {
+  .mobile .shopping .bottom-bar { flex-wrap: wrap; }
+}
+.hud { isolation: isolate; }
+#hit-directions { z-index: 1; }
+.mobile .raid-information #exit-navigation { min-height: 44px; padding: 6px; font-size: 11px; white-space: nowrap; }
+.mobile #raid-quest-list { max-height: clamp(20px, calc(100dvh - 330px), 160px); }
+.mobile .radio { right: max(350px, var(--safe-right)); overflow: auto; pointer-events: auto; }
+
+/* Choosing a shop slot replaces the footer action instead of shrinking its grids. */
+.shopping .shop-placement { flex: 0 1 280px; min-width: 220px; }
+.mobile .shopping .departure-check { width: auto; flex: 1; min-width: 0; }
+.shopping .shop-placement .placement-controls { margin: 0; gap: 8px; }
+.shopping .shop-placement .placement-hint { max-width: 250px; font-size: 11px; }
+.shopping:has(.shop-placement) .seed-label { display: none; }
+@media (max-height: 340px) and (orientation: landscape) {
+  .mobile .shopping .cash > span, .mobile .shop-content > .merchant-heading { display: none; }
+  .mobile .shopping .shop-buffer { gap: 4px; }
+  .mobile .shopping .shop-buffer h3 { padding: 2px 0; line-height: 1.25; margin-bottom: 2px; }
+  .mobile .raid-information { right: max(215px, var(--safe-right)); }
+  .mobile .radio { right: max(445px, var(--safe-right)); }
+  .mobile #raid-quests { padding: 4px; }
+  .mobile #raid-quests summary { min-height: 24px; }
+  .mobile #raid-quest-list { max-height: 44px; }
+}
 /* Building and station controls share the existing inventory and touch surfaces. */
 .rpg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
 .rpg-cards > div { min-width: 100px; padding: 12px; border: 1px solid #526349; display: flex; flex-direction: column; gap: 6px; }

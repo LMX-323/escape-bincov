@@ -68,7 +68,7 @@ export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: En
         name: `${D.ENEMIES[enemy.id].name}遗体`, x: enemy.x, y: enemy.y, inventory });
 }
 
-export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, mapId: string, bullet: BulletState, playerPresent: boolean, hitFeedback?: (uid: string, critical: boolean) => void): boolean {
+export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, mapId: string, bullet: BulletState, playerPresent: boolean, hitFeedback?: (uid: string, critical: boolean) => void, playerHitFeedback?: (source: Point) => void): boolean {
     const raid = state.raid!, layer = raid.maps[mapId], speed = Math.hypot(bullet.vx, bullet.vy);
     if (speed === 0 || bullet.left <= 0 || bullet.damage <= 0) return false;
     const dx = bullet.vx / speed, dy = bullet.vy / speed;
@@ -81,6 +81,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
                 if (raid.version === 2) enemyDamage(state, bullet.damage, bullet.owner, random());
                 else { state.body.hp = Math.max(0, state.body.hp - bullet.damage); raid.hitTime = .25; if (random() < SURVIVAL.bleedChance) state.body.bleeding = true; }
                 raid.rng = random.getState();
+                playerHitFeedback?.({ x: raid.player.x - bullet.vx, y: raid.player.y - bullet.vy });
                 return true;
             }
         }
@@ -104,12 +105,12 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
 }
 
 /** The finite segment kernel is shared by normal flight and one-time departure settlement. */
-export function advanceLayerShots(state: ExpansionState, world: WorldDefinition, mapId: string, dt: number, hitFeedback?: (uid: string, critical: boolean) => void): void {
+export function advanceLayerShots(state: ExpansionState, world: WorldDefinition, mapId: string, dt: number, hitFeedback?: (uid: string, critical: boolean) => void, playerHitFeedback?: (source: Point) => void): void {
     const layer = state.raid!.maps[mapId], survivors: BulletState[] = [];
     for (const bullet of [...layer.bullets].sort((a, b) => a.uid.localeCompare(b.uid, 'en'))) {
         const speed = Math.hypot(bullet.vx, bullet.vy), length = Math.min(bullet.left, speed * dt);
         if (speed === 0) continue;
-        if (resolveLayerShot(state, world, mapId, { ...bullet, left: length }, true, hitFeedback)) continue;
+        if (resolveLayerShot(state, world, mapId, { ...bullet, left: length }, true, hitFeedback, playerHitFeedback)) continue;
         bullet.x += bullet.vx / speed * length; bullet.y += bullet.vy / speed * length; bullet.left -= length;
         if (bullet.left > 0) survivors.push(bullet);
     }

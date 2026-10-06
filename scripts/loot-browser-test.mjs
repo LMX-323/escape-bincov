@@ -10,8 +10,8 @@ const out = resolve('test-results'), SAVE_KEY = 'escape-bincov.session.v2';
 const report = { startedAt: new Date().toISOString(), status: 'running', viewports: [], methodology: [
   'Fresh offline file:// contexts at 1280×720 and 1920×1080; browser errors and external requests fail acceptance.',
   'Positions, inventories, enemy readiness and elapsed time are controlled fixtures. E opening, closing, transfers, combat and extraction use real browser keys/mouse.',
-  'Native dragTo uses displayed grid geometry. Stale-payload checks replay data captured from a real native drag after its context closes.',
-  'Quota injection starts at capture of the trusted drop event, so periodic saves remain writable until the transfer. Failed transfers compare inventories and the exact pre-drop session bytes.',
+  'Real pointer dragTo uses displayed grid geometry. Stale-drag checks close and replace the source while the mouse is held.',
+  'Quota injection starts at capture of the trusted pointerup event, so periodic saves remain writable until the transfer. Failed transfers compare inventories and the exact pre-drop session bytes.',
   'Repeated refreshes restore matching container, corpse and carried inventories. Three consecutive completed runs verify lifecycle isolation. This is not a natural-play balance test.',
 ] };
 await mkdir(out, { recursive: true });
@@ -97,19 +97,19 @@ async function suite(viewport) {
   async function failStorage(on) {
     await page.evaluate(({ on, key }) => {
       window.__lootRealWrite ??= Storage.prototype.setItem;
-      if (window.__lootFaultListener) document.removeEventListener('drop', window.__lootFaultListener, true);
+      if (window.__lootFaultListener) document.removeEventListener('pointerup', window.__lootFaultListener, true);
       if (!on) { Storage.prototype.setItem = window.__lootRealWrite; return; }
       window.__lootFailedWrites = 0;
       const arm = event => {
-        if (!event.isTrusted || !(event.target instanceof Element) || !event.target.closest('[data-grid]')) return;
-        document.removeEventListener('drop', arm, true);
+        if (!event.isTrusted || !document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-grid]')) return;
+        document.removeEventListener('pointerup', arm, true);
         window.__lootStorageAtFault = localStorage.getItem(key);
         Storage.prototype.setItem = function (k, v) {
           if (k === key) { window.__lootFailedWrites++; throw new DOMException('Container quota fixture', 'QuotaExceededError'); }
           return window.__lootRealWrite.call(this, k, v);
         };
       };
-      window.__lootFaultListener = arm; document.addEventListener('drop', arm, true);
+      window.__lootFaultListener = arm; document.addEventListener('pointerup', arm, true);
     }, { on, key: SAVE_KEY });
   }
   async function aim(x, y) {
@@ -132,7 +132,7 @@ async function suite(viewport) {
       assert.equal(c.enemies, 25); assert.equal(c.entries, 60); assert.ok(c.crates > 0 && c.crates <= 10);
       assert.equal(c.liveUnits, c.configuredUnits); assert.ok(c.samples > 0 && c.ledgers > 0); return c;
     });
-    await step('native crate ↔ bag and crate ↔ safe transfers use exact displayed cells', async () => {
+    await step('pointer crate ↔ bag and crate ↔ safe transfers use exact displayed cells', async () => {
       const c = await fixture({ items: [item('transfer-fuse', 'fuse', 2), item('transfer-pearl', 'pearl', 1, 1)] }); await open(c.id); await screenshot('crate-open');
       await drag('container', 'transfer-fuse', 'bag', 4, 4);
       assert.deepEqual((await snapshot()).loadout.bag.items.find(i => i.uid === 'transfer-fuse'), item('transfer-fuse', 'fuse', 2, 4, 4));
@@ -144,10 +144,13 @@ async function suite(viewport) {
       await drag('container', 'transfer-fuse', 'container', 0, 3);
       assert.equal((await snapshot()).containers.find(x => x.id === c.id).inventory.items.find(i => i.uid === 'transfer-fuse').y, 3); await screenshot('crate-returned');
     });
-    await step('stacks merge while overflow, occupied cells and out-of-bounds shapes preserve items', async () => {
+    await step('stacks accept partial merges while occupied cells and out-of-bounds shapes preserve items', async () => {
       const c = await fixture({ items: [item('stack-ammo', 'ammo9', 8), item('wide-gun', 'pistol', 1, 1), item('overflow-ammo', 'ammo9', 30, 3)], bag: [item('bag-ammo', 'ammo9', 10)] });
       await open(c.id); await drag('container', 'stack-ammo', 'bag', 0, 0); assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 18);
-      for (const [uid, x, y] of [['overflow-ammo', 0, 0], ['wide-gun', 0, 0], ['wide-gun', 5, 4]]) {
+      await drag('container', 'overflow-ammo', 'bag', 0, 0);
+      assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 40);
+      assert.equal((await snapshot()).containers.find(i => i.id === c.id).inventory.items.find(i => i.uid === 'overflow-ammo').qty, 8);
+      for (const [uid, x, y] of [['wide-gun', 0, 0], ['wide-gun', 5, 4]]) {
         const before = participants(await snapshot()); await drag('container', uid, 'bag', x, y); assert.deepEqual(participants(await snapshot()), before);
       }
     });
@@ -177,7 +180,7 @@ async function suite(viewport) {
         if (key === 'm') { await page.keyboard.press('m'); await waitOverlay(''); }
       }
     });
-    await step('native drag previews exact legal and illegal shapes; blur cancels the pending transfer', async () => {
+    await step('pointer drag previews exact legal and illegal shapes; blur cancels the pending transfer', async () => {
       const c = await fixture({ items: [item('preview-gun', 'pistol')] }); await open(c.id);
       const before = participants(await snapshot());
       const source = await page.locator('[data-uid="preview-gun"]').boundingBox();
@@ -235,7 +238,7 @@ async function suite(viewport) {
         for (const [source, target] of [['container', destination], [destination, 'container']]) {
           const before = participants(await snapshot()); await failStorage(true); await drag(source, uid, target, 0, 0);
           await waitOverlay('checkpoint-error');
-          assert.ok(await page.evaluate(() => window.__lootFailedWrites) > 0, 'The trusted drop reached the failing session write');
+          assert.ok(await page.evaluate(() => window.__lootFailedWrites) > 0, 'The trusted pointer release reached the failing session write');
           assert.equal((await snapshot()).storage, await page.evaluate(() => window.__lootStorageAtFault), 'Failed transaction leaves exact session bytes untouched');
           assert.deepEqual(participants(await snapshot()), before); assert.equal((await snapshot()).context, null);
           await failStorage(false); await action('retry-checkpoint').click(); await waitOverlay('pause');
@@ -247,17 +250,14 @@ async function suite(viewport) {
         }
       }
     });
-    await step('stale native drag payload cannot mutate a different container', async () => {
+    await step('a held pointer drag cannot mutate a new source after the old context closes', async () => {
       const c = await fixture({ items: [item('stale-drag', 'sample')] }); await open(c.id);
-      await page.evaluate(() => document.addEventListener('dragstart', e => { window.__capturedLootDrag = e.dataTransfer.getData('text/plain'); }, { once: true }));
-      await drag('container', 'stale-drag', 'bag', 0, 0); await close();
-      const other = await fixture({ items: [item('other-container', 'wire')], bag: [item('stale-drag', 'sample')], index: 1 }); await open(other.id);
-      const before = participants(await snapshot());
-      await page.locator('[data-grid="container"]').evaluate(el => {
-        if (!window.__capturedLootDrag) throw new Error('Native drag payload missing');
-        const dataTransfer = new DataTransfer(); dataTransfer.setData('text/plain', window.__capturedLootDrag); const r = el.getBoundingClientRect();
-        el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, clientX: r.x + 10, clientY: r.y + 10, dataTransfer }));
-      }); assert.deepEqual(participants(await snapshot()), before);
+      const source = await page.locator('[data-uid="stale-drag"]').boundingBox();
+      await page.mouse.move(source.x+10, source.y+10); await page.mouse.down(); await page.mouse.move(source.x+30,source.y+20,{steps:4});
+      await page.keyboard.press('Tab'); await waitOverlay('');
+      const other = await fixture({ items: [item('other-container', 'wire')], bag: [item('other-bag-item', 'sample')], index: 1 }); await open(other.id);
+      const before = participants(await snapshot()), grid = await page.locator('[data-grid="container"]').boundingBox();
+      await page.mouse.move(grid.x+12,grid.y+12); await page.mouse.up(); assert.deepEqual(participants(await snapshot()), before);
     });
     await step('scattered ground loot still uses immediate E pickup', async () => {
       await close(); await quiet();

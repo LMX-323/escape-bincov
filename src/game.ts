@@ -1,3 +1,4 @@
+import { exitBearing, questProgress } from './qol';
 import Phaser from 'phaser';
 import { createTextures, drawWorld } from './art';
 import { drawTitleBackdrop, drawStationBackdrop } from './title-art';
@@ -118,8 +119,11 @@ export class RaidScene extends Phaser.Scene {
     private locked = false;
     private extracted = false;
     private hitTime = 0;
+    private hitNotice = 0;
+    private hitDirections: { sector: number; angle: number; left: number }[] = [];
     private noteSeen = new Set<string>();
     private exhausted = false;
+    private lootTargetId = '';
     constructor() { super('Raid'); }
     create() {
         this.config = this.registry.get('runConfig');
@@ -129,6 +133,7 @@ export class RaidScene extends Phaser.Scene {
         this.enemies = [];
         this.loot = [];
         this.containers = [];
+        this.lootTargetId = ''; app.selectedExit = ''; app.tasksExpanded = false; this.hitDirections = [];
         this.containerSprites = [];
         this.bullets = [];
         this.hp = B.maxHealth;
@@ -148,7 +153,7 @@ export class RaidScene extends Phaser.Scene {
         this.radioTime = 12;
         this.locked = false;
         this.extracted = false;
-        this.hitTime = 0;
+        this.hitTime = 0; this.hitNotice = 0;
         this.noteSeen = new Set();
         this.shotNoise = null;
         this.noiseTime = 0;
@@ -333,6 +338,27 @@ export class RaidScene extends Phaser.Scene {
             && !this.locked && !this.extracted && this.hp > 0 && !app.pendingSettlement && !app.conflict
             && distance(this.player, container) < 43 && this.walkable(container.x, container.y, this.highTide)
             && this.sight(this.player, container, this.highTide, 10);
+    }
+    private lootTargets(): LootContainer[] {
+        const targets = this.containers.filter(container => this.canLootContainer(container.id, container.runId));
+        // Stable ties preserve creation order, including the numbers on overlapping corpses.
+        targets.sort((a, b) => distance(a, this.player) - distance(b, this.player));
+        if (!targets.some(container => container.id === this.lootTargetId)) this.lootTargetId = targets[0]?.id || '';
+        return targets;
+    }
+    /** Selection is local UI state; opening still rechecks the current run, range and tide. */
+    cycleLootTarget(delta: number): boolean {
+        if (!Number.isFinite(delta) || !delta || playerInput.touch || app.overlay || this.paused
+            || this.visibleExits.some(exit => distance(exit, this.player) < 48)) return false;
+        const targets = this.lootTargets();
+        if (targets.length < 2) return false;
+        const index = targets.findIndex(container => container.id === this.lootTargetId);
+        this.lootTargetId = targets[(index + Math.sign(delta) + targets.length) % targets.length].id;
+        return true;
+    }
+    private lootTargetName(container: LootContainer): string {
+        const sameName = this.containers.filter(other => other.name === container.name);
+        return sameName.length > 1 ? `${container.name} ${sameName.findIndex(other => other.id === container.id) + 1}` : container.name;
     }
     private createLootContainer(id: string, kind: LootContainer['kind'], name: string, x: number, y: number, items: { id: string; qty: number }[]): void {
         if (this.getLootContainer(id)) return;
@@ -568,8 +594,17 @@ export class RaidScene extends Phaser.Scene {
         for (let i = 0; i < drops.length; i++) { this.random(); this.random(); }
         this.createLootContainer(`corpse-${e.uid}`, 'corpse', `${D.ENEMIES[e.id].name}遗体`, e.sprite.x, e.sprite.y, drops);
     } }
-    hurt(amount: number, owner?: string) { if (this.extracted)
+    private showIncomingHit(source?: Point): void {
+        if (source) {
+            const angle = Math.atan2(source.y - this.player.y, source.x - this.player.x), sector = (Math.round(angle / (Math.PI / 4)) + 8) % 8;
+            this.hitDirections = this.hitDirections.filter(hit => hit.sector !== sector);
+            this.hitDirections.push({ sector, angle, left: 1 });
+        }
+        this.hitNotice = 1;
+    }
+    hurt(amount: number, source?: Point, owner?: string) { if (this.extracted)
         return;
+        this.showIncomingHit(source);
         if (this.layered) {
             const state = this.snapshotExpansion(); enemyDamage(state, amount, owner, this.random()); state.raid!.rng = this.random.getState();
             this.restoreExpansion(state); this.extractTime = 0; audio.hit(); if (this.hp <= 0) finish('death'); return;
@@ -603,6 +638,8 @@ export class RaidScene extends Phaser.Scene {
         this.fireCooldown = Math.max(0, this.fireCooldown - dt);
         this.noiseTime = Math.max(0, this.noiseTime - dt);
         this.hitTime = Math.max(0, this.hitTime - dt);
+        this.hitNotice = Math.max(0, this.hitNotice - dt);
+        this.hitDirections = this.hitDirections.map(hit => ({ ...hit, left: hit.left - dt })).filter(hit => hit.left > 0);
         this.fx.clear();
         if (this.elapsed >= this.config.duration) {
             this.extracted = true;
@@ -790,7 +827,7 @@ export class RaidScene extends Phaser.Scene {
                     audio.shot('enemy');
                 }
                 else if (!this.space || this.sight(e.sprite, this.player, this.highTide, 10))
-                    this.hurt(def.damage, e.uid);
+                    this.hurt(def.damage, e.sprite, e.uid);
             }
             return;
         }
@@ -827,7 +864,7 @@ export class RaidScene extends Phaser.Scene {
                     const enemy = this.enemies.find(e => e.uid === uid);
                     if (enemy) { const text = this.add.text(enemy.sprite.x, enemy.sprite.y - 35, '爆头', { fontSize: '12px', color: '#ffd596', backgroundColor: '#392a20' }).setOrigin(.5).setDepth(15); this.time.delayedCall(500, () => text.destroy()); }
                 }
-            });
+            }, source => { this.showIncomingHit(source); this.extractTime = 0; audio.hit(); });
             this.restoreExpansion(state); if (this.hp <= 0) finish('death'); return;
         }
         for (let i = this.bullets.length - 1; i >= 0; i--) {
@@ -844,7 +881,7 @@ export class RaidScene extends Phaser.Scene {
             }
             if (b.enemy) {
                 if (distance(b.sprite, this.player) < 12) {
-                    this.hurt(b.damage);
+                    this.hurt(b.damage, { x: this.player.x - b.vx, y: this.player.y - b.vy });
                     remove = true;
                     break;
                 }
@@ -873,14 +910,17 @@ export class RaidScene extends Phaser.Scene {
         let text = '';
         const exit = this.visibleExits.find(e => distance(e, this.player) < 48);
         const nearby = this.nearbyLoot();
+        const targets = this.lootTargets();
         const candidates: { point: Point; ground?: Ground; container?: LootContainer; key: string }[] = [
             ...nearby.map(ground => ({ point: ground.sprite, ground, key: ground.uid })),
-            ...this.containers.filter(container => this.canLootContainer(container.id, container.runId))
+            ...targets
                 .map(container => ({ point: container, container, key: container.id })),
         ];
         candidates.sort((a, b) => distance(a.point, this.player) - distance(b.point, this.player)
             || a.point.x - b.point.x || a.point.y - b.point.y || a.key.localeCompare(b.key));
-        const loot = candidates[0]?.ground, container = candidates[0]?.container;
+        // The touch interaction button keeps nearest-item behavior; source names open exact containers.
+        const container = playerInput.touch ? candidates[0]?.container : targets.find(target => target.id === this.lootTargetId);
+        const loot = playerInput.touch ? candidates[0]?.ground : nearby[0];
         const note = this.mapData.notes.find(n => distance(n, this.player) < 43);
         const touchButton = document.getElementById('touch-interact');
         if (touchButton) touchButton.textContent = exit ? '按住撤离' : container ? '搜刮' : loot ? '拾取' : note ? '阅读' : '交互';
@@ -921,15 +961,52 @@ export class RaidScene extends Phaser.Scene {
             }
         }
         text = playerInput.touch ? text.replace('站稳并按住 E 3 秒撤离', '停稳，按住「撤离」3 秒').replace('E 搜刮', '点「搜刮」').replace('E 拾取', '附近物资').replace('E 阅读', '附近记录') : text;
-        const signature = text + ':' + nearby.length;
+        this.renderInteraction(text, exit ? [] : targets, nearby, !!(exit || container));
+    }
+    private renderInteraction(text: string, targets: LootContainer[], nearby: Ground[], showNearby: boolean): void {
+        const el = document.getElementById('interaction');
+        if (!el) return;
+        const listedTargets = targets.map(target => ({
+            id: target.id, name: this.lootTargetName(target), empty: !target.inventory.items.length,
+        }));
+        if (listedTargets.length) text = playerInput.touch ? '点名称搜刮' : listedTargets.length > 1
+            ? `滚轮切换 · E 搜刮　${listedTargets.findIndex(target => target.id === this.lootTargetId) + 1} / ${listedTargets.length}`
+            : 'E 搜刮';
+        const signature = JSON.stringify([text, nearby.length, listedTargets, this.lootTargetId]);
         if (el.dataset.content !== signature) {
             el.dataset.content = signature; el.replaceChildren();
             const description = document.createElement('span'); description.textContent = text; el.append(description);
-            if (nearby.length > 1 || ((exit || container) && nearby.length)) {
+            if (listedTargets.length) {
+                const list = document.createElement('ul'); list.className = 'loot-targets'; list.setAttribute('aria-label', '附近可搜刮的箱子和尸体');
+                for (const target of listedTargets) {
+                    const row = document.createElement('li'); row.dataset.lootTarget = target.id;
+                    const selected = target.id === this.lootTargetId;
+                    if (selected) row.setAttribute('aria-current', 'true');
+                    row.textContent = `${selected ? '▶ ' : ''}${target.name}${target.empty ? ' · 已搜空' : ''}`;
+                    if (playerInput.touch) {
+                        const button = document.createElement('button'); button.textContent = row.textContent;
+                        button.onclick = () => {
+                            if (app.overlay || this.paused || this.visibleExits.some(e => distance(e, this.player) < 48)) return;
+                            openLoot(target.id, app.loadout!.runId!);
+                        };
+                        row.replaceChildren(button);
+                    }
+                    list.append(row);
+                }
+                el.append(list);
+            }
+            if (nearby.length > 1 || (showNearby && nearby.length)) {
                 const button = document.createElement('button'); button.textContent = `附近 ${nearby.length}`; button.dataset.action = 'nearby'; button.onclick = () => setOverlay('nearby'); el.append(button);
             }
         }
         el.style.display = text && !app.overlay ? 'block' : 'none';
+        const selectedRow = el.querySelector<HTMLElement>('.loot-targets [aria-current="true"]');
+        if (!playerInput.touch && selectedRow && el.style.display !== 'none') {
+            const list = selectedRow.parentElement!;
+            if (selectedRow.offsetTop < list.scrollTop) list.scrollTop = selectedRow.offsetTop;
+            else if (selectedRow.offsetTop + selectedRow.offsetHeight > list.scrollTop + list.clientHeight)
+                list.scrollTop = selectedRow.offsetTop + selectedRow.offsetHeight - list.clientHeight;
+        }
         const height = `${el.offsetHeight}px`;
         if (document.documentElement.style.getPropertyValue('--interaction-height') !== height)
             document.documentElement.style.setProperty('--interaction-height', height);
@@ -946,7 +1023,13 @@ export class RaidScene extends Phaser.Scene {
             const at = doorAnchor(context, door.id, this.player);
             if (at) candidates.push({ id: door.id, kind: 'door', at, label: context.doors[door.id] ? '关门' : '开门' });
         }
-        const target = interactionTarget(context, this.player, candidates), touch = document.getElementById('touch-interact');
+        let target = interactionTarget(context, this.player, candidates);
+        const targets = this.lootTargets(), touch = document.getElementById('touch-interact');
+        const listAvailable = target?.kind === 'container' || target?.kind === 'ground';
+        if (listAvailable && !playerInput.touch) {
+            const selected = targets.find(c => c.id === this.lootTargetId);
+            if (selected) target = { id: selected.id, kind: 'container', at: selected, label: `搜刮 · ${this.lootTargetName(selected)}` };
+        }
         if (touch) { touch.textContent = target?.kind === 'exit' ? '按住撤离' : target?.label.split(' · ')[0] ?? '交互'; touch.setAttribute('aria-label', target?.label ?? '交互'); }
         let text = target ? `${playerInput.touch ? '点' : 'E'} ${target.label}` : '';
         if (target?.kind === 'exit') {
@@ -976,8 +1059,7 @@ export class RaidScene extends Phaser.Scene {
                 }
             }
         }
-        const el = document.getElementById('interaction');
-        if (el) { el.textContent = text; el.style.display = text && !app.overlay ? 'block' : 'none'; document.documentElement.style.setProperty('--interaction-height', `${el.offsetHeight}px`); }
+        this.renderInteraction(text, listAvailable ? targets : [], this.nearbyLoot(), !!target);
     }
     drawEffects(dt: number) {
         this.weather.clear();
@@ -1033,8 +1115,22 @@ export class RaidScene extends Phaser.Scene {
         css('stamina', Math.round(this.stamina).toString());
         css('status', [this.bleeding ? '流血' : '', this.pollution > 10 ? '污染 ' + Math.round(this.pollution) + '%' : '', this.layered ? `精神 ${Math.round(this.layered.body.mental)} · 水分 ${Math.round(this.layered.body.water)} · 饱食 ${Math.round(this.layered.body.satiety)}` : '', this.layered?.body.effects.pain ? '疼痛' : '', this.layered?.body.effects.energized ? '精力充沛' : '', this.layered?.body.effects.focus ? '专注' : '', this.layered?.body.effects.injectionFatigue ? '注射后疲劳' : ''].filter(Boolean).join(' · ') || '状态正常');
         css('weight', `${this.carriedWeight().toFixed(1)} kg`);
+        const directions = document.getElementById('hit-directions');
+        if (directions) directions.innerHTML = this.hitDirections.map(hit => `<i style="left:${50 + Math.cos(hit.angle) * 47}%;top:${50 + Math.sin(hit.angle) * 45}%;transform:translate(-50%,-50%) rotate(${hit.angle * 180 / Math.PI + 90}deg);opacity:${Math.min(1,hit.left * 2)}">▲</i>`).join('');
+        const exit = this.visibleExits.find(e => e.name === app.selectedExit);
+        if (exit) { const bearing = exitBearing(this.player, exit); css('exit-navigation', `${exit.name} · ${bearing.direction} · 直线 ${bearing.distance.toFixed(1)} 格`); }
+        else css('exit-navigation', app.selectedExit && this.layered ? `${app.selectedExit} · 返回地面查看方位` : '选择撤离点');
+        const progress = questProgress(app.save, app.loadout), questList = document.getElementById('raid-quest-list');
+        css('raid-quest-count', `· ${progress.length} 项未完成`);
+        if (questList) {
+            const html = progress.map(q => `<section><strong>${q.name}</strong>${q.needs.map(n => `<p>${D.ITEMS[n.id].name}：仓库 ${n.stored} · 携带 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
+            if (questList.innerHTML !== html) questList.innerHTML = html;
+        }
         css('loot-health', `${Math.max(0, Math.ceil(this.hp))} / ${limits.hp}`);
         css('loot-timer', `${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`);
+        css('loot-condition', [this.bleeding ? '流血：持续失去生命' : '', this.pollution > 0 ? `污染 ${Math.round(this.pollution)}%${this.pollution > B.pollutionDamageThreshold ? '：持续失去生命' : ''}` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行');
+        css('loot-hit', this.hitNotice > 0 ? '正在遭受攻击！' : '');
+        document.querySelector('.loot-header')?.classList.toggle('under-attack', this.hitNotice > 0);
         css('loot-weight', this.carriedWeight().toFixed(1));
         css('equipped-ammo', `${this.mag} / ${D.WEAPONS[app.loadout?.weapon || 'knife'].magazine}`);
         const hp = document.getElementById('hpbar'), st = document.getElementById('staminabar');

@@ -1,3 +1,4 @@
+import type { ShopCart } from './shop';
 import type Phaser from 'phaser';
 import type { RaidScene } from './game';
 import type { SaveDataV1 } from './domain';
@@ -13,14 +14,17 @@ export const app = {
     raid: null as RaidScene | null,
     base: null as BaseScene | null,
     baseWalking: false, baseFacility: 'rest', mapView: '',
-    tab: 'gear', overlay: '', selected: '', selectedSource: '', seed: '',
+    tab: 'gear', overlay: '', helpReturn: '', selected: '', selectedSource: '', seed: '',
     runWorld: 'coast' as 'coast' | 'buildings' | 'mall',
     lootContext: null as { containerId: string; runId: string } | null,
-    mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined,
+    mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined, placementQuantity: undefined as number | undefined,
     reading: null as { title: string; text: string } | null,
     pendingImport: null as SaveDataV1 | null,
     pendingRecoveryImport: null as SessionRecord | null,
     menuMotion: true,
+    selectedExit: '', tasksExpanded: false,
+    shop: null as ShopCart | null,
+    shopLeave: null as { action: 'tab' | 'deploy' | 'menu' | 'base-enter' | 'base-return'; id: string } | null,
 };
 
 export const audio = new SynthAudio();

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { placementError } from '../src/loot';
+import { moveQuantity, placementError } from '../src/loot';
 
 function inventory(id: string, qty = 1, w = 6, h = 5, relief = false): D.Inventory {
     const inv = D.createInventory(w, h);
@@ -36,7 +36,7 @@ test('whole stacks merge only at their exact origin and never exceed the stack l
     target.items[0].qty = 2;
     assert.match(placementError(source, target, uid, 0, 0)!, /堆叠上限为 2/);
     const ammo = inventory('ammo9', 8), almostFull = inventory('ammo9', 33);
-    assert.match(placementError(ammo, almostFull, ammo.items[0].uid, 0, 0)!, /整组/);
+    assert.equal(placementError(ammo, almostFull, ammo.items[0].uid, 0, 0), null);
     assert.equal(ammo.items[0].qty, 8);
     assert.equal(almostFull.items[0].qty, 33);
 });
@@ -74,4 +74,21 @@ test('missing items, malformed quantities and duplicate identities are rejected'
     target.items = [];
     source.items.push({ ...source.items[0], x: 1 });
     assert.match(placementError(source, target, uid, 0, 0)!, /标识冲突/);
+});
+
+
+test('partial merges conserve the total and preserve source identity, position and relief', () => {
+    const from = inventory('ammo9', 12, 6, 5, true), to = inventory('ammo9', 35, 6, 5, true), original = structuredClone(from.items[0]);
+    assert.ok(moveQuantity(from, to, original.uid, 0, 0));
+    assert.deepEqual(from.items[0], { ...original, qty: 7 }); assert.equal(to.items[0].qty, 40);
+    const before = structuredClone({ from, to }); assert.equal(moveQuantity(from, to, original.uid, 0, 0), false); assert.deepEqual({ from, to }, before);
+});
+test('split and rotation are previews until valid exact placement, without self-overlap or duplicated identities', () => {
+    const inv = inventory('water', 2), original = structuredClone(inv.items[0]);
+    assert.match(placementError(inv, inv, original.uid, 0, 0, true, 1)!, /其他/);
+    for (const qty of [0, -1, .5, 3, NaN]) assert.equal(moveQuantity(inv, inv, original.uid, 2, 2, true, qty), false);
+    assert.deepEqual(inv.items, [original]);
+    assert.ok(moveQuantity(inv, inv, original.uid, 2, 2, true, 1));
+    assert.deepEqual(inv.items[0], { ...original, qty: 1 }); assert.notEqual(inv.items[1].uid, original.uid);
+    assert.equal(inv.items[1].rotated, true); assert.equal(inv.items[1].qty, 1); assert.equal(inv.items[1].x, 2);
 });

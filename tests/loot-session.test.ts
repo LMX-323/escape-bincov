@@ -230,3 +230,19 @@ test('containers from the last raid cannot supply the next raid', () => {
     assert.deepEqual(f.snapshot(), before);
     assert.equal(f.writes, 3);
 });
+
+
+test('split with rotation and partial merge persist source remainder atomically and roll back on write failure', () => {
+    const f = fixture(), uid = add(f.container.inventory, 'water', 2);
+    const req = { ...f.request('container', 'safe', uid, 0, 0), quantity: 1, rotated: true };
+    const before = f.snapshot(); f.failWrites(true);
+    assert.equal(f.session.transferLoot(f.container, req), 'save-failed'); assert.deepEqual(f.snapshot(), before);
+    f.failWrites(false); assert.equal(f.session.transferLoot(f.container, req), 'committed');
+    assert.equal(f.container.inventory.items[0].qty, 1); assert.equal(f.container.inventory.items[0].rotated, undefined);
+    assert.equal(f.state.loadout!.safe.items[0].rotated, true);
+    assert.notEqual(f.state.loadout!.safe.items[0].uid, uid);
+    assert.deepEqual(read(f.storage).raid!.containers![0].inventory, f.container.inventory);
+    const ammo = add(f.container.inventory, 'ammo9', 12); add(f.state.loadout!.bag, 'ammo9', 35);
+    assert.equal(f.session.transferLoot(f.container, f.request('container', 'bag', ammo)), 'committed');
+    assert.equal(f.container.inventory.items.find(i => i.uid === ammo)!.qty, 7); assert.equal(D.count(f.state.loadout!.bag, 'ammo9'), 40);
+});

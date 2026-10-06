@@ -1,0 +1,672 @@
+{
+  "baseline": "a34c7a1ba810919fc33d4fce158aba0a028a0f78",
+  "observed_on": "2026-10-05",
+  "environment": {
+    "node": "v24.19.0",
+    "chromium": "151.0.7922.173",
+    "platform": "linux",
+    "htmlSha256": "2984e201d2b33c0f242e2c290f01425652463ef20b25df47b528471b4be5e731",
+    "pnpm": "11.19.0",
+    "playwright": "1.63.0"
+  },
+  "scope": "Observed unchanged main during discovery; this PR publishes analysis and evidence only. All findings remain unresolved.",
+  "methodology": [
+    "Fresh browser contexts; unmodified main HTML on localhost with explicit ?test=1.",
+    "Real keyboard/mouse/touch actions; inventories, corpse positions and survival state use controlled fixtures where stated in QOL-DISCOVERY.md.",
+    "Overlap fixture uses damageEnemy, validates canLootContainer and successfully saves a checkpoint before repeated interaction.",
+    "Touch uses Chromium emulation, not physical devices.",
+    "Only valid observations are included. Early invalid container setup and direct targeting of pointer-events:none decorative cells were discarded. Final touch transfers tap the actual grid and succeed."
+  ],
+  "observations": {
+    "core": [
+      {
+        "id": "shop-information",
+        "cards": [
+          "密封绷带医疗用品 · 每份 1 件¥ 45",
+          "急救包医疗用品 · 每份 1 件¥ 160",
+          "除藻药剂医疗用品 · 每份 1 件¥ 120",
+          "净水瓶食品 · 每份 1 件¥ 35",
+          "鱼松罐头食品 · 每份 1 件¥ 50"
+        ],
+        "details": 0
+      },
+      {
+        "id": "deploy-without-reserves-or-treatment",
+        "state": "run",
+        "overlay": "",
+        "paused": false,
+        "elapsed": 0.07919999999995345,
+        "hp": 100,
+        "stamina": 100,
+        "pollution": 0,
+        "bag": {
+          "w": 6,
+          "h": 5,
+          "items": [
+            {
+              "uid": "bc-muur61j0-8",
+              "id": "water",
+              "qty": 1,
+              "x": 2,
+              "y": 0
+            }
+          ]
+        },
+        "selected": "",
+        "lootContext": null,
+        "equipment": "pistol",
+        "toast": "物资已转移。"
+      },
+      {
+        "id": "pause-help-close",
+        "before": {
+          "state": "run",
+          "overlay": "help",
+          "paused": true,
+          "elapsed": 0.09909999999997672,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "uid": "bc-muur61j0-8",
+                "id": "water",
+                "qty": 1,
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "selected": "",
+          "lootContext": null
+        },
+        "after": {
+          "state": "run",
+          "overlay": "",
+          "paused": false,
+          "elapsed": 0.4030999999999767,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "uid": "bc-muur61j0-8",
+                "id": "water",
+                "qty": 1,
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "selected": "",
+          "lootContext": null
+        }
+      },
+      {
+        "id": "no-benefit-water",
+        "before": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 0.4530999999999767,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "id": "water",
+                "uid": "qol-use-0",
+                "qty": 1,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "selected": "qol-use-0",
+          "lootContext": null
+        },
+        "after": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 0.5217000000000116,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": []
+          },
+          "selected": "",
+          "lootContext": null
+        },
+        "toast": "已使用净水瓶"
+      },
+      {
+        "id": "no-benefit-food",
+        "before": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 0.6897999999999884,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "id": "food",
+                "uid": "qol-use-1",
+                "qty": 1,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "selected": "qol-use-1",
+          "lootContext": null
+        },
+        "after": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 0.7867999999999884,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": []
+          },
+          "selected": "",
+          "lootContext": null
+        },
+        "toast": "已使用鱼松罐头"
+      },
+      {
+        "id": "no-benefit-antidote",
+        "before": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 0.9927000000000117,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "id": "antidote",
+                "uid": "qol-use-2",
+                "qty": 1,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "selected": "qol-use-2",
+          "lootContext": null
+        },
+        "after": {
+          "state": "run",
+          "overlay": "inventory",
+          "paused": false,
+          "elapsed": 1.1117000000000117,
+          "hp": 100,
+          "stamina": 100,
+          "pollution": 0,
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": []
+          },
+          "selected": "",
+          "lootContext": null
+        },
+        "toast": "已使用除藻药剂"
+      }
+    ],
+    "questSell": {
+      "id": "sell-unfinished-quest-item",
+      "before": {
+        "cash": 700,
+        "detail": "任务物品\n赤潮封存样本\n\n潮汐观测站封存的赤潮样本，用于任务「瓶中的潮声」。\n\n占用\n1 × 1 格\n重量\n0.25 kg\n数量\n1\n售价\n¥ 100\n放入背包\n放入安全箱\n出售"
+      },
+      "after": {
+        "cash": 800,
+        "quest": false,
+        "items": [],
+        "overlay": "",
+        "toast": "物品已出售。"
+      }
+    },
+    "overlap": [
+      {
+        "kind": "setup",
+        "checkpoint": true,
+        "point": {
+          "id": "crate-0",
+          "runId": "bc-muurak2t-b",
+          "kind": "crate",
+          "name": "潮汐观测站物资箱",
+          "x": 1744,
+          "y": 656,
+          "inventory": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "uid": "bc-muurak2z-c",
+                "id": "shell",
+                "qty": 2,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "uid": "bc-muurak2z-d",
+                "id": "water",
+                "qty": 1,
+                "x": 1,
+                "y": 0
+              }
+            ]
+          }
+        },
+        "corpses": [
+          {
+            "id": "corpse-enemy-0",
+            "accessible": true
+          },
+          {
+            "id": "corpse-enemy-1",
+            "accessible": true
+          }
+        ]
+      },
+      {
+        "kind": "before",
+        "overlay": "",
+        "storage": true,
+        "input": "E 搜刮　潮蚀生物遗体 · 已搜空",
+        "focus": "<body data-screen=\"run\"><main id=\"frame\" style=\"transform: scale(1);\"><div id=\"g"
+      },
+      {
+        "kind": "after",
+        "overlay": "loot",
+        "paused": false,
+        "loot": {
+          "containerId": "corpse-enemy-0",
+          "runId": "bc-muurak2t-b"
+        },
+        "storage": true,
+        "toast": "",
+        "can": [
+          {
+            "id": "corpse-enemy-0",
+            "can": true,
+            "count": 0
+          },
+          {
+            "id": "corpse-enemy-1",
+            "can": true,
+            "count": 1
+          }
+        ]
+      },
+      {
+        "kind": "before",
+        "overlay": "",
+        "storage": true,
+        "input": "E 搜刮　潮蚀生物遗体 · 已搜空",
+        "focus": "<body data-screen=\"run\"><main id=\"frame\" style=\"transform: scale(1);\"><div id=\"g"
+      },
+      {
+        "kind": "after",
+        "overlay": "loot",
+        "paused": false,
+        "loot": {
+          "containerId": "corpse-enemy-0",
+          "runId": "bc-muurak2t-b"
+        },
+        "storage": true,
+        "toast": "",
+        "can": [
+          {
+            "id": "corpse-enemy-0",
+            "can": true,
+            "count": 0
+          },
+          {
+            "id": "corpse-enemy-1",
+            "can": true,
+            "count": 1
+          }
+        ]
+      },
+      {
+        "kind": "before",
+        "overlay": "",
+        "storage": true,
+        "input": "E 搜刮　潮蚀生物遗体 · 已搜空",
+        "focus": "<body data-screen=\"run\"><main id=\"frame\" style=\"transform: scale(1);\"><div id=\"g"
+      },
+      {
+        "kind": "after",
+        "overlay": "loot",
+        "paused": false,
+        "loot": {
+          "containerId": "corpse-enemy-0",
+          "runId": "bc-muurak2t-b"
+        },
+        "storage": true,
+        "toast": "",
+        "can": [
+          {
+            "id": "corpse-enemy-0",
+            "can": true,
+            "count": 0
+          },
+          {
+            "id": "corpse-enemy-1",
+            "can": true,
+            "count": 1
+          }
+        ]
+      },
+      {
+        "kind": "loot-hud",
+        "risk": "生命 50 / 100\n封锁倒计时 09:59\n世界仍在运行，请留意周围。",
+        "buttons": "使用\n放入安全箱\n丢弃",
+        "warning": "持续流血 · Q 止血",
+        "topmost": "panel loot-modal"
+      }
+    ],
+    "viewports": [
+      {
+        "width": 844,
+        "height": 390,
+        "mobile": true,
+        "errors": [],
+        "selected": {
+          "hp": 49.55845500000003,
+          "elapsed": 0.6985999999999766,
+          "paused": false,
+          "risk": {
+            "rect": {
+              "x": 374.171875,
+              "y": 31,
+              "w": 160.53125,
+              "h": 34
+            },
+            "covered": false,
+            "cover": "loot-risk"
+          },
+          "close": {
+            "rect": {
+              "x": 749.859375,
+              "y": 24,
+              "w": 71.140625,
+              "h": 48
+            },
+            "covered": false,
+            "cover": ""
+          },
+          "columnsHeight": 255
+        },
+        "transfer": {
+          "storage": true,
+          "bag": [
+            {
+              "id": "water",
+              "uid": "qol-touch-water",
+              "qty": 1,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "overlay": "loot"
+        }
+      },
+      {
+        "width": 667,
+        "height": 375,
+        "mobile": true,
+        "errors": [],
+        "selected": {
+          "hp": 49.50613000000003,
+          "elapsed": 0.7842999999999302,
+          "paused": false,
+          "risk": {
+            "rect": {
+              "x": 285.671875,
+              "y": 31,
+              "w": 160.53125,
+              "h": 34
+            },
+            "covered": false,
+            "cover": "loot-risk"
+          },
+          "close": {
+            "rect": {
+              "x": 572.859375,
+              "y": 24,
+              "w": 71.140625,
+              "h": 48
+            },
+            "covered": false,
+            "cover": ""
+          },
+          "columnsHeight": 240
+        },
+        "transfer": {
+          "storage": true,
+          "bag": [
+            {
+              "id": "water",
+              "uid": "qol-touch-water",
+              "qty": 1,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "overlay": "loot"
+        }
+      },
+      {
+        "width": 740,
+        "height": 300,
+        "mobile": true,
+        "errors": [],
+        "selected": {
+          "hp": 49.4582900000001,
+          "elapsed": 0.8516999999999534,
+          "paused": false,
+          "risk": {
+            "rect": {
+              "x": 322.171875,
+              "y": 31,
+              "w": 160.53125,
+              "h": 34
+            },
+            "covered": true,
+            "cover": "details loot-details"
+          },
+          "close": {
+            "rect": {
+              "x": 645.859375,
+              "y": 24,
+              "w": 71.140625,
+              "h": 48
+            },
+            "covered": true,
+            "cover": "details loot-details"
+          },
+          "columnsHeight": 165
+        },
+        "transfer": {
+          "storage": true,
+          "bag": [
+            {
+              "id": "water",
+              "uid": "qol-touch-water",
+              "qty": 1,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "overlay": "loot"
+        }
+      },
+      {
+        "width": 640,
+        "height": 300,
+        "mobile": true,
+        "errors": [],
+        "selected": {
+          "hp": 49.52751500000006,
+          "elapsed": 0.7836999999999532,
+          "paused": false,
+          "risk": {
+            "rect": {
+              "x": 272.171875,
+              "y": 31,
+              "w": 160.53125,
+              "h": 34
+            },
+            "covered": true,
+            "cover": "details loot-details"
+          },
+          "close": {
+            "rect": {
+              "x": 545.859375,
+              "y": 24,
+              "w": 71.140625,
+              "h": 48
+            },
+            "covered": true,
+            "cover": "details loot-details"
+          },
+          "columnsHeight": 165
+        },
+        "transfer": {
+          "storage": true,
+          "bag": [
+            {
+              "id": "water",
+              "uid": "qol-touch-water",
+              "qty": 1,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "overlay": "loot"
+        }
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "mobile": false,
+        "errors": [],
+        "selected": {
+          "hp": 49.75397499999999,
+          "elapsed": 0.4505,
+          "paused": false,
+          "risk": {
+            "rect": {
+              "x": 866.78125,
+              "y": 86,
+              "w": 341.0625,
+              "h": 68
+            },
+            "covered": false,
+            "cover": "loot-risk"
+          },
+          "close": {
+            "rect": {
+              "x": 1630.59375,
+              "y": 85.1875,
+              "w": 133.40625,
+              "h": 69.59375
+            },
+            "covered": false,
+            "cover": ""
+          },
+          "columnsHeight": 293
+        }
+      }
+    ]
+  },
+  "stack_transfer": {
+    "method": "Existing pure functions: createInventory/addItem/placementError, no source changes",
+    "bag_dimensions": [
+      6,
+      5
+    ],
+    "occupied_slots": 30,
+    "bag_ammo9": 39,
+    "source_ammo9": 6,
+    "container_result": "堆叠上限为 40，无法合并整组物品。",
+    "ground_addItem_accepted": 1,
+    "classification": "Documented whole-stack design tradeoff, not an implementation failure"
+  },
+  "artifacts": [
+    {
+      "file": "loot-desktop-1280.png",
+      "sha256": "b9ff81e2ba824e130055cad6bbca84a3925a502e3b700bc7271e851c20935e1f",
+      "bytes": 85836,
+      "kind": "unmodified browser screenshot"
+    },
+    {
+      "file": "loot-desktop-1920.png",
+      "sha256": "f46ad17f1ff3253e54ef0d60fb8a8a056354a69987f76de3bdc548982eb223c1",
+      "bytes": 164255,
+      "kind": "unmodified browser screenshot"
+    },
+    {
+      "file": "loot-touch-844.png",
+      "sha256": "712b48e26725a47192a1e2e5943ef721a80a9ea328294c821e5e88ad143572f2",
+      "bytes": 50507,
+      "kind": "unmodified browser screenshot"
+    },
+    {
+      "file": "loot-touch-740.png",
+      "sha256": "539e5db9c9b908b9194d7ce889aa25fb7c167d153fee659cd0ee31b768c1ab5b",
+      "bytes": 33830,
+      "kind": "unmodified browser screenshot"
+    },
+    {
+      "file": "shop-1280.png",
+      "sha256": "9a54c0e59085bae6b48749786be81d74d6f8e3cfcdffda00dfb413a1d67761c7",
+      "bytes": 69564,
+      "kind": "unmodified browser screenshot"
+    }
+  ],
+  "validation": {
+    "unit": "node --import tsx --test --test-isolation=none tests/*.test.ts：109/109 通过",
+    "typecheck": "pnpm exec tsc --noEmit：通过",
+    "upstreamCI": "https://github.com/xuys2025/escape-bincov/actions/runs/37261878225，success",
+    "fileBrowser": "pnpm test:ui 与 pnpm test:loot 受 Chromium file:// ERR_BLOCKED_BY_ADMINISTRATOR 阻塞，未通过",
+    "httpBrowser": "同一 HTML 本地 HTTP 复现；4 种触控尺寸完成原有转移，诊断视图无页面错误",
+    "notRun": [
+      "pnpm package",
+      "完整离线/存档/浏览器回归",
+      "十分钟自然计时实战",
+      "手机真机、真人手感与自然重叠频率"
+    ]
+  }
+}

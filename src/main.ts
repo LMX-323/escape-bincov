@@ -3,7 +3,7 @@ import { loadPixelFont } from './font';
 import { BootScene, MenuScene, HideoutScene, RaidScene, ResultScene } from './game';
 import { BaseScene } from './base-scene';
 import { app, audio, saveSession } from './app';
-import { initSave, setOverlay, persist, toast, render } from './ui';
+import { initSave, installInventoryDrag, closeOverlay, setOverlay, persist, toast, render } from './ui';
 import { SAVE_KEY } from './domain';
 import { SESSION_KEY, ownSession } from './recovery-store';
 import { playerInput } from './input';
@@ -16,6 +16,7 @@ async function boot() {
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
     app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, BaseScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
     const coarse = matchMedia('(pointer: coarse)'), fine = matchMedia('(any-pointer: fine)');
+    installInventoryDrag();
     const controls = installControls(name => setOverlay(app.baseWalking ? 'base-menu' : name), () => app.state === 'run' || app.baseWalking, () => audio.start());
     let previousWidth = 0, previousHeight = 0;
     function resize() {
@@ -66,6 +67,9 @@ async function boot() {
     document.addEventListener('contextmenu', e => { if ((e.target as HTMLElement).closest('#game, #touch-controls')) e.preventDefault(); });
     addEventListener('pointermove', e => { if (e.pointerType === 'mouse') playerInput.pointer = { x: e.clientX, y: e.clientY }; });
     const game = document.getElementById('game')!;
+    game.addEventListener('wheel', e => {
+        if (app.state === 'run' && app.raid?.cycleLootTarget(e.deltaY)) e.preventDefault();
+    }, { passive: false });
     let pointerType = '';
     game.addEventListener('pointerdown', e => { pointerType = e.pointerType; });
     // Mouse chords emit mousedown for each button; pointerdown only fires for the first.
@@ -93,12 +97,12 @@ async function boot() {
             if (e.key === 'Tab') setOverlay(['inventory', 'loot'].includes(app.overlay) ? '' : 'inventory');
             else if (e.key.toLowerCase() === 'e' && app.overlay === 'loot') { app.raid?.suppressHeldInput('E'); setOverlay(''); }
             else if (e.key.toLowerCase() === 'm') setOverlay(app.overlay === 'map' ? '' : 'map');
-            else if (e.key === 'Escape') setOverlay(app.overlay ? '' : 'pause');
+            else if (e.key === 'Escape') { if (app.overlay) closeOverlay(); else setOverlay('pause'); }
             else if (!app.overlay) playerInput.key(e.key, true);
         } else if (app.baseWalking) {
-            if (e.key === 'Escape') setOverlay(app.overlay ? '' : 'base-menu');
+            if (e.key === 'Escape') { if (app.overlay) closeOverlay(); else setOverlay('base-menu'); }
             else if (!app.overlay) playerInput.key(e.key, true);
-        } else if (e.key === 'Escape') setOverlay('');
+        } else if (e.key === 'Escape') closeOverlay();
     });
     addEventListener('keyup', e => playerInput.key(e.key, false));
     addEventListener('storage', e => {

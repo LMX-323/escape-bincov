@@ -8,6 +8,7 @@ import { chromium } from 'playwright';
 import { findPath, lineOfSight } from '../src/world.ts';
 import { ITEMS, fits } from '../src/domain.ts';
 import { browserOptions } from './browser-options.mjs';
+import { buyAffordable } from './inventory-actions.mjs';
 
 const minutes = Number(process.env.BINCOV_PLAY_MINUTES || 10);
 assert.ok(minutes >= 1 && minutes <= 60);
@@ -87,9 +88,9 @@ try {
     if (s.state === 'hideout') {
       if (now >= deadline) break;
       await action('tab', 'arms').click();
-      for (let i = 0; i < 2; i++) if (await action('buy', 'ammo9').isEnabled()) await action('buy', 'ammo9').click();
+      await buyAffordable(page, 'ammo9', 2);
       await action('tab', 'med').click();
-      if (await action('buy', 'medkit').isEnabled()) await action('buy', 'medkit').click();
+      await buyAffordable(page, 'medkit');
       await action('tab', 'gear').click();
       for (let i = 0; i < 12; i++) {
         const items = page.locator('[data-source="stash"][data-uid]'); const count = await items.count();

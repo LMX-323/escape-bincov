@@ -1,3 +1,4 @@
+import { placeAt } from './inventory-actions.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -38,9 +39,10 @@ try {
   await step('failed purchase preserves cash and inventory; retry commits once', async () => {
     await action('tab', 'arms').click();
     const before = (await state()).save;
-    await failStorage(true); await action('buy', 'ammo9').click();
+    await placeAt(page, 'merchant', 'ammo9', 'buy');
+    await failStorage(true); await action('checkout').click();
     assert.deepEqual((await state()).save, before);
-    await failStorage(false); await action('buy', 'ammo9').click();
+    await failStorage(false); await action('checkout').click();
     assert.equal((await state()).save.cash, before.cash - 84);
   });
   await step('all three quest buttons and storage upgrade commit and survive reload', async () => {

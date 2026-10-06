@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { placeAt } from './inventory-actions.mjs';
 import * as D from '../src/domain.ts';
 const out = resolve('test-results/tactical');
 await mkdir(out, {recursive:true});
@@ -57,20 +58,23 @@ try {
     }
     await page.evaluate(stash=>{window.__bincov.app.save.stash=stash;},rotated);await action('tab','gear').click();
     await noClipping();await shot('rotated-items');check(`${Object.keys(D.ITEMS).length} inventory objects, eight rotated shapes, no clipped artwork`);
-    // Transaction callbacks remain the existing save-backed implementation.
+    // Keep the accepted art and inspection while buying/selling through the QOL cart.
     await page.evaluate(()=>{const s=window.__bincov.app.save;s.stash.items=[];s.cash=5000;});
     await action('tab','arms').click();
-    const invalidCards = await page.locator('.shop-card').evaluateAll(cards => cards.filter(card => [...card.children].some(child => child.getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1)).length);
-    assert.equal(invalidCards, 0, 'Catalogue rows must contain their icons and purchase buttons');
-    await action('inspect-stock','carbine').click();
-    assert.match(await page.locator('.trade-inspector').textContent(),/适合远距离点射/);
-    await action('buy','carbine').click();
+    const merchant = await box('[data-grid="merchant"]'), buy = await box('[data-grid="buy"]'), sell = await box('[data-grid="sell"]'), warehouse = await box('[data-grid="stash"]');
+    assert.ok(merchant.x + merchant.width < buy.x && buy.x + buy.width < warehouse.x && buy.y + buy.height < sell.y);
+    await noClipping();
+    await page.locator('[data-source="merchant"][data-item-id="carbine"]').click();
+    assert.match(await page.locator('.shop-details').textContent(),/适合远距离点射/);
+    await placeAt(page,'merchant','carbine','buy');
+    assert.equal(await page.evaluate(()=>window.__bincov.app.save.cash),5000,'Staging merchandise must not spend cash');
+    await action('checkout').click();
     assert.equal(await page.evaluate(()=>window.__bincov.app.save.cash),3800);
     await page.locator('[data-source="stash"][aria-label^="半自动卡宾枪"]').click();
-    await shot('trader');await action('sell').click();
+    await shot('trader');await placeAt(page,'stash','carbine','sell');await action('checkout').click();
     assert.equal(await page.evaluate(()=>window.__bincov.app.save.cash),4380);
     assert.equal(await page.locator('[data-source="stash"][aria-label^="半自动卡宾枪"]').count(),0);
-    check('merchant inspection, purchase into visible warehouse, and sale update cash correctly');
+    check('merchant / buy-sell buffer / warehouse order, artwork, inspection and atomic checkout');
     await action('tab','gear').click();await page.locator('#seed').fill('42');await action('deploy').click();
     await page.waitForFunction(()=>window.__bincov.app.raid?.player?.active);
     const source={w:6,h:5,items:[]};for(const id of ['carbine','medkit','water','wire','sample'])D.addItem(source,id,1);
@@ -92,7 +96,7 @@ try {
     assert.equal(await page.locator(`[data-source="bag"][data-uid="${uid}"]`).count(),1);
     await page.locator(`[data-uid="${uid}"]`).dragTo(page.locator('[data-grid="container"]'),{targetPosition:{x:cell*3.4,y:cell*.4}});
     assert.equal(await page.locator(`[data-source="container"][data-uid="${uid}"]`).count(),1);
-    check('full viewport loot, own inventory on left, live clock, native drag and return at both scales');
+    check('full viewport loot, own inventory on left, live clock, pointer drag and return at both scales');
     await context.close();
   }
   assert.deepEqual(report.errors,[]);assert.deepEqual(report.externalRequests,[]);report.status='passed';
