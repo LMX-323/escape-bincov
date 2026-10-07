@@ -46,7 +46,7 @@ export function registerTitleTextures(scene: Phaser.Scene) {
         const spec = LAYERS[name];
         if (scene.textures.exists(spec.key)) continue;
         const texture = (spec.frames ?? 1) > 1
-            ? scene.textures.addSpriteSheet(spec.key, image, { frameWidth: spec.w, frameHeight: spec.h })
+            ? scene.textures.addSpriteSheet(spec.key, image, { frameWidth: spec.w * (spec.res ?? 1), frameHeight: spec.h * (spec.res ?? 1) })
             : scene.textures.addImage(spec.key, image);
         texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
