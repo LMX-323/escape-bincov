@@ -1,14 +1,15 @@
 /**
  * Hand passes on the shared 640x360 grid (global coordinates). They replace generated
  * pseudo-detail with readable objects that belong to this game: a tide chart and a
- * lockdown calendar instead of an illegible portrait and note, and a clean radio meter.
+ * lockdown calendar instead of an illegible portrait and note. (The radio and rifle are
+ * Codex redraws pasted into the desk source; see generate.ts.)
  * Colours are named here and snapped to the shared palette.
  */
-import { majority, painter, type Cells, type Palette } from './pixel-grid';
+import { painter, type Cells, type Palette } from './pixel-grid';
 
 export const RESERVED = ['#a8473c', '#6e2e28', '#4f7a76'];
-const ink = '#141210', shade = '#3a2a22', paperD = '#7a6a4c', paperM = '#9c8a64', paperL = '#b9a57a', paperH = '#d2bf8e';
-const red = RESERVED[0], redD = RESERVED[1], teal = RESERVED[2], brass = '#8a6a36', glow = '#e9b766', glowH = '#f6dc98';
+const shade = '#3a2a22', paperD = '#7a6a4c', paperM = '#9c8a64', paperL = '#b9a57a', paperH = '#d2bf8e';
+const red = RESERVED[0], redD = RESERVED[1], teal = RESERVED[2], brass = '#8a6a36', glowH = '#f6dc98';
 
 /** Pillar between the door and window (room layer). */
 export function touchRoom(c: Cells, pal: Palette) {
@@ -39,18 +40,3 @@ export function touchRoom(c: Cells, pal: Palette) {
     }
 }
 
-/** Radio on the desk layer: calm the generated panel noise, then redraw the lit meter. */
-export function touchDesk(c: Cells, pal: Palette) {
-    majority(c, 400, 188, 92, 38, 2);
-    const { px, rect, line } = painter(c, pal);
-    rect(ink, 430, 196, 23, 15);
-    rect(glow, 431, 197, 21, 13); rect(glowH, 432, 198, 19, 2);
-    for (let k = 0; k <= 8; k++) {
-        const x = 433 + Math.round(k / 8 * 16), y = 203 - Math.round(Math.sin(k / 8 * Math.PI) * 3);
-        px(k % 4 ? brass : ink, x, y);
-        if (k % 4 === 0) px(brass, x, y + 1);
-    }
-    rect(red, 445, 201, 5, 1);
-    line(red, 441, 208, 437, 200); px(ink, 441, 208); px(ink, 442, 208);
-    rect(brass, 430, 211, 23, 1);
-}

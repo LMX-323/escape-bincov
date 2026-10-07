@@ -143,22 +143,6 @@ export function clean(c: Cells, pal: Palette, passes = 2) {
     }
 }
 
-/** 3x3 majority filter over a global-grid rectangle; used only where generated detail is noise. */
-export function majority(c: Cells, x0: number, y0: number, w: number, h: number, passes = 2) {
-    for (let p = 0; p < passes; p++) {
-        const next = c.index.slice();
-        for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
-            if (!c.has(x, y) || c.index[c.at(x, y)] < 0) continue;
-            const counts = new Map<number, number>();
-            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (c.has(x + dx, y + dy)) { const n = c.index[c.at(x + dx, y + dy)]; if (n >= 0) counts.set(n, (counts.get(n) ?? 0) + 1); }
-            const me = c.index[c.at(x, y)]; let best = me, bc = counts.get(me) ?? 0;
-            for (const [n, k] of counts) if (k > bc && k >= 4) { best = n; bc = k; }
-            next[c.at(x, y)] = best;
-        }
-        c.index = next;
-    }
-}
-
 /** Painter on global grid coordinates. Colours snap to the shared palette (including reserved accents). */
 export function painter(c: Cells, pal: Palette) {
     const cache = new Map<string, number>();

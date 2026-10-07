@@ -4,12 +4,14 @@ import { createHash } from 'node:crypto';
 import { LAYERS, type LayerName } from '../../src/title/layout';
 import { decodePng, encodePng, type RGBA } from './png';
 import { RES, sample, extractPalette, quantize, clean, texture, type Cells, type Region } from './pixel-grid';
-import { RESERVED, touchRoom, touchDesk } from './touch';
+import { RESERVED, touchRoom } from './touch';
 const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const path = (name: string) => 'assets/title/' + name + '.png';
 const read = (name: string) => decodePng(readFileSync(path(name)));
 const file = (name: LayerName) => path(LAYERS[name].key);
-const sourceFiles = ['sources/wordmark-industrial-v4', ...['master', 'room', 'desk', 'chair', 'fore', 'lamp', 'harbor', 'boat', 'pier'].map(n => 'sources/master-v3/' + n + '-v3')];
+/** Codex redraws registered to master-v3 coordinates (see sources/refine-v5/prompts.md). */
+const REFINE = 'sources/refine-v5/';
+const sourceFiles = [...['wordmark-144x72', 'radio-panel', 'rifle'].map(n => REFINE + n), ...['master', 'room', 'desk', 'chair', 'fore', 'lamp', 'harbor', 'boat', 'pier'].map(n => 'sources/master-v3/' + n + '-v3')];
 const master = (name: string) => read('sources/master-v3/' + name + '-v3');
 /** Five sway frames around the fixed suspension; rows shift by whole art pixels (3 texels). */
 function lampStrip(src: RGBA): RGBA {
@@ -31,25 +33,25 @@ function mooringStrip(): RGBA {
     }
     return { w, h, data };
 }
+/** The v5 wordmark is drawn at its runtime size: copy its ink 1:1 in the menu's one colour,
+ * moved to a one-pixel top-left margin so it lines up with the menu column. */
 function wordmark(): RGBA {
-    const src = read('sources/wordmark-industrial-v4'), ink = (p: number) => src.data[p + 3] >= 192 && src.data[p] > 190 && src.data[p + 1] > 172 && src.data[p + 2] > 130;
-    let x0 = src.w, y0 = src.h, x1 = 0, y1 = 0;
-    for (let y = 0; y < src.h; y++)
-        for (let x = 0; x < src.w; x++)
-            if (ink((y * src.w + x) * 4)) {
-                x0 = Math.min(x0, x);
-                y0 = Math.min(y0, y);
-                x1 = Math.max(x1, x);
-                y1 = Math.max(y1, y);
-            }
-    const { w, h } = LAYERS.wordmark, data = new Uint8Array(w * h * 4), s = Math.min((w - 2) / (x1 - x0 + 1), (h - 2) / (y1 - y0 + 1)), dw = Math.round((x1 - x0 + 1) * s), dh = Math.round((y1 - y0 + 1) * s);
-    for (let y = 0; y < dh; y++)
-        for (let x = 0; x < dw; x++) {
-            const p = (Math.min(y1, y0 + Math.floor((y + .5) / s)) * src.w + Math.min(x1, x0 + Math.floor((x + .5) / s))) * 4;
-            if (ink(p))
-                data.set([228, 218, 184, 255], ((y + 1) * w + x + 1) * 4);
-        }
+    const src = read(REFINE + 'wordmark-144x72'), { w, h } = LAYERS.wordmark, data = new Uint8Array(w * h * 4);
+    if (src.w !== w || src.h !== h) throw new Error('Wordmark source must be drawn at the runtime size');
+    const ink = (x: number, y: number) => src.data[(y * w + x) * 4 + 3] >= 128;
+    let x0 = w, y0 = h;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (ink(x, y)) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); }
+    for (let y = y0; y < h; y++) for (let x = x0; x < w; x++) if (ink(x, y)) data.set([228, 218, 184, 255], ((y - y0 + 1) * w + x - x0 + 1) * 4);
     return { w, h, data };
+}
+/** Paste redrawn props (binary alpha) over a master-registered layer before it is gridded. */
+function paste(base: RGBA, prop: RGBA, ox: number, oy: number): RGBA {
+    const data = base.data.slice();
+    for (let y = 0; y < prop.h; y++) for (let x = 0; x < prop.w; x++) {
+        const p = (y * prop.w + x) * 4;
+        if (prop.data[p + 3] >= 128) data.set([prop.data[p], prop.data[p + 1], prop.data[p + 2], 255], ((oy + y) * base.w + ox + x) * 4);
+    }
+    return { w: base.w, h: base.h, data };
 }
 export function validateTitleArt() {
     const manifest = JSON.parse(readFileSync('assets/title/manifest.json', 'utf8'));
@@ -77,15 +79,16 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
     else {
         // Registered areas: source rectangle ↔ logical scene rectangle (unchanged from the
         // previous preparation). Everything below shares one grid and one palette.
-        const full = (name: string, lx: number, ly: number, lw: number, lh: number): Region => {
-            const src = master(name), k = src.w / 960;
+        const full = (name: string, lx: number, ly: number, lw: number, lh: number, src = master(name)): Region => {
+            const k = src.w / 960;
             return { src, sx: lx * k, sy: ly * k, sw: lw * k, sh: lh * k, lx, ly, lw, lh };
         };
         const regions = {
             harbor: full('harbor', 0, 0, 960, 540),
             room: full('room', 0, 0, 960, 540),
             chair: full('chair', 250, 372, 320, 168),
-            desk: full('desk', 392, 238, 568, 302),
+            // The radio and rifle are Codex redraws at their master-v3 crop origins.
+            desk: full('desk', 392, 238, 568, 302, paste(paste(master('desk'), read(REFINE + 'radio-panel'), 1040, 470), read(REFINE + 'rifle'), 1150, 600)),
             fore: full('fore', 810, 0, 150, 540),
             boat: { src: master('boat'), sx: 484, sy: 55, sw: 507, sh: 712, lx: LAYERS.boat.x, ly: LAYERS.boat.y, lw: LAYERS.boat.w, lh: LAYERS.boat.h },
             lamp: { src: master('lamp'), sx: 896, sy: 12, sw: 368, sh: 302, lx: LAYERS.lamp.x, ly: LAYERS.lamp.y, lw: LAYERS.lamp.w, lh: LAYERS.lamp.h },
@@ -95,13 +98,12 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
         const palette = extractPalette(Object.values(cells), 64, RESERVED);
         for (const c of Object.values(cells)) { quantize(c, palette); clean(c, palette); }
         touchRoom(cells.room, palette);
-        touchDesk(cells.desk, palette);
         const tex = (name: keyof typeof regions, layer: LayerName) => { const L = LAYERS[layer]; return texture(cells[name], palette, regions[name], L.x, L.y, L.w, L.h); };
         const derived: Record<string, RGBA> = {
             'title-sky-ready': tex('harbor', 'sky'),
             'title-harbor-ready': tex('harbor', 'harbor'),
             'title-room-ready': tex('room', 'room'),
-            'title-wordmark-industrial-v4': wordmark(),
+            'title-wordmark-industrial-v5': wordmark(),
             'title-chair-master-v3': tex('chair', 'chair'),
             'title-desk-master-v3': tex('desk', 'desk'),
             'title-fore-master-v3': tex('fore', 'fore'),
@@ -121,7 +123,7 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
                 throw new Error(name + ': invalid image size');
             pngBytes += bytes.length;
             rgbaBytes += im.w * im.h * 4;
-            layers[name] = { file: file(name), ...spec, frameWidth: spec.w * (spec.res ?? 1), frameHeight: spec.h * (spec.res ?? 1), frames: spec.frames ?? 1, bytes: bytes.length, sha256: sha(bytes), pixelSha256: sha(im.data), provenance: name === 'wordmark' ? 'ImageGen, one-ink nearest-neighbour preparation' : name === 'mooring' ? 'Deterministic native pixel-line frames' : name === 'lamp' ? 'ImageGen cutout, registered crop and fixed-suspension row-shift frames' : spec.res ? 'ImageGen master-v3 layer on the shared 640x360 pixel grid and palette' + (name === 'room' || name === 'desk' ? ', with hand passes (scripts/title-art/touch.ts)' : '') : name === 'sparks' || name === 'rain' || name === 'radioFx' || name.startsWith('fog') ? 'Existing deterministic effect sprite' : 'Imported ImageGen pixel layer' };
+            layers[name] = { file: file(name), ...spec, frameWidth: spec.w * (spec.res ?? 1), frameHeight: spec.h * (spec.res ?? 1), frames: spec.frames ?? 1, bytes: bytes.length, sha256: sha(bytes), pixelSha256: sha(im.data), provenance: name === 'wordmark' ? 'Codex redraw at runtime size (sources/refine-v5), one ink' : name === 'mooring' ? 'Deterministic native pixel-line frames' : name === 'lamp' ? 'ImageGen cutout, registered crop and fixed-suspension row-shift frames' : spec.res ? 'ImageGen master-v3 layer on the shared 640x360 pixel grid and palette' + (name === 'room' ? ', with hand passes (scripts/title-art/touch.ts)' : name === 'desk' ? ', with Codex radio and rifle redraws (sources/refine-v5)' : '') : name === 'sparks' || name === 'rain' || name === 'radioFx' || name.startsWith('fog') ? 'Existing deterministic effect sprite' : 'Imported ImageGen pixel layer' };
         }
         const sources = Object.fromEntries(sourceFiles.map(n => [path(n), sha(readFileSync(path(n)))]));
         mkdirSync('assets/title', { recursive: true });

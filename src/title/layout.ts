@@ -35,7 +35,7 @@ const layers = {
     fore: { key: 'title-fore-master-v3', group: 'fore', x: 785, y: -11, w: 200, h: 562, res: 2 },
     sparks: { key: 'title-sparks-new', group: 'harbor', x: 0, y: 0, w: 8, h: 4, frames: 8 },
     rain: { key: 'title-rain-new', group: 'harbor', x: 0, y: 0, w: 6, h: 16, frames: 3 },
-    wordmark: { key: 'title-wordmark-industrial-v4', group: 'fore', x: 0, y: 0, w: 144, h: 72, html: true },
+    wordmark: { key: 'title-wordmark-industrial-v5', group: 'fore', x: 0, y: 0, w: 144, h: 72, html: true },
 } satisfies Record<string, LayerSpec>;
 export type LayerName = keyof typeof layers;
 export const LAYERS: Record<LayerName, LayerSpec> = layers;

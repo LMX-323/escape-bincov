@@ -6,7 +6,7 @@
 
 ## v7 统一像素网格（2026-10-07）
 
-运行图层不再直接缩放生成插画。`pnpm title:art` 会把每个登记图层采样到同一套 640×360 美术像素网格上，所有图层共用一套色板（`palette.json`，64 色提炼色加 3 个保留色），清理孤立像素，再应用 `scripts/title-art/touch.ts` 的手绘精修（潮汐表、封锁日历、电表）。网格图层（`layout.ts` 中 `res: 2`）每个逻辑像素存 2 个纹素，1 个美术像素正好 3×3 纹素。源图不改。说明与截图见 [docs/title-pixel-grid](../../docs/title-pixel-grid/README.md)。
+运行图层不再直接缩放生成插画。`pnpm title:art` 会把每个登记图层采样到同一套 640×360 美术像素网格上，所有图层共用一套色板（`palette.json`，64 色提炼色加 3 个保留色），清理孤立像素，再应用 `scripts/title-art/touch.ts` 的手绘精修（潮汐表、封锁日历、电表）。网格图层（`layout.ts` 中 `res: 2`）每个逻辑像素存 2 个纹素，1 个美术像素正好 3×3 纹素。源图不改。`sources/refine-v5/` 是 Codex 按母版坐标重绘的电台、步枪和字标，生成时贴回 desk 源层或直接作为字标。说明与截图见 [docs/title-pixel-grid](../../docs/title-pixel-grid/README.md)。
 
 ## 来源与派生
 
