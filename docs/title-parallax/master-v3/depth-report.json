@@ -1,0 +1,157 @@
+{
+  "date": "2026-10-06T19:55:47.457Z",
+  "methodology": "Unmodified offline game screenshots. Default pose uses reduced motion; four extreme poses use real mouse input. Threshold crops are direct browser screenshots of the visible canvas, not retouched assets. Visual acceptance is separate from this script.",
+  "views": [
+    {
+      "name": "top-left",
+      "camera": [
+        -0.9987800728981675,
+        -0.9978397256282809
+      ],
+      "groups": {
+        "far": [
+          1,
+          1
+        ],
+        "harbor": [
+          3,
+          2
+        ],
+        "room": [
+          5,
+          3
+        ],
+        "lamp": [
+          6,
+          3
+        ],
+        "desk": [
+          8,
+          4
+        ],
+        "chair": [
+          16,
+          7
+        ],
+        "fore": [
+          24,
+          10
+        ]
+      }
+    },
+    {
+      "name": "top-right",
+      "camera": [
+        0.9984763942841887,
+        -0.9981481481481481
+      ],
+      "groups": {
+        "far": [
+          -1,
+          1
+        ],
+        "harbor": [
+          -3,
+          2
+        ],
+        "room": [
+          -5,
+          3
+        ],
+        "lamp": [
+          -6,
+          3
+        ],
+        "desk": [
+          -8,
+          4
+        ],
+        "chair": [
+          -16,
+          7
+        ],
+        "fore": [
+          -24,
+          10
+        ]
+      }
+    },
+    {
+      "name": "bottom-left",
+      "camera": [
+        -0.9984649814558457,
+        0.9976550921148926
+      ],
+      "groups": {
+        "far": [
+          1,
+          -1
+        ],
+        "harbor": [
+          3,
+          -2
+        ],
+        "room": [
+          5,
+          -3
+        ],
+        "lamp": [
+          6,
+          -3
+        ],
+        "desk": [
+          8,
+          -4
+        ],
+        "chair": [
+          16,
+          -7
+        ],
+        "fore": [
+          24,
+          -10
+        ]
+      }
+    },
+    {
+      "name": "bottom-right",
+      "camera": [
+        0.9984651719798107,
+        0.9981481481481482
+      ],
+      "groups": {
+        "far": [
+          -1,
+          -1
+        ],
+        "harbor": [
+          -3,
+          -2
+        ],
+        "room": [
+          -5,
+          -3
+        ],
+        "lamp": [
+          -6,
+          -3
+        ],
+        "desk": [
+          -8,
+          -4
+        ],
+        "chair": [
+          -16,
+          -7
+        ],
+        "fore": [
+          -24,
+          -10
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "status": "passed"
+}

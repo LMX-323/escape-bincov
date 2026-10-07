@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-07T06:20:36.665Z",
+  "methodology": "Offline file:// current packaged game. Screenshots are unmodified. Water diagnostic uses ?test=1 to disable rain and hold the camera; a separate static capture uses reduced motion. Synthetic state is limited to these controls; no saved-game fixture.",
+  "checks": [
+    {
+      "name": "visible water changes without rain",
+      "changedPixels": 2124
+    },
+    {
+      "name": "visible reflection changes without rain",
+      "changedPixels": 8617
+    },
+    {
+      "name": "fixed-camera diagnostic",
+      "camera": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "motion toggle preserves pose",
+      "before": [
+        {
+          "far": [
+            0,
+            0
+          ],
+          "harbor": [
+            0,
+            0
+          ],
+          "room": [
+            0.979033558337486,
+            0
+          ],
+          "lamp": [
+            0.979033558337486,
+            0
+          ],
+          "desk": [
+            1.958067116674972,
+            0
+          ],
+          "chair": [
+            2.937100675012458,
+            0
+          ],
+          "fore": [
+            3.916134233349944,
+            0
+          ]
+        },
+        61.524120998807724,
+        2,
+        53
+      ],
+      "after": [
+        {
+          "far": [
+            0,
+            0
+          ],
+          "harbor": [
+            0,
+            0
+          ],
+          "room": [
+            0.979033558337486,
+            0
+          ],
+          "lamp": [
+            0.979033558337486,
+            0
+          ],
+          "desk": [
+            1.958067116674972,
+            0
+          ],
+          "chair": [
+            2.937100675012458,
+            0
+          ],
+          "fore": [
+            3.916134233349944,
+            0
+          ]
+        },
+        61.524120998807724,
+        2,
+        53
+      ]
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "status": "passed"
+}

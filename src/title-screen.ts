@@ -1,41 +1,28 @@
 import { uiIcon } from './art/symbols';
 
-// Menu and hideout use viewport space; raids retain their logical 960×540 layout.
-const book=uiIcon('guide'), motionIcon=uiIcon('motion'), arrow=uiIcon('arrow'), compass=uiIcon('compass');
-
+// The menu is real HTML over the layered Phaser scene; nothing interactive is baked into art.
+// The wordmark image arrives as the --title-wordmark CSS variable (src/title/assets.ts).
 export function titleScreen(options: { runs: number; extracts: number; motion: boolean; overlay: boolean; storageOK: boolean; resume: boolean; touch: boolean }) {
     const { runs, extracts, motion, overlay, storageOK, resume, touch } = options;
+    const detail = resume ? '继续未结束的行动 · 恢复后暂停' : runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '';
     return `<section class="title-screen" aria-label="游戏主菜单" ${overlay ? 'inert' : ''}>
         <div class="title-shade" aria-hidden="true"></div>
-        <header class="title-masthead">
-            <div class="title-location">${compass}<span>滨科夫县<b>沿海封锁区</b></span></div>
-            <div class="title-day"><span class="signal-dot" aria-hidden="true"></span>赤潮封锁 <strong>第 17 天</strong></div>
-        </header>
+        <header class="title-masthead"><span>滨科夫县</span><span aria-hidden="true">·</span><span>沿海封锁区</span></header>
         <div class="title-layout">
-            <div class="title-copy">
-                <div class="title-kicker"><span></span>海还没有退去</div>
-                <h1><span class="title-escape">逃离</span><span class="title-bincov">滨科夫<span class="title-period" aria-hidden="true">.</span></span></h1>
-                <div class="title-english" lang="en">ESCAPE BINCOV</div>
-                <p class="title-story">穿过盐雾与封锁线，<br>带上找到的物资，<em>活着回来。</em></p>
-                <div class="title-actions">
-                    <button class="title-enter" data-action="enter"><span><strong>${resume ? '继续上次行动' : '进入水产站'}</strong><small>${resume ? '继续未结束的行动 · 恢复后暂停' : runs > 0 ? `已出击 ${runs} 次 · 成功撤离 ${extracts} 次` : '整理装备，准备出发'}</small></span>${arrow}</button>
-                    <p class="title-save-note">单人撤离生存<span>进度保存在此浏览器</span></p>
-                    ${!storageOK ? '<p class="title-storage-note" role="status">浏览器无法保存进度，暂时不能出击。</p>' : ''}
-                </div>
-            </div>
-            <aside class="title-fieldnote" aria-label="水产站电台">
-                <div class="title-fieldnote-rule"><span>沿海避难点</span><span>封锁第 17 天</span></div>
-                <div class="title-radio-heading"><span class="radio-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>水产站 · 值守电台</div>
-                <p>“看见岸边那盏灯了吗？<br>我们在这里，等你回来。”</p>
-            </aside>
+            <h1 class="title-mark"><span class="title-mark-art" aria-hidden="true"></span><span class="title-mark-text">逃离 滨科夫</span></h1>
+            <div class="title-english" lang="en">ESCAPE BINCOV</div>
+            <nav class="title-menu" aria-label="主菜单">
+                <button class="title-enter" data-action="enter"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">${resume ? '继续上次行动' : '进入水产站'}</strong>${detail ? `<small>${detail}</small>` : ''}</button>
+                <button class="title-option" data-action="help"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">行动指南</strong></button>
+                ${!storageOK ? '<p class="title-storage-note" role="status">浏览器无法保存进度，暂时不能出击。</p>' : ''}
+            </nav>
         </div>
         <footer class="title-footer">
-            <nav aria-label="主菜单选项">
-                <button class="title-link" data-action="help">${book}<span>行动指南</span></button>
-                <button class="title-link title-motion" data-action="title-motion" aria-pressed="${motion}" aria-label="动态景物">${motionIcon}<span>动态景物 <b>${motion ? '开' : '关'}</b></span></button>
+            <div class="title-settings">
+                <button class="title-link title-motion" data-action="title-motion" aria-pressed="${motion}" aria-label="动态景物">动态景物 <b>${motion ? '开' : '关'}</b></button>
                 <a class="title-link title-repo" href="https://github.com/xuys2025/escape-bincov" target="_blank" rel="noopener noreferrer">GitHub ${uiIcon('external')}</a>
-            </nav>
-            <div class="title-edition"><span class="title-input-note">${touch ? '手机横屏战斗 · 触控候选版' : '键盘与鼠标 · 手机支持触控'}</span><span class="title-build">v0.2.0</span></div>
+            </div>
+            <p class="title-save-note">进度保存在此浏览器<span class="title-input-note">${touch ? '手机横屏战斗 · 触控候选版' : '键盘与鼠标 · 手机支持触控'}</span><span class="title-build">v0.2.0</span></p>
         </footer>
     </section>`;
 }

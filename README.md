@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/tactical-ui/title-1920.png" alt="逃离滨科夫实际主界面：月光、风雨中的夜港，以及等待归来的水产站" width="100%">
+  <img src="docs/title-parallax/menu-v4/centre.png" alt="逃离滨科夫实际主界面：从水产站值守室的灯下望向雨夜港口与系泊渔船" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>
@@ -101,7 +101,7 @@ PR #7 候选修复增加药品与附近物品入口、可取消的格位整理�
 
 </details>
 
-主界面支持桌面、宽屏和手机横竖屏排布，提供「动态景物」开关，并遵循系统减少动态效果设置。手机触控已开放尝鲜，真机验收待补；主界面设计与历史截图见 [夜港主界面记录](docs/TITLE-SCREEN.md)。
+主界面是一间可以看见港口的像素值守室：移动鼠标时前后景物产生不同幅度的视差，吊灯、渔船、水面、雾、尘埃与雨各自缓慢变化。支持桌面、宽屏和手机横竖屏排布，提供「动态景物」开关，并遵循系统减少动态效果设置。手机触控已开放尝鲜，真机验收待补；实现与验收见 [像素主界面记录](docs/title-parallax/README.md)，旧版夜港主界面见 [历史记录](docs/TITLE-SCREEN.md)。
 
 大陆网络下 GitHub Pages 的访问体验需以实际网络为准；遇到加载问题可使用离线版。备用静态托管方案与存档迁移说明见 [大陆在线游玩指南](docs/ONLINE-CHINA.md)。
 
@@ -129,7 +129,9 @@ pnpm dev
 | `pnpm test:ui` | 界面布局检查与双分辨率截图 |
 | `pnpm test:tactical` | 战术布局、字体 B、20 种物品、旋转裁切、商人买卖与搜刮拖放 |
 | `pnpm test:art` | 原生/灰度纹理图集、角色朝向、六区场景及美术恢复检查 |
-| `pnpm test:title` | 12 种主界面视口、键盘/点击、动态开关和场景往返检查 |
+| `pnpm test:title` | 13 种主界面视口、点阵字体、键盘/点击、分层视差与环境动态、动态开关和 20 次场景往返检查 |
+| `pnpm title:art` | 安全派生主菜单视差边缘和字标并更新 manifest；原始生成图不覆盖（`-- --check` 只核对） |
+| `pnpm title:evidence` | 生成主菜单截图、录屏、60 秒连续性审计与性能证据（不在 CI 中） |
 | `pnpm test:save-browser` | 保存失败、导入导出、任务和升级回归 |
 | `pnpm test:loot` | 双栏拖放、指定格、保存回滚、箱子／尸体恢复与三局结算 |
 | `pnpm test:loot-target` | 桌面滚轮/手机点选目标、危险栏、指南返回与可访问性 |
@@ -194,7 +196,8 @@ PR 会运行 **CI & Pages / Build and test**；合并至 `main` 并验证通过�
 | 移动端操作、完整恢复协议与验证边界 | [移动适配实现](docs/MOBILE-IMPLEMENTATION.md) |
 | PR #2 桌面回归修复与前后对照 | [桌面回归修复](docs/DESKTOP-REGRESSION-FIXES.md) |
 | 移动体验：背包、搜刮、用药和战斗提示 | [修复记录](docs/MOBILE-EXPERIENCE-FIXES.md)（PR #7 待审） · [基线排查与原计划](docs/PLAYER-FEEDBACK-PLAN.md) |
-| 夜港主界面、手机布局与性能取舍 | [主界面重制记录](docs/TITLE-SCREEN.md) |
+| 像素值守室主界面、视差、素材与验收 | [像素主界面记录](docs/title-parallax/README.md)、[素材说明](assets/title/README.md) |
+| 旧版夜港主界面（历史） | [主界面重制记录](docs/TITLE-SCREEN.md) |
 | 玩家文案、统一术语与校对规则 | [文案约定](docs/COPY-GUIDE.md) · [校对记录](docs/COPY-REVIEW.md) |
 | 上一轮实现、验证与遗留事项 | [handoff.md](handoff.md) |
 | 离线分享及验收证据 | [便携包说明](docs/PORTABLE.md) · [验收记录](docs/ACCEPTANCE.md) |

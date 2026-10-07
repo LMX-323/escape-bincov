@@ -5,7 +5,18 @@ import { createHash } from 'node:crypto';
 import { fontCharacters } from './font-characters.mjs';
 
 async function compile() {
-  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',define:{'process.env.NODE_ENV':'"production"'}});
+  const titleManifest = JSON.parse(await readFile('assets/title/manifest.json','utf8'));
+  if (titleManifest.schema !== 2) throw new Error('Prepare the imported title art manifest with pnpm title:art.');
+  const titleImports = [...(await readFile('src/title/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/title\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  const titleFiles = Object.values(titleManifest.layers).map(layer => layer.file).sort();
+  if (JSON.stringify(titleImports) !== JSON.stringify(titleFiles)) throw new Error('Title manifest does not cover the runtime imports.');
+  for (const layer of Object.values(titleManifest.layers)) {
+    const bytes = await readFile(layer.file);
+    if (createHash('sha256').update(bytes).digest('hex') !== layer.sha256) throw new Error(`Title asset hash mismatch: ${layer.file}. Review the changed source before preparing derivatives.`);
+    if (bytes.readUInt32BE(16) !== layer.frameWidth * layer.frames || bytes.readUInt32BE(20) !== layer.frameHeight) throw new Error(`Title dimensions mismatch: ${layer.file}`);
+  }
+  for (const [file, sha256] of Object.entries(titleManifest.sources)) if (createHash('sha256').update(await readFile(file)).digest('hex') !== sha256) throw new Error(`Title source changed: ${file}`);
+  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'}});
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
   if (createHash('sha256').update(font).digest('hex') !== manifest.sha256) throw new Error('Font manifest hash mismatch');

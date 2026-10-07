@@ -1,0 +1,15 @@
+2026-10-07 — 内置 ImageGen，真实透明背景。
+最终源图：wordmark-industrial.png
+运行资产：../title-wordmark-industrial.png
+参考：已认可 concept-v2-pixel.png（仓库构图参考 docs/title-parallax/concept-reference.png）。
+
+第一轮提示词：
+Use case: logo-brand. Create the final replacement pixel-art Chinese game wordmark, extracted in spirit from the title in this reference image, on genuine transparent background. Only the wordmark, no scene, no UI, no panel. Text EXACTLY two lines: top line “逃离”, second line “滨科夫”. Correct five simplified Chinese characters, no other text. Composition: compact left-aligned block, second line dominates, first line about 50% the second line's character height. Total artwork roughly 2:1 wide. Custom very heavy condensed industrial stencil-like lettering with massive square stroke geometry and readable negative counters, not a normal bitmap text font enlarged. Flat old ivory ink, subtle gray chips exposing transparency, localized abrasion and restrained broken edges; fractured harbor crane and warehouse negative silhouettes along lower parts of second line, while preserving legibility. Match the reference's thick survival-game industrial title weight, exact wording and tight spacing. Designed as hand-crafted pixel art with hard staircase edges and coherent block shapes, will be rendered around 144x72 logical pixels with nearest-neighbor. No gradients, no bevel, no extrusion, no drop shadow, no golden outline, no cursive/calligraphic strokes, no rounded cute font, no extra emblem, no soldiers or weapons. Leave small transparent margins; retain true alpha. This is a new independent wordmark asset for Escape Bincov.
+
+第二轮提示词（输入为第一轮图；本文件夹保存第二轮源图）：
+Precise edit of this wordmark. Keep all five exact Chinese characters 逃离 / 滨科夫, identical two-line layout, heavy stroke shapes, crane silhouette cutouts and compact proportions. CRITICAL: remove ALL gray/brown/yellow outlines, bevels, soft glows, shadows and raised/embossed appearance. It must be absolutely FLAT SINGLE INK screen printing. Every remaining opaque pixel is the exact solid color #E4DAB8, every background/counter/abrasion/crane-cutout pixel is true transparency. Like a one-color stencil cut from paper, no other color, no shading. Use crisp pixel stair-step edges and slightly more purposeful broad cracked/worn patches, without hurting the Chinese letterforms. Genuine transparent background, do not draw a checkerboard. Keep original silhouette and small transparent margins. The result will be downsampled to a 144-pixel-wide game logo; only bold readable shapes survive.
+
+可复现游戏化派生：scripts/title-art/generate.ts
+- 根据源图主体墨色阈值取得包围盒，最近邻映射至 144×66。
+- 主体统一为 #E4DAB8，透明为 alpha=0；没有图片模糊、抗锯齿或浮雕阴影。
+- 保留 ImageGen 源图，不覆盖；构建清单记录来源和文件哈希。

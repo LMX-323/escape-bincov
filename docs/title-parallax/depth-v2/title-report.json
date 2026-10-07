@@ -1,0 +1,493 @@
+{
+  "startedAt": "2026-10-06T19:29:53.844Z",
+  "checks": [
+    {
+      "name": "composition, lettering, help, input and round-trip 1280x720",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 1920x1080",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 432,
+          "height": 198,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 2560x1080",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 432,
+          "height": 198,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 1024x768",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 768x1024",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 360x800",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 390x844",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 412x915",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 430x932",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 288,
+          "height": 132,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 844x390",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          32,
+          16
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 144,
+          "height": 66,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 932x430",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          16,
+          32
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 144,
+          "height": 66,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 640x360",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          32,
+          16
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 144,
+          "height": 66,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "composition, lettering, help, input and round-trip 740x300",
+      "status": "passed",
+      "outside": [],
+      "smallTargets": [],
+      "noOverlap": true,
+      "fitsWidth": true,
+      "scrollable": false,
+      "lettering": {
+        "fonts": [
+          "Bincov Text"
+        ],
+        "sizes": [
+          32,
+          16
+        ],
+        "loaded": true,
+        "mark": {
+          "heading": "逃离 滨科夫",
+          "width": 144,
+          "height": 66,
+          "image": "url(\"data:image/png;base64"
+        }
+      }
+    },
+    {
+      "name": "layered scene mounted with one controller",
+      "status": "passed",
+      "counts": {
+        "children": 7,
+        "textures": 16,
+        "motion": 1,
+        "overlay": 1,
+        "destroy": 13,
+        "shutdown": 13
+      },
+      "listeners": {
+        "pointermove": 3,
+        "blur": 4,
+        "focus": 2,
+        "visibilitychange": 4,
+        "mouseleave": 1
+      }
+    },
+    {
+      "name": "pointer parallax by depth, fixed menu, settles after leaving",
+      "status": "passed",
+      "corner": {
+        "far": [
+          -1,
+          -1
+        ],
+        "harbor": [
+          -3,
+          -2
+        ],
+        "room": [
+          -5,
+          -3
+        ],
+        "lamp": [
+          -6,
+          -3
+        ],
+        "desk": [
+          -8,
+          -4
+        ],
+        "chair": [
+          -16,
+          -7
+        ],
+        "fore": [
+          -24,
+          -10
+        ]
+      },
+      "settled": [
+        -0.022584018887826556,
+        -0.03448693380449033
+      ]
+    },
+    {
+      "name": "at least four ambient motion kinds, with and without rain",
+      "status": "passed",
+      "ambient": {
+        "light": true,
+        "object": true,
+        "water": true,
+        "air": true,
+        "rain": true
+      },
+      "dry": {
+        "light": true,
+        "object": true,
+        "water": true,
+        "air": true,
+        "rain": false
+      }
+    },
+    {
+      "name": "rain recycles off-screen only; fog never jumps back",
+      "status": "passed",
+      "frames": 240,
+      "drops": 70,
+      "respawns": 71,
+      "violations": 0,
+      "fogBack": 0
+    },
+    {
+      "name": "guide freezes pointer parallax and releases it on close",
+      "status": "passed"
+    },
+    {
+      "name": "motion toggle and live reduced-motion preference stop every system",
+      "status": "passed"
+    },
+    {
+      "name": "hidden or unfocused page pauses the scene and resumes without catch-up",
+      "status": "passed",
+      "advancedAfterResumeMs": 120.40000000148939
+    },
+    {
+      "name": "twenty scene round-trips without controller, object, texture or listener growth",
+      "status": "passed",
+      "warm": {
+        "children": 7,
+        "textures": 17,
+        "motion": 1,
+        "overlay": 1,
+        "destroy": 13,
+        "shutdown": 13
+      },
+      "after": {
+        "children": 7,
+        "textures": 17,
+        "motion": 1,
+        "overlay": 1,
+        "destroy": 13,
+        "shutdown": 13
+      },
+      "listeners": {
+        "pointermove": 3,
+        "blur": 4,
+        "focus": 2,
+        "visibilitychange": 4,
+        "mouseleave": 1
+      }
+    },
+    {
+      "name": "600-frame desktop headless sample with motion on (measurement, not a device guarantee)",
+      "status": "passed",
+      "frames": 600,
+      "p50Ms": 6.1,
+      "p95Ms": 6.2,
+      "p99Ms": 6.2,
+      "maxMs": 6.3,
+      "over33ms": 0,
+      "actualFps": 164.7065254225288
+    },
+    {
+      "name": "orientation changes, including an open help dialog",
+      "status": "passed"
+    },
+    {
+      "name": "touch taps do not drive parallax",
+      "status": "passed",
+      "camera": [
+        0.0093751523003973,
+        0.04781218489521634
+      ]
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "methodology": "Offline file:// entry, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 is only used to read the title controller snapshot (motion, lifecycle, performance). No gameplay or save fixtures.",
+  "browser": "154.0.8037.98",
+  "htmlBytes": 6081208,
+  "frameSample": {
+    "frames": 600,
+    "p50Ms": 6.1,
+    "p95Ms": 6.2,
+    "p99Ms": 6.2,
+    "maxMs": 6.3,
+    "over33ms": 0,
+    "actualFps": 164.7065254225288
+  },
+  "status": "passed",
+  "finishedAt": "2026-10-06T19:30:41.341Z"
+}

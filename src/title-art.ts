@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
-// Original, deterministic pixel scenery. Four cached textures, no external assets,
-// shaders, particles or per-frame Canvas drawing. Shared by title, hideout and result.
+// Original, deterministic pixel harbour painted once to a cached texture. Used as the
+// static backdrop of the hideout and result screens; the menu has its own layered scene (src/title/).
 type Context = CanvasRenderingContext2D;
 const random = (n: number, salt = 0) => {
     let v = Math.imul(n + salt * 137, 374761393);
@@ -231,49 +231,6 @@ function paintHarbor(c: Context) {
     line(c, '#9c976b', 576, 448, 601, 436);
     // Sparse salt-grain texture is baked once, never animated noise.
     for (let i = 0; i < 1600; i++) rect(c, i % 2 ? '#d4dfb806' : '#06191e0b', random(i, 31) * 960, random(i, 32) * 540, 1, 1);
-}
-
-export function drawTitleBackdrop(scene: Phaser.Scene, motion: boolean) {
-    texture(scene, 'title-harbor', 960, 540, paintHarbor);
-    texture(scene, 'title-rain', 1024, 600, c => {
-        for (let i = 0; i < 85; i++) {
-            const x = random(i, 35) * 1024, y = random(i, 36) * 600;
-            line(c, i % 3 ? '#adccbf16' : '#cbdacb24', x, y, x - 3, y + 8);
-        }
-    });
-    texture(scene, 'title-glints', 960, 540, c => {
-        for (let i = 0; i < 45; i++) {
-            const y = 280 + random(i, 37) * 215;
-            rect(c, i % 2 ? '#bad4b745' : '#e7c28345', 590 + random(i, 38) * 350, y, 2 + random(i, 39) * 17, 1);
-        }
-    });
-    texture(scene, 'title-beacon', 24, 24, c => {
-        disc(c, '#d6d99209', 12, 12, 12); disc(c, '#e4dc9c18', 12, 12, 7);
-        rect(c, '#f4e6aa', 11, 10, 3, 4);
-    });
-    scene.add.image(0, 0, 'title-harbor').setOrigin(0);
-    const glints = scene.add.image(0, 0, 'title-glints').setOrigin(0);
-    const beacon = scene.add.image(893, 189, 'title-beacon').setOrigin(0);
-    const rain = scene.add.image(-16, -24, 'title-rain').setOrigin(0);
-    const tweens = [
-        scene.tweens.add({ targets: rain, x: -25, y: 0, duration: 1700, repeat: -1 }),
-        scene.tweens.add({ targets: glints, alpha: .2, duration: 3400, yoyo: true, repeat: -1, ease: 'Sine.InOut' }),
-        scene.tweens.add({ targets: beacon, alpha: .2, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.InOut' }),
-    ];
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const applyMotion = () => {
-        const enabled = motion && !reduced.matches;
-        tweens.forEach(tween => enabled ? tween.resume() : tween.pause());
-        if (!enabled) { rain.setPosition(-16, -24); glints.setAlpha(.45); beacon.setAlpha(.7); }
-    };
-    const toggle = (enabled: boolean) => { motion = enabled; applyMotion(); };
-    applyMotion();
-    reduced.addEventListener('change', applyMotion);
-    scene.events.on('title-motion', toggle);
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-        reduced.removeEventListener('change', applyMotion);
-        scene.events.off('title-motion', toggle);
-    });
 }
 
 /** Station and result share the same harbor painting without menu animations. */

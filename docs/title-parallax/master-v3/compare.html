@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>滨科夫 · 同一母版分层对照</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1519;color:#e4dab8;font:16px/1.6 system-ui,sans-serif}main{max-width:1500px;margin:auto;padding:24px}h1{font-size:26px;margin:0 0 6px}p{color:#b0bab5;margin:8px 0 18px}nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}button,a{color:inherit}button{font:inherit;cursor:pointer;background:#17292e;border:1px solid #64746d;padding:9px 16px}button[aria-pressed=true]{background:#e4dab8;color:#152126}button:focus-visible,a:focus-visible{outline:3px solid #edab56;outline-offset:3px}.frame{aspect-ratio:16/9;background:#050b0d;border:1px solid #344747}.frame img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}figcaption{margin-top:10px;color:#b0bab5}figure{margin:0}section{margin-top:30px}h2{font-size:20px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid img{width:100%;image-rendering:pixelated;border:1px solid #344747}footer{margin:30px 0} @media(max-width:700px){main{padding:14px}.grid{grid-template-columns:1fr}}
+</style>
+<main><h1>同一母版，重新核对空间关系</h1><p>原概念、生成母版和游戏截图可在同一画框切换。本轮是审阅稿，技术检查不代替美术验收。</p>
+<nav aria-label="比较版本" id="versions"></nav>
+<figure><div class="frame"><img id="scene" src="centre.png" alt="本轮真实游戏截图"></div><figcaption id="caption" aria-live="polite"></figcaption></figure>
+<section><h2>门槛与地面：直接浏览器局部截图</h2><p>湿码头止于门外；室内地板和门槛随室内层运动。以下分别是中心、鼠标右上、鼠标左下。</p><div class="grid">
+<figure><img src="threshold-centre.png" alt="中心门槛"><figcaption>中心</figcaption></figure>
+<figure><img src="threshold-top-right.png" alt="右上视差门槛"><figcaption>鼠标右上</figcaption></figure>
+<figure><img src="threshold-bottom-left.png" alt="左下视差门槛"><figcaption>鼠标左下</figcaption></figure>
+</div></section>
+<section><h2>动态与设备取景</h2><nav id="poses" aria-label="运行截图"></nav><p>前景绳椅遮挡桌台，桌台遮挡门外景物；像素截图未重绘或修饰。手机截图保留原始纵横比。</p></section>
+<footer><a href="water-and-parallax.webm">播放实际水面与视差录屏</a> · <a href="README.md">查看检查记录与剩余差距</a> · <a href="../../../start%20the%20game.html">打开本地游戏</a></footer></main>
+<script>
+const choices=[
+['原概念','../depth-v2/concept-approved.png','已认可像素概念：用于比较构图、透视和光照，不是游戏截图。'],
+['无 UI 母版','../../../assets/title/sources/master-v3/master-v3.png','内置 ImageGen 从原概念去除 UI 后生成的母版；不是运行截图。'],
+['上一轮实装','../depth-v2/static-1920x1080.png','v2 独立物件生成方案：保留作对照，未通过用户美术验收。'],
+['本轮实装','centre.png','v3：1920×1080，离线 HTML 直接截图，减少动态效果固定构图。']];
+const poses=[['左上','top-left.png'],['右上','top-right.png'],['左下','bottom-left.png'],['右下','bottom-right.png'],['1280×720','static-1280x720.png'],['手机竖屏','static-390x844.png']];
+const scene=document.querySelector('#scene'),caption=document.querySelector('#caption');
+function select(button,label,path,note){document.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));scene.src=path;scene.alt=label;caption.textContent=note;}
+function add(parent,label,path,note){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed','false');b.onclick=()=>select(b,label,path,note);document.querySelector(parent).append(b);return b;}
+choices.forEach(([label,path,note],i)=>{const b=add('#versions',label,path,note);if(i===3)select(b,label,path,note);});
+poses.forEach(([label,path])=>add('#poses',label,path,'真实运行截图：'+label+'。四角使用真实鼠标输入，手机为浏览器视口仿真。'));
+</script></html>

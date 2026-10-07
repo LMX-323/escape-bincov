@@ -1,7 +1,9 @@
 import { exitBearing, questProgress } from './qol';
 import Phaser from 'phaser';
 import { createTextures, drawWorld } from './art';
-import { drawTitleBackdrop, drawStationBackdrop } from './title-art';
+import { drawStationBackdrop } from './title-art';
+import { registerTitleTextures } from './title/assets';
+import { mountTitle, type TitleController } from './title/scene';
 import { WORLD, WORLD_W, WORLD_H, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, type RunConfig, type Point, type MapData } from './world';
 import * as D from './domain';
 import type { LootContainer } from './loot';
@@ -21,11 +23,13 @@ import type { ExpansionTransaction } from './session';
 import { render, setOverlay, openLoot, finish, toast, drawMap, refreshQuickPanel } from './ui';
 export class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
-    create() { createTextures(this); this.scene.start('Menu'); }
+    create() { createTextures(this); registerTitleTextures(this); this.scene.start('Menu'); }
 }
 export class MenuScene extends Phaser.Scene {
+    title?: TitleController;
     constructor() { super('Menu'); }
-    create() { drawTitleBackdrop(this, app.menuMotion); render(); }
+    create() { this.title = mountTitle(this, app.menuMotion); render(); }
+    update(_time: number, delta: number) { this.title?.update(delta); }
 }
 export class HideoutScene extends Phaser.Scene {
     constructor() { super('Hideout'); }

@@ -240,6 +240,8 @@ export function render() {
         const overlay = overlayHtml();
         ui().innerHTML = titleScreen({ runs: app.save.stats.runs, extracts: app.save.stats.extracts, motion: app.menuMotion,
             overlay: !!overlay, storageOK: app.storageOK, resume: !!(app.checkpoint || app.expansion?.raid), touch: playerInput.touch }) + overlay;
+        // Freeze pointer parallax while a dialog is open over the scene.
+        app.game?.scene.getScene('Menu')?.events.emit('title-overlay', !!overlay);
         bind();
         if (overlay) {
             const modal = ui().querySelector<HTMLElement>('.modal');

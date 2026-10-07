@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-07T06:08:04.920Z",
+  "browser": "154.0.8037.98",
+  "file": "D:\\bincov\\title-motion-work\\before.html",
+  "throttle": 1,
+  "methodology": "1920x1080 headless Chrome, no video capture, at least 360 requestAnimationFrame intervals and 8 seconds per state; instrumented renderer/update CPU time excludes asynchronous GPU execution. Separate fresh browser profile, no player save. CPU slowdown is simulated, not a physical low-end device.",
+  "info": {
+    "type": 1,
+    "gpu": null
+  },
+  "graphicsObjects": 3,
+  "graphicsCommands": 14047,
+  "on": {
+    "rafMs": {
+      "n": 1320,
+      "p50": 6.099999999999454,
+      "p95": 6.100000000000364,
+      "p99": 6.200000000000728,
+      "max": 6.299999999999727,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1321,
+      "p50": 1.2999999998137355,
+      "p95": 2.099999999627471,
+      "p99": 2.2999999998137355,
+      "max": 2.599999999627471,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1321,
+      "p50": 0,
+      "p95": 0.19999999925494194,
+      "p99": 0.2999999998137355,
+      "max": 0.5,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1321,
+      "p50": 1.300000000745058,
+      "p95": 2.199999999254942,
+      "p99": 2.300000000745058,
+      "max": 2.7000000001862645,
+      "over33": 0
+    }
+  },
+  "off": {
+    "rafMs": {
+      "n": 1321,
+      "p50": 6.099999999998545,
+      "p95": 6.100000000002183,
+      "p99": 6.200000000000728,
+      "max": 6.200000000000728,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1322,
+      "p50": 1.099999999627471,
+      "p95": 1.7000000001862645,
+      "p99": 1.900000000372529,
+      "max": 3.900000000372529,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1322,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0.09999999962747097,
+      "max": 0.10000000055879354,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1322,
+      "p50": 1.099999999627471,
+      "p95": 1.7000000001862645,
+      "p99": 1.900000000372529,
+      "max": 4,
+      "over33": 0
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-06T19:28:49.904Z",
+  "methodology": "Offline file:// current packaged game. Screenshots are unmodified. Water diagnostic uses ?test=1 to disable rain and hold the camera; a separate static capture uses reduced motion. Synthetic state is limited to these controls; no saved-game fixture.",
+  "checks": [
+    {
+      "name": "visible water changes without rain",
+      "changedPixels": 2536
+    },
+    {
+      "name": "visible reflection changes without rain",
+      "changedPixels": 14173
+    },
+    {
+      "name": "fixed-camera diagnostic",
+      "camera": [
+        -0.16236404942773727,
+        0.17546833040356122
+      ]
+    },
+    {
+      "name": "motion toggle preserves pose",
+      "before": [
+        {
+          "far": [
+            1,
+            -1
+          ],
+          "harbor": [
+            3,
+            -2
+          ],
+          "room": [
+            5,
+            -3
+          ],
+          "lamp": [
+            6,
+            -3
+          ],
+          "desk": [
+            8,
+            -4
+          ],
+          "chair": [
+            16,
+            -7
+          ],
+          "fore": [
+            23,
+            -10
+          ]
+        },
+        79,
+        0,
+        53
+      ],
+      "after": [
+        {
+          "far": [
+            1,
+            -1
+          ],
+          "harbor": [
+            3,
+            -2
+          ],
+          "room": [
+            5,
+            -3
+          ],
+          "lamp": [
+            6,
+            -3
+          ],
+          "desk": [
+            8,
+            -4
+          ],
+          "chair": [
+            16,
+            -7
+          ],
+          "fore": [
+            23,
+            -10
+          ]
+        },
+        79,
+        0,
+        53
+      ]
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "status": "passed"
+}

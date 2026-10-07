@@ -1,5 +1,7 @@
 # 夜港主界面重制
 
+> 历史记录：2026-10-06 起主菜单已由[像素值守室与 2.5D 视差](title-parallax/README.md)取代。本文保留 2026-10-04 的设计、截图与验证，不代表当前实现。
+
 2026-10-04 · 最终基线 `a4de2421115d56d491c7eed34ba1293ba8ceae73` · 分支 `agent/harbor-title-screen`。
 
 任务开始基线为 `f4c50bd`；提交前 main 合并了 PR #3，因此已将未发布改动移到最新 main，沿用新的 `app.ts` / `SaveSession` 分层，并重新运行完整验证。

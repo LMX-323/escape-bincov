@@ -1,0 +1,82 @@
+{
+  "startedAt": "2026-10-06T14:46:46.499Z",
+  "htmlBytes": 2010766,
+  "assets": {
+    "pngBytes": 61885,
+    "rgbaBytes": 8775516,
+    "note": "rgbaBytes = Σ width × height × 4; decoded texture estimate, not total GPU memory."
+  },
+  "errors": [],
+  "externalRequests": [],
+  "browser": "154.0.8037.98",
+  "gifFrames": {
+    "count": 90,
+    "meanCaptureMs": 68
+  },
+  "continuity60s": {
+    "frames": 9901,
+    "rainViolations": 0,
+    "respawns": 2568,
+    "fogBack": 0,
+    "poseJumps": 0,
+    "maxClockStepMs": 6.400000000001455,
+    "poses": {
+      "lamp": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "rope": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "boatY": [
+        85,
+        86,
+        87
+      ],
+      "needle": [
+        0,
+        1,
+        2
+      ]
+    }
+  },
+  "load": {
+    "domContentLoadedMs": 239,
+    "loadMs": 240,
+    "titleArtDecodeMs": 8,
+    "menuReadyMs": 502
+  },
+  "desktop60s": {
+    "frames": 9901,
+    "p50Ms": 6.1,
+    "p95Ms": 6.2,
+    "p99Ms": 6.2,
+    "maxMs": 6.4,
+    "over33ms": 0,
+    "phaserFps": 165.8
+  },
+  "heapAfter20RoundTrips": {
+    "beforeBytes": 17100000,
+    "afterBytes": 17100000,
+    "live": 1
+  },
+  "cpuThrottle4x20s": {
+    "frames": 3302,
+    "p50Ms": 6.1,
+    "p95Ms": 6.1,
+    "p99Ms": 6.2,
+    "maxMs": 6.3,
+    "over33ms": 0,
+    "phaserFps": 165.6
+  },
+  "status": "passed",
+  "finishedAt": "2026-10-06T14:50:16.718Z",
+  "methodology": "Windows headless Chrome via Playwright, offline file:// entry. Phone sizes are viewport/touch emulation. ?test=1 is used only to read the title controller snapshot. Frame times come from requestAnimationFrame in headless Chrome without vsync, and the 4x CPU throttle is DevTools emulation; neither is a physical-device measurement. Demo recordings include a demo-only pointer marker."
+}
