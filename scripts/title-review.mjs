@@ -191,16 +191,28 @@ try {
     const roomStep = Math.abs(fractionalB.groups.room[0] - fractionalA.groups.room[0]);
     assert.ok(roomStep > .09 && roomStep < .11, 'Subpixel camera step was rounded');
     assert.notDeepEqual(patchA, patchB, 'Subpixel input changed state but not actual rendered pixels');
-    const localMotion = await page.evaluate(() => new Promise(done => {
-      const title = window.__bincov.app.game.scene.getScene('Menu').title;
-      const boats = [], lamps = [];
-      const tick = () => { const s = title.snapshot(); boats.push(s.boatY); lamps.push(s.lampAngle);
-        if (boats.length < 90) requestAnimationFrame(tick);
-        else done({ samples: boats.length, boatPoses: new Set(boats).size, lampPoses: new Set(lamps).size,
-          roundPixels: window.__bincov.app.game.scene.getScene('Menu').cameras.main.roundPixels }); };
-      requestAnimationFrame(tick);
+    const localMotion = await page.evaluate(() => new Promise((done, reject) => {
+      const scene = window.__bincov.app.game.scene.getScene('Menu'), title = scene.title;
+      const boats = [], lamps = []; let previousClock = -1;
+      const finish = () => { clearTimeout(timer); scene.events.off('postupdate', tick); };
+      const changes = a => a.slice(1).filter((v, i) => Math.abs(v - a[i]) > 1e-9).length;
+      const tick = () => {
+        const s = title.snapshot();
+        if (!s.allowed) { finish(); reject(new Error('Motion stopped during the continuous-pose check')); return; }
+        if (s.clock === previousClock) return;
+        previousClock = s.clock; boats.push(s.boatY); lamps.push(s.lampAngle);
+        if (boats.length === 90) {
+          finish();
+          done({ samples: boats.length, boatPoses: new Set(boats).size, lampPoses: new Set(lamps).size,
+            boatChanges: changes(boats), lampChanges: changes(lamps), roundPixels: scene.cameras.main.roundPixels });
+        }
+      };
+      const timer = setTimeout(() => { finish(); reject(new Error('Fewer than 90 active scene updates in 30 seconds')); }, 30000);
+      scene.events.on('postupdate', tick);
     }));
-    assert.ok(localMotion.boatPoses > 60 && localMotion.lampPoses > 60, 'Boat or lamp still uses a few quantised poses');
+    // A sine legitimately revisits earlier poses on its return swing. Count
+    // consecutive changes in real scene updates, not global uniqueness or RAFs.
+    assert.ok(localMotion.boatChanges > 80 && localMotion.lampChanges > 80, `Boat or lamp holds quantised poses: ${JSON.stringify(localMotion)}`);
     assert.equal(localMotion.roundPixels, false);
     record('actual subpixel floor movement and continuous boat/lamp animation', { roomStep, ...localMotion });
     record('painted pixel contrast survives fractional movement without broad edge blur', await checkPixelEdge(page));
