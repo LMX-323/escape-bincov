@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-07T06:19:50.106Z",
+  "browser": "154.0.8037.98",
+  "file": "D:\\bincov\\escape-bincov\\dist\\index.html",
+  "throttle": 4,
+  "methodology": "1920x1080 headless Chrome, no video capture, at least 360 requestAnimationFrame intervals and 8 seconds per state; instrumented renderer/update CPU time excludes asynchronous GPU execution. Separate fresh browser profile, no player save. CPU slowdown is simulated, not a physical low-end device.",
+  "info": {
+    "type": 2,
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  },
+  "graphicsObjects": 0,
+  "graphicsCommands": 0,
+  "on": {
+    "rafMs": {
+      "n": 1321,
+      "p50": 6.099999999999454,
+      "p95": 6.199999999999818,
+      "p99": 6.200000000000728,
+      "max": 6.200000000000728,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1322,
+      "p50": 0.5,
+      "p95": 0.7000000001862645,
+      "p99": 1.1000000005587935,
+      "max": 2.900000000372529,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1322,
+      "p50": 0.09999999962747097,
+      "p95": 1,
+      "p99": 1.400000000372529,
+      "max": 3,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1322,
+      "p50": 0.599999999627471,
+      "p95": 1.599999999627471,
+      "p99": 2,
+      "max": 3.5,
+      "over33": 0
+    }
+  },
+  "off": {
+    "rafMs": {
+      "n": 1321,
+      "p50": 6.099999999998545,
+      "p95": 6.100000000002183,
+      "p99": 6.200000000000728,
+      "max": 6.300000000001091,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1322,
+      "p50": 0.30000000074505806,
+      "p95": 0.599999999627471,
+      "p99": 0.7999999998137355,
+      "max": 1.7999999998137355,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1322,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0.10000000055879354,
+      "max": 0.20000000018626451,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1322,
+      "p50": 0.30000000074505806,
+      "p95": 0.599999999627471,
+      "p99": 0.7999999998137355,
+      "max": 1.7999999998137355,
+      "over33": 0
+    }
+  },
+  "errors": [],
+  "htmlSha256": "07aa021df474b16cdf73f034339b3d88d12db1450ba84a04aff16ac70a20a1b3",
+  "browserArgs": [
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--autoplay-policy=no-user-gesture-required"
+  ]
+}

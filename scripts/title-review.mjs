@@ -135,25 +135,68 @@ try {
     assert.equal(initial.art, true); assert.equal(initial.allowed, true); assert.equal(initial.live, 1);
     assert.equal(counts.motion, 1); assert.equal(counts.overlay, 1);
     record('layered scene mounted with one controller', { counts, listeners });
+    const waterRender = await page.evaluate(() => {
+      const game = window.__bincov.app.game, scene = game.scene.getScene('Menu');
+      let graphicsCommands = 0;
+      const visit = o => { graphicsCommands += o.commandBuffer?.length || 0; if (o.list) o.list.forEach(visit); };
+      scene.children.list.forEach(visit);
+      return { graphicsCommands, waterTextures: game.textures.getTextureKeys().filter(k => k.startsWith('title-water-')).length };
+    });
+    assert.ok(waterRender.graphicsCommands < 100, 'Water replays thousands of graphics commands on every display frame');
+    assert.equal(waterRender.waterTextures, 2);
+    record('water renders cached pixels instead of per-frame vector commands', waterRender);
 
     // Parallax: near layers travel further than far ones; menu text and hit targets stay put.
     const menuRect = () => page.locator('.title-enter').evaluate(el => JSON.stringify(el.getBoundingClientRect()));
     const before = await menuRect();
-    await page.mouse.move(1279, 719, { steps: 8 }); await page.waitForTimeout(1600);
+    await page.mouse.move(1279, 719, { steps: 8 }); await page.waitForTimeout(2500);
     const corner = await snap();
-    await page.mouse.move(0, 0, { steps: 8 }); await page.waitForTimeout(1600);
+    await page.mouse.move(0, 0, { steps: 8 }); await page.waitForTimeout(2500);
     const opposite = await snap();
-    const maxima = { far: [1, 1], harbor: [3, 2], room: [5, 3], lamp: [6, 3], desk: [8, 4], chair: [16, 7], fore: [24, 10] };
+    const maxima = { far: [0, 0], harbor: [0, 0], room: [1, 0], lamp: [1, 0], desk: [2, 0], chair: [3, 0], fore: [4, 0] };
     for (const [name, [x, y]] of Object.entries(maxima)) {
-      assert.deepEqual(corner.groups[name], [-x, -y], `${name} at bottom-right corner`);
+      assert.ok(Math.abs(corner.groups[name][0] + x) < .015 && corner.groups[name][1] === 0, `${name} at bottom-right corner`);
       assert.deepEqual(opposite.groups[name], [x, y], `${name} at top-left corner`);
     }
     assert.equal(await menuRect(), before, 'Menu moved with the scene');
+    // Idle used to start autonomous camera drift after six seconds.
+    await page.waitForTimeout(7000);
+    assert.deepEqual((await snap()).groups, opposite.groups, 'Idle pointer restarted camera motion');
+    await page.mouse.move(700, 340); await page.waitForTimeout(250);
     await page.evaluate(() => document.documentElement.dispatchEvent(new MouseEvent('mouseleave', { relatedTarget: null })));
-    await page.waitForTimeout(4500);
+    const left = await snap();
+    await page.waitForTimeout(1200);
     const settled = await snap();
-    assert.ok(Math.abs(settled.camera[0]) < .15 && Math.abs(settled.camera[1]) < .15, 'Camera does not settle after the pointer leaves');
-    record('pointer parallax by depth, fixed menu, settles after leaving', { corner: corner.groups, settled: settled.camera });
+    assert.deepEqual(settled.groups, left.groups, 'Pointer leaving recenters the room');
+    await page.locator('.title-enter').hover();
+    const menuPose = await snap(); await page.waitForTimeout(700);
+    assert.deepEqual((await snap()).groups, menuPose.groups, 'Menu hover moves the room');
+    record('bounded horizontal parallax, fixed horizon, no idle/leave/menu drift', { corner: corner.groups, settled: settled.camera });
+
+    // State interpolation alone is insufficient: NEAREST/roundPixels previously
+    // made continuous camera input appear as discrete jumps in the real canvas.
+    // This floor patch contains only the room layer (no rain, UI, boat or light).
+    await page.mouse.move(960, 100); await page.waitForTimeout(2000);
+    const fractionalA = await snap();
+    const patchA = await page.screenshot({ path: resolve(out, 'subpixel-floor-a.png'), clip: { x: 80, y: 590, width: 180, height: 45 } });
+    await page.mouse.move(1024, 100); await page.waitForTimeout(2000);
+    const fractionalB = await snap();
+    const patchB = await page.screenshot({ path: resolve(out, 'subpixel-floor-b.png'), clip: { x: 80, y: 590, width: 180, height: 45 } });
+    const roomStep = Math.abs(fractionalB.groups.room[0] - fractionalA.groups.room[0]);
+    assert.ok(roomStep > .09 && roomStep < .11, 'Subpixel camera step was rounded');
+    assert.notDeepEqual(patchA, patchB, 'Subpixel input changed state but not actual rendered pixels');
+    const localMotion = await page.evaluate(() => new Promise(done => {
+      const title = window.__bincov.app.game.scene.getScene('Menu').title;
+      const boats = [], lamps = [];
+      const tick = () => { const s = title.snapshot(); boats.push(s.boatY); lamps.push(s.lampAngle);
+        if (boats.length < 90) requestAnimationFrame(tick);
+        else done({ samples: boats.length, boatPoses: new Set(boats).size, lampPoses: new Set(lamps).size,
+          roundPixels: window.__bincov.app.game.scene.getScene('Menu').cameras.main.roundPixels }); };
+      requestAnimationFrame(tick);
+    }));
+    assert.ok(localMotion.boatPoses > 60 && localMotion.lampPoses > 60, 'Boat or lamp still uses a few quantised poses');
+    assert.equal(localMotion.roundPixels, false);
+    record('actual subpixel floor movement and continuous boat/lamp animation', { roomStep, ...localMotion });
 
     // Ambient motion: light, objects, water and air all change, independent of the rain.
     const categories = async seconds => {

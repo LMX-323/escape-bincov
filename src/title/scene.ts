@@ -33,7 +33,15 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
     const groups = {} as Record<GroupName, Phaser.GameObjects.Container>;
     for (const name of Object.keys(GROUPS) as GroupName[]) groups[name] = scene.add.container(0, 0);
     const art = titleArtReady();
+    // The artwork stays at its native pixel resolution, but moving a whole plate
+    // must interpolate between texels. NEAREST + rounded camera positions made
+    // 60+ rendering frames look like a handful of 2-screen-pixel jumps.
+    const renderCamera = scene.cameras.main, roundedBefore = renderCamera.roundPixels;
+    renderCamera.setRoundPixels(false);
+    const smoothLayers = new Set<LayerName>(['room', 'lamp', 'desk', 'chair', 'fore', 'boat', 'light', 'radioFx']);
+    const smoothTextures = new Set<string>();
     const img = (name: LayerName, frame = 0, x: number = LAYERS[name].x, y: number = LAYERS[name].y) => {
+        if (smoothLayers.has(name)) { scene.textures.get(LAYERS[name].key).setFilter(Phaser.Textures.FilterMode.LINEAR); smoothTextures.add(LAYERS[name].key); }
         const image = scene.add.image(x, y, LAYERS[name].key, LAYERS[name].frames ? frame : undefined).setOrigin(0);
         groups[LAYERS[name].group].add(image);
         return image;
@@ -90,6 +98,8 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         // All planes retain the same master painting's palette and light direction.
         img('room');
         lamp = img('lamp', 2);
+        lamp.setOrigin((ANCHORS.lampPivot.x - LAYERS.lamp.x) / LAYERS.lamp.w, (ANCHORS.lampPivot.y - LAYERS.lamp.y) / LAYERS.lamp.h)
+            .setPosition(ANCHORS.lampPivot.x, ANCHORS.lampPivot.y);
         img('desk');
         needle = img('radioFx', 1, ANCHORS.radioDial.x - 8, ANCHORS.radioDial.y - 9);
         led = img('radioFx', 3, ANCHORS.radioLed.x - 7, ANCHORS.radioLed.y - 3);
@@ -129,21 +139,24 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
 
     // ---- Input: mouse/pen only; touch never steers the camera ----
     const camera = { x: 0, y: 0 }, target = { x: 0, y: 0 };
-    let pointerSeen = -1e9, pointerInside = false, overlay = false, clock = 0, rainOn = true, needleTimer = 0, needleFrame = 1;
+    let overlay = false, clock = 0, rainOn = true, needleTimer = 0, needleFrame = 1;
+    const holdCamera = () => { target.x = camera.x; target.y = camera.y; };
     const onMove = (e: PointerEvent) => {
-        if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+        if ((e.pointerType !== 'mouse' && e.pointerType !== 'pen') || overlay || !motionAllowed(gate)) return;
+        // Using menu controls must not drag the room behind the player's eyes.
+        if (e.target instanceof Element && e.target.closest('button, a, [aria-modal="true"]')) { holdCamera(); return; }
         const n = normalizePointer(e.clientX, e.clientY, innerWidth, innerHeight);
-        target.x = n.x; target.y = n.y; pointerSeen = clock; pointerInside = true;
+        target.x = n.x; target.y = 0;
     };
-    const onLeave = (e: MouseEvent) => { if (!e.relatedTarget) { pointerInside = false; target.x = 0; target.y = 0; } };
+    const onLeave = (e: MouseEvent) => { if (!e.relatedTarget) holdCamera(); };
     // Hidden tab or unfocused window both pause the scene; it resumes from where it stopped.
     let blurred = false;
-    const onVisibility = () => { gate.hidden = document.hidden || blurred; apply(); };
+    const onVisibility = () => { gate.hidden = document.hidden || blurred; holdCamera(); apply(); };
     const onBlur = () => { blurred = true; onVisibility(); };
     const onFocus = () => { blurred = false; onVisibility(); };
-    const onReduced = () => { gate.reduced = reducedQuery.matches; apply(); };
-    const onMotion = (enabled: boolean) => { gate.enabled = enabled; apply(); };
-    const onOverlay = (open: boolean) => { overlay = open; };
+    const onReduced = () => { gate.reduced = reducedQuery.matches; holdCamera(); apply(); };
+    const onMotion = (enabled: boolean) => { gate.enabled = enabled; holdCamera(); apply(); };
+    const onOverlay = (open: boolean) => { overlay = open; holdCamera(); };
     addEventListener('pointermove', onMove, { passive: true });
     document.documentElement.addEventListener('mouseleave', onLeave);
     document.addEventListener('visibilitychange', onVisibility);
@@ -155,7 +168,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
 
     function place(sway: number) {
         for (const name of Object.keys(GROUPS) as GroupName[]) groups[name].setPosition(layerOffset(camera.x, GROUPS[name].x), layerOffset(camera.y, GROUPS[name].y));
-        if (lamp && light) { lamp.setFrame(sway + 2); light.x = LAYERS.light.x + sway * 2; }
+        if (lamp && light) { lamp.setRotation(sway * .006); light.x = LAYERS.light.x + sway * .75; }
     }
     // Freeze the current composition. Resetting positions here caused the visible toggle jump.
     function apply() {
@@ -170,21 +183,17 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         if (!motionAllowed(gate)) return;
         const ms = clampStep(rawDelta);
         clock += ms;
-        // Parallax: follow the pointer; drift back to centre after it leaves; tiny idle drift.
+        // No idle camera drift or timed recenter. Stationary input stays stationary.
         if (!overlay) {
-            const idle = clock - pointerSeen > 6000;
-            const tx = idle ? .12 * wave(clock, 23000) : target.x, ty = idle ? .1 * wave(clock, 31000, .3) : target.y;
-            const tau = pointerInside && !idle ? .26 : 1.3;
-            camera.x = follow(camera.x, tx, ms, tau); camera.y = follow(camera.y, ty, ms, tau);
+            camera.x = follow(camera.x, target.x, ms, .18);
         }
-        const sway = poseFrame(wave(clock, 9400, .1), 5) - 2;
+        const sway = wave(clock, 14000);
         place(sway);
         // Lamp: steady with a rare, short dip, never a strobe.
         light?.setAlpha(blink(clock, 11300, .012, .4) ? .015 : .025);
-        // Boat bob (1 px each way) with the bow line following, rope end swaying on its own period.
-        const bob = Math.round(wave(clock, 7300, .6) * 1.2);
-        const b = Math.max(-1, Math.min(1, bob));
-        boat?.setY(LAYERS.boat.y + b); mooring?.setFrame(b + 1);
+        // Continuous subpixel bob, not a sprite that teleports one pixel at a time.
+        const b = wave(clock, 7300) * .7;
+        boat?.setY(LAYERS.boat.y + b); mooring?.setFrame(poseFrame(b, 3));
         waterSurface?.draw(clock, b);
         // Foreground has pointer parallax; the fixed jamb must never wobble with the rope.
         // Radio: the needle wanders between three positions; the status lamp blinks briefly.
@@ -222,6 +231,9 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         scene.events.off('title-overlay', onOverlay);
         scene.events.off(Phaser.Scenes.Events.SHUTDOWN, destroy);
         scene.events.off(Phaser.Scenes.Events.DESTROY, destroy);
+        waterSurface?.destroy();
+        for (const key of smoothTextures) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        renderCamera.setRoundPixels(roundedBefore);
         gate.active = false;
     }
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, destroy);
@@ -232,7 +244,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         return {
             art, allowed: motionAllowed(gate), gate: { ...gate }, overlay, live, camera: [camera.x, camera.y], clock,
             groups: Object.fromEntries((Object.keys(GROUPS) as GroupName[]).map(n => [n, [groups[n].x, groups[n].y]])),
-            lamp: lamp ? Number(lamp.frame.name) : null, lightX: light?.x ?? null, lightAlpha: light?.alpha ?? null, boatY: boat?.y ?? null, mooring: mooring ? Number(mooring.frame.name) : null,
+            lamp: lamp ? Number(lamp.frame.name) : null, lampAngle: lamp?.rotation ?? null, lightX: light?.x ?? null, lightAlpha: light?.alpha ?? null, boatY: boat?.y ?? null, mooring: mooring ? Number(mooring.frame.name) : null,
             rope: rope?.x ?? null, needle: needle ? Number(needle.frame.name) : null, led: led?.visible ?? null,
             fog: fog.map(t => t.tilePositionX), waterFrame: waterSurface?.frame ?? null,
             glints: glints.map(g => g.img.alpha).join(','), lights: farLights.map(l => l.img.alpha).join(','),

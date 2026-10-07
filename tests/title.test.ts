@@ -35,15 +35,22 @@ test('frame steps are clamped so resuming never fast-forwards motion', () => {
     assert.equal(clampStep(Number.NaN), 0);
 });
 
-test('parallax offsets are whole pixels, opposite the pointer, bounded by each depth', () => {
+test('parallax has continuous subpixel positions and a bounded horizontal comfort range', () => {
     for (const [name, max] of Object.entries(GROUPS)) {
-        assert.equal(layerOffset(1, max.x), -max.x, name);
+        assert.equal(layerOffset(1, max.x), max.x ? -max.x : 0, name);
         assert.equal(layerOffset(-1, max.x), max.x, name);
         assert.ok(Object.is(layerOffset(0, max.x), 0));
-        for (let v = -1; v <= 1; v += .05) assert.ok(Number.isInteger(layerOffset(v, max.x)) && Math.abs(layerOffset(v, max.x)) <= max.x);
+        for (let v = -1; v <= 1; v += .05) assert.ok(Math.abs(layerOffset(v, max.x)) <= max.x);
     }
-    const order = ['far', 'harbor', 'room', 'lamp', 'desk', 'chair', 'fore'] as const;
+    const order = ['harbor', 'room', 'desk', 'chair', 'fore'] as const;
     order.slice(1).forEach((name, i) => assert.ok(GROUPS[name].x > GROUPS[order[i]].x, `${name} must move more than ${order[i]}`));
+    assert.equal(GROUPS.far.x, 0, 'The horizon must remain fixed');
+    for (const group of Object.values(GROUPS)) {
+        assert.equal(group.y, 0, 'Camera must never bob vertically');
+        assert.ok(group.x <= 4, 'Foreground travel exceeded the comfort budget');
+    }
+    assert.equal(layerOffset(.125, 4), -.5, 'Fractional movement was rounded back to visible jumps');
+    assert.ok(Math.abs(layerOffset(.126, 4) - layerOffset(.125, 4)) < .005);
 });
 
 test('any one stop condition halts the whole scene', () => {

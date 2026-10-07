@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-07T06:02:55.562Z",
+  "browser": "154.0.8037.98",
+  "file": "D:\\bincov\\title-motion-work\\before.html",
+  "throttle": 4,
+  "methodology": "1920x1080 headless Chrome, no video capture, at least 360 requestAnimationFrame intervals and 8 seconds per state; instrumented renderer/update CPU time excludes asynchronous GPU execution. Separate fresh browser profile, no player save. CPU slowdown is simulated, not a physical low-end device.",
+  "info": {
+    "type": 2,
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  },
+  "graphicsObjects": 3,
+  "graphicsCommands": 14047,
+  "on": {
+    "rafMs": {
+      "n": 1320,
+      "p50": 6.099999999999454,
+      "p95": 6.199999999998909,
+      "p99": 6.200000000000728,
+      "max": 6.200000000000728,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1321,
+      "p50": 1.099999999627471,
+      "p95": 1.5,
+      "p99": 1.7999999998137355,
+      "max": 4.199999999254942,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1321,
+      "p50": 0.09999999962747097,
+      "p95": 0.5,
+      "p99": 0.900000000372529,
+      "max": 2,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1321,
+      "p50": 1.2000000001862645,
+      "p95": 1.7999999998137355,
+      "p99": 2.300000000745058,
+      "max": 4.199999999254942,
+      "over33": 0
+    }
+  },
+  "off": {
+    "rafMs": {
+      "n": 1321,
+      "p50": 6.099999999998545,
+      "p95": 6.199999999998909,
+      "p99": 6.200000000000728,
+      "max": 6.200000000000728,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1322,
+      "p50": 1,
+      "p95": 1.400000000372529,
+      "p99": 2.099999999627471,
+      "max": 2.7999999998137355,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1322,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0.09999999962747097,
+      "max": 0.20000000018626451,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1322,
+      "p50": 1,
+      "p95": 1.400000000372529,
+      "p99": 2.099999999627471,
+      "max": 2.7999999998137355,
+      "over33": 0
+    }
+  },
+  "errors": []
+}

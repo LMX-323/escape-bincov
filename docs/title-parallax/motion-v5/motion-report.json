@@ -1,0 +1,288 @@
+{
+  "methodology": "Unmodified offline game recording. Real mouse input in an isolated profile. Test hook reads layer positions only. Screenshots are direct frames. Video capture is excluded from performance measurements.",
+  "poses": [
+    {
+      "name": "centre-motion",
+      "camera": [
+        0,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0,
+          0
+        ],
+        "lamp": [
+          0,
+          0
+        ],
+        "desk": [
+          0,
+          0
+        ],
+        "chair": [
+          0,
+          0
+        ],
+        "fore": [
+          0,
+          0
+        ]
+      },
+      "boatY": 62.61251270228264,
+      "lamp": 2,
+      "waterFrame": 20
+    },
+    {
+      "name": "right-motion",
+      "camera": [
+        0.9895833333333333,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          -0.9895833333333333,
+          0
+        ],
+        "lamp": [
+          -0.9895833333333333,
+          0
+        ],
+        "desk": [
+          -1.9791666666666665,
+          0
+        ],
+        "chair": [
+          -2.96875,
+          0
+        ],
+        "fore": [
+          -3.958333333333333,
+          0
+        ]
+      },
+      "boatY": 61.42134855998928,
+      "lamp": 2,
+      "waterFrame": 51
+    },
+    {
+      "name": "left-motion",
+      "camera": [
+        -0.9895833333333334,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0.9895833333333334,
+          0
+        ],
+        "lamp": [
+          0.9895833333333334,
+          0
+        ],
+        "desk": [
+          1.9791666666666667,
+          0
+        ],
+        "chair": [
+          2.96875,
+          0
+        ],
+        "fore": [
+          3.9583333333333335,
+          0
+        ]
+      },
+      "boatY": 61.31298132052831,
+      "lamp": 2,
+      "waterFrame": 104
+    },
+    {
+      "name": "idle-after-seven-seconds",
+      "camera": [
+        -0.9895833333333334,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0.9895833333333334,
+          0
+        ],
+        "lamp": [
+          0.9895833333333334,
+          0
+        ],
+        "desk": [
+          1.9791666666666667,
+          0
+        ],
+        "chair": [
+          2.96875,
+          0
+        ],
+        "fore": [
+          3.9583333333333335,
+          0
+        ]
+      },
+      "boatY": 61.3001904149101,
+      "lamp": 2,
+      "waterFrame": 167
+    },
+    {
+      "name": "menu-hover",
+      "camera": [
+        -0.9895833333333334,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0.9895833333333334,
+          0
+        ],
+        "lamp": [
+          0.9895833333333334,
+          0
+        ],
+        "desk": [
+          1.9791666666666667,
+          0
+        ],
+        "chair": [
+          2.96875,
+          0
+        ],
+        "fore": [
+          3.9583333333333335,
+          0
+        ]
+      },
+      "boatY": 61.3441830575932,
+      "lamp": 2,
+      "waterFrame": 170
+    },
+    {
+      "name": "motion-off",
+      "camera": [
+        -0.9895833333333334,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0.9895833333333334,
+          0
+        ],
+        "lamp": [
+          0.9895833333333334,
+          0
+        ],
+        "desk": [
+          1.9791666666666667,
+          0
+        ],
+        "chair": [
+          2.96875,
+          0
+        ],
+        "fore": [
+          3.9583333333333335,
+          0
+        ]
+      },
+      "boatY": 61.9028904145665,
+      "lamp": 2,
+      "waterFrame": 181
+    },
+    {
+      "name": "motion-resumed",
+      "camera": [
+        -0.9895833333333334,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          0.9895833333333334,
+          0
+        ],
+        "lamp": [
+          0.9895833333333334,
+          0
+        ],
+        "desk": [
+          1.9791666666666667,
+          0
+        ],
+        "chair": [
+          2.96875,
+          0
+        ],
+        "fore": [
+          3.9583333333333335,
+          0
+        ]
+      },
+      "boatY": 62.65141857439461,
+      "lamp": 2,
+      "waterFrame": 194
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "status": "passed"
+}

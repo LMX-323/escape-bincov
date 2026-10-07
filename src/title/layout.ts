@@ -1,7 +1,9 @@
 /** Logical artwork coordinates; imported source images remain immutable. */
 export const SCENE_W = 960, SCENE_H = 540;
 export const GROUPS = {
-    far: { x: 1, y: 1 }, harbor: { x: 3, y: 2 }, room: { x: 5, y: 3 }, lamp: { x: 6, y: 3 }, desk: { x: 8, y: 4 }, chair: { x: 16, y: 7 }, fore: { x: 24, y: 10 },
+    // Fixed horizon and no vertical camera travel. Depth is a small horizontal cue,
+    // not an orbit of the room when the pointer crosses the menu.
+    far: { x: 0, y: 0 }, harbor: { x: 0, y: 0 }, room: { x: 1, y: 0 }, lamp: { x: 1, y: 0 }, desk: { x: 2, y: 0 }, chair: { x: 3, y: 0 }, fore: { x: 4, y: 0 },
 } as const;
 export type GroupName = keyof typeof GROUPS;
 export type LayerSpec = {

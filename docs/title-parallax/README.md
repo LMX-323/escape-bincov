@@ -1,6 +1,8 @@
 # 像素值守室主界面：修订中
 
-最新状态：用户指出上一版透视、景深和光照未达标，[PR #21](https://github.com/xuys2025/escape-bincov/pull/21) 已改为草稿。**当前版本以 [字标与暗部精修 v4](menu-v4/README.md) 与 [概念／v3／v4 对照](menu-v4/compare.html) 为准，整体美术仍未验收。** 场景结构继续沿用 [同一母版分层 v3](master-v3/README.md)。 上一轮独立物件方案保留为 [v2 历史记录](depth-v2/README.md)。
+最新动态：用户反馈 v4 动态眩晕与掉帧，已取消位置与相机取整，图层／船／灯改为连续运动；取消纵向位移和自动漂移、收窄横向视差，并缓存水面绘制。见 [v5 动态修复、连续录屏与性能测量](motion-v5/README.md)。整体画面继续沿用 v4，实际用户环境体验尚待确认。
+
+美术状态：用户指出上一版透视、景深和光照未达标，[PR #21](https://github.com/xuys2025/escape-bincov/pull/21) 已改为草稿。**当前版本以 [字标与暗部精修 v4](menu-v4/README.md) 与 [概念／v3／v4 对照](menu-v4/compare.html) 为准，整体美术仍未验收。** 场景结构继续沿用 [同一母版分层 v3](master-v3/README.md)。 上一轮独立物件方案保留为 [v2 历史记录](depth-v2/README.md)。
 
 以下保留第一次局部修复的历史记录。
 

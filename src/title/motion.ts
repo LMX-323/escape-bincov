@@ -17,9 +17,9 @@ export function follow(current: number, target: number, ms: number, tau: number)
     return Math.abs(next - target) < 1e-4 ? target : next;
 }
 
-/** Whole-pixel layer offset; parallax moves opposite to the pointer so near layers swing most. */
+/** Continuous layer translation. Pixel artwork must not imply a quantised camera. */
 export const layerOffset = (camera: number, max: number) => {
-    const v = Math.round(-camera * max);
+    const v = -Math.max(-1, Math.min(1, camera)) * max;
     return v === 0 ? 0 : v;
 };
 
