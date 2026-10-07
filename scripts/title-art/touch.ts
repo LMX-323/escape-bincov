@@ -29,11 +29,13 @@ export function touchRoom(c: Cells, pal: Palette) {
     rect(brass, 368, 94, 2, 2); px(glowH, 368, 94);
     rect(paperD, 359, 129, 9, 1); rect(paperD, 370, 129, 7, 1);
     // Lockdown calendar: days already passed are crossed out, today is boxed.
-    rect(shade, 357, 139, 27, 31);
-    rect(paperM, 355, 137, 27, 31); rect(paperL, 366, 137, 16, 31); rect(paperH, 355, 137, 27, 1);
-    rect(red, 355, 138, 27, 4); rect(redD, 355, 141, 27, 1);
+    // Seven 3-pixel day cells with 1-pixel gaps plus a 1-pixel margin each side: 29 wide.
+    const calX = 354, calW = 1 + 7 * 4 - 1 + 1;
+    rect(shade, calX + 2, 139, calW, 31);
+    rect(paperM, calX, 137, calW, 31); rect(paperL, calX + 11, 137, calW - 11, 31); rect(paperH, calX, 137, calW, 1);
+    rect(red, calX, 138, calW, 4); rect(redD, calX, 141, calW, 1);
     for (let row = 0; row < 5; row++) for (let col = 0; col < 7; col++) {
-        const x = 356 + col * 4, y = 144 + row * 5, day = row * 7 + col;
+        const x = calX + 1 + col * 4, y = 144 + row * 5, day = row * 7 + col;
         rect(paperD, x, y, 3, 1);
         if (day < 17) { px(red, x, y + 1); px(red, x + 2, y + 1); px(red, x + 1, y + 2); px(red, x, y + 3); px(red, x + 2, y + 3); }
         else if (day === 17) { rect(teal, x - 1, y, 5, 1); rect(teal, x - 1, y + 4, 5, 1); rect(teal, x - 1, y, 1, 4); rect(teal, x + 3, y, 1, 4); }

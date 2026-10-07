@@ -145,9 +145,9 @@
       "frameWidth": 1944,
       "frameHeight": 1096,
       "frames": 1,
-      "bytes": 91932,
-      "sha256": "dd8df329d2ac100313efcdc54cff06ea90f8359b73c1fe17460a762978d374d4",
-      "pixelSha256": "a863765024010fc120cf21d533adc0b2d3831802abc299ac2e1acf470ff32739",
+      "bytes": 91878,
+      "sha256": "54adc93804c11978e5af165d504afd4fdfa1e2d08a66959de5cc595f2ac0d2d1",
+      "pixelSha256": "e40703d4599d342ec9cbb523ec6e50ce6d06050d88fc7e71e7c264fe75be6e59",
       "provenance": "ImageGen master-v3 layer on the shared 640x360 pixel grid and palette, with hand passes (scripts/title-art/touch.ts)"
     },
     "lamp": {
@@ -301,7 +301,7 @@
     }
   },
   "totals": {
-    "pngBytes": 362369,
+    "pngBytes": 362315,
     "rgbaBytes": 42132288
   }
 }
