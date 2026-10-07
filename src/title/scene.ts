@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GROUPS, LAYERS, OPENINGS, ANCHORS, FAR_LIGHTS, SCENE_W, SCENE_H, type GroupName, type LayerName } from './layout';
 import { titleArtReady } from './assets';
 import { mountWater } from './water';
+import { mountTitleSurface, motionTexture } from './rendering';
 import { clampStep, normalizePointer, follow, layerOffset, motionAllowed, decorRandom, wave, poseFrame, blink, twinkle, type MotionGate } from './motion';
 
 type Img = Phaser.GameObjects.Image;
@@ -33,16 +34,11 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
     const groups = {} as Record<GroupName, Phaser.GameObjects.Container>;
     for (const name of Object.keys(GROUPS) as GroupName[]) groups[name] = scene.add.container(0, 0);
     const art = titleArtReady();
-    // The artwork stays at its native pixel resolution, but moving a whole plate
-    // must interpolate between texels. NEAREST + rounded camera positions made
-    // 60+ rendering frames look like a handful of 2-screen-pixel jumps.
-    const renderCamera = scene.cameras.main, roundedBefore = renderCamera.roundPixels;
-    renderCamera.setRoundPixels(false);
-    const smoothLayers = new Set<LayerName>(['room', 'lamp', 'desk', 'chair', 'fore', 'boat', 'light', 'radioFx']);
-    const smoothTextures = new Set<string>();
+    const restoreSurface = mountTitleSurface(scene);
     const img = (name: LayerName, frame = 0, x: number = LAYERS[name].x, y: number = LAYERS[name].y) => {
-        if (smoothLayers.has(name)) { scene.textures.get(LAYERS[name].key).setFilter(Phaser.Textures.FilterMode.LINEAR); smoothTextures.add(LAYERS[name].key); }
-        const image = scene.add.image(x, y, LAYERS[name].key, LAYERS[name].frames ? frame : undefined).setOrigin(0);
+        const spec = LAYERS[name];
+        const image = scene.add.image(x, y, motionTexture(scene, name), spec.frames ? frame : undefined)
+            .setOrigin(0).setDisplaySize(spec.w, spec.h);
         groups[LAYERS[name].group].add(image);
         return image;
     };
@@ -232,8 +228,7 @@ export function mountTitle(scene: Phaser.Scene, motion: boolean) {
         scene.events.off(Phaser.Scenes.Events.SHUTDOWN, destroy);
         scene.events.off(Phaser.Scenes.Events.DESTROY, destroy);
         waterSurface?.destroy();
-        for (const key of smoothTextures) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
-        renderCamera.setRoundPixels(roundedBefore);
+        restoreSurface();
         gate.active = false;
     }
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, destroy);

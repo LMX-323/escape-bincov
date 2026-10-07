@@ -129,10 +129,12 @@ async function suite(viewport) {
       await action('enter').waitFor();
       assert.match(await page.locator('h1').innerText(), /逃离[\s\S]*滨科夫/);
       const bounds = await page.evaluate(() => {
-        const canvas = window.__bincov.app.game.canvas, rect = canvas.getBoundingClientRect();
-        return { width: rect.width, height: rect.height, x: rect.x, y: rect.y, logicalWidth: canvas.width, logicalHeight: canvas.height };
+        const game = window.__bincov.app.game, canvas = game.canvas, rect = canvas.getBoundingClientRect(), camera = game.scene.getScene('Menu').cameras.main;
+        return { width: rect.width, height: rect.height, x: rect.x, y: rect.y, renderWidth: canvas.width, renderHeight: canvas.height,
+          logicalWidth: camera.width / camera.zoom, logicalHeight: camera.height / camera.zoom };
       });
       assert.equal(bounds.logicalWidth, 960); assert.equal(bounds.logicalHeight, 540);
+      assert.equal(bounds.renderWidth, viewport.width); assert.equal(bounds.renderHeight, viewport.height);
       assert.equal(bounds.width, viewport.width); assert.equal(bounds.height, viewport.height);
       assert.equal(bounds.x, 0); assert.equal(bounds.y, 0);
       await screenshot('menu');
@@ -140,6 +142,7 @@ async function suite(viewport) {
     });
     await step('hideout, merchant price and pointer inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
+      assert.deepEqual(await page.locator('#game canvas').evaluate(c => [c.width, c.height]), [960, 540], 'Menu render density must not leak into gameplay');
       // Hideout panels use the viewport; combat retains the fixed logical canvas.
       const bounds = await page.locator('#game canvas').boundingBox();
       assert.equal(bounds.width, Math.min(viewport.width, 1808)); assert.equal(bounds.height, viewport.height);

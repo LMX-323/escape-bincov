@@ -1,0 +1,143 @@
+[
+  {
+    "name": "before",
+    "menu": {
+      "canvas": [
+        960,
+        540
+      ],
+      "zoom": 1,
+      "scroll": [
+        0,
+        0
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          -0.25,
+          0
+        ],
+        "lamp": [
+          -0.25,
+          0
+        ],
+        "desk": [
+          -0.5,
+          0
+        ],
+        "chair": [
+          -0.75,
+          0
+        ],
+        "fore": [
+          -1,
+          0
+        ]
+      }
+    },
+    "station": {
+      "canvas": [
+        960,
+        540
+      ],
+      "zoom": 1,
+      "scroll": [
+        0,
+        0
+      ]
+    },
+    "edge": {
+      "expectedRegressionFailure": "A painted pixel was blurred into its neighbour (RGB error 37)"
+    },
+    "errors": []
+  },
+  {
+    "name": "after",
+    "menu": {
+      "canvas": [
+        1920,
+        1080
+      ],
+      "zoom": 2,
+      "scroll": [
+        -480,
+        -270
+      ],
+      "groups": {
+        "far": [
+          0,
+          0
+        ],
+        "harbor": [
+          0,
+          0
+        ],
+        "room": [
+          -0.25,
+          0
+        ],
+        "lamp": [
+          -0.25,
+          0
+        ],
+        "desk": [
+          -0.5,
+          0
+        ],
+        "chair": [
+          -0.75,
+          0
+        ],
+        "fore": [
+          -1,
+          0
+        ]
+      }
+    },
+    "station": {
+      "canvas": [
+        960,
+        540
+      ],
+      "zoom": 1,
+      "scroll": [
+        0,
+        0
+      ]
+    },
+    "edge": {
+      "x": 132,
+      "y": 100,
+      "expected": [
+        151,
+        84,
+        33
+      ],
+      "contrast": 149,
+      "actual": [
+        151,
+        84,
+        33
+      ],
+      "repeated": [
+        151,
+        84,
+        33
+      ],
+      "error": 0,
+      "surface": [
+        1920,
+        1080
+      ],
+      "renderer": 1
+    },
+    "errors": []
+  }
+]

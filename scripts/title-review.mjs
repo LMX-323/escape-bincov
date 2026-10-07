@@ -5,12 +5,13 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { checkPixelEdge } from './title-edge-check.mjs';
 
 const out = resolve('test-results/title');
 const { frameWidth: markW, frameHeight: markH } = JSON.parse(await readFile('assets/title/manifest.json', 'utf8')).layers.wordmark;
 await mkdir(out, { recursive: true });
 const report = { startedAt: new Date().toISOString(), checks: [], errors: [], externalRequests: [],
-  methodology: 'Offline file:// entry, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 is only used to read the title controller snapshot (motion, lifecycle, performance). No gameplay or save fixtures.' };
+  methodology: 'Offline file:// entry, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 reads scene state and exercises motion gates. The separate edge probe temporarily renders a copy of the actual desk texture over black; it is a controlled framebuffer test, not a gameplay screenshot. No gameplay or save fixtures.' };
 const browser = await chromium.launch(browserOptions);
 report.browser = browser.version();
 report.htmlBytes = (await stat('dist/index.html')).size;
@@ -97,6 +98,7 @@ try {
       if (width < 600) await page.locator('.title-enter').tap();
       else { await page.locator('.title-enter').focus(); await page.keyboard.press('Enter'); }
       await page.locator('.hideout').waitFor();
+      assert.deepEqual(await page.locator('#game canvas').evaluate(c => [c.width, c.height]), [960, 540], 'Title render resolution leaked into gameplay');
       assert.equal(await page.evaluate(() => document.body.dataset.screen), 'hideout');
       assert.equal(await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2')), saved, 'Title entry alters existing progress');
       await page.locator('[data-action="tab"][data-id="home"]').click();
@@ -128,7 +130,7 @@ try {
         return listeners.reduce((m, l) => ({ ...m, [l.type]: (m[l.type] || 0) + 1 }), {});
       };
       const w = await count('window'), d = await count('document'), root = await count('document.documentElement');
-      return { pointermove: w.pointermove || 0, blur: w.blur || 0, focus: w.focus || 0, visibilitychange: d.visibilitychange || 0, mouseleave: root.mouseleave || 0 };
+      return { pointermove: w.pointermove || 0, resize: w.resize || 0, blur: w.blur || 0, focus: w.focus || 0, visibilitychange: d.visibilitychange || 0, mouseleave: root.mouseleave || 0 };
     };
     await page.waitForTimeout(300);
     const initial = await snap(), counts = await sceneCounts(), listeners = await domListeners();
@@ -197,6 +199,7 @@ try {
     assert.ok(localMotion.boatPoses > 60 && localMotion.lampPoses > 60, 'Boat or lamp still uses a few quantised poses');
     assert.equal(localMotion.roundPixels, false);
     record('actual subpixel floor movement and continuous boat/lamp animation', { roomStep, ...localMotion });
+    record('painted pixel contrast survives fractional movement without broad edge blur', await checkPixelEdge(page));
 
     // Ambient motion: light, objects, water and air all change, independent of the rain.
     const categories = async seconds => {
@@ -304,6 +307,11 @@ try {
     // visit): no controller, object, texture or listener growth.
     const roundTrip = async () => {
       await page.locator('.title-enter').click();
+      await page.locator('.hideout').waitFor();
+      assert.deepEqual(await page.evaluate(() => {
+        const g = window.__bincov.app.game, c = g.scene.getScene('Hideout').cameras.main;
+        return [g.canvas.width, g.canvas.height, c.width, c.height, c.zoom, c.scrollX, c.scrollY];
+      }), [960, 540, 960, 540, 1, 0, 0], 'Title camera or surface leaked into station');
       await page.locator('[data-action="tab"][data-id="home"]').click();
       await page.locator('[data-action="menu"]').click();
       await page.locator('.title-enter').waitFor();

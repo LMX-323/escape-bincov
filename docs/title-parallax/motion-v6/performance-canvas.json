@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-07T07:02:27.407Z",
+  "browser": "154.0.8037.98",
+  "file": "D:/bincov/escape-bincov/dist/index.html",
+  "throttle": 1,
+  "methodology": "1920x1080 headless Chrome, no video capture, at least 360 requestAnimationFrame intervals and 8 seconds per state; instrumented renderer/update CPU time excludes asynchronous GPU execution. Separate fresh browser profile, no player save. CPU slowdown is simulated, not a physical low-end device.",
+  "info": {
+    "type": 1,
+    "gpu": null
+  },
+  "graphicsObjects": 0,
+  "graphicsCommands": 0,
+  "on": {
+    "rafMs": {
+      "n": 1320,
+      "p50": 6.099999999999454,
+      "p95": 6.199999999999818,
+      "p99": 6.200000000000728,
+      "max": 6.300000000001091,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1321,
+      "p50": 0.6000000014901161,
+      "p95": 1,
+      "p99": 1.200000001117587,
+      "max": 1.900000000372529,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1321,
+      "p50": 0,
+      "p95": 0.19999999925494194,
+      "p99": 0.40000000037252903,
+      "max": 0.599999999627471,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1321,
+      "p50": 0.6999999992549419,
+      "p95": 1.099999999627471,
+      "p99": 1.400000000372529,
+      "max": 2.400000000372529,
+      "over33": 0
+    }
+  },
+  "off": {
+    "rafMs": {
+      "n": 1321,
+      "p50": 6.099999999998545,
+      "p95": 6.100000000002183,
+      "p99": 6.200000000000728,
+      "max": 6.600000000000364,
+      "over33": 0
+    },
+    "renderCpuMs": {
+      "n": 1322,
+      "p50": 0.2999999988824129,
+      "p95": 0.40000000037252903,
+      "p99": 0.599999999627471,
+      "max": 0.900000000372529,
+      "over33": 0
+    },
+    "updateCpuMs": {
+      "n": 1322,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0.09999999962747097,
+      "max": 0.10000000149011612,
+      "over33": 0
+    },
+    "combinedCpuMs": {
+      "n": 1322,
+      "p50": 0.30000000074505806,
+      "p95": 0.40000000037252903,
+      "p99": 0.599999999627471,
+      "max": 0.900000000372529,
+      "over33": 0
+    }
+  },
+  "errors": [],
+  "htmlSha256": "951394924c27b42a4339564a6795d6f07e4fb0543f8659c222c3ac88df5ea4c2",
+  "browserArgs": [
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--autoplay-policy=no-user-gesture-required",
+    "--disable-webgl"
+  ]
+}
