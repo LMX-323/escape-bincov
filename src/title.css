@@ -21,15 +21,15 @@ body[data-screen="menu"] #game canvas { width: 100% !important; height: 100% !im
 .title-shade {
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
-    linear-gradient(90deg, #0a141bd6 0%, #0a141bc2 18%, #0a141b80 30%, #0a141b2e 40%, transparent 48%),
-    linear-gradient(0deg, #0a141bb8 0%, #0a141b66 7%, transparent 14%);
+    linear-gradient(90deg, #0a141b38 0%, #0a141b29 18%, #0a141b1a 30%, transparent 44%),
+    linear-gradient(0deg, #0a141b66 0%, #0a141b33 7%, transparent 14%);
 }
 .title-masthead { display: flex; align-items: center; gap: 8px; min-height: 44px; flex-shrink: 0; color: var(--t-dim); }
 .title-masthead span:nth-child(2) { color: var(--t-faint); }
 .title-layout { flex: 1; min-height: min-content; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; padding: clamp(24px, 5vh, 62px) 0 32px; }
 .title-mark { position: relative; margin: 0; line-height: 0; }
-/* Independent industrial wordmark, 144×66 art pixels, integer display sizes. */
-.title-mark-art { display: block; width: 288px; height: 132px; background: var(--title-wordmark) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+/* Independent industrial wordmark, 144×72 art pixels, integer display sizes. */
+.title-mark-art { display: block; width: 288px; height: 144px; background: var(--title-wordmark) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
 .title-mark-text { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 html[data-title-art="fallback"] .title-mark-art { display: none; }
 html[data-title-art="fallback"] .title-mark-text { position: static; width: auto; height: auto; clip-path: none; font-size: 32px; line-height: 40px; }
@@ -37,15 +37,17 @@ html[data-title-art="fallback"] .title-mark-text { position: static; width: auto
 .title-english::after { content: ""; display: block; width: 32px; height: 2px; margin-top: 24px; background: var(--t-brass); }
 .title-menu { display: flex; flex-direction: column; gap: 8px; width: min(100%, 368px); margin-top: 24px; }
 .title-screen .title-enter, .title-screen .title-option {
-  display: grid; grid-template-columns: 8px 1fr; column-gap: 16px; align-items: center; justify-items: start;
+  display: grid; grid-template-columns: 10px 1fr; column-gap: 14px; align-items: center; justify-items: start;
   width: 100%; min-height: 56px; padding: 8px 0; margin: 0;
   border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--t-text);
   font-size: 32px; line-height: 40px; text-align: left; transition: none;
 }
-.title-screen .title-enter { border-bottom-color: #c09a5599; padding-bottom: 12px; }
+.title-screen .title-enter { border-bottom-color: #c09a55cc; padding-bottom: 12px; }
 .title-screen .title-option { color: var(--t-dim); }
-.title-marker { width: 8px; height: 16px; background: transparent; }
-.title-enter .title-marker { background: var(--t-brass); }
+/* A single hard pixel of ink adds weight without a second face or blurred shadow. */
+.title-label { text-shadow: 1px 0 currentColor; }
+.title-marker { width: 10px; height: 20px; background: transparent; }
+.title-enter .title-marker { background: #d7ae61; }
 .title-enter small { grid-column: 2; margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--t-dim); }
 .title-screen .title-enter:hover:not(:disabled), .title-screen .title-option:hover:not(:disabled) { background: transparent; color: #fff5d6; }
 .title-screen .title-enter:hover .title-marker, .title-screen .title-enter:focus-visible .title-marker { background: var(--t-brass-hi); }
@@ -78,9 +80,13 @@ body[data-screen="menu"] .modal:focus-within { border-top-color: #c09a55; }
 /* Large desktops: the wordmark steps up one whole pixel scale. */
 @media (min-width: 1800px) and (min-height: 1000px) {
   .title-screen { padding-top: max(40px, env(safe-area-inset-top)); padding-bottom: max(28px, env(safe-area-inset-bottom)); }
-  .title-mark-art { width: 432px; height: 198px; }
-  .title-menu { width: 400px; }
+  .title-mark-art { width: 432px; height: 216px; }
+  .title-english { margin-top: 14px; letter-spacing: 4px; }
+  .title-english::after { margin-top: 32px; width: 48px; }
+  .title-menu { width: 400px; margin-top: 40px; }
 }
+/* Do not draw a website-wide rule across the chair and desk in the desktop scene. */
+@media (min-width: 601px) { .title-footer { border-top: 0; } }
 /* Ultra-wide: keep the desk and lamp in frame. */
 @media (min-aspect-ratio: 2/1) { body[data-screen="menu"] #game canvas { object-position: 55% 40%; } }
 /* Portrait phones: own framing (lamp, radio and desk) and a stacked menu at the bottom. */
@@ -111,9 +117,11 @@ body[data-screen="menu"] .modal:focus-within { border-top-color: #c09a55; }
 /* Short landscape and browser zoom: the wordmark drops to 1× and the layout scrolls if needed. */
 @media (max-height: 600px) and (min-width: 601px) {
   .title-screen { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  /* On cropped landscape screens the footer crosses the lit map; keep its text legible. */
+  .title-shade { background: linear-gradient(0deg, #0a141be6 0, #0a141bc2 48px, transparent 92px), linear-gradient(90deg, #0a141b38 0%, #0a141b29 18%, #0a141b1a 30%, transparent 44%); }
   .title-masthead { min-height: 32px; }
   .title-layout { padding: 8px 0 12px; }
-  .title-mark-art { width: 144px; height: 66px; }
+  .title-mark-art { width: 144px; height: 72px; }
   .title-english { margin-top: 8px; }
   .title-english::after { margin-top: 12px; }
   .title-menu { margin-top: 12px; gap: 4px; }

@@ -14,7 +14,7 @@
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip) · [🤖 Agent 开发入口](AGENTS.md)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
-  <img src="docs/title-parallax/master-v3/centre.png" alt="逃离滨科夫实际主界面：从水产站值守室的灯下望向雨夜港口与系泊渔船" width="100%">
+  <img src="docs/title-parallax/menu-v4/centre.png" alt="逃离滨科夫实际主界面：从水产站值守室的灯下望向雨夜港口与系泊渔船" width="100%">
 </a>
 
 <sub>真实游戏画面 · 桌面键鼠 · 单人撤离生存 · 无账号 · 可离线运行</sub>

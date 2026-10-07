@@ -3,7 +3,7 @@
   "generator": "scripts/title-art/generate.ts",
   "note": "Unified master-v3 sources are immutable. Preparation crops/resamples registered layers, pads parallax edges and derives lamp/mooring frames. All runtime imports are validated.",
   "sources": {
-    "assets/title/sources/wordmark-industrial.png": "5b203e925184635e79ba76fe219df5d2599f225201706e081f2de9d5b2758d5c",
+    "assets/title/sources/wordmark-industrial-v4.png": "4389b18dfc2c36b27de0201bfcf88206f65ad55db23b209b96c13b4ac1a266ff",
     "assets/title/sources/master-v3/master-v3.png": "6190365faf37759ae8ae198554036f83b0437830546f857cd3ae3444b48dab9a",
     "assets/title/sources/master-v3/room-v3.png": "7541cb01ddade2ad0c1e88978f0e18dc9d7451ae8ca954e2ee15a81402810c1d",
     "assets/title/sources/master-v3/desk-v3.png": "41e6d794e608158e2cda9ea1ae5cb16e0a064ac959f875aac2ff612f2b061cb9",
@@ -272,25 +272,25 @@
       "provenance": "Existing deterministic effect sprite"
     },
     "wordmark": {
-      "file": "assets/title/title-wordmark-industrial.png",
-      "key": "title-wordmark-industrial",
+      "file": "assets/title/title-wordmark-industrial-v4.png",
+      "key": "title-wordmark-industrial-v4",
       "group": "fore",
       "x": 0,
       "y": 0,
       "w": 144,
-      "h": 66,
+      "h": 72,
       "html": true,
       "frameWidth": 144,
-      "frameHeight": 66,
+      "frameHeight": 72,
       "frames": 1,
-      "bytes": 957,
-      "sha256": "b4213ffe1ccc7bf0db9357370b3d8dbae01ebf7a9c3f37c7a7b367f0216c245c",
-      "pixelSha256": "4ac1e19161af1f1ba4570ed24af04952955a2fbd1eff6a3322e36664b74f806e",
+      "bytes": 899,
+      "sha256": "902f5fa6591e1c753689d0daa06ff59a50ddc77b34be93fcf9f793373990f0a7",
+      "pixelSha256": "94909673be06984ff57a98435506267211fa5ca5e0cbbd29dd8e440fed1a5c26",
       "provenance": "ImageGen, one-ink nearest-neighbour preparation"
     }
   },
   "totals": {
-    "pngBytes": 3599009,
-    "rgbaBytes": 11061024
+    "pngBytes": 3598951,
+    "rgbaBytes": 11064480
   }
 }

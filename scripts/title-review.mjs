@@ -1,12 +1,13 @@
 /** Offline title: viewport composition, lettering, keyboard/touch, layered parallax, ambient motion, lifecycle and cost. */
 import assert from 'node:assert/strict';
-import { mkdir, writeFile, stat } from 'node:fs/promises';
+import { mkdir, writeFile, stat, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 
 const out = resolve('test-results/title');
+const { frameWidth: markW, frameHeight: markH } = JSON.parse(await readFile('assets/title/manifest.json', 'utf8')).layers.wordmark;
 await mkdir(out, { recursive: true });
 const report = { startedAt: new Date().toISOString(), checks: [], errors: [], externalRequests: [],
   methodology: 'Offline file:// entry, fresh saves, real DOM input and unmodified screenshots. Phone sizes are Chromium viewport/touch emulation, not physical iOS/Android certification. Explicit ?test=1 is only used to read the title controller snapshot (motion, lifecycle, performance). No gameplay or save fixtures.' };
@@ -71,7 +72,7 @@ try {
       assert.ok(lettering.loaded, 'Bincov Text not loaded');
       assert.match(lettering.mark.heading, /逃离\s*滨科夫/);
       assert.equal(lettering.mark.image, 'url("data:image/png;base64');
-      assert.ok(lettering.mark.width > 0 && lettering.mark.width % 144 === 0 && lettering.mark.height === lettering.mark.width / 144 * 66, `${size}: wordmark scaled by a fraction`);
+      assert.ok(lettering.mark.width > 0 && lettering.mark.width % markW === 0 && lettering.mark.height === lettering.mark.width / markW * markH, `${size}: wordmark scaled by a fraction`);
       await page.screenshot({ path: resolve(out, `${size}.png`) });
       await page.locator('[data-action="help"]').click();
       const modal = page.getByRole('dialog', { name: '行动指南' });

@@ -7,7 +7,7 @@ const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
 const path = (name: string) => 'assets/title/' + name + '.png';
 const read = (name: string) => decodePng(readFileSync(path(name)));
 const file = (name: LayerName) => path(LAYERS[name].key);
-const sourceFiles = ['sources/wordmark-industrial', ...['master', 'room', 'desk', 'chair', 'fore', 'lamp', 'harbor', 'boat', 'pier'].map(n => 'sources/master-v3/' + n + '-v3')];
+const sourceFiles = ['sources/wordmark-industrial-v4', ...['master', 'room', 'desk', 'chair', 'fore', 'lamp', 'harbor', 'boat', 'pier'].map(n => 'sources/master-v3/' + n + '-v3')];
 const master = (name: string) => read('sources/master-v3/' + name + '-v3');
 /** Texture preparation only: preserve generated pixels/alpha with nearest sampling. */
 function sampled(src: RGBA, w: number, h: number): RGBA {
@@ -44,7 +44,7 @@ function mooringStrip(): RGBA {
     return { w, h, data };
 }
 function wordmark(): RGBA {
-    const src = read('sources/wordmark-industrial'), ink = (p: number) => src.data[p + 3] >= 192 && src.data[p] > 190 && src.data[p + 1] > 172 && src.data[p + 2] > 130;
+    const src = read('sources/wordmark-industrial-v4'), ink = (p: number) => src.data[p + 3] >= 192 && src.data[p] > 190 && src.data[p + 1] > 172 && src.data[p + 2] > 130;
     let x0 = src.w, y0 = src.h, x1 = 0, y1 = 0;
     for (let y = 0; y < src.h; y++)
         for (let x = 0; x < src.w; x++)
@@ -92,7 +92,7 @@ if (process.argv[1]?.replaceAll('\\', '/').endsWith('/generate.ts')) {
             'title-sky-ready': extrude(harbor, 2, 2),
             'title-harbor-ready': extrude(harbor, 4, 3),
             'title-room-ready': extrude(sampled(master('room'), 960, 540), 6, 4),
-            'title-wordmark-industrial': wordmark(),
+            'title-wordmark-industrial-v4': wordmark(),
             'title-chair-master-v3': extrude(crop(sampled(master('chair'), 960, 540), 250, 372, 320, 168), 16, 7),
             'title-desk-master-v3': extrude(crop(sampled(master('desk'), 960, 540), 392, 238, 568, 302), 10, 6),
             'title-fore-master-v3': extrude(crop(sampled(master('fore'), 960, 540), 810, 0, 150, 540), 25, 11),

@@ -10,9 +10,9 @@
 - `sources/*-depth-v2.png` 和对应运行图是上一轮独立物件方案，保留供比较／回退，已不进入运行包。`*-new.png` 中被替换的源素材同样保留。
 
 - `*-new.png`：2026-10-07 第三轮分层交付。原始生成图、提示词和交付清单位于本地 `设计提案/主界面重做-20261006/layers/`；仓库保存实际运行需要的 PNG。
-- `sources/wordmark-industrial.png`：本轮通过内置 ImageGen 生成的独立中文工业字标。准确文本为“逃离／滨科夫”；提示词见同目录 `wordmark-prompts.txt`。运行版缩至 144×66，最近邻采样后使用单色旧白和二值透明，避免柔边与浮雕效果。
+- `sources/wordmark-industrial-v4.png`：本轮通过内置 ImageGen 从已认可概念提取的独立中文工业字标，准确文本为“逃离／滨科夫”。两次生成提示词和实际选择见 [wordmark-v4-prompts.md](sources/wordmark-v4-prompts.md)。运行版为 144×72，最近邻采样后使用单色旧白和二值透明；旧源图和 144×66 版本保留作历史。
 - `title-sky-ready.png`、`title-harbor-ready.png`、`title-room-ready.png`：从当前对应源 PNG 延展边缘像素，覆盖视差边界。透明补边不能代替画面延展。
-- `title-wordmark-industrial.png`：独立字标的运行版。正文继续使用 Bincov Text，字体来源与 OFL 许可见 [字体说明](../fonts/README.md)。
+- `title-wordmark-industrial-v4.png`：独立字标的当前运行版。正文继续使用 Bincov Text，字体来源与 OFL 许可见 [字体说明](../fonts/README.md)。
 - `title-pier-master-v3.png`：只包含室外湿码头、桩和护栏，位于船与船水关系之上；室内地板和门槛只属于 `title-room-ready.png`。首个错误包含室内地面的码头输出已拒用。
 - `src/title/water.ts`：从船体真实轮廓采样，绘制吃水边缘、暗水、受波纹打断的船影和局部反光；不是另一张不透明背景。
 

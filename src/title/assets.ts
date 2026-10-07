@@ -16,7 +16,7 @@ import chair from '../../assets/title/title-chair-master-v3.png';
 import fore from '../../assets/title/title-fore-master-v3.png';
 import sparks from '../../assets/title/title-sparks-new.png';
 import rain from '../../assets/title/title-rain-new.png';
-import wordmark from '../../assets/title/title-wordmark-industrial.png';
+import wordmark from '../../assets/title/title-wordmark-industrial-v4.png';
 
 /** Inline data URLs; the build checks each file against assets/title/manifest.json. */
 export const TITLE_ART: Record<LayerName, string> = { sky, fogHigh, fogLow, harbor, boat, mooring, pierFront, room, lamp, desk, light, radioFx, chair, fore, sparks, rain, wordmark };
