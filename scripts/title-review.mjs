@@ -116,6 +116,10 @@ try {
     await page.goto(url + '?test=1');
     await page.locator('.title-enter').waitFor();
     const snap = () => page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+    const settledPointer = x => page.waitForFunction(px => {
+      const s = window.__bincov.app.game.scene.getScene('Menu').title.snapshot();
+      return s.camera[0] === Math.max(-1, Math.min(1, px / innerWidth * 2 - 1));
+    }, x, { timeout: 20000 });
     const sceneCounts = () => page.evaluate(() => {
       const scene = window.__bincov.app.game.scene.getScene('Menu');
       return { children: scene.children.length, textures: scene.textures.getTextureKeys().filter(k => k.startsWith('title-')).length,
@@ -151,9 +155,9 @@ try {
     // Parallax: near layers travel further than far ones; menu text and hit targets stay put.
     const menuRect = () => page.locator('.title-enter').evaluate(el => JSON.stringify(el.getBoundingClientRect()));
     const before = await menuRect();
-    await page.mouse.move(1279, 719, { steps: 8 }); await page.waitForTimeout(2500);
+    await page.mouse.move(1279, 719, { steps: 8 }); await settledPointer(1279);
     const corner = await snap();
-    await page.mouse.move(0, 0, { steps: 8 }); await page.waitForTimeout(2500);
+    await page.mouse.move(0, 0, { steps: 8 }); await settledPointer(0);
     const opposite = await snap();
     const maxima = { far: [0, 0], harbor: [0, 0], room: [1, 0], lamp: [1, 0], desk: [2, 0], chair: [3, 0], fore: [4, 0] };
     for (const [name, [x, y]] of Object.entries(maxima)) {
@@ -178,10 +182,10 @@ try {
     // State interpolation alone is insufficient: NEAREST/roundPixels previously
     // made continuous camera input appear as discrete jumps in the real canvas.
     // This floor patch contains only the room layer (no rain, UI, boat or light).
-    await page.mouse.move(960, 100); await page.waitForTimeout(2000);
+    await page.mouse.move(960, 100); await settledPointer(960);
     const fractionalA = await snap();
     const patchA = await page.screenshot({ path: resolve(out, 'subpixel-floor-a.png'), clip: { x: 80, y: 590, width: 180, height: 45 } });
-    await page.mouse.move(1024, 100); await page.waitForTimeout(2000);
+    await page.mouse.move(1024, 100); await settledPointer(1024);
     const fractionalB = await snap();
     const patchB = await page.screenshot({ path: resolve(out, 'subpixel-floor-b.png'), clip: { x: 80, y: 590, width: 180, height: 45 } });
     const roomStep = Math.abs(fractionalB.groups.room[0] - fractionalA.groups.room[0]);
