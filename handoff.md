@@ -8,6 +8,8 @@
 
 本地 Windows / Node 24.19.0 实际检查通过：四文件围栏与新增导航、六个文档相对链接、四张表格共 34 行列数、十二区域的 7／3／2 分类、六阶段与三结局、所需区域及术语覆盖；`git diff --check` 通过。源码核对确认原任务、污染文案和已有区域选择仍保留。本轮游戏测试、浏览器截图与打包未运行；PR 的自动 CI 单独以检查页为准。
 
+已通过认证 GitHub 连接器提交 [PR #27](https://github.com/xuys2025/escape-bincov/pull/27)。初始远端提交 `c1af0ff1fb287349f50afc3c0d9a10052aec9667` 与本地提交 `2c87f8bf02a07a32a1e89682850b348d30a2ec5e` 的完整文件树均为 `9c1bde7d6c217183abddbf218af07636f230df88`；随后仅补记 PR 归属与交付记录。最终 CI 状态见 [PR 检查页](https://github.com/xuys2025/escape-bincov/pull/27/checks)，不将 PR 已提交表述为已合并或已上线。
+
 ## 2026-10-07 · CI 单次构建与四组并行检查
 
 维护者明确要求立即执行 CI 优化。实时主线 `f14414718f6dd2b9b8d9144b40134b51fcbc8cc9`（#23 已合并），工作区干净；开放 PR 中无同目标，独立承接分支 `ci/parallel-browser-checks`。本轮只改 CI 与交付文档。
