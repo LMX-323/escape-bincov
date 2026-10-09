@@ -8,6 +8,8 @@
 
 主工作区原有未提交 handoff、商场文档和进度文件完整保留；使用仓库内隔离工作树。终端 `git fetch` 因网络不可达失败，改用认证GitHub只读接口核对并获取真实Git对象，未把失败fetch记成通过。开工主线为8355b85；交付前#29合并，已同步最新main `43a342ce434c101e4b7058a54f6f29ede9482223`，逐项校验新增文件blob、tree与commit哈希及完整父历史，保留主线上新合入的文学稿、导航、任务和交接记录。纯内容文档未运行pnpm test、pnpm package、浏览器或真人测试，无新增实现截图、素材或发布包。后续代码接入仍排在#22后，工厂联系及其余章节逐批细化；未来版本5迁移与地图身份只为规格，未实际修改存档。
 
+已通过认证GitHub连接器提交 [PR #30](https://github.com/xuys2025/escape-bincov/pull/30)。初始远端提交 `076c62d1826ca9ffd882cb635d07ddd777d8d1c6` 与本地 `80b6e7c89f90bd46947ccf58e3c90163e62af7ef` 的完整文件树同为 `acd31d45c5d1a2493deb3f71823227b3c5682acf`；随后仅补记任务归属及交付记录。最终本地核对160个本地链接／锚点、十八节点无环和十五线索登记通过；PR自动CI以[检查页](https://github.com/xuys2025/escape-bincov/pull/30/checks)为准，不将提交表述为合并或上线。
+
 ## 2026-10-09 · 潮水、内陆区域与长线主线设计
 
 维护者明确要求落实本次世界观与地图规划。基线为最新上游 main `841e8bbdfb070eada82537563dd1ab1b4801aea3`；已核对任务清单与开放 PR，只有美术方向 #22，无同目标承接。本轮在独立分支 `docs/world-regions-story`、仓库内隔离工作树编写 [世界观与地图主线](docs/WORLD-REGIONS-STORY.md)，同步 README 导航与任务归属。原工作区的未提交 handoff、商场文档和进度文件保留，未纳入本次提交。
