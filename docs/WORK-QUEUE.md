@@ -18,12 +18,15 @@
 
 | 任务 / 承接入口 | 核对时实际范围 | 下一步与范围边界 |
 | --- | --- | --- |
+| [#27](https://github.com/xuys2025/escape-bincov/pull/27) · `docs/world-regions-story` · [世界观与地图主线](WORLD-REGIONS-STORY.md) | 2026-10-09 已合并为 `8355b85`，接受潮水、盐度、一据点十二区域、五方势力及六阶段三结局的设计文档 | 维护者确认先完成 #22，再实施相关功能；[#26](https://github.com/xuys2025/escape-bincov/issues/26) 只部分被覆盖，保持开放。文学重写由下方登记的独立草稿承接，文档合并不代表玩法已实现 |
+| `ci/parallel-browser-checks` · [CI 工作流](../.github/workflows/ci-pages.yml) | 2026-10-07 维护者明确授权执行 CI 优化；实时 main 为 `f144147`，无同目标开放 PR。单次构建，20 项浏览器检查分四组独立 runner 并行，保留统一门禁、证据与 Pages/镜像检查名 | 本地语法、覆盖、失败门禁、制品哈希及单元/打包检查后提交独立 PR，等待该提交完整 CI。按路径选择测试、缩短诊断循环及缓存调整留待后续明确范围；等待维护者合并 |
 | [#10](https://github.com/xuys2025/escape-bincov/pull/10) · `agent/qol-discovery-20261005` | 原头 `a99c661` 的完整 QOL 与已接受 #16 整合；保留原分支历史，补齐 RPG 商店、多层搜刮/拆分/旋转、真实命中方向和基地离店确认 | [本轮整合记录](QOL-PR16-INTEGRATION.md)；必须在最新组合完整 CI 通过后合并。真机及真人清单继续保留 |
 | [#11](https://github.com/xuys2025/escape-bincov/pull/11) · `docs/art-direction-research` | 核心资产已由 #20 采用；63 份来源档案由 #19 保留原头父历史承接 | GitHub 已标记合并，归档来源及历史验收保留；不恢复旧 `art.css` |
 | [#16](https://github.com/xuys2025/escape-bincov/pull/16) · `feat/buildings-rpg-mall` | 最终头 `c558888` 已复核，完整 CI 通过，合并为 `9045139`；建筑/RPG/基地/商场进入主线 | [73 项验收登记](PR16-ACCEPTANCE-REGISTER.md)保留原图、真人、真机、独立性能及扩展组合缺口；已合并不代表这些全部通过 |
 | [#17](https://github.com/xuys2025/escape-bincov/pull/17) · `docs/pr16-development-plan` · `d0b6bd8` | M0–M7、68 项任务及 16+23+34 条验收已由 #16 完整采纳；逐行比较仅两段开头说明更新为历史事实 | 按“内容已由 #16 采纳”关闭，未再次合并旧说明。保留原分支、提交和[原规划交接](https://github.com/xuys2025/escape-bincov/blob/d0b6bd8259a2b102a565ae1c714c97edebf58bfc/handoff.md) |
 | [#18](https://github.com/xuys2025/escape-bincov/pull/18) · `docs/tarkov-ui-study` | 34 份原型、许可和证据已通过完整 CI 并合并为 `912aadc` | 原型仍非游戏；旧截图重采在历史 `baa8335` 工作区，不覆盖当前发布包 |
 | [#21 主界面像素重做](https://github.com/xuys2025/escape-bincov/pull/21) · `feat/pixel-title-parallax` | 按用户 2026-10-06 认可的像素概念与本地实施计划，独立重做主菜单：分层像素素材、2.5D 视差、环境动态、统一点阵字体、多端排布与离线打包 | 2026-10-07 用户指出透视、前中后景和光照尚未达标，#21 已转草稿；本轮改为同一概念母版分层，纠正室内地板混入码头的问题，重校桌台、椅座、吊灯、船及前景遮挡；已目视检查四角视差和多尺寸。整体美术仍未验收，继续在原 PR 修改。v3 完整 CI 已通过；继续减弱过重遮罩、精修字标和菜单、补短横屏文字对比度。v4 CI 已通过，但用户实测反馈动态眩晕和掉帧；继续取消位置取整与标题相机取整，图层、船与灯改为连续运动；取消纵向与自动漂移、收窄横向视差并缓存水面。实际截图验证 0.1 像素位移可见，20 次往返无资源增长。v5 完整 CI 已通过，用户确认不再卡顿，但指出边缘发糊；v6 改为更密的主菜单渲染画布和像素复制后细边界采样，保留连续坐标与实际画面回归，退出后恢复局内缩放。见 [当前 v6 糊边修复](title-parallax/motion-v6/README.md)，用户实际边缘体验待确认 |
+| [#23 主界面统一像素网格](https://github.com/xuys2025/escape-bincov/pull/23) · `feat/title-pixel-grid` | #21 已合并为 `425f320`；用户反馈画面“AI 味”重，确认采用“母版真像素化加关键处手绘”的方案。独立交付：全局 640×360 网格、共享色板、手绘替换海报与电表，不改源图和场景结构 | 草稿 PR，待用户验收整体美术。后续候选：效果精灵对齐网格、电台旋钮与步枪手绘、字标重绘。本轮按维护者要求在原 PR 修复旧客户端冲突测试时序（Refs #24）；保留全部保护断言，本地 4 倍 CPU 连续 5/5、正常搜刮 44/44、存档专项 9/9 通过，完整 CI 以最新提交为准。见 [测试修复记录](LOOT-CONFLICT-TEST-FIX.md)及 [title-pixel-grid](title-pixel-grid/README.md) |
 | [#20](https://github.com/xuys2025/escape-bincov/pull/20) · `feat/tactical-pixel-ui` | 战术界面、字体 B、统一美术已合并为 `9fe189c` | #10 整合继续保留布局、30 件库存美术和回归 |
 | [#19 流程整理](https://github.com/xuys2025/escape-bincov/pull/19) · `docs/pr-workflow-consolidation` | 统一任务入口及 #11 来源归档，完整 CI 通过后合并为 `07b1414` | 默认复用原 PR、需求先登记、最多两条新实现线等约定继续生效 |
 
@@ -53,6 +56,7 @@
 | 事项 | 来源 / 当前归属 | 当前处理 |
 | --- | --- | --- |
 | 沿海地图 2.5D 视角与像素材质 | 用户 2026-10-07 确认；[#22](https://github.com/xuys2025/escape-bincov/pull/22) · `docs/coast-2-5d-art-design`；[设计文档](COAST-2_5D-ART-DESIGN.md) | 文档检查完成，待 PR 审阅：A 视角、灰褐废土、仅沿海及关联室内；含 GPT Image 多素材拼板、提示词与验收。绘图、代码接入和游戏验收均待后续安排，不纳入商场、基地或主菜单 |
+| 故事文学性重写 | 用户 2026-10-09 明确要求；[#29](https://github.com/xuys2025/escape-bincov/pull/29) · `docs/story-literary-rewrite`；[写作交接](STORY-LITERARY-REWRITE.md) | #27 已合并，维护者认为现有故事缺少文学性，交给 Opus 5.5 续写。2026-10-09 已在同一草稿 PR 提交[《等海退去》](MAIN-STORY.md)初稿，设定索引补充第 6 节，取舍列在写作交接的修订说明中。LMX-323 已回复六项取舍（五项接受，人物去向改为随条件变化），同日完成第二轮修订。创作者批准后转 Ready，按维护者授权合并。文稿合并不代表故事已接入游戏：接入仍排在 #22 之后，#26 保持开放。功能实施仍排在 #22 完成后，#26 未决建议保留 |
 | QOL 与建筑/RPG 主线整合 | #10 原分支，基线 `9045139` | 本轮修复与验证见 [整合记录](QOL-PR16-INTEGRATION.md)，完整 CI 通过后按维护者授权合并；未完真机验收保留 |
 | 美术及界面前序成果收尾 | #11 / #18，承接实现 #20 | 方向与核心资产已采用；原 PR 留档收尾，历史报告不冒充新版本验收 |
 | 追击事件重开已经走过的门 | #16，审阅 `7cc9236` 的 `src/pursuit.ts` | 已复现并修复，只处理本帧新路段及身体范围；纯规则、原生关门/刷新与主线整合回归通过，最终 CI 已通过并随 #16 合并 |
