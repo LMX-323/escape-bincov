@@ -107,6 +107,12 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         const blocked = this.guard(false); if (blocked) return blocked;
         if (this.state.save.activeRun || !['menu', 'hideout'].includes(this.state.state)) return fail('locked', '请先恢复或结束原行动。');
         if (!this.saves.ensureRpg()) return this.failed('upgrade');
+        // Entry owns relief; mounting/remounting a renderer must never issue inventory writes.
+        // Preserve accepted training before the shared session advances its revision for relief.
+        if (this.samples.length) { const flushed = this.flush(); if (!flushed.ok) return flushed; }
+        const relief = this.saves.grantReliefResult();
+        if (relief === 'blocked') return this.guard(false) ?? fail('storage', '请先重试保存或导出备份。');
+        if (relief === 'save-failed') return this.failed('relief');
         this.state.state = 'hideout'; this.lastTick = this.now(); this.sync('enter'); return ok();
     }
     snapshot(): C.HideoutSnapshot {

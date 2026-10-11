@@ -23,6 +23,62 @@ function fixture(raw?: string, enter = true, allowed = () => true) {
     return { state, saves, runtime, events, setup, data, storage, initialized, get now() { return now; }, get writes() { return writes; }, get raw() { return data.get(SESSION_KEY)!; }, fail: (v = true) => { failed = v; }, advance: (ms: number) => { now += ms; } };
 }
 function reason(result: Result) { assert.equal(result.ok, false); return !result.ok && result.reason; }
+function poorStation(full = false) {
+    const f = fixture();
+    f.setup(d => {
+        d.profile.cash = 0; d.profile.equipment = { weapon: null, relief: false, ammo: 0, ammoRelief: 0 };
+        d.profile.bag = D.createInventory(6, 5); d.profile.stash = D.createInventory(10, 6); d.profile.safe = D.createInventory(2, 2);
+        if (full) { D.addItem(d.profile.bag, 'watch', 60); D.addItem(d.profile.stash, 'watch', 120); }
+    });
+    f.state.state = 'menu'; return f;
+}
+test('station entry durably grants relief before any view and repeated entry writes nothing', () => {
+    const f = poorStation(), revision = f.saves.revision;
+    assert.ok(f.runtime.enter().ok); assert.equal(f.saves.revision, revision + 1);
+    assert.equal(f.state.save.equipment.weapon, 'pistol'); assert.equal(f.state.save.equipment.relief, true);
+    assert.equal(D.count(f.state.save.bag, 'ammo9'), 12); assert.equal(D.count(f.state.save.bag, 'bandage'), 1);
+    assert.ok(f.state.save.bag.items.every(i => i.relief));
+    const raw = f.raw, writes = f.writes; assert.ok(f.runtime.enter().ok);
+    assert.equal(f.raw, raw); assert.equal(f.writes, writes);
+    const g = fixture(raw, false); const afterLoad = g.raw; assert.ok(g.runtime.enter().ok); assert.equal(g.raw, afterLoad);
+});
+test('entry relief queues full inventories once and delivers only the remaining supplies as space opens', () => {
+    const f = poorStation(true); assert.ok(f.runtime.enter().ok);
+    assert.deepEqual(f.state.save.reliefSupplies, [{ id: 'ammo9', qty: 12 }, { id: 'bandage', qty: 1 }]);
+    const raw = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, raw);
+    f.setup(d => { D.removeItem(d.profile.bag, 'watch', 2); });
+    assert.ok(f.runtime.enter().ok); assert.equal(D.count(f.state.save.bag, 'ammo9'), 12);
+    assert.deepEqual(f.state.save.reliefSupplies, [{ id: 'bandage', qty: 1 }]);
+    f.setup(d => { D.removeItem(d.profile.stash, 'watch', 2); });
+    assert.ok(f.runtime.enter().ok); assert.equal(D.count(f.state.save.stash, 'bandage'), 1); assert.equal(f.state.save.reliefSupplies, undefined);
+    assert.equal(reason(f.runtime.claimRelief()), 'rule'); // Existing explicit-claim contract is unchanged.
+});
+test('failed entry relief leaves menu and profile intact; retry then re-entry grants once', () => {
+    const f = poorStation(), profile = structuredClone(f.state.save), expansion = structuredClone(f.state.expansion), raw = f.raw;
+    f.fail(); assert.equal(reason(f.runtime.enter()), 'storage');
+    assert.equal(f.state.state, 'menu'); assert.equal(f.raw, raw); assert.deepEqual(f.state.save, profile); assert.deepEqual(f.state.expansion, expansion);
+    assert.equal(f.events.filter(e => e.type === 'committed').length, 0);
+    f.fail(false); assert.ok(f.runtime.retrySave().ok); assert.deepEqual(f.state.save, profile);
+    assert.ok(f.runtime.enter().ok); const delivered = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, delivered);
+    assert.equal(D.count(f.state.save.bag, 'ammo9'), 12); assert.equal(D.count(f.state.save.bag, 'bandage'), 1);
+});
+test('entry keeps relief eligibility, active-raid and writer protection intact', () => {
+    for (const source of ['cash', 'safe'] as const) {
+        const f = poorStation(); f.setup(d => { if (source === 'cash') d.profile.cash = 200; else D.addItem(d.profile.safe, 'pistol'); });
+        const raw = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, raw); assert.equal(f.state.save.equipment.weapon, null);
+    }
+    const f = poorStation(), raw = f.raw; f.saves.markConflict(); assert.equal(reason(f.runtime.enter()), 'conflict'); assert.equal(f.raw, raw);
+    const g = fixture(); assert.ok(g.runtime.deploy({ world: 'coast', seed: 'relief-entry' }).ok);
+    const raid = g.raw; assert.equal(reason(g.runtime.enter()), 'locked'); assert.equal(g.raw, raid);
+});
+test('re-entering a training station preserves accepted samples before relief commits', () => {
+    const f = poorStation(); f.setup(d => { d.expansion.base.facilities.training = 1; d.expansion.base.training.attribute = 'strength'; });
+    f.state.state = 'hideout'; f.runtime.setActivity(true); f.advance(250);
+    f.runtime.practice({ from: { x: 332, y: 302 }, to: { x: 334, y: 302 }, seconds: .25, now: f.now });
+    assert.equal(f.runtime.trainingProgress().pendingSeconds, .25); assert.ok(f.runtime.enter().ok);
+    assert.equal(f.runtime.trainingProgress().activeSeconds, .25); assert.equal(f.state.save.equipment.weapon, 'pistol');
+    assert.ok(f.runtime.flush().ok); assert.equal(f.runtime.snapshot().base.training.activeSeconds, .25);
+});
 function train(f: ReturnType<typeof fixture>, seconds: number) {
     f.runtime.setActivity(true);
     for (let i = 0; i < seconds * 4; i++) {

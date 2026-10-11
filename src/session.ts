@@ -247,12 +247,17 @@ export class SaveSession {
         return true;
     }
 
-    grantRelief(): boolean {
+    /** A no-op is a successful entry check, but is not a newly claimed kit. */
+    grantReliefResult(): 'committed' | 'unchanged' | 'blocked' | 'save-failed' {
+        if (this.session.pendingSettlement || this.session.conflict || !this.owned || this.deferred) return 'blocked';
         const candidate = structuredClone(this.session.save);
-        if (this.session.pendingSettlement || !D.grantRelief(candidate) || !this.persist(candidate)) return false;
+        if (!D.grantRelief(candidate)) return 'unchanged';
+        if (!this.persist(candidate)) return this.session.conflict ? 'blocked' : 'save-failed';
         this.session.save = candidate;
-        return true;
+        return 'committed';
     }
+    /** Existing callers still distinguish newly delivered relief from no change. */
+    grantRelief(): boolean { return this.grantReliefResult() === 'committed'; }
 
     setVolume(volume: number): boolean {
         if (this.session.pendingSettlement) return false;

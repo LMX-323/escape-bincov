@@ -77,7 +77,7 @@ export type HideoutEvent =
 /** Position/time input replaces unverified moved/inZone claims. World pixels; clock is epoch milliseconds. */
 export interface PracticeSample { from: { x: number; y: number }; to: { x: number; y: number }; seconds: number; now: number }
 export interface HideoutRuntime {
-    /** At the station boundary only: atomically upgrade existing progress; active legacy raids must resume first. */
+    /** Upgrade at the station boundary, then persist eligible relief before entry; active legacy raids resume first. */
     enter(): Result;
     snapshot(): HideoutSnapshot;
     /** Detached, read-only effective training progress; base.training remains committed data. */
