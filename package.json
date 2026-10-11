@@ -28,6 +28,7 @@
     "test:station-tier1": "node --import tsx scripts/station-tier1-test.mjs",
     "test:station-tier2": "node --import tsx scripts/station-tier2-test.mjs",
     "test:station-relief": "node scripts/station-relief-test.mjs",
+    "test:station-capability": "node --import tsx scripts/station-capability-listeners.mjs",
     "test:shop-drag": "node scripts/shop-drag-test.mjs",
     "test:qol-expansion": "node scripts/qol-expansion-test.mjs",
     "test:expansion": "node scripts/expansion-browser-test.mjs",

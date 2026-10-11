@@ -1,3 +1,9 @@
+## 2026-10-12 · SOL-R3-CAP-LISTENER-01 能力切换监听
+
+从 main `1dbacb4` 建 `fix/cap-listener-r3`，只处理 #32 三级的 SOL-R3-CAP-LISTENER-01。根因是 Pixi 8.22 `DefaultBatcher._updateMaxTextures`：能力变化后池里复用的 Graphics 渲染数据每次新建 DefaultShader、不销毁旧的，旧 Shader 的 BindGroup 永久挂在模块缓存的 batch-sampler 组上。C5 的增长来自测试 scratch 绘制，真实院子→城中村往返也会触发。`src/coast-view/renderer-lifetime.ts` 改为整页每个纹理数一个 DefaultShader，批处理器的 Shader 与自身纹理数保持一致。
+
+修复前 C5 8/9（监听 3→8 / 4→9）、新归属检查 2/4；修复后 9/9（监听全程 2）、4/4，程序复用、像素、恢复后输入与暂停、院子/城中村往返回归通过。只模拟能力查询，真实 8 槽设备与驱动迁移未测；F20 PARTIAL、ASTRA-SAVE-01 UNCONFIRMED 及原 R/K 失败不变。[报告与复验入口](docs/station-yard/opus-cap-listener-20261012/README.md)。完整 CI 通过后交主调度验收；未合并、未发布、未更新试玩站。以下历史交接原样保留。
+
 ## 2026-10-12 · README 对齐当前主线
 
 维护者要求在 Opus 处理监听问题期间更新过时的首页说明。从 main `1dbacb4` 建独立分支 `docs/readme-current`，只调整 README 与交接索引：补齐默认水产站院子、三个行动区域、城中村可选入口、院子/局内按键、成长与存档说明；复用已提交的真实截图，移除已失效的候选状态和旧测试数字，保留素材、真机、内存及历史异常边界。Opus 的 `fix/cap-listener-r3` 工作树和产品源码未改。

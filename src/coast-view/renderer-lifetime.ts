@@ -1,5 +1,5 @@
 /**
- * Two context-restore lifetimes on the shared renderer that Pixi 8.22 leaves to its user (ASTRA-R3).
+ * Three context-restore lifetimes on the shared renderer that Pixi 8.22 leaves to its user (ASTRA-R3, SOL-R3).
  *
  * 1. Graphics program (ASTRA-R3-PIXI-01). Pixi's GlGraphicsAdaptor compiles a new GlProgram on every contextChange,
  *    i.e. on renderer start and on every WebGL context restore. GlProgram names each compile with a page-wide counter
@@ -13,10 +13,20 @@
  * 2. Released render targets. A GPU texture slot in Pixi's managed hash becomes a null placeholder when its source is
  *    unloaded, and a context restore nulls every slot at once; a source destroyed afterwards never takes its slot
  *    back. `releaseManagedSlots` drops exactly the placeholders of sources the caller has just destroyed.
+ * 3. Default batch shader (SOL-R3-CAP-LISTENER-01). Pixi's DefaultBatcher shares one module-level DefaultShader, but
+ *    `_updateMaxTextures` (run when a pooled Graphics render data is reused) makes a new DefaultShader whenever the
+ *    count differs from its batcher's, even if one for that count exists, and never destroys the one it replaces. The
+ *    replaced Shader is collected, yet its bind group stays a 'change' listener of Pixi's module-cached batch-sampler
+ *    group for that count, so every 8/16 switch followed by such a reuse leaves one more. Batchers only borrow this
+ *    shader (DefaultBatcher.destroy drops its reference without destroying it), so the page keeps one DefaultShader
+ *    per count, adopting the one Pixi already made, and batchers switch between those. A batcher's shader always
+ *    matches its own texture count: `_updateMaxTextures` now moves both (Pixi left the count at its first value), and
+ *    `begin` corrects a batcher made after a switch, to which the constructor hands Pixi's first shader.
  */
 import {
-  colorBitGl, compileHighShaderGlProgram, extensions, generateTextureBatchBitGl, getBatchSamplersUniformGroup, GlGraphicsAdaptor,
-  localUniformBitGl, Matrix, roundPixelsBitGl, Shader, UniformGroup, type Application, type GlProgram, type Renderer,
+  colorBitGl, compileHighShaderGlProgram, DefaultBatcher, DefaultShader, extensions, generateTextureBatchBitGl,
+  getBatchSamplersUniformGroup, GlGraphicsAdaptor, localUniformBitGl, Matrix, roundPixelsBitGl, Shader, UniformGroup,
+  type Application, type GlProgram, type Renderer,
 } from 'pixi.js';
 
 const programs = new Map<number, GlProgram>();
@@ -54,6 +64,30 @@ export class KeptProgramGraphicsAdaptor extends GlGraphicsAdaptor {
 // imported by the host that creates it). Works whether or not the WebGL renderer module has registered yet.
 extensions.remove(GlGraphicsAdaptor);
 extensions.add(KeptProgramGraphicsAdaptor);
+
+const batchShaders = new Map<number, DefaultShader>();
+/** The page's DefaultShader for a batch texture count; `seen` (a shader Pixi made) is kept if its count has none. */
+function batchShader(maxTextures: number, seen?: DefaultShader | null): DefaultShader {
+  if (seen?.maxTextures && !batchShaders.has(seen.maxTextures)) batchShaders.set(seen.maxTextures, seen);
+  let shader = batchShaders.get(maxTextures);
+  if (!shader) { shader = new DefaultShader(maxTextures); batchShaders.set(maxTextures, shader); }
+  return shader;
+}
+type KeptBatcher = { shader: DefaultShader | null; maxTextures: number; begin(): void; _updateMaxTextures(n: number): void };
+const batcher = DefaultBatcher.prototype as unknown as KeptBatcher;
+// The prototype is patched because Pixi constructs DefaultBatcher directly (BatcherPipe, GraphicsContextRenderData);
+// there is no extension to swap. Skipped if the internal method is gone (the capability-switch check then fails).
+if (typeof batcher._updateMaxTextures === 'function' && typeof batcher.begin === 'function') {
+  const begin = batcher.begin;
+  batcher._updateMaxTextures = function (this: KeptBatcher, maxTextures: number) {
+    this.maxTextures = maxTextures;
+    this.shader = batchShader(maxTextures, this.shader);
+  };
+  batcher.begin = function (this: KeptBatcher) {
+    if (this.shader && this.shader.maxTextures !== this.maxTextures) this.shader = batchShader(this.maxTextures, this.shader);
+    begin.call(this);
+  };
+}
 
 /**
  * Drop the null placeholders that the given released resources left in one of the renderer's managed hashes (for
