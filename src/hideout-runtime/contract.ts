@@ -1,7 +1,7 @@
 /** Durable water-station contract, based on the approved prototype contract (2026-10-09).
  * Presentation, animation, pathfinding and assets belong to the host. No mock settlement exists here.
  */
-import type { Inventory, RunSummary, SaveDataV1 } from '../domain';
+import type { Inventory, Item, RunSummary, SaveDataV1 } from '../domain';
 import type { Attribute, Facility } from '../expansion-state';
 export type { Attribute, Facility } from '../expansion-state';
 export type Recipe = 'bandage' | 'medkit' | 'antidote';
@@ -26,6 +26,8 @@ export interface BodyView {
 export interface HideoutSnapshot {
     /** Actual durable session revision, also observes transactions made through the old tabs. */
     rev: number; profile: Readonly<SaveDataV1>; base: BaseView; body: BodyView; power: 'emergency' | 'restored';
+    /** Detached view of the equipped item in the committed session; null when none is equipped. */
+    readonly charm: Readonly<Item> | null;
     storage: { ok: boolean; conflict: boolean; pendingSettlement: boolean; pendingBase: boolean; upgradeRequired: boolean };
     /** Log sequence derived from run count, not a new day/night clock. */
     day: number; phase: 'menu' | 'hideout' | 'departing' | 'run' | 'result';

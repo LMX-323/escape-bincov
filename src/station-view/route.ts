@@ -83,7 +83,6 @@ async function openStation(arrival: Arrival): Promise<boolean> {
           if (app.save.activeRun) { closeStation(); changeState('menu'); toast('备份中有进行中的行动，请在标题页继续。'); }
           else current?.host.resync();
         },
-        charm: () => app.expansion?.charm?.id ?? null,
         volume: v => { const r = hideoutRuntime.setVolume(v); if (r.ok) audio.setVolume(app.save.settings.volume); else current?.host.ui.toast(r.message, 'error'); },
         audioStart: () => audio.start(),
         audioBus: () => audio.bus(),

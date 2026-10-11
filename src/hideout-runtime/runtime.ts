@@ -104,7 +104,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     }
     snapshot(): C.HideoutSnapshot {
         this.sync(); const s = this.state, e = structuredClone(s.expansion) ?? newExpansion(this.now()), limits = derivedLimits(e), effective = effectiveAttributes(e);
-        return structuredClone({ rev: this.saves.revision, profile: s.save,
+        return structuredClone({ rev: this.saves.revision, profile: s.save, charm: e.charm ?? null,
             base: { ...e.base, training: { ...e.base.training, windowLeft: Math.max(0, 600000 - Math.max(0, this.now() - e.base.training.startedAt)) / 1000 } },
             body: { ...e.body, hpMax: limits.hp, staminaMax: limits.stamina, carry: limits.carry,
                 effects: Object.entries(e.body.effects).filter(([, seconds]) => seconds > 0).map(([name, seconds]) => ({ name, seconds })),

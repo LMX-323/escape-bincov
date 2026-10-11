@@ -25,6 +25,7 @@
     "test:qol": "node scripts/qol-test.mjs",
     "test:hideout": "node scripts/hideout-browser-test.mjs",
     "test:station": "node --import tsx scripts/station-browser-test.mjs",
+    "test:station-tier1": "node --import tsx scripts/station-tier1-test.mjs",
     "test:shop-drag": "node scripts/shop-drag-test.mjs",
     "test:qol-expansion": "node scripts/qol-expansion-test.mjs",
     "test:expansion": "node scripts/expansion-browser-test.mjs",

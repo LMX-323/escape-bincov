@@ -15,7 +15,8 @@
 
 | 接口 | 接法 |
 | --- | --- |
-| snapshot | 原字段保留；新增 phase、arrival、storage.pendingBase/upgradeRequired。所有对象均为副本，改副本不会提交。rev 是全局存档版本，不是院子独立计数。 |
+| snapshot | 原字段保留；新增 phase、arrival、storage.pendingBase/upgradeRequired。所有对象均为副本，改副本不会提交。rev 是全局存档版本，不是院子独立计数。2026-10-11 / PR #34 增加只读 `charm: Readonly<Item> \| null`，来自已提交会话；院子整备直接读取 `snapshot.charm`，不再用 host 回调读取共享状态。 |
+| snapshot.day / profile.stats.runs | day 仍是出击次数 + 1 的兼容日志序号。院子 HUD、电台、旧页签统一显示「累计出击 N 次」，读取 profile.stats.runs；不把日志序号当日历。 |
 | move / split | move 追加可选 quantity；split 指定目标空格。安全箱用 secure；补给、护符用 useSupply/equipCharm/unequipCharm。移入格位先调 placementError 预览。 |
 | openShop | view 为副本；place 仅改临时车；settle 才扣钱。任务物资返回 `ok:false, reason:'rule', confirmation:{kind:'quest-sale',token,warnings}`，确认弹层后 settle(token)。编辑车、任务/需求变化会使旧确认失效。失败时保持车；stale 须让玩家明确 reset 后重新选择。 |
 | CartView.placement | 恒为 automatic-stash。待买区不是仓库预留格；本轮没有批准手动指定成交落点的新规则。 |
