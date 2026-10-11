@@ -2,6 +2,10 @@
 
 #36 已合并，main `1dbacb4`。按维护者指令在独立分支 `fix/cap-listener-r3` 只收口 #32 的 SOL-R3-CAP-LISTENER-01：区分测试 scratch 绘制与产品往返各自触发的 Pixi DefaultShader 替换，渲染层改为每个纹理数一个 DefaultShader，修复前 C5 失败对照保留。见[复现、根因与验证](station-yard/opus-cap-listener-20261012/README.md)。本批为独立小 PR，不改 Runtime/存档/图片；F20 总堆、ASTRA-SAVE-01、原 R/K 及其它二三级保持原状态，不自行合并/发布/更新试玩站。
 
+## 2026-10-12 · README 更新（独立文档交付）
+
+维护者要求更新首页过时内容。基于最新 main `1dbacb4`，由 `docs/readme-current` 承接 README 的玩法、入口、操作、开发命令与进度边界更新，完成条件为说明对齐源码、链接有效、打包制品不变及 PR CI 通过。当前主调度负责本项；Opus 继续独立处理 #32 的 SOL-R3-CAP-LISTENER-01（`fix/cap-listener-r3`），不改其文件或扩展修复范围。#34/#35/#36 已合并；下方待审字样为历史记录，实时状态以 GitHub 为准。
+
 ## 2026-10-11 · 水产站进站救济（AI 遗留续作）
 
 #35 已获维护者授权合并，最新 main `21e3796` 的 CI 全部通过。按“继续解决遗留问题”，在独立分支 `fix/station-relief-entry` 承接 #32 的 ASTRA-STATION-RELIEF-01：救济归属正式进站接口，保留资格、满包队列、失败回滚和重复入口保护；同时修正 #35 留下的药剂名称。见[实现与真实验证](station-relief-20261011/README.md)。本批新增独立 PR，完整 CI 通过后交维护者审阅；不自行合并，#32 总单及其余二三级问题保持开放。下方 #35 待审字样为历史快照。
