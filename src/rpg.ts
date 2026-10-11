@@ -124,7 +124,7 @@ export function useRpgItemResult(state: ExpansionState, id: string): RpgItemResu
         const message = id === 'water' ? '水分和耐力已满，且没有污染，饮水没有效果。'
             : id === 'food' ? '饱食、生命和耐力已满，食用罐头没有效果。'
             : id === 'bandage' || id === 'medkit' ? '生命已满且没有流血，治疗没有效果。'
-            : id === 'antidote' ? '当前没有污染，使用解毒剂没有效果。'
+            : id === 'antidote' ? '当前没有污染，使用除藻药剂没有效果。'
             : '同类效果与持续时间没有变化，当前使用没有效果。';
         return { ok: false, reason: 'no-effect', message };
     }

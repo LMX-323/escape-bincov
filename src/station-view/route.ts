@@ -31,7 +31,7 @@ let exposed = false;
 export async function enterStation(): Promise<boolean> {
   if (current || starting) return false;
   const entered = hideoutRuntime.enter();
-  if (!entered.ok) { toast(entered.message); return false; }
+  if (!entered.ok) { render(); toast(entered.message); return false; }
   return openStation(null);
 }
 /** Result page "返回": the Runtime hands over a one-time arrival; the yard plays the walk-in and the report. */
@@ -89,8 +89,6 @@ async function openStation(arrival: Arrival): Promise<boolean> {
       },
     });
     current = { host, root, pixi };
-    // Entering the hideout has always issued the relief kit to a broke player without a gun; the Runtime does it here.
-    if (!arrival) hideoutRuntime.claimRelief();
     host.resync();
     if (test) expose();
     if (test && p.get('at')) { const [x, y, d] = p.get('at')!.split(',').map(Number); if (Number.isFinite(x) && Number.isFinite(y)) host.place(x, y, Number.isFinite(d) ? d : 6); }

@@ -135,6 +135,9 @@ jobs:
       - name: Station trusted training progress and supply feedback
         if: matrix.group == 'world'
         run: pnpm test:station-tier2
+      - name: Station entry owns relief delivery
+        if: matrix.group == 'world'
+        run: pnpm test:station-relief
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
         run: pnpm test:mall-passages
