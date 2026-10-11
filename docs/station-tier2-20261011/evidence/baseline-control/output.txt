@@ -1,0 +1,15 @@
+FAIL P01 rejected clock samples do not fill the existing scene ring or training prompt rejected real-clock samples must not fill the ring
++ actual - expected
+
++ 0.008333333333333333
+- 0
+
+FAIL P02 cap stays visibly full and explains waiting instead of accumulating display seconds capped training ring must represent the cap
++ actual - expected
+
++ 0.008691666666666665
+- 1
+
+FAIL S01 1280x720 compound no-effect rejection is readable and consumes nothing false == true
+FAIL S01 1920x1080 compound no-effect rejection is readable and consumes nothing false == true
+FAIL S01 390x844 compound no-effect rejection is readable and consumes nothing false == true

@@ -229,8 +229,9 @@ try {
     const s0 = await snap(), raw0 = await record(), n0 = D.count(s0.profile.stash, 'food'), sat0 = s0.body.satiety;
     await page.locator('[data-act="use"]').click(); await page.waitForTimeout(150);
     const s1 = await snap(); assertSupplyRefused(s0, s1); assert.deepEqual((await record()).profile, raw0.profile);
-    assert.match(await page.locator('#station-yard .toast').last().textContent(), /操作未完成/);
-    report.coverage.supplyRefused = { before: s0, after: s1 }; const used = false;
+    const message = await page.locator('#station-yard .toast').last().textContent();
+    assert.equal(message, '饱食、生命和耐力已满，食用罐头没有效果。');
+    report.coverage.supplyRefused = { before: s0, after: s1, message }; const used = false;
     return `9mm ${q0} 拆成 ${bag.map(i => i.qty).join(' + ')}；绷带进安全箱；罐头${used ? `已使用（饱食 ${sat0.toFixed(0)} → ${s1.body.satiety.toFixed(0)}）` : '未使用（Runtime 拒绝，见提示）'}`;
   });
 

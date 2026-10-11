@@ -1,0 +1,79 @@
+[
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-hideout.txt",
+    "command": "test:hideout",
+    "started": "2026-10-11T12:19:58.6891398Z",
+    "finished": "2026-10-11T12:20:12.7204475Z"
+  },
+  {
+    "exitCode": 1,
+    "log": "test-results/tier2/test-station.txt",
+    "command": "test:station",
+    "started": "2026-10-11T12:20:12.7724973Z",
+    "finished": "2026-10-11T12:28:42.0719627Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-save-browser.txt",
+    "command": "test:save-browser",
+    "started": "2026-10-11T12:28:42.0792635Z",
+    "finished": "2026-10-11T12:28:55.9741292Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-systems.txt",
+    "command": "test:systems",
+    "started": "2026-10-11T12:28:55.9755952Z",
+    "finished": "2026-10-11T12:29:35.4681081Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-station-tier1.txt",
+    "command": "test:station-tier1",
+    "started": "2026-10-11T12:29:35.4700786Z",
+    "finished": "2026-10-11T12:30:14.3441169Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-portable.txt",
+    "command": "test:portable",
+    "started": "2026-10-11T12:30:14.3461662Z",
+    "finished": "2026-10-11T12:30:23.4870930Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-ui.txt",
+    "command": "test:ui",
+    "started": "2026-10-11T12:30:23.4886441Z",
+    "finished": "2026-10-11T12:30:31.9573192Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-browser.txt",
+    "command": "test:browser",
+    "started": "2026-10-11T12:30:31.9588186Z",
+    "finished": "2026-10-11T12:31:11.4210637Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-desktop-input.txt",
+    "command": "test:desktop-input",
+    "started": "2026-10-11T12:31:11.4230654Z",
+    "finished": "2026-10-11T12:31:34.4925052Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-mobile.txt",
+    "command": "test:mobile",
+    "started": "2026-10-11T12:31:34.4944742Z",
+    "finished": "2026-10-11T12:31:54.2218832Z"
+  },
+  {
+    "exitCode": 0,
+    "log": "test-results/tier2/test-mobile-ux.txt",
+    "command": "test:mobile-ux",
+    "started": "2026-10-11T12:31:54.2233703Z",
+    "finished": "2026-10-11T12:33:04.8368174Z"
+  }
+]

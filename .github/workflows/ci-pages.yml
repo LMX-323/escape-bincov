@@ -132,6 +132,9 @@ jobs:
       - name: Station run count and equipped charm snapshot
         if: matrix.group == 'world'
         run: pnpm test:station-tier1
+      - name: Station trusted training progress and supply feedback
+        if: matrix.group == 'world'
+        run: pnpm test:station-tier2
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
         run: pnpm test:mall-passages

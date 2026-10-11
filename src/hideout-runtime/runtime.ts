@@ -4,7 +4,7 @@ import * as B from '../base';
 import * as Shop from '../shop';
 import { moveQuantity, placementError } from '../loot';
 import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, type ExpansionState } from '../expansion-state';
-import { useRpgItem } from '../rpg';
+import { useRpgItemResult } from '../rpg';
 import { equipCharm, unequipCharm } from '../reputation-luck';
 import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
 import { generateRun } from '../world';
@@ -27,7 +27,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     private acceptedMilliseconds = 0;
     private lastPosition: { x: number; y: number } | null = null;
     private samples: (C.PracticeSample & { attribute: C.Attribute })[] = [];
-    private pending: { ticket: ExpansionTransaction; draft: ExpansionDraft } | null = null;
+    private pending: { ticket: ExpansionTransaction; draft: ExpansionDraft; seconds: number; revision: number; before: string } | null = null;
     private lastTick: number;
     private preparedRun: string | null = null;
     private arrival: C.HideoutSnapshot['arrival'] = null;
@@ -43,6 +43,10 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     private sync(action = 'external') {
         if (this.observed === this.saves.revision || this.publishing) return;
         const initialLoad = this.observed === 0, before = this.previous, after = this.capture();
+        // Another entry committed independently: samples belonged to the previous revision, never its replacement.
+        if (action === 'external') {
+            this.samples = []; this.lastPosition = null; this.activityStart = this.lastInput = this.now(); this.acceptedMilliseconds = 0;
+        }
         this.observed = this.saves.revision; this.previous = after;
         this.publishing = true;
         try {
@@ -74,15 +78,18 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         this.publishing = true; try { this.emit({ type: 'save-failed', action }); } finally { this.publishing = false; }
         return fail(this.state.conflict ? 'conflict' : 'storage', this.state.storageError || '存档未写入，操作已回滚。');
     }
-    private applySamples(draft: ExpansionDraft) {
-        for (const sample of this.samples) B.practice(draft.expansion, sample.attribute, sample.from, sample.to, sample.seconds, sample.now);
+    private applySamples(draft: Pick<ExpansionDraft, 'expansion'>) {
+        let seconds = 0;
+        if (this.observed === this.saves.revision) for (const sample of this.samples)
+            if (B.practice(draft.expansion, sample.attribute, sample.from, sample.to, sample.seconds, sample.now)) seconds += sample.seconds;
+        return seconds;
     }
     private transaction(action: string, apply: (draft: ExpansionDraft) => boolean | C.Result, keep = false): C.Result {
         this.sync(); const blocked = this.guard(); if (blocked) return blocked;
-        let rejection: C.Result = fail('rule'), candidate: ExpansionDraft | null = null;
+        let rejection: C.Result = fail('rule'), candidate: ExpansionDraft | null = null, seconds = 0;
         let ticket: ExpansionTransaction | null;
         try { ticket = this.saves.prepareExpansionMutation(draft => {
-            this.applySamples(draft);
+            seconds = this.applySamples(draft);
             const result = apply(draft);
             if (result === false || typeof result === 'object' && !result.ok) { rejection = result === false ? fail('rule') : result; return false; }
             if (['move', 'quick-move', 'secure', 'equip', 'unequip', 'shop', 'quest', 'stash-upgrade'].includes(action)) D.grantRelief(draft.profile);
@@ -91,7 +98,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         if (!ticket) return rejection;
         const result = this.saves.commitExpansionMutation(ticket);
         if (result !== 'committed') {
-            if (result === 'save-failed') { if (keep) { this.pending = { ticket, draft: candidate! }; this.saves.retainExpansionTransaction(ticket); } return this.failed(action); }
+            if (result === 'save-failed') { if (keep) { this.pending = { ticket, draft: candidate!, seconds, revision: this.saves.revision, before: JSON.stringify(this.capture()) }; this.saves.retainExpansionTransaction(ticket); } return this.failed(action); }
             return fail(result === 'rejected' ? 'stale' : 'conflict');
         }
         this.samples = []; this.lastTick = this.now(); this.sync(action); return ok();
@@ -112,6 +119,23 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
             power: s.save.quests.repair ? 'restored' : 'emergency',
             storage: { ok: s.storageOK, conflict: s.conflict || !this.saves.ownsStorage, pendingSettlement: !!s.pendingSettlement, pendingBase: !!this.pending || !!this.samples.length, upgradeRequired: s.expansion?.version !== 2 },
             day: s.save.stats.runs + 1, phase: s.state === 'hideout' && this.preparedRun && s.save.activeRun?.runId === this.preparedRun ? 'departing' : s.state, arrival: this.arrival });
+    }
+    trainingProgress(): C.TrainingProgress {
+        const now = this.now(), saved = this.saves.captureExpansion() ?? newExpansion(now);
+        const stale = !!this.pending && (this.pending.revision !== this.saves.revision || this.pending.before !== JSON.stringify(this.capture()));
+        const effective = !stale && this.pending ? structuredClone(this.pending.draft.expansion) : structuredClone(saved);
+        const pendingSeconds = stale ? 0 : this.pending ? this.pending.seconds : this.applySamples({ expansion: effective });
+        const t = effective.base.training, windowLeft = Math.max(0, 600000 - Math.max(0, now - t.startedAt)) / 1000;
+        const windowExpired = windowLeft === 0, capped = t.quantity >= 1 && !windowExpired;
+        const status = this.state.conflict || !this.saves.ownsStorage ? 'conflict' : stale ? 'stale'
+            : this.pending || !this.state.storageOK ? 'storage'
+            : this.disposed || this.state.state !== 'hideout' || this.state.save.activeRun || this.state.pendingSettlement ? 'locked'
+            : !saved.base.facilities.training ? 'unavailable' : !t.attribute ? 'select' : capped ? 'capped' : 'ready';
+        return { attribute: t.attribute, saved: { activeSeconds: saved.base.training.activeSeconds, quantity: saved.base.training.quantity },
+            pendingSeconds, activeSeconds: t.activeSeconds, quantity: t.quantity, windowLeft, windowExpired,
+            pendingWindow: t.startedAt !== saved.base.training.startedAt, capped, status,
+            pendingGrowth: Object.fromEntries(ATTRIBUTES.map(a => [a, Math.max(0, (effective.growth.permanent[a] - saved.growth.permanent[a])
+                + (effective.growth.progress[a] - saved.growth.progress[a]))])) as Record<C.Attribute, number> };
     }
     subscribe(fn: (event: C.HideoutEvent) => void) { if (!this.disposed) this.listeners.add(fn); return () => { this.listeners.delete(fn); }; }
     tick(nowMs: number): void {
@@ -159,7 +183,8 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         if (!source(from)) return fail('rule');
         return this.transaction('supply', d => {
             const inv = d.profile[from], item = inv.items.find(i => i.uid === uid);
-            if (!item || !useRpgItem(d.expansion, item.id)) return false;
+            if (!item) return fail('missing-item', '这件物品已不存在，请重新选择补给。');
+            const result = useRpgItemResult(d.expansion, item.id); if (!result.ok) return fail(result.reason, result.message);
             if (!--item.qty) inv.items = inv.items.filter(i => i.uid !== uid); return true;
         });
     }
@@ -197,6 +222,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         return this.transaction('practice-select', d => { if (!d.expansion.base.facilities.training) return false; d.expansion.base.training.attribute = attribute; return true; });
     }
     practice(sample: C.PracticeSample): void {
+        this.sync();
         if (!this.active || !this.activityAllowed() || this.guard() || !validPractice(sample) || sample.now > this.now() || this.now() - sample.now > 1000
             || sample.now <= this.lastInput || sample.now - this.lastInput + 1 < sample.seconds * 1000
             || this.acceptedMilliseconds + sample.seconds * 1000 > sample.now - this.activityStart + 1 || this.samples.length >= 4096) return;

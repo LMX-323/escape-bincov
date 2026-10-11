@@ -1,6 +1,6 @@
 # AI 遗留第二级 A 批：水产站训练进度与补给反馈
 
-2026-10-11。承接 [Issue #32](https://github.com/xuys2025/escape-bincov/issues/32) 的 ASTRA-STATION-API-02、ASTRA-STATION-API-03。第一级 [PR #34](https://github.com/xuys2025/escape-bincov/pull/34) 已合并；本批从 main `6494b51ab987cd9fe038604afdf0caf8a1bc8d75` 建独立分支 `fix/ai-tier2-station`，本地工作树 `D:/bincov/ai-tier2-station`。本提交只准备范围与交接，下面两项尚未实现。
+2026-10-11。承接 [Issue #32](https://github.com/xuys2025/escape-bincov/issues/32) 的 ASTRA-STATION-API-02、ASTRA-STATION-API-03。第一级 [PR #34](https://github.com/xuys2025/escape-bincov/pull/34) 已合并；本批从 main `6494b51ab987cd9fe038604afdf0caf8a1bc8d75` 建独立分支 `fix/ai-tier2-station`，本地工作树 `D:/bincov/ai-tier2-station`。准备提交 `8c24ac3` 只有范围与交接；后续在原 [PR #35](https://github.com/xuys2025/escape-bincov/pull/35) 完成下面两项及现有界面接线。[实现、实际验证、截图与首败](station-tier2-20261011/README.md)；最终 head CI、Ready 与待合并状态以原 PR 为准。
 
 ## 交付目标与归属
 
@@ -8,7 +8,7 @@
 
 ## T2A-01：可信训练进度（ASTRA-STATION-API-02）
 
-当前依据：[Runtime](../src/hideout-runtime/runtime.ts) 校验移动输入、保留未提交样本，五秒检查点写入；保存失败时保留候选事务供重试/备份。[快照](../src/hideout-runtime/contract.ts) 的 `base.training.activeSeconds` 来自已提交会话；[院子宿主](../src/station-view/host.ts) 另累加 `pending`，通过 [UI](../src/station-view/ui.ts) 的 `pendingSeconds()` 给[设施面板](../src/station-view/panels.ts)。这个显示估算不等于 Runtime 接受的训练量。
+准备时依据：[Runtime](../src/hideout-runtime/runtime.ts) 校验移动输入、保留未提交样本，五秒检查点写入；保存失败时保留候选事务供重试/备份。[快照](../src/hideout-runtime/contract.ts) 的 `base.training.activeSeconds` 来自已提交会话；当时[院子宿主](../src/station-view/host.ts) 另累加 `pending`，通过 [UI](../src/station-view/ui.ts) 的 `pendingSeconds()` 给[设施面板](../src/station-view/panels.ts)。本次已用只读 `trainingProgress()` 替换该估算和回调，已提交字段的含义不变。
 
 - Runtime 提供独立、只读的有效训练进度视图，明确已提交、待保存、奖励上限/等待状态的含义；具体字段由实现者按现有约定设计。不改已有已提交字段的语义，不改存档格式。
 - 只能使用真实验证后的样本、原训练规则及保留的失败候选推导。读取不能推进训练、发奖或写入存档；失败候选与样本不能重复计算。返回数据必须与会话隔离。
@@ -25,7 +25,7 @@
 
 ## T2A-02：补给拒绝原因（ASTRA-STATION-API-03）
 
-当前依据：[Runtime.useSupply](../src/hideout-runtime/runtime.ts) 把物品不存在及 [useRpgItem](../src/rpg.ts) 返回 false 都变成笼统失败；后者按实际身体变化决定是否使用。界面不能按单一数值猜测原因。
+准备时依据：[Runtime.useSupply](../src/hideout-runtime/runtime.ts) 把物品不存在及 [useRpgItem](../src/rpg.ts) 返回 false 都变成笼统失败；后者按实际身体变化决定是否使用。本次规则层 `useRpgItemResult()` 给出原因，原 boolean 调用者继续共用同一效果应用；院子直接显示 Runtime 返回的文案，不按单一数值猜测原因。
 
 - 从规则/Runtime 返回稳定且可辨别的拒绝原因及清楚文案，至少区分物品已不存在、不属于可用补给、当前使用没有效果。存储失败、写入冲突及入口锁定继续遵循现有事务保护优先级。
 - 按真实效果说明“为什么无效”：水同时影响水分、体力和污染；罐头同时影响饱食、生命和体力；医疗补给还可能止血。不能因为水分/饱食/生命中的一项满值，就拒绝本来有效的使用。持续效果续时/替换也维持原规则。
