@@ -7,16 +7,19 @@ import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import { throughYard } from './yard-entry.mjs';
 import * as D from '../src/domain.ts';
+import { validPractice } from '../src/hideout-runtime/training.ts';
 import { newExpansion, derivedLimits } from '../src/expansion-state.ts';
 import { decodeSession } from '../src/recovery-store.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const out = resolve(option('out', 'test-results/tier2/browser')), htmlPath = option('html', 'dist/index.html');
 const only = option('only', '').split(',').filter(Boolean), html = await readFile(htmlPath, 'utf8');
+const cpuRate = Number(option('cpu-rate', '1'));
+assert.ok(Number.isFinite(cpuRate) && cpuRate >= 1 && cpuRate <= 20);
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), node: process.version, platform: process.platform, browser: browser.version(),
-  startedAt: new Date().toISOString(), methodology: 'Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.', steps: [], screenshots: [], errors: [], external: [] };
+  startedAt: new Date().toISOString(), cpuRate, methodology: 'Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Practice inputs and scene render are observed; original methods receive unchanged arguments exactly once. 390x844 is touch/viewport emulation, not a real phone. Full real-clock training also uses a 640x360 auxiliary viewport to reduce software rasterization cost, with a 540-second wall budget and unchanged 120 effective seconds/reward assertions. Old-build controls assert existing rendered behavior, not the absence of a new API.', steps: [], screenshots: [], errors: [], external: [] };
 let context, page, mobile;
 const yard = selector => page.locator(`#station-yard ${selector}`);
 const ready = () => page.waitForFunction(() => window.__station?.mounted && window.__station.host.frames > 8);
@@ -30,6 +33,7 @@ async function open(size = [1280, 720], fixed = false, ordinary = false) {
   await context.route('https://station.test/**', r => r.fulfill({ contentType: 'text/html', body: new URL(r.request().url()).pathname === '/peer' ? '<title>peer</title>' : html }));
   context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://station.test/')) report.external.push(r.url()); });
   page = await context.newPage(); page.setDefaultTimeout(15000);
+  if (cpuRate > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: cpuRate });
   page.on('pageerror', e => report.errors.push(String(e.stack)));
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   if (fixed) await page.clock.setFixedTime(new Date());
@@ -52,6 +56,17 @@ async function seed({ training = true, seconds = 0, quantity = 0, body = {} } = 
   }); }, { p, e });
   await ready(); await page.evaluate(() => {
     const h = window.__station.host; h.place(10.6, 16.3);
+    const rt = window.__bincov.hideoutRuntime;
+    window.__tier2Offered = []; window.__tier2Accepted = [];
+    window.__tier2PracticeOriginal ??= rt.practice;
+    // Test-only observation of the original validated queue, independent of the new projection.
+    // Geometry-valid calls can still fail clock/continuity checks on a slow renderer.
+    rt.practice = function(sample) {
+      window.__tier2Offered.push(structuredClone(sample)); const count = this.samples.length;
+      const result = window.__tier2PracticeOriginal.call(this, sample);
+      if (this.samples.length > count) window.__tier2Accepted.push(structuredClone(sample));
+      return result;
+    };
     const render = h.scene.render;
     h.scene.render = function(dt, state) { window.__tier2Rendered = structuredClone(state.training); return render.call(this, dt, state); };
   });
@@ -79,6 +94,12 @@ async function readable(selector) {
   }, selector); const value = await measurement.jsonValue(); await measurement.dispose(); return value;
 }
 async function walk(key, ms) { await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key); }
+async function observedSamples() {
+  const { offered, accepted } = await page.evaluate(() => ({ offered: window.__tier2Offered, accepted: window.__tier2Accepted }));
+  assert.ok(offered.length >= accepted.length && accepted.length > 0, 'real keyboard movement must have validated samples');
+  assert.ok(accepted.every(validPractice), 'accepted movement must satisfy the original geometry/speed rule');
+  return { offeredCount: offered.length, acceptedCount: accepted.length, seconds: accepted.reduce((n, s) => n + s.seconds, 0) };
+}
 async function fault(on) { await page.evaluate(on => {
   window.__tier2Write ??= Storage.prototype.setItem;
   Storage.prototype.setItem = on ? function(k, v) { if (k === 'escape-bincov.session.v2') throw new DOMException('tier2 quota fixture', 'QuotaExceededError'); return window.__tier2Write.call(this, k, v); } : window.__tier2Write;
@@ -114,7 +135,9 @@ try {
   });
   for (const size of [[1280, 720], [1920, 1080], [390, 844]]) await step(`P03 ${size.join('x')} accepted sub-checkpoint ring, hint and panel share Runtime values`, async () => {
     await open(size); await seed(); await walk('d', 1350); await page.clock.setFixedTime(new Date());
-    const v = await progress(); assert.equal(v.saved.activeSeconds, 0); assert.ok(v.pendingSeconds > .5 && v.pendingSeconds < 5);
+    const offered = await observedSamples(), v = await progress(); assert.equal(v.saved.activeSeconds, 0);
+    assert.ok(v.pendingSeconds > 0 && v.pendingSeconds < 5);
+    assert.ok(Math.abs(v.pendingSeconds - offered.seconds) < 1e-8, 'pending must equal the actual validated frame samples, not wall time');
     assert.equal(v.activeSeconds, v.pendingSeconds); const text = await yard('.prompt').innerText();
     assert.match(text, new RegExp(`待保存 ${v.pendingSeconds.toFixed(1).replace('.', '\\.')} 秒`));
     const rendered = await page.evaluate(() => window.__tier2Rendered); assert.ok(Math.abs(rendered.progress - v.activeSeconds / 120) < 1e-8);
@@ -122,13 +145,15 @@ try {
     await trainingPanel(); assert.equal(await yard('[data-training-seconds]').innerText(), `已保存 0.0 秒 · 待保存 ${v.pendingSeconds.toFixed(1)} 秒`);
     await readable('[data-training-seconds]'); await readable('[data-training-status]'); await shot(`training-panel-${size.join('x')}`);
     const after = await progress(); for (let i = 0; i < 8; i++) assert.deepEqual(await progress(), after); assert.equal(await raw(), before);
-    return { view: v, rendered, text };
+    return { offered, view: v, rendered, text };
   });
   await step('P04 reward checkpoint quota retains exact candidate; backup and retry credit once', async () => {
-    await open(); await seed({ seconds: 119 }); const before = await raw(), initial = await snap();
+    await open(); await seed({ seconds: 119.95 }); const before = await raw(), initial = await snap();
     await page.evaluate(() => { window.__tier2Events = []; window.__bincov.hideoutRuntime.subscribe(e => window.__tier2Events.push(e)); });
     await fault(true); await walk('d', 1800); await page.waitForFunction(() => window.__station.host.ui.dialogKind === 'storage');
-    const v = await progress(); assert.equal(v.status, 'storage'); assert.equal(v.saved.activeSeconds, 119); assert.ok(v.pendingSeconds > 1 && v.pendingSeconds < 5);
+    const offered = await observedSamples(), v = await progress(); assert.equal(v.status, 'storage'); assert.equal(v.saved.activeSeconds, 119.95);
+    assert.ok(v.pendingSeconds > 0 && v.pendingSeconds < 5); assert.ok(v.saved.activeSeconds + v.pendingSeconds >= 120);
+    assert.ok(Math.abs(v.pendingSeconds - offered.seconds) < 1e-8, 'failed candidate must contain exactly the actually accepted queue samples');
     assert.ok(v.pendingGrowth.technique > 0); assert.equal(v.quantity, .2625); assert.equal(await raw(), before);
     assert.equal((await snap()).body.attributes.technique.progress, initial.body.attributes.technique.progress);
     assert.equal(await page.evaluate(() => window.__tier2Events.filter(e => e.type === 'practice-credited').length), 0);
@@ -139,7 +164,7 @@ try {
     await fault(false); await tap(yard('.dialog [data-act="retry-save"]')); assert.equal((await progress()).pendingSeconds, 0);
     assert.ok(await page.evaluate(() => window.__bincov.hideoutRuntime.retrySave().ok));
     assert.equal(await page.evaluate(() => window.__tier2Events.filter(e => e.type === 'practice-credited').length), 1);
-    assert.equal((await progress()).quantity, v.quantity); await shot('training-quota-after-retry'); return { before: v, after: await progress() };
+    assert.equal((await progress()).quantity, v.quantity); await shot('training-quota-after-retry'); return { offered, before: v, after: await progress() };
   });
   for (const size of [[1280, 720], [1920, 1080], [390, 844]]) await step(`S01 ${size.join('x')} compound no-effect rejection is readable and consumes nothing`, async () => {
     await open(size, true); await seed(); const before = await raw(), s = await snap(); await use('water');
@@ -186,7 +211,9 @@ try {
     return { savedSeconds: 12, bandages: 1, hp: 56 };
   });
   await step('P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time', async () => {
-    await open(); await seed(); const start = Date.now(), pauses = [];
+    // A smaller auxiliary viewport reduces software rasterization cost. The three product sizes are tested above.
+    // The original host caps each frame to .05 seconds; slow runners need more wall time, never a fake clock.
+    const viewport = [640, 360]; await open(viewport); await seed(); const start = Date.now(), pauses = [];
     const total = async () => { const v = await progress(); return v.activeSeconds + v.quantity / .2625 * 120; };
     const pause = async (name, action) => { const a = await total(); await action(); const b = await total(); assert.ok(Math.abs(a - b) < 1e-8, name); pauses.push({ name, before: a, after: b }); };
     await pause('idle', () => page.waitForTimeout(700));
@@ -197,12 +224,12 @@ try {
     });
     await page.evaluate(() => window.__station.host.place(10.6, 16.3));
     const trace = []; let i = 0;
-    while ((await snap()).base.training.quantity === 0 && Date.now() - start < 210000) {
+    while ((await snap()).base.training.quantity === 0 && Date.now() - start < 540000) {
       await walk(i++ % 2 ? 'a' : 'd', 2200); const v = await progress(); trace.push({ wallSeconds: (Date.now() - start) / 1000, ...v });
       if (i % 12 === 0) console.log('TRAIN', Math.round((Date.now() - start) / 1000), v.saved.activeSeconds.toFixed(1), v.pendingSeconds.toFixed(1));
     }
     const end = await snap(); assert.equal(end.base.training.quantity, .2625); assert.ok(Math.abs(end.body.attributes.technique.progress - .0525) < 1e-9); assert.ok((Date.now() - start) / 1000 >= 120);
-    await trainingPanel(); await shot('training-real-120-credit'); return { wallSeconds: (Date.now() - start) / 1000, pauses, trace, training: end.base.training, growth: end.body.attributes.technique.progress };
+    await trainingPanel(); await shot('training-real-120-credit'); return { viewport, wallBudgetSeconds: 540, wallSeconds: (Date.now() - start) / 1000, pauses, trace, training: end.base.training, growth: end.body.attributes.technique.progress };
   });
   await step('O01 ordinary offline entry has no test globals and uses the current UI', async () => {
     await open(undefined, false, true); assert.equal(await page.evaluate(() => '__bincov' in window || '__station' in window), false);
