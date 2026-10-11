@@ -1,0 +1,76 @@
+{
+  "build": "dist/index.html",
+  "sha256": "c628196768e6fede9a3e0a7d330fb18e6a4d609f722f7a5e97ff770b9f5ca46c",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T08:10:50.993Z",
+  "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
+  "steps": [
+    {
+      "name": "ordinary-new-save-zero",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1280x720",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: text must fit the viewport\n    at readable (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:55:10)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:118:29\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:101:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:114:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1920x1080",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: text must fit the viewport\n    at readable (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:55:10)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:118:29\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:101:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:114:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "charm-snapshot-and-gear-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "old-tabs-equip-and-unequip-refresh-yard",
+      "status": "passed"
+    },
+    {
+      "name": "quota-equip-replace-remove-preserve-inventory-and-retry-once",
+      "status": "failed",
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('#station-yard [data-grid=\"stash\"] [data-uid=\"bc-mv3js57g-1d\"]')\n    - locator resolved to <div tabindex=\"0\" role=\"button\" data-src=\"stash\" title=\"旧护身符 × 1\" aria-label=\"旧护身符 × 1\" class=\"item k-accessory\" data-uid=\"bc-mv3js57g-1d\">…</div>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    6 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n\n    at tap (/home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:24:89)\n    at equip (/home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:85:9)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:161:16\n    at async step (/home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:101:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:156:3"
+    },
+    {
+      "name": "departure-failure-seven-success-eight-refresh-no-double-count",
+      "status": "failed",
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('#station-yard [data-act=\"deploy\"]')\n    - locator resolved to <button data-act=\"deploy\" class=\"primary big\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    7 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <canvas width=\"1280\" height=\"720\" aria-label=\"滨科夫水产站：可走动的据点画面\"></canvas> from <div class=\"stage\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n\n    at tap (/home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:24:89)\n    at /home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:174:80\n    at async step (/home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:101:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier1-test.mjs:172:3"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "ordinary-zero-1280.png",
+    "seven-hud-1280.png",
+    "failure-2.png",
+    "charm-gear-1280.png",
+    "seven-hud-1920.png",
+    "failure-4.png",
+    "charm-gear-1920.png",
+    "seven-hud-390.png",
+    "seven-radio-390.png",
+    "seven-tabs-390.png",
+    "charm-gear-390.png",
+    "old-tabs-charm.png",
+    "failure-9.png",
+    "failure-10.png"
+  ],
+  "finishedAt": "2026-10-11T08:15:30.680Z",
+  "summary": {
+    "passed": 6,
+    "total": 10
+  }
+}

@@ -17,7 +17,8 @@ Windows，Node 24.19.0，pnpm 11.19.0，使用系统 Chrome；浏览器完整版
 | --- | --- |
 | pnpm test | 278/278；[最终日志](evidence/unit-final.txt) |
 | pnpm package | 类型检查、字库覆盖、两个 HTML 和 ZIP 通过；[日志](evidence/package-first.txt)、[发布清单](../release-manifest.json) |
-| pnpm test:station-tier1 | 10/10，页面错误0、外部请求0；[报告](evidence/final/tier1-browser.json) |
+| pnpm test:station-tier1 | CI夹具修正后10/10，页面错误0、外部请求0；[报告](evidence/final/tier1-browser.json)、[日志](evidence/browser-ci-fix.txt)；[首次本地10/10](evidence/final/tier1-browser-before-ci.json)另留 |
+| 四倍CPU减速专项 | 同一10项断言10/10，页面错误0、外部请求0；[报告](evidence/final/tier1-browser-slow.json)、[日志](evidence/browser-ci-fix-slow.txt)；只用于复验慢速下的脚本竞争，不代表真机性能 |
 | pnpm test:hideout | 8/8；[报告](evidence/final/hideout.json)、[日志](evidence/test-hideout.txt) |
 | pnpm test:station | 76/76，页面错误0、外部请求0；[报告](evidence/final/station.json)、[日志](evidence/test-station.txt) |
 | pnpm test:save-browser | 9/9；[报告](evidence/final/save-browser.json)、[日志](evidence/test-save-browser.txt) |
@@ -25,10 +26,10 @@ Windows，Node 24.19.0，pnpm 11.19.0，使用系统 Chrome；浏览器完整版
 | pnpm test:ui | 通过，桌面两尺寸布局检查；[报告](evidence/final/ui.json)、[日志](evidence/test-ui.txt) |
 | pnpm test:portable | 实际解压 ZIP，file 离线运行与操作通过；[原始输出](evidence/test-portable.txt) |
 | 回归退出码 | 六套均为0，运行起止时间见[原始结果](evidence/regression-results.json) |
-| 原构建负对照 | 同一最终脚本跑 main fc2a1d3 的原 HTML，0/10、10项预期失败；[报告](evidence/baseline/report.json)、[日志](evidence/baseline/output.txt) |
+| 原构建负对照 | 同一最终脚本跑 main fc2a1d3 的原 HTML，0/10、10项预期失败；CI夹具修正后仍0/10，[最新报告](evidence/baseline/report-after-ci.json)、[日志](evidence/baseline/output-after-ci.txt)；[初次报告](evidence/baseline/report.json)、[初次日志](evidence/baseline/output.txt)保留 |
 | 最终 CI | 推送后核对当前 head 的完整检查，结果与 run 链接更新在[原 PR #34](https://github.com/xuys2025/escape-bincov/pull/34)；准备提交的 CI 不作为本次证据 |
 
-专项用打包 HTML、真实 Runtime / SaveSession / localStorage；普通新档无测试接口。旧档7次、护符库存、存储配额故障是明确夹具；鼠标/触摸动作走真实控件。覆盖三个入口、刷新与切换不改统计、出击写入失败保持7、成功提交变8且动画中刷新不重计；护符为空、佩戴/替换/取下、旧页签提交、刷新恢复、副本修改隔离、原字节/库存回滚、重试不自动佩戴及单次物品身份守恒。
+专项用打包 HTML、真实 Runtime / SaveSession / localStorage；普通新档无测试接口。旧档7次、护符库存、存储配额故障是明确夹具；鼠标/触摸动作走真实控件。几何读取等待真实220ms面板动画结束和字体就绪。仅两个故障事务用Playwright固定Date，避免无关五秒检查点先消耗故障；定时器、动画与真实控件继续运行，没有模拟Runtime或渲染器。覆盖三个入口、刷新与切换不改统计、出击写入失败保持7、成功提交变8且动画中刷新不重计；护符为空、佩戴/替换/取下、旧页签提交、刷新恢复、副本修改隔离、原字节/库存回滚、重试不自动佩戴及单次物品身份守恒。
 
 ## 真实实现截图
 
@@ -48,6 +49,7 @@ Windows，Node 24.19.0，pnpm 11.19.0，使用系统 Chrome；浏览器完整版
 2. [首轮专项](evidence/failures/browser-first.json) 4/10：[日志](evidence/browser-first.txt)及6张失败截图保留。打开电台/整备后快捷栏按现有设计隐藏，脚本直接调用页签快捷入口而超时；另一次失败重试后320ms内再次点物品，被现有双击快捷转移规则处理。脚本改为先真实关闭面板再切页签，并明确隔开两个单击；没有删断言、动作失败重试或改产品交互。
 3. 原构建负对照：同一最终脚本、相同断言，运行保存的 main fc2a1d3 原 HTML（SHA256 `112e7c8e37c91a218351b2fee03c008872bee5ca563d4262e431a57a845c5ef1`），10项均预期失败，页面错误和外部请求均0。旧 HUD 新档显示「第1天」、旧档7次显示「第8天」，旧页签固定「第17天」；正式快照没有 charm，因此对应空值/身份断言失败。修复后10/10通过，首轮脚本操作错误另列，不能混为产品首败。保留[旧电台桌面](evidence/baseline/seven-radio-1280.png)、[旧电台窄屏](evidence/baseline/seven-radio-390.png)、[旧页签](evidence/baseline/seven-tabs-1280.png)和原报告。
 4. 接手默认沙箱 Git 因工作树所有者不同报 dubious ownership；只对本工作树传safe.directory，不改全局信任或钩子。默认全局ignore不可读是环境提示，不清理用户文件。提交、推送前仍运行原本地密钥检查。
+5. [首轮远端CI](https://github.com/xuys2025/escape-bincov/actions/runs/38123637343)的专项6/10：[原报告](evidence/failures/ci-first/report.json)、[完整运行状态](evidence/failures/ci-first/run.json)、[可读world日志](evidence/failures/ci-first/world.txt)、[无损原日志与SHA](evidence/failures/ci-first/world-raw.json)，四张失败截图保留。1280/1920的几何断言在220ms入场动画中读取；窄屏无该动画，因此通过。慢速runner的故障夹具又让五秒检查点先失败，存档对话框挡住佩戴/出击控件，尚未执行目标交易。脚本补动画/字体等待，仅固定两个故障事务的Date；所有边界、回滚、守恒与几何断言保留，产品代码和制品SHA不变。原CI构建、input、visual、inventory均通过，world和总门禁失败，不宣称该次CI通过。
 
 ## 交付与遗留
 

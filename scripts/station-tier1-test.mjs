@@ -9,12 +9,14 @@ import { throughYard } from './yard-entry.mjs';
 import * as D from '../src/domain.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
+const cpuRate = Number(option('cpu-rate', '1'));
+assert.ok(Number.isFinite(cpuRate) && cpuRate >= 1 && cpuRate <= 20, 'cpu-rate must be between 1 and 20');
 const out = resolve(option('out', 'test-results/tier1/browser'));
 const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
-  methodology: 'Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.', steps: [], errors: [], external: [], screenshots: [] };
+  methodology: 'Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Only quota transaction cases fix Date so the unrelated five-second checkpoint cannot consume the fault; timers, animation and real UI keep running. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.', cpuRate, steps: [], errors: [], external: [], screenshots: [] };
 let context, page, mobileInput = false;
 const yard = selector => page.locator(`#station-yard ${selector}`);
 const snapshot = () => page.evaluate(() => window.__bincov.hideoutRuntime.snapshot());
@@ -22,7 +24,7 @@ const raw = () => page.evaluate(() => localStorage.getItem('escape-bincov.sessio
 const ready = () => page.waitForFunction(() => window.__station?.mounted && window.__station.host.frames > 8);
 const shot = async name => { await page.screenshot({ path: resolve(out, `${name}.png`) }); report.screenshots.push(`${name}.png`); };
 const tap = async locator => { if (mobileInput) await locator.tap(); else await locator.click(); };
-async function open({ size = [1280, 720], legacy, test = true, mobile = false } = {}) {
+async function open({ size = [1280, 720], legacy, test = true, mobile = false, fixedTime = false } = {}) {
   await context?.close();
   context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, hasTouch: mobile, isMobile: mobile, deviceScaleFactor: 1 });
   mobileInput = mobile;
@@ -30,6 +32,8 @@ async function open({ size = [1280, 720], legacy, test = true, mobile = false } 
   context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://station.test/')) report.external.push(r.url()); });
   if (legacy) await context.addInitScript(s => { if (!localStorage.getItem('escape-bincov.session.v2')) localStorage.setItem('escape-bincov.save.v1', s); }, JSON.stringify(legacy));
   page = await context.newPage(); page.setDefaultTimeout(15000);
+  if (fixedTime) await page.clock.setFixedTime(new Date());
+  if (cpuRate > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: cpuRate });
   page.on('pageerror', e => report.errors.push(String(e.stack)));
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   await page.goto(`https://station.test/${test ? '?test=1' : ''}`);
@@ -44,12 +48,23 @@ async function panel(kind) {
   if (!await button.isVisible()) await tap(yard('[data-quickmenu]'));
   await tap(button);
   await page.waitForFunction(kind => window.__station.host.ui.kind === kind, kind);
+  await settled();
+}
+async function settled() {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const root = document.querySelector('#station-yard')?.shadowRoot;
+    const animations = [...(root?.querySelectorAll('.panel:not([hidden]), .modal:not([hidden])') ?? [])]
+      .flatMap(el => el.getAnimations()).filter(a => a.effect?.getTiming().iterations !== Infinity);
+    await Promise.all(animations.map(a => a.finished.catch(() => {})));
+  });
 }
 async function tabs() {
   if (await page.evaluate(() => window.__station.host.ui.kind)) await tap(yard('.panel [data-act="close"]'));
   await throughYard(page, { tap: mobileInput });
 }
 async function readable(locator) {
+  await settled();
   await locator.scrollIntoViewIfNeeded();
   const box = await locator.boundingBox(), viewport = page.viewportSize();
   assert.ok(box && box.width > 0 && box.x >= -1 && box.y >= -1 && box.x + box.width <= viewport.width + 1 && box.y + box.height <= viewport.height + 1, 'text must fit the viewport');
@@ -154,7 +169,7 @@ try {
     assert.equal(await yard('.charm').count(), 0); assert.equal(identityCount(await snapshot(), uid), 1);
   });
   await step('quota-equip-replace-remove-preserve-inventory-and-retry-once', async () => {
-    await open(); const fx = await seedCharms(); await panel('gear');
+    await open({ fixedTime: true }); const fx = await seedCharms(); await panel('gear');
     const lucky = fx.stash.items[0].uid, unlucky = fx.bag.items[0].uid;
     for (const [src, uid] of [['stash', lucky], ['bag', unlucky], [null, null]]) {
       const before = await snapshot(), bytes = await raw(); await fault(true);
@@ -170,7 +185,7 @@ try {
     }
   });
   await step('departure-failure-seven-success-eight-refresh-no-double-count', async () => {
-    const legacy = D.newSave(); legacy.stats.runs = 7; await open({ legacy });
+    const legacy = D.newSave(); legacy.stats.runs = 7; await open({ legacy, fixedTime: true });
     const bytes = await raw(); await panel('deploy'); await fault(true); await tap(yard('[data-act="deploy"]'));
     await yard('.dialog [data-act="retry-save"]').waitFor(); assert.equal(await raw(), bytes);
     assert.equal((await snapshot()).profile.stats.runs, 7); assert.match(await yard('#hud-sub').innerText(), /^累计出击 7 次 ·/);
