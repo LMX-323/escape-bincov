@@ -30,7 +30,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
 
 const charmRow = (charm: string | null) => charm ? `<div class="charm">${icon(charm, 20)}<span>护符 · ${esc(D.ITEMS[charm]?.name ?? charm)}</span>${btn('取下', 'charm-unequip', 'mini')}</div>` : '';
 
-export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, details = '', charm: string | null = null) {
+export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, details = '') {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const ammo = w.ammo ? D.count(p.bag, w.ammo) : 0;
   const over = departure.weight > departure.carry;
@@ -41,7 +41,7 @@ export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | nu
         <img alt="" src="${itemArt(e.weapon || 'knife')}" style="height:${Math.round(cell * .6)}px"><div><b>${esc(w.name)}</b>
         <span>${e.weapon ? `弹匣 ${e.ammo} / ${w.magazine}${e.relief ? ' · 救济' : ''} · 背包备用 ${w.ammo ? `${ammo} 发` : '—'}` : '随身匕首 · 始终保留 · 把枪拖到这里装备'}</span></div>
         ${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}
-      </div>${charmRow(charm)}
+      </div>${charmRow(s.charm?.id ?? null)}
       <h3><i>02</i>背包 <small>${occupied(p.bag)} / ${p.bag.w * p.bag.h} 格</small></h3>${gridHtml(p.bag, 'bag', cell, selected, { empty: '背包是空的' })}
       <div class="meter ${over ? 'over' : ''}"><span>携行重量 <small>含装备与安全箱</small></span><b>${departure.weight.toFixed(1)} <small>/ ${departure.carry.toFixed(1)} kg</small></b><i style="width:${Math.min(100, departure.weight / departure.carry * 100)}%"></i></div>
       <h3><i>安</i>安全箱 <small>撤离失败也保留</small></h3>${gridHtml(p.safe, 'safe', cell, selected)}
@@ -57,12 +57,12 @@ export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | nu
  * Phones and short windows: two containers side by side (stacked when the screen is taller than wide), the second
  * one switchable, so every grid keeps cells of at least 36 px and full item names.
  */
-export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, paneB: 'stash' | 'safe', details: string, charm: string | null = null) {
+export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, paneB: 'stash' | 'safe', details: string) {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'], ammo = w.ammo ? D.count(p.bag, w.ammo) : 0, over = departure.weight > departure.carry;
   const inv = paneB === 'stash' ? p.stash : p.safe;
   return `<div class="cgear">
     <div class="cbar"><div class="slot chip ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" title="把枪拖到这里装备"><img alt="" src="${itemArt(e.weapon || 'knife')}"><b>${esc(w.name)}</b><span>${e.weapon ? `${e.ammo} / ${w.magazine}${w.ammo ? ` · 备用 ${ammo}` : ''}` : '拖枪到这里装备'}</span>${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}</div>
-      <div class="cweight ${over ? 'over' : ''}">携行 <b>${departure.weight.toFixed(1)}</b> / ${departure.carry.toFixed(1)} kg</div></div>${charmRow(charm)}
+      <div class="cweight ${over ? 'over' : ''}">携行 <b>${departure.weight.toFixed(1)}</b> / ${departure.carry.toFixed(1)} kg</div></div>${charmRow(s.charm?.id ?? null)}
     <div class="panes">
       <section class="pane"><h3>背包 <small>${occupied(p.bag)} / ${p.bag.w * p.bag.h}</small></h3><div class="pane-scroll">${gridHtml(p.bag, 'bag', cell, selected, { empty: '背包是空的' })}</div></section>
       <section class="pane"><nav class="seg tabs2">${btn(`仓库 <small>${occupied(p.stash)} / ${p.stash.w * p.stash.h}</small>`, 'pane:stash', paneB === 'stash' ? 'on' : '')}${btn('安全箱 <small>失败也保留</small>', 'pane:safe', paneB === 'safe' ? 'on' : '')}${paneB === 'stash' && !p.upgraded ? btn(`扩建 ¥ ${D.STASH_UPGRADE_COST}`, 'upgrade', 'mini grow', !p.quests.repair ? `disabled title="完成「${D.QUESTS.repair.name}」后可扩建"` : '') : ''}</nav><div class="pane-scroll">${gridHtml(inv, paneB, cell, selected, { empty: paneB === 'stash' ? '仓库空置' : '安全箱是空的' })}</div></section>
@@ -102,7 +102,7 @@ export function questsHtml(s: HideoutSnapshot) {
     const done = p.quests[id], needs = Object.entries(q.needs).map(([item, n]) => ({ item, n, have: total(s, item) })), ready = needs.every(x => x.have >= x.n);
     return `<article class="quest ${done ? 'done' : ready ? 'ready' : ''}"><header><span>0${i + 1}</span><b>${esc(q.name)}</b><em>${done ? '已交付' : ready ? '可以交付' : '等待物资'}</em></header><p>${esc(q.description)}</p>${done ? `<p class="reply">${esc(q.radio)}</p>` : `<ul>${needs.map(x => `<li class="${x.have >= x.n ? 'ok' : ''}">${icon(x.item, 20)}<span>${esc(D.ITEMS[x.item].name)}</span><b>${Math.min(x.have, x.n)} / ${x.n}</b></li>`).join('')}</ul>`}<footer><b>¥ ${q.reward}</b><small>${id === 'repair' ? '另解锁仓库扩建与基地设施' : '任务报酬'}</small>${done ? '<span class="tick">已完成</span>' : btn('交付物资', `quest:${id}`, ready ? 'primary' : '', ready ? '' : 'disabled')}</footer></article>`;
   }).join('');
-  return `<div class="radio"><div class="quests">${cards}</div><aside class="log"><small>水产站值守记录 · 第 ${s.day} 天</small><h4>${s.power === 'restored' ? '供电已恢复。' : '目前靠应急电源供电。'}</h4><p>出击前查好路线，涉水会积累污染。以下时间从出击开始计算。</p><dl><div><dt>04:30</dt><dd>电台预警，离开浅滩。</dd></div><div><dt>05:00</dt><dd>潮位变化，高架路与海堤仍可通行。</dd></div></dl><div class="stats"><div><b>${p.stats.runs}</b><span>累计出击</span></div><div><b>${p.stats.extracts}</b><span>成功撤离</span></div><div><b>${p.stats.kills}</b><span>击败敌人</span></div></div><p class="muted">交付时会扣除仓库、背包或安全箱中的所需物资。放进安全箱的任务物品，撤离失败也保留。</p></aside></div>`;
+  return `<div class="radio"><div class="quests">${cards}</div><aside class="log"><small>水产站值守记录 · 累计出击 ${p.stats.runs} 次</small><h4>${s.power === 'restored' ? '供电已恢复。' : '目前靠应急电源供电。'}</h4><p>出击前查好路线，涉水会积累污染。以下时间从出击开始计算。</p><dl><div><dt>04:30</dt><dd>电台预警，离开浅滩。</dd></div><div><dt>05:00</dt><dd>潮位变化，高架路与海堤仍可通行。</dd></div></dl><div class="stats"><div><b>${p.stats.runs}</b><span>累计出击</span></div><div><b>${p.stats.extracts}</b><span>成功撤离</span></div><div><b>${p.stats.kills}</b><span>击败敌人</span></div></div><p class="muted">交付时会扣除仓库、背包或安全箱中的所需物资。放进安全箱的任务物品，撤离失败也保留。</p></aside></div>`;
 }
 
 export function generatorHtml(s: HideoutSnapshot) {

@@ -1,3 +1,7 @@
+## 2026-10-11 · AI 遗留第一级实现（PR #34 续作）
+
+#22 与 #33 已合并，fetch 核对 main 仍为 fc2a1d3。维护者本轮明确要求当前 agent 在 `fix/ai-tier1-station` 继续 [PR #34](https://github.com/xuys2025/escape-bincov/pull/34)，一次完成 OPUS-STATION-COPY-01（真实出击计数文案）与 ASTRA-STATION-API-01（护符快照及接线）。两项代码和当前方案内的院子接线已完成，存档格式与交易规则保留；[范围](AI-LEFTOVERS-TIER1.md)、[真实验证/截图/首败](station-tier1-20261011/README.md)。最终 CI 与 Ready 状态以原 PR 最新 head 为准，等待维护者审阅，未合并/发布。仅更新 #32 对应子项，总单及二三级仍开放；#26 和在途 #28/#30/#31 保持原归属，不新增同目标 PR，完成后停止。
+
 > 2026-10-11 合并收口：维护者授权先合并设计 #22，再合并本实现 PR。候选 c565d97 的游戏源码、素材、测试与生成物保持不变；历轮原始附件完整归档。当前范围、证据与延期边界见[实现交付](IMPLEMENTATION-RELEASE.md)，AI 遗留见 [#32](https://github.com/xuys2025/escape-bincov/issues/32)，玩家反馈仍在 #26。以下历轮状态按原日期保留，不代表继续派修或当前远端状态。
 
 # 统一任务清单与 PR 归属

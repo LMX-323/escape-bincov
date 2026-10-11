@@ -1,0 +1,13 @@
+$ node --import tsx scripts/station-tier1-test.mjs "--html=test-results/tier1/clip-control/index.html" "--out=test-results/tier1/clip-control/browser"
+PASS ordinary-new-save-zero
+FAIL legacy-seven-copy-1280x720 page.waitForFunction: Timeout 15000ms exceeded.
+PASS charm-snapshot-and-gear-1280x720
+FAIL legacy-seven-copy-1920x1080 page.waitForFunction: Timeout 15000ms exceeded.
+PASS charm-snapshot-and-gear-1920x1080
+FAIL legacy-seven-copy-390x844 page.waitForFunction: Timeout 15000ms exceeded.
+PASS charm-snapshot-and-gear-390x844
+PASS old-tabs-equip-and-unequip-refresh-yard
+PASS quota-equip-replace-remove-preserve-inventory-and-retry-once
+PASS departure-failure-seven-success-eight-refresh-no-double-count
+{"passed":7,"total":10}
+[ELIFECYCLE] Command failed with exit code 1.

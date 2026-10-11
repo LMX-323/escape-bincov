@@ -1,0 +1,44 @@
+[
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:38:41.2403704+08:00",
+    "log": "test-hideout.log",
+    "command": "pnpm test:hideout",
+    "finishedAt": "2026-10-11T10:38:56.0132330+08:00"
+  },
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:38:56.0673438+08:00",
+    "log": "test-station.log",
+    "command": "pnpm test:station",
+    "finishedAt": "2026-10-11T10:47:54.4371757+08:00"
+  },
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:47:54.4408609+08:00",
+    "log": "test-save-browser.log",
+    "command": "pnpm test:save-browser",
+    "finishedAt": "2026-10-11T10:48:09.5554030+08:00"
+  },
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:48:09.5569619+08:00",
+    "log": "test-browser.log",
+    "command": "pnpm test:browser",
+    "finishedAt": "2026-10-11T10:48:49.8566830+08:00"
+  },
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:48:49.8588309+08:00",
+    "log": "test-ui.log",
+    "command": "pnpm test:ui",
+    "finishedAt": "2026-10-11T10:48:58.3866482+08:00"
+  },
+  {
+    "exitCode": 0,
+    "startedAt": "2026-10-11T10:48:58.3935523+08:00",
+    "log": "test-portable.log",
+    "command": "pnpm test:portable",
+    "finishedAt": "2026-10-11T10:49:08.4467976+08:00"
+  }
+]

@@ -20,8 +20,6 @@ export interface UIHost {
   exportSave(): void;
   /** A complete backup was imported; the host decides where the player goes next. */
   imported(): void;
-  /** Equipped charm (read-only; the snapshot has no field for it yet). */
-  charm(): string | null;
   /** Training seconds walked since the last save (display only; the Runtime credits nothing until it commits). */
   pendingSeconds(): number;
 }
@@ -169,8 +167,8 @@ export class UI {
     const sel = this.selected?.uid ?? null;
     switch (kind) {
       case 'gear': {
-        const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear'), charm = this.host.charm();
-        body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details, charm) : P.gearHtml(s, cell, sel, this.rt.departure(), details, charm); break;
+        const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear');
+        body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details) : P.gearHtml(s, cell, sel, this.rt.departure(), details); break;
       }
       case 'arms': case 'med': { const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null; body = this.compact ? P.shopCompactHtml(v, cell, sel, s.profile.cash, this.shopMode) : P.shopHtml(v, cell, sel, s.profile.cash) + P.detailsHtml(item, this.selected?.src ?? null, 'shop'); break; }
       case 'radio': body = P.questsHtml(s); break;
@@ -368,7 +366,7 @@ export class UI {
 
   // ---------- HUD, tags, prompt, bubbles, toasts ----------
   updateHud(s: HideoutSnapshot) {
-    (this.root.querySelector('#hud-sub') as HTMLElement).textContent = `第 ${s.day} 天 · ${s.power === 'restored' ? '供电正常' : '应急供电'}`;
+    (this.root.querySelector('#hud-sub') as HTMLElement).textContent = `累计出击 ${s.profile.stats.runs} 次 · ${s.power === 'restored' ? '供电正常' : '应急供电'}`;
     this.hud.classList.toggle('dark', s.power !== 'restored');
     (this.root.querySelector('#hud-cash') as HTMLElement).textContent = `¥ ${s.profile.cash.toLocaleString()}`;
     const q = s.base.queue[0], prod = s.base.completed.length ? `工作台 · ${s.base.completed.length} 批成品可领取` : q ? `工作台 · ${D.ITEMS[q.recipe].name} 剩余 ${Math.ceil(q.remaining / 60)} 分` : '';

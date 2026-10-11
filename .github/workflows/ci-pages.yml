@@ -129,6 +129,9 @@ jobs:
       - name: RPG, station and mall transactions
         if: matrix.group == 'world'
         run: pnpm test:systems
+      - name: Station run count and equipped charm snapshot
+        if: matrix.group == 'world'
+        run: pnpm test:station-tier1
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
         run: pnpm test:mall-passages

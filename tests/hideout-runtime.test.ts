@@ -6,6 +6,7 @@ import { SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { decodePortableBackup } from '../src/save-backup';
 import { RealHideoutRuntime, validPractice } from '../src/hideout-runtime';
 import type { HideoutEvent, Result } from '../src/hideout-runtime';
+import { equipCharm } from '../src/reputation-luck';
 function fixture(raw?: string, enter = true) {
     let now = 1800000000000, failed = false, writes = 0;
     if (raw?.includes('escape-bincov-session')) now = JSON.parse(raw).savedAt;
@@ -59,6 +60,58 @@ test('snapshot and event payloads cannot mutate session; external tab commits ob
     f.events.length = 0; assert.ok(f.saves.setVolume(.3)); f.runtime.snapshot(); f.runtime.snapshot();
     assert.equal(f.events.filter(e => e.type === 'committed').length, 1);
     f.runtime.subscribe(() => { throw Error('view'); }); assert.ok(f.runtime.setVolume(.4).ok); assert.equal(f.state.save.settings.volume, .4);
+});
+test('equipped charm snapshot is detached, follows old-tab commits and reloads without moving inventory', () => {
+    const f = fixture(); assert.equal(f.runtime.snapshot().charm, null);
+    f.setup(d => { D.addItem(d.profile.stash, 'luckyCharm'); });
+    const item = f.state.save.stash.items.find(i => i.id === 'luckyCharm')!;
+    // The old tabs use the same session transaction, without the facade.
+    const ticket = f.saves.prepareExpansionMutation(d => equipCharm(d.profile, d.expansion, item.uid, 'stash'))!;
+    assert.equal(f.saves.commitExpansionMutation(ticket), 'committed');
+    const snap = f.runtime.snapshot(), equipped = { uid: item.uid, id: item.id, qty: 1, x: 0, y: 0 };
+    assert.deepEqual(snap.charm, equipped); assert.equal(D.count(snap.profile.stash, 'luckyCharm'), 0);
+    (snap.charm as D.Item).id = 'unluckyCharm'; (snap.charm as D.Item).qty = 99;
+    assert.deepEqual(f.runtime.snapshot().charm, equipped);
+    const g = fixture(f.raw); assert.deepEqual(g.runtime.snapshot().charm, equipped);
+    assert.equal(D.count(g.state.save.stash, 'luckyCharm'), 0);
+    assert.ok(g.runtime.unequipCharm().ok); assert.equal(g.runtime.snapshot().charm, null);
+    assert.equal(g.state.save.stash.items.find(i => i.id === 'luckyCharm')!.uid, item.uid);
+});
+test('failed charm replacement and removal preserve committed snapshots, raw bytes and item identities on retry', () => {
+    const f = fixture(); f.setup(d => { D.addItem(d.profile.stash, 'luckyCharm'); D.addItem(d.profile.safe, 'unluckyCharm'); });
+    const first = f.state.save.stash.items.find(i => i.id === 'luckyCharm')!, next = f.state.save.safe.items.find(i => i.id === 'unluckyCharm')!;
+    assert.ok(f.runtime.equipCharm('stash', first.uid).ok);
+    const before = f.runtime.snapshot(), raw = f.raw;
+    f.fail(); assert.equal(reason(f.runtime.equipCharm('safe', next.uid)), 'storage');
+    assert.equal(f.raw, raw); assert.deepEqual(f.runtime.snapshot().charm, before.charm);
+    assert.deepEqual(f.runtime.snapshot().profile, before.profile);
+    f.fail(false); assert.ok(f.runtime.retrySave().ok);
+    assert.deepEqual(f.runtime.snapshot().charm, before.charm); // Retry saves; it does not silently re-equip.
+    assert.ok(f.runtime.equipCharm('safe', next.uid).ok);
+    assert.equal(f.runtime.snapshot().charm!.uid, next.uid);
+    assert.equal(f.state.save.safe.items.filter(i => i.uid === first.uid).length, 1); // Replacement returns to its source container.
+    assert.equal(D.count(f.state.save.safe, 'unluckyCharm'), 0);
+    const replacement = f.runtime.snapshot(), replacementRaw = f.raw;
+    f.fail(); assert.equal(reason(f.runtime.unequipCharm()), 'storage');
+    assert.equal(f.raw, replacementRaw); assert.deepEqual(f.runtime.snapshot().charm, replacement.charm);
+    assert.deepEqual(f.runtime.snapshot().profile, replacement.profile);
+    f.fail(false); assert.ok(f.runtime.retrySave().ok); assert.ok(f.runtime.unequipCharm().ok);
+    assert.equal(f.runtime.snapshot().charm, null);
+    for (const uid of [first.uid, next.uid]) assert.equal([f.state.save.stash, f.state.save.bag, f.state.save.safe].flatMap(i => i.items).filter(i => i.uid === uid).length, 1);
+    assert.equal(reason(f.runtime.unequipCharm()), 'rule');
+});
+test('run count begins at zero, preserves legacy seven, and increments only on committed departure', () => {
+    assert.equal(fixture().runtime.snapshot().profile.stats.runs, 0);
+    const profile = D.newSave(); profile.stats.runs = 7;
+    const f = fixture(JSON.stringify(profile)); assert.equal(f.runtime.snapshot().profile.stats.runs, 7);
+    assert.equal(f.runtime.snapshot().day, 8); // Keep the existing log-sequence contract.
+    const raw = f.raw; f.fail(); assert.equal(reason(f.runtime.deploy({ world: 'buildings', seed: '42' })), 'storage');
+    assert.equal(f.raw, raw); assert.equal(f.runtime.snapshot().profile.stats.runs, 7);
+    f.fail(false); assert.ok(f.runtime.retrySave().ok);
+    const start = f.runtime.deploy({ world: 'buildings', seed: '42' }); assert.ok(start.ok);
+    assert.equal(f.runtime.snapshot().profile.stats.runs, 8);
+    assert.equal(fixture(f.raw, false).runtime.snapshot().profile.stats.runs, 8);
+    assert.ok(f.runtime.startRaid(start.runId!).ok); assert.equal(f.runtime.snapshot().profile.stats.runs, 8);
 });
 test('inventory split merge rotate transfer and failed write preserve identities and quantities', () => {
     const f = fixture(); f.setup(d => { d.profile.stash = D.createInventory(10, 6); d.profile.bag = D.createInventory(6, 5); D.addItem(d.profile.stash, 'ammo9', 20); D.addItem(d.profile.stash, 'pistol'); });

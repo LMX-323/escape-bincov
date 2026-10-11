@@ -42,7 +42,6 @@ export interface StationHooks {
   title(): void;
   exportSave(): void;
   imported(): void;
-  charm(): string | null;
   /** Write the volume setting (the Runtime decides) and apply the saved value. */
   volume(v: number): void;
   /** Start the game's audio from a user gesture. */
@@ -109,7 +108,6 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-      charm: () => hooks.charm(),
       pendingSeconds: () => this.pending,
     }, this.scope, { world: opts.world, seed: opts.seed });
     this.ui.volume = opts.volume;
