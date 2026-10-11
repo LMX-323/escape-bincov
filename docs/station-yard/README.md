@@ -2,7 +2,7 @@
 
 日期：2026-10-10（UTC+8）。工作树 `D:/bincov/hideout-runtime`，分支 `agent/hideout-runtime`，基线 `81fbb8a`（Astra 的真实 Runtime 交付，已含城中村与商店修复）。本轮把原型 `D:/bincov/前端原型-水产站-20261009` 的院子迁进游戏，接上真实 Runtime，换上 Sol 的正式图片。只在本地提交，不推送、不合并、不更新试玩站。
 
-验收：[Sol 独立验收清单](SOL-ACCEPTANCE.md)。实际运行结果：[验证记录](VALIDATION.md)。第二轮（手机菜单遮挡、墙面逐格明暗）的修复与 Sol 定向复验清单见 [opus-round2-20261010](opus-round2-20261010/README.md)。第三轮（上下文恢复后旧 RT 的管理表空槽、ASTRA-R3-PIXI-01 graphics 程序重编）的修复与 Sol 独立复验清单见 [opus-resource-r3-20261010](opus-resource-r3-20261010/README.md)。
+验收：[Sol 独立验收清单](SOL-ACCEPTANCE.md)。实际运行结果：[验证记录](VALIDATION.md)。第二轮（手机菜单遮挡、墙面逐格明暗）的修复与 Sol 定向复验清单见 [opus-round2-20261010](opus-round2-20261010/README.md)。第三轮（上下文恢复后旧 RT 的管理表空槽、ASTRA-R3-PIXI-01 graphics 程序重编）的修复与 Sol 独立复验清单见 [opus-resource-r3-20261010](opus-resource-r3-20261010/README.md)。8/16 能力反复切换后的 sampler 监听（SOL-R3-CAP-LISTENER-01）见 [opus-cap-listener-20261012](opus-cap-listener-20261012/README.md)。
 
 ## 玩家看到的变化
 

@@ -1,3 +1,9 @@
+## 2026-10-12 · SOL-R3-CAP-LISTENER-01 能力切换监听
+
+从 main `1dbacb4` 建 `fix/cap-listener-r3`，只处理 #32 三级的 SOL-R3-CAP-LISTENER-01。根因是 Pixi 8.22 `DefaultBatcher._updateMaxTextures`：能力变化后池里复用的 Graphics 渲染数据每次新建 DefaultShader、不销毁旧的，旧 Shader 的 BindGroup 永久挂在模块缓存的 batch-sampler 组上。C5 的增长来自测试 scratch 绘制，真实院子→城中村往返也会触发。`src/coast-view/renderer-lifetime.ts` 改为整页每个纹理数一个 DefaultShader，批处理器的 Shader 与自身纹理数保持一致。
+
+修复前 C5 8/9（监听 3→8 / 4→9）、新归属检查 2/4；修复后 9/9（监听全程 2）、4/4，程序复用、像素、恢复后输入与暂停、院子/城中村往返回归通过。只模拟能力查询，真实 8 槽设备与驱动迁移未测；F20 PARTIAL、ASTRA-SAVE-01 UNCONFIRMED 及原 R/K 失败不变。[报告与复验入口](docs/station-yard/opus-cap-listener-20261012/README.md)。完整 CI 通过后交主调度验收；未合并、未发布、未更新试玩站。以下历史交接原样保留。
+
 ## 2026-10-11 · 进站救济归属与药剂名称
 
 从已合并 #35 的 main `21e3796` 建 `fix/station-relief-entry`，落实 #32 的 ASTRA-STATION-RELIEF-01。`enter()` 在进站前保存符合条件的救济，院子重挂不发物品；原页签布尔接口保留。保存失败停在入口，刷新/重试不重复领取，满包只保留剩余队列，已有训练样本先保存。药剂拒绝提示统一为“除藻药剂”。
