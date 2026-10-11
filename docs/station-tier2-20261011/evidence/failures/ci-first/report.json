@@ -1,0 +1,211 @@
+{
+  "build": "dist/index.html",
+  "sha256": "390b244716803312987f5c53f7b08b2188c2a935b9b7ee8fa5b0bc374cbcc71c",
+  "node": "v24.21.0",
+  "platform": "linux",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T12:58:06.339Z",
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "P01 rejected clock samples do not fill the existing scene ring or training prompt",
+      "status": "passed",
+      "detail": {
+        "rendered": {
+          "active": true,
+          "progress": 0
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.0 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 7356
+    },
+    {
+      "name": "P02 cap stays visibly full and explains waiting instead of accumulating display seconds",
+      "status": "passed",
+      "detail": {
+        "rendered": {
+          "active": true,
+          "progress": 1
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.0 秒\n十分钟训练量已达上限，等待 600 秒。"
+      },
+      "ms": 8700
+    },
+    {
+      "name": "P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:117:80\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:93:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:115:63",
+      "ms": 9228
+    },
+    {
+      "name": "P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:117:80\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:93:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:115:63",
+      "ms": 11883
+    },
+    {
+      "name": "P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:117:80\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:93:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:115:63",
+      "ms": 9192
+    },
+    {
+      "name": "P04 reward checkpoint quota retains exact candidate; backup and retry credit once",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:131:117\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:93:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:127:3",
+      "ms": 10759
+    },
+    {
+      "name": "S01 1280x720 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 9033
+    },
+    {
+      "name": "S01 1920x1080 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 14237
+    },
+    {
+      "name": "S01 390x844 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 10883
+    },
+    {
+      "name": "S02 missing/non-supply results are stable; secondary and sustained effects retain existing behavior",
+      "status": "passed",
+      "detail": {
+        "refused": [
+          {
+            "ok": false,
+            "reason": "missing-item",
+            "message": "这件物品已不存在，请重新选择补给。"
+          },
+          {
+            "ok": false,
+            "reason": "not-supply",
+            "message": "这件物品不属于可用补给。"
+          }
+        ],
+        "effects": [
+          {
+            "id": "water",
+            "field": "pollution",
+            "before": 12,
+            "after": 0
+          },
+          {
+            "id": "water",
+            "field": "stamina",
+            "before": 20,
+            "after": 100
+          },
+          {
+            "id": "food",
+            "field": "hp",
+            "before": 40,
+            "after": 52
+          },
+          {
+            "id": "food",
+            "field": "stamina",
+            "before": 20,
+            "after": 70
+          },
+          {
+            "id": "medkit",
+            "field": "bleeding",
+            "before": true,
+            "after": false
+          }
+        ],
+        "sustained": [
+          {
+            "ok": true
+          },
+          {
+            "ok": false,
+            "reason": "no-effect",
+            "message": "同类效果与持续时间没有变化，当前使用没有效果。"
+          },
+          {
+            "ok": true
+          },
+          {
+            "ok": true
+          }
+        ]
+      },
+      "ms": 34263
+    },
+    {
+      "name": "S03 supply write failure rolls back; retry saves first, explicit reuse consumes exactly once",
+      "status": "passed",
+      "detail": {
+        "before": 20,
+        "after": 100,
+        "count": 1
+      },
+      "ms": 12540
+    },
+    {
+      "name": "S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes",
+      "status": "passed",
+      "detail": {
+        "revision": 5
+      },
+      "ms": 6583
+    },
+    {
+      "name": "P05 old tabs, yard switching and reload follow durable progress and old supply callers",
+      "status": "passed",
+      "detail": {
+        "savedSeconds": 12,
+        "bandages": 1,
+        "hp": 56
+      },
+      "ms": 12154
+    },
+    {
+      "name": "P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 0.2625\n\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:204:38\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:93:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/station-tier2-test.mjs:188:3",
+      "ms": 220056
+    },
+    {
+      "name": "O01 ordinary offline entry has no test globals and uses the current UI",
+      "status": "passed",
+      "ms": 8040
+    }
+  ],
+  "screenshots": [
+    "rejected-frames-1280.png",
+    "cap-wait-1280.png",
+    "fail-3.png",
+    "fail-4.png",
+    "fail-5.png",
+    "fail-6.png",
+    "supply-no-effect-1280x720.png",
+    "supply-no-effect-1920x1080.png",
+    "supply-no-effect-390x844.png",
+    "supply-quota-before-retry.png",
+    "supply-quota-after-reuse.png",
+    "fail-14.png",
+    "ordinary-offline-1280.png"
+  ],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T13:04:31.255Z",
+  "passed": false
+}

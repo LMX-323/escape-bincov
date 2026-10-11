@@ -7,14 +7,16 @@ import { decodePortableBackup } from '../src/save-backup';
 import { RealHideoutRuntime, validPractice } from '../src/hideout-runtime';
 import type { HideoutEvent, Result } from '../src/hideout-runtime';
 import { equipCharm } from '../src/reputation-luck';
-function fixture(raw?: string, enter = true) {
+import { useRpgItem, useRpgItemResult } from '../src/rpg';
+import { derivedLimits } from '../src/expansion-state';
+function fixture(raw?: string, enter = true, allowed = () => true) {
     let now = 1800000000000, failed = false, writes = 0;
     if (raw?.includes('escape-bincov-session')) now = JSON.parse(raw).savedAt;
     const data = new Map<string, string>(); if (raw) data.set(raw.includes('escape-bincov-session') ? SESSION_KEY : D.SAVE_KEY, raw);
     const storage = { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => { if (failed) throw Error('quota'); data.set(k, v); writes++; } };
     const state = createSessionState(), saves = new SaveSession(state, () => storage, undefined, () => now);
     const initialized = saves.initialize();
-    const runtime = new RealHideoutRuntime(state, saves, () => now), events: HideoutEvent[] = [];
+    const runtime = new RealHideoutRuntime(state, saves, () => now, allowed), events: HideoutEvent[] = [];
     runtime.subscribe(e => events.push(e));
     if (enter && initialized) assert.equal(runtime.enter().ok, true);
     const setup = (action: (draft: ExpansionDraft) => void) => { const ticket = saves.prepareExpansionMutation(action); assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed'); runtime.snapshot(); events.length = 0; };
@@ -304,4 +306,110 @@ test('60 FPS fractional frame seconds survive integer wall-clock rounding withou
     }
     assert.ok(Math.abs(f.runtime.snapshot().base.training.activeSeconds) < 1e-6);
     assert.equal(f.state.expansion!.growth.progress.strength, .052500000000000005);
+});
+
+function trainingFixture(allowed?: () => boolean) {
+    const f = fixture(undefined, true, allowed); f.setup(d => { d.expansion.base.facilities.training = 1; });
+    assert.ok(f.runtime.selectPractice('strength').ok); return f;
+}
+function sample(f: ReturnType<typeof fixture>, i = 0) {
+    f.advance(250); f.runtime.practice({ from: { x: i % 2 ? 334 : 332, y: 302 }, to: { x: i % 2 ? 332 : 334, y: 302 }, seconds: .25, now: f.now });
+}
+test('effective training view shows sub-checkpoint samples, is detached and has no read side effects', () => {
+    const f = trainingFixture(); f.runtime.setActivity(true);
+    const raw = f.raw, writes = f.writes, revision = f.saves.revision, events = structuredClone(f.events);
+    for (let i = 0; i < 7; i++) sample(f, i);
+    const view = f.runtime.trainingProgress(); assert.equal(view.saved.activeSeconds, 0); assert.equal(view.activeSeconds, 1.75); assert.equal(view.pendingSeconds, 1.75);
+    for (let i = 0; i < 10; i++) assert.deepEqual(f.runtime.trainingProgress(), view);
+    (view.saved as { activeSeconds: number }).activeSeconds = 999; (view.pendingGrowth as Record<string, number>).strength = 99;
+    assert.equal(f.runtime.trainingProgress().saved.activeSeconds, 0); assert.equal(f.runtime.trainingProgress().pendingGrowth.strength, 0);
+    assert.equal(f.raw, raw); assert.equal(f.writes, writes); assert.equal(f.saves.revision, revision); assert.deepEqual(f.events, events);
+    f.advance(3250); f.runtime.tick(f.now);
+    assert.equal(f.runtime.trainingProgress().activeSeconds, 1.75); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0);
+    assert.equal(f.runtime.snapshot().base.training.activeSeconds, 1.75);
+});
+test('effective view ignores every rejected sample, suspended activity and absent training prerequisites', () => {
+    let allowed = true; const f = trainingFixture(() => allowed); f.runtime.setActivity(true); sample(f);
+    const frame = { from: { x: 334, y: 302 }, to: { x: 332, y: 302 }, seconds: .25, now: f.now };
+    f.runtime.practice(frame); // repeated timestamp
+    f.advance(250);
+    for (const invalid of [{ ...frame, now: f.now + 1 }, { ...frame, now: f.now - 2000 }, { ...frame, seconds: 1, now: f.now },
+        { ...frame, from: frame.to, now: f.now }, { ...frame, to: { x: 500, y: 302 }, now: f.now },
+        { ...frame, from: { x: 400, y: 350 }, to: { x: 402, y: 350 }, now: f.now },
+        { ...frame, from: { x: 200, y: 300 }, to: { x: 202, y: 300 }, now: f.now }]) f.runtime.practice(invalid);
+    allowed = false; sample(f, 1); allowed = true; f.runtime.setActivity(false); sample(f, 1);
+    assert.equal(f.runtime.trainingProgress().pendingSeconds, .25);
+    const g = fixture(); g.runtime.setActivity(true); sample(g); assert.equal(g.runtime.trainingProgress().status, 'unavailable'); assert.equal(g.runtime.trainingProgress().pendingSeconds, 0);
+    g.setup(d => { d.expansion.base.facilities.training = 1; }); assert.equal(g.runtime.trainingProgress().status, 'select');
+});
+test('failed reward checkpoint projects its exact candidate once; only retry announces durable growth', () => {
+    const f = trainingFixture(); train(f, 115); const raw = f.raw, before = structuredClone(f.state.expansion); f.events.length = 0;
+    f.fail(); train(f, 5); const view = f.runtime.trainingProgress();
+    assert.equal(view.status, 'storage'); assert.equal(view.saved.activeSeconds, 115); assert.equal(view.pendingSeconds, 5);
+    assert.equal(view.activeSeconds, 0); assert.equal(view.quantity, .2625); assert.ok(Math.abs(view.pendingGrowth.strength - .0525) < 1e-9);
+    assert.deepEqual(f.state.expansion, before); assert.equal(f.raw, raw); assert.equal(f.events.filter(e => e.type === 'practice-credited').length, 0);
+    const backup = decodePortableBackup(f.runtime.exportBackup()); assert.ok(backup.kind === 'session');
+    assert.equal(backup.record.expansion!.base.training.activeSeconds, view.activeSeconds); assert.equal(backup.record.expansion!.base.training.quantity, view.quantity);
+    for (let i = 0; i < 5; i++) assert.deepEqual(f.runtime.trainingProgress(), view);
+    f.fail(false); assert.ok(f.runtime.retrySave().ok); assert.ok(f.runtime.retrySave().ok);
+    assert.equal(f.runtime.trainingProgress().pendingSeconds, 0); assert.equal(f.runtime.trainingProgress().quantity, view.quantity);
+    assert.equal(f.events.filter(e => e.type === 'practice-credited').length, 1);
+    assert.equal(f.runtime.trainingProgress().pendingGrowth.strength, 0);
+});
+test('cap, shared attribute switch and ten-minute boundary project original practice without resetting on reads', () => {
+    const f = trainingFixture(); train(f, 120); assert.ok(f.runtime.selectPractice('technique').ok); train(f, 360);
+    const view = f.runtime.trainingProgress(); assert.equal(view.capped, true); assert.equal(view.quantity, 1); assert.equal(view.status, 'capped');
+    train(f, 2); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0); assert.equal(f.runtime.trainingProgress().quantity, 1);
+    f.advance(600000); const raw = f.raw; assert.equal(f.runtime.trainingProgress().windowExpired, true); assert.equal(f.runtime.trainingProgress().capped, false); assert.equal(f.raw, raw);
+    sample(f); const next = f.runtime.trainingProgress(); assert.equal(next.activeSeconds, .25); assert.equal(next.quantity, 0); assert.equal(next.pendingSeconds, .25);
+    assert.equal(next.pendingWindow, true);
+    assert.equal(f.runtime.snapshot().base.training.quantity, 1); assert.ok(f.runtime.flush().ok);
+    assert.equal(f.runtime.trainingProgress().saved.quantity, 0); assert.equal(f.runtime.trainingProgress().saved.activeSeconds, .25);
+});
+test('switching, reload and external writers never attach unsaved samples to a new revision', () => {
+    const f = trainingFixture(); f.runtime.setActivity(true); sample(f); assert.ok(f.runtime.selectPractice('constitution').ok);
+    assert.equal(f.runtime.trainingProgress().attribute, 'constitution'); assert.equal(f.runtime.trainingProgress().saved.activeSeconds, .25); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0);
+    sample(f, 1); const g = fixture(f.raw); assert.equal(g.runtime.trainingProgress().activeSeconds, .25); assert.equal(g.runtime.trainingProgress().pendingSeconds, 0);
+    const before = f.raw; assert.ok(f.saves.setVolume(.3)); assert.notEqual(f.raw, before);
+    assert.equal(f.runtime.trainingProgress().activeSeconds, .25); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0);
+    const backup = decodePortableBackup(f.runtime.exportBackup()); assert.ok(backup.kind === 'session'); assert.equal(backup.record.expansion!.base.training.activeSeconds, .25);
+    f.runtime.snapshot(); f.runtime.setActivity(false); f.runtime.setActivity(true); sample(f);
+    assert.equal(f.runtime.trainingProgress().pendingSeconds, .25);
+    assert.ok(f.runtime.backToMenu().ok); assert.ok(f.runtime.enter().ok); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0); assert.equal(f.runtime.trainingProgress().activeSeconds, .5);
+});
+test('a stale retained candidate stays exportable but is never mixed with replacement training', () => {
+    const f = trainingFixture(); f.fail(); train(f, 5); const backup = f.runtime.exportBackup();
+    // A hostile in-memory change cannot bypass the ticket identity / before-state check.
+    f.state.expansion!.base.training.activeSeconds = 42; f.fail(false);
+    assert.equal(reason(f.runtime.retrySave()), 'stale'); assert.equal(f.runtime.exportBackup(), backup);
+    assert.equal(f.runtime.trainingProgress().status, 'stale'); assert.equal(f.runtime.trainingProgress().activeSeconds, 42); assert.equal(f.runtime.trainingProgress().pendingSeconds, 0);
+    f.saves.markConflict(); const view = f.runtime.trainingProgress(); assert.equal(view.status, 'conflict');
+    const raw = f.raw; sample(f); assert.equal(f.raw, raw); assert.equal(reason(f.runtime.useSupply('bag', 'missing')), 'conflict');
+});
+test('supply rejection types preserve all bytes and transaction protection takes priority', () => {
+    const f = fixture(); f.setup(d => { const l = derivedLimits(d.expansion); d.expansion.body.hp = l.hp; d.expansion.body.stamina = l.stamina; d.expansion.body.water = 100; d.expansion.body.pollution = 0; D.addItem(d.profile.stash, 'scrap'); });
+    const raw = f.raw, state = structuredClone(f.state), water = f.state.save.bag.items.find(i => i.id === 'water')!;
+    assert.equal(reason(f.runtime.useSupply('bag', 'missing')), 'missing-item');
+    assert.equal(reason(f.runtime.useSupply('stash', f.state.save.stash.items.find(i => i.id === 'scrap')!.uid)), 'not-supply');
+    const refused = f.runtime.useSupply('bag', water.uid); assert.equal(reason(refused), 'no-effect'); assert.ok(!refused.ok && /水分.*耐力.*污染/.test(refused.message));
+    assert.equal(f.raw, raw); assert.deepEqual(f.state, state);
+    f.state.storageOK = false; assert.equal(reason(f.runtime.useSupply('bag', 'missing')), 'storage');
+    f.saves.markConflict(); assert.equal(reason(f.runtime.useSupply('bag', 'missing')), 'conflict');
+    const g = fixture(); g.state.state = 'menu'; assert.equal(reason(g.runtime.useSupply('bag', 'missing')), 'locked');
+});
+test('water, food and medicine remain usable for each secondary effect at full primary resource', () => {
+    for (const [id, field, value] of [['water', 'stamina', 30], ['water', 'pollution', 12], ['food', 'hp', 40], ['food', 'stamina', 30], ['medkit', 'bleeding', true]] as const) {
+        const f = fixture(); f.setup(d => { const b = d.expansion.body, l = derivedLimits(d.expansion); b.hp = l.hp; b.stamina = l.stamina; b.water = b.satiety = 100; b.pollution = 0; Object.assign(b, { [field]: value }); d.profile.stash = D.createInventory(10, 6); D.addItem(d.profile.stash, id); });
+        const item = f.state.save.stash.items[0]; assert.ok(f.runtime.useSupply('stash', item.uid).ok, `${id} ${field}`);
+        assert.equal(D.count(f.state.save.stash, id), 0); assert.notEqual(f.state.expansion!.body[field], value);
+    }
+});
+test('sustained supplies retain exact renewal and opposite-luck replacement boundaries and boolean callers', () => {
+    for (const [id, effect, duration] of [['analgesic', 'analgesia', 180], ['focus', 'focus', 120], ['strengthDose', 'strength', 180], ['constitutionDose', 'constitution', 180], ['techniqueDose', 'technique', 180], ['luckySachet', 'luck', 300], ['unluckySachet', 'luck', 300]] as const) {
+        const f = fixture(), e = f.state.expansion!; assert.ok(useRpgItem(e, id)); const before = structuredClone(e);
+        assert.deepEqual(useRpgItemResult(e, id).ok, false); assert.deepEqual(e, before); e.body.effects[effect] = duration - 1;
+        assert.ok(useRpgItemResult(e, id).ok); assert.equal(e.body.effects[effect], duration);
+    }
+    const f = fixture(), e = f.state.expansion!; assert.ok(useRpgItem(e, 'luckySachet')); assert.ok(useRpgItemResult(e, 'unluckySachet').ok); assert.equal(e.body.luckEffect, -1);
+    assert.equal(useRpgItem(e, 'scrap'), false); assert.equal(useRpgItemResult(e, 'scrap').ok, false);
 });

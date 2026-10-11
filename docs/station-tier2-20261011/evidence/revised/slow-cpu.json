@@ -1,0 +1,189 @@
+{
+  "build": "dist/index.html",
+  "sha256": "390b244716803312987f5c53f7b08b2188c2a935b9b7ee8fa5b0bc374cbcc71c",
+  "node": "v24.19.0",
+  "platform": "win32",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T13:12:40.177Z",
+  "cpuRate": 8,
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Practice inputs and scene render are observed; original methods receive unchanged arguments exactly once. 390x844 is touch/viewport emulation, not a real phone. Full real-clock training also uses a 640x360 auxiliary viewport to reduce software rasterization cost, with a 540-second wall budget and unchanged 120 effective seconds/reward assertions. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "offered": {
+          "offeredCount": 32,
+          "acceptedCount": 15,
+          "seconds": 0.6243999999999977
+        },
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 0.6243999999999977,
+          "activeSeconds": 0.6243999999999977,
+          "quantity": 0,
+          "windowLeft": 595.887,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.005203333333333314
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.6 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 16821
+    },
+    {
+      "name": "P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "offered": {
+          "offeredCount": 36,
+          "acceptedCount": 12,
+          "seconds": 0.4516000000000022
+        },
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 0.4516000000000022,
+          "activeSeconds": 0.4516000000000022,
+          "quantity": 0,
+          "windowLeft": 595.933,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.003763333333333352
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.5 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 15078
+    },
+    {
+      "name": "P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "offered": {
+          "offeredCount": 27,
+          "acceptedCount": 21,
+          "seconds": 1.0107000000000008
+        },
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 1.0107000000000008,
+          "activeSeconds": 1.0107000000000008,
+          "quantity": 0,
+          "windowLeft": 595.659,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.008422500000000006
+        },
+        "text": "训练区 · 1 / 120 秒\n已保存 0.0 秒 · 待保存 1.0 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 16638
+    },
+    {
+      "name": "P04 reward checkpoint quota retains exact candidate; backup and retry credit once",
+      "status": "passed",
+      "detail": {
+        "offered": {
+          "offeredCount": 48,
+          "acceptedCount": 18,
+          "seconds": 0.6983999999999961
+        },
+        "before": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 119.95,
+            "quantity": 0
+          },
+          "pendingSeconds": 0.6983999999999961,
+          "activeSeconds": 0.6483999999999971,
+          "quantity": 0.2625,
+          "windowLeft": 594.861,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "storage",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0.052500000000000005
+          }
+        },
+        "after": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0.6483999999999971,
+            "quantity": 0.2625
+          },
+          "pendingSeconds": 0,
+          "activeSeconds": 0.6483999999999971,
+          "quantity": 0.2625,
+          "windowLeft": 593.245,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        }
+      },
+      "ms": 17092
+    }
+  ],
+  "screenshots": [
+    "training-yard-1280x720.png",
+    "training-panel-1280x720.png",
+    "training-yard-1920x1080.png",
+    "training-panel-1920x1080.png",
+    "training-yard-390x844.png",
+    "training-panel-390x844.png",
+    "training-quota-before-retry.png",
+    "training-quota-after-retry.png"
+  ],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T13:13:45.809Z",
+  "passed": true
+}

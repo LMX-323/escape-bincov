@@ -1,5 +1,5 @@
 import * as D from '../domain';
-import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
+import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
 import { RECIPES } from '../expansion-state';
 import { itemArt } from './items';
 import { esc, gridHtml } from './grid';
@@ -135,15 +135,29 @@ export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight
   <div class="go"><span>${dep.warnings.length ? esc(dep.warnings.join(' · ')) : '装备与快捷补给已备齐'}</span>${btn('开门出击 <span aria-hidden="true">→</span>', 'deploy', 'primary big')}</div></div>`;
 }
 
-export function facilityHtml(f: FacilityInfo, s: HideoutSnapshot, pendingSeconds = 0) {
+export function trainingHint(t: TrainingProgress): string {
+  if (t.status === 'conflict') return '存档已由另一窗口接管，练习暂停。';
+  if (t.status === 'stale') return '存档已改变，请先导出待保存进度。';
+  if (t.status === 'storage') return '练习等待保存，请重试保存或导出备份。';
+  if (t.status === 'locked') return '当前不能练习。';
+  if (t.status === 'unavailable') return '修建训练区后才能练习。';
+  if (t.status === 'select') return '先选一个练习项目。';
+  if (t.capped) return `十分钟训练量已达上限，等待 ${Math.ceil(t.windowLeft)} 秒。`;
+  if (Object.values(t.pendingGrowth).some(n => n > 1e-9)) return '有练习收益待保存，保存后计入成长。';
+  if (t.pendingWindow) return '新一轮练习待保存，保存后更新训练量。';
+  if (t.windowExpired) return '下一次有效走动开始新一轮练习。';
+  return '在训练区实际走动，每五秒保存。';
+}
+export const trainingSeconds = (t: TrainingProgress) => `已保存 ${t.saved.activeSeconds.toFixed(1)} 秒 · 待保存 ${t.pendingSeconds.toFixed(1)} 秒`;
+export function facilityHtml(f: FacilityInfo, s: HideoutSnapshot, training: TrainingProgress) {
   const pips = Array.from({ length: f.maxLevel }, (_, i) => `<i class="${i < f.level ? 'on' : ''}"></i>`).join('');
   const short = f.cost ? s.profile.cash < f.cost.cash || f.cost.items.some(i => i.have < i.qty) : false;
   const costHtml = f.cost ? `<div class="cost"><b>${f.level ? '升级' : '修建'}费用</b><ul><li class="${s.profile.cash >= f.cost.cash ? 'ok' : ''}"><span>现金</span><b>¥ ${f.cost.cash}</b></li>${f.cost.items.map(i => `<li class="${i.have >= i.qty ? 'ok' : ''}">${icon(i.id, 20)}<span>${esc(D.ITEMS[i.id].name)}</span><b>${Math.min(i.have, i.qty)} / ${i.qty}</b></li>`).join('')}</ul><small>只使用普通物资，救济物资不计入。</small>${f.locked ? `<p class="warn">${esc(f.locked)}</p>` : ''}${btn(f.locked ? '暂不能修建' : short ? '现金或材料不足' : f.level ? `升级到 ${f.level + 1} 级` : '修建设施', `build:${f.id}`, 'primary wide', f.locked || short ? 'disabled' : '')}</div>` : '<p class="ok">已达到最高等级。</p>';
   let extra = '';
   const b = s.base;
   if (f.id === 'training') {
-    const names = { strength: '力量', constitution: '体质', technique: '技巧' } as const, seconds = Math.min(120, b.training.activeSeconds + pendingSeconds);
-    extra = `<h4>主动练习</h4><p class="muted">选好练习项目，再到院里训练区（育苗池之间）实际走动，每满 120 秒获得一次练习收益；十分钟内共享 1 点训练量上限。每五秒存档一次。</p><div class="seg">${(Object.keys(names) as (keyof typeof names)[]).map(a => btn(names[a], `practice:${a}`, b.training.attribute === a ? 'on' : '')).join('')}</div><div class="bar"><span>本轮练习 ${Math.floor(seconds)} / 120 秒</span><i style="width:${seconds / 120 * 100}%"></i></div><div class="bar"><span>十分钟训练量 ${b.training.quantity.toFixed(2)} / 1 · 剩余 ${Math.ceil(b.training.windowLeft / 60)} 分</span><i style="width:${b.training.quantity * 100}%"></i></div>${f.level ? b.training.attribute ? '' : '<p class="warn">先选一个练习项目。</p>' : '<p class="warn">修建训练区后才能练习。</p>'}`;
+    const names = { strength: '力量', constitution: '体质', technique: '技巧' } as const, seconds = Math.min(120, training.activeSeconds);
+    extra = `<h4>主动练习</h4><p class="muted">选好练习项目，再到院里训练区（育苗池之间）实际走动，每满 120 秒获得一次练习收益；十分钟内共享 1 点训练量上限。每五秒存档一次。</p><div class="seg">${(Object.keys(names) as (keyof typeof names)[]).map(a => btn(names[a], `practice:${a}`, training.attribute === a ? 'on' : '')).join('')}</div><div class="bar"><span>本轮有效练习 ${Math.floor(seconds)} / 120 秒</span><i style="width:${seconds / 120 * 100}%"></i></div><p class="muted" data-training-seconds>${trainingSeconds(training)}</p><div class="bar"><span>已保存训练量 ${training.saved.quantity.toFixed(2)} / 1 · ${training.pendingWindow ? '上一轮' : `剩余 ${Math.ceil(training.windowLeft / 60)} 分`}</span><i style="width:${training.saved.quantity * 100}%"></i></div><p class="${training.status === 'ready' ? 'muted' : 'warn'}" data-training-status>${trainingHint(training)}</p>`;
   }
   if (f.id === 'workbench') {
     extra = `<h4>配方</h4>${(Object.keys(RECIPES) as (keyof typeof RECIPES)[]).map(id => { const r = RECIPES[id]; return `<div class="row">${icon(id, 24)}<span><b>${esc(D.ITEMS[id].name)} × ${r.result[0].qty}</b><small>${r.seconds / 60} 分钟 · ¥ ${r.cash} + ${r.materials.map(m => `${esc(D.ITEMS[m.id].name)} × ${m.qty}`).join('、')} · 工作台 ${r.level} 级${r.medical ? ' / 医疗区 1 级' : ''}</small></span>${btn('排入生产', `enqueue:${id}`, 'mini', f.level >= r.level ? '' : 'disabled')}</div>`; }).join('')}

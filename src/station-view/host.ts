@@ -1,7 +1,7 @@
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
-import type { HideoutEvent, HideoutRuntime, HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
-import { validPractice } from '../hideout-runtime/training';
+import type { HideoutEvent, HideoutRuntime, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
+import { trainingHint, trainingSeconds } from './panels';
 import { Scope, lifecycle } from '../coast-view/scope';
 import { DOORWAYS, ROOMS, SHED, SITTERS, STATIONS, T, TRAINING_ZONE, WALKERS, WALL_H, domainAt, floors, inRect, type Doorway, type PropDef, type RoomId, type Station, type StationId } from './layout';
 import { HideoutScene, type ActorView, type SceneState } from './scene';
@@ -83,8 +83,6 @@ export class StationHost {
   private trainingFlash = 0;
   private hover: Station | null = null;
   private active = false;
-  /** Training seconds sent since the last commit that look valid here (display interpolation only). */
-  private pending = 0;
   private contextLost = false;
   private closed = false;
   frames = 0;
@@ -108,7 +106,6 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-      pendingSeconds: () => this.pending,
     }, this.scope, { world: opts.world, seed: opts.seed });
     this.ui.volume = opts.volume;
     this.ui.setTouch(opts.touch);
@@ -244,7 +241,6 @@ export class StationHost {
   /** Read-only reaction: no transaction is started from here (the Runtime would refuse a re-entrant one). */
   private event(e: HideoutEvent) {
     this.snap = this.rt.snapshot();
-    if (e.type === 'committed') this.pending = 0;
     if (e.type === 'power-restored') { this.ui.close(); this.seq = { kind: 'power', t: 0 }; this.scene.light.setPower('restored', true); this.audio.cue('relay'); this.ui.setQuickVisible(false); }
     if (e.type === 'facility-built') this.colKey = '';
     if (e.type === 'production-complete') { this.ui.toast('工作台：一批成品可以领取了。', 'ok'); this.audio.cue('ok'); }
@@ -255,7 +251,7 @@ export class StationHost {
   }
   /** After an import the profile may differ entirely: lamps, collision and HUD follow the new snapshot. */
   resync() {
-    this.snap = this.rt.snapshot(); this.pending = 0;
+    this.snap = this.rt.snapshot();
     this.scene.light.setPower(this.snap.power, false); this.colKey = '';
     this.ui.updateHud(this.snap); this.ui.refresh(true);
   }
@@ -318,9 +314,8 @@ export class StationHost {
     if (active && moved >= .01) {
       const sample = { from: before, to: after, seconds: dt, now };
       this.rt.practice(sample);
-      if (s.base.facilities.training && s.base.training.attribute && validPractice(sample)) this.pending = Math.min(120, this.pending + dt);
     }
-    const inZone = inRect(this.player.x, this.player.y, TRAINING_ZONE);
+    const training = this.rt.trainingProgress(), inZone = inRect(this.player.x, this.player.y, TRAINING_ZONE);
     this.updateFocus();
     const door = this.nearSideDoor();
     const actors = this.updateActors(dt);
@@ -335,12 +330,12 @@ export class StationHost {
       player: { x: this.player.x, y: this.player.y, dir8: this.player.dir8, walkFrame: this.player.moving ? 1 + (Math.floor(this.player.walk) % 4) : 0 },
       actors, power: s.power, gateOpen: this.gateOpen, facilities: s.base.facilities, upgraded: s.profile.upgraded,
       focus: this.ui.open ? panelStation?.id ?? null : this.focus?.id ?? null, peekRoom: peek, look, panelInset: this.ui.inset,
-      curtain: this.curtain, training: train ? { active: true, progress: Math.min(1, (s.base.training.activeSeconds + this.pending) / 120) } : null,
+      curtain: this.curtain, training: train ? { active: true, progress: training.capped ? 1 : Math.min(1, training.activeSeconds / 120) } : null,
       workbench: { progress: s.base.queue[0] ? 1 - s.base.queue[0].remaining / s.base.queue[0].duration : null, ready: s.base.completed.length },
       doorHint: door ? { x: door.d.x, y: door.d.y, dir: door.dir } : null,
     };
     if (!this.contextLost) this.scene.render(dt, state);
-    this.updateDom(actors, s);
+    this.updateDom(actors, s, training);
     if (door) { const p = this.scene.toScreen(door.d.x * T + 16, door.d.y * T - 50); this.ui.setDoorTag(door.dir > 0 ? `${door.d.name.b} →` : `← ${door.d.name.a}`, p); } else this.ui.setDoorTag(null, null);
     this.audioFrame(dt, pRoom, moved);
     if (this.frames % 30 === 0) { this.ui.updateHud(s); if (this.ui.kind === 'facility' && !this.ui.dragging) this.ui.refresh(); }
@@ -470,7 +465,7 @@ export class StationHost {
     }
   }
 
-  private updateDom(actors: ActorView[], s: HideoutSnapshot) {
+  private updateDom(actors: ActorView[], s: HideoutSnapshot, training: TrainingProgress) {
     const pRoom = domainAt(this.player.x, this.player.y);
     const hidden = new Set<RoomId>(pRoom ? [pRoom] : []);
     this.ui.updateTags(st => {
@@ -486,8 +481,7 @@ export class StationHost {
       const verb = f.who ? `和${f.who}说话` : f.panel === 'facility' ? `查看${f.name}${fac ? ` · ${fac} 级` : ' · 未修建'}` : f.panel === 'board' ? '看寻人板' : `打开${f.name}`;
       this.ui.setPrompt(`<kbd>${this.ui.touch ? '交互' : 'E'}</kbd> ${verb}${f.who ? ` <small>${f.name}</small>` : ''}`);
     } else if (!this.ui.open && !this.seq && s.base.facilities.training > 0 && inRect(this.player.x, this.player.y, TRAINING_ZONE)) {
-      const seconds = Math.min(120, s.base.training.activeSeconds + this.pending);
-      this.ui.setPrompt(s.base.training.attribute ? `训练区 · 走动练习 <small>${Math.floor(seconds)} / 120 秒</small>` : '训练区 · <small>先在设施面板选一个练习项目</small>');
+      this.ui.setPrompt(`<span data-training-prompt>训练区 · <small>${training.attribute ? `${Math.floor(training.activeSeconds)} / 120 秒<br>${trainingSeconds(training)}<br>` : ''}${trainingHint(training)}</small></span>`);
     } else this.ui.setPrompt(null);
   }
 
@@ -523,7 +517,7 @@ export class StationHost {
   /** Test helper: teleport the player and settle the camera. */
   place(x: number, y: number, dir8 = 6) { this.player = { ...this.player, x: x * T, y: y * T, dir8 }; this.path = null; this.scene.snapCamera(); }
   get busy() { return !!this.seq; }
-  get debug() { return { player: { ...this.player }, focus: this.focus?.id ?? null, panel: this.ui.kind, dialog: this.ui.dialogKind, seq: this.seq?.kind ?? null, active: this.active, pending: this.pending, col: this.col, errors: this.errors }; }
+  get debug() { return { player: { ...this.player }, focus: this.focus?.id ?? null, panel: this.ui.kind, dialog: this.ui.dialogKind, seq: this.seq?.kind ?? null, active: this.active, training: this.rt.trainingProgress(), col: this.col, errors: this.errors }; }
 
   /** Release listeners, the ticker callback, the scene's GPU resources and the audio loops (the caller parks the app). */
   destroy() {

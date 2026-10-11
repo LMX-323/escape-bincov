@@ -1,0 +1,6 @@
+{
+  "command": "test:station",
+  "exitCode": 0,
+  "finished": "2026-10-11T12:39:31.2079775Z",
+  "log": "test-results/tier2/test-station-final.txt"
+}

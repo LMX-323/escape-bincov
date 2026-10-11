@@ -10,13 +10,30 @@ export type ShopSource = 'merchant' | 'buy' | 'sell' | 'stash';
 export type Merchant = 'arms' | 'med';
 export type Power = 'emergency' | 'restored';
 export type RunWorld = 'coast' | 'buildings' | 'mall';
-export type FailReason = 'rule' | 'space' | 'funds' | 'materials' | 'locked' | 'stale' | 'storage' | 'conflict';
+export type FailReason = 'rule' | 'space' | 'funds' | 'materials' | 'locked' | 'stale' | 'storage' | 'conflict' | 'missing-item' | 'not-supply' | 'no-effect';
 export type Result = { ok: true; message?: string } | { ok: false; reason: FailReason; message: string;
     confirmation?: { kind: 'quest-sale'; token: string; warnings: string[] } };
 export interface BatchView { id: string; recipe: Recipe; duration: number; remaining: number; result: { id: string; qty: number }[] }
 export interface BaseView {
     facilities: Record<Facility, number>; queue: BatchView[]; completed: BatchView[];
     training: { attribute: Attribute | null; activeSeconds: number; quantity: number; windowLeft: number }; extractedPearl: boolean;
+}
+/** Runtime-validated projection, never a saved reward. Reading neither advances the clock nor commits. */
+export interface TrainingProgress {
+    readonly attribute: Attribute | null;
+    readonly saved: { readonly activeSeconds: number; readonly quantity: number };
+    /** Effective seconds accepted by the original practice rule since the last successful commit. */
+    readonly pendingSeconds: number;
+    /** Remainder and quantity after applying those samples OR the retained failed candidate, exactly once. */
+    readonly activeSeconds: number;
+    readonly quantity: number;
+    readonly pendingGrowth: Readonly<Record<Attribute, number>>;
+    readonly windowLeft: number;
+    readonly capped: boolean;
+    readonly windowExpired: boolean;
+    /** A validated sample started a new ten-minute window, still awaiting persistence. */
+    readonly pendingWindow: boolean;
+    readonly status: 'unavailable' | 'select' | 'ready' | 'capped' | 'storage' | 'conflict' | 'stale' | 'locked';
 }
 export interface BodyView {
     hp: number; hpMax: number; stamina: number; staminaMax: number; mental: number; water: number; satiety: number; pollution: number;
@@ -63,6 +80,8 @@ export interface HideoutRuntime {
     /** At the station boundary only: atomically upgrade existing progress; active legacy raids must resume first. */
     enter(): Result;
     snapshot(): HideoutSnapshot;
+    /** Detached, read-only effective training progress; base.training remains committed data. */
+    trainingProgress(): TrainingProgress;
     subscribe(fn: (event: HideoutEvent) => void): () => void;
     /** Real-time queue/recovery checkpoint every five seconds; no raid simulation. */
     tick(nowMs: number): void;

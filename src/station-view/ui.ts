@@ -20,8 +20,6 @@ export interface UIHost {
   exportSave(): void;
   /** A complete backup was imported; the host decides where the player goes next. */
   imported(): void;
-  /** Training seconds walked since the last save (display only; the Runtime credits nothing until it commits). */
-  pendingSeconds(): number;
 }
 /** A confirmation or failure dialog drawn over the open panel. */
 type Dialog =
@@ -174,7 +172,7 @@ export class UI {
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
       case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed); break;
-      case 'facility': body = `<nav class="seg facs">${FACILITY_ORDER.map(f => P.btn(`${FACILITY_LABEL[f]}${s.base.facilities[f] ? ` <small>${s.base.facilities[f]} 级</small>` : ''}`, `fac:${f}`, f === this.facility ? 'on' : '')).join('')}</nav>` + P.facilityHtml(this.rt.facility(this.facility), s, this.host.pendingSeconds()); break;
+      case 'facility': body = `<nav class="seg facs">${FACILITY_ORDER.map(f => P.btn(`${FACILITY_LABEL[f]}${s.base.facilities[f] ? ` <small>${s.base.facilities[f]} 级</small>` : ''}`, `fac:${f}`, f === this.facility ? 'on' : '')).join('')}</nav>` + P.facilityHtml(this.rt.facility(this.facility), s, this.rt.trainingProgress()); break;
       case 'body': body = P.bodyHtml(s); break;
       case 'board': body = P.boardHtml(); break;
       case 'chat': body = `<p class="muted">长桌上摆着碗。灶上那锅粥一直温着，谁回来谁盛。</p>`; break;

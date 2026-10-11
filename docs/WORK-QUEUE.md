@@ -1,3 +1,7 @@
+## 2026-10-11 · AI 遗留第二级 A 批实现（PR #35 续作）
+
+维护者明确要求在 `fix/ai-tier2-station` 继续原 [PR #35](https://github.com/xuys2025/escape-bincov/pull/35)。fetch 核对 main `6494b51`，沿用准备提交 `8c24ac3`；当前 agent 独立完成 ASTRA-STATION-API-02 可信训练进度、ASTRA-STATION-API-03 补给拒绝原因及现有界面接线。[范围](AI-LEFTOVERS-TIER2A.md)、[实际验证与首败/截图](station-tier2-20261011/README.md)。287单测和15项专项通过，真实132.331秒墙钟完成120秒有效训练；受影响旧回归、必要打包和最终head完整CI按报告/PR核实。CI全过才转Ready，#32两项标待合并，总单开放；交回主调度审查后停止。救济、人物/场景素材、内存等其它二三级和在途 #28/#30/#31保持原归属，不扩量、不自行合并/发布/更新试玩站。#34已合并及下方记录按历史日期保留。
+
 ## 2026-10-11 · AI 遗留第一级实现（PR #34 续作）
 
 #22 与 #33 已合并，fetch 核对 main 仍为 fc2a1d3。维护者本轮明确要求当前 agent 在 `fix/ai-tier1-station` 继续 [PR #34](https://github.com/xuys2025/escape-bincov/pull/34)，一次完成 OPUS-STATION-COPY-01（真实出击计数文案）与 ASTRA-STATION-API-01（护符快照及接线）。两项代码和当前方案内的院子接线已完成，存档格式与交易规则保留；[范围](AI-LEFTOVERS-TIER1.md)、[真实验证/截图/首败](station-tier1-20261011/README.md)。最终 CI 与 Ready 状态以原 PR 最新 head 为准，等待维护者审阅，未合并/发布。仅更新 #32 对应子项，总单及二三级仍开放；#26 和在途 #28/#30/#31 保持原归属，不新增同目标 PR，完成后停止。

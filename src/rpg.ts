@@ -107,7 +107,9 @@ export function healingTraining(state: ExpansionState, actual: number): void {
     }
     training.quantity.constitution += qualified / 50 * trainingEfficiency(state);
 }
-export function useRpgItem(state: ExpansionState, id: string): boolean {
+export type RpgItemResult = { ok: true } | { ok: false; reason: 'not-supply' | 'no-effect'; message: string };
+/** The same effect application serves every caller; full resources alone cannot reject a compound supply. */
+export function useRpgItemResult(state: ExpansionState, id: string): RpgItemResult {
     const body = state.body, limits = derivedLimits(state), before = JSON.stringify(body), oldHp = body.hp;
     if (id === 'bandage' || id === 'medkit') { body.hp = Math.min(limits.hp, body.hp + (id === 'bandage' ? 16 : 55)); body.bleeding = false; }
     else if (id === 'water') { body.stamina = limits.stamina; body.pollution = Math.max(0, body.pollution - 12); body.water = Math.min(100, body.water + 40); }
@@ -117,10 +119,19 @@ export function useRpgItem(state: ExpansionState, id: string): boolean {
     else if (id === 'focus') body.effects.focus = 120;
     else if (['strengthDose', 'constitutionDose', 'techniqueDose'].includes(id)) body.effects[id.replace('Dose', '') as Attribute] = 180;
     else if (id === 'luckySachet' || id === 'unluckySachet') { body.effects.luck = 300; body.luckEffect = id === 'luckySachet' ? 1 : -1; }
-    else return false;
-    if (JSON.stringify(body) === before) return false;
-    healingTraining(state, body.hp - oldHp); return true;
+    else return { ok: false, reason: 'not-supply', message: '这件物品不属于可用补给。' };
+    if (JSON.stringify(body) === before) {
+        const message = id === 'water' ? '水分和耐力已满，且没有污染，饮水没有效果。'
+            : id === 'food' ? '饱食、生命和耐力已满，食用罐头没有效果。'
+            : id === 'bandage' || id === 'medkit' ? '生命已满且没有流血，治疗没有效果。'
+            : id === 'antidote' ? '当前没有污染，使用解毒剂没有效果。'
+            : '同类效果与持续时间没有变化，当前使用没有效果。';
+        return { ok: false, reason: 'no-effect', message };
+    }
+    healingTraining(state, body.hp - oldHp); return { ok: true };
 }
+/** Existing gameplay callers retain their boolean contract and identical effects. */
+export function useRpgItem(state: ExpansionState, id: string): boolean { return useRpgItemResult(state, id).ok; }
 
 export function criticalChance(technique: number, closeness: number, direct = 0): number {
     if (![technique, closeness, direct].every(Number.isFinite) || closeness < 0 || closeness > 1) throw new Error('命中参数无效。');
