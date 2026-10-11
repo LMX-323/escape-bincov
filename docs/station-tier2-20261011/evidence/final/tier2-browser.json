@@ -1,0 +1,1591 @@
+{
+  "build": "dist/index.html",
+  "sha256": "390b244716803312987f5c53f7b08b2188c2a935b9b7ee8fa5b0bc374cbcc71c",
+  "node": "v24.19.0",
+  "platform": "win32",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T12:19:07.909Z",
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "P01 rejected clock samples do not fill the existing scene ring or training prompt",
+      "status": "passed",
+      "detail": {
+        "rendered": {
+          "active": true,
+          "progress": 0
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.0 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 2458
+    },
+    {
+      "name": "P02 cap stays visibly full and explains waiting instead of accumulating display seconds",
+      "status": "passed",
+      "detail": {
+        "rendered": {
+          "active": true,
+          "progress": 1
+        },
+        "text": "训练区 · 0 / 120 秒\n已保存 0.0 秒 · 待保存 0.0 秒\n十分钟训练量已达上限，等待 600 秒。"
+      },
+      "ms": 2360
+    },
+    {
+      "name": "P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 1.314900000000001,
+          "activeSeconds": 1.314900000000001,
+          "quantity": 0,
+          "windowLeft": 598.334,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.010957500000000009
+        },
+        "text": "训练区 · 1 / 120 秒\n已保存 0.0 秒 · 待保存 1.3 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 3584
+    },
+    {
+      "name": "P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 1.2773999999999996,
+          "activeSeconds": 1.2773999999999996,
+          "quantity": 0,
+          "windowLeft": 598.307,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.010644999999999996
+        },
+        "text": "训练区 · 1 / 120 秒\n已保存 0.0 秒 · 待保存 1.3 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 3846
+    },
+    {
+      "name": "P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "passed",
+      "detail": {
+        "view": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0,
+            "quantity": 0
+          },
+          "pendingSeconds": 1.2969000000000015,
+          "activeSeconds": 1.2969000000000015,
+          "quantity": 0,
+          "windowLeft": 598.333,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        },
+        "rendered": {
+          "active": true,
+          "progress": 0.010807500000000013
+        },
+        "text": "训练区 · 1 / 120 秒\n已保存 0.0 秒 · 待保存 1.3 秒\n在训练区实际走动，每五秒保存。"
+      },
+      "ms": 3984
+    },
+    {
+      "name": "P04 reward checkpoint quota retains exact candidate; backup and retry credit once",
+      "status": "passed",
+      "detail": {
+        "before": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 119,
+            "quantity": 0
+          },
+          "pendingSeconds": 1.745500000000004,
+          "activeSeconds": 0.7455000000003508,
+          "quantity": 0.2625,
+          "windowLeft": 594.994,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "storage",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0.052500000000000005
+          }
+        },
+        "after": {
+          "attribute": "technique",
+          "saved": {
+            "activeSeconds": 0.7455000000003508,
+            "quantity": 0.2625
+          },
+          "pendingSeconds": 0,
+          "activeSeconds": 0.7455000000003508,
+          "quantity": 0.2625,
+          "windowLeft": 594.509,
+          "windowExpired": false,
+          "pendingWindow": false,
+          "capped": false,
+          "status": "ready",
+          "pendingGrowth": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          }
+        }
+      },
+      "ms": 6861
+    },
+    {
+      "name": "S01 1280x720 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 2431
+    },
+    {
+      "name": "S01 1920x1080 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 2643
+    },
+    {
+      "name": "S01 390x844 compound no-effect rejection is readable and consumes nothing",
+      "status": "passed",
+      "detail": {
+        "message": "水分和耐力已满，且没有污染，饮水没有效果。",
+        "items": 2
+      },
+      "ms": 2575
+    },
+    {
+      "name": "S02 missing/non-supply results are stable; secondary and sustained effects retain existing behavior",
+      "status": "passed",
+      "detail": {
+        "refused": [
+          {
+            "ok": false,
+            "reason": "missing-item",
+            "message": "这件物品已不存在，请重新选择补给。"
+          },
+          {
+            "ok": false,
+            "reason": "not-supply",
+            "message": "这件物品不属于可用补给。"
+          }
+        ],
+        "effects": [
+          {
+            "id": "water",
+            "field": "pollution",
+            "before": 12,
+            "after": 0
+          },
+          {
+            "id": "water",
+            "field": "stamina",
+            "before": 20,
+            "after": 100
+          },
+          {
+            "id": "food",
+            "field": "hp",
+            "before": 40,
+            "after": 52
+          },
+          {
+            "id": "food",
+            "field": "stamina",
+            "before": 20,
+            "after": 70
+          },
+          {
+            "id": "medkit",
+            "field": "bleeding",
+            "before": true,
+            "after": false
+          }
+        ],
+        "sustained": [
+          {
+            "ok": true
+          },
+          {
+            "ok": false,
+            "reason": "no-effect",
+            "message": "同类效果与持续时间没有变化，当前使用没有效果。"
+          },
+          {
+            "ok": true
+          },
+          {
+            "ok": true
+          }
+        ]
+      },
+      "ms": 5637
+    },
+    {
+      "name": "S03 supply write failure rolls back; retry saves first, explicit reuse consumes exactly once",
+      "status": "passed",
+      "detail": {
+        "before": 20,
+        "after": 100,
+        "count": 1
+      },
+      "ms": 2884
+    },
+    {
+      "name": "S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes",
+      "status": "passed",
+      "detail": {
+        "revision": 5
+      },
+      "ms": 1892
+    },
+    {
+      "name": "P05 old tabs, yard switching and reload follow durable progress and old supply callers",
+      "status": "passed",
+      "detail": {
+        "savedSeconds": 12,
+        "bandages": 1,
+        "hp": 56
+      },
+      "ms": 3367
+    },
+    {
+      "name": "P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time",
+      "status": "passed",
+      "detail": {
+        "wallSeconds": 132.331,
+        "pauses": [
+          {
+            "name": "idle",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "open panel",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "hidden gate simulation",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "hasFocus gate simulation",
+            "before": 0,
+            "after": 0
+          }
+        ],
+        "trace": [
+          {
+            "wallSeconds": 5.466,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 1.3937000000000026,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.7818999999999999,
+            "activeSeconds": 2.1756000000000046,
+            "quantity": 0,
+            "windowLeft": 594.224,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 7.679,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 1.3937000000000026,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.829899999999999,
+            "activeSeconds": 4.223599999999984,
+            "quantity": 0,
+            "windowLeft": 592.011,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 9.892,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 6.150699999999954,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.2001000000000004,
+            "activeSeconds": 6.350799999999951,
+            "quantity": 0,
+            "windowLeft": 589.799,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 12.114,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 6.150699999999954,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.345399999999997,
+            "activeSeconds": 8.496099999999918,
+            "quantity": 0,
+            "windowLeft": 587.576,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 14.338,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 6.150699999999954,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.460699999999973,
+            "activeSeconds": 10.611399999999925,
+            "quantity": 0,
+            "windowLeft": 585.352,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 16.557,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 10.962799999999925,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.8363000000000014,
+            "activeSeconds": 12.799099999999928,
+            "quantity": 0,
+            "windowLeft": 583.133,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 18.769,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 10.962799999999925,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.993799999999981,
+            "activeSeconds": 14.956599999999915,
+            "quantity": 0,
+            "windowLeft": 580.921,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 20.986,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 15.88369999999991,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.266499999999996,
+            "activeSeconds": 17.150200000000034,
+            "quantity": 0,
+            "windowLeft": 578.705,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 23.198,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 15.88369999999991,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.43619999999998,
+            "activeSeconds": 19.319900000000246,
+            "quantity": 0,
+            "windowLeft": 576.492,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 25.41,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 20.822800000000413,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.6667000000000011,
+            "activeSeconds": 21.4895000000005,
+            "quantity": 0,
+            "windowLeft": 574.28,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 27.628,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 20.822800000000413,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.8544999999999905,
+            "activeSeconds": 23.677300000000752,
+            "quantity": 0,
+            "windowLeft": 572.063,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 29.839,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 25.756100000000984,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.12109999999999858,
+            "activeSeconds": 25.877200000000997,
+            "quantity": 0,
+            "windowLeft": 569.851,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 32.066,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 25.756100000000984,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.326999999999994,
+            "activeSeconds": 28.08310000000123,
+            "quantity": 0,
+            "windowLeft": 567.625,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 34.278,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 25.756100000000984,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.4846999999999815,
+            "activeSeconds": 30.24080000000149,
+            "quantity": 0,
+            "windowLeft": 565.413,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 36.503,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 30.671000000001538,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.7451999999999994,
+            "activeSeconds": 32.41620000000166,
+            "quantity": 0,
+            "windowLeft": 563.188,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 38.72,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 30.671000000001538,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.8782999999999808,
+            "activeSeconds": 34.5493000000014,
+            "quantity": 0,
+            "windowLeft": 560.971,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 40.944,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 35.53110000000128,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.1089000000000082,
+            "activeSeconds": 36.64000000000116,
+            "quantity": 0,
+            "windowLeft": 558.746,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 43.162,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 35.53110000000128,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.2421999999999938,
+            "activeSeconds": 38.77330000000091,
+            "quantity": 0,
+            "windowLeft": 556.529,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 45.374,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 40.312500000000746,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.6181000000000061,
+            "activeSeconds": 40.93060000000067,
+            "quantity": 0,
+            "windowLeft": 554.317,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 47.605,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 40.312500000000746,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.8239999999999927,
+            "activeSeconds": 43.13650000000042,
+            "quantity": 0,
+            "windowLeft": 552.086,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 49.828,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 45.233400000000245,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.09100000000000001,
+            "activeSeconds": 45.32440000000023,
+            "quantity": 0,
+            "windowLeft": 549.862,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 52.047,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 45.233400000000245,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.266599999999987,
+            "activeSeconds": 47.49999999999995,
+            "quantity": 0,
+            "windowLeft": 547.644,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 54.271,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 45.233400000000245,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.472699999999973,
+            "activeSeconds": 49.706099999999765,
+            "quantity": 0,
+            "windowLeft": 545.42,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 56.489,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 50.11789999999971,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.7090999999999934,
+            "activeSeconds": 51.826999999999494,
+            "quantity": 0,
+            "windowLeft": 543.202,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 58.706,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 50.11789999999971,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.848399999999972,
+            "activeSeconds": 53.96629999999923,
+            "quantity": 0,
+            "windowLeft": 540.985,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 60.923,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 54.97839999999912,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.1634999999999989,
+            "activeSeconds": 56.14189999999895,
+            "quantity": 0,
+            "windowLeft": 538.767,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 63.138,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 54.97839999999912,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.3451999999999877,
+            "activeSeconds": 58.32359999999861,
+            "quantity": 0,
+            "windowLeft": 536.553,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 65.359,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 59.85689999999841,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.5757000000000118,
+            "activeSeconds": 60.43259999999838,
+            "quantity": 0,
+            "windowLeft": 534.332,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 67.578,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 59.85689999999841,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.714900000000006,
+            "activeSeconds": 62.571799999998106,
+            "quantity": 0,
+            "windowLeft": 532.112,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 69.802,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 64.73529999999776,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.042499999999999996,
+            "activeSeconds": 64.77779999999775,
+            "quantity": 0,
+            "windowLeft": 529.888,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 72.021,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 64.73529999999776,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.181799999999968,
+            "activeSeconds": 66.9170999999973,
+            "quantity": 0,
+            "windowLeft": 527.669,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 74.234,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 64.73529999999776,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.351399999999934,
+            "activeSeconds": 69.08669999999687,
+            "quantity": 0,
+            "windowLeft": 525.457,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 76.455,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 69.60179999999676,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.6423000000000014,
+            "activeSeconds": 71.24409999999644,
+            "quantity": 0,
+            "windowLeft": 523.234,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 78.667,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 69.60179999999676,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.799799999999947,
+            "activeSeconds": 73.401599999996,
+            "quantity": 0,
+            "windowLeft": 521.022,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 80.879,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 74.46219999999576,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.0664999999999982,
+            "activeSeconds": 75.52869999999555,
+            "quantity": 0,
+            "windowLeft": 518.811,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 83.091,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 74.46219999999576,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.2602999999999596,
+            "activeSeconds": 77.72249999999512,
+            "quantity": 0,
+            "windowLeft": 516.599,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 85.304,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 79.37699999999478,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.5150000000000002,
+            "activeSeconds": 79.89199999999468,
+            "quantity": 0,
+            "windowLeft": 514.386,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 87.524,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 79.37699999999478,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.7148999999999917,
+            "activeSeconds": 82.09189999999425,
+            "quantity": 0,
+            "windowLeft": 512.166,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 89.741,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 79.37699999999478,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.660599999999982,
+            "activeSeconds": 84.03759999999386,
+            "quantity": 0,
+            "windowLeft": 509.949,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 91.954,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 84.06789999999386,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.1695999999999867,
+            "activeSeconds": 86.23749999999342,
+            "quantity": 0,
+            "windowLeft": 507.736,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 94.182,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 84.06789999999386,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.3635999999999715,
+            "activeSeconds": 88.431499999993,
+            "quantity": 0,
+            "windowLeft": 505.507,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 96.395,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 89.03139999999289,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.5938000000000017,
+            "activeSeconds": 90.62519999999257,
+            "quantity": 0,
+            "windowLeft": 503.295,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 98.607,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 89.03139999999289,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.7815999999999668,
+            "activeSeconds": 92.81299999999214,
+            "quantity": 0,
+            "windowLeft": 501.083,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 100.824,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 93.97659999999192,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.030300000000001,
+            "activeSeconds": 95.00689999999172,
+            "quantity": 0,
+            "windowLeft": 498.865,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 103.042,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 93.97659999999192,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.2299999999999716,
+            "activeSeconds": 97.20659999999128,
+            "quantity": 0,
+            "windowLeft": 496.647,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 105.261,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 98.93359999999093,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.44850000000001483,
+            "activeSeconds": 99.38209999999086,
+            "quantity": 0,
+            "windowLeft": 494.429,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 107.478,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 98.93359999999093,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.660400000000007,
+            "activeSeconds": 101.59399999999043,
+            "quantity": 0,
+            "windowLeft": 492.211,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 109.698,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 98.93359999999093,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.86019999999999,
+            "activeSeconds": 103.79379999998999,
+            "quantity": 0,
+            "windowLeft": 489.992,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 111.92,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 103.89679999998997,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.10289999999999,
+            "activeSeconds": 105.99969999998955,
+            "quantity": 0,
+            "windowLeft": 487.769,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 114.141,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 103.89679999998997,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.2906999999999735,
+            "activeSeconds": 108.18749999998913,
+            "quantity": 0,
+            "windowLeft": 485.55,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 116.365,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 108.847999999989,
+              "quantity": 0
+            },
+            "pendingSeconds": 1.539399999999992,
+            "activeSeconds": 110.38739999998869,
+            "quantity": 0,
+            "windowLeft": 483.325,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 118.58,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 108.847999999989,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.733299999999948,
+            "activeSeconds": 112.58129999998825,
+            "quantity": 0,
+            "windowLeft": 481.109,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 120.799,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 113.787599999988,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.9696000000000042,
+            "activeSeconds": 114.75719999998782,
+            "quantity": 0,
+            "windowLeft": 478.89,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 123.017,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 113.787599999988,
+              "quantity": 0
+            },
+            "pendingSeconds": 3.1574999999999744,
+            "activeSeconds": 116.94509999998738,
+            "quantity": 0,
+            "windowLeft": 476.672,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 125.241,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 118.70879999998702,
+              "quantity": 0
+            },
+            "pendingSeconds": 0.405900000000009,
+            "activeSeconds": 119.11469999998695,
+            "quantity": 0,
+            "windowLeft": 474.448,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          },
+          {
+            "wallSeconds": 127.465,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 118.70879999998702,
+              "quantity": 0
+            },
+            "pendingSeconds": 2.6238999999999932,
+            "activeSeconds": 1.3326999999867748,
+            "quantity": 0.2625,
+            "windowLeft": 472.224,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0.052500000000000005
+            }
+          },
+          {
+            "wallSeconds": 129.683,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 118.70879999998702,
+              "quantity": 0
+            },
+            "pendingSeconds": 4.811699999999991,
+            "activeSeconds": 3.520499999986747,
+            "quantity": 0.2625,
+            "windowLeft": 470.007,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0.052500000000000005
+            }
+          },
+          {
+            "wallSeconds": 131.895,
+            "attribute": "technique",
+            "saved": {
+              "activeSeconds": 3.6598999999867385,
+              "quantity": 0.2625
+            },
+            "pendingSeconds": 2.066499999999994,
+            "activeSeconds": 5.726399999986812,
+            "quantity": 0.2625,
+            "windowLeft": 467.795,
+            "windowExpired": false,
+            "pendingWindow": false,
+            "capped": false,
+            "status": "ready",
+            "pendingGrowth": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            }
+          }
+        ],
+        "training": {
+          "startedAt": 1791721193871,
+          "quantity": 0.2625,
+          "credited": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0.052500000000000005
+          },
+          "activeSeconds": 3.6598999999867385,
+          "attribute": "technique",
+          "windowLeft": 467.79
+        },
+        "growth": 0.052500000000000005
+      },
+      "ms": 134073
+    },
+    {
+      "name": "O01 ordinary offline entry has no test globals and uses the current UI",
+      "status": "passed",
+      "ms": 1819
+    }
+  ],
+  "screenshots": [
+    "rejected-frames-1280.png",
+    "cap-wait-1280.png",
+    "training-yard-1280x720.png",
+    "training-panel-1280x720.png",
+    "training-yard-1920x1080.png",
+    "training-panel-1920x1080.png",
+    "training-yard-390x844.png",
+    "training-panel-390x844.png",
+    "training-quota-before-retry.png",
+    "training-quota-after-retry.png",
+    "supply-no-effect-1280x720.png",
+    "supply-no-effect-1920x1080.png",
+    "supply-no-effect-390x844.png",
+    "supply-quota-before-retry.png",
+    "supply-quota-after-reuse.png",
+    "training-real-120-credit.png",
+    "ordinary-offline-1280.png"
+  ],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T12:22:08.333Z",
+  "passed": true
+}

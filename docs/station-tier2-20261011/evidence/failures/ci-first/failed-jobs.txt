@@ -1,0 +1,653 @@
+Browser / world	UNKNOWN STEP	﻿2026-10-11T12:48:48.9622035Z Current runner version: '2.337.0'
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9650084Z ##[group]Runner Image Provisioner
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9651069Z Hosted Compute Agent
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9651718Z Version: 20261002.596
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9652369Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9653435Z Build Date: 2026-10-02T22:28:27Z
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9654230Z Worker ID: {2cf7c122-906d-45fc-904a-574e024681c0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9654986Z Region: centralus
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9655645Z Cloud: Azure
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9656191Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9657899Z ##[group]Operating System
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9658695Z Ubuntu
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9659248Z 24.04.5
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9659836Z LTS
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9660365Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9660952Z ##[group]Runner Image
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9661595Z Image: ubuntu-24.04
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9662198Z Version: 20261004.327.1
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9663900Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9665614Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9666642Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9667855Z ##[group]GITHUB_TOKEN Permissions
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9669805Z Contents: read
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9670451Z Metadata: read
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9671153Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9673685Z Secret source: Actions
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9674761Z Cache mode: write
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:48.9675550Z Prepare workflow directory
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:49.0106141Z Prepare all required actions
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:49.0179018Z Getting action download info
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:49.2687914Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:49.3915389Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:49.8167608Z Download action repository 'actions/download-artifact@v8' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.2421434Z Download action repository 'actions/upload-artifact@v6' (SHA:b7c566a772e6b6bfb58ed0dc250532a479d7789f)
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.5268836Z Complete job name: Browser / world
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6501204Z ##[group]Run actions/checkout@v7
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6502595Z with:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6503691Z   persist-credentials: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6504777Z   repository: xuys2025/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6514460Z   token: ***
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6515308Z   ssh-strict: true
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6516179Z   ssh-user: git
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6517017Z   clean: true
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6517914Z   sparse-checkout-cone-mode: true
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6518975Z   fetch-depth: 1
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6519853Z   fetch-tags: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6520754Z   show-progress: true
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6521662Z   lfs: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6522489Z   submodules: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6523540Z   set-safe-directory: true
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6524576Z   allow-unsafe-pr-checkout: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.6525937Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.7587923Z Syncing repository: xuys2025/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.7590699Z ##[group]Getting Git version info
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.7592334Z Working directory is '/home/runner/work/escape-bincov/escape-bincov'
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.7594975Z [command]/usr/bin/git version
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.8802077Z git version 2.55.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.8825997Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.8838086Z Temporarily overriding HOME='/home/runner/work/_temp/f88168b0-041f-4448-afbb-cb39f463f768' before making global git config changes
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.8842975Z Adding repository directory to the temporary git global config as a safe directory
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.8847303Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/escape-bincov/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9097585Z Deleting the contents of '/home/runner/work/escape-bincov/escape-bincov'
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9101790Z ##[group]Determining repository object format
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9105581Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9108267Z ##[group]Initializing the repository
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9110929Z [command]/usr/bin/git init /home/runner/work/escape-bincov/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9620114Z hint: Using 'master' as the name for the initial branch. This default branch name
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9623709Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9627204Z hint: to use in all of your new repositories, which will suppress this warning,
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9629775Z hint: call:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9631158Z hint:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9632828Z hint: 	git config --global init.defaultBranch <name>
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9635169Z hint:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9637316Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9640585Z hint: 'development'. The just-created branch can be renamed via this command:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9643084Z hint:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9644729Z hint: 	git branch -m <name>
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9646321Z hint:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9648600Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9650915Z Initialized empty Git repository in /home/runner/work/escape-bincov/escape-bincov/.git/
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9654774Z [command]/usr/bin/git remote add origin https://github.com/xuys2025/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9962297Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9964416Z ##[group]Disabling automatic garbage collection
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:50.9966764Z [command]/usr/bin/git config --local gc.auto 0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.0009613Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.0011933Z ##[group]Setting up auth
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.0013625Z Removing SSH command configuration
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.0016424Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.0060708Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2588596Z Removing HTTP extra header
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2595067Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2640114Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2914735Z Removing includeIf entries pointing to credentials config files
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2918317Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.2944288Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3175586Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3278809Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git.path /home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3316203Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3366978Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3405656Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3444337Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3446092Z ##[group]Fetching the repository
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:51.3452676Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +78a46d4221a5d63843795eb3c183ca38372d88bf:refs/remotes/pull/35/merge
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9015757Z From https://github.com/xuys2025/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9017182Z  * [new ref]         78a46d4221a5d63843795eb3c183ca38372d88bf -> pull/35/merge
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9019714Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9020217Z ##[group]Determining the checkout info
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9020971Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9026649Z [command]/usr/bin/git sparse-checkout disable
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9219497Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9256161Z ##[group]Checking out the ref
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:54.9256804Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/35/merge
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4770502Z Note: switching to 'refs/remotes/pull/35/merge'.
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4771394Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4771839Z You are in 'detached HEAD' state. You can look around, make experimental
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4772771Z changes and commit them, and you can discard any commits you make in this
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4773937Z state without impacting any branches by switching back to a branch.
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4774474Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4774852Z If you want to create a new branch to retain commits you create, you may
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4775646Z do so (now or later) by using -c with the switch command. Example:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4776102Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4776302Z   git switch -c <new-branch-name>
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4776629Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4776849Z Or undo this operation with:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4777154Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4777339Z   git switch -
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4777600Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4777990Z Turn off this advice by setting config variable advice.detachedHead to false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4778579Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4779200Z HEAD is now at 78a46d4 Merge 5beee4b9417156753b85a329fedaad70142d04c5 into 6494b51ab987cd9fe038604afdf0caf8a1bc8d75
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4805610Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4859358Z [command]/usr/bin/git log -1 --format=%H
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4889844Z 78a46d4221a5d63843795eb3c183ca38372d88bf
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4900945Z ##[group]Removing auth
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4901470Z Removing SSH command configuration
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4905848Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.4940795Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5184466Z Removing HTTP extra header
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5187440Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5234958Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5519564Z Removing includeIf entries pointing to credentials config files
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5520629Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5523477Z includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5524473Z includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git/worktrees/*.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5525291Z includeif.gitdir:/github/workspace/.git.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5525941Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5532646Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5560846Z /home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5570827Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-4603929b\-1e0b\-43be\-a4cb\-66d15e549166\.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5607561Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git/worktrees/*.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5635097Z /home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5641557Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/escape-bincov/escape-bincov/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-4603929b\-1e0b\-43be\-a4cb\-66d15e549166\.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5676441Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5701933Z /github/runner_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5715878Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-4603929b\-1e0b\-43be\-a4cb\-66d15e549166\.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5756867Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5782854Z /github/runner_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5797392Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-4603929b\-1e0b\-43be\-a4cb\-66d15e549166\.config
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.5835003Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6055290Z Removing credentials config '/home/runner/work/_temp/git-credentials-4603929b-1e0b-43be-a4cb-66d15e549166.config'
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6063873Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6321098Z ##[group]Run actions/setup-node@v7
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6321395Z with:
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6321597Z   node-version: 24
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6321829Z   package-manager-cache: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6322104Z   check-latest: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6325170Z   token: ***
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.6325396Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:55.9410885Z Found in cache @ /opt/hostedtoolcache/node/24.21.0/x64
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:56.9176413Z ##[group]Environment details
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7005929Z node: v24.21.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7006307Z npm: 11.19.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7006614Z yarn: 1.22.22
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7007319Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7136352Z ##[group]Run npm install --global pnpm@11.19.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7136763Z ^[[36;1mnpm install --global pnpm@11.19.0^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7422602Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:48:58.7422898Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.5868300Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.5878618Z added 1 package in 3s
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.5878993Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.5879387Z 1 package is looking for funding
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.5879918Z   run `npm fund` for details
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.6324283Z ##[group]Run pnpm install --frozen-lockfile --registry=https://registry.npmjs.org
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.6324982Z ^[[36;1mpnpm install --frozen-lockfile --registry=https://registry.npmjs.org^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.6388615Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:01.6388889Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.4964929Z ? Verifying lockfile against supply-chain policies (73 entries)...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.5026824Z Lockfile is up to date, resolution step is skipped
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.5794905Z Progress: resolved 1, reused 0, downloaded 0, added 0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.5895658Z Packages: +23
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.5896424Z +++++++++++++++++++++++
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.9216089Z Packages are hard linked from the content-addressable store to the virtual store.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.9245223Z   Content-addressable store is at: /home/runner/work/escape-bincov/escape-bincov/.pnpm-store/v11
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:02.9246724Z   Virtual store is at:             node_modules/.pnpm
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:03.5783997Z Progress: resolved 23, reused 0, downloaded 21, added 21
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.1001790Z ✓ Lockfile passes supply-chain policies (73 entries in 1.6s)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.4776753Z Progress: resolved 23, reused 0, downloaded 23, added 23, done
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.5057355Z .../esbuild@0.25.0/node_modules/esbuild postinstall$ node install.js
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.5120757Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.5811313Z .../esbuild@0.25.0/node_modules/esbuild postinstall: Done
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.5923933Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7505168Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7505724Z dependencies:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506012Z + phaser 3.90.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506244Z + pixi.js 8.22.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506382Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506480Z devDependencies:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506721Z + @types/node 24.13.6
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7506960Z + esbuild 0.25.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7507181Z + playwright 1.63.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7507424Z + tsx 4.23.15
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7507925Z + typescript 5.9.2
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.7508154Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.8671360Z Done in 3.1s using pnpm v11.19.0
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9246823Z ##[group]Run actions/download-artifact@v8
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9247357Z with:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9247584Z   name: built-game
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9247806Z   digest-mismatch: error
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9248045Z   merge-multiple: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9248291Z   repository: xuys2025/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9248548Z   run-id: 38140656823
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9248774Z   skip-decompress: false
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:04.9249016Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.0723641Z Downloading single artifact
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.2423621Z Preparing to download the following artifacts:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.2425244Z - built-game (ID: 11702591173, Size: 5164679, Expected Digest: sha256:6fe785b0bb6f9d25ca5c91cb9d3e76c330def9fdef7841fa66ef38029d4f5ebe)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.5676316Z Redirecting to blob download url: https://productionresultssa0.blob.core.windows.net/actions-results/94d7b7d9-b880-8458-8fe1-f1fd714f9633/workflow-job-run-7ac6fde2-c509-5c31-8874-ca08021bd54f/artifacts/2a290a03524fbe3f307d687b9e1490fdde13fd471257ed8e97badbe4e9b2c541.zip
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.5677812Z Starting download of artifact to: /home/runner/work/escape-bincov/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.7477089Z (node:2509) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:05.7478247Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1495110Z SHA256 digest of downloaded artifact is 6fe785b0bb6f9d25ca5c91cb9d3e76c330def9fdef7841fa66ef38029d4f5ebe
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1496166Z Artifact download completed successfully.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1496560Z Total of 1 artifact(s) downloaded
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1499800Z Download artifact has finished successfully
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1608096Z ##[group]Run sha256sum --check build-checksums.sha256
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1608543Z ^[[36;1msha256sum --check build-checksums.sha256^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1670927Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1671187Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1845753Z dist/index.html: OK
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1872390Z start the game.html: OK
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1882585Z release/Escape-Bincov-portable.zip: OK
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1892153Z release/Escape-Bincov-web.zip: OK
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1892744Z docs/release-manifest.json: OK
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1926020Z ##[group]Run pnpm exec playwright install --with-deps chromium
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1926488Z ^[[36;1mpnpm exec playwright install --with-deps chromium^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1985254Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:06.1985522Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.1563144Z Installing dependencies...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.1643813Z Switching to root user to install dependencies...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3011024Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3181431Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3384990Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3399701Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3454038Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.3504877Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.4415892Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [492 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.4602281Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [548 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.4697763Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main all Packages [640 B]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.4743700Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [12.3 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6385932Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1375 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6464840Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [306 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6494701Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1702 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6552036Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [342 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6574829Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1761 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6656887Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [401 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6679683Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.0 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.6688599Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [14.3 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.7465365Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1121 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.7530338Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [228 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.7957326Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1220 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.8019448Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [245 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.8036404Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1669 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.8116721Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [383 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.8137994Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [49.8 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:07.8145281Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse Translation-en [12.4 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:12.9145561Z Fetched 12.3 MB in 1s (8840 kB/s)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:13.7702645Z Reading package lists...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:13.8908635Z Reading package lists...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.1295858Z Building dependency tree...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.1303377Z Reading state information...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3346384Z libasound2t64 is already the newest version (1.2.11-1ubuntu0.3).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3347482Z libasound2t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3348248Z libatk-bridge2.0-0t64 is already the newest version (2.52.0-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3349011Z libatk-bridge2.0-0t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3350389Z libatk1.0-0t64 is already the newest version (2.52.0-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3351155Z libatk1.0-0t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3351800Z libatspi2.0-0t64 is already the newest version (2.52.0-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3352293Z libatspi2.0-0t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3352756Z libcairo2 is already the newest version (1.18.0-3build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3353201Z libcairo2 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3354200Z libcups2t64 is already the newest version (2.4.7-1.2ubuntu7.14).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3354894Z libcups2t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3355372Z libdbus-1-3 is already the newest version (1.14.10-4ubuntu4.1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3355828Z libdbus-1-3 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3356303Z libdrm2 is already the newest version (2.4.125-1ubuntu0.1~24.04.2).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3356957Z libdrm2 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3357431Z libgbm1 is already the newest version (25.2.8-0ubuntu0.24.04.4).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3357869Z libgbm1 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3358323Z libglib2.0-0t64 is already the newest version (2.80.0-6ubuntu3.9).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3358795Z libglib2.0-0t64 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3359263Z libnspr4 is already the newest version (2:4.35-1.1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3359787Z libnspr4 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3360226Z libnss3 is already the newest version (2:3.98-1ubuntu0.2).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3360651Z libnss3 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3361097Z libpango-1.0-0 is already the newest version (1.52.1+ds-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3361510Z libpango-1.0-0 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3361904Z libx11-6 is already the newest version (2:1.8.7-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3362269Z libx11-6 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3362632Z libxcb1 is already the newest version (1.15-1ubuntu2).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3362998Z libxcb1 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3363707Z libxcomposite1 is already the newest version (1:0.4.5-1build3).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3364159Z libxcomposite1 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3364575Z libxdamage1 is already the newest version (1:1.1.6-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3364968Z libxdamage1 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3365355Z libxext6 is already the newest version (2:1.3.4-1build2).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3365726Z libxext6 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3366113Z libxfixes3 is already the newest version (1:6.0.0-2build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3366502Z libxfixes3 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3366907Z libxkbcommon0 is already the newest version (1.6.0-1build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3367344Z libxkbcommon0 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3367748Z libxrandr2 is already the newest version (2:1.5.2-2build1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3368134Z libxrandr2 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3368525Z xvfb is already the newest version (2:21.1.12-1ubuntu1.8).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3369065Z fonts-noto-color-emoji is already the newest version (2.047-0ubuntu0.24.04.1).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3369633Z libfontconfig1 is already the newest version (2.15.0-1.1ubuntu2).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3370063Z libfontconfig1 set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3370471Z fonts-liberation is already the newest version (1:2.1.5-3).
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3370895Z fonts-liberation set to manually installed.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3371292Z The following additional packages will be installed:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3371650Z   xfonts-encodings xfonts-utils
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3371937Z Recommended packages:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3372221Z   fonts-ipafont-mincho fonts-tlwg-loma
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3730679Z The following NEW packages will be installed:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3731303Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3737629Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3738399Z   xfonts-utils
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3742127Z The following packages will be upgraded:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3746824Z   libfreetype6
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3919069Z 1 upgraded, 9 newly installed, 0 to remove and 22 not upgraded.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3919552Z Need to get 21.5 MB of archives.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3920184Z After this operation, 79.5 MB of additional disk space will be used.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.3921056Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.4407616Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-ipafont-gothic all 00303-21ubuntu1 [3513 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.5477388Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-freefont-ttf all 20211204+svn4273-2 [5641 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.8931703Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-tlwg-loma-otf all 1:0.7.3-1 [107 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.9280410Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-unifont all 1:15.1.01-1build1 [2993 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:14.9790490Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-wqy-zenhei all 0.9.45-8 [7472 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.0878995Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libfreetype6 amd64 2.13.2+dfsg-1ubuntu0.2 [403 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.1246529Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-encodings all 1:1.0.5-0ubuntu2 [578 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.1620153Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-utils amd64 1:7.7+6build3 [94.4 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.1975428Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 xfonts-cyrillic all 1:1.0.5+nmu1 [384 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.2345081Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-scalable all 1:1.0.3-1.3 [304 kB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.5152867Z Fetched 21.5 MB in 1s (25.1 MB/s)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.5549498Z Selecting previously unselected package fonts-ipafont-gothic.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6120587Z (Reading database ... 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6121087Z (Reading database ... 5%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6121419Z (Reading database ... 10%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6121730Z (Reading database ... 15%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6122030Z (Reading database ... 20%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6122342Z (Reading database ... 25%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6122842Z (Reading database ... 30%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6123623Z (Reading database ... 35%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6124142Z (Reading database ... 40%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6124546Z (Reading database ... 45%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6124846Z (Reading database ... 50%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.6496756Z (Reading database ... 55%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:15.9695753Z (Reading database ... 60%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:16.2389125Z (Reading database ... 65%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:16.5194268Z (Reading database ... 70%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:16.8390733Z (Reading database ... 75%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:17.1913050Z (Reading database ... 80%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:19.0251284Z (Reading database ... 85%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:19.8454342Z (Reading database ... 90%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.5177216Z (Reading database ... 95%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.5177682Z (Reading database ... 100%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.5178269Z (Reading database ... 203191 files and directories currently installed.)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.5221387Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-21ubuntu1_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.5331261Z Unpacking fonts-ipafont-gothic (00303-21ubuntu1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.7610246Z Selecting previously unselected package fonts-freefont-ttf.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.7738442Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-2_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.7745768Z Unpacking fonts-freefont-ttf (20211204+svn4273-2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.8508568Z Selecting previously unselected package fonts-tlwg-loma-otf.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.8634508Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.8640773Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.8890291Z Selecting previously unselected package fonts-unifont.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.9018859Z Preparing to unpack .../3-fonts-unifont_1%3a15.1.01-1build1_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:20.9027341Z Unpacking fonts-unifont (1:15.1.01-1build1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.0104261Z Selecting previously unselected package fonts-wqy-zenhei.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.0230467Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.0330272Z Unpacking fonts-wqy-zenhei (0.9.45-8) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5043483Z Preparing to unpack .../5-libfreetype6_2.13.2+dfsg-1ubuntu0.2_amd64.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5072974Z Unpacking libfreetype6:amd64 (2.13.2+dfsg-1ubuntu0.2) over (2.13.2+dfsg-1ubuntu0.1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5313978Z Selecting previously unselected package xfonts-encodings.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5440904Z Preparing to unpack .../6-xfonts-encodings_1%3a1.0.5-0ubuntu2_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5447083Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5740533Z Selecting previously unselected package xfonts-utils.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5865767Z Preparing to unpack .../7-xfonts-utils_1%3a7.7+6build3_amd64.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.5872573Z Unpacking xfonts-utils (1:7.7+6build3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.6655059Z Selecting previously unselected package xfonts-cyrillic.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.6782507Z Preparing to unpack .../8-xfonts-cyrillic_1%3a1.0.5+nmu1_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.6789827Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7120770Z Selecting previously unselected package xfonts-scalable.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7246297Z Preparing to unpack .../9-xfonts-scalable_1%3a1.0.3-1.3_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7252633Z Unpacking xfonts-scalable (1:1.0.3-1.3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7685533Z Setting up fonts-wqy-zenhei (0.9.45-8) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7799604Z Setting up fonts-freefont-ttf (20211204+svn4273-2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7816486Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7832144Z Setting up libfreetype6:amd64 (2.13.2+dfsg-1ubuntu0.2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7867343Z Setting up xfonts-encodings (1:1.0.5-0ubuntu2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7886270Z Setting up fonts-ipafont-gothic (00303-21ubuntu1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7951139Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7965752Z Setting up fonts-unifont (1:15.1.01-1build1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.7981570Z Setting up xfonts-utils (1:7.7+6build3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.8019383Z Setting up xfonts-cyrillic (1:1.0.5+nmu1) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.8340375Z Setting up xfonts-scalable (1:1.0.3-1.3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.8644919Z Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.9261912Z Processing triggers for man-db (2.12.0-4build2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.9283810Z Not building database; man-db/auto-update is not 'true'.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:21.9297546Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.2888724Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.2889439Z Running kernel seems to be up-to-date.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.2889859Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.2890030Z Restarting services...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.2970447Z  systemctl restart php8.3-fpm.service
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4141751Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4143158Z No containers need to be restarted.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4143738Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4144256Z No user sessions are running outdated binaries.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4144594Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:23.4144920Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:24.3850484Z Downloading Chrome for Testing 153.0.8010.12 (playwright chromium v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-linux64.zip
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:24.8152546Z |                                                                                |   0% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.0767821Z |■■■■■■■■                                                                        |  10% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.1630377Z |■■■■■■■■■■■■■■■■                                                                |  20% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.2590496Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.3250544Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.4068489Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.4875663Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.5526811Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.6364760Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.6990317Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:25.7797050Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 186.8 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.1062191Z Chrome for Testing 153.0.8010.12 (playwright chromium v1243) downloaded to /home/runner/.cache/ms-playwright/chromium-1243
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.1066620Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.5735971Z |                                                                                |   0% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.6228999Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.6513662Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.6730466Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.6928907Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.6990224Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.7120277Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.7207269Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.7288468Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.7393463Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.7428548Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.8122363Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:29.8126658Z Downloading Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-headless-shell-linux64.zip
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.2392045Z |                                                                                |   0% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.4626243Z |■■■■■■■■                                                                        |  10% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.5492536Z |■■■■■■■■■■■■■■■■                                                                |  20% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.6116105Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.6827289Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.7566191Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.8012612Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.8461335Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.9116459Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:30.9628771Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:31.0063783Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 114.3 MiB
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.3514122Z Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1243
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.3878839Z ##[group]Run sudo apt-get install -y fonts-noto-cjk
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.3879556Z ^[[36;1msudo apt-get install -y fonts-noto-cjk^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.3961105Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.3961373Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.4248369Z Reading package lists...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.6135615Z Building dependency tree...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.6142695Z Reading state information...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7459829Z Suggested packages:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7460408Z   fonts-noto-cjk-extra
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7585625Z The following NEW packages will be installed:
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7588841Z   fonts-noto-cjk
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7751466Z 0 upgraded, 1 newly installed, 0 to remove and 22 not upgraded.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7752213Z Need to get 61.2 MB of archives.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7752936Z After this operation, 93.2 MB of additional disk space will be used.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.7754115Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:33.8458640Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-noto-cjk all 1:20230817+repack1-3 [61.2 MB]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8531950Z Fetched 61.2 MB in 1s (73.7 MB/s)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8721385Z Selecting previously unselected package fonts-noto-cjk.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8778973Z (Reading database ... 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8779575Z (Reading database ... 5%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8780159Z (Reading database ... 10%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8780517Z (Reading database ... 15%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8780838Z (Reading database ... 20%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8781204Z (Reading database ... 25%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8781575Z (Reading database ... 30%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8781895Z (Reading database ... 35%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8782258Z (Reading database ... 40%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8782612Z (Reading database ... 45%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8782954Z (Reading database ... 50%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8790187Z (Reading database ... 55%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8910398Z (Reading database ... 60%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8939476Z (Reading database ... 65%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8960436Z (Reading database ... 70%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.8998557Z (Reading database ... 75%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9026710Z (Reading database ... 80%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9173339Z (Reading database ... 85%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9247120Z (Reading database ... 90%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9500389Z (Reading database ... 95%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9500754Z (Reading database ... 100%
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9501259Z (Reading database ... 203458 files and directories currently installed.)
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9544716Z Preparing to unpack .../fonts-noto-cjk_1%3a20230817+repack1-3_all.deb ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:34.9615490Z Unpacking fonts-noto-cjk (1:20230817+repack1-3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.3882594Z Setting up fonts-noto-cjk (1:20230817+repack1-3) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.3942999Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9871120Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9871876Z Running kernel seems to be up-to-date.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9872406Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9872753Z No services need to be restarted.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9873084Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9873683Z No containers need to be restarted.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9873951Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9874199Z No user sessions are running outdated binaries.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9874485Z 
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:35.9874860Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:36.9173662Z ##[group]Run pnpm test:buildings
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:36.9174011Z ^[[36;1mpnpm test:buildings^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:36.9236188Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:36.9236444Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:37.3993026Z $ node scripts/building-browser-test.mjs
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:44.2988327Z PASS native deployment saves all three maps with one global roster and body
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:45.8376075Z PASS failed door write leaves the closed door and original bytes; retry opens exactly once
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:47.1219335Z PASS one held E switches once, releases held movement, and keeps global time and saved doors
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:50.9540949Z PASS refresh restores upstairs and all maps; reverse and basement entries return to paired anchors
+Browser / world	UNKNOWN STEP	2026-10-11T12:49:58.6461730Z PASS native E closes a passed pursuit door; subsequent frames and reload keep it closed
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:00.2453495Z PASS indoor warning and tide use the global clock; failed upstairs timeout retains its candidate and retries once
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:12.6775808Z PASS native touch entry and map panel at 844x390
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.2545268Z PASS native touch entry and map panel at 640x300
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.4398313Z ##[group]Run pnpm test:systems
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.4398653Z ^[[36;1mpnpm test:systems^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.4460047Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.4460334Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:24.9135139Z $ node --import tsx scripts/systems-browser-test.mjs
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:29.3360538Z PASS station movement is real, blocked movement earns no practice; menus close and rearm input
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:29.7637559Z PASS failed facility payment rolls back cash, material, grade and bytes; next click commits once
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:31.1423135Z PASS all five facilities expose costs and gates; finite recipe queue debits each batch once
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:34.0685475Z PASS offline time restores damaged body and finishes only paid batches; claim rollback and single receipt
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:36.4100850Z PASS charm swap, body panel and medical use commit the item and effect together
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:37.6935294Z PASS mall native deployment has 39 regions, 25 enemies, one clock and two valid exits
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:43.0694979Z PASS mall native crate transfer keeps both inventories atomic and persists remaining contents after a floor round trip
+Browser / world	UNKNOWN STEP	2026-10-11T12:50:50.0128446Z PASS map and backpack block a nearby connector; a failed floor write preserves successful loot and retries once
+Browser / world	UNKNOWN STEP	2026-10-11T12:51:21.0831181Z PASS all four paired mall connectors support ten round trips each with no duplicated population
+Browser / world	UNKNOWN STEP	2026-10-11T12:51:30.3772819Z PASS upstairs fixed crate supports failed and successful native transfer, floor round trip and refresh without duplicating either end
+Browser / world	UNKNOWN STEP	2026-10-11T12:51:36.8089040Z PASS mall floor preview does not move the player; terrace stays upstairs and reload restores it
+Browser / world	UNKNOWN STEP	2026-10-11T12:51:37.4346507Z PASS scene tide flip reroutes the persisted source pursuit once and leaves upstairs dry
+Browser / world	UNKNOWN STEP	2026-10-11T12:51:55.7217490Z PASS station and mall native touch at 844x390
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:14.3994606Z PASS station and mall native touch at 640x300
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:26.1314560Z PASS native terminal scenes commit death, timeout, abandonment and extraction once; failed settlement retains its candidate
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:55.7981878Z PASS ordinary offline mall entry exposes no test hook and saves native movement, map view and refresh recovery
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:56.0166568Z ##[group]Run pnpm test:station-tier1
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:56.0167172Z ^[[36;1mpnpm test:station-tier1^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:56.0231665Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:56.0231964Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:52:56.4848372Z $ node --import tsx scripts/station-tier1-test.mjs
+Browser / world	UNKNOWN STEP	2026-10-11T12:53:02.8534809Z PASS ordinary-new-save-zero
+Browser / world	UNKNOWN STEP	2026-10-11T12:53:41.8550913Z PASS legacy-seven-copy-1280x720
+Browser / world	UNKNOWN STEP	2026-10-11T12:54:07.9589212Z PASS charm-snapshot-and-gear-1280x720
+Browser / world	UNKNOWN STEP	2026-10-11T12:55:02.0245813Z PASS legacy-seven-copy-1920x1080
+Browser / world	UNKNOWN STEP	2026-10-11T12:55:38.8592362Z PASS charm-snapshot-and-gear-1920x1080
+Browser / world	UNKNOWN STEP	2026-10-11T12:56:35.7943836Z PASS legacy-seven-copy-390x844
+Browser / world	UNKNOWN STEP	2026-10-11T12:57:07.1575148Z PASS charm-snapshot-and-gear-390x844
+Browser / world	UNKNOWN STEP	2026-10-11T12:57:31.4985222Z PASS old-tabs-equip-and-unequip-refresh-yard
+Browser / world	UNKNOWN STEP	2026-10-11T12:57:50.0853004Z PASS quota-equip-replace-remove-preserve-inventory-and-retry-once
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:04.9485658Z PASS departure-failure-seven-success-eight-refresh-no-double-count
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.0313177Z {"passed":10,"total":10}
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.0640522Z ##[group]Run pnpm test:station-tier2
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.0640886Z ^[[36;1mpnpm test:station-tier2^[[0m
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.0703592Z shell: /usr/bin/bash -e {0}
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.0703862Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:05.5348684Z $ node --import tsx scripts/station-tier2-test.mjs
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:13.6969881Z PASS P01 rejected clock samples do not fill the existing scene ring or training prompt
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:22.3971617Z PASS P02 cap stays visibly full and explains waiting instead of accumulating display seconds
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:30.8678346Z FAIL P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values false == true
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:42.9750062Z FAIL P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values false == true
+Browser / world	UNKNOWN STEP	2026-10-11T12:58:52.4750951Z FAIL P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values false == true
+Browser / world	UNKNOWN STEP	2026-10-11T12:59:02.3714690Z FAIL P04 reward checkpoint quota retains exact candidate; backup and retry credit once false == true
+Browser / world	UNKNOWN STEP	2026-10-11T12:59:12.4940636Z PASS S01 1280x720 compound no-effect rejection is readable and consumes nothing
+Browser / world	UNKNOWN STEP	2026-10-11T12:59:26.7312799Z PASS S01 1920x1080 compound no-effect rejection is readable and consumes nothing
+Browser / world	UNKNOWN STEP	2026-10-11T12:59:37.6145479Z PASS S01 390x844 compound no-effect rejection is readable and consumes nothing
+Browser / world	UNKNOWN STEP	2026-10-11T13:00:11.8791645Z PASS S02 missing/non-supply results are stable; secondary and sustained effects retain existing behavior
+Browser / world	UNKNOWN STEP	2026-10-11T13:00:24.4199651Z PASS S03 supply write failure rolls back; retry saves first, explicit reuse consumes exactly once
+Browser / world	UNKNOWN STEP	2026-10-11T13:00:31.0036702Z PASS S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes
+Browser / world	UNKNOWN STEP	2026-10-11T13:00:43.1590378Z PASS P05 old tabs, yard switching and reload follow durable progress and old supply callers
+Browser / world	UNKNOWN STEP	2026-10-11T13:01:34.5794113Z TRAIN 45 7.5 0.2
+Browser / world	UNKNOWN STEP	2026-10-11T13:02:08.4961434Z TRAIN 79 14.6 1.0
+Browser / world	UNKNOWN STEP	2026-10-11T13:02:42.1578166Z TRAIN 113 22.8 0.5
+Browser / world	UNKNOWN STEP	2026-10-11T13:03:16.1631961Z TRAIN 147 31.1 0.1
+Browser / world	UNKNOWN STEP	2026-10-11T13:03:50.5138222Z TRAIN 181 37.9 1.0
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:22.1290406Z FAIL P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time Expected values to be strictly equal:
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:22.1292183Z 
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:22.1292795Z 0 !== 0.2625
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:22.1293155Z 
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.2561670Z PASS O01 ordinary offline entry has no test globals and uses the current UI
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4327814Z [ELIFECYCLE] Command failed with exit code 1.
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4769763Z ##[error]Process completed with exit code 1.
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4888464Z ##[group]Run actions/upload-artifact@v6
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4888768Z with:
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4888986Z   name: browser-evidence-world
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4889241Z   path: test-results/
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4889469Z   if-no-files-found: ignore
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4889703Z   retention-days: 14
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4889928Z   compression-level: 6
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4890143Z   overwrite: false
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4890359Z   include-hidden-files: false
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.4890600Z ##[endgroup]
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.6642237Z With the provided path, there will be 49 files uploaded
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.6648881Z Artifact name is valid!
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.6649416Z Root directory input is valid!
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:31.9438983Z Beginning upload of artifact content to blob storage
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.6699438Z Uploaded bytes 5744634
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.7074596Z Finished uploading artifact content to blob storage!
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.7075545Z SHA256 digest of uploaded artifact zip is 5e8fd172064574c41550e4b7051490ada38a24bd058ff31b8e95296be86f1a4d
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.7076837Z Finalizing artifact upload
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.9778851Z Artifact browser-evidence-world.zip successfully finalized. Artifact ID 11703312972
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.9780200Z Artifact browser-evidence-world has been successfully uploaded! Final size is 5744634 bytes. Artifact ID is 11703312972
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.9783693Z Artifact download URL: https://github.com/xuys2025/escape-bincov/actions/runs/38140656823/artifacts/11703312972
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:32.9980101Z Post job cleanup.
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.0879591Z [command]/usr/bin/git version
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.0926925Z git version 2.55.0
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.0967369Z Temporarily overriding HOME='/home/runner/work/_temp/6bc842c7-d3e9-4503-b40f-9b17a6527124' before making global git config changes
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.0968892Z Adding repository directory to the temporary git global config as a safe directory
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.0974308Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/escape-bincov/escape-bincov
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1006298Z Removing SSH command configuration
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1013715Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1061506Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1291932Z Removing HTTP extra header
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1297713Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1334149Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1587426Z Removing includeIf entries pointing to credentials config files
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1596971Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.1637125Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Browser / world	UNKNOWN STEP	2026-10-11T13:04:33.2073683Z Cleaning up orphan processes
+Build and test	Require build and every browser group to succeed	﻿2026-10-11T13:04:38.8538034Z ##[group]Run if [[ "$BUILD_RESULT" != success || "$BROWSER_RESULT" != success ]]; then
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8539127Z ^[[36;1mif [[ "$BUILD_RESULT" != success || "$BROWSER_RESULT" != success ]]; then^[[0m
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8540029Z ^[[36;1m  echo "Build: $BUILD_RESULT; browser groups: $BROWSER_RESULT"^[[0m
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8540729Z ^[[36;1m  exit 1^[[0m
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8541146Z ^[[36;1mfi^[[0m
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8788194Z shell: /usr/bin/bash -e {0}
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8789078Z env:
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8789554Z   BUILD_RESULT: success
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8790096Z   BROWSER_RESULT: failure
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8790625Z ##[endgroup]
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8950013Z Build: success; browser groups: failure
+Build and test	Require build and every browser group to succeed	2026-10-11T13:04:38.8963703Z ##[error]Process completed with exit code 1.

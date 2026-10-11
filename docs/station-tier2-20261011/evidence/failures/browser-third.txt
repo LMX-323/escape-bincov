@@ -1,0 +1,19 @@
+PASS P01 rejected clock samples do not fill the existing scene ring or training prompt
+PASS P02 cap stays visibly full and explains waiting instead of accumulating display seconds
+PASS P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P04 reward checkpoint quota retains exact candidate; backup and retry credit once
+PASS S01 1280x720 compound no-effect rejection is readable and consumes nothing
+PASS S01 1920x1080 compound no-effect rejection is readable and consumes nothing
+FAIL S01 390x844 compound no-effect rejection is readable and consumes nothing page.waitForFunction: Timeout 15000ms exceeded.
+PASS S02 missing/non-supply results are stable; secondary and sustained effects retain existing behavior
+PASS S03 supply write failure rolls back; retry saves first, explicit reuse consumes exactly once
+PASS S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes
+PASS P05 old tabs, yard switching and reload follow durable progress and old supply callers
+TRAIN 30 25.9 0.1
+TRAIN 56 50.6 1.7
+TRAIN 83 75.1 3.2
+TRAIN 110 99.5 4.8
+PASS P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time
+PASS O01 ordinary offline entry has no test globals and uses the current UI

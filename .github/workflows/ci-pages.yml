@@ -97,6 +97,9 @@ jobs:
       - name: Desktop and hybrid input regression
         if: matrix.group == 'input'
         run: pnpm test:desktop-input
+      - name: Base shop drag and drop regression
+        if: matrix.group == 'input'
+        run: pnpm test:shop-drag
       - name: UI layout and screenshot review
         if: matrix.group == 'visual'
         run: pnpm test:ui
@@ -126,6 +129,15 @@ jobs:
       - name: RPG, station and mall transactions
         if: matrix.group == 'world'
         run: pnpm test:systems
+      - name: Station run count and equipped charm snapshot
+        if: matrix.group == 'world'
+        run: pnpm test:station-tier1
+      - name: Station trusted training progress and supply feedback
+        if: matrix.group == 'world'
+        run: pnpm test:station-tier2
+      - name: Station entry owns relief delivery
+        if: matrix.group == 'world'
+        run: pnpm test:station-relief
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
         run: pnpm test:mall-passages

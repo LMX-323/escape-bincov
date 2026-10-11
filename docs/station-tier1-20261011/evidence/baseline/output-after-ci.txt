@@ -1,0 +1,57 @@
+$ node --import tsx scripts/station-tier1-test.mjs "--html=test-results/tier1/baseline/index.html" "--out=test-results/tier1/baseline-ci-fix"
+FAIL ordinary-new-save-zero The input did not match the regular expression /^累计出击 0 次 ·/. Input:
+
+'第 1 天 · 应急供电'
+
+FAIL legacy-seven-copy-1280x720 Expected values to be strictly equal:
++ actual - expected
+
++ '水产站值守记录 · 第 8 天'
+- '水产站值守记录 · 累计出击 7 次'
+             ^
+
+FAIL charm-snapshot-and-gear-1280x720 Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- null
+
+FAIL legacy-seven-copy-1920x1080 Expected values to be strictly equal:
++ actual - expected
+
++ '水产站值守记录 · 第 8 天'
+- '水产站值守记录 · 累计出击 7 次'
+             ^
+
+FAIL charm-snapshot-and-gear-1920x1080 Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- null
+
+FAIL legacy-seven-copy-390x844 Expected values to be strictly equal:
++ actual - expected
+
++ '水产站值守记录 · 第 8 天'
+- '水产站值守记录 · 累计出击 7 次'
+             ^
+
+FAIL charm-snapshot-and-gear-390x844 Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- null
+
+FAIL old-tabs-equip-and-unequip-refresh-yard Cannot read properties of undefined (reading 'uid')
+FAIL quota-equip-replace-remove-preserve-inventory-and-retry-once Expected values to be strictly equal:
++ actual - expected
+
++ null
+- 'bc-mv3k32vf-1d'
+
+FAIL departure-failure-seven-success-eight-refresh-no-double-count The input did not match the regular expression /^累计出击 7 次 ·/. Input:
+
+'第 8 天 · 应急供电'
+
+{"passed":0,"total":10}
+[ELIFECYCLE] Command failed with exit code 1.

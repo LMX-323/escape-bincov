@@ -1,0 +1,47 @@
+{
+  "sha256": "390b244716803312987f5c53f7b08b2188c2a935b9b7ee8fa5b0bc374cbcc71c",
+  "browser": "154.0.8037.99",
+  "methodology": "Real offline release, Runtime and SaveSession. Fixtures run at the menu; fixed clock isolates inventory writes. Mouse clicks use original UI. No real-device claim.",
+  "steps": [
+    {
+      "name": "R1 Runtime entry grants once before any renderer exists",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ammo: 0,\n+   bandage: 0,\n+   relief: false,\n+   weapon: null\n-   ammo: 12,\n-   bandage: 1,\n-   relief: true,\n-   weapon: 'pistol'\n  }\n\n    at file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:51:74\n    at async step (file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:44:22)\n    at async file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:49:3"
+    },
+    {
+      "name": "R2 1280x720 title enters yard with saved kit; view remount cannot issue relief",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ammo: 12,\n+   bandage: 1,\n+   relief: true,\n+   weapon: 'pistol'\n-   ammo: 0,\n-   bandage: 0,\n-   relief: false,\n-   weapon: null\n  }\n\n    at file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:67:12\n    at async step (file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:44:22)\n    at async file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:55:51"
+    },
+    {
+      "name": "R2 1920x1080 title enters yard with saved kit; view remount cannot issue relief",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   ammo: 12,\n+   bandage: 1,\n+   relief: true,\n+   weapon: 'pistol'\n-   ammo: 0,\n-   bandage: 0,\n-   relief: false,\n-   weapon: null\n  }\n\n    at file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:67:12\n    at async step (file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:44:22)\n    at async file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:55:51"
+    },
+    {
+      "name": "R3 failed entry stays at menu with original bytes; refresh and retry grant once",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'hideout' !== 'menu'\n\n    at file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:78:12\n    at async step (file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:44:22)\n    at async file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:71:3"
+    },
+    {
+      "name": "R4 legacy tab entry still grants the same kit and explicit claim cannot duplicate it",
+      "status": "passed",
+      "detail": {
+        "kit": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        },
+        "explicitDuplicateRefused": true
+      }
+    },
+    {
+      "name": "R5 antidote no-effect message uses the canonical item name",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '当前没有污染，使用解毒剂没有效果。'\n- '当前没有污染，使用除藻药剂没有效果。'\n            ^\n\n    at file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:103:12\n    at async step (file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:44:22)\n    at async file:///D:/bincov/station-relief-fix/scripts/station-relief-test.mjs:92:3"
+    }
+  ],
+  "errors": [],
+  "external": []
+}
