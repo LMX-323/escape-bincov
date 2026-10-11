@@ -1,8 +1,8 @@
 {
   "build": "dist/index.html",
   "sha256": "c628196768e6fede9a3e0a7d330fb18e6a4d609f722f7a5e97ff770b9f5ca46c",
-  "browser": "154.0.8037.99",
-  "startedAt": "2026-10-11T08:19:20.103Z",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T11:21:06.998Z",
   "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Only quota transaction cases fix Date so the unrelated five-second checkpoint cannot consume the fault; timers, animation and real UI keep running. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
   "cpuRate": 1,
   "steps": [
@@ -68,7 +68,7 @@
     "quota-bag.png",
     "quota-remove.png"
   ],
-  "finishedAt": "2026-10-11T08:19:58.415Z",
+  "finishedAt": "2026-10-11T11:21:44.212Z",
   "summary": {
     "passed": 10,
     "total": 10

@@ -63,12 +63,25 @@ async function tabs() {
   if (await page.evaluate(() => window.__station.host.ui.kind)) await tap(yard('.panel [data-act="close"]'));
   await throughYard(page, { tap: mobileInput });
 }
-async function readable(locator) {
+async function readable(selector) {
   await settled();
-  await locator.scrollIntoViewIfNeeded();
-  const box = await locator.boundingBox(), viewport = page.viewportSize();
-  assert.ok(box && box.width > 0 && box.x >= -1 && box.y >= -1 && box.x + box.width <= viewport.width + 1 && box.y + box.height <= viewport.height + 1, 'text must fit the viewport');
-  const clipped = await locator.evaluate(el => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1);
+  // Check the current node atomically: the real five-second commit can replace panel contents while an element
+  // handle is waiting to scroll. Poll only this read, not player actions, until the unchanged layout checks hold.
+  const measurement = await page.waitForFunction(selector => {
+    const el = selector.startsWith('#station-yard ')
+      ? document.querySelector('#station-yard')?.shadowRoot?.querySelector(selector.slice('#station-yard '.length))
+      : document.querySelector(selector);
+    if (!el) return false;
+    el.getBoundingClientRect(); // Flush layout before asking about newly started CSS animations.
+    if (el.closest('.panel, .modal')?.getAnimations().some(a => a.playState === 'running' || a.pending)) return false;
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    const r = el.getBoundingClientRect(), clipped = el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+    const box = { x: r.x, y: r.y, width: r.width, height: r.height }, viewport = { width: innerWidth, height: innerHeight };
+    const fits = r.width > 0 && r.height > 0 && r.x >= -1 && r.y >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1;
+    return el.isConnected && fits && !clipped ? { box, viewport, clipped } : false;
+  }, selector, { timeout: 15000 });
+  const { box, viewport, clipped } = await measurement.jsonValue(); await measurement.dispose();
+  assert.ok(box.width > 0 && box.x >= -1 && box.y >= -1 && box.x + box.width <= viewport.width + 1 && box.y + box.height <= viewport.height + 1, 'text must fit the viewport');
   assert.equal(clipped, false, 'text must not be clipped');
 }
 async function assertCounts(n) {
@@ -123,17 +136,17 @@ try {
     await open({ test: false }); await shot('ordinary-zero-1280');
     assert.equal(await page.evaluate(() => '__bincov' in window || '__station' in window), false);
     assert.equal(JSON.parse(await raw()).profile.stats.runs, 0);
-    assert.match(await yard('#hud-sub').innerText(), /^累计出击 0 次 ·/); await readable(yard('#hud-sub'));
+    assert.match(await yard('#hud-sub').innerText(), /^累计出击 0 次 ·/); await readable('#station-yard #hud-sub');
   });
   for (const [w, h] of [[1280, 720], [1920, 1080], [390, 844]]) {
     await step(`legacy-seven-copy-${w}x${h}`, async () => {
       const legacy = D.newSave(); legacy.stats.runs = 7;
       await open({ size: [w, h], legacy, mobile: w === 390 });
-      await readable(yard('#hud-sub')); await shot(`seven-hud-${w}`);
-      await panel('radio'); await readable(yard('.log > small')); await shot(`seven-radio-${w}`);
+      await readable('#station-yard #hud-sub'); await shot(`seven-hud-${w}`);
+      await panel('radio'); await readable('#station-yard .log > small'); await shot(`seven-radio-${w}`);
       const radio = await yard('.log > small').innerText();
       await tabs(); await tap(page.locator('[data-action="tab"][data-id="home"]'));
-      await readable(page.locator('.station-log .section-label')); await shot(`seven-tabs-${w}`);
+      await readable('.station-log .section-label'); await shot(`seven-tabs-${w}`);
       assert.equal(radio, '水产站值守记录 · 累计出击 7 次');
       assert.equal(await page.locator('.station-log .section-label').innerText(), radio);
       assert.equal(JSON.parse(await raw()).legacyBackup, JSON.stringify(legacy));
@@ -144,7 +157,7 @@ try {
       await open({ size: [w, h], mobile: w === 390 }); const fx = await seedCharms(); await panel('gear');
       assert.equal((await snapshot()).charm, null); assert.equal(await yard('.charm').count(), 0);
       const uid = fx.stash.items[0].uid; await equip('stash', uid);
-      await readable(yard('.charm')); await shot(`charm-gear-${w}`);
+      await readable('#station-yard .charm'); await shot(`charm-gear-${w}`);
       assert.equal((await snapshot()).charm.uid, uid); assert.match(await yard('.charm').innerText(), new RegExp(D.ITEMS.luckyCharm.name));
       await page.evaluate(() => { const s = window.__bincov.hideoutRuntime.snapshot(); s.charm.id = 'unluckyCharm'; s.charm.qty = 99; });
       assert.equal((await snapshot()).charm.id, 'luckyCharm'); assert.equal((await snapshot()).charm.qty, 1);
