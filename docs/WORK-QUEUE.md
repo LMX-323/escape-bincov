@@ -1,3 +1,7 @@
+## 2026-10-11 · AI 遗留第二级 A 批准备
+
+维护者要求推进下一步。#34 已合并为 main `6494b51`，两个一级子项在 #32 已完成；下方一级及历轮记录作为历史保留。本轮从该 main 建 `fix/ai-tier2-station`，只准备[第二级 A 批](AI-LEFTOVERS-TIER2A.md)及同分支草稿 PR：ASTRA-STATION-API-02 可信训练进度、ASTRA-STATION-API-03 补给拒绝原因。Sol 接手后一次完成逻辑、现有界面接线和有针对性的验证，等待主调度审查；当前尚未实现、尚未派发。救济、素材、内存等其它二三级事项待排，#32 总单保持开放。不修改在途 #28/#30/#31；不自行合并、发布或更新试玩站。
+
 ## 2026-10-11 · AI 遗留第一级实现（PR #34 续作）
 
 #22 与 #33 已合并，fetch 核对 main 仍为 fc2a1d3。维护者本轮明确要求当前 agent 在 `fix/ai-tier1-station` 继续 [PR #34](https://github.com/xuys2025/escape-bincov/pull/34)，一次完成 OPUS-STATION-COPY-01（真实出击计数文案）与 ASTRA-STATION-API-01（护符快照及接线）。两项代码和当前方案内的院子接线已完成，存档格式与交易规则保留；[范围](AI-LEFTOVERS-TIER1.md)、[真实验证/截图/首败](station-tier1-20261011/README.md)。最终 CI 与 Ready 状态以原 PR 最新 head 为准，等待维护者审阅，未合并/发布。仅更新 #32 对应子项，总单及二三级仍开放；#26 和在途 #28/#30/#31 保持原归属，不新增同目标 PR，完成后停止。
