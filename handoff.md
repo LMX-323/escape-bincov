@@ -1,3 +1,7 @@
+## 2026-10-12 · 开场动画剧情稿
+
+基于 main `64505046fb737af195bc808d2f8e4274df21cf24`，在独立文档分支提交用户提供的[简易分镜与完整剧情](docs/OPENING-CUTSCENE-SCRIPT.md)，保留原稿措辞，仅整理 Markdown 段落。此稿尚未接入游戏或制作动画；与已批准主线的船只身份（远汐号／七号）及抵达水产站时间（一个月／第十七天）需要后续创作者确认。本轮仅做文档核对与差异检查，未运行游戏测试或打包。
+
 ## 2026-10-12 · SOL-R3-CAP-LISTENER-01 能力切换监听
 
 从 main `1dbacb4` 建 `fix/cap-listener-r3`，只处理 #32 三级的 SOL-R3-CAP-LISTENER-01。根因是 Pixi 8.22 `DefaultBatcher._updateMaxTextures`：能力变化后池里复用的 Graphics 渲染数据每次新建 DefaultShader、不销毁旧的，旧 Shader 的 BindGroup 永久挂在模块缓存的 batch-sampler 组上。C5 的增长来自测试 scratch 绘制，真实院子→城中村往返也会触发。`src/coast-view/renderer-lifetime.ts` 改为整页每个纹理数一个 DefaultShader，批处理器的 Shader 与自身纹理数保持一致。
