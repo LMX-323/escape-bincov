@@ -1,0 +1,134 @@
+{
+  "sha256": "a2db076f8ce62af80db078a27c879ea8f8cc2b4fd52d09ba40bdb2092190318d",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "name": "1280x720 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 238.4921875,
+          "y": 576.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 225.4921875,
+          "y": 576.5,
+          "width": 317.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 430.4921875,
+          "y": 936.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 417.4921875,
+          "y": 936.5,
+          "width": 317.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "yard refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "tabs refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "another window still locks settlement and cannot be overwritten through refresh",
+      "detail": {
+        "result": {
+          "ok": false,
+          "reason": "conflict",
+          "message": "存档已由另一窗口接管，本页不能写入。"
+        },
+        "newerSavePreserved": true
+      },
+      "status": "passed"
+    }
+  ]
+}

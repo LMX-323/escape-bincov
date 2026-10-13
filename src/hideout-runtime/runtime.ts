@@ -329,24 +329,27 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         const warnings = () => Shop.saleWarnings(this.state.save, cart).map(w => `${w.quest}：${D.ITEMS[w.id].name}还需${w.needed}，出售后剩${w.remaining}`);
         const key = () => JSON.stringify([cart, warnings(), this.state.save.quests]);
         const validSource = (value: string) => ['merchant', 'buy', 'sell', 'stash'].includes(value);
+        const stale = () => Shop.cartStale(this.state.save, cart);
+        const rejected = (reason: Shop.CartRejection) => fail(reason, Shop.cartRejectionMessage[reason]);
         return {
-            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), warnings: warnings(), placement: 'automatic-stash' }),
-            placementError: (from, to, uid, x, y) => validSource(from) && validSource(to) ? Shop.shopPlacementError(cart, from, to, uid, x, y) : '无效容器。',
+            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), stale: stale(), warnings: warnings(), placement: 'automatic-stash' }),
+            placementError: (from, to, uid, x, y) => stale() ? Shop.cartRejectionMessage.stale : validSource(from) && validSource(to) ? Shop.shopPlacementError(cart, from, to, uid, x, y) : '无效容器。',
             place: (from, to, uid, x, y) => {
                 const blocked = this.guard(); if (blocked) return blocked;
+                if (stale()) return rejected('stale');
                 if (!validSource(from) || !validSource(to)) return fail('rule');
                 const message = Shop.shopPlacementError(cart, from, to, uid, x, y); if (message) return fail('rule', message);
                 confirmation = null; return Shop.moveShopItem(cart, from, to, uid, x, y) ? ok() : fail('rule');
             },
             settle: token => {
                 const blocked = this.guard(); if (blocked) return blocked;
-                if (JSON.stringify(this.state.save.stash) !== cart.original) return fail('stale', '仓库已改变，请重置购物车。');
+                if (stale()) return rejected('stale');
                 const list = warnings();
                 if (list.length && (!confirmation || confirmation.token !== token || confirmation.key !== key())) {
                     confirmation = { token: `sale-${++this.serial}`, key: key() };
                     return { ok: false, reason: 'rule', message: '出售会消耗未完成任务，请确认。', confirmation: { kind: 'quest-sale', token: confirmation.token, warnings: list } };
                 }
-                const result = this.transaction('shop', d => { const r = Shop.settleCartResult(d.profile, cart, true); return r.ok ? true : fail(r.reason); });
+                const result = this.transaction('shop', d => { const r = Shop.settleCartResult(d.profile, cart, true); return r.ok ? true : rejected(r.reason); });
                 if (result.ok) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } return result;
             },
             reset: () => { if (!this.guard()) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } },

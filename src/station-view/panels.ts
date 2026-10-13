@@ -79,7 +79,7 @@ export function shopCompactHtml(c: CartView, cell: number, selected: string | nu
       <section class="pane"><h3>${a[0]} <small>${mode === 'buy' ? '按包购买' : '整组出售'}</small></h3><div class="pane-scroll">${gridHtml(a[1], a[2], cell, selected)}</div></section>
       <section class="pane"><h3>${b[0]} <small>¥ ${mode === 'buy' ? c.totals.buy : c.totals.sell}${mode === 'buy' ? ` · ${checkoutNote}` : ''}</small></h3><div class="pane-scroll">${gridHtml(b[1], b[2], cell, selected, { empty: '拖到这里' })}</div></section>
     </div>
-    <footer class="checkout compact"><div class="sum"><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后 ¥ ${(cash - c.totals.net).toLocaleString()}</small></div>${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn('清空', 'cart-reset', 'mini', c.dirty ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty ? '' : 'disabled')}</div></footer></div>`;
+    <footer class="checkout compact"><div class="sum"><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后 ¥ ${(cash - c.totals.net).toLocaleString()}</small></div>${c.stale ? '<p class="warn">仓库已改变，请刷新清单后重新选择物品。</p>' : ''}${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn(c.stale ? '刷新清单' : '清空', 'cart-reset', 'mini', c.dirty || c.stale ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty && !c.stale ? '' : 'disabled')}</div></footer></div>`;
 }
 
 export function shopHtml(c: CartView, cell: number, selected: string | null, cash: number) {
@@ -88,7 +88,7 @@ export function shopHtml(c: CartView, cell: number, selected: string | null, cas
     <section class="buffer"><h3>待买 <small>¥ ${c.totals.buy}</small></h3>${gridHtml(c.buy, 'buy', cell, selected, { empty: '拖到这里' })}<h3>待卖 <small>¥ ${c.totals.sell}</small></h3>${gridHtml(c.sell, 'sell', cell, selected, { empty: '拖到这里' })}</section>
     <section><h3>仓库 <small>整组出售</small></h3>${gridHtml(c.stash, 'stash', cell, selected)}</section>
   </div>
-  <footer class="checkout"><div class="sum"><span>待买 ¥ ${c.totals.buy}</span><span>待卖 ¥ ${c.totals.sell}</span><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后现金 ¥ ${(cash - c.totals.net).toLocaleString()} · ${checkoutNote}</small></div>${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn('清空', 'cart-reset', '', c.dirty ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty ? '' : 'disabled')}</div></footer>`;
+  <footer class="checkout"><div class="sum"><span>待买 ¥ ${c.totals.buy}</span><span>待卖 ¥ ${c.totals.sell}</span><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后现金 ¥ ${(cash - c.totals.net).toLocaleString()} · ${checkoutNote}</small></div>${c.stale ? '<p class="warn">仓库已改变，请刷新清单后重新选择物品。</p>' : ''}${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn(c.stale ? '刷新清单' : '清空', 'cart-reset', '', c.dirty || c.stale ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty && !c.stale ? '' : 'disabled')}</div></footer>`;
 }
 
 /** Selling goods an open quest still needs: the Runtime asks for this explicit confirmation (quest-sale token). */

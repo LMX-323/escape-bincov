@@ -53,6 +53,8 @@ export interface HideoutSnapshot {
 export interface CartView {
     merchant: Merchant; name: string; subtitle: string; catalog: Inventory; buy: Inventory; sell: Inventory; stash: Inventory;
     totals: { buy: number; sell: number; net: number }; dirty: boolean; warnings: string[];
+    /** The stash changed since opening; explicit reset discards the old list without writing the save. */
+    stale: boolean;
     /** Buy slots are a shopping list; existing rules auto-place purchases into the stash. */
     placement: 'automatic-stash';
 }

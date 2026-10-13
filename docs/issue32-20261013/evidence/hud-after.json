@@ -1,0 +1,52 @@
+{
+  "sha256": "a2db076f8ce62af80db078a27c879ea8f8cc2b4fd52d09ba40bdb2092190318d",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "size": [
+        1280,
+        720
+      ],
+      "result": {
+        "inputEnabled": true,
+        "oldHudAlive": false,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "passed"
+    },
+    {
+      "size": [
+        1920,
+        1080
+      ],
+      "result": {
+        "inputEnabled": true,
+        "oldHudAlive": false,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "passed"
+    }
+  ]
+}

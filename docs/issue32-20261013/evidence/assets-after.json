@@ -1,0 +1,43 @@
+{
+  "sha256": "a2db076f8ce62af80db078a27c879ea8f8cc2b4fd52d09ba40bdb2092190318d",
+  "checks": [
+    {
+      "asset": "station",
+      "fault": "decode",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    },
+    {
+      "asset": "station",
+      "fault": "draw",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    },
+    {
+      "asset": "coast",
+      "fault": "decode",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    },
+    {
+      "asset": "coast",
+      "fault": "draw",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    }
+  ],
+  "external": [],
+  "browser": "153.0.8010.12"
+}
