@@ -265,19 +265,24 @@ const cases = [
   }]),
   ['real-window-conflict-cancels-held-swap', async t => {
     const crate = await t.fixture({ items: [item('conflict-source', 'sample')], bag: [item('conflict-target', 'wire')] }); await t.open(crate);
-    // Freeze only rendering/simulation while the real storage event is tested; no conflict handler is mocked.
-    await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.stop(); else window.__bincov.app.raid.scene.pause(); }, t.sample);
-    const before = t.participants(await t.snapshot()); await t.drag('container', 'conflict-source', 'bag', 0, 0, { release: false });
     const other = await t.context.newPage();
     try {
       await other.goto(url + t.query); await other.waitForFunction(() => window.__bincov);
       assert.equal(await other.evaluate(() => window.__bincov.app.storageOK), false, 'second page cannot claim the existing writer lock');
+      await t.page.bringToFront();
+      const before = t.participants(await t.snapshot());
+      assert.equal(await t.drag('container', 'conflict-source', 'bag', 0, 0, { release: false }), 'true');
+      // A paused Phaser scene fails canLootContainer's isActive guard. Sleep only its render loop,
+      // after establishing the real drag, so simulation cannot change the snapshot during this storage event.
+      // Open the other page first: focus changes must not cancel the gesture before the conflict does.
+      await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.stop(); else window.__bincov.app.game.loop.sleep(); }, t.sample);
+      assert.equal(await t.page.locator('.drop-preview').count(), 1, 'swap is still held immediately before the competing write');
       const winner = await other.evaluate(key => {
         const saved = JSON.parse(localStorage.getItem(key)); saved.revision++;
         const bytes = JSON.stringify(saved); localStorage.setItem(key, bytes); return bytes;
       }, SAVE_KEY);
       await t.page.waitForFunction(() => window.__bincov.app.conflict); await t.page.mouse.up();
-      await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.start(); else window.__bincov.app.raid.scene.resume(); }, t.sample);
+      await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.start(); else window.__bincov.app.game.loop.wake(); }, t.sample);
       await frames(t.page); const s = await t.snapshot(); assert.equal(s.context, null); assert.equal(s.bytes, winner);
       assert.deepEqual(t.participants(s), before, 'held swap cannot mutate either participant after a real window conflict');
       assert.equal(await t.page.locator('[data-grid="container"]').count(), 0); return { conflict: s.conflict, newerRecordPreserved: true };

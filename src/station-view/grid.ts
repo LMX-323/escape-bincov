@@ -120,7 +120,8 @@ export class GridDrag {
     this.start = null;
     if (!this.ghost || !h) {
       if (h) {
-        const now = performance.now();
+        // Compare when input occurred, not when a busy render thread finally handles it.
+        const now = e.timeStamp;
         if (this.lastClick.uid === s.uid && now - this.lastClick.t < 320 && h.quick) { h.quick(s.src, s.uid); this.lastClick = { uid: '', t: 0 }; }
         else { this.lastClick = { uid: s.uid, t: now }; h.select(s.src, s.uid); }
       }

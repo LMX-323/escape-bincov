@@ -93,6 +93,22 @@ try {
       }
       return { upstairs, basement };
     });
+    await check('S04b stair-label-clears-player-from-both-sides', async () => {
+      const samples = [];
+      for (const y of [272, 308, 336]) {
+        await place(560, y); await settle();
+        const sample = await page.evaluate(() => {
+          const h = window.__bincovSample.host, p = h.lastBatch.frame.player;
+          const entry = h.lastBatch.map.entries.find(e => e.kind === 'up'), label = h.view.stairLabels.get(entry.id);
+          return { player: { x: p.x, y: p.y }, label: { x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height, visible: label.visible } };
+        });
+        const p = sample.player, l = sample.label;
+        assert.ok(l.visible, 'known stair destination remains visible');
+        assert.ok(l.x + l.w <= p.x - 14 || l.x >= p.x + 14 || l.y + l.h <= p.y - 44 || l.y >= p.y + 4, 'stair destination must not cover the player');
+        samples.push(sample);
+      }
+      return samples;
+    });
     await check('S05 hidden-room-zero-pixels-with-positive-control', async () => {
       await place(176, 176, 'resident-f2'); await settle();
       const living = await page.evaluate(() => {

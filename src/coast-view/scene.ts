@@ -705,7 +705,14 @@ export class CoastView {
       guide.texture = this.tex.ensure(`door-guide:${door.wall}:${open}`, () => paintDoorGuide(door.wall, open));
       guide.alpha = f.interaction?.ref.id === door.id ? 1 : .82;
     }
-    for (const entry of map.entries) this.stairLabels.get(entry.id)!.visible = knownStructurePoint(map, entry.at, f.revealed, occupied);
+    for (const entry of map.entries) {
+      const label = this.stairLabels.get(entry.id)!;
+      label.visible = knownStructurePoint(map, entry.at, f.revealed, occupied);
+      label.position.set(entry.at.x, entry.at.y + 22);
+      // Move below the player when needed; the interaction prompt already occupies the space above the head.
+      if (label.visible && intersects({ x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height },
+        { x: f.player.x - 14, y: f.player.y - 44, w: 28, h: 48 })) label.y = f.player.y + 8;
+    }
   }
   private applyFade(o: Occluder) {
     if (o.level >= 4) { o.sprite.visible = false; return; }

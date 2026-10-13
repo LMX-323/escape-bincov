@@ -53,6 +53,9 @@ async function open(p = fixture(), size = [1280, 720]) {
   context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1, hasTouch: mobile, isMobile: mobile });
   await context.route('https://station.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
   await context.addInitScript(() => {
+    // Only checkpoint wall time is fixed. Playwright's full clock also replaces Event.timeStamp with
+    // handler time, which would hide whether a real queued double click survives a slow render frame.
+    const checkpointTime = Date.now(); Date.now = () => checkpointTime;
     window.__issue26Writes = []; window.__issue26Rejected = 0;
     const write = Storage.prototype.setItem;
     Storage.prototype.setItem = function(k, v) {
@@ -62,10 +65,12 @@ async function open(p = fixture(), size = [1280, 720]) {
     };
   });
   context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://station.test/')) report.external.push(r.url()); });
-  page = await context.newPage(); page.setDefaultTimeout(12000); await page.clock.setFixedTime(new Date());
+  page = await context.newPage(); page.setDefaultTimeout(12000);
   page.on('pageerror', e => report.errors.push(String(e.stack)));
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   await page.goto('https://station.test/?test=1'); await tap(page.locator('[data-action="enter"]')); await ready(); await seed(p); await gear();
+  const cpu = Number(option('cpu-rate', '1'));
+  if (cpu > 1) { const cdp = await context.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpu }); }
 }
 async function gear() {
   const btn = yard('[data-quick="gear"]'); if (!await btn.isVisible()) await tap(yard('[data-quickmenu]'));
@@ -81,13 +86,45 @@ async function readable(selector) {
   assert.ok(r && r.width > 0 && r.height > 0 && r.x >= -1 && r.y >= -1 && r.x + r.width <= size.width + 1 && r.y + r.height <= size.height + 1, `${selector} outside viewport`);
   assert.equal(await el.evaluate(e => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1), false, `${selector} clipped`);
 }
+async function reachableGrid(source) {
+  const grid = yard(`[data-grid="${source}"]`), items = grid.locator('.item[data-uid]');
+  // Compact inventories intentionally scroll. Check actual items at both ends of the fixture, including
+  // the final warehouse row, rather than require the entire grid to fit in a short viewport at once.
+  for (const item of [items.first(), items.last()]) {
+    await item.scrollIntoViewIfNeeded();
+    const r = await item.boundingBox(), size = page.viewportSize();
+    assert.ok(r && r.x >= 0 && r.y >= 0 && r.x + r.width <= size.width && r.y + r.height <= size.height, `${source} item outside viewport`);
+    assert.ok(await item.evaluate(el => {
+      const r = el.getBoundingClientRect(), root = el.getRootNode();
+      return [[r.left + 2, r.top + 2], [r.right - 2, r.bottom - 2]].every(([x, y]) =>
+        root.elementsFromPoint(x, y).some(hit => hit === el || el.contains(hit)));
+    }), `${source} item is clipped or covered`);
+  }
+}
 async function select(src, uid) {
   // A deliberate single selection must not become a second click of the preceding quick transfer.
   await page.waitForTimeout(350); await tap(yard(`[data-grid="${src}"] [data-uid="${uid}"]`));
 }
 async function dbl(src, uid) {
+  await page.evaluate(() => {
+    window.__issue26PointerTrace = [];
+    if (window.__issue26TraceInstalled) return;
+    window.__issue26TraceInstalled = true;
+    window.addEventListener('pointerup', e => {
+      const item = e.composedPath().find(el => el?.dataset?.uid);
+      window.__issue26PointerTrace.push({ stamp: e.timeStamp, handled: performance.now(), trusted: e.isTrusted, uid: item?.dataset.uid, x: e.clientX, y: e.clientY });
+    }, true);
+  });
   const el = yard(`[data-grid="${src}"] [data-uid="${uid}"]`); await el.scrollIntoViewIfNeeded();
-  const r = await el.boundingBox(); assert.ok(r); await page.mouse.dblclick(r.x + 8, r.y + 8, { delay: 80 });
+  // Delayed mouse commands wait for each renderer acknowledgement, so slow frames can turn
+  // the requested double click into two singles (>320 ms). Queue the native double-click input together.
+  const r = await el.boundingBox(); assert.ok(r); await page.mouse.dblclick(r.x + 8, r.y + 8);
+  report.steps.at(-1).doubleClicks ??= [];
+  const trace = await page.evaluate(() => window.__issue26PointerTrace);
+  report.steps.at(-1).doubleClicks.push(trace);
+  assert.equal(trace.length, 2, 'two native releases must reach the inventory');
+  assert.ok(trace.every(e => e.trusted && e.uid === uid), 'both clicks target the same actual item');
+  assert.ok(trace[1].stamp - trace[0].stamp < 320, 'test input must be a double click within the unchanged 320 ms window');
 }
 async function drag(src, uid, to, x, y) {
   const el = yard(`[data-grid="${src}"] [data-uid="${uid}"]`), target = yard(`[data-grid="${to}"]`);
@@ -127,6 +164,23 @@ try {
     await dbl('stash', gun.uid); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.equal(await raw(), before);
     assert.match(await yard('.toasts').innerText(), /空间|放不下/);
   });
+  await step('F01-queued-double-click-survives-busy-frame', async () => {
+    const p = fixture(), gun = add(p.stash, 'pistol'); await open(p); const writes = await writeCount();
+    await page.evaluate(uid => {
+      // Run after GridDrag's first release handler. The second physical click is already queued,
+      // but cannot be handled until this simulated long frame finishes.
+      const busy = e => {
+        if (!e.composedPath().some(el => el?.dataset?.uid === uid)) return;
+        window.removeEventListener('pointerup', busy);
+        const until = performance.now() + 400; while (performance.now() < until) { /* simulated long frame */ }
+      };
+      window.addEventListener('pointerup', busy);
+    }, gun.uid);
+    await dbl('stash', gun.uid);
+    const after = (await snapshot()).profile;
+    assert.equal(D.count(after.bag, 'pistol'), 1); assert.equal(after.stash.items.length, 0);
+    assert.equal(await writeCount(), writes + 1); assert.deepEqual(JSON.parse(await raw()).profile.bag, after.bag);
+  });
   await step('F01-double-click-storage-failure-rolls-back', async () => {
     const p = fixture(), gun = add(p.stash, 'pistol'); await open(p); const before = await raw(); await fault(true); await dbl('stash', gun.uid);
     await yard('.dialog [data-act="retry-save"]').waitFor(); assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag);
@@ -148,9 +202,9 @@ try {
   for (const size of [[1280, 720], [1920, 1080], [390, 844], [844, 390]]) {
     await step(`F05-F09-F10-visible-and-persistent-${size.join('x')}`, async () => {
       const p = fixture(), gun = add(p.bag, 'pistol'); add(p.bag, 'bandage', 3); add(p.safe, 'food', 1);
-      add(p.stash, 'bandage', 2); const cloth = add(p.stash, 'cloth', 2); cloth.x = 8; cloth.y = 4;
+      add(p.stash, 'bandage', 2); const cloth = add(p.stash, 'cloth', 2); cloth.x = 8; cloth.y = 5;
       await open(p, size); await readable('[data-act="stash-all"]'); await readable('[data-act="sort-stash"]'); await shot(`gear-${size.join('x')}`);
-      await readable('[data-grid="bag"]'); await readable('[data-grid="stash"]');
+      await reachableGrid('bag'); await reachableGrid('stash');
       assert.equal(await yard('.panel .pbody').evaluate(e => e.scrollWidth > e.clientWidth + 2), false, 'inventory panel must not clip horizontally');
       await select('bag', gun.uid); assert.equal(await yard('[data-act="equip"]').innerText(), '装备主武器'); await readable('[data-act="equip"]'); await shot(`equip-${size.join('x')}`);
       await tap(yard('[data-act="equip"]')); assert.equal((await snapshot()).profile.equipment.weapon, 'pistol'); assert.match(await yard('.toasts').innerText(), /已装备主武器/);
