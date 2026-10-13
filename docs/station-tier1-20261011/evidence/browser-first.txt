@@ -1,0 +1,49 @@
+$ node --import tsx scripts/station-tier1-test.mjs
+PASS ordinary-new-save-zero
+FAIL legacy-seven-copy-1280x720 locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible[22m
+[2m    33 × locator resolved to hidden <button class="qmore" data-quickmenu="" aria-expanded="false">…</button>[22m
+
+PASS charm-snapshot-and-gear-1280x720
+FAIL legacy-seven-copy-1920x1080 locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible[22m
+[2m    33 × locator resolved to hidden <button class="qmore" data-quickmenu="" aria-expanded="false">…</button>[22m
+
+PASS charm-snapshot-and-gear-1920x1080
+FAIL legacy-seven-copy-390x844 locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible[22m
+[2m    33 × locator resolved to hidden <button class="qmore" data-quickmenu="" aria-expanded="false">…</button>[22m
+
+PASS charm-snapshot-and-gear-390x844
+FAIL old-tabs-equip-and-unequip-refresh-yard locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible[22m
+[2m    33 × locator resolved to hidden <button class="qmore" data-quickmenu="" aria-expanded="false">…</button>[22m
+
+FAIL quota-equip-replace-remove-preserve-inventory-and-retry-once locator.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-act="charm-equip"]')[22m
+
+FAIL departure-failure-seven-success-eight-refresh-no-double-count locator.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#station-yard [data-quickmenu]')[22m
+[2m    - locator resolved to <button class="qmore" data-quickmenu="" aria-expanded="false">…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    29 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not visible[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+{"passed":4,"total":10}
+[ELIFECYCLE] Command failed with exit code 1.

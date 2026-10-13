@@ -1,0 +1,43 @@
+{
+  "sha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+  "checks": [
+    {
+      "asset": "station",
+      "fault": "decode",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    },
+    {
+      "asset": "station",
+      "fault": "draw",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"base-enter\"]') to be visible\u001b[22m\n\n    at /workspace/escape-bincov/scripts/asset-load-test.mjs:49:58",
+      "errors": [
+        "injected cold PNG draw failure"
+      ]
+    },
+    {
+      "asset": "coast",
+      "fault": "decode",
+      "probe": {
+        "consumed": 1,
+        "attempts": 2
+      },
+      "status": "passed"
+    },
+    {
+      "asset": "coast",
+      "fault": "draw",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"base-enter\"]') to be visible\u001b[22m\n\n    at /workspace/escape-bincov/scripts/asset-load-test.mjs:49:58",
+      "errors": [
+        "injected cold PNG draw failure"
+      ]
+    }
+  ],
+  "external": [],
+  "browser": "153.0.8010.12"
+}

@@ -1,0 +1,56 @@
+{
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "size": [
+        1280,
+        720
+      ],
+      "sleepingKeyboardQueue": 0,
+      "result": {
+        "inputEnabled": true,
+        "keyboardEnabled": true,
+        "oldHudAlive": false,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "passed"
+    },
+    {
+      "size": [
+        1920,
+        1080
+      ],
+      "sleepingKeyboardQueue": 0,
+      "result": {
+        "inputEnabled": true,
+        "keyboardEnabled": true,
+        "oldHudAlive": false,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "passed"
+    }
+  ]
+}

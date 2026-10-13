@@ -1,0 +1,54 @@
+{
+  "sha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "size": [
+        1280,
+        720
+      ],
+      "result": {
+        "inputEnabled": true,
+        "oldHudAlive": true,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: old HUD can be collected before clicking away from results\n\ntrue !== false\n\n    at file:///workspace/escape-bincov/scripts/hud-release-test.mjs:42:14"
+    },
+    {
+      "size": [
+        1920,
+        1080
+      ],
+      "result": {
+        "inputEnabled": true,
+        "oldHudAlive": true,
+        "pointers": [
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          },
+          {
+            "eventInHud": false,
+            "downInHud": false,
+            "upInHud": false
+          }
+        ]
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: old HUD can be collected before clicking away from results\n\ntrue !== false\n\n    at file:///workspace/escape-bincov/scripts/hud-release-test.mjs:42:14"
+    }
+  ]
+}

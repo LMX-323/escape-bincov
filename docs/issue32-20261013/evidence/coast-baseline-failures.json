@@ -1,0 +1,158 @@
+{
+  "startedAt": "2026-10-13T02:25:31.787Z",
+  "seed": "42",
+  "steps": [
+    {
+      "name": "V03 sol: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: frames of fall: 1\n    at file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:150:12\n    at async step (file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:23:24)\n    at async file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:131:3"
+    },
+    {
+      "name": "V04 sol: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 14,
+          "changed": 0
+        },
+        "reveal": 12,
+        "indoorFallFrames": 1,
+        "stairs": 14,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 48
+      }
+    },
+    {
+      "name": "V03 placeholder: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: frames of fall: 1\n    at file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:150:12\n    at async step (file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:23:24)\n    at async file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:131:3"
+    },
+    {
+      "name": "V04 placeholder: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 15,
+          "changed": 0
+        },
+        "reveal": 12,
+        "indoorFallFrames": 1,
+        "stairs": 14,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 48
+      }
+    },
+    {
+      "name": "V11b low tide (seed 42): the Runtime floods nothing and nothing is drawn as tidal water by the tide strip",
+      "status": "passed",
+      "detail": {
+        "high": false,
+        "flooded": 0,
+        "shown": 0,
+        "changed": 0
+      }
+    },
+    {
+      "name": "V09 the player's death: fall and corpse presented after the settlement commit, curtain 你倒下了, no simulation, grading cleared after",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: frames presented after the commit: 14\n    at file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:243:12\n    at async step (file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:23:24)\n    at async file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:230:3"
+    },
+    {
+      "name": "V10 damage causes: a blow (even under 1 point) pulses the red edge and flashes the body; bleeding, pollution, thirst, hunger and a lowered limit show as readouts under the health bar with a tinted edge and never flash",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: a 0.4-point blow still pulses: 0.27\n    at file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:300:12\n    at async step (file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:23:24)\n    at async file:///workspace/escape-bincov/scripts/.issue32-coast-baseline.mjs:259:3"
+    },
+    {
+      "name": "V11 tide: water is drawn exactly on the Runtime's flooded cells (none outside, every visible one covered); a body caught there wades; the tide recedes with a fade",
+      "status": "passed",
+      "detail": {
+        "flooded": 106,
+        "changed": 86528,
+        "outside": 0,
+        "inView": 20,
+        "covered": 20,
+        "minCover": 1,
+        "low": [],
+        "cam": [
+          1536,
+          162,
+          768,
+          432
+        ],
+        "wade": {
+          "wade": true,
+          "shadow": false
+        },
+        "dry": {
+          "wade": false,
+          "shadow": true
+        },
+        "fade": [
+          0.64,
+          0,
+          0,
+          0.5,
+          1,
+          true
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "finishedAt": "2026-10-13T02:26:56.845Z",
+  "passed": 4,
+  "failed": 4,
+  "htmlSha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231"
+}

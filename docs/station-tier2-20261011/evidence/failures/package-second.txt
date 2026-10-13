@@ -1,0 +1,13 @@
+$ pnpm build && node scripts/package.mjs
+$ tsc --noEmit && node scripts/build.mjs
+file:///D:/bincov/ai-tier2-station/scripts/build.mjs:36
+  if (createHash('sha256').update(font).digest('hex') !== manifest.sha256) throw new Error('Font manifest hash mismatch');
+                                                                                 ^
+
+Error: Font manifest hash mismatch
+    at compile (file:///D:/bincov/ai-tier2-station/scripts/build.mjs:36:82)
+    at async file:///D:/bincov/ai-tier2-station/scripts/build.mjs:50:12
+
+Node.js v24.19.0
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,72 @@
+{
+  "sha256": "34ba59f6e51d4f08cd82560413ed2810a71725be5104792f880db26ede2fe3a4",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "name": "1280x720 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 238.4921875,
+          "y": 576.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 space rejection",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://shop.test/?test=1:9104:578977)\n    at yo (https://shop.test/?test=1:9104:579920)\n    at Cn (https://shop.test/?test=1:9104:574054)\n    at th.prepareExpansionMutation (https://shop.test/?test=1:9104:610211)\n    at eval (eval at evaluate (:311:30), <anonymous>:3:22)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at open (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:21:14)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:48:5\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:47:102"
+    },
+    {
+      "name": "1920x1080 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 430.4921875,
+          "y": 936.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 space rejection",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://shop.test/?test=1:9104:578977)\n    at yo (https://shop.test/?test=1:9104:579920)\n    at Cn (https://shop.test/?test=1:9104:574054)\n    at th.prepareExpansionMutation (https://shop.test/?test=1:9104:610211)\n    at eval (eval at evaluate (:311:30), <anonymous>:3:22)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at open (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:21:14)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:48:5\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:47:102"
+    },
+    {
+      "name": "390x844 funds rejection",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /workspace/escape-bincov/scripts/shop-feedback-test.mjs:52:16\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:47:102"
+    },
+    {
+      "name": "390x844 space rejection",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://shop.test/?test=1:9104:578977)\n    at yo (https://shop.test/?test=1:9104:579920)\n    at Cn (https://shop.test/?test=1:9104:574054)\n    at th.prepareExpansionMutation (https://shop.test/?test=1:9104:610211)\n    at eval (eval at evaluate (:311:30), <anonymous>:3:22)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at open (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:21:14)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:48:5\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:47:102"
+    },
+    {
+      "name": "yard refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "tabs refreshes stale empty cart without reopening",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"cart-reset\"]') to be visible\u001b[22m\n\n    at /workspace/escape-bincov/scripts/shop-feedback-test.mjs:71:17\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:61:37"
+    },
+    {
+      "name": "another window still locks settlement and cannot be overwritten through refresh",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /workspace/escape-bincov/scripts/shop-feedback-test.mjs:82:16\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:40:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:77:3"
+    }
+  ]
+}

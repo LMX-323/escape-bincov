@@ -1,0 +1,83 @@
+{
+  "build": "dist/index.html",
+  "sha256": "c628196768e6fede9a3e0a7d330fb18e6a4d609f722f7a5e97ff770b9f5ca46c",
+  "browser": "154.0.8037.99",
+  "startedAt": "2026-10-11T02:36:06.371Z",
+  "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
+  "steps": [
+    {
+      "name": "ordinary-new-save-zero",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1280x720",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible\u001b[22m\n\u001b[2m    33 × locator resolved to hidden <button class=\"qmore\" data-quickmenu=\"\" aria-expanded=\"false\">…</button>\u001b[22m\n\n    at throughYard (D:\\bincov\\ai-tier1-station\\scripts\\yard-entry.mjs:11:45)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:111:7\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:105:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1920x1080",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible\u001b[22m\n\u001b[2m    33 × locator resolved to hidden <button class=\"qmore\" data-quickmenu=\"\" aria-expanded=\"false\">…</button>\u001b[22m\n\n    at throughYard (D:\\bincov\\ai-tier1-station\\scripts\\yard-entry.mjs:11:45)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:111:7\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:105:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-390x844",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible\u001b[22m\n\u001b[2m    33 × locator resolved to hidden <button class=\"qmore\" data-quickmenu=\"\" aria-expanded=\"false\">…</button>\u001b[22m\n\n    at throughYard (D:\\bincov\\ai-tier1-station\\scripts\\yard-entry.mjs:11:45)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:111:7\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:105:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "old-tabs-equip-and-unequip-refresh-yard",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-quickmenu]') to be visible\u001b[22m\n\u001b[2m    33 × locator resolved to hidden <button class=\"qmore\" data-quickmenu=\"\" aria-expanded=\"false\">…</button>\u001b[22m\n\n    at throughYard (D:\\bincov\\ai-tier1-station\\scripts\\yard-entry.mjs:11:45)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:142:5\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:132:3"
+    },
+    {
+      "name": "quota-equip-replace-remove-preserve-inventory-and-retry-once",
+      "status": "failed",
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-act=\"charm-equip\"]')\u001b[22m\n\n    at tap (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:24:98)\n    at equip (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:77:9)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:156:16\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:147:3"
+    },
+    {
+      "name": "departure-failure-seven-success-eight-refresh-no-double-count",
+      "status": "failed",
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard [data-quickmenu]')\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"qmore\" data-quickmenu=\"\" aria-expanded=\"false\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    29 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at tap (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:24:98)\n    at panel (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:41:40)\n    at async assertCounts (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:54:3)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:168:20\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:163:3"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "ordinary-zero-1280.png",
+    "seven-hud-1280.png",
+    "seven-radio-1280.png",
+    "failure-2.png",
+    "charm-gear-1280.png",
+    "seven-hud-1920.png",
+    "seven-radio-1920.png",
+    "failure-4.png",
+    "charm-gear-1920.png",
+    "seven-hud-390.png",
+    "seven-radio-390.png",
+    "failure-6.png",
+    "charm-gear-390.png",
+    "old-tabs-charm.png",
+    "failure-8.png",
+    "quota-stash.png",
+    "quota-bag.png",
+    "failure-9.png",
+    "failure-10.png"
+  ],
+  "finishedAt": "2026-10-11T02:38:02.063Z",
+  "summary": {
+    "passed": 4,
+    "total": 10
+  }
+}

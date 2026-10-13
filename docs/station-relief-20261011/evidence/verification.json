@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-11",
+  "base": "21e379698fea217392c553ee761c8079ac9e42af",
+  "branch": "fix/station-relief-entry",
+  "node": "24.19.0",
+  "pnpm": "11.19.0",
+  "browser": "154.0.8037.99",
+  "htmlSha256": "af97b2a23a073375af08a5526e14f8c18044593604d866f51b3b93de1df195f0",
+  "reproduciblePackage": true,
+  "unit": {
+    "passed": 292,
+    "failed": 0
+  },
+  "oldSourceNewUnit": {
+    "expectedFailure": true,
+    "passed": 1,
+    "failed": 4
+  },
+  "browserChecks": {
+    "pageErrors": 0,
+    "passed": 6,
+    "failed": 0,
+    "externalRequests": 0
+  },
+  "oldHtmlNewBrowser": {
+    "expectedFailure": true,
+    "passed": 1,
+    "failed": 5
+  },
+  "regressions": [
+    {
+      "suite": "test:hideout",
+      "exit": 0,
+      "log": "test-results/relief/test-hideout.txt"
+    },
+    {
+      "suite": "test:save-browser",
+      "exit": 0,
+      "log": "test-results/relief/test-save-browser.txt"
+    },
+    {
+      "suite": "test:station",
+      "exit": 0,
+      "log": "test-results/relief/test-station.txt"
+    },
+    {
+      "suite": "test:portable",
+      "exit": 0,
+      "log": "test-results/relief/test-portable.txt"
+    }
+  ],
+  "counts": {
+    "station": 76,
+    "saveBrowser": 9,
+    "hideout": 8
+  },
+  "rawLocalLogs": [
+    {
+      "path": "test-results/relief/unit.txt",
+      "sha256": "fa92eee07d1e9fead0c3f88f4d17914705ed11c5481423fbac64645f96f72ecd"
+    },
+    {
+      "path": "test-results/relief/package.txt",
+      "sha256": "5e657d6e6c7928ae2b8860eb3fc09a9c809cb76db1b00407d51ffb357e1f55bd"
+    },
+    {
+      "path": "test-results/relief/repackage.txt",
+      "sha256": "5e657d6e6c7928ae2b8860eb3fc09a9c809cb76db1b00407d51ffb357e1f55bd"
+    },
+    {
+      "path": "test-results/relief/baseline-unit.txt",
+      "sha256": "e24a50d07728d1d45445374a17ba7c3ee46f339358bc5148b1d234c1db495ba5"
+    },
+    {
+      "path": "test-results/relief/baseline-browser.txt",
+      "sha256": "d242805b1c3fc4973602aa9db59a3f53b7211b57fca13c91608e007067b06113"
+    },
+    {
+      "path": "test-results/relief/final-browser.txt",
+      "sha256": "fc2071b1d5ccb1c405b06a30b6281624b4d6ba2e7dea8dca04c500ba1f189d04"
+    },
+    {
+      "path": "test-results/relief/test-hideout.txt",
+      "sha256": "845b978bac89f2a0b3e222af14f55441558d8340f541bb1129f12849947dad53"
+    },
+    {
+      "path": "test-results/relief/test-save-browser.txt",
+      "sha256": "44da469da3393237033d0cfdae498d581ec87be6a420783206f90ddb65a995d2"
+    },
+    {
+      "path": "test-results/relief/test-station.txt",
+      "sha256": "da431f357c6976f0dc83c532b5e3f7cee82d43d4f5bb489bb39e439c98e70313"
+    },
+    {
+      "path": "test-results/relief/test-portable.txt",
+      "sha256": "687261b095ad3f8204fd8e2c9030f32382797f7db47e8cd79d7c962affa4f694"
+    }
+  ],
+  "notRun": [
+    "real devices",
+    "human playtest",
+    "long-term memory"
+  ],
+  "ci": "See exact PR head checks; local report does not assert CI completion"
+}

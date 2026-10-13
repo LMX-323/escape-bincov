@@ -1,0 +1,23 @@
+[
+  {
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/station-browser-test.mjs",
+      "--html=/tmp/escape-bincov-baseline.html",
+      "--only=H12 ",
+      "--out=test-results/issue32/station-baseline-h12"
+    ],
+    "exit": 1,
+    "seconds": 15.51
+  },
+  {
+    "command": [
+      "node",
+      "scripts/.issue32-coast-baseline.mjs"
+    ],
+    "exit": 1,
+    "seconds": 85.35
+  }
+]
