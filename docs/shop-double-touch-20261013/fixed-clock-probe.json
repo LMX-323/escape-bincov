@@ -1,0 +1,118 @@
+{
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "155.0.8059.40",
+  "cpuRate": 1,
+  "only": [
+    "timing"
+  ],
+  "checks": [
+    {
+      "name": "timing: quick input survives a long task before its second pointerup handler",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "inputGapMs": 80,
+        "blockSecondUpMs": 450,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1557,
+            "receivedAt": 1557,
+            "beforeHandlerAt": 1557,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2isy-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1557,
+            "receivedAt": 1557,
+            "beforeHandlerAt": 1557,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2isy-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1559,
+            "receivedAt": 1559,
+            "beforeHandlerAt": 1559,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2isy-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 2009,
+            "receivedAt": 1559,
+            "beforeHandlerAt": 2009,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2isy-b"
+          }
+        ],
+        "gapMs": 452,
+        "handlerGapMs": 452
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: actual pointer timestamps are inside the quick-transfer window\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:130:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:104:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:126:3; taps={\"mode\":\"queued-cdp-touch\",\"inputGapMs\":80,\"blockSecondUpMs\":450,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":1557,\"receivedAt\":1557,\"beforeHandlerAt\":1557,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2isy-b\"},{\"type\":\"pointerup\",\"timeStamp\":1557,\"receivedAt\":1557,\"beforeHandlerAt\":1557,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2isy-b\"},{\"type\":\"pointerdown\",\"timeStamp\":1559,\"receivedAt\":1559,\"beforeHandlerAt\":1559,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2isy-b\"},{\"type\":\"pointerup\",\"timeStamp\":2009,\"receivedAt\":1559,\"beforeHandlerAt\":2009,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2isy-b\"}],\"gapMs\":452,\"handlerGapMs\":452}"
+    },
+    {
+      "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "inputGapMs": 350,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1385,
+            "receivedAt": 1385,
+            "beforeHandlerAt": 1385,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2ki3-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1385,
+            "receivedAt": 1385,
+            "beforeHandlerAt": 1385,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2ki3-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1387,
+            "receivedAt": 1387,
+            "beforeHandlerAt": 1387,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2ki3-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1387,
+            "receivedAt": 1387,
+            "beforeHandlerAt": 1387,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p2ki3-b"
+          }
+        ],
+        "gapMs": 2,
+        "handlerGapMs": 2
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: actual pointer timestamps are outside the quick-transfer window\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:140:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:104:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:136:3; taps={\"mode\":\"queued-cdp-touch\",\"inputGapMs\":350,\"blockSecondUpMs\":0,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":1385,\"receivedAt\":1385,\"beforeHandlerAt\":1385,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2ki3-b\"},{\"type\":\"pointerup\",\"timeStamp\":1385,\"receivedAt\":1385,\"beforeHandlerAt\":1385,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2ki3-b\"},{\"type\":\"pointerdown\",\"timeStamp\":1387,\"receivedAt\":1387,\"beforeHandlerAt\":1387,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2ki3-b\"},{\"type\":\"pointerup\",\"timeStamp\":1387,\"receivedAt\":1387,\"beforeHandlerAt\":1387,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p2ki3-b\"}],\"gapMs\":2,\"handlerGapMs\":2}"
+    }
+  ]
+}
