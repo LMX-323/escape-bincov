@@ -120,7 +120,7 @@ export class GridDrag {
     this.start = null;
     if (!this.ghost || !h) {
       if (h) {
-        // Compare when input occurred, not when a busy render thread finally handles it.
+        // Compare input times: renderer work between pointerups must not split a quick double tap.
         const now = e.timeStamp;
         if (this.lastClick.uid === s.uid && now - this.lastClick.t < 320 && h.quick) { h.quick(s.src, s.uid); this.lastClick = { uid: '', t: 0 }; }
         else { this.lastClick = { uid: s.uid, t: now }; h.select(s.src, s.uid); }

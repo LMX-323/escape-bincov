@@ -1,0 +1,77 @@
+{
+  "startedAt": "2026-10-13T13:43:28.775Z",
+  "status": "failed",
+  "viewports": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "steps": [
+        {
+          "name": "25 enemies and original 60 loot entries remain conserved",
+          "status": "passed",
+          "detail": {
+            "enemies": 25,
+            "ground": 42,
+            "crates": 9,
+            "entries": 60,
+            "configuredUnits": 168,
+            "liveUnits": 168,
+            "samples": 1,
+            "ledgers": 1
+          },
+          "durationMs": 22
+        },
+        {
+          "name": "pointer crate ↔ bag and crate ↔ safe transfers use exact displayed cells",
+          "status": "passed",
+          "durationMs": 4511
+        },
+        {
+          "name": "stacks accept partial merges while multiple occupied targets and out-of-bounds shapes preserve items",
+          "status": "passed",
+          "durationMs": 3641
+        },
+        {
+          "name": "full inventory rejects a shape overlapping multiple items atomically",
+          "status": "passed",
+          "durationMs": 1437
+        },
+        {
+          "name": "swap rejects atomically when the original corner cannot fit the displaced gun in either orientation",
+          "status": "passed",
+          "durationMs": 1251
+        },
+        {
+          "name": "external selection exposes no direct use or equip; double-click picks up without using or equipping",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  [\n    {\n      id: 'crate-0',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '潮汐观测站物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1744,\n+     y: 656\n    },\n    {\n      id: 'crate-11',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 944,\n+     y: 1296\n    },\n    {\n      id: 'crate-13',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 592,\n+     y: 592\n    },\n    {\n      id: 'crate-14',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 496,\n+     y: 336\n    },\n    {\n      id: 'crate-15',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '海堤泵房物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1808,\n+     y: 1328\n    },\n    {\n      id: 'crate-20',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 560,\n+     y: 912\n    },\n    {\n      id: 'crate-21',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 944,\n+     y: 912\n    },\n    {\n      id: 'crate-25',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 784,\n+     y: 272\n    },\n    {\n      id: 'crate-49',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '旧渔港物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1872,\n+     y: 1040\n    }\n  ]\n\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:180:69\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:54:22)\n    at async suite (file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:167:5)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:483:3",
+          "durationMs": 1053
+        }
+      ],
+      "screenshots": [
+        "/home/runner/work/escape-bincov/escape-bincov/test-results/loot-1280x720-crate-open.png",
+        "/home/runner/work/escape-bincov/escape-bincov/test-results/loot-1280x720-crate-returned.png",
+        "/home/runner/work/escape-bincov/escape-bincov/test-results/loot-1280x720-full-bag.png",
+        "/home/runner/work/escape-bincov/escape-bincov/test-results/loot-1280x720-failure.png"
+      ],
+      "errors": [],
+      "externalRequests": [],
+      "runIds": [
+        "bc-mv6qelvk-b"
+      ]
+    }
+  ],
+  "methodology": [
+    "Fresh offline file:// contexts at 1280×720 and 1920×1080; browser errors and external requests fail acceptance.",
+    "Positions, inventories, enemy readiness and elapsed time are controlled fixtures. E opening, closing, transfers, combat and extraction use real browser keys/mouse.",
+    "Real pointer dragTo uses displayed grid geometry. Stale-drag checks close and replace the source while the mouse is held.",
+    "Quota injection starts at capture of the trusted pointerup event, so periodic saves remain writable until the transfer. Failed transfers compare inventories and the exact pre-drop session bytes.",
+    "The old-client storage-event fixture pauses the first raid scene through the existing opt-in hook, preserving the open loot panel while excluding automatic checkpoints; it resumes after conflict detection.",
+    "Repeated refreshes restore matching container, corpse and carried inventories. Three consecutive completed runs verify lifecycle isolation. This is not a natural-play balance test."
+  ],
+  "browser": "153.0.8010.12",
+  "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  [\n    {\n      id: 'crate-0',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '潮汐观测站物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1744,\n+     y: 656\n    },\n    {\n      id: 'crate-11',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 944,\n+     y: 1296\n    },\n    {\n      id: 'crate-13',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 592,\n+     y: 592\n    },\n    {\n      id: 'crate-14',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 496,\n+     y: 336\n    },\n    {\n      id: 'crate-15',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '海堤泵房物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1808,\n+     y: 1328\n    },\n    {\n      id: 'crate-20',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 560,\n+     y: 912\n    },\n    {\n      id: 'crate-21',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '水产市场物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 944,\n+     y: 912\n    },\n    {\n      id: 'crate-25',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '城中村巷道物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 784,\n+     y: 272\n    },\n    {\n      id: 'crate-49',\n      inventory: {\n        h: 5,\n...\n      kind: 'crate',\n+     name: '旧渔港物资箱',\n      runId: 'bc-mv6qelvk-b',\n+     x: 1872,\n+     y: 1040\n    }\n  ]\n\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:180:69\n    at async step (file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:54:22)\n    at async suite (file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:167:5)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/loot-browser-test.mjs:483:3",
+  "finishedAt": "2026-10-13T13:43:43.644Z"
+}

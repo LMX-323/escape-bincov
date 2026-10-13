@@ -28,6 +28,10 @@
 
 额外完整院子回归[75/76](evidence/closeout/station-full-first.json)，唯一失败是1280×720扩建仓库的“保险管”短名裁切；同机[main对照4/4](evidence/closeout/labels-main.json)通过，确认为本PR新工具栏挤小格子导致。最终将桌面院子工具按钮放到标题栏，格子至少36px，保留首次选择时几何稳定；[文字/面板高度/真实拖拽旋转双击6/6](evidence/closeout/gear-header.json)通过。只放大格子的中间方案引起29px滚动，该[中间失败](evidence/closeout/gear-labels-first.json)保留。修后站内16项再次完整验证；没有把上述分次结果拼成一轮76/76。
 
+收尾CI `38405926739` 新增专项通过后，旧搜刮回归停在本PR新增的快捷拾取持久化比较：[首败](evidence/closeout/loot-ci-first-failure.json)。现场快照只摘录了id/runId/kind/inventory，而存档还含name/x/y，因此完整对象不相等；物品内容和位置没有丢失。现场快照补齐同一容器的name/x/y，保留整对象相等断言；修后[两桌面尺寸各21项、触屏4项，共46/46](evidence/closeout/loot-final.json)。未改产品事务或删减比较字段。本地未设置可选旧客户端HTML参数；CI既有真实旧客户端检查保持。
+
+并行PR #46也将共享GridDrag改为原生输入时间；本PR相同行为与注释保持一致，商店专用连续触控脚本仍由#46承接，未覆盖其工作树或issue状态。
+
 ![最终院子桌面工具栏与完整短名](evidence/closeout/gear-header-1280.png)
 
 ![传统整备安全箱恢复可见](evidence/closeout/tactical-1280.png)

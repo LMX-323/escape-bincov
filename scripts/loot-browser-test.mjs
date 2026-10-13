@@ -35,7 +35,7 @@ async function suite(viewport) {
   const snapshot = () => page.evaluate(key => {
     const a = window.__bincov.app, r = a.raid;
     return { state: a.state, overlay: a.overlay, context: a.lootContext, save: a.save, loadout: a.loadout,
-      containers: r?.containers.map(c => ({ id: c.id, runId: c.runId, kind: c.kind, inventory: c.inventory })),
+      containers: r?.containers.map(c => ({ id: c.id, runId: c.runId, kind: c.kind, name: c.name, x: c.x, y: c.y, inventory: c.inventory })),
       elapsed: r?.elapsed, hp: r?.hp, mag: r?.mag, x: r?.player?.x, y: r?.player?.y, storage: localStorage.getItem(key) };
   }, SAVE_KEY);
   // Automatic checkpoints legitimately update revision/time; compare the inventory
