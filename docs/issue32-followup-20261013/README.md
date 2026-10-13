@@ -1,3 +1,13 @@
+## 2026-10-13 最终收尾复验
+
+原 head e11552c 的[完整 CI 已成功](https://github.com/xuys2025/escape-bincov/actions/runs/38342364197)，此前“CI仍运行”是交接时快照。本轮继续原 PR #43，正常合入 main 95036af，双方剧情与资源交接均保留。
+
+Windows / Node 24.19.0 / pnpm 11.19.0 / Chrome 155.0.8059.40 串行复验：295/295单测、严格TS及打包通过，重新构建的HTML、ZIP、manifest与原PR逐字节一致。资源专项1280×720、1920×1080各5/5，动画6/6，页面异常与外部请求为0。见[单测](evidence/closeout/unit.log)、[打包](evidence/closeout/package.log)、[1280](evidence/closeout/targets-1280.json)、[1920](evidence/closeout/targets-1920.json)、[动画](evidence/closeout/animation.json)。
+
+宽屏首轮4/5：点击“继续”紧接按住D，按键会落在Runtime恢复发布前，并被关闭暂停面板的suppressHeld抑制；界面正常恢复，角色没有移动。[首败](evidence/closeout/targets-1920-first-failure.json)保留。专项现等待正式running状态及暂停面板关闭，再发新的真实按键；未改产品、移动距离断言、超时或资源门槛。修后两尺寸各5/5。
+
+当前交付为可审阅的原PR续作，最终提交完整CI状态见PR。#32仅更新本次资源空槽和动画采样子项；F20总堆、原R/K整体、自然帧率、SAVE/A6、真机与其它范围保持原状态。
+
 # #32 续作：城中村渲染目标释放与动画验收采样
 
 日期：2026-10-13（UTC）。唯一基线：`origin/main` `3f706b77e9b924b0cee085e79c54479a0c19da65`；任务分支 `fix/issue32-validation-followup`。#42 已合并，本次独立承接它保留的资源调查和自动验收维护；开放 #28/#30/#31/#39/#40/#41 的分支及范围保持原归属。
@@ -41,8 +51,8 @@ node --import tsx scripts/coast-lifecycle-test.mjs
 
 | 检查 | 实际结果与证据 |
 | --- | --- |
-| `pnpm test` | 30 个测试文件全部通过；本环境默认 reporter 按文件汇总，[原始输出](evidence/unit.log) |
-| `pnpm package`、制品校验 | 严格 TS 与打包通过；两个 HTML 一致，4 个 manifest 哈希/大小、两 ZIP 的 CRC 与入口 HTML 字节均核对通过，[输出](evidence/package.log) |
+| `pnpm test` | 30 个测试文件全部通过；本环境默认 reporter 按文件汇总，[原 head CI](https://github.com/xuys2025/escape-bincov/actions/runs/38342364197) |
+| `pnpm package`、制品校验 | 严格 TS 与打包通过；两个 HTML 一致，4 个 manifest 哈希/大小、两 ZIP 的 CRC 与入口 HTML 字节均核对通过，[原 head CI](https://github.com/xuys2025/escape-bincov/actions/runs/38342364197) |
 | 资源专项，旧 main 包 | **2/5**，前三组准确检出旧目标 uid 的 null 残留；像素/键鼠及结算往返原本通过，[负对照](evidence/targets-baseline.json) |
 | 资源专项，1280×720 | **5/5**，[逐 uid 报告](evidence/targets-1280.json) |
 | 资源专项，1920×1080 | **5/5**，[逐 uid 报告](evidence/targets-1920.json) |

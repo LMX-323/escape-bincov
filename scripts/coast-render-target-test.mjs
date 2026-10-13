@@ -184,6 +184,9 @@ try {
     await page.evaluate(() => window.__bincovSample.driver.placePlayer({ x: 640, y: 456 }, 0, 'coast'));
     await page.waitForFunction(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return p.x === 640 && p.y === 456; });
     row.before = await state(); await page.locator('[data-do="resume"]').click();
+    // Resume requests a Runtime transition; syncPanels suppresses keys held until its next published frame.
+    // Start the movement only once the real pause panel has closed, as a fresh post-resume input.
+    await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running' && window.__bincovSample.host.panel === null);
     await page.keyboard.down('d');
     try { await page.waitForFunction(before => Math.hypot(window.__bincovSample.host.lastBatch.frame.player.x - before.x, window.__bincovSample.host.lastBatch.frame.player.y - before.y) > 3, row.before.player); }
     finally { await page.keyboard.up('d'); }
