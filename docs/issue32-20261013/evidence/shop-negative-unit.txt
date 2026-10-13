@@ -62,9 +62,9 @@
 test at tests/hideout-runtime.test.ts:1:15227
 ✖ shop rejections tell the player whether cash or stash space is missing without changing the cart (8.620472ms)
   AssertionError [ERR_ASSERTION]: The input did not match the regular expression /现金不足/. Input:
-  
+
   '操作未完成，请检查条件后重试。'
-  
+
       at TestContext.<anonymous> (/workspace/escape-bincov/tests/hideout-runtime.test.ts:214:16)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1382:25)
@@ -84,10 +84,10 @@ test at tests/hideout-runtime.test.ts:1:15940
 ✖ a stale empty cart exposes refresh and reset rebuilds it without reopening or writing progress (2.645201ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
   + actual - expected
-  
+
   + undefined
   - true
-  
+
       at TestContext.<anonymous> (/workspace/escape-bincov/tests/hideout-runtime.test.ts:222:12)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1382:25)
