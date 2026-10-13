@@ -1,3 +1,16 @@
+## 合并前组合复核：#43 → #44
+
+维护者明确要求“检查一下，没问题就合并”。两PR准确head均已通过完整CI且无待处理审阅；先正常合并#43为`1ad9b2d7442dd2ab3a8c5a5afb141d5c950f193b`，确认merge tree与受检head65e5b36完全一致。#44在原分支正常同步该主线；冲突仅是CoastView新增import、双方交接文档及生成物，两条import和完整历史均保留，生成物由正式命令重建。
+
+组合HTML SHA256：`a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7`。本地Windows/Node24.19.0/pnpm11.19.0/Chrome155：
+
+- [314/314单测](evidence/merge43/unit.log)、[严格TS与正式打包](evidence/merge43/package.log)通过。
+- 渲染目标[1280×720](evidence/merge43/targets-1280.json)和[1920×1080](evidence/merge43/targets-1920.json)各5/5，包括真实resize、WebGL恢复、销毁与回站重建。
+- [结构显示与隐藏权限](evidence/merge43/spatial.json)14/14、[动画](evidence/merge43/animation.json)6/6，零页面异常与外部请求；仍不代表自然帧率或真机性能验收。
+- 已目视复核真实构建的[恢复画面](evidence/merge43/restored-1280.png)和[楼梯标签](evidence/merge43/stairs-1920.png)。
+
+没有改变其他库存/存档/玩法代码或放宽断言；此前的失败、负对照和未完成需求原样保留。组合提交准确head的完整CI仍须通过，之后按本轮明确授权正常合并#44；最终提交、CI和合并状态见原PR，Pages由main成功流水线自动更新。
+
 ## 2026-10-13 最终核对补记：同步 #46
 
 此前提交 2dfde47 / CI 38408465448 的完整CI已成功，issue已据此更新；最终核对发现并行#46刚合入main 7df2d22，因此继续原分支正常合并该主线。冲突仅为生成物和交接文档；保留双方历史，接入#46的13项商店输入检查，正式重新打包。同步后本地314/314 单测、严格TS、打包及[商店13/13](evidence/closeout/merge46-shop.json)通过。当前HTML SHA256为774d9ea4aefa4f683d7fc1f21f0eb33a2d2bca7eb5fa4b630fdbe80686af4c3d。同步后的准确head完整CI以原PR最新结果为准；本PR尚未合并或发布，原失败证据和未完成范围不变。

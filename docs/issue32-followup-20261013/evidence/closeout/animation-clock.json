@@ -1,0 +1,448 @@
+{
+  "startedAt": "2026-10-13T13:22:42.402Z",
+  "build": "file:///D:/bincov/pr43-closeout/dist/index.html",
+  "buildSHA256": "322fa384857004baa4f30a806b2667c360dd299dd49f09b6bc8ac6345052da78",
+  "seed": "42",
+  "group": "animation",
+  "steps": [
+    {
+      "name": "V03 sol: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "passed",
+      "detail": {
+        "art": "sol",
+        "sampling": {
+          "controlledViewDelta": 0.016666666666666666,
+          "natural": {
+            "frames": 21,
+            "fallFrames": 21,
+            "originalMinimumFallFrames": 3,
+            "meetsOriginalMinimum": true,
+            "deltas": [
+              0.006,
+              0.006099999999999909,
+              0.0061000000000001366,
+              0.006,
+              0.006,
+              0.006099999999999909,
+              0.006099999999999909,
+              0.0061000000000001366,
+              0.006,
+              0.006099999999999909,
+              0.006,
+              0.0061000000000001366,
+              0.006099999999999909,
+              0.006099999999999909,
+              0.006,
+              0.0061000000000001366,
+              0.006,
+              0.006099999999999909,
+              0.0061000000000001366,
+              0.005899999999999864,
+              0.0061000000000001366
+            ]
+          }
+        },
+        "deathFrame": {
+          "uid": "enemy-3",
+          "dt": 0.016666666666666666,
+          "alive": false,
+          "death": true,
+          "rebuilt": false,
+          "map": "coast",
+          "epoch": 2,
+          "deathT": 0.016766666666666666,
+          "rotation": -0.13098958333333333,
+          "body": true,
+          "weapon": false,
+          "corpse": false,
+          "hasCorpse": false,
+          "corpseKey": "",
+          "shown": true
+        },
+        "fallFrames": 9,
+        "rotations": [
+          -0.131,
+          -0.261,
+          -0.391,
+          -0.522,
+          -0.652,
+          -0.782,
+          -0.912,
+          -1.042,
+          -1.173
+        ],
+        "handoffDeathT": 0.16676666666666665,
+        "facing": -1,
+        "crops": [
+          {
+            "deathT": 0.016766666666666666,
+            "rotation": -0.13098958333333333,
+            "corpse": false,
+            "changedFromDeathFrame": 0
+          },
+          {
+            "deathT": 0.05009999999999999,
+            "rotation": -0.3914062499999999,
+            "corpse": false,
+            "changedFromDeathFrame": 6075
+          },
+          {
+            "deathT": 0.08343333333333332,
+            "rotation": -0.6518229166666666,
+            "corpse": false,
+            "changedFromDeathFrame": 6903
+          },
+          {
+            "deathT": 0.13343333333333332,
+            "rotation": -1.0424479166666665,
+            "corpse": false,
+            "changedFromDeathFrame": 14337
+          },
+          {
+            "deathT": 0.16676666666666665,
+            "rotation": -1.1726562499999997,
+            "corpse": true,
+            "changedFromDeathFrame": 15093
+          },
+          {
+            "deathT": 0.3001,
+            "rotation": -1.1726562499999997,
+            "corpse": true,
+            "changedFromDeathFrame": 17559
+          }
+        ]
+      }
+    },
+    {
+      "name": "V04 sol: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 14,
+          "changed": 0
+        },
+        "reveal": 11,
+        "indoorFallFrames": 26,
+        "stairs": 11,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-6",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 45
+      }
+    },
+    {
+      "name": "V03 placeholder: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "passed",
+      "detail": {
+        "art": "placeholder",
+        "sampling": {
+          "controlledViewDelta": 0.016666666666666666,
+          "natural": {
+            "frames": 20,
+            "fallFrames": 20,
+            "originalMinimumFallFrames": 3,
+            "meetsOriginalMinimum": true,
+            "deltas": [
+              0.0061000000000001366,
+              0.006099999999999909,
+              0.005900000000000091,
+              0.0061999999999998185,
+              0.006,
+              0.0061000000000001366,
+              0.006,
+              0.006099999999999909,
+              0.0061000000000001366,
+              0.006,
+              0.006099999999999909,
+              0.006099999999999909,
+              0.005900000000000091,
+              0.006099999999999909,
+              0.0061000000000001366,
+              0.006099999999999909,
+              0.006,
+              0.0061000000000001366,
+              0.006099999999999909,
+              0.006299999999999955
+            ]
+          }
+        },
+        "deathFrame": {
+          "uid": "enemy-3",
+          "dt": 0.016666666666666666,
+          "alive": false,
+          "death": true,
+          "rebuilt": false,
+          "map": "coast",
+          "epoch": 2,
+          "deathT": 0.016766666666666666,
+          "rotation": -0.13098958333333333,
+          "body": true,
+          "weapon": false,
+          "corpse": false,
+          "hasCorpse": false,
+          "corpseKey": "",
+          "shown": true
+        },
+        "fallFrames": 9,
+        "rotations": [
+          -0.131,
+          -0.261,
+          -0.391,
+          -0.522,
+          -0.652,
+          -0.782,
+          -0.912,
+          -1.042,
+          -1.173
+        ],
+        "handoffDeathT": 0.16676666666666665,
+        "facing": -1,
+        "crops": [
+          {
+            "deathT": 0.016766666666666666,
+            "rotation": -0.13098958333333333,
+            "corpse": false,
+            "changedFromDeathFrame": 0
+          },
+          {
+            "deathT": 0.05009999999999999,
+            "rotation": -0.3914062499999999,
+            "corpse": false,
+            "changedFromDeathFrame": 5598
+          },
+          {
+            "deathT": 0.08343333333333332,
+            "rotation": -0.6518229166666666,
+            "corpse": false,
+            "changedFromDeathFrame": 6453
+          },
+          {
+            "deathT": 0.13343333333333332,
+            "rotation": -1.0424479166666665,
+            "corpse": false,
+            "changedFromDeathFrame": 14013
+          },
+          {
+            "deathT": 0.16676666666666665,
+            "rotation": -1.1726562499999997,
+            "corpse": true,
+            "changedFromDeathFrame": 14769
+          },
+          {
+            "deathT": 0.3001,
+            "rotation": -1.1726562499999997,
+            "corpse": true,
+            "changedFromDeathFrame": 17226
+          }
+        ]
+      }
+    },
+    {
+      "name": "V04 placeholder: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 14,
+          "changed": 0
+        },
+        "reveal": 10,
+        "indoorFallFrames": 25,
+        "stairs": 14,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-6",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 45
+      }
+    },
+    {
+      "name": "V10 damage causes: a blow (even under 1 point) pulses the red edge and flashes the body; bleeding, pollution, thirst, hunger and a lowered limit show as readouts under the health bar with a tinted edge and never flash",
+      "status": "passed",
+      "detail": {
+        "start": {
+          "chips": [],
+          "ail": 0,
+          "tint": "",
+          "edge": 0
+        },
+        "sampling": {
+          "blowPresentationDelta": 0,
+          "clock": "delivered Pixi ticker delta; wall time reported separately",
+          "stages": {
+            "during": {
+              "presentationSeconds": 2.005900000000007,
+              "wallMs": 2003.199999999255,
+              "ticks": 330
+            },
+            "after": {
+              "presentationSeconds": 1.5029999999999877,
+              "wallMs": 1502.699999999255,
+              "ticks": 248
+            },
+            "limitAfter": {
+              "presentationSeconds": 3.405799999999945,
+              "wallMs": 3404.9000000003725,
+              "ticks": 561
+            },
+            "blowAfter": {
+              "presentationSeconds": 1.2060999999999806,
+              "wallMs": 1206.0999999996275,
+              "ticks": 199
+            }
+          }
+        },
+        "during": {
+          "chips": [
+            "流血 -1.2/秒",
+            "污染 -0.5/秒"
+          ],
+          "ail": 0.243,
+          "tint": "150,26,16",
+          "edge": 0
+        },
+        "after": {
+          "chips": [],
+          "ail": 0,
+          "tint": "150,26,16",
+          "edge": 0
+        },
+        "limit": {
+          "chips": [
+            "生命上限下降 -3.0"
+          ],
+          "ail": 0,
+          "tint": "150,26,16",
+          "edge": 0
+        },
+        "limitAfter": {
+          "chips": [],
+          "ail": 0,
+          "tint": "150,26,16",
+          "edge": 0
+        },
+        "blow": {
+          "chips": [],
+          "ail": 0,
+          "tint": "150,26,16",
+          "edge": 0.414
+        },
+        "blowAfter": {
+          "chips": [],
+          "ail": 0,
+          "tint": "150,26,16",
+          "edge": 0
+        },
+        "flash": {
+          "bleed": 0,
+          "pollution": 0,
+          "dehydration": 0,
+          "starvation": 0,
+          "limit-change": 0,
+          "blow": 0.07
+        }
+      }
+    },
+    {
+      "name": "V11 tide: water is drawn exactly on the Runtime's flooded cells (none outside, every visible one covered); a body caught there wades; the tide recedes with a fade",
+      "status": "passed",
+      "detail": {
+        "flooded": 106,
+        "changed": 86528,
+        "outside": 0,
+        "inView": 20,
+        "covered": 20,
+        "minCover": 1,
+        "low": [],
+        "cam": [
+          1536,
+          162,
+          768,
+          432
+        ],
+        "wade": {
+          "wade": true,
+          "shadow": false
+        },
+        "dry": {
+          "wade": false,
+          "shadow": true
+        },
+        "fade": [
+          0.64,
+          0,
+          0,
+          0.5,
+          1,
+          true
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "155.0.8059.40",
+  "finishedAt": "2026-10-13T13:23:05.200Z",
+  "passed": 6,
+  "failed": 0
+}

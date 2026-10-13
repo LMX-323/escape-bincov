@@ -33,6 +33,8 @@
     "test:shop-feedback": "node scripts/shop-feedback-test.mjs",
     "test:asset-load": "node scripts/asset-load-test.mjs",
     "test:hud-release": "node scripts/hud-release-test.mjs",
+    "test:coast-render-targets": "node scripts/coast-render-target-test.mjs",
+    "test:coast-animation": "node scripts/coast-sample-test.mjs --group=animation",
     "test:qol-expansion": "node scripts/qol-expansion-test.mjs",
     "test:expansion": "node scripts/expansion-browser-test.mjs",
     "test:expansion-benchmark": "node --import tsx scripts/expansion-benchmark.mjs",
