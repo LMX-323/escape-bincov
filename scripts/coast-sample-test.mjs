@@ -3,7 +3,8 @@
 // action goes through real input, the v1 port and the Runtime transaction services. Storage faults patch the real
 // localStorage write for the session key.
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -14,8 +15,12 @@ const managed = page => page.evaluate(readManagedTablesSource => (0,eval)('('+re
 const pixiEvents = page => page.evaluate(source => (0,eval)('('+source+')')(window.__bincovSample.host.app.renderer), readPixiEvents.toString());
 
 const out = resolve(process.env.BINCOV_SAMPLE_OUT || 'test-results/coast-sample'); await mkdir(out, { recursive: true });
-const url = pathToFileURL(resolve(process.env.BINCOV_SAMPLE_HTML || 'dist/index.html')).href;
-const report = { startedAt: new Date().toISOString(), seed: '42', steps: [], errors: [], requests: [] };
+const htmlPath = resolve(process.env.BINCOV_SAMPLE_HTML || 'dist/index.html'), url = pathToFileURL(htmlPath).href;
+const buildSHA256 = createHash('sha256').update(await readFile(htmlPath)).digest('hex');
+// --group=animation keeps the complete V03/V04 death flow and V10/V11 feedback/tide flow (six checks).
+const group = process.argv.find(a => a.startsWith('--group='))?.slice(8);
+assert.ok(group === undefined || group === 'animation', 'unknown test group');
+const report = { startedAt: new Date().toISOString(), build: url, buildSHA256, seed: '42', group: group ?? 'all', steps: [], errors: [], requests: [] };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function step(name, task) {
@@ -76,7 +81,7 @@ const roomPixels = (page, compare, leak = false) => page.evaluate(([r, compare, 
   return { size: [x1 - x0, y1 - y0], changed };
 }, [ROOM, compare, leak]);
 
-{ // Desktop flow: one run through every wiring point, ending in a settlement
+if (!group) { // Desktop flow: one run through every wiring point, ending in a settlement
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await step('W00 sample deploy mounts the Pixi host on the real Runtime; RaidScene never starts', async () => {
     await deploy(page);
@@ -469,7 +474,8 @@ const roomPixels = (page, compare, leak = false) => page.evaluate(([r, compare, 
 // Real Runtime deaths (driver.kill -> damageEnemy, so hurt/death events, kills and the corpse container are the game's own)
 // watched from inside the view: the real present runs unchanged and each watched actor's graphics are read after it.
 // Nothing primes deathT, injects or reorders events, or removes corpses. `strip` also crops the composited target through
-// one actor's fall, and holds the ticker once mid-fall so the page itself can be screenshotted.
+// one actor's fall. Pixel readbacks stall software renderers, so V03 records natural frames separately and advances its
+// pixel contract at an explicit 1/60s view delta with the automatic ticker stopped. Runtime kills and events remain real.
 const watchDeaths = (page, uids, strip = null) => page.evaluate(([uids, strip]) => {
   const h = window.__bincovSample.host, v = h.view, present = Object.getPrototypeOf(v).present, log = window.__deaths = { rows: [], crops: [], hold: false };
   v.present = function (batch, dt) {
@@ -488,7 +494,6 @@ const watchDeaths = (page, uids, strip = null) => page.evaluate(([uids, strip]) 
     }
   };
 }, [uids, strip]);
-const releaseHold = page => page.evaluate(() => { window.__deaths.hold = false; window.__bincovSample.host.app.ticker.start(); });
 const endWatch = page => page.evaluate(() => {
   const v = window.__bincovSample.host.view, log = window.__deaths; delete v.present; delete window.__deaths;
   const data = c => c.getContext('2d').getImageData(0, 0, 216, 216).data, base = log.crops[0] && data(log.crops[0].canvas);
@@ -510,7 +515,7 @@ const deadGraphics = page => page.evaluate(() => {
 const noFall = (rows, label) => { for (const r of rows) assert.ok(r.deathT === 0 && r.rotation === 0 && !r.body && !r.weapon, `${label}: ${JSON.stringify(r)}`); };
 
 // Playtest readability (round 5): held-weapon arms, recognisable ground loot, the exit hold ring and the docked panels.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   await step('V05 readability: arms end on the weapon grip, ground loot uses the item icon, the exit ring draws no stray line, docked loot keeps the player in view', async () => {
@@ -561,18 +566,37 @@ for (const art of ['sol', 'placeholder']) {
     assert.equal((await page.evaluate(() => window.__bincovSample.counts())).art, art);
     const uid = 'enemy-3'; // a rifleman: the held weapon must leave with the fall
     // Inside the village sample, so the Sol mode draws its own ground around the fall (enemy bodies are procedural in both modes).
-    await place(page, 640, 456, 0, 'coast'); await putEnemy(uid, 704, 456); await frames(page, 8); await savable();
+    await place(page, 640, 456, 0, 'coast'); await putEnemy('enemy-6', 768, 456); await frames(page, 8); await savable();
+    // Observe a separate real kill without GPU readbacks, a stopped ticker or a substituted delta. This observation
+    // cannot certify hardware performance; retain its natural fall-frame count even when the pixel contract passes.
+    assert.equal(await shownNow('enemy-6'), true, 'the natural observation starts with an enemy in view');
+    await watchDeaths(page, ['enemy-6']); await kill('enemy-6'); await frames(page, 20);
+    const naturalRows = (await endWatch(page)).rows.filter(r => !r.alive);
+    const naturalFallFrames = naturalRows.filter(r => !r.hasCorpse).length;
+    const natural = { frames: naturalRows.length, fallFrames: naturalFallFrames, originalMinimumFallFrames: 3, meetsOriginalMinimum: naturalFallFrames >= 3, deltas: naturalRows.map(r => r.dt) };
+    await putEnemy(uid, 704, 456); await frames(page, 8); await savable();
     assert.equal(await shownNow(uid), true, 'the enemy stands in view before the kill');
-    await watchDeaths(page, [uid], uid); await kill(uid);
-    // Without a fall (the OPUS-DEATH-01 defect) the hold never comes: stop waiting once the corpse is up and let the asserts say why.
-    await page.waitForFunction(() => { const d = window.__deaths; return d.hold || d.rows.some(r => !r.alive && r.hasCorpse && r.deathT === 0); });
-    if (await page.evaluate(() => window.__deaths.hold)) {
-      await page.evaluate(() => window.__bincovSample.host.app.render());
-      await page.screenshot({ path: resolve(out, `death-midfall-${art}.png`) }); await releaseHold(page);
+    const previousDelta = await page.evaluate(() => { const t = window.__bincovSample.host.app.ticker; t.stop(); return t.deltaMS; });
+    let w;
+    try {
+      await watchDeaths(page, [uid], uid); await kill(uid);
+      for (let i = 0; i < 60; i++) {
+        const probe = await page.evaluate(() => {
+          const h = window.__bincovSample.host; h.app.ticker.deltaMS = 1000 / 60; h.frame(); h.app.render();
+          const d = window.__deaths; return { hold: d.hold, done: d.crops.length === 6 || d.rows.some(r => !r.alive && r.hasCorpse && r.deathT === 0) };
+        });
+        if (probe.hold) {
+          await page.screenshot({ path: resolve(out, `death-midfall-${art}.png`) });
+          await page.evaluate(() => { window.__deaths.hold = false; });
+        }
+        if (probe.done) break;
+      }
+      await page.screenshot({ path: resolve(out, `death-corpse-${art}.png`) });
+      w = await endWatch(page);
+    } finally {
+      await page.evaluate(delta => { const h = window.__bincovSample.host; delete h.view.present; delete window.__deaths; h.app.ticker.deltaMS = delta; h.app.ticker.start(); }, previousDelta);
     }
-    await page.waitForFunction(() => { const d = window.__deaths; return d.crops.length === 6 || d.rows.filter(r => !r.alive).length >= 60; });
-    await page.screenshot({ path: resolve(out, `death-corpse-${art}.png`) });
-    const w = await endWatch(page); await saveStrip(w, `death-fall-${art}.png`);
+    await saveStrip(w, `death-fall-${art}.png`);
     const dead = w.rows.filter(r => !r.alive), first = dead[0], dying = dead.filter(r => !r.hasCorpse), lying = dead.filter(r => r.hasCorpse);
     assert.equal(first.death, true, 'the first dead frame carries the real death event');
     assert.ok(first.deathT > 0 && first.body && !first.weapon && !first.hasCorpse, `the death frame starts the fall, not the corpse: ${JSON.stringify(first)}`);
@@ -585,7 +609,7 @@ for (const art of ['sol', 'placeholder']) {
     assert.ok(lying[0].deathT >= .16 && lying.every(r => r.corpse && !r.body && !r.weapon && r.shown), 'then only the corpse shows');
     assert.equal(w.crops.length, 6); assert.ok(w.crops[3].changedFromDeathFrame > 0 && !w.crops[3].corpse, 'the tipped body renders differently from the death frame');
     await savable();
-    return { art, deathFrame: first, fallFrames: dying.length, rotations: dying.map(r => +r.rotation.toFixed(3)), handoffDeathT: lying[0].deathT, facing, crops: w.crops };
+    return { art, sampling: { controlledViewDelta: 1 / 60, natural }, deathFrame: first, fallFrames: dying.length, rotations: dying.map(r => +r.rotation.toFixed(3)), handoffDeathT: lying[0].deathT, facing, crops: w.crops };
   });
   await step(`V04 ${art}: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload`, async () => {
     const hidden = 'enemy-12', indoor = 'enemy-21';
@@ -635,7 +659,7 @@ for (const art of ['sol', 'placeholder']) {
 }
 // Round 6 (experience pass): combat feedback, the exit pointer, the stateless atmosphere and the end-of-run outro.
 // Fixtures only place actors, doors and the player; shots, keys and panels are real input.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   const screenOf = (x, y) => page.evaluate(([x, y]) => { const v = window.__bincovSample.host.view, r = document.querySelector('.coast-sample canvas').getBoundingClientRect(); return { x: r.left + (x - v.cam.x) * v.view.s / v.view.dpr, y: r.top + (y - v.cam.y) * v.view.s / v.view.dpr }; }, [x, y]);
@@ -797,7 +821,7 @@ for (const art of ['sol', 'placeholder']) {
 }
 // The outro after a saved settlement: the player's own fall plays to the corpse under the curtain (OPUS-DEATH-02), with
 // no further simulation; the canvas grading is cleared for the next mount.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   await step('V11b low tide (seed 42): the Runtime floods nothing and nothing is drawn as tidal water by the tide strip', async () => {
@@ -857,7 +881,7 @@ for (const art of ['sol', 'placeholder']) {
       const ev = (cause, damage, angle = null) => ({ type: 'hurt', cause, uid: 'player', at: { x: b().frame.player.x, y: b().frame.player.y }, damage, critical: false, angle, seq: 0, stamp: b().stamp, durability: 'accepted' });
       const read = () => ({ chips: [...document.querySelectorAll('[data-drain] i')].map(i => i.textContent), ail: +document.querySelector('[data-ail]').style.opacity || 0, tint: document.querySelector('[data-ail]').style.getPropertyValue('--ail'), edge: +document.querySelector('[data-hurt]').style.opacity || 0 });
       const flashOf = e => { const g = v.actors.get('player'); g.flashT = 0; v.present({ ...b(), events: [e] }, 0); return g.flashT; };
-      const out = { start: read() };
+      const out = { start: read(), sampling: { blowPresentationDelta: 0, fadeWallMilliseconds: 1200 } };
       let feeding = null; const feed = () => { if (feeding) for (const [c, perSecond] of feeding) h.feedback(ev(c, perSecond * h.app.ticker.deltaMS / 1000), b()); };
       h.app.ticker.add(feed);
       // Waits are in time, not frames: the page may run at 60 or 165 Hz.
@@ -868,7 +892,10 @@ for (const art of ['sol', 'placeholder']) {
       feeding = null; await forMs(1500); out.after = read();
       h.feedback(ev('limit-change', 3), b()); await frame(); await frame(); out.limit = read();
       await forMs(3400); out.limitAfter = read();
-      h.feedback(ev('blow', .4, 1), b()); await frame(); out.blow = read();
+      // Sample the event's own presentation before any arbitrary rAF delay decays the pulse. This is the same real
+      // feedback path as above; a zero elapsed interval does not advance simulation or age an effect before reading it.
+      h.feedback(ev('blow', .4, 1), b()); h.feedbackFrame(b(), 0); out.blow = read();
+      await forMs(1200); out.blowAfter = read();
       h.app.ticker.remove(feed);
       out.flash = Object.fromEntries(['bleed', 'pollution', 'dehydration', 'starvation', 'limit-change', 'blow'].map(c => [c, flashOf(ev(c, c === 'blow' ? .4 : 2, c === 'blow' ? 1 : null))]));
       return out;
@@ -889,6 +916,7 @@ for (const art of ['sol', 'placeholder']) {
     assert.deepEqual(r.after.chips, []); assert.equal(r.after.ail, 0);
     assert.deepEqual(r.limit.chips, ['生命上限下降 -3.0']); assert.deepEqual(r.limitAfter.chips, []);
     assert.ok(r.blow.edge > .3, `a 0.4-point blow still pulses: ${r.blow.edge}`); assert.deepEqual(r.blow.chips, []);
+    assert.ok(r.blowAfter.edge < .05, `the single blow pulse fades without another hit: ${r.blowAfter.edge}`);
     for (const [c, t] of Object.entries(r.flash)) assert.equal(t > 0, c === 'blow', `${c} flash ${t}`);
     return r;
   });
@@ -956,7 +984,7 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
-{ // Touch
+if (!group) { // Touch
   const { context, page } = await open('?test=1&entry=tabs&sample=village', { hasTouch: true });
   await step('W14 touch aim stick past 0.62 keeps firing', async () => {
     await deploy(page); await place(page, 640, 456, 0); await frames(page, 3); await clearEvents(page);
@@ -971,7 +999,7 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
-{ // Item names in the grid panels: three-character labels (保险管 and the like) show in full at every size.
+if (!group) { // Item names in the grid panels: three-character labels (保险管 and the like) show in full at every size.
   for (const size of [{ w: 1280, h: 720, touch: false }, { w: 1920, h: 1080, touch: false }, { w: 844, h: 390, dpr: 3, touch: true }, { w: 640, h: 300, dpr: 3, touch: true }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', size.touch ? { viewport: { width: 844, height: 390 }, deviceScaleFactor: size.dpr, hasTouch: true, isMobile: true } : { viewport: { width: size.w, height: size.h } });
     await step(`U11 item labels at ${size.w}x${size.h}: three-character names are not cut (pixel face on desktop, compact face on touch)`, async () => {
@@ -1005,7 +1033,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Dragging in the docked panels: the ghost stays under the cursor, above the panel, and the panel never grows a scrollbar.
+if (!group) { // Dragging in the docked panels: the ghost stays under the cursor, above the panel, and the panel never grows a scrollbar.
   for (const size of [{ w: 1280, h: 720 }, { w: 1920, h: 1080 }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', { viewport: { width: size.w, height: size.h } });
     await step(`U12 drag at ${size.w}x${size.h}: the ghost follows the cursor above the panel, the docked panel never scrolls, closing mid-drag clears it`, async () => {
@@ -1070,7 +1098,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Short and small screens: map labels never overlap, every exit stays labelled, the map uses the panel height
+if (!group) { // Short and small screens: map labels never overlap, every exit stays labelled, the map uses the panel height
   for (const size of [{ w: 640, h: 300, dpr: 3, touch: true }, { w: 844, h: 390, dpr: 3, touch: true }, { w: 1280, h: 720, dpr: 1, touch: false }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', size.touch ? { viewport: { width: 844, height: 390 }, deviceScaleFactor: size.dpr, hasTouch: true, isMobile: true } : {});
     await step(`U10 map labels at ${size.w}x${size.h}: no overlap, every exit named, map fills the short panel`, async () => {
@@ -1098,7 +1126,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Entries without the test flag
+if (!group) { // Entries without the test flag
   const { context, page } = await open('?sample=village');
   await step('W15 ?sample=village without ?test=1 exposes no test interface and still plays on the real Runtime', async () => {
     await action(page, 'enter').click(); await deployFromYard(page, { world: 'buildings', seed: 42 });

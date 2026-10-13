@@ -153,6 +153,8 @@ pnpm test:save-browser
 pnpm test:shop-feedback
 pnpm test:asset-load
 pnpm test:hud-release
+pnpm test:coast-render-targets
+pnpm test:coast-animation
 pnpm test:expansion
 pnpm test:buildings
 pnpm test:qol-expansion
@@ -174,10 +176,10 @@ CI 对 PR 与 `main` 运行以上完整检查。单元测试及打包只在 `Bui
 
 | 组 | 完整浏览器命令（均保留现有断言和循环） |
 | --- | --- |
-| `visual` | `test:ui`、`test:tactical`、`test:art`、`test:title`、`test:title-water` |
+| `visual` | `test:ui`、`test:coast-animation`、`test:tactical`、`test:art`、`test:title`、`test:title-water` |
 | `inventory` | `test:save-browser`、`test:shop-feedback`、`test:expansion`、`test:qol-expansion`、`test:loot`、`test:loot-target`、`test:qol`、`test:portable` |
 | `world` | `test:buildings`、`test:systems`、`test:station-tier1`、`test:station-tier2`、`test:station-relief`、`test:mall-passages`、`test:mall-landing` |
-| `input` | `test:browser`、`test:desktop-input`、`test:shop-drag`、`test:asset-load`、`test:hud-release`、`test:mobile`、`test:mobile-ux` |
+| `input` | `test:browser`、`test:desktop-input`、`test:shop-drag`、`test:asset-load`、`test:hud-release`、`test:coast-render-targets`、`test:mobile`、`test:mobile-ux` |
 
 诊断附件为 `browser-evidence-visual`、`browser-evidence-inventory`、`browser-evidence-world`、`browser-evidence-input`，保留 14 天；临时构建制品仅保留 1 天。失败时其余组继续收集证据，取消旧运行的规则保持不变。
 
