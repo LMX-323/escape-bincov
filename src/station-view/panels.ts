@@ -17,27 +17,28 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
   const d = D.ITEMS[item.id], size = D.itemSize(item);
   const gun = D.WEAPONS[item.id] && item.id !== 'knife';
   const acts = mode === 'gear' ? [
-    gun && source !== 'safe' ? btn('装备', 'equip', 'primary') : '',
+    gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
     d.kind === 'accessory' ? btn('佩戴', 'charm-equip', 'primary') : '',
     SUPPLIES.includes(item.id) ? btn('使用', 'use') : '',
     source === 'stash' ? btn('放入背包', 'quick') : btn('放入仓库', 'quick'),
-    btn(source === 'safe' ? '移回背包' : '放入安全箱', 'secure'),
+    btn(source === 'safe' ? '移回背包' : '放入安全箱', 'secure', gun && source === 'safe' ? 'primary' : ''),
     d.w !== d.h ? btn('旋转', 'rotate') : '',
     item.qty > 1 ? btn('拆分一半', 'split') : '',
   ].join('') : '';
-  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>${mode === 'shop' ? '买价' : '售价'}</dt><dd>${mode === 'shop' ? (d.buy ? `¥ ${d.buy}` : '—') : item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd></div></dl><div class="dacts">${acts}</div></aside>`;
+  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>${mode === 'shop' ? '买价' : '售价'}</dt><dd>${mode === 'shop' ? (d.buy ? `¥ ${d.buy}` : '—') : item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd></div></dl><div class="dacts">${acts}</div>${mode === 'gear' && gun && source === 'safe' ? '<p class="equip-note">安全箱里的枪械请先移回背包，再装备主武器。</p>' : ''}</aside>`;
 }
 
 const charmRow = (charm: string | null) => charm ? `<div class="charm">${icon(charm, 20)}<span>护符 · ${esc(D.ITEMS[charm]?.name ?? charm)}</span>${btn('取下', 'charm-unequip', 'mini')}</div>` : '';
+export const gearActions = (p: Readonly<D.SaveDataV1>, hint = true) => `<div class="gear-actions">${btn('背包全部入库', 'stash-all', '', p.bag.items.length ? 'title="背包全部移入仓库，空间不足时全部留在原处；装备与安全箱不变"' : 'disabled title="背包是空的"')}${btn('整理仓库', 'sort-stash', '', p.stash.items.length ? 'title="只整理仓库：合并同类堆叠，大件优先排列，必要时旋转"' : 'disabled title="仓库是空的"')}${hint ? '<small>入库空间不足时全部留在原处；装备与安全箱不变。</small>' : ''}</div>`;
 
 export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, details = '') {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const ammo = w.ammo ? D.count(p.bag, w.ammo) : 0;
   const over = departure.weight > departure.carry;
   return `<div class="gear">
-    <section class="col left">
-      <h3><i>01</i>随身装备</h3>
-      <div class="slot ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" title="把枪拖到这里装备">
+    <section class="col left" style="width:${p.bag.w * cell}px">
+      <h3><i>01</i>主武器槽</h3>
+      <div class="slot ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备">
         <img alt="" src="${itemArt(e.weapon || 'knife')}" style="height:${Math.round(cell * .6)}px"><div><b>${esc(w.name)}</b>
         <span>${e.weapon ? `弹匣 ${e.ammo} / ${w.magazine}${e.relief ? ' · 救济' : ''} · 背包备用 ${w.ammo ? `${ammo} 发` : '—'}` : '随身匕首 · 始终保留 · 把枪拖到这里装备'}</span></div>
         ${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}
@@ -46,7 +47,7 @@ export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | nu
       <div class="meter ${over ? 'over' : ''}"><span>携行重量 <small>含装备与安全箱</small></span><b>${departure.weight.toFixed(1)} <small>/ ${departure.carry.toFixed(1)} kg</small></b><i style="width:${Math.min(100, departure.weight / departure.carry * 100)}%"></i></div>
       <h3><i>安</i>安全箱 <small>撤离失败也保留</small></h3>${gridHtml(p.safe, 'safe', cell, selected)}
     </section>
-    <section class="col stash"><h3><i>03</i>仓库 <small>${occupied(p.stash)} / ${p.stash.w * p.stash.h} 格 · 出击时留在站里</small></h3>${gridHtml(p.stash, 'stash', cell, selected, { empty: '仓库空置' })}
+    <section class="col stash" style="width:${p.stash.w * cell}px"><h3><i>03</i>仓库 <small>${occupied(p.stash)} / ${p.stash.w * p.stash.h} 格 · 出击时留在站里</small></h3>${gridHtml(p.stash, 'stash', cell, selected, { empty: '仓库空置' })}
       <div class="upgrade">${p.upgraded ? '<span class="ok">已扩建 · 10 × 9 格</span>' : `${btn(`扩建仓库 · ¥ ${D.STASH_UPGRADE_COST}`, 'upgrade', '', !p.quests.repair ? 'disabled' : '')}<small>${p.quests.repair ? '扩建后增至 90 格' : `完成「${D.QUESTS.repair.name}」后可扩建`}</small>`}</div>
       ${details}
     </section>
@@ -60,8 +61,9 @@ export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | nu
 export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, paneB: 'stash' | 'safe', details: string) {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'], ammo = w.ammo ? D.count(p.bag, w.ammo) : 0, over = departure.weight > departure.carry;
   const inv = paneB === 'stash' ? p.stash : p.safe;
-  return `<div class="cgear">
-    <div class="cbar"><div class="slot chip ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" title="把枪拖到这里装备"><img alt="" src="${itemArt(e.weapon || 'knife')}"><b>${esc(w.name)}</b><span>${e.weapon ? `${e.ammo} / ${w.magazine}${w.ammo ? ` · 备用 ${ammo}` : ''}` : '拖枪到这里装备'}</span>${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}</div>
+  return `<div class="cgear">${gearActions(p)}
+    <p class="gear-hint">主武器槽 · 选中枪械后点「装备主武器」</p>
+    <div class="cbar"><div class="slot chip ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备"><img alt="" src="${itemArt(e.weapon || 'knife')}"><b>${esc(w.name)}</b><span>${e.weapon ? `${e.ammo} / ${w.magazine}${w.ammo ? ` · 备用 ${ammo}` : ''}` : '拖枪到这里装备'}</span>${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}</div>
       <div class="cweight ${over ? 'over' : ''}">携行 <b>${departure.weight.toFixed(1)}</b> / ${departure.carry.toFixed(1)} kg</div></div>${charmRow(s.charm?.id ?? null)}
     <div class="panes">
       <section class="pane"><h3>背包 <small>${occupied(p.bag)} / ${p.bag.w * p.bag.h}</small></h3><div class="pane-scroll">${gridHtml(p.bag, 'bag', cell, selected, { empty: '背包是空的' })}</div></section>

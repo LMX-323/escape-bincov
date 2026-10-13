@@ -1,0 +1,79 @@
+{
+  "build": "dist/index.html",
+  "sha256": "481f625c60804567a5c4fb8c295a8af6339789ee1791ded3c0163b130f0a064e",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-13T03:28:16.770Z",
+  "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
+  "steps": [
+    {
+      "name": "F01-existing-mouse-double-click-roundtrip",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:102:41\n    at async step (file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:95:22)\n    at async file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:100:3"
+    },
+    {
+      "name": "F01-full-bag-keeps-item-and-shows-reason",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /空间|放不下/. Input:\n\n''\n\n    at file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:111:12\n    at async step (file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:95:22)\n    at async file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:108:3"
+    },
+    {
+      "name": "F01-double-click-storage-failure-rolls-back",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard .dialog [data-act=\"retry-save\"]') to be visible\u001b[22m\n\n    at /workspace/escape-bincov/scripts/issue26-station-test.mjs:115:51\n    at async step (/workspace/escape-bincov/scripts/issue26-station-test.mjs:95:22)\n    at async file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:113:3"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-844x390",
+      "status": "passed"
+    },
+    {
+      "name": "F05-safe-gun-explains-return-and-keeps-equip-selection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'bc-mv64h30y-b'\n- 'bc-mv64h2um-1s'\n           ^\n\n    at file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:138:52\n    at async step (file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:95:22)\n    at async file:///workspace/escape-bincov/scripts/issue26-station-test.mjs:135:3"
+    },
+    {
+      "name": "F09-full-stash-rejects-whole-batch",
+      "status": "passed"
+    },
+    {
+      "name": "F09-F10-stash-all-storage-failure-rolls-back",
+      "status": "passed"
+    },
+    {
+      "name": "F09-F10-sort-stash-storage-failure-rolls-back",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "failure-1.png",
+    "failure-2.png",
+    "failure-3.png",
+    "gear-1280x720.png",
+    "equip-1280x720.png",
+    "gear-1920x1080.png",
+    "equip-1920x1080.png",
+    "gear-390x844.png",
+    "equip-390x844.png",
+    "gear-844x390.png",
+    "equip-844x390.png",
+    "failure-8.png",
+    "full-stash-refusal.png"
+  ],
+  "finishedAt": "2026-10-13T03:30:08.051Z",
+  "summary": {
+    "passed": 7,
+    "total": 11
+  }
+}

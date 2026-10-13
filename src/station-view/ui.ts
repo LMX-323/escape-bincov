@@ -136,8 +136,10 @@ export class UI {
     }
     if (kind === 'gear') {
       // Left: slot, three headings and the weight meter (~224 px) around bag (5 rows) and safe (2 rows); right: stash, upgrade and details (~180 px).
-      const byH = Math.min((H - 164 - 262) / 7, (H - 164 - 190) / rows), byW = (Math.min(Wd - 24, Wd * .74) - 70) / 16;
-      return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
+      const byH = Math.min((H - 164 - 326) / 7, (H - 164 - 254) / rows), byW = (Math.min(Wd - 24, Wd * .74) - 70) / 16;
+      // Below 36 px, three-character labels such as 保险管 no longer fit after the new gear actions.
+      // Keep labels readable and allow the existing vertical scroll on exceptionally short desktop panels.
+      return Math.max(36, Math.min(56, Math.floor(Math.min(byH, byW))));
     }
     const byH = Math.min((H - 331 - 70) / 6, (H - 331) / rows), byW = (Math.min(Wd - 24, Wd * .76) - 74) / 20;
     return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
@@ -156,8 +158,10 @@ export class UI {
     for (let pass = 0; ; pass++) {
       this.paint(kind, s, cell, center, el, title, sub, line);
       const pb = el.querySelector<HTMLElement>('.pbody')!, over = pb.scrollHeight - pb.clientHeight;
-      if (over <= 1 || this.compact || !WIDE.includes(kind) || cell <= 28 || pass >= 2) break;
-      cell = Math.max(28, cell - Math.ceil(over / Math.max(kind === 'gear' ? 7 : 6, s.profile.stash.h)));
+      // Gear details may scroll vertically; keep inventory geometry fixed while a first click selects an item,
+      // otherwise the second click of a double click can land outside that item after the panel resizes.
+      if (kind === 'gear' || over <= 1 || this.compact || !WIDE.includes(kind) || cell <= 28 || pass >= 2) break;
+      cell = Math.max(28, cell - Math.ceil(over / Math.max(6, s.profile.stash.h)));
     }
   }
   private paint(kind: PanelKind, s: HideoutSnapshot, cell: number, center: boolean, el: HTMLElement, title: string, sub: string, line: string) {
@@ -187,7 +191,7 @@ export class UI {
     const tabbed = SHORTCUTS.some(q => q.kind === kind) || kind === 'generator';
     const tabs = tabbed ? `<nav class="ptabs" aria-label="水产站功能">${SHORTCUTS.map(q => `<button data-tab="${q.kind}" class="${q.kind === kind ? 'on' : ''}" ${q.kind === kind ? 'aria-current="page"' : ''}>${q.label}<kbd>${q.key}</kbd></button>`).join('')}</nav>` : '';
     const heading = this.compact && tabbed ? `<button class="tabmenu" data-tabmenu aria-label="切换功能"><h2>${esc(title)}</h2><i class="caret" aria-hidden="true"></i></button>` : `<h2>${esc(title)}</h2>`;
-    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
+    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${kind === 'gear' && !this.compact ? P.gearActions(s.profile, false) : ''}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
     el.querySelector('.pbody')!.scrollTop = scroll;
     el.hidden = false;
     (center ? this.panel : this.modal).hidden = true;
@@ -235,7 +239,7 @@ export class UI {
       inv: src => this.rt.snapshot().profile[src as Source] ?? null,
       check: (from, to, uid, x, y, r) => this.rt.placementError(from as Source, to as Source, uid, x, y, r),
       drop: (from, to, uid, x, y, r) => { this.result(this.rt.move(from as Source, to as Source, uid, x, y, r), 'drop'); this.selected = { src: to, uid }; this.render(); },
-      dropSlot: (slot, from, uid) => { if (slot === 'weapon') { this.result(this.rt.equip(from as Source, uid), 'drop'); this.selected = null; this.render(); } },
+      dropSlot: (slot, from, uid) => { if (slot === 'weapon') this.equip(from as Source, uid); },
       select: (src, uid) => { this.selected = { src, uid }; this.host.sound('pick'); this.render(); },
       quick: (src, uid) => { this.result(this.rt.quickMove(src as Source, uid), 'drop'); this.selected = null; this.render(); },
       reject: m => { this.toast(m, 'error'); this.host.sound('error'); },
@@ -264,6 +268,25 @@ export class UI {
     if (r.ok) { if (r.message) this.toast(r.message, 'ok'); this.host.sound(okCue); }
     else { this.toast(r.message, 'error'); this.host.sound('error'); if (r.reason === 'storage' || r.reason === 'conflict') this.showStorage(); }
     return r.ok;
+  }
+  private equip(src: Source, uid: string) {
+    const item = this.rt.snapshot().profile[src]?.items.find(i => i.uid === uid);
+    this.selected = { src, uid };
+    const r: Result = src === 'safe' ? { ok: false, reason: 'rule', message: '安全箱里的枪械请先移回背包，再装备主武器。' } : this.rt.equip(src, uid);
+    if (this.result(r, 'drop')) { this.toast(`已装备主武器：${D.ITEMS[item?.id ?? '']?.name ?? '枪械'}。`, 'ok'); this.selected = null; }
+    this.render();
+  }
+  private secure(src: Source, uid: string) {
+    const before = this.rt.snapshot().profile, item = before[src].items.find(i => i.uid === uid);
+    if (this.result(this.rt.secure(src, uid), 'drop')) {
+      this.selected = null;
+      if (src === 'safe' && item && D.WEAPONS[item.id] && item.id !== 'knife') {
+        // Automatic transfers allocate a fresh UID; select the newly created gun, not its former safe entry.
+        const moved = this.rt.snapshot().profile.bag.items.find(i => i.id === item.id && !!i.relief === !!item.relief && !before.bag.items.some(old => old.uid === i.uid));
+        if (moved) this.selected = { src: 'bag', uid: moved.uid };
+      }
+    }
+    this.render();
   }
   private settle(token?: string) {
     if (!this.shop) return;
@@ -307,16 +330,18 @@ export class UI {
       case 'close': if (b.closest('.dialog')) this.closeDialog(); else this.close(); break;
       case 'pane': this.paneB = a1 as 'stash' | 'safe'; this.selected = null; this.render(); break;
       case 'mode': this.shopMode = a1 as 'buy' | 'sell'; this.selected = null; this.render(); break;
-      case 'equip': if (src && uid) { this.result(this.rt.equip(src, uid), 'drop'); this.selected = null; this.render(); } break;
+      case 'equip': if (src && uid) this.equip(src, uid); break;
       case 'unequip': this.result(this.rt.unequip(), 'drop'); this.render(); break;
       case 'charm-equip': if (src && uid) { this.result(this.rt.equipCharm(src, uid), 'drop'); this.selected = null; this.render(); } break;
       case 'charm-unequip': this.result(this.rt.unequipCharm(), 'drop'); this.render(); break;
       case 'use': if (src && uid) { const name = D.ITEMS[this.findSelected(this.rt.snapshot())?.id ?? '']?.name; if (this.result(this.rt.useSupply(src, uid))) this.toast(`已使用${name ?? '补给'}。`, 'ok'); this.selected = null; this.render(); } break;
-      case 'secure': if (src && uid) { this.result(this.rt.secure(src, uid), 'drop'); this.selected = null; this.render(); } break;
+      case 'secure': if (src && uid) this.secure(src, uid); break;
       case 'split': this.split(); break;
       case 'quick': if (src && uid) { this.result(this.rt.quickMove(src, uid), 'drop'); this.selected = null; this.render(); } break;
       case 'rotate': if (src) { const it = this.findSelected(this.rt.snapshot()); if (it) { const r = this.rt.move(src, src, it.uid, it.x, it.y, !it.rotated); this.result(r.ok || r.reason !== 'space' ? r : { ok: false, reason: 'space', message: '原位旋转放不下，拖动时按 R 换个位置。' }, 'drop'); this.render(); } } break;
       case 'upgrade': this.result(this.rt.upgradeStash(), 'build'); this.render(); break;
+      case 'stash-all': if (this.result(this.rt.stashAll(), 'drop')) this.selected = null; this.render(); break;
+      case 'sort-stash': if (this.result(this.rt.sortStash(), 'drop')) this.selected = null; this.render(); break;
       case 'relief': this.result(this.rt.claimRelief()); this.render(); break;
       case 'cart-reset': this.shop?.reset(); this.selected = null; this.host.sound('close'); this.render(); break;
       case 'cart-settle': this.settle(); break;

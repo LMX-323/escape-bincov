@@ -1,0 +1,480 @@
+{
+  "startedAt": "2026-10-13T13:04:51.749Z",
+  "status": "failed",
+  "platform": "win32/x64",
+  "node": "v24.19.0",
+  "html": "D:\\bincov\\pr44-closeout\\dist\\index.html",
+  "htmlSHA256": "292b29967fb18ba3c3ccab95b667ab016ce082b30c03816a2a1779fab1fd3cfa",
+  "checkoutCommit": "f68b593938d81ede3c1827aa7a9c8dca2dffa5e8",
+  "cases": [
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "pickup-once",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-pickup-once-picked-up.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-pickup-once-accepted.png"
+      ],
+      "detail": {
+        "doubleClickWrites": 1,
+        "buttonWrites": 1,
+        "restoredBag": [
+          {
+            "uid": "double-pickup",
+            "id": "bandage",
+            "qty": 2,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "uid": "button-pickup",
+            "id": "pistol",
+            "qty": 1,
+            "x": 1,
+            "y": 0
+          }
+        ]
+      },
+      "durationMs": 2275
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "partial-stack-and-full-bag",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-partial-stack-and-full-bag-accepted.png"
+      ],
+      "detail": {
+        "merged": 2,
+        "remaining": 6,
+        "refused": "背包空间不足"
+      },
+      "durationMs": 1429
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "equip-gun-and-specific-rejection",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-equip-gun-and-specific-rejection-equipped-picked-gun.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-equip-gun-and-specific-rejection-accepted.png"
+      ],
+      "detail": {
+        "equipped": "carbine",
+        "recoveredRounds": 8,
+        "rejection": "无法装备，背包装不下换下的武器和弹药。请先腾出空间。"
+      },
+      "durationMs": 1699
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "drag-swaps-and-invalid-overlap",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-drag-swaps-and-invalid-overlap-accepted.png"
+      ],
+      "detail": {
+        "crossContainerSwap": true,
+        "sameBagSwap": true,
+        "multipleOverlapRejected": true
+      },
+      "durationMs": 1474
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "quick-quota-joint-rollback",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-quick-quota-joint-rollback-save-rejected.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-quick-quota-joint-rollback-accepted.png"
+      ],
+      "detail": {
+        "operation": "quick",
+        "rollback": true,
+        "retryWrites": 1
+      },
+      "durationMs": 1567
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "swap-quota-joint-rollback",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-swap-quota-joint-rollback-save-rejected.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-swap-quota-joint-rollback-accepted.png"
+      ],
+      "detail": {
+        "operation": "swap",
+        "rollback": true,
+        "retryWrites": 1
+      },
+      "durationMs": 1651
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "real-window-conflict-cancels-held-swap",
+      "status": "failed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1280x720-real-window-conflict-cancels-held-swap-failure.png"
+      ],
+      "error": "locator.evaluate: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.drop-preview').last()\u001b[22m\n\n    at Object.drag (D:\\bincov\\pr44-closeout\\scripts\\issue26-raid-inventory-test.mjs:141:62)\n    at async cases (D:\\bincov\\pr44-closeout\\scripts\\issue26-raid-inventory-test.mjs:270:56)\n    at async runCase (D:\\bincov\\pr44-closeout\\scripts\\issue26-raid-inventory-test.mjs:166:21)\n    at async file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:293:7",
+      "durationMs": 13390
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "pickup-once",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1920x1080-pickup-once-picked-up.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1920x1080-pickup-once-accepted.png"
+      ],
+      "detail": {
+        "doubleClickWrites": 1,
+        "buttonWrites": 1,
+        "restoredBag": [
+          {
+            "uid": "double-pickup",
+            "id": "bandage",
+            "qty": 2,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "uid": "button-pickup",
+            "id": "pistol",
+            "qty": 1,
+            "x": 1,
+            "y": 0
+          }
+        ]
+      },
+      "durationMs": 2289
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "equip-gun-and-specific-rejection",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1920x1080-equip-gun-and-specific-rejection-equipped-picked-gun.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1920x1080-equip-gun-and-specific-rejection-accepted.png"
+      ],
+      "detail": {
+        "equipped": "carbine",
+        "recoveredRounds": 8,
+        "rejection": "无法装备，背包装不下换下的武器和弹药。请先腾出空间。"
+      },
+      "durationMs": 1566
+    },
+    {
+      "entry": "classic",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "drag-swaps-and-invalid-overlap",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\classic-1920x1080-drag-swaps-and-invalid-overlap-accepted.png"
+      ],
+      "detail": {
+        "crossContainerSwap": true,
+        "sameBagSwap": true,
+        "multipleOverlapRejected": true
+      },
+      "durationMs": 1512
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "pickup-once",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-pickup-once-picked-up.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-pickup-once-accepted.png"
+      ],
+      "detail": {
+        "doubleClickWrites": 1,
+        "buttonWrites": 1,
+        "restoredBag": [
+          {
+            "uid": "double-pickup",
+            "id": "bandage",
+            "qty": 2,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "uid": "button-pickup",
+            "id": "pistol",
+            "qty": 1,
+            "x": 1,
+            "y": 0
+          }
+        ]
+      },
+      "durationMs": 2937
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "partial-stack-and-full-bag",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-partial-stack-and-full-bag-accepted.png"
+      ],
+      "detail": {
+        "merged": 2,
+        "remaining": 6,
+        "refused": "背包空间不足"
+      },
+      "durationMs": 1948
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "equip-gun-and-specific-rejection",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-equip-gun-and-specific-rejection-equipped-picked-gun.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-equip-gun-and-specific-rejection-accepted.png"
+      ],
+      "detail": {
+        "equipped": "carbine",
+        "recoveredRounds": 8,
+        "rejection": "无法装备，背包装不下换下的武器和弹药。请先腾出空间。"
+      },
+      "durationMs": 2417
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "drag-swaps-and-invalid-overlap",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-drag-swaps-and-invalid-overlap-accepted.png"
+      ],
+      "detail": {
+        "crossContainerSwap": true,
+        "sameBagSwap": true,
+        "multipleOverlapRejected": true
+      },
+      "durationMs": 2050
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "quick-quota-joint-rollback",
+      "status": "failed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-quick-quota-joint-rollback-failure.png"
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   containerId: 'crate-13',\n+   runId: 'bc-mv6p1qs6-b'\n+ }\n- null\n\n    at file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:254:92\n    at async runCase (file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:166:21)\n    at async file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:293:7",
+      "durationMs": 1900
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "swap-quota-joint-rollback",
+      "status": "failed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-swap-quota-joint-rollback-failure.png"
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   containerId: 'crate-13',\n+   runId: 'bc-mv6p1s96-b'\n+ }\n- null\n\n    at file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:254:92\n    at async runCase (file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:166:21)\n    at async file:///D:/bincov/pr44-closeout/scripts/issue26-raid-inventory-test.mjs:293:7",
+      "durationMs": 1975
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "name": "real-window-conflict-cancels-held-swap",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1280x720-real-window-conflict-cancels-held-swap-accepted.png"
+      ],
+      "detail": {
+        "conflict": true,
+        "newerRecordPreserved": true
+      },
+      "durationMs": 4116
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "pickup-once",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1920x1080-pickup-once-picked-up.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1920x1080-pickup-once-accepted.png"
+      ],
+      "detail": {
+        "doubleClickWrites": 1,
+        "buttonWrites": 1,
+        "restoredBag": [
+          {
+            "uid": "double-pickup",
+            "id": "bandage",
+            "qty": 2,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "uid": "button-pickup",
+            "id": "pistol",
+            "qty": 1,
+            "x": 1,
+            "y": 0
+          }
+        ]
+      },
+      "durationMs": 2904
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "equip-gun-and-specific-rejection",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1920x1080-equip-gun-and-specific-rejection-equipped-picked-gun.png",
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1920x1080-equip-gun-and-specific-rejection-accepted.png"
+      ],
+      "detail": {
+        "equipped": "carbine",
+        "recoveredRounds": 8,
+        "rejection": "无法装备，背包装不下换下的武器和弹药。请先腾出空间。"
+      },
+      "durationMs": 2546
+    },
+    {
+      "entry": "village",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "name": "drag-swaps-and-invalid-overlap",
+      "status": "passed",
+      "errors": [],
+      "externalRequests": [],
+      "screenshots": [
+        "D:\\bincov\\pr44-closeout\\test-results\\closeout\\inventory\\village-1920x1080-drag-swaps-and-invalid-overlap-accepted.png"
+      ],
+      "detail": {
+        "crossContainerSwap": true,
+        "sameBagSwap": true,
+        "multipleOverlapRejected": true
+      },
+      "durationMs": 2228
+    }
+  ],
+  "methodology": [
+    "Each independent case starts a fresh offline file:// browser context and deploys through ordinary menu controls.",
+    "Fixtures only arrange inventory, player position, equipment and enemy readiness through the explicit ?test=1 hooks. Gameplay operations use trusted Playwright mouse/keyboard input.",
+    "Both Phaser and ?sample=village are tested. Inventory assertions compare live carried/world state, profile safe contents and every persisted container.",
+    "Storage.prototype.setItem is observed, not replaced with a fake save service. Successful transaction writes are counted inside their trusted browser input event; unrelated periodic checkpoints do not inflate this count.",
+    "Quota faults arm at capture of the trusted action, retain the exact pre-action bytes, and exercise the ordinary retry flow. The second window writes a newer real record and triggers the native storage event.",
+    "1280×720 runs all cases; 1920×1080 repeats pickup, equipment and swap with actual screenshots. No claimed touch-device or human balance acceptance."
+  ],
+  "browser": "155.0.8059.40",
+  "finishedAt": "2026-10-13T13:05:46.112Z",
+  "passed": 17,
+  "failed": 3
+}

@@ -201,9 +201,13 @@ test('container transfer is atomic, partial quantity is truthful, and stale requ
         const ref = { runId: container.runId, mapId: 'coast', kind: 'container' as const, id: container.id };
         const request = { runId: container.runId, containerId: container.id, from: 'container' as const, to: 'bag' as const,
             uid: container.inventory.items[0].uid, x: 0, y: 0, quantity: 1 };
+        assert.equal(r.activate(ref), true); assert.equal(r.lootContext?.containerId, container.id);
         const before = r.snapshot(); f.fail(true); assert.equal(r.transferLoot(ref, request), 'save-failed');
         assert.deepEqual(r.snapshot(), before); assert.ok(!r.current().events.some(e => e.type === 'looted'));
+        assert.equal(r.lootContext, null, 'a failed loot write closes the obsolete interaction context');
         f.fail(false); assert.equal(r.retrySave(), true, f.state.storageError);
+        assert.equal(r.lootContext, null, 'retrying persistence does not reopen or replay the rejected transfer');
+        assert.equal(r.activate(ref), true, 'the player can explicitly open the same container again');
         assert.equal(r.transferLoot({ ...ref, mapId: 'resident-f2' }, request), 'rejected');
         assert.equal(r.transferLoot(ref, request), 'committed');
         assert.equal(D.count(r.snapshot().loadout.bag, 'scrap'), 1);

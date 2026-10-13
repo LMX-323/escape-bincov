@@ -87,6 +87,8 @@ html:not(.mobile) .tabs { gap:32px; padding:0 20px; background:#1b1f18; }
 html:not(.mobile) .tabs button { font-size:16px; padding:9px 0; }
 html:not(.mobile) .tabs button.active { color:#ebdfb2; }
 html:not(.mobile) .tabs button.active::after { background:#c7ba8c; }
+html:not(.mobile) .tabs .inventory-tools { margin:0 0 0 auto; flex-wrap:nowrap; gap:8px; }
+html:not(.mobile) .tabs .inventory-tools button { padding:4px 8px; border:1px solid #646653; white-space:nowrap; }
 html:not(.mobile) .content { padding:14px 20px 0; }
 html:not(.mobile) .gear-content, html:not(.mobile) .trade-content { display:flex; flex-direction:column; overflow:hidden; }
 html:not(.mobile) .gear-columns, html:not(.mobile) .tactical-columns { display:grid; grid-template-columns:minmax(210px,1fr) calc(var(--inventory-cell) * 6) calc(var(--inventory-cell) * 10); gap:24px; flex:1; min-height:0; overflow:auto; padding:0 0 14px; align-items:start; }
