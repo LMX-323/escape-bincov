@@ -19,9 +19,15 @@
 1. CDP 真实触控输入提供 80 ms 的时间间隔；第二次 pointerup 在产品 handler 前经历真实 450 ms 主线程长任务。检查事件间隔小于 320 ms、处理间隔大于 320 ms，仍恰好入车一件，原存档字节不变。
 2. CDP 真实触控输入提供 350 ms 的时间间隔，但四条事件一起排队处理。检查仍是两次单选、购物车为空、第二下高亮和存档不变。这不是实际等待 350 ms 的真机手势；原 `test:station-tier1` 的真实 350 ms 分隔另外回归。
 
-两个时间回归明确使用**原生时钟**，事件仍为 `isTrusted=true`。其他原有拒绝/冲突检查保留固定时钟。Playwright `page.clock.setFixedTime` 不只冻结 Date：它还替换 `Event.timeStamp`，在第一次读取时缓存假的当前 performance 时间。最初固定时钟探针因此未满足事件间隔条件，保留为测试条件调查，不能当作旧产品负对照。[DOM 时间戳规则](https://dom.spec.whatwg.org/#dom-event-timestamp)与本地 Playwright 源码共同支持该区分。
+两个时间回归明确使用**原生事件时间与performance时钟**，事件仍为 `isTrusted=true`；通过独立init脚本只固定 `Date.now()` 这一业务时间，避免正常5秒检查点与“入车不写档”断言竞争，帧、计时器和输入处理继续真实运行。其他原有拒绝/冲突检查保留原固定时钟。Playwright `page.clock.setFixedTime` 不只冻结 Date：它还替换 `Event.timeStamp`，在第一次读取时缓存假的当前 performance 时间，不能用于此输入时间门槛。最初固定时钟探针因此未满足事件间隔条件，保留为测试条件调查，不能当作旧产品负对照。[DOM 时间戳规则](https://dom.spec.whatwg.org/#dom-event-timestamp)与本地 Playwright 源码共同支持该区分。
 
 同一新测试脚本对未升级 main HTML 的两项原生时钟负对照都失败：[原始报告](old-native-clock.json)。80 ms 输入、约 451.7 ms 处理间隔时未入车；350 ms 输入、约 2 ms 处理间隔时错误入车。失败均发生在最终产品结果断言，事件顺序、可信输入和时序前提均通过，证明门槛有效。
+
+## 首轮 CI 与业务时间夹具修正
+
+准确head `cd7274e` 的[首轮CI库存job](https://github.com/xuys2025/escape-bincov/actions/runs/38404279410/job/115319971344)在商店步骤11/13，原11项全部通过；新两项的可信输入、80/350 ms前提及最终入车/两次单选结果也通过，最后原档字节检查失败。[原始CI报告](ci-first-shop-feedback.json)记录两项 profile 均不变，但revision从3变4，基地cursor和restSeconds推进约5.9秒。这与正式Runtime每5秒自动checkpoint一致，是新增测试完全放开业务时间后的夹具竞争，不是交易写入、双触失败或存档损坏。
+
+修正限定为上述两项只固定Date.now，原生输入/performance时间保留；原11项固定时钟、15秒超时、全部字节/交易断言和产品源码不改。同一最终测试再对旧main运行的[Date-only负对照](old-date-only.json)仍须两项在产品结果断言失败。首轮CI未重跑覆盖，报告和日志保留；修正推送后由新head重新运行完整CI。
 
 ## 本轮实际验证
 

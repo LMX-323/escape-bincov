@@ -70,43 +70,43 @@
         "events": [
           {
             "type": "pointerdown",
-            "timeStamp": 1366,
-            "receivedAt": 1366,
-            "beforeHandlerAt": 1366,
+            "timeStamp": 1321,
+            "receivedAt": 1321,
+            "beforeHandlerAt": 1321,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf5vg-b"
+            "uid": "bc-mv6q392q-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 1367,
-            "receivedAt": 1367,
-            "beforeHandlerAt": 1367,
+            "timeStamp": 1322,
+            "receivedAt": 1322,
+            "beforeHandlerAt": 1322,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf5vg-b"
+            "uid": "bc-mv6q392q-b"
           },
           {
             "type": "pointerdown",
-            "timeStamp": 1369,
-            "receivedAt": 1369,
-            "beforeHandlerAt": 1369,
+            "timeStamp": 1324,
+            "receivedAt": 1324,
+            "beforeHandlerAt": 1324,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf5vg-b"
+            "uid": "bc-mv6q392q-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 1369,
-            "receivedAt": 1369,
-            "beforeHandlerAt": 1369,
+            "timeStamp": 1324,
+            "receivedAt": 1324,
+            "beforeHandlerAt": 1324,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf5vg-b"
+            "uid": "bc-mv6q392q-b"
           }
         ],
         "gapMs": 2,
@@ -134,47 +134,47 @@
         "events": [
           {
             "type": "pointerdown",
-            "timeStamp": 1343,
-            "receivedAt": 1343,
-            "beforeHandlerAt": 1343,
+            "timeStamp": 1303,
+            "receivedAt": 1303,
+            "beforeHandlerAt": 1303,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf78n-b"
+            "uid": "bc-mv6q3aej-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 1343,
-            "receivedAt": 1343,
-            "beforeHandlerAt": 1343,
+            "timeStamp": 1304,
+            "receivedAt": 1304,
+            "beforeHandlerAt": 1304,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf78n-b"
+            "uid": "bc-mv6q3aej-b"
           },
           {
             "type": "pointerdown",
-            "timeStamp": 1346,
-            "receivedAt": 1346,
-            "beforeHandlerAt": 1346,
+            "timeStamp": 1306,
+            "receivedAt": 1306,
+            "beforeHandlerAt": 1306,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf78n-b"
+            "uid": "bc-mv6q3aej-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 1346,
-            "receivedAt": 1346,
-            "beforeHandlerAt": 1346,
+            "timeStamp": 1306,
+            "receivedAt": 1306,
+            "beforeHandlerAt": 1306,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf78n-b"
+            "uid": "bc-mv6q3aej-b"
           }
         ],
-        "gapMs": 3,
-        "handlerGapMs": 3
+        "gapMs": 2,
+        "handlerGapMs": 2
       },
       "detail": {
         "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
@@ -190,7 +190,10 @@
     },
     {
       "name": "timing: quick input survives a long task before its second pointerup handler",
-      "fixedTime": false,
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
       "taps": {
         "mode": "queued-cdp-touch",
         "interactionCpuRate": 1,
@@ -199,47 +202,47 @@
         "events": [
           {
             "type": "pointerdown",
-            "timeStamp": 337.7999999988824,
-            "receivedAt": 1358.3999999985099,
-            "beforeHandlerAt": 1358.5,
+            "timeStamp": 375.09999999962747,
+            "receivedAt": 1397.300000000745,
+            "beforeHandlerAt": 1397.300000000745,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf9kk-b"
+            "uid": "bc-mv6q3br8-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 337.7999999988824,
-            "receivedAt": 1358.5999999996275,
-            "beforeHandlerAt": 1358.5999999996275,
+            "timeStamp": 375.09999999962747,
+            "receivedAt": 1397.5,
+            "beforeHandlerAt": 1397.5,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf9kk-b"
+            "uid": "bc-mv6q3br8-b"
           },
           {
             "type": "pointerdown",
-            "timeStamp": 417.7999999988824,
-            "receivedAt": 1360.3999999985099,
-            "beforeHandlerAt": 1360.3999999985099,
+            "timeStamp": 455.09999999962747,
+            "receivedAt": 1399.300000000745,
+            "beforeHandlerAt": 1399.300000000745,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf9kk-b"
+            "uid": "bc-mv6q3br8-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 417.7999999988824,
-            "receivedAt": 1360.5,
-            "beforeHandlerAt": 1810.5,
+            "timeStamp": 455.09999999962747,
+            "receivedAt": 1399.300000000745,
+            "beforeHandlerAt": 1849.300000000745,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pf9kk-b"
+            "uid": "bc-mv6q3br8-b"
           }
         ],
         "gapMs": 80,
-        "handlerGapMs": 451.90000000037253
+        "handlerGapMs": 451.80000000074506
       },
       "detail": {
         "unchangedSave": true
@@ -248,7 +251,10 @@
     },
     {
       "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
-      "fixedTime": false,
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
       "taps": {
         "mode": "queued-cdp-touch",
         "interactionCpuRate": 1,
@@ -257,47 +263,47 @@
         "events": [
           {
             "type": "pointerdown",
-            "timeStamp": 337,
-            "receivedAt": 1359.5999999996275,
-            "beforeHandlerAt": 1359.5999999996275,
+            "timeStamp": 284.2999999988824,
+            "receivedAt": 1296.7999999988824,
+            "beforeHandlerAt": 1296.8999999985099,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pfb43-b"
+            "uid": "bc-mv6q3dbs-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 337,
-            "receivedAt": 1359.7000000011176,
-            "beforeHandlerAt": 1359.7000000011176,
+            "timeStamp": 284.2999999988824,
+            "receivedAt": 1297,
+            "beforeHandlerAt": 1297,
             "pointerId": 2,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pfb43-b"
+            "uid": "bc-mv6q3dbs-b"
           },
           {
             "type": "pointerdown",
-            "timeStamp": 687,
-            "receivedAt": 1361.7000000011176,
-            "beforeHandlerAt": 1361.7000000011176,
+            "timeStamp": 634.2999999988824,
+            "receivedAt": 1298.7999999988824,
+            "beforeHandlerAt": 1298.7999999988824,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pfb43-b"
+            "uid": "bc-mv6q3dbs-b"
           },
           {
             "type": "pointerup",
-            "timeStamp": 687,
-            "receivedAt": 1361.7000000011176,
-            "beforeHandlerAt": 1361.7000000011176,
+            "timeStamp": 634.2999999988824,
+            "receivedAt": 1298.7999999988824,
+            "beforeHandlerAt": 1298.7999999988824,
             "pointerId": 3,
             "pointerType": "touch",
             "trusted": true,
-            "uid": "bc-mv6pfb43-b"
+            "uid": "bc-mv6q3dbs-b"
           }
         ],
         "gapMs": 350,
-        "handlerGapMs": 2
+        "handlerGapMs": 1.799999998882413
       },
       "detail": {
         "unchangedSave": true

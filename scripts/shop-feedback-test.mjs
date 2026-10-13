@@ -22,6 +22,10 @@ async function open(size, kind, tabs = false, fixedTime = true) {
   page = await context.newPage(); page.setDefaultTimeout(15000);
   page.on('pageerror', e => errors.push(String(e.stack)));
   if (fixedTime) await page.clock.setFixedTime(new Date());
+  else await page.addInitScript(() => {
+    // Pin the business checkpoint clock only. Native performance/Event timestamps and frames keep running.
+    const now = Date.now(); Date.now = () => now;
+  });
   await page.goto(`https://shop.test/?test=1${tabs ? '&entry=tabs' : ''}`);
   await page.waitForFunction(() => window.__bincov?.hideoutRuntime);
   await page.evaluate(kind => {
@@ -128,7 +132,7 @@ try {
   await check('timing: quick input survives a long task before its second pointerup handler', async () => {
     // Playwright's fake clock caches timeStamp at its first read. Use native event times for this gate.
     await open([390, 844], 'funds', false, false);
-    currentCheck.fixedTime = false;
+    currentCheck.clock = { nativeInputTime: true, frozenDateNow: true };
     const before = await raw(), target = await pistolTarget();
     const taps = await doubleTap(target, { inputGapMs: 80, blockSecondUpMs: 450 });
     assert.ok(taps.gapMs >= 0 && taps.gapMs < 320, 'actual pointer timestamps are inside the quick-transfer window');
@@ -139,7 +143,7 @@ try {
   });
   await check('timing: inputs 350 ms apart remain separate selections even when queued together', async () => {
     await open([390, 844], 'funds', false, false);
-    currentCheck.fixedTime = false;
+    currentCheck.clock = { nativeInputTime: true, frozenDateNow: true };
     const before = await raw(), target = await pistolTarget();
     const taps = await doubleTap(target, { inputGapMs: 350 });
     assert.ok(taps.gapMs >= 320, 'actual pointer timestamps are outside the quick-transfer window');

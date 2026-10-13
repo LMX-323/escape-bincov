@@ -1,0 +1,348 @@
+{
+  "sha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "browser": "153.0.8010.12",
+  "cpuRate": 1,
+  "only": [],
+  "checks": [
+    {
+      "name": "1280x720 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 238.4921875,
+          "y": 576.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 225.4921875,
+          "y": 576.5,
+          "width": 317.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 430.4921875,
+          "y": 936.5,
+          "width": 291.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 417.4921875,
+          "y": 936.5,
+          "width": 317.015625,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 funds rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 3101,
+            "receivedAt": 3101,
+            "beforeHandlerAt": 3101,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pomhd-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 3101,
+            "receivedAt": 3101,
+            "beforeHandlerAt": 3101,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pomhd-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 3104,
+            "receivedAt": 3104,
+            "beforeHandlerAt": 3104,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pomhd-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 3105,
+            "receivedAt": 3105,
+            "beforeHandlerAt": 3105,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pomhd-b"
+          }
+        ],
+        "gapMs": 4,
+        "handlerGapMs": 4
+      },
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 space rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 3067,
+            "receivedAt": 3067,
+            "beforeHandlerAt": 3067,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6popqn-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 3067,
+            "receivedAt": 3067,
+            "beforeHandlerAt": 3067,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6popqn-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 3070,
+            "receivedAt": 3070,
+            "beforeHandlerAt": 3070,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6popqn-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 3070,
+            "receivedAt": 3070,
+            "beforeHandlerAt": 3070,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6popqn-b"
+          }
+        ],
+        "gapMs": 3,
+        "handlerGapMs": 3
+      },
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "timing: quick input survives a long task before its second pointerup handler",
+      "fixedTime": false,
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 80,
+        "blockSecondUpMs": 450,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 4756.099999999991,
+            "receivedAt": 6162.300000000003,
+            "beforeHandlerAt": 6162.399999999994,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6povnw-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 4756.099999999991,
+            "receivedAt": 6162.699999999997,
+            "beforeHandlerAt": 6162.699999999997,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6povnw-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 4836.099999999991,
+            "receivedAt": 6166.599999999991,
+            "beforeHandlerAt": 6166.599999999991,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6povnw-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 4836.099999999991,
+            "receivedAt": 6166.699999999997,
+            "beforeHandlerAt": 6616.699999999997,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6povnw-b"
+          }
+        ],
+        "gapMs": 80,
+        "handlerGapMs": 454
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: entering cart does not settle or write a save\n+ actual - expected\n\n+ '{\"format\":\"escape-bincov-session\",\"version\":4,\"revision\":4,\"savedAt\":1791897814244,\"profile\":{\"version\":2,\"cash\":0,\"stash\":{\"w\":10,\"h\":6,\"items\":[]},\"bag\":{\"w\":6,\"h\":5,\"items\":[{\"uid\":\"bc-mv6potje-6\",\"id\":\"ammo9\",\"qty\":32,\"x\":0,\"y\":0},{\"uid\":\"bc-mv6potje-7\",\"id\":\"bandage\",\"qty\":2,\"x\":1,\"y\":0},{\"uid\":\"bc-mv6potje-8\",\"id\":\"water\",\"qty\":1,\"x\":2,\"y\":0}]},\"safe\":{\"w\":2,\"h\":2,\"items\":[]},\"equipment\":{\"weapon\":\"pistol\",\"relief\":false,\"ammo\":0,\"ammoRelief\":0},\"quests\":{\"repair\":false,\"sample\":false,\"ledger\":false},\"upgraded\":false,\"settings\":{\"volume\":0.35},\"stats\":{\"runs\":0,\"extracts\":0,\"kills\":0},\"activeRun\":null},\"raid\":null,\"terminal\":null,\"legacyBackup\":null,\"migrationBackup\":null,\"expansion\":{\"version\":2,\"body\":{\"hp\":100,\"stamina\":100,\"mental\":100,\"water\":100,\"satiety\":100,\"pollution\":0,\"bleeding\":false,\"exhausted\":false,\"effects\":{\"pain\":0,\"energized\":0,\"analgesia\":0,\"focus\":0,\"strength\":0,\"constitution\":0,\"technique\":0,\"injectionFatigue\":0,\"luck\":0},\"treatment\":{\"bleeding\":0,\"pain\":0,\"injectionFatigue\":0},\"luckEffect\":0},\"growth\":{\"permanent\":{\"strength\":10,\"constitution\":10,\"technique\":10},\"progress\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"reputation\":{},\"luck\":1},\"base\":{\"facilities\":{\"rest\":0,\"medical\":0,\"training\":0,\"workbench\":0,\"blackmarket\":0},\"queue\":[],\"completed\":[],\"nextBatch\":1,\"cursor\":1791897814244,\"location\":\"base\",\"restSeconds\":5.9110000000000005,\"energizedGranted\":false,\"extractedPearl\":false,\"training\":{\"startedAt\":1791897808333,\"quantity\":0,\"credited\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"activeSeconds\":0,\"attribute\":null}},\"raid\":null,\"charm\":null,\"awards\":[]},\"systemsBackup\":\"{\\\\\"format\\\\\":\\\\\"escape-bincov-session\\\\\",\\\\\"version\\\\\":3,\\\\\"revision\\\\\":1,\\\\\"savedAt\\\\\":1791897808010,\\\\\"profile\\\\\":{\\\\\"version\\\\\":2,\\\\\"cash\\\\\":700,\\\\\"stash\\\\\":{\\\\\"w\\\\\":10,\\\\\"h\\\\\":6,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-9\\\\\",\\\\\"id\\\\\":\\\\\"medkit\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-a\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":24,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"bag\\\\\":{\\\\\"w\\\\\":6,\\\\\"h\\\\\":5,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-6\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":32,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-7\\\\\",\\\\\"id\\\\\":\\\\\"bandage\\\\\",\\\\\"qty\\\\\":2,\\\\\"x\\\\\":1,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-8\\\\\",\\\\\"id\\\\\":\\\\\"water\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"safe\\\\\":{\\\\\"w\\\\\":2,\\\\\"h\\\\\":2,\\\\\"items\\\\\":[]},\\\\\"equipment\\\\\":{\\\\\"weapon\\\\\":\\\\\"pistol\\\\\",\\\\\"relief\\\\\":false,\\\\\"ammo\\\\\":0,\\\\\"ammoRelief\\\\\":0},\\\\\"quests\\\\\":{\\\\\"repair\\\\\":false,\\\\\"sample\\\\\":false,\\\\\"ledger\\\\\":false},\\\\\"upgraded\\\\\":false,\\\\\"settings\\\\\":{\\\\\"volume\\\\\":0.35},\\\\\"stats\\\\\":{\\\\\"runs\\\\\":0,\\\\\"extracts\\\\\":0,\\\\\"kills\\\\\":0},\\\\\"activeRun\\\\\":null},\\\\\"raid\\\\\":null,\\\\\"terminal\\\\\":null,\\\\\"legacyBackup\\\\\":null,\\\\\"migrationBackup\\\\\":null}\"}'\n- '{\"format\":\"escape-bincov-session\",\"version\":4,\"revision\":3,\"savedAt\":1791897808336,\"profile\":{\"version\":2,\"cash\":0,\"stash\":{\"w\":10,\"h\":6,\"items\":[]},\"bag\":{\"w\":6,\"h\":5,\"items\":[{\"uid\":\"bc-mv6potje-6\",\"id\":\"ammo9\",\"qty\":32,\"x\":0,\"y\":0},{\"uid\":\"bc-mv6potje-7\",\"id\":\"bandage\",\"qty\":2,\"x\":1,\"y\":0},{\"uid\":\"bc-mv6potje-8\",\"id\":\"water\",\"qty\":1,\"x\":2,\"y\":0}]},\"safe\":{\"w\":2,\"h\":2,\"items\":[]},\"equipment\":{\"weapon\":\"pistol\",\"relief\":false,\"ammo\":0,\"ammoRelief\":0},\"quests\":{\"repair\":false,\"sample\":false,\"ledger\":false},\"upgraded\":false,\"settings\":{\"volume\":0.35},\"stats\":{\"runs\":0,\"extracts\":0,\"kills\":0},\"activeRun\":null},\"raid\":null,\"terminal\":null,\"legacyBackup\":null,\"migrationBackup\":null,\"expansion\":{\"version\":2,\"body\":{\"hp\":100,\"stamina\":100,\"mental\":100,\"water\":100,\"satiety\":100,\"pollution\":0,\"bleeding\":false,\"exhausted\":false,\"effects\":{\"pain\":0,\"energized\":0,\"analgesia\":0,\"focus\":0,\"strength\":0,\"constitution\":0,\"technique\":0,\"injectionFatigue\":0,\"luck\":0},\"treatment\":{\"bleeding\":0,\"pain\":0,\"injectionFatigue\":0},\"luckEffect\":0},\"growth\":{\"permanent\":{\"strength\":10,\"constitution\":10,\"technique\":10},\"progress\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"reputation\":{},\"luck\":1},\"base\":{\"facilities\":{\"rest\":0,\"medical\":0,\"training\":0,\"workbench\":0,\"blackmarket\":0},\"queue\":[],\"completed\":[],\"nextBatch\":1,\"cursor\":1791897808336,\"location\":\"base\",\"restSeconds\":0.003,\"energizedGranted\":false,\"extractedPearl\":false,\"training\":{\"startedAt\":1791897808333,\"quantity\":0,\"credited\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"activeSeconds\":0,\"attribute\":null}},\"raid\":null,\"charm\":null,\"awards\":[]},\"systemsBackup\":\"{\\\\\"format\\\\\":\\\\\"escape-bincov-session\\\\\",\\\\\"version\\\\\":3,\\\\\"revision\\\\\":1,\\\\\"savedAt\\\\\":1791897808010,\\\\\"profile\\\\\":{\\\\\"version\\\\\":2,\\\\\"cash\\\\\":700,\\\\\"stash\\\\\":{\\\\\"w\\\\\":10,\\\\\"h\\\\\":6,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-9\\\\\",\\\\\"id\\\\\":\\\\\"medkit\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-a\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":24,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"bag\\\\\":{\\\\\"w\\\\\":6,\\\\\"h\\\\\":5,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-6\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":32,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-7\\\\\",\\\\\"id\\\\\":\\\\\"bandage\\\\\",\\\\\"qty\\\\\":2,\\\\\"x\\\\\":1,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6potje-8\\\\\",\\\\\"id\\\\\":\\\\\"water\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"safe\\\\\":{\\\\\"w\\\\\":2,\\\\\"h\\\\\":2,\\\\\"items\\\\\":[]},\\\\\"equipment\\\\\":{\\\\\"weapon\\\\\":\\\\\"pistol\\\\\",\\\\\"relief\\\\\":false,\\\\\"ammo\\\\\":0,\\\\\"ammoRelief\\\\\":0},\\\\\"quests\\\\\":{\\\\\"repair\\\\\":false,\\\\\"sample\\\\\":false,\\\\\"ledger\\\\\":false},\\\\\"upgraded\\\\\":false,\\\\\"settings\\\\\":{\\\\\"volume\\\\\":0.35},\\\\\"stats\\\\\":{\\\\\"runs\\\\\":0,\\\\\"extracts\\\\\":0,\\\\\"kills\\\\\":0},\\\\\"activeRun\\\\\":null},\\\\\"raid\\\\\":null,\\\\\"terminal\\\\\":null,\\\\\"legacyBackup\\\\\":null,\\\\\"migrationBackup\\\\\":null}\"}'\n\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:137:12\n    at async check (file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:106:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:128:3; taps={\"mode\":\"queued-cdp-touch\",\"interactionCpuRate\":1,\"inputGapMs\":80,\"blockSecondUpMs\":450,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":4756.099999999991,\"receivedAt\":6162.300000000003,\"beforeHandlerAt\":6162.399999999994,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6povnw-b\"},{\"type\":\"pointerup\",\"timeStamp\":4756.099999999991,\"receivedAt\":6162.699999999997,\"beforeHandlerAt\":6162.699999999997,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6povnw-b\"},{\"type\":\"pointerdown\",\"timeStamp\":4836.099999999991,\"receivedAt\":6166.599999999991,\"beforeHandlerAt\":6166.599999999991,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6povnw-b\"},{\"type\":\"pointerup\",\"timeStamp\":4836.099999999991,\"receivedAt\":6166.699999999997,\"beforeHandlerAt\":6616.699999999997,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6povnw-b\"}],\"gapMs\":80,\"handlerGapMs\":454}"
+    },
+    {
+      "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+      "fixedTime": false,
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 350,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 5850.5,
+            "receivedAt": 7265.600000000006,
+            "beforeHandlerAt": 7265.600000000006,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pp2pv-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 5850.5,
+            "receivedAt": 7266,
+            "beforeHandlerAt": 7266,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pp2pv-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 6200.5,
+            "receivedAt": 7268.900000000009,
+            "beforeHandlerAt": 7268.900000000009,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pp2pv-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 6200.5,
+            "receivedAt": 7269,
+            "beforeHandlerAt": 7269.100000000006,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6pp2pv-b"
+          }
+        ],
+        "gapMs": 350,
+        "handlerGapMs": 3.1000000000058208
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '{\"format\":\"escape-bincov-session\",\"version\":4,\"revision\":4,\"savedAt\":1791897822194,\"profile\":{\"version\":2,\"cash\":0,\"stash\":{\"w\":10,\"h\":6,\"items\":[]},\"bag\":{\"w\":6,\"h\":5,\"items\":[{\"uid\":\"bc-mv6pozov-6\",\"id\":\"ammo9\",\"qty\":32,\"x\":0,\"y\":0},{\"uid\":\"bc-mv6pozov-7\",\"id\":\"bandage\",\"qty\":2,\"x\":1,\"y\":0},{\"uid\":\"bc-mv6pozov-8\",\"id\":\"water\",\"qty\":1,\"x\":2,\"y\":0}]},\"safe\":{\"w\":2,\"h\":2,\"items\":[]},\"equipment\":{\"weapon\":\"pistol\",\"relief\":false,\"ammo\":0,\"ammoRelief\":0},\"quests\":{\"repair\":false,\"sample\":false,\"ledger\":false},\"upgraded\":false,\"settings\":{\"volume\":0.35},\"stats\":{\"runs\":0,\"extracts\":0,\"kills\":0},\"activeRun\":null},\"raid\":null,\"terminal\":null,\"legacyBackup\":null,\"migrationBackup\":null,\"expansion\":{\"version\":2,\"body\":{\"hp\":100,\"stamina\":100,\"mental\":100,\"water\":100,\"satiety\":100,\"pollution\":0,\"bleeding\":false,\"exhausted\":false,\"effects\":{\"pain\":0,\"energized\":0,\"analgesia\":0,\"focus\":0,\"strength\":0,\"constitution\":0,\"technique\":0,\"injectionFatigue\":0,\"luck\":0},\"treatment\":{\"bleeding\":0,\"pain\":0,\"injectionFatigue\":0},\"luckEffect\":0},\"growth\":{\"permanent\":{\"strength\":10,\"constitution\":10,\"technique\":10},\"progress\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"reputation\":{},\"luck\":1},\"base\":{\"facilities\":{\"rest\":0,\"medical\":0,\"training\":0,\"workbench\":0,\"blackmarket\":0},\"queue\":[],\"completed\":[],\"nextBatch\":1,\"cursor\":1791897822193,\"location\":\"base\",\"restSeconds\":5.883,\"energizedGranted\":false,\"extractedPearl\":false,\"training\":{\"startedAt\":1791897816310,\"quantity\":0,\"credited\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"activeSeconds\":0,\"attribute\":null}},\"raid\":null,\"charm\":null,\"awards\":[]},\"systemsBackup\":\"{\\\\\"format\\\\\":\\\\\"escape-bincov-session\\\\\",\\\\\"version\\\\\":3,\\\\\"revision\\\\\":1,\\\\\"savedAt\\\\\":1791897815983,\\\\\"profile\\\\\":{\\\\\"version\\\\\":2,\\\\\"cash\\\\\":700,\\\\\"stash\\\\\":{\\\\\"w\\\\\":10,\\\\\"h\\\\\":6,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-9\\\\\",\\\\\"id\\\\\":\\\\\"medkit\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-a\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":24,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"bag\\\\\":{\\\\\"w\\\\\":6,\\\\\"h\\\\\":5,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-6\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":32,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-7\\\\\",\\\\\"id\\\\\":\\\\\"bandage\\\\\",\\\\\"qty\\\\\":2,\\\\\"x\\\\\":1,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-8\\\\\",\\\\\"id\\\\\":\\\\\"water\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"safe\\\\\":{\\\\\"w\\\\\":2,\\\\\"h\\\\\":2,\\\\\"items\\\\\":[]},\\\\\"equipment\\\\\":{\\\\\"weapon\\\\\":\\\\\"pistol\\\\\",\\\\\"relief\\\\\":false,\\\\\"ammo\\\\\":0,\\\\\"ammoRelief\\\\\":0},\\\\\"quests\\\\\":{\\\\\"repair\\\\\":false,\\\\\"sample\\\\\":false,\\\\\"ledger\\\\\":false},\\\\\"upgraded\\\\\":false,\\\\\"settings\\\\\":{\\\\\"volume\\\\\":0.35},\\\\\"stats\\\\\":{\\\\\"runs\\\\\":0,\\\\\"extracts\\\\\":0,\\\\\"kills\\\\\":0},\\\\\"activeRun\\\\\":null},\\\\\"raid\\\\\":null,\\\\\"terminal\\\\\":null,\\\\\"legacyBackup\\\\\":null,\\\\\"migrationBackup\\\\\":null}\"}'\n- '{\"format\":\"escape-bincov-session\",\"version\":4,\"revision\":3,\"savedAt\":1791897816313,\"profile\":{\"version\":2,\"cash\":0,\"stash\":{\"w\":10,\"h\":6,\"items\":[]},\"bag\":{\"w\":6,\"h\":5,\"items\":[{\"uid\":\"bc-mv6pozov-6\",\"id\":\"ammo9\",\"qty\":32,\"x\":0,\"y\":0},{\"uid\":\"bc-mv6pozov-7\",\"id\":\"bandage\",\"qty\":2,\"x\":1,\"y\":0},{\"uid\":\"bc-mv6pozov-8\",\"id\":\"water\",\"qty\":1,\"x\":2,\"y\":0}]},\"safe\":{\"w\":2,\"h\":2,\"items\":[]},\"equipment\":{\"weapon\":\"pistol\",\"relief\":false,\"ammo\":0,\"ammoRelief\":0},\"quests\":{\"repair\":false,\"sample\":false,\"ledger\":false},\"upgraded\":false,\"settings\":{\"volume\":0.35},\"stats\":{\"runs\":0,\"extracts\":0,\"kills\":0},\"activeRun\":null},\"raid\":null,\"terminal\":null,\"legacyBackup\":null,\"migrationBackup\":null,\"expansion\":{\"version\":2,\"body\":{\"hp\":100,\"stamina\":100,\"mental\":100,\"water\":100,\"satiety\":100,\"pollution\":0,\"bleeding\":false,\"exhausted\":false,\"effects\":{\"pain\":0,\"energized\":0,\"analgesia\":0,\"focus\":0,\"strength\":0,\"constitution\":0,\"technique\":0,\"injectionFatigue\":0,\"luck\":0},\"treatment\":{\"bleeding\":0,\"pain\":0,\"injectionFatigue\":0},\"luckEffect\":0},\"growth\":{\"permanent\":{\"strength\":10,\"constitution\":10,\"technique\":10},\"progress\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"reputation\":{},\"luck\":1},\"base\":{\"facilities\":{\"rest\":0,\"medical\":0,\"training\":0,\"workbench\":0,\"blackmarket\":0},\"queue\":[],\"completed\":[],\"nextBatch\":1,\"cursor\":1791897816312,\"location\":\"base\",\"restSeconds\":0.002,\"energizedGranted\":false,\"extractedPearl\":false,\"training\":{\"startedAt\":1791897816310,\"quantity\":0,\"credited\":{\"strength\":0,\"constitution\":0,\"technique\":0},\"activeSeconds\":0,\"attribute\":null}},\"raid\":null,\"charm\":null,\"awards\":[]},\"systemsBackup\":\"{\\\\\"format\\\\\":\\\\\"escape-bincov-session\\\\\",\\\\\"version\\\\\":3,\\\\\"revision\\\\\":1,\\\\\"savedAt\\\\\":1791897815983,\\\\\"profile\\\\\":{\\\\\"version\\\\\":2,\\\\\"cash\\\\\":700,\\\\\"stash\\\\\":{\\\\\"w\\\\\":10,\\\\\"h\\\\\":6,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-9\\\\\",\\\\\"id\\\\\":\\\\\"medkit\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-a\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":24,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"bag\\\\\":{\\\\\"w\\\\\":6,\\\\\"h\\\\\":5,\\\\\"items\\\\\":[{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-6\\\\\",\\\\\"id\\\\\":\\\\\"ammo9\\\\\",\\\\\"qty\\\\\":32,\\\\\"x\\\\\":0,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-7\\\\\",\\\\\"id\\\\\":\\\\\"bandage\\\\\",\\\\\"qty\\\\\":2,\\\\\"x\\\\\":1,\\\\\"y\\\\\":0},{\\\\\"uid\\\\\":\\\\\"bc-mv6pozov-8\\\\\",\\\\\"id\\\\\":\\\\\"water\\\\\",\\\\\"qty\\\\\":1,\\\\\"x\\\\\":2,\\\\\"y\\\\\":0}]},\\\\\"safe\\\\\":{\\\\\"w\\\\\":2,\\\\\"h\\\\\":2,\\\\\"items\\\\\":[]},\\\\\"equipment\\\\\":{\\\\\"weapon\\\\\":\\\\\"pistol\\\\\",\\\\\"relief\\\\\":false,\\\\\"ammo\\\\\":0,\\\\\"ammoRelief\\\\\":0},\\\\\"quests\\\\\":{\\\\\"repair\\\\\":false,\\\\\"sample\\\\\":false,\\\\\"ledger\\\\\":false},\\\\\"upgraded\\\\\":false,\\\\\"settings\\\\\":{\\\\\"volume\\\\\":0.35},\\\\\"stats\\\\\":{\\\\\"runs\\\\\":0,\\\\\"extracts\\\\\":0,\\\\\"kills\\\\\":0},\\\\\"activeRun\\\\\":null},\\\\\"raid\\\\\":null,\\\\\"terminal\\\\\":null,\\\\\"legacyBackup\\\\\":null,\\\\\"migrationBackup\\\\\":null}\"}'\n\n    at file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:148:12\n    at async check (file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:106:22)\n    at async file:///home/runner/work/escape-bincov/escape-bincov/scripts/shop-feedback-test.mjs:140:3; taps={\"mode\":\"queued-cdp-touch\",\"interactionCpuRate\":1,\"inputGapMs\":350,\"blockSecondUpMs\":0,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":5850.5,\"receivedAt\":7265.600000000006,\"beforeHandlerAt\":7265.600000000006,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6pp2pv-b\"},{\"type\":\"pointerup\",\"timeStamp\":5850.5,\"receivedAt\":7266,\"beforeHandlerAt\":7266,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6pp2pv-b\"},{\"type\":\"pointerdown\",\"timeStamp\":6200.5,\"receivedAt\":7268.900000000009,\"beforeHandlerAt\":7268.900000000009,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6pp2pv-b\"},{\"type\":\"pointerup\",\"timeStamp\":6200.5,\"receivedAt\":7269,\"beforeHandlerAt\":7269.100000000006,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6pp2pv-b\"}],\"gapMs\":350,\"handlerGapMs\":3.1000000000058208}"
+    },
+    {
+      "name": "yard refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "tabs refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "another window still locks settlement and cannot be overwritten through refresh",
+      "detail": {
+        "result": {
+          "ok": false,
+          "reason": "conflict",
+          "message": "存档已由另一窗口接管，本页不能写入。"
+        },
+        "newerSavePreserved": true
+      },
+      "status": "passed"
+    }
+  ]
+}
