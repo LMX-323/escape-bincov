@@ -186,7 +186,7 @@ export function buildMall(ctx: MallContext, d: MallDress) {
   }
   for (const l of d.lintels) {
     const o = ctx.add(sample(l.asset), l.x * T, l.y * T - 48, (l.y + 1) * T + .05, 'lintel', 0);
-    o.tintAt = { x: l.x * T + 16, y: (l.y + 1) * T + 8 };
+    o.tintAt = { x: l.x * T + 16, y: (l.y + 1) * T + 8 }; owners.set(`${l.x},${l.y}`, o);
     glow(o, l.asset, l.x * T, l.y * T - 48);
   }
   for (const p of d.props) {

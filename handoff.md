@@ -1,3 +1,11 @@
+## 2026-10-14 · 商场 2.5D：Pixi 画面接入（#47 / #48）
+
+`?sample=mall` 出击用布局二版（标签页、水产站出发和继续行动都按存档里的布局），在 Pixi 2.5D 画面上画：`src/coast-view/mall-scene.ts` 按布置表建墙（同类墙一张图）、门头、家具（可淡出的遮挡物，标牌和发光跟随所属物）、灯光与环境光分区；`art/mall-ground.ts` 画地面块（64 像素图按格子奇偶取块，滩涂仍是泥地，二层临空画街面，贴花与投影烘入）。切墙改为玩家所在房间加楼内正前方几格，广场上看外立面不切。雨只在楼外，海声按楼体判断。素材在 `assets/mall/`，`scripts/mall-assets.mjs` 生成导入表，`mall-art-load.ts` 只按需加载，Node 测试不碰 PNG。没有素材时退回通用占位画面。
+
+共用修正：事件、子弹、粒子、贴花、命中与方向提示、受击声、窗光和 HUD 房间名都改用与 Runtime 一致的重叠房间判断；撤离点在 Runtime 发布它的任何楼层显示；图集页每帧最多上传一次。
+
+验证：`pnpm test` 353 项（新增 `tests/mall-view.test.ts` 6 项）；`test:mall-sample` 13/13；村庄 `coast-sample-test.mjs` 51/51、`test:coast-render-targets` 5/5。`coast-launcher-check.mjs` 失败是脚本过时（假定普通入口直接进标签页），不在 CI，未改。已知问题：外立面朝外一面暂用室内立面图；未布置区域只有替身杂物；两层地面块保留约 35 MB 显存。手感、掩体与敌人路线未做真人评估。以下历史记录保留。
+
 ## 2026-10-13 · 商场 2.5D：布局二版数据（#47）
 
 维护者确认商场 2.5D 化，决定做布局二版、`?sample=mall` 先行、先做正门广场到露台一段。登记 [#47](https://github.com/xuys2025/escape-bincov/issues/47)，分支 `feat/mall-2-5d` 从 main `7df2d22` 开始。本批：`src/mall-layout-v2.ts` 家具登记与 `mallWorldV2()`；`mallWorld()` 拆成共用函数，一版输出 SHA-256 不变；`initializeMallRaid` 增加可选 `world` 参数（默认一版）。二版只改八个切片区域和超市北侧一排，S-N 在两层大堂内东移到 (62,13)。二版未注册到 `resolveExpansionWorld`，普通存档不能创建或恢复它。
