@@ -10,6 +10,7 @@ import type { Puddle } from './art/ground';
 import { canvas, hash, rect } from './art/paint';
 import { BAYER4, Lattice } from './art/surface';
 import type { Textures } from './textures';
+import { isMall } from './structure-guide';
 
 export type WeatherKind = 'rain' | 'clear';
 /** A roofed footprint: drops land on the roof (lifted on screen) while it is drawn, and stop once the room is revealed. */
@@ -34,6 +35,8 @@ export class Weather {
   private grid = new Map<number, Puddle[]>();
   private water: (x: number, y: number) => boolean = () => false;
   private glints: Sprite[] = [];
+  /** 0 in the open, 1 under a roof: the mist thins out indoors (set by the view; the mall's halls). */
+  shelter = 0;
   /** Drops landed and drawn this frame (read by checks). */
   stats = { drops: 0, splashes: 0, rings: 0, skippedRevealed: 0 };
 
@@ -49,7 +52,7 @@ export class Weather {
   setMap(m: MapDef, puddles: Puddle[], roofs: RoofArea[], covered: Rect[], water: (x: number, y: number) => boolean = () => false) {
     this.map = m; this.roofs = roofs; this.covered = covered; this.water = water; this.grid.clear();
     for (const p of puddles) { const k = (p.x >> 6) * 4096 + (p.y >> 6); (this.grid.get(k) ?? this.grid.set(k, []).get(k)!).push(p); }
-    const outdoors = m.key.mapId === 'coast';
+    const outdoors = m.key.mapId === 'coast' || isMall(m);
     this.front.visible = this.back.visible = outdoors;
   }
 
@@ -81,6 +84,7 @@ export class Weather {
     if (!this.map || !this.front.visible) return;
     // Mist drifts with the wind; tile positions are whole pixels so the dithered pattern never shimmers.
     this.mist.forEach((t, i) => {
+      t.alpha = (i ? .05 : .07) * (1 - this.shelter);
       t.position.set(cam.x - 8, cam.y - 8); t.width = view.w + 16; t.height = view.h + 16;
       const drift = this.still ? 0 : time * (i ? 9 : 5);
       t.tilePosition.set(Math.round(-cam.x + 8 - drift), Math.round(-cam.y + 8 + drift * .35));

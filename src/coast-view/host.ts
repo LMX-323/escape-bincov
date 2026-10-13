@@ -339,7 +339,7 @@ export class CoastSampleHost {
   private markAt = { x: 0, y: 0 };
   /** Feedback for one new event. Hits are marked only where the hit point is in a revealed area (or outdoors). */
   private feedback(e: StampedEvent, b: PublishedView) {
-    const f = b.frame, shown = (p: { x: number; y: number }) => { const r = this.view.regionAt(p); return r === null || f.revealed[r] === true; };
+    const f = b.frame, shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
     if (e.type === 'shot' && e.shooter === 'player') {
       this.kick = Math.min(1.4, this.kick + (e.weapon === 'shotgun' ? 1.2 : .8));
     } else if (e.type === 'impact') {
@@ -687,7 +687,8 @@ export class CoastSampleHost {
     if (reload) cross.style.setProperty('--reload', `${Math.round((1 - reload.left / Math.max(.01, reload.total)) * 360)}deg`);
     this.root.classList.toggle('touch', this.input.touch);
     let lootChanged = false;
-    const shown = (p: { x: number; y: number }) => { const r = this.view.regionAt(p); return r === null || f.revealed[r] === true; };
+    // Rooms may overlap: only a point whose every room is revealed (or one in the open) makes a hit or impact sound.
+    const shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
     for (const e of b.events) if (e.seq > this.lastSeq) {
       this.lastSeq = e.seq; this.onEvent(e); this.sound.event(e, b.stamp.world.mapId, shown); this.feedback(e, b);
       if (e.type === 'looted' || e.type === 'rejected') lootChanged = true;
@@ -732,7 +733,7 @@ export class CoastSampleHost {
    * at it with its straight-line distance in tiles. Exits are the Runtime's visible exits; nothing else is pointed at.
    */
   private exitPointer(b: PublishedView) {
-    const el = this.q('[data-exitptr]'), exit = b.stamp.world.mapId === 'coast' && !this.panel ? b.map.exits.find(e => e.name === this.selectedExit) : undefined;
+    const el = this.q('[data-exitptr]'), exit = !this.panel ? b.map.exits.find(e => e.name === this.selectedExit) : undefined;
     if (!exit) { el.hidden = true; return; }
     const p = b.frame.player, at = this.view.worldToClient({ x: exit.at.x, y: exit.at.y - 30 }), W = innerWidth, H = innerHeight;
     const ground = this.view.worldToClient(exit.at), tiles = Math.hypot(exit.at.x - p.x, exit.at.y - p.y) / 32;

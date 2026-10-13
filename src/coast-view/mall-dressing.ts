@@ -42,7 +42,7 @@ export const MALL_SPRITE_SIZE: Record<string, readonly [number, number]> = {
     'prop-freezer': [64, 54], 'prop-bench': [64, 50], 'prop-planter': [32, 62], 'prop-bed': [64, 84], 'prop-coffee-table': [32, 44],
     'prop-floor-lamp': [32, 76], 'prop-cafe-table': [32, 52], 'prop-planter-box': [64, 56], 'prop-stanchions': [64, 44],
     'prop-adboard-fallen': [64, 44], 'overhead-umbrella': [64, 88], 'sign-hanging-green': [48, 18],
-    'prop-gondola-toppled': [64, 44], 'prop-debris': [32, 44],
+    'prop-gondola-toppled': [64, 44], 'prop-debris': [32, 44], 'prop-cart-fallen': [32, 44], 'prop-sandbags-1': [32, 46],
 };
 const SINGLE: Partial<Record<FurnitureName, string>> = {
     column: 'prop-column', directory: 'prop-directory', pylon: 'prop-pylon', 'stairs-up': 'stairs-up', 'stairs-down': 'stairs-down',
@@ -56,7 +56,9 @@ const EMITS = new Set(['prop-fridge-a', 'prop-fridge-b', 'prop-directory', 'prop
 
 const contains = (r: DressRegion, x: number, y: number) => x * TILE >= r.x && x * TILE < r.x + r.w && y * TILE >= r.y && y * TILE < r.y + r.h;
 const regionAt = (m: DressMap, x: number, y: number) => m.regions.find(r => r.inside !== false && contains(r, x, y)) ?? m.regions.find(r => contains(r, x, y));
-const insideFootprint = (x: number, y: number) => x >= 8 && x <= 64 && y >= 6 && y <= 48;
+/** The building's cells (both floors): x 8..64, y 6..48. */
+export const insideFootprint = (x: number, y: number) => x >= 8 && x <= 64 && y >= 6 && y <= 48;
+export const MALL_FOOTPRINT = { x: 8 * TILE, y: 6 * TILE, w: 57 * TILE, h: 43 * TILE } as const;
 
 /** Ground material ids, preferred first. Unlisted regions keep the large tile inside and the plaza paving outside. */
 export function mallGround(m: DressMap, x: number, y: number): string[] {
@@ -200,10 +202,12 @@ export function mallSigns(m: DressMap): DressSprite[] {
     const at = furnitureAt(m), out: DressSprite[] = [];
     const stand = (x: number, y: number, top: number, kind: string): DressSprite =>
         ({ assets: [PROCEDURAL + 'sign:' + kind], x: x * TILE + 16 - 13, y: (y + 1) * TILE - top - 24 - 16, z: (y + 1) * TILE + .05, layer: 'sorted', emit: false });
-    for (const [key, f] of at) {
+    // Aisle numbers run west to east, then north to south, over the gondola runs (their west ends carry the board).
+    const ends = [...at].flatMap(([key, f]) => {
         const [x, y] = key.split(',').map(Number);
-        if (f?.type === 'gondola' && at.get((x - 1) + ',' + y)?.type !== 'gondola') out.push(stand(x, y, 40, 'aisle'));
-    }
+        return f?.type === 'gondola' && at.get((x - 1) + ',' + y)?.type !== 'gondola' ? [[x, y]] : [];
+    }).sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+    ends.forEach(([x, y], i) => out.push(stand(x, y, 40, 'aisle:' + (i + 1))));
     const extra: Record<string, readonly [number, number, number, string][]> = {
         'mall-f1': [[38, 36, 24, 'fresh'], [36, 39, 24, 'fresh'], [48, 33, 48, 'cold']],
         'mall-f2': [[58, 17, 48, 'home'], [58, 31, 48, 'home']],
@@ -236,11 +240,36 @@ export function mallDecals(m: DressMap): MallDecalSpot[] {
     const rate: Record<string, number> = { 'O-02': .07, 'F1-03': .1, 'F1-04': .08, 'F1-05': .08, 'F1-11': .1, 'F2-13': .05, 'F2-14': .06, 'F2-18': .08 };
     m.cells.forEach((row, y) => row.forEach((_, x) => {
         const r = regionAt(m, x, y)?.id ?? '', aisle = m.mapId === 'mall-f1' && y >= 14 && y <= 19 && x >= 27 && x <= 56;
-        if (hash(x, y, 23) >= (rate[r] ?? (aisle ? .08 : 0))) return;
+        // Rooms outside the dressed route get a little litter too, so their floors do not read as untouched.
+        const other = r && !r.startsWith('O-') ? .025 : 0;
+        if (hash(x, y, 23) >= (rate[r] ?? (aisle ? .08 : other))) return;
         const k = hash(x, y, 29);
         if (r === 'F1-05' || r === 'F1-04' || r === 'F2-18') put(k < .35 ? 'water' : 'litter', x, y, k < .35);
         else if (r === 'F1-03' || aisle) put(k < .35 ? 'tracks' : k < .55 ? 'cardboard' : 'litter', x, y, k < .55);
         else put(k < .3 ? 'cardboard' : k < .45 ? 'water' : 'litter', x, y, k < .45);
+    }));
+    return out;
+}
+
+/** Ambient of a cell: indoors in the footprint, the drop to the street beside the second floor, open air elsewhere. */
+export function mallZone(m: DressMap, x: number, y: number): 'indoor' | 'outdoor' | 'drop' {
+    if (insideFootprint(x, y)) return 'indoor';
+    return m.mapId === 'mall-f2' && m.cells[y]?.[x] === 'wall' && mallWallRole(m, x, y) === 'void' ? 'drop' : 'outdoor';
+}
+
+/**
+ * Low collision cells the layout does not name (revision-1 corner markers and fixtures outside the dressed route) get a
+ * stand-in piece of clutter, so no cell that blocks movement looks like open floor. Blocking (B) cells without a name
+ * are drawn as wall segments.
+ */
+export function mallStandIns(m: DressMap): DressSprite[] {
+    const at = furnitureAt(m), out: DressSprite[] = [];
+    m.cells.forEach((row, y) => row.forEach((c, x) => {
+        if (c !== 'low' || at.has(`${x},${y}`)) return;
+        const name = pick(x, y, 31, ['prop-pallet-wrapped', 'prop-cart-fallen', 'prop-sandbags-1', 'prop-pallet-wrapped', 'prop-debris']);
+        const h = MALL_SPRITE_SIZE[name][1];
+        out.push({ assets: [id(name)], x: x * TILE, y: (y + 1) * TILE - h, z: (y + 1) * TILE, layer: 'sorted', emit: false,
+            foot: { x: x * TILE, y: y * TILE, w: TILE, h: TILE, lift: h - TILE } });
     }));
     return out;
 }

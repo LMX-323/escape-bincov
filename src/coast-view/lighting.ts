@@ -4,8 +4,11 @@ import { hasRoof } from './appearance';
 import { hash, hex, radialLight } from './art/paint';
 import type { Textures } from './textures';
 
+export type AmbientZone = (x: number, y: number) => 'outdoor' | 'indoor' | 'drop';
 /** `flicker`: a stable seed; lamps with one dip and waver as a stateless function of view time (see `level`). */
-export interface Light { x: number; y: number; r: number; color: number; k: number; ttl?: number; age?: number; region?: string | null; flicker?: number }
+export interface Light { x: number; y: number; r: number; color: number; k: number; ttl?: number; age?: number; region?: string | null; flicker?: number;
+  /** Every inside region at the light's point (overlapping rooms): shown only when all are revealed. */
+  regions?: readonly string[] }
 export interface Mood { outdoor: number; indoor: number; ruined: number; cellar: number; name: string }
 export const MOODS: Mood[] = [
   { name: 'overcast', outdoor: 0xeeede4, indoor: 0x9a9488, ruined: 0xcfcabe, cellar: 0x837e74 },
@@ -42,20 +45,25 @@ export class Lighting {
     this.layer.addChild(this.backdrop, this.base, this.dynamic);
   }
 
-  setMap(m: MapDef) { this.map = m; this.bakeAmbient(); }
+  /** Ambient zone of a world point for maps the default rule gets wrong (the mall: outdoor plaza and terrace, the drop). */
+  private zone: AmbientZone | null = null;
+  setMap(m: MapDef, zone: AmbientZone | null = null) { this.map = m; this.zone = zone; this.bakeAmbient(); }
   setMood(i: number, _bounds?: Rect) { this.mood = MOODS[i % MOODS.length]; if (this.map) this.bakeAmbient(); }
 
   private bakeAmbient() {
     const m = this.map!, b = m.bounds, w = Math.ceil(b.w / AMB), h = Math.ceil(b.h / AMB), mood = this.mood;
     const coast = m.key.mapId === 'coast', cellar = m.key.mapId.endsWith('-b1');
     const [or, og, ob] = rgb(mood.outdoor), [ir, ig, ib] = rgb(cellar ? mood.cellar : mood.indoor), [rr, rg, rb] = rgb(mood.ruined);
+    const zone = this.zone, drop = [or * .42, og * .44, ob * .46];
     const r = new Float32Array(w * h), g = new Float32Array(w * h), bl = new Float32Array(w * h);
     const roofed = coast ? m.buildings.filter(q => hasRoof(m, q)) : [], ruins = coast ? m.buildings.filter(q => !hasRoof(m, q)) : [];
     const inside = (list: typeof roofed, x: number, y: number) => list.some(q => x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const wx = b.x + x * AMB + AMB / 2, wy = b.y + y * AMB + AMB / 2, i = y * w + x;
       // Layered floors are interiors throughout; on the coast, roofed footprints are indoor and roofless ruins half-shaded.
-      const [cr, cg, cb] = !coast || inside(roofed, wx, wy) ? [ir, ig, ib] : inside(ruins, wx, wy) ? [rr, rg, rb] : [or, og, ob];
+      const z = zone?.(wx, wy);
+      const [cr, cg, cb] = z ? z === 'outdoor' ? [or, og, ob] : z === 'drop' ? drop : [ir, ig, ib]
+        : !coast || inside(roofed, wx, wy) ? [ir, ig, ib] : inside(ruins, wx, wy) ? [rr, rg, rb] : [or, og, ob];
       r[i] = cr; g[i] = cg; bl[i] = cb;
     }
     for (let pass = 0; pass < 2; pass++) for (const ch of [r, g, bl]) blur(ch, w, h);
@@ -68,7 +76,7 @@ export class Lighting {
     this.baseSource = new CanvasSource({ resource: c, scaleMode: 'linear' });
     this.base.texture = this.baseTexture = new Texture({ source: this.baseSource });
     this.base.position.set(b.x, b.y); this.base.scale.set(AMB);
-    this.backdrop.clear().rect(b.x - 128, b.y - 128, b.w + 256, b.h + 256).fill(coast ? mood.outdoor : cellar ? mood.cellar : mood.indoor);
+    this.backdrop.clear().rect(b.x - 128, b.y - 128, b.w + 256, b.h + 256).fill(coast || zone ? mood.outdoor : cellar ? mood.cellar : mood.indoor);
   }
 
   /** Additive lights for this frame; `time` (view seconds) drives flicker statelessly, so a re-present is identical. */
@@ -109,7 +117,7 @@ export class Lighting {
       r = s(a.r); g = s(a.g); b = s(a.b);
     }
     for (const l of this.lights) {
-      if (l.region && revealed[l.region] === false) continue;
+      if (l.region && revealed[l.region] === false || l.regions?.some(r => revealed[r] !== true)) continue;
       const d = Math.hypot(l.x - p.x, l.y - p.y);
       if (d >= l.r) continue;
       const f = Math.pow(1 - d / l.r, 1.6) * l.k * this.level(l), [lr, lg, lb] = rgb(l.color);

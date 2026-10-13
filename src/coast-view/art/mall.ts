@@ -96,13 +96,29 @@ export function paintMallStairsDown(cols = 3, rows = 3): HTMLCanvasElement {
 }
 
 /** Aisle board standing on a gondola top (blank; the engine writes the text). Anchor: bottom centre of the post. */
-export function paintAisleSign(color = '#5f8456'): HTMLCanvasElement {
+export function paintAisleSign(color = '#5f8456', glyph = ''): HTMLCanvasElement {
     const { c, g } = canvas(26, 24);
     rect(g, '#2a2926', 0, 0, 26, 15); rect(g, color, 1, 1, 24, 13); rect(g, mix(color, '#cfc6ad', .5), 2, 3, 22, 8);
     rect(g, mix(color, '#ffffff', .25), 1, 1, 24, 1); rect(g, mix(color, '#000000', .35), 1, 13, 24, 1);
     rect(g, '#5d5951', 12, 15, 2, 9); rect(g, '#8a8476', 12, 15, 1, 9);
+    // The board's mark in the dark ink of a printed sign: an aisle number, or a pictogram for a department.
+    const ink = mix(color, '#141412', .7), rows = GLYPHS[glyph] ?? (/^\d+$/.test(glyph) ? number(glyph) : null);
+    if (rows) {
+        const x0 = 13 - Math.ceil(rows[0].length / 2);
+        rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') dot(g, ink, x0 + i, 4 + j); }));
+    }
     return c;
 }
+/** 3x5 digits; two-digit aisle numbers keep one column between them. */
+const DIGITS = ['###,#.#,#.#,#.#,###', '.#.,##.,.#.,.#.,###', '##.,..#,.#.,#..,###', '##.,..#,.#.,..#,##.', '#.#,#.#,###,..#,..#',
+    '###,#..,##.,..#,##.', '.##,#..,###,#.#,###', '###,..#,.#.,.#.,.#.', '###,#.#,###,#.#,###', '###,#.#,###,..#,##.'].map(d => d.split(','));
+const number = (n: string) => DIGITS[0].map((_, j) => [...n].map(d => DIGITS[+d][j]).join('.'));
+/** 5 px pictograms: fresh (a fish), cold (a snowflake), home (a sofa). */
+const GLYPHS: Record<string, string[]> = {
+    fresh: ['.....', '.##.#', '####.', '.##.#', '.....'],
+    cold: ['#.#.#', '.###.', '#####', '.###.', '#.#.#'],
+    home: ['#...#', '#####', '#####', '#...#', '.....'],
+};
 
 export type MallDecal = 'litter' | 'glass' | 'cardboard' | 'water' | 'mud' | 'tracks' | 'cans';
 export const DECAL_SIZE: Record<MallDecal, readonly [number, number]> = {

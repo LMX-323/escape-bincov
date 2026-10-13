@@ -26,3 +26,29 @@ export function knownDoor(map: MapDef, door: DoorDef, revealed: Readonly<Record<
   return structureContains(map, occupied, { x: door.x * 32 + 16, y: door.y * 32 + 16 })
     || door.anchors.some(p => knownStructurePoint(map, p, revealed, occupied));
 }
+
+/**
+ * Fail-closed visibility of a world point, the Runtime's rule (presentation.ts): regions may overlap, so a point is shown
+ * only when every inside region containing it is revealed. Points in no inside region (streets, corridors) are shown.
+ */
+export function shownAt(map: MapDef, revealed: Readonly<Record<string, boolean>>, p: Point): boolean {
+  return map.regions.every(r => !r.inside || !contains(r, p) || revealed[r.id] === true);
+}
+/** The region a point counts as: a containing unrevealed region wins, ties by stable id (presentation.ts). */
+export function regionAtClosed(map: MapDef, revealed: Readonly<Record<string, boolean>>, p: Point): string | null {
+  return map.regions.filter(r => r.inside && contains(r, p))
+    .sort((a, b) => Number(!!revealed[a.id]) - Number(!!revealed[b.id]) || a.id.localeCompare(b.id, 'en'))[0]?.id ?? null;
+}
+
+export const isMall = (map: MapDef) => map.buildings.some(b => b.kind === 'mall');
+/**
+ * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the
+ * cutaway is the room the player stands in (with its south wall), plus, indoors, the walls within a few cells in front
+ * of the player (corridors have no room). `p` is a wall cell's centre. Display only, like the rest of this module.
+ */
+export function mallCutaway(map: MapDef, player: Point, indoors: boolean): (p: Point) => boolean {
+  const rooms = map.regions.filter(r => r.inside && contains(r, player)).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h + 32 }));
+  // Outdoors (the plaza, the terrace) the facade stays solid: only the player's own focus fade applies there.
+  const ahead = indoors ? { x: player.x - 6 * 32, y: player.y - 16, w: 12 * 32, h: 4 * 32 } : null;
+  return p => !!ahead && contains(ahead, p) || rooms.some(r => contains(r, p));
+}

@@ -2,24 +2,24 @@ import { Container, Sprite } from 'pixi.js';
 import type { Textures } from './textures';
 import { canvas, hash } from './art/paint';
 
-interface Particle { region: string | null; s: Sprite; x: number; y: number; h: number; vx: number; vy: number; vh: number; age: number; ttl: number; g: number; settle: 'decal' | 'fade' | 'stay'; color: number }
+interface Particle { region: readonly string[]; s: Sprite; x: number; y: number; h: number; vx: number; vy: number; vh: number; age: number; ttl: number; g: number; settle: 'decal' | 'fade' | 'stay'; color: number }
 
 export class Fx {
   private live: Particle[] = [];
   private free: Sprite[] = [];
-  private decals: { s: Sprite; region: string | null }[] = [];
+  private decals: { s: Sprite; region: readonly string[] }[] = [];
   /**
-   * Every particle and decal belongs to the region under it and is drawn only while the Runtime reports that region as
-   * revealed, so blood, sparks and casings never mark an unrevealed room (OPUS-VIS-01).
+   * Every particle and decal belongs to the regions under it and is drawn only while the Runtime reports all of them as
+   * revealed (rooms may overlap), so blood, sparks and casings never mark an unrevealed room (OPUS-VIS-01).
    */
-  constructor(private tex: Textures, private sorted: Container, private flat: Container, private regionAt: (x: number, y: number) => string | null) {}
+  constructor(private tex: Textures, private sorted: Container, private flat: Container, private regionAt: (x: number, y: number) => readonly string[]) {}
 
   private sprite(): Sprite { const s = this.free.pop() ?? new Sprite(this.tex.pixel()); s.visible = true; s.alpha = 1; s.scale.set(1); s.blendMode = 'normal'; return s; }
 
   spawn(o: { x: number; y: number; h: number; vx: number; vy: number; vh: number; ttl: number; color: number; g?: number; size?: number; settle?: Particle['settle']; add?: boolean }) {
     const s = this.sprite(); s.tint = o.color; s.scale.set(o.size ?? 1); if (o.add) s.blendMode = 'add';
     this.sorted.addChild(s);
-    this.live.push({ region: null, s, x: o.x, y: o.y, h: o.h, vx: o.vx, vy: o.vy, vh: o.vh, age: 0, ttl: o.ttl, g: o.g ?? 520, settle: o.settle ?? 'fade', color: o.color });
+    this.live.push({ region: [], s, x: o.x, y: o.y, h: o.h, vx: o.vx, vy: o.vy, vh: o.vh, age: 0, ttl: o.ttl, g: o.g ?? 520, settle: o.settle ?? 'fade', color: o.color });
   }
 
   sparks(x: number, y: number, h: number, nx: number, ny: number, rnd: () => number) {
@@ -88,7 +88,7 @@ export class Fx {
   }
   /** Apply region visibility after update; particles are re-tested at their current position each frame. */
   reveal(revealed: Readonly<Record<string, boolean>>) {
-    const shown = (r: string | null) => r === null || revealed[r] === true;
+    const shown = (r: readonly string[]) => r.every(id => revealed[id] === true);
     let hidden = 0;
     for (const p of this.live) { p.region = this.regionAt(p.x, p.y); p.s.visible = shown(p.region); if (!p.s.visible) hidden++; }
     for (const d of this.decals) { d.s.visible = shown(d.region); if (!d.s.visible) hidden++; }

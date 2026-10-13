@@ -12,7 +12,10 @@ import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
-import { knownDoor, knownStructurePoint, occupiedStructure, structureContains } from './structure-guide';
+import { isMall, knownDoor, knownStructurePoint, mallCutaway, occupiedStructure, regionAtClosed, shownAt, structureContains } from './structure-guide';
+import { paintMallGround } from './art/mall-ground';
+import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
+import type { MallArt } from './mall-art';
 import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
@@ -29,8 +32,12 @@ const FALL_T = .16;
 const FALL_SLIDE = 18;
 
 interface Occluder {
-  sprite: Sprite; key: string; kind: 'wall' | 'door' | 'roof' | 'ceiling' | 'canopy' | 'lintel';
+  sprite: Sprite; key: string; kind: OccluderKind;
   z: number; rect: Rect; keepBottom: number; level: number; target: number; region?: string; spec?: WallSpec;
+  /** Sprites that copy this occluder's fade, visibility and culling (signs, wall pieces, emission overlays). */
+  links?: Link[];
+  /** World point whose light tints the sprite (default: just in front of its south edge). */
+  tintAt?: Point;
   tall?: { full: string; flat: string; band: number; y: number; building: Rect; collapsed: boolean };
   /** A door caught between closed and open for a few frames (display only; the Runtime state already changed). */
   swing?: { t: number; key: string };
@@ -59,6 +66,8 @@ export interface ViewOptions {
   collapseTall: boolean;
   /** Decoded Sol samples; null keeps the procedural placeholders. */
   art: SolArt | null;
+  /** Decoded mall samples (?sample=mall); null draws mall floors with the generic placeholder pipeline. */
+  mallArt: MallArt | null;
   /** Drizzle on the coast map (default) or a dry overcast; reduced motion keeps only a still mist. */
   weather: WeatherKind;
 }
@@ -121,6 +130,7 @@ export class CoastView {
   constructor(private app: Application, public opts: ViewOptions) {
     try {
       this.tex = new Textures(opts.art);
+      this.tex.atlas.defer = true;
       this.light = new Lighting(this.tex);
       this.weather = new Weather(this.tex, opts.weather, opts.reducedMotion);
       this.tide = new Tide(this.tex, opts.reducedMotion);
@@ -131,7 +141,7 @@ export class CoastView {
       this.lightOverlay.blendMode = 'multiply';
       this.lightHolder.addChild(this.lightOverlay);
       this.upHolder.addChild(this.upSprite);
-      this.fx = new Fx(this.tex, this.sorted, this.flat, (x, y) => this.regionAt({ x, y }));
+      this.fx = new Fx(this.tex, this.sorted, this.flat, (x, y) => this.regionsAt({ x, y }));
       this.tex.warm(['player', 'scav', 'salt', 'creature', 'elite']);
       this.resize();
       CoastView.live.add(this);
@@ -218,8 +228,13 @@ export class CoastView {
     this.updateXray(f);
     this.updateHighlight(f, visible);
     this.camera(f, dt);
+    if (this.mall) {
+      // Mist thins out indoors over half a second (the mall's plaza and terrace are outdoors, its halls are not).
+      const indoor = this.mall.zone(f.player.x, f.player.y) === 'indoor' ? 1 : 0;
+      this.weather.shelter += (indoor - this.weather.shelter) * Math.min(1, dt * 4);
+    }
     this.weather.update(this.time, this.cam, this.view, f.revealed);
-    this.light.sync(dt, l => l.region === undefined || l.region === null || f.revealed[l.region] === true, this.time);
+    this.light.sync(dt, l => (l.region === undefined || l.region === null || f.revealed[l.region] === true) && !l.regions?.some(r => f.revealed[r] !== true), this.time);
     this.tintUpright(f);
     if (this.opts.debug) this.drawDebug(f); else this.debugG.clear();
     this.render();
@@ -245,6 +260,10 @@ export class CoastView {
     const b = m.bounds, M = materials(m);
     let bake = this.bakes.get(mapKey);
     if (!bake) { const geo = groundGeometry(m, M); bake = { geo, puddles: puddles(m, M, geo) }; this.bakes.set(mapKey, bake); }
+    // Mall floors with Sol's samples: dressing tables, ground inputs and lights depend only on the map (one per floor).
+    const mall = this.mall = this.opts.mallArt && isMall(m) ? this.mallFor(m, mapKey, this.opts.mallArt) : null;
+    const art = this.opts.art, groundBake = bake;
+    const paint = (r: Rect) => mall ? () => paintMallGround(m, r, mall.ground, art) : () => paintGround(m, r, M, art, groundBake);
 
     // Ground is painted once into 512px chunks (standalone textures), so the full 2304x1664 coast never needs one huge texture.
     // Chunks around the starting view bake now; the rest bake nearest-first, one per presented frame (bakeAhead), so the
@@ -253,13 +272,15 @@ export class CoastView {
     this.pendingChunks = [];
     for (let cy = b.y; cy < b.y + b.h; cy += CH) for (let cx = b.x; cx < b.x + b.w; cx += CH) {
       const r = { x: cx, y: cy, w: Math.min(CH, b.x + b.w - cx), h: Math.min(CH, b.y + b.h - cy) }, key = `${prefix}:${cx},${cy}`;
-      if (this.tex.atlas.has(key) || intersects(r, near)) this.placeChunk(m, r, key, M, bake);
-      else this.pendingChunks.push({ r, key, M, bake });
+      if (this.tex.atlas.has(key) || intersects(r, near)) this.placeChunk(r, key, paint(r));
+      else this.pendingChunks.push({ r, key, paint: paint(r) });
     }
     if (m.key.mapId === 'coast') this.markSampleArea(b);
     for (const e of m.entries) {
-      const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
-      s.position.set(Math.floor(e.at.x / 32) * 32, Math.floor(e.at.y / 32) * 32 - 8); this.groundLayer.addChild(s);
+      if (!mall?.flights.has(e.id)) {
+        const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
+        s.position.set(Math.floor(e.at.x / 32) * 32, Math.floor(e.at.y / 32) * 32 - 8); this.groundLayer.addChild(s);
+      }
       const label = new Sprite(this.tex.ensure(`stairs-label:${e.label}`, () => paintStairLabel(e.label)));
       label.anchor.set(.5, 0); label.position.set(e.at.x, e.at.y + 22); label.visible = false;
       this.overhead.addChild(label); this.stairLabels.set(e.id, label);
@@ -267,6 +288,27 @@ export class CoastView {
     for (const x of m.exits) { const s = new Sprite(this.tex.exitDecal()); s.anchor.set(.5); s.position.set(x.at.x, x.at.y); this.groundLayer.addChild(s); }
     for (const n of m.notes) { const s = new Sprite(this.tex.loot('note')); s.anchor.set(.5, 11 / 14); s.position.set(n.at.x, n.at.y); this.flat.addChild(s); }
 
+    const roofs: RoofArea[] = [];
+    if (mall) buildMall({
+      tex: this.tex, art: this.opts.mallArt!,
+      add: (key, x, y, z, kind, keep) => this.addOccluder(key, x, y, z, kind, keep),
+      addSprite: s => { this.sorted.addChild(s); },
+    }, mall);
+    else this.buildGeneric(m, f, M, roofs);
+    if (m.key.mapId === 'coast') this.dressCoast();
+    // Awnings keep the pavement under them dry; the mall's footprint keeps all of its floor dry.
+    const awnings = m.key.mapId === 'coast' ? [11, 25].map(tx => ({ x: tx * 32, y: 15 * 32 - 8, w: 4 * 32, h: 40 })) : mall ? mall.covered : [];
+    this.tide.setMap(m);
+    this.weather.setMap(m, bake.puddles, roofs, awnings, (x, y) => M[y >> 5]?.[x >> 5] === 'water' || this.tide.wet(x, y));
+    this.light.mood = MOODS[this.opts.mood % MOODS.length]; this.light.setMap(m, mall?.zone ?? null);
+    this.staticLights(m);
+    this.stats.occluders = this.occluders.length;
+    this.camF = { x: f.player.x - this.view.w / 2, y: f.player.y - AIM_H - this.view.h / 2 };
+    this.stats.rebuildMs = performance.now() - t0;
+  }
+  /** Walls, doors, low furniture, roofs and ceilings of the coast and the resident building (and of mall floors without art). */
+  private buildGeneric(m: MapDef, f: ViewFrame, M: GroundMaterial[][], roofs: RoofArea[]) {
+    const b = m.bounds;
     const wallish = (x: number, y: number) => { const c = m.cells[y]?.[x]; return c === 'wall' || c === 'window' || m.doors.some(d => d.x === x && d.y === y); };
     const interior = (x: number, y: number) => ['tile', 'concrete', 'wood'].includes(M[y]?.[x] ?? '');
     const owner = (x: number, y: number) => m.buildings.find(q => x * 32 >= q.x && x * 32 < q.x + q.w && y * 32 >= q.y && y * 32 < q.y + q.h);
@@ -301,7 +343,6 @@ export class CoastView {
       }
     }
 
-    const roofs: RoofArea[] = [];
     for (const bld of m.buildings) {
       if (!hasRoof(m, bld)) continue;
       const n = storeys(m, bld), band = (n - 1) * STOREY_H, lift = WALL_H + band;
@@ -323,20 +364,10 @@ export class CoastView {
       this.tex.ensure(key, () => paintCeiling(r.w, r.h));
       const occ = this.addOccluder(key, r.x, r.y, r.y + r.h + .5, 'ceiling', 0); occ.region = r.id;
     }
-    if (m.key.mapId === 'coast') this.dressCoast();
-    // Awnings keep the pavement under them dry.
-    const awnings = m.key.mapId === 'coast' ? [11, 25].map(tx => ({ x: tx * 32, y: 15 * 32 - 8, w: 4 * 32, h: 40 })) : [];
-    this.tide.setMap(m);
-    this.weather.setMap(m, bake.puddles, roofs, awnings, (x, y) => M[y >> 5]?.[x >> 5] === 'water' || this.tide.wet(x, y));
-    this.light.mood = MOODS[this.opts.mood % MOODS.length]; this.light.setMap(m);
-    this.staticLights(m);
-    this.stats.occluders = this.occluders.length;
-    this.camF = { x: f.player.x - this.view.w / 2, y: f.player.y - AIM_H - this.view.h / 2 };
-    this.stats.rebuildMs = performance.now() - t0;
   }
-  private pendingChunks: { r: Rect; key: string; M: GroundMaterial[][]; bake: GroundBake }[] = [];
-  private placeChunk(m: MapDef, r: Rect, key: string, M: GroundMaterial[][], bake: GroundBake) {
-    if (!this.tex.atlas.has(key)) this.tex.atlas.add(key, paintGround(m, r, M, this.opts.art, bake), true);
+  private pendingChunks: { r: Rect; key: string; paint: () => HTMLCanvasElement }[] = [];
+  private placeChunk(r: Rect, key: string, paint: () => HTMLCanvasElement) {
+    if (!this.tex.atlas.has(key)) this.tex.atlas.add(key, paint(), true);
     const chunk = new Sprite(this.tex.atlas.get(key)); chunk.position.set(r.x, r.y); this.groundLayer.addChildAt(chunk, 0);
   }
   /**
@@ -353,12 +384,20 @@ export class CoastView {
     });
     if (best < 0) return;
     const c = this.pendingChunks.splice(best, 1)[0];
-    this.placeChunk(this.map, c.r, c.key, c.M, c.bake);
+    this.placeChunk(c.r, c.key, c.paint);
   }
   /** Ground chunks still waiting to bake (read by checks). */
   get pendingGround() { return this.pendingChunks.length; }
   /** Per-map bake inputs (geometry, noise lattices, puddles), reused by every rebuild of the same map. */
   private bakes = new Map<string, GroundBake>();
+  /** Mall floors: dressing per map (kept like the ground inputs), and the current floor's. */
+  private mallBakes = new Map<string, MallDress>();
+  private mall: MallDress | null = null;
+  private mallFor(m: MapDef, key: string, art: MallArt): MallDress {
+    let d = this.mallBakes.get(key);
+    if (!d) { d = mallDress(m, art, this.opts.reducedMotion); this.mallBakes.set(key, d); }
+    return d;
+  }
 
   /** Outside the dressed village corner the generic placeholder pipeline still renders the real map; mark it as such. */
   private markSampleArea(b: Rect) {
@@ -385,7 +424,7 @@ export class CoastView {
   }
   private wallTexKey(spec: WallSpec) { const key = wallKey(spec); this.tex.ensure(key, () => (this.opts.art && solWall(this.opts.art, spec)) || paintWall(spec)); return key; }
 
-  private addOccluder(key: string, x: number, y: number, z: number, kind: Occluder['kind'], keepBottom: number): Occluder {
+  private addOccluder(key: string, x: number, y: number, z: number, kind: OccluderKind, keepBottom: number): Occluder {
     const t = this.tex.atlas.get(key), s = new Sprite(t);
     s.position.set(x, y); s.zIndex = z; this.sorted.addChild(s);
     const o: Occluder = { sprite: s, key, kind, z, rect: { x, y, w: t.width, h: t.height }, keepBottom, level: 0, target: 0 };
@@ -423,24 +462,27 @@ export class CoastView {
   private staticLights(m: MapDef) {
     this.light.lights = [];
     // Room lamps waver slightly and the odd one stutters (stateless in view time; no visibility or combat effect).
-    for (const l of regionLamps(m)) this.light.lights.push({ ...lamp(l.x, l.y, l.region, l.warm ? 0xc3a26a : 0xa08a5f), flicker: Math.floor(l.x * 7 + l.y * 13) % 997 });
+    // Mall floors light their halls with the dressing's tubes, cold cases and lamps instead of one lamp per room.
+    if (this.mall) this.light.lights.push(...this.mall.lights.map(l => ({ ...l })));
+    else for (const l of regionLamps(m)) this.light.lights.push({ ...lamp(l.x, l.y, l.region, l.warm ? 0xc3a26a : 0xa08a5f), flicker: Math.floor(l.x * 7 + l.y * 13) % 997 });
     if (m.key.mapId === 'coast') {
       this.light.lights.push({ ...lamp(26 * 32, 18.5 * 32, null, 0xa08a5f), flicker: 311 });
       this.light.lights.push({ x: 20 * 32, y: 9 * 32, r: 90, color: 0xb59a68, k: .35, region: null });
     }
     for (const x of m.exits) this.light.lights.push({ x: x.at.x, y: x.at.y, r: 120, color: 0x7f9a55, k: .5, region: null });
-    const regionAt = (x: number, y: number) => m.regions.find(r => r.inside && x * 32 >= r.x && x * 32 < r.x + r.w && y * 32 >= r.y && y * 32 < r.y + r.h)?.id ?? null;
     for (let y = 0; y < m.rows; y++) for (let x = 0; x < m.cols; x++) {
       if (m.cells[y][x] !== 'window') continue;
       const dx = m.cells[y][x - 1] === 'floor' ? -1 : m.cells[y][x + 1] === 'floor' ? 1 : 0, dy = m.cells[y + 1]?.[x] === 'floor' ? 1 : m.cells[y - 1]?.[x] === 'floor' ? -1 : 0;
-      this.light.lights.push({ x: (x + .5 + dx * 1.2) * 32, y: (y + .5 + dy * 1.2) * 32, r: 64, color: 0x8796a0, k: .45, region: regionAt(x + dx, y + dy) });
+      const at = { x: (x + .5 + dx) * 32, y: (y + .5 + dy) * 32 }, regions = this.regionsAt(at, m);
+      this.light.lights.push({ x: (x + .5 + dx * 1.2) * 32, y: (y + .5 + dy * 1.2) * 32, r: 64, color: 0x8796a0, k: .45, region: regions[0] ?? null, ...regions.length > 1 ? { regions } : {} });
     }
   }
 
   private onEvent(e: StampedEvent, f: ViewFrame) {
     const all = [f.player, ...f.actors], actor = (uid: string) => all.find(a => a.uid === uid);
-    const regionAt = (p: Point) => this.map!.regions.find(r => r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h)?.id ?? null;
-    const shown = (p: Point) => { const r = regionAt(p); return r === null || f.revealed[r] === true; };
+    // Rooms may overlap: a point is shown only when every room containing it is revealed (the Runtime's rule).
+    const regionAt = (p: Point) => regionAtClosed(this.map!, f.revealed, p);
+    const shown = (p: Point) => shownAt(this.map!, f.revealed, p);
     switch (e.type) {
       case 'shot': {
         const a = actor(e.shooter); if (!a || !shown(a)) break;
@@ -627,13 +669,12 @@ export class CoastView {
   }
   private syncBullets(f: ViewFrame) {
     const seen = new Set<string>();
-    const regionAt = (p: Point) => this.map!.regions.find(r => r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h)?.id ?? null;
     for (const b of f.bullets) {
       seen.add(b.uid);
       let e = this.bullets.get(b.uid);
       if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
       e.vx = b.vx; e.vy = b.vy;
-      const r = regionAt(b), show = r === null || f.revealed[r] === true;
+      const show = shownAt(this.map!, f.revealed, b);
       const v = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / v, uy = b.vy / v;
       const travelled = Math.hypot(b.x - e.born.x, b.y - e.born.y), len = Math.min(b.enemy ? 8 : 14, travelled - 3);
       const hx = Math.round(b.x), hy = Math.round(b.y - AIM_H);
@@ -677,7 +718,10 @@ export class CoastView {
     if (f.interaction) focus.push({ x: f.interaction.at.x - 8, y: f.interaction.at.y - 20, w: 16, h: 22 });
     // Cull by the last camera: off-screen structure neither renders nor runs fade/tint work.
     const vr = { x: this.cam.x - 96, y: this.cam.y - 96, w: this.view.w + 192, h: this.view.h + 240 };
-    for (const o of this.occluders) o.sprite.renderable = intersects(vr, o.rect);
+    for (const o of this.occluders) { o.sprite.renderable = intersects(vr, o.rect); if (o.links) for (const l of o.links) l.sprite.renderable = o.sprite.renderable; }
+    // Mall floors cut away the player's room and the walls just in front; other layered floors their whole plan.
+    const map = this.map!, mall = this.mall;
+    const cut = mall ? mallCutaway(map, p, mall.zone(p.x, p.y) === 'indoor') : (q: Point) => structureContains(map, occupied, q);
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
       if (o.kind === 'roof' || o.kind === 'ceiling') {
@@ -686,7 +730,7 @@ export class CoastView {
       // Cut away the current building's complete floor plan, retaining solid wall feet. Actor/loot permissions
       // still use only f.revealed; seeing the static layout does not reveal anyone behind a closed room door.
       const structural = o.kind === 'wall' || o.kind === 'door' || o.kind === 'lintel';
-      let t = structural && structureContains(this.map!, occupied, { x: o.rect.x + 16, y: o.z - 16 }) ? 3 : 0;
+      let t = structural && cut({ x: o.rect.x + 16, y: o.z - 16 }) ? 3 : 0;
       for (const r of focus) {
         if (o.z <= r.y + r.h) continue;
         if (intersects(r, o.rect)) t = Math.max(t, o.kind === 'canopy' ? 3 : 2);
@@ -724,6 +768,10 @@ export class CoastView {
     }
   }
   private applyFade(o: Occluder) {
+    if (o.links) for (const l of o.links) {
+      l.sprite.visible = o.level < 4;
+      if (l.sprite.visible) l.sprite.texture = this.tex.faded(l.key, o.level, 0, l.sprite.x, l.sprite.y);
+    }
     if (o.level >= 4) { o.sprite.visible = false; return; }
     o.sprite.visible = true;
     o.sprite.texture = this.tex.faded(o.key, o.level, o.keepBottom, o.rect.x, o.rect.y);
@@ -777,7 +825,8 @@ export class CoastView {
     const tx = p.x + ax - this.view.w / 2, ty = p.y - AIM_H + ay - this.view.h / 2 + this.panelInset * this.view.dpr / this.view.s / 2;
     const k = 1 - Math.exp(-dt * 8);
     this.camF.x += (tx - this.camF.x) * k; this.camF.y += (ty - this.camF.y) * k;
-    const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' ? 0 : 96;
+    // Mall floors end in hoarding or the drop at the map edge: no margin beyond it.
+    const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' || isMall(this.map!) ? 0 : 96;
     const clamp = (v: number, lo: number, hi: number) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, v));
     const top = this.hudTop * this.view.dpr / this.view.s;
     const cx = clamp(this.camF.x, b.x - pad, b.x + b.w + pad - this.view.w), cy = clamp(this.camF.y, b.y - pad - (pad ? 40 : 0) - top, b.y + b.h + pad - this.view.h);
@@ -791,8 +840,9 @@ export class CoastView {
     const rv = f.revealed;
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
-      const p = o.kind === 'roof' ? { x: -9999, y: -9999 } : { x: o.rect.x + 16, y: o.z + 8 };
+      const p = o.tintAt ?? (o.kind === 'roof' ? { x: -9999, y: -9999 } : { x: o.rect.x + 16, y: o.z + 8 });
       o.sprite.tint = this.light.at(p, null, rv, o.spec?.face === 'int' || o.kind === 'ceiling');
+      if (o.links) for (const l of o.links) if (!l.emit) l.sprite.tint = o.sprite.tint;
     }
     for (const [, g] of this.actors) {
       const tint = this.light.at({ x: g.body.x, y: g.body.y - 2 }, null, rv);
@@ -823,6 +873,7 @@ export class CoastView {
 
   private render() {
     const r = this.app.renderer, cx = -this.cam.x, cy = -this.cam.y;
+    this.tex.atlas.flush();
     this.groundRoot.position.set(cx, cy); this.light.layer.position.set(cx, cy); this.upper.position.set(cx, cy);
     r.render({ container: this.groundRoot, target: this.worldRT!, clear: true, clearColor: 0x121110 });
     r.render({ container: this.light.layer, target: this.lightRT!, clear: true, clearColor: 0x000000 });
@@ -851,13 +902,19 @@ export class CoastView {
   moodName() { return MOODS[this.opts.mood % MOODS.length].name; }
   get fxCount() { return this.fx.count; }
   textureBytes() { return this.tex.atlas.stats.bytes + this.view.w * this.view.h * 8 + this.view.w * this.view.k * this.view.h * this.view.k * 4; }
+  /** Name of the room the player is in; with overlapping rooms the one that counts for visibility (fail closed). */
   regionName(): string | null {
     const p = this.last?.player, m = this.map; if (!p || !m) return null;
-    return m.regions.find(r => r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h)?.name ?? null;
+    const id = regionAtClosed(m, this.last!.revealed, p);
+    return m.regions.find(r => r.id === id)?.name ?? null;
   }
   get mapDef() { return this.map; }
-  /** Diagnostic: whether an actor currently has any visible display object (used by the info-boundary check). */
-  regionAt(p: Point): string | null { return this.map?.regions.find(r => r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h)?.id ?? null; }
+  /** Region a point counts as for visibility: an unrevealed containing room first (the Runtime's rule). */
+  regionAt(p: Point): string | null { return this.map ? regionAtClosed(this.map, this.last?.revealed ?? {}, p) : null; }
+  /** Every inside region containing a point (rooms may overlap). */
+  regionsAt(p: Point, m = this.map): string[] { return m ? m.regions.filter(r => r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h).map(r => r.id) : []; }
+  /** Whether a world point may show transient detail now: every room containing it is revealed. */
+  shownAt(p: Point, revealed: Readonly<Record<string, boolean>>): boolean { return !this.map || shownAt(this.map, revealed, p); }
   /** Test probe: particles and decals currently withheld because their region is not revealed. */
   get hiddenFx() { return this.fx.hidden; }
   actorShown(uid: string): boolean { const g = this.actors.get(uid); return !!g && (g.body.visible || !!g.corpse?.visible); }

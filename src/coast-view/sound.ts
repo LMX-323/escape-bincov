@@ -11,6 +11,7 @@
  */
 import type { Spot, SynthAudio } from '../audio';
 import type { PublishedView, StampedEvent } from '../raid-runtime/contract';
+import { insideFootprint } from './mall-dressing';
 
 export type SoundOut = Pick<SynthAudio, 'start' | 'stop' | 'shot' | 'step' | 'hit' | 'pickup' | 'click' | 'radio' | 'extract' | 'death'
   | 'whiz' | 'impact' | 'dry' | 'heartbeat' | 'setRoomTone' | 'stow'>;
@@ -54,8 +55,10 @@ export class SampleSound {
     this.where.clear();
     for (const a of f.actors ?? []) this.where.set(a.uid, { x: a.x, y: a.y });
     if (!live || f.phase === 'ending') { this.stepLeft = 0; this.reloading = w.reloading; this.heals = f.hud.heals; return; }
-    // Room tone: indoors (a revealed room or a layered floor) the sea closes in.
-    const indoor = b.stamp.world.mapId !== 'coast' || p.regionId != null, key = indoor ? 'in' : 'out';
+    // Room tone: indoors (a revealed room or a layered floor) the sea closes in. A mall floor is indoors inside the
+    // building's footprint only: its plaza and terrace are open air.
+    const mall = b.stamp.world.mapId.startsWith('mall-');
+    const indoor = mall ? insideFootprint(Math.floor(p.x / 32), Math.floor(p.y / 32)) : b.stamp.world.mapId !== 'coast' || p.regionId != null, key = indoor ? 'in' : 'out';
     if (key !== this.ambience) { this.ambience = key; this.out.setRoomTone(indoor ? 1 : 0); }
     // Footsteps at the original cadence: 0.42 s walking, 0.25 s sprinting, first step on the first moving frame.
     if (p.alive && p.state.moving) {
