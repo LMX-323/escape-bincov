@@ -167,6 +167,7 @@ PR 经 CI 验证、维护者确认合并后，`main` 的 CI 成功才会更新 G
 
 | 内容 | 入口 |
 | --- | --- |
+| 剧情转化制作流程、十八事件卡与市场样板（内容规格，待接入） | [工作方案](docs/NARRATIVE-ADAPTATION-PLAN.md) · [事件与线索登记](docs/story/CONTENT-REGISTER.md) · [市场与回站样板](docs/story/CH01-MARKET-SLICE.md) |
 | 院子与城中村整合范围、发布边界 | [整合说明](docs/IMPLEMENTATION-RELEASE.md) |
 | 水产站院子实现、快捷入口与真实接口 | [院子接线说明](docs/station-yard/README.md) · [HideoutRuntime](docs/hideout-runtime/README.md) |
 | 城中村逻辑与样板接线历史 | [Coast Runtime](docs/COAST-RUNTIME-SAMPLE.md) · [样板接线](docs/COAST-SAMPLE-VIEW.md) |
