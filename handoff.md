@@ -1,3 +1,9 @@
+## 2026-10-13 · 商场 2.5D：布局二版数据（#47）
+
+维护者确认商场 2.5D 化，决定做布局二版、`?sample=mall` 先行、先做正门广场到露台一段。登记 [#47](https://github.com/xuys2025/escape-bincov/issues/47)，分支 `feat/mall-2-5d` 从 main `7df2d22` 开始。本批：`src/mall-layout-v2.ts` 家具登记与 `mallWorldV2()`；`mallWorld()` 拆成共用函数，一版输出 SHA-256 不变；`initializeMallRaid` 增加可选 `world` 参数（默认一版）。二版只改八个切片区域和超市北侧一排，S-N 在两层大堂内东移到 (62,13)。二版未注册到 `resolveExpansionWorld`，普通存档不能创建或恢复它。
+
+`tests/mall.test.ts` 改为一版、二版各跑一遍原有 5 项，新增 `tests/mall-layout-v2.test.ts` 5 项（哈希、骨架不变、家具完整、落点与穿行带、通道宽度）。坐标表、规则与平面示意见[商场 2.5D](docs/mall-2-5d/README.md)。Runtime 接入、二版注册与恢复兼容、34 条商场用例复验交 Astra；渲染等 #43、#44 合并；素材由 Sol 制作。真人手感、掩体与敌人路线未评估。以下历史记录保留。
+
 ## 2026-10-13 · CI-SHOP-TOUCH-01 输入时序修复（A＋B）
 
 维护者已接受修复决定并要求在新PR做。从已接受 main `95036af9b97ef136c874a650a8176f7fd37d6d52` 创建 `fix/shop-double-touch`，只承接商店双触验收及共享库存格的输入时间判定。窄屏测试在同一CDP会话连续排队四条真实触控事件，再统一等待；四事件顺序/可信touch/目标、取消和未取整时间证据在成功与失败都保留。产品使用`e.timeStamp`，不改变320 ms窗口。新增原生时钟门槛验证80 ms输入经历450 ms长任务仍入车、350 ms输入即使一起处理仍只选择；旧main两项都能准确检出。原11项商店事务检查保留，正式HTML/ZIP/manifest按`pnpm package`更新。[实际验证、负对照、首败与截图](docs/shop-double-touch-20261013/README.md)。

@@ -4,6 +4,7 @@ import { entityUid, newTraining, type ExpansionState, type LayeredRaid, type Wor
 import { initialLuck } from './reputation-luck';
 import { traversable, type SpaceDefinition } from './spatial';
 import type { Point, RunConfig } from './world';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_STAIRS, furnitureCellName, type FurnitureType, type Placement } from './mall-layout-v2';
 
 const at = (x: number, y: number): Point => ({ x: (x + .5) * 32, y: (y + .5) * 32 });
 export const MALL_ANCHORS = {
@@ -32,7 +33,8 @@ function room(map: SpaceDefinition, id: string, name: string, x: number, y: numb
         else rect(map, side === 'left' ? x : x + w - 1, y + offset, 1, 3, 'floor');
     } else rect(map, x + 1, y + 1, w - 2, h - 2, 'wall');
 }
-function mallWorld(): WorldDefinition {
+/** Walls, regions, rooms and passages shared by every layout revision. */
+function mallSkeleton(): { f1: SpaceDefinition; f2: SpaceDefinition } {
     const f1 = roomMap('mall-f1', 76, 56, '滨湾商场', '一层 / 地面室外'), f2 = roomMap('mall-f2', 76, 56, '滨湾商场', '二层');
     // The outside ring and F1 share one continuous layer. F2 never touches that ring.
     for (let x = 8; x <= 64; x++) { f1.cells[6][x] = 'wall'; f1.cells[48][x] = 'wall'; }
@@ -89,10 +91,12 @@ function mallWorld(): WorldDefinition {
         // Clear the adjoining store wall as well as the facade itself.
         rect(map, x - 1, y - 1, 3, 3, 'floor');
     }
-    const stairs = [['S-W', at(14, 41), at(14, 31)], ['S-N', at(60, 11), at(60, 11)], ['S-E', at(60, 45), at(60, 45)], ['E-C', at(38, 16), at(38, 19)]] as const;
-    for (const [id, a, b] of stairs) connect(f1, `${id}-up`, a, '上楼至二层', f2, `${id}-down`, b, '下楼至一层');
+    return { f1, f2 };
+}
+/** Revision 1 corner markers: one collision class per region corner, skipped near connections. */
+function cornerMarkers(map: SpaceDefinition, skip: ReadonlySet<string> = new Set()) {
     // Registered collision classes are materialized into the exact same tile cells.
-    for (const map of [f1, f2]) for (const r of map.regions!.filter(r => !r.sealed)) {
+    for (const r of map.regions!.filter(r => !r.sealed && !skip.has(r.id!))) {
         const x = Math.floor(r.x / 32) + 2, y = Math.floor(r.y / 32) + 2;
         const kind = /数码|生鲜|促销|家居|露台|大堂|服务|门厅/.test(r.name) ? 'M' : 'B';
         for (const [cx, cy, k] of [[x, y, kind], [x + 2, y, 'M'], [x, y + 2, 'V']] as const) {
@@ -102,24 +106,69 @@ function mallWorld(): WorldDefinition {
             if (k !== 'V') map.cells[cy][cx] = k === 'B' ? 'wall' : 'low';
         }
     }
-    // Parallel supermarket shelves, open cross aisles and a low diamond fashion island.
-    for (const map of [f1, f2]) for (const x of [33, 39, 45, 51]) { rect(map, x, 25, 1, 4, 'wall'); rect(map, x, 36, 1, 3, 'wall'); }
+}
+// Parallel supermarket shelves with open cross aisles (revision 1 on both floors, revision 2 on F2 only).
+const shelves = (map: SpaceDefinition) => { for (const x of [33, 39, 45, 51]) { rect(map, x, 25, 1, 4, 'wall'); rect(map, x, 36, 1, 3, 'wall'); } };
+function floorTwoFixtures(f2: SpaceDefinition) {
+    // A low diamond fashion island.
     for (const [x, y] of [[23, 12], [22, 13], [23, 13], [24, 13], [23, 14]]) f2.cells[y][x] = 'low';
     rect(f2, 22, 41, 4, 3, 'wall'); // closed ball pool; accessible external play circuit
     rect(f2, 33, 40, 1, 3, 'wall'); // bamboo partition; no diagonal collision wall
+}
+function settle(f1: SpaceDefinition, f2: SpaceDefinition) {
     for (const map of [f1, f2]) for (const e of map.entries) rect(map, Math.floor(e.at.x / 32) - 1, Math.floor(e.at.y / 32) - 1, 3, 3, 'floor');
     for (const map of [f1, f2]) map.decorations = map.decorations!.filter(d => map.cells[Math.floor(d.y / 32)][Math.floor(d.x / 32)] === (d.kind === 'B' ? 'wall' : d.kind === 'M' ? 'low' : 'floor'));
+}
+function mallWorld(): WorldDefinition {
+    const { f1, f2 } = mallSkeleton();
+    const stairs = [['S-W', at(14, 41), at(14, 31)], ['S-N', at(60, 11), at(60, 11)], ['S-E', at(60, 45), at(60, 45)], ['E-C', at(38, 16), at(38, 19)]] as const;
+    for (const [id, a, b] of stairs) connect(f1, `${id}-up`, a, '上楼至二层', f2, `${id}-down`, b, '下楼至一层');
+    for (const map of [f1, f2]) cornerMarkers(map);
+    for (const map of [f1, f2]) shelves(map);
+    floorTwoFixtures(f2);
+    settle(f1, f2);
     return { id: 'mall-v1', revision: 'mall-layout-1', maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_ANCHORS.spawn };
 }
 export const MALL_WORLD = mallWorld();
+
+/** Each furniture cell takes its collision class and a decoration naming the piece the view draws there. */
+function furnish(map: SpaceDefinition, placements: readonly Placement[]) {
+    for (const p of placements) {
+        const t: FurnitureType = MALL_FURNITURE[p.type];
+        for (let i = 0; i < (t.run ? p.n ?? 1 : 1); i++) for (let dy = 0; dy < t.h; dy++) for (let dx = 0; dx < t.w; dx++) {
+            const x = p.x + i * t.w + dx, y = p.y + dy;
+            if (map.cells[y]?.[x] !== 'floor' || map.decorations!.some(d => Math.floor(d.x / 32) === x && Math.floor(d.y / 32) === y))
+                throw new Error(`Mall layout 2: ${p.type} at ${x},${y} is not on open floor.`);
+            if (t.kind !== 'V') map.cells[y][x] = t.kind === 'B' ? 'wall' : 'low';
+            map.decorations!.push({ ...at(x, y), kind: t.kind, name: furnitureCellName(p.type, dx, dy) });
+        }
+    }
+}
+function buildMallWorldV2(): WorldDefinition {
+    const { f1, f2 } = mallSkeleton(), dressed = new Set<string>(MALL_V2_REGIONS);
+    for (const [id, a, b] of MALL_V2_STAIRS) connect(f1, `${id}-up`, a, '上楼至二层', f2, `${id}-down`, b, '下楼至一层');
+    for (const map of [f1, f2]) cornerMarkers(map, dressed);
+    shelves(f2);
+    floorTwoFixtures(f2);
+    settle(f1, f2);
+    furnish(f1, MALL_V2_LAYOUT['mall-f1']); furnish(f2, MALL_V2_LAYOUT['mall-f2']);
+    return { id: 'mall-v2', revision: 'mall-layout-2', maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_ANCHORS.spawn };
+}
+let worldV2: WorldDefinition | null = null;
+/**
+ * Layout revision 2, built on first use. Not registered in resolveExpansionWorld yet: registration, the deploy choice
+ * behind ?sample=mall and restore compatibility belong to the Runtime integration, so no ordinary save can reach it.
+ */
+export function mallWorldV2(): WorldDefinition { return worldV2 ??= buildMallWorldV2(); }
 export function mallRunConfig(seed: number | string): RunConfig {
     const config = buildingRunConfig(seed), random = D.seededRandom(config.seed + 23191);
     const exits = [{ id: 'X-N', name: '北侧接应', ...MALL_ANCHORS.north }, { id: 'X-S', name: '南街接应', ...MALL_ANCHORS.south }, { id: 'X-L', name: '卸货接应', ...MALL_ANCHORS.loading }];
     const omitted = Math.floor(random() * 3);
     return { ...config, spawn: MALL_ANCHORS.spawn, exits: exits.filter((_, i) => i !== omitted) };
 }
-export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout, config: RunConfig): void {
-    const maps: LayeredRaid['maps'] = Object.fromEntries(Object.keys(MALL_WORLD.maps).map(id => [id, { doors: {}, localTime: 0, enemies: [], loot: [], containers: [], bullets: [], noise: null }]));
+/** `world` defaults to revision 1; tests pass revision 2 until the Runtime integration chooses it for ?sample=mall. */
+export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout, config: RunConfig, world: WorldDefinition = MALL_WORLD): void {
+    const maps: LayeredRaid['maps'] = Object.fromEntries(Object.keys(world.maps).map(id => [id, { doors: {}, localTime: 0, enemies: [], loot: [], containers: [], bullets: [], noise: null }]));
     const random = D.seededRandom(config.seed + 24231), points = (map: SpaceDefinition, inside: boolean): Point[] => {
         const result: Point[] = [], context = { definition: map, doors: {}, highTide: true };
         for (let y = 1; y < map.cells.length - 1; y++) for (let x = 1; x < map.cells[y].length - 1; x++) {
@@ -130,9 +179,9 @@ export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout,
         for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; }
         return result;
     };
-    const groups = [{ id: 'mall-f1', enemies: 6, records: 12, boxes: 2, points: points(MALL_WORLD.maps['mall-f1'], false) },
-        { id: 'mall-f1', enemies: 10, records: 28, boxes: 5, points: points(MALL_WORLD.maps['mall-f1'], true) },
-        { id: 'mall-f2', enemies: 9, records: 20, boxes: 3, points: points(MALL_WORLD.maps['mall-f2'], true) }];
+    const groups = [{ id: 'mall-f1', enemies: 6, records: 12, boxes: 2, points: points(world.maps['mall-f1'], false) },
+        { id: 'mall-f1', enemies: 10, records: 28, boxes: 5, points: points(world.maps['mall-f1'], true) },
+        { id: 'mall-f2', enemies: 9, records: 20, boxes: 3, points: points(world.maps['mall-f2'], true) }];
     // Use existing 60 generation records. No floor performs a second economic roll.
     const units = [...config.loot, ...config.containers.flatMap(c => c.items)], enemies = [...config.enemies];
     let serial = 1, enemySerial = 0;
@@ -151,7 +200,7 @@ export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout,
         for (const source of groupUnits) layer.loot.push({ uid: entityUid({ version: 2, runId: loadout.runId! }, serial++), id: source.id, qty: source.qty, relief: false, ...nextPoint() });
     }
     state.base.location = 'raid'; state.base.restSeconds = 0; state.base.energizedGranted = false;
-    state.raid = { version: 2, worldVersion: MALL_WORLD.id, layoutRevision: MALL_WORLD.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
+    state.raid = { version: 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
         currentMap: 'mall-f1', player: { ...config.spawn, rotation: 0 }, loadout: structuredClone(loadout), elapsed: 0, initialHigh: config.initialHigh, highTide: config.initialHigh, warned: false, tideChanged: false,
         kills: 0, rng: (config.seed + 771) >>> 0, nextEntity: serial, maps, pursuits: [], training: newTraining(), reloadLeft: 0, fireCooldown: 0, knife: false, hitTime: 0,
         roster: Object.values(maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id }))), eventRolled: false, mapEvent: 'none' };
