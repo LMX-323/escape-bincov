@@ -1,3 +1,7 @@
+## 2026-10-13 · #32 商店反馈、冷图片恢复与旧 HUD 释放
+
+从最新 main `64505046` 在独立分支 `fix/issue32-shop-recovery` 复现并修复三类可独立确认的缺陷：交易现金/空间拒绝原因及过期清单原地刷新；两套冷 PNG 绘制异常导致加载不结束；SOL-F20-HUD-01 的 Phaser 全局鼠标事件保留旧 HUD。原版有效负对照、实际验证、截图与剩余范围见[验收报告](docs/issue32-20261013/README.md)。295项单测、最终构建17项专项、5项场景往返和5项生命周期通过；产品提交91a38b1完整CI通过。额外旧院子65/76、城中村47/51，其全部失败点已在原main对照复现并保留，未降低断言。最终验收记录与CI见[PR #42](https://github.com/xuys2025/escape-bincov/pull/42)。维护者已明确授权自验通过后经 PR 合并，不直接推送 main。#32/#26总单、F20总堆、原R/K、SAVE/A6历史未确认、真机及产品/素材待定项保持开放；既有射击与剧情 PR 不改。以下原历史记录保留。
+
 ## 2026-10-12 · SOL-R3-CAP-LISTENER-01 能力切换监听
 
 从 main `1dbacb4` 建 `fix/cap-listener-r3`，只处理 #32 三级的 SOL-R3-CAP-LISTENER-01。根因是 Pixi 8.22 `DefaultBatcher._updateMaxTextures`：能力变化后池里复用的 Graphics 渲染数据每次新建 DefaultShader、不销毁旧的，旧 Shader 的 BindGroup 永久挂在模块缓存的 batch-sampler 组上。C5 的增长来自测试 scratch 绘制，真实院子→城中村往返也会触发。`src/coast-view/renderer-lifetime.ts` 改为整页每个纹理数一个 DefaultShader，批处理器的 Shader 与自身纹理数保持一致。

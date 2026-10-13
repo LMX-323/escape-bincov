@@ -57,12 +57,19 @@ export function saleWarnings(save: D.SaveDataV1, cart: ShopCart) {
     }));
 }
 export type CartRejection = 'rule' | 'stale' | 'space' | 'funds';
+export const cartRejectionMessage: Record<CartRejection, string> = {
+    funds: '现金不足，请减少待买物品或增加待卖物品。',
+    space: '仓库空间不足，请先腾出能放下待买物品的空格。',
+    stale: '仓库已改变，请刷新清单后重新选择物品。',
+    rule: '清单无效或没有改动，请重新选择待买、待卖物品。',
+};
+export const cartStale = (save: D.SaveDataV1, cart: ShopCart) => JSON.stringify(save.stash) !== cart.original;
 export type CartSettlement = { ok: true } | { ok: false; reason: CartRejection };
 /** Same automatic stash-placement rules, now with precise rejection reasons. Failure never edits the profile. */
 export function settleCartResult(save: D.SaveDataV1, cart: ShopCart, rpg = false): CartSettlement {
     const fail = (reason: CartRejection): CartSettlement => ({ ok: false, reason });
     if (save.activeRun || !Object.hasOwn(D.MERCHANTS, cart.merchant)) return fail('rule');
-    if (JSON.stringify(save.stash) !== cart.original) return fail('stale');
+    if (cartStale(save, cart)) return fail('stale');
     if (!cartDirty(cart)) return fail('rule');
     const owned = [...cart.stash.items, ...cart.sell.items];
     if (owned.length !== save.stash.items.length || new Set(owned.map(i => i.uid)).size !== owned.length) return fail('rule');

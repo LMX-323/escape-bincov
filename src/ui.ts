@@ -45,6 +45,26 @@ export function toast(message: string, kind: 'info' | 'success' = 'info') {
     }, kind === 'success' ? 1500 : 3300);
 }
 function clearSelection() { app.selected = ''; app.placement = false; app.placementRotated = undefined; app.placementQuantity = undefined; }
+let phaserInputBeforeExternal: { enabled: boolean; keyboard: boolean | undefined } | null = null;
+/** Sleeping Phaser still receives window mouse events. External views own input until they hand back control. */
+function externalInput(external: boolean) {
+    const input = app.game?.input; if (!input) return;
+    if (external) {
+        if (phaserInputBeforeExternal === null) phaserInputBeforeExternal = { enabled: input.enabled, keyboard: input.keyboard?.enabled };
+        input.enabled = false;
+        if (input.keyboard) input.keyboard.enabled = false;
+    } else {
+        if (phaserInputBeforeExternal === null) return;
+        input.enabled = phaserInputBeforeExternal.enabled;
+        if (input.keyboard && phaserInputBeforeExternal.keyboard !== undefined) input.keyboard.enabled = phaserInputBeforeExternal.keyboard;
+        phaserInputBeforeExternal = null;
+    }
+    // KeyboardManager has a separate enabled flag and otherwise queues until Phaser's next POST_STEP.
+    const keyboard = input.keyboard as typeof input.keyboard & { queue?: unknown[] };
+    if (Array.isArray(keyboard?.queue)) keyboard.queue.length = 0;
+    // reset() releases event, downElement and upElement as well as held buttons on every pointer.
+    for (const pointer of input.pointers) pointer.reset();
+}
 function saved(ok: boolean): boolean {
     if (!ok && !app.conflict && !app.storageOK)
         toast('存档保存失败。请检查浏览器是否允许保存数据，然后重试。');
@@ -64,7 +84,7 @@ export function initSave(owned = true) {
 export function hideoutExternal(): boolean {
     if (app.pendingSettlement) { setOverlay('save-error'); return false; }
     if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return false; }
-    clearLootContext(); app.raid?.releaseInput(); playerInput.clear(); app.overlay = ''; app.baseWalking = false; app.shop = null; clearSelection();
+    clearLootContext(); app.raid?.releaseInput(); playerInput.clear(); externalInput(true); app.overlay = ''; app.baseWalking = false; app.shop = null; clearSelection();
     app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); return true;
 }
 /** The old tab page's way into the walking hideout: the station yard, or the earlier BaseScene for the legacy fixture. */
@@ -74,8 +94,8 @@ function walkIn() {
 }
 const walkInLabel = () => stationDefault() ? '回到院子' : '走进水产站';
 /** Enter the run state for an external renderer (village sample) without starting the Phaser RaidScene. */
-export function enterExternalRun() { clearLootContext(); playerInput.clear(); app.state = 'run'; app.overlay = ''; app.baseWalking = false; clearSelection(); app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); }
-export function changeState(state: typeof app.state, walking = app.baseWalking) { if (state === 'hideout' && !app.pendingSettlement && !saved(saveSession.ensureRpg())) return; if (app.pendingSettlement) { setOverlay('save-error'); return; } clearLootContext(); app.raid?.releaseInput(); if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return; } playerInput.clear(); app.state = state; app.overlay = ''; app.baseWalking = state === 'hideout' && walking; clearSelection(); if (state === 'hideout') {
+export function enterExternalRun() { clearLootContext(); playerInput.clear(); externalInput(true); app.state = 'run'; app.overlay = ''; app.baseWalking = false; clearSelection(); app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); }
+export function changeState(state: typeof app.state, walking = app.baseWalking) { if (state === 'hideout' && !app.pendingSettlement && !saved(saveSession.ensureRpg())) return; if (app.pendingSettlement) { setOverlay('save-error'); return; } clearLootContext(); app.raid?.releaseInput(); if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return; } playerInput.clear(); externalInput(false); app.state = state; app.overlay = ''; app.baseWalking = state === 'hideout' && walking; clearSelection(); if (state === 'hideout') {
     saved(saveSession.grantRelief());
 } app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); app.game?.scene.start(state === 'hideout' && app.baseWalking ? 'Base' : ({ menu: 'Menu', hideout: 'Hideout', run: 'Raid', result: 'Result' })[state]); render(); }
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -234,7 +254,11 @@ function deploy() {
 }
 function checkout() {
     const current = cart(); app.overlay = app.baseWalking ? 'base-menu' : '';
-    if (mutate(() => Shop.settleCart(app.save, current, app.expansion?.version === 2), '交易完成，物资已存入仓库。', '交易未完成，请检查现金、仓库空间和清单。')) { app.shop = null; render(); }
+    if (mutate(() => {
+        const result = Shop.settleCartResult(app.save, current, app.expansion?.version === 2);
+        if (!result.ok) toast(Shop.cartRejectionMessage[result.reason]);
+        return result.ok;
+    }, '交易完成，物资已存入仓库。', null)) { app.shop = null; render(); }
 }
 function shopDetails(item: D.Item | null | undefined) {
     if (!item) return `<aside class="details shop-details details-empty"><p>从商人拖到待买区，从仓库拖到待卖区。选中物品可查看用途，再点「移动格位」选择位置。</p></aside>`;
@@ -308,7 +332,8 @@ export function render() {
 function shopCheckout() {
     if (app.placement) return `<div class="shop-placement">${placementControls()}</div>`;
     const c = cart(), totals = Shop.cartTotals(c);
-    return `<div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) ? '' : 'disabled')}<span>背包、安全箱物品请先移入仓库。救济物资不可出售。</span></div>`;
+    const stale = Shop.cartStale(app.save, c);
+    return `<div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${stale ? btn('刷新清单', 'cart-reset') : ''}${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) && !stale ? '' : 'disabled')}<span>${stale ? Shop.cartRejectionMessage.stale : '背包、安全箱物品请先移入仓库。救济物资不可出售。'}</span></div>`;
 }
 const carryLimit = () => app.raid?.carryLimit() ?? (app.expansion?.version === 2 ? derivedLimits(app.expansion).carry : SURVIVAL.carryLimit);
 function expansionAction(action: (draft: ExpansionDraft) => boolean | void, message: string): boolean {
@@ -655,6 +680,7 @@ function bind() {
             case 'property': setOverlay('property'); break;
             case 'checkout': if (Shop.saleWarnings(app.save, cart()).length) setOverlay('shop-quest'); else checkout(); break;
             case 'checkout-confirm': checkout(); break;
+            case 'cart-reset': app.shop = null; clearSelection(); render(); break;
             case 'shop-leave-confirm': {
                 const next = app.shopLeave; app.shopLeave = null; app.shop = null; app.overlay = app.baseWalking ? 'base-menu' : ''; clearSelection();
                 if (next?.action === 'tab') { app.tab = next.id; render(); }

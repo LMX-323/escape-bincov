@@ -1,3 +1,7 @@
+## 2026-10-13 · #32 商店反馈、冷图片恢复与旧 HUD 释放
+
+从最新 main `64505046` 在独立分支 `fix/issue32-shop-recovery` 复现并修复三类可独立确认的缺陷：交易现金/空间拒绝原因及过期清单原地刷新；两套冷 PNG 绘制异常导致加载不结束；SOL-F20-HUD-01 的 Phaser 全局鼠标事件保留旧 HUD。原版有效负对照、实际验证、截图与剩余范围见[验收报告](issue32-20261013/README.md)。295项单测、最终构建17项专项、5项场景往返和5项生命周期通过；产品提交91a38b1完整CI通过。额外旧院子65/76、城中村47/51，其全部失败点已在原main对照复现并保留，未降低断言。最终验收记录与CI见[PR #42](https://github.com/xuys2025/escape-bincov/pull/42)。维护者已明确授权自验通过后经 PR 合并，不直接推送 main。#32/#26总单、F20总堆、原R/K、SAVE/A6历史未确认、真机及产品/素材待定项保持开放；既有射击与剧情 PR 不改。以下原历史记录保留。
+
 ## 2026-10-12 · SOL-R3-CAP-LISTENER-01（AI 遗留三级单项）
 
 #36 已合并，main `1dbacb4`。按维护者指令在独立分支 `fix/cap-listener-r3` 只收口 #32 的 SOL-R3-CAP-LISTENER-01：区分测试 scratch 绘制与产品往返各自触发的 Pixi DefaultShader 替换，渲染层改为每个纹理数一个 DefaultShader，修复前 C5 失败对照保留。见[复现、根因与验证](station-yard/opus-cap-listener-20261012/README.md)。本批为独立小 PR，不改 Runtime/存档/图片；F20 总堆、ASTRA-SAVE-01、原 R/K 及其它二三级保持原状态，不自行合并/发布/更新试玩站。

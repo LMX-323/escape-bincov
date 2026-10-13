@@ -100,6 +100,12 @@ jobs:
       - name: Base shop drag and drop regression
         if: matrix.group == 'input'
         run: pnpm test:shop-drag
+      - name: Cold image failure recovery and external view input ownership
+        if: matrix.group == 'input'
+        run: pnpm test:asset-load && pnpm test:hud-release
+      - name: Shop rejection feedback and stale cart recovery
+        if: matrix.group == 'inventory'
+        run: pnpm test:shop-feedback
       - name: UI layout and screenshot review
         if: matrix.group == 'visual'
         run: pnpm test:ui
