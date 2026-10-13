@@ -14,8 +14,16 @@ export interface DressMap {
     regions: readonly DressRegion[];
     decorations: readonly DressDecoration[];
 }
-/** `x, y`: top-left of the canvas in world px; `z`: south edge used for depth sorting; `layer` overhead draws above actors. */
-export interface DressSprite { assets: readonly string[]; x: number; y: number; z: number; layer: 'sorted' | 'overhead'; emit: boolean }
+/**
+ * `x, y`: top-left of the canvas in world px; `z`: south edge used for depth sorting; `layer` overhead draws above actors.
+ * `foot`: the piece's footprint and height, for its contact shadow. Asset ids starting with `procedural:` are painted by
+ * art/mall.ts instead of loaded.
+ */
+export interface DressSprite {
+    assets: readonly string[]; x: number; y: number; z: number; layer: 'sorted' | 'overhead'; emit: boolean;
+    foot?: { x: number; y: number; w: number; h: number; lift: number };
+}
+export const PROCEDURAL = 'procedural:';
 
 const TILE = 32;
 const hash = (x: number, y: number, salt: number) => {
@@ -145,8 +153,13 @@ export function mallWallProps(m: DressMap): DressSprite[] {
         return { assets: [id(name)], x: x * TILE + 16 - w / 2, y: (y + 1) * TILE - up - h, z: (y + 1) * TILE + .1, layer: 'sorted', emit: name !== 'wallprop-hydrant' && name !== 'sign-board-wall' };
     });
 }
-export function mallLights(m: DressMap): DressSprite[] {
-    return (TUBES[m.mapId] ?? []).map(([x, y, broken]) => ({ assets: [id(broken ? 'overhead-tube-hanging' : 'overhead-tube')], x: x * TILE, y: y * TILE + 16 - 64, z: (y + 1) * TILE, layer: 'overhead', emit: true }));
+/**
+ * Ceiling lights as light only: the view cuts the ceiling away, so a fixture drawn at ceiling height reads as an object
+ * lying on the floor. `x, y`: the lit floor point in world px; broken tubes flicker.
+ */
+export interface MallLight { x: number; y: number; r: number; broken: boolean }
+export function mallLights(m: DressMap): MallLight[] {
+    return (TUBES[m.mapId] ?? []).map(([x, y, broken]) => ({ x: x * TILE + 16, y: y * TILE + 16, r: broken ? 80 : 115, broken }));
 }
 
 /** One sprite per furniture piece (multi-cell pieces at their north-west part) plus the umbrellas over cafe tables. */
@@ -164,8 +177,9 @@ export function mallProps(m: DressMap): DressSprite[] {
         } else if (f.type === 'fridge') names = [`prop-fridge-${hash(x, y, 19) < .7 ? 'a' : 'b'}`, 'prop-fridge-a'];
         else names = [SINGLE[f.type]!];
         const size = MALL_SPRITE_SIZE[names[0].replace(/-(end-[ew]|mid-.*|[ab])$/, '')] ?? MALL_SPRITE_SIZE[names[0]] ?? [t.w * TILE, t.h * TILE];
-        const south = (y + t.h) * TILE;
-        out.push({ assets: names.map(id), x: x * TILE, y: south - size[1], z: south, layer: 'sorted', emit: names.some(n => EMITS.has(n)) });
+        const south = (y + t.h) * TILE, stairs = f.type === 'stairs-up' || f.type === 'stairs-down';
+        out.push({ assets: stairs ? [PROCEDURAL + f.type] : names.map(id), x: x * TILE, y: south - size[1], z: south, layer: 'sorted',
+            emit: names.some(n => EMITS.has(n)), foot: { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
         if (f.type === 'cafe-table') {
             const [uw, uh] = MALL_SPRITE_SIZE['overhead-umbrella'];
             out.push({ assets: [id('overhead-umbrella')], x: x * TILE + 16 - uw / 2, y: y * TILE + 16 - (uh - 1), z: south, layer: 'overhead', emit: false });
@@ -174,11 +188,55 @@ export function mallProps(m: DressMap): DressSprite[] {
     return out.sort((a, b) => a.z - b.z || a.x - b.x);
 }
 
-/** Hanging signs over the supermarket aisles (overhead, no footprint): anchor is the sign's top centre at ceiling height. */
+/** Colour of the standing board per sign; the engine writes the text. */
+export const SIGN_COLORS: Record<string, string> = { aisle: '#5f8456', fresh: '#4a7391', cold: '#8fa7ac', home: '#a8977a' };
+/**
+ * Signs stand on top of fixtures (gondola ends, weighing counters, the fridge wall, home-store partitions), never hang
+ * from the cut-away ceiling. `top`: height of the fixture's top face above its ground line.
+ */
 export function mallSigns(m: DressMap): DressSprite[] {
-    const hang = (x: number, y: number, asset: string): DressSprite => ({ assets: [id(asset)], x: x * TILE + 16 - 24, y: y * TILE + 16 - 60, z: (y + 1) * TILE, layer: 'overhead', emit: false });
-    if (m.mapId === 'mall-f2') return [hang(59, 16, 'sign-home')];
-    if (m.mapId !== 'mall-f1') return [];
-    return [hang(34, 24, 'sign-hanging-green'), hang(43, 27, 'sign-hanging-green'), hang(50, 24, 'sign-hanging-green'),
-        hang(36, 38, 'sign-hanging-blue'), hang(48, 35, 'sign-hanging-frost')];
+    const at = furnitureAt(m), out: DressSprite[] = [];
+    const stand = (x: number, y: number, top: number, kind: string): DressSprite =>
+        ({ assets: [PROCEDURAL + 'sign:' + kind], x: x * TILE + 16 - 13, y: (y + 1) * TILE - top - 24 - 16, z: (y + 1) * TILE + .05, layer: 'sorted', emit: false });
+    for (const [key, f] of at) {
+        const [x, y] = key.split(',').map(Number);
+        if (f?.type === 'gondola' && at.get((x - 1) + ',' + y)?.type !== 'gondola') out.push(stand(x, y, 40, 'aisle'));
+    }
+    const extra: Record<string, readonly [number, number, number, string][]> = {
+        'mall-f1': [[38, 36, 24, 'fresh'], [36, 39, 24, 'fresh'], [48, 33, 48, 'cold']],
+        'mall-f2': [[58, 17, 48, 'home'], [58, 31, 48, 'home']],
+    };
+    for (const [x, y, top, kind] of extra[m.mapId] ?? []) out.push(stand(x, y, top, kind));
+    return out;
+}
+
+/**
+ * Ground clutter of a looted, flooded mall (V only: never blocks, never reads as loot): litter and cart tracks in the
+ * aisles, spilled goods below gondolas, glass under the lobby glazing, mud trodden in at the main entrance, water stains
+ * around the cold cases and on the terrace. Free floor cells only; stable per cell, never from the raid RNG.
+ */
+export interface MallDecalSpot { kind: 'litter' | 'glass' | 'cardboard' | 'water' | 'mud' | 'tracks' | 'cans'; x: number; y: number; seed: number }
+export function mallDecals(m: DressMap): MallDecalSpot[] {
+    const f = furnitureAt(m), out: MallDecalSpot[] = [], used = new Set<string>();
+    const free = (x: number, y: number) => m.cells[y]?.[x] === 'floor' && !f.has(x + ',' + y) && !used.has(x + ',' + y);
+    const put = (kind: MallDecalSpot['kind'], x: number, y: number, wide = false) => {
+        if (!free(x, y) || wide && !free(x + 1, y)) return;
+        used.add(x + ',' + y); if (wide) used.add((x + 1) + ',' + y);
+        out.push({ kind, x: x * TILE, y: y * TILE, seed: Math.floor(hash(x, y, 91) * 1e6) });
+    };
+    m.cells.forEach((row, y) => row.forEach((_, x) => {
+        if (f.get(x + ',' + (y - 1))?.type === 'gondola' && hash(x, y, 7) < .45) put('cans', x, y);
+        if (m.mapId === 'mall-f1' && y === 7 && x >= 54 && x <= 63 && hash(x, 6, 9) < .25) put('glass', x, y);
+        if (m.mapId === 'mall-f1' && x >= 58 && x <= 62 && y >= 7 && y <= 10 && hash(x, y, 13) < .5) put('mud', x, y);
+    }));
+    const rate: Record<string, number> = { 'O-02': .07, 'F1-03': .1, 'F1-04': .08, 'F1-05': .08, 'F1-11': .1, 'F2-13': .05, 'F2-14': .06, 'F2-18': .08 };
+    m.cells.forEach((row, y) => row.forEach((_, x) => {
+        const r = regionAt(m, x, y)?.id ?? '', aisle = m.mapId === 'mall-f1' && y >= 14 && y <= 19 && x >= 27 && x <= 56;
+        if (hash(x, y, 23) >= (rate[r] ?? (aisle ? .08 : 0))) return;
+        const k = hash(x, y, 29);
+        if (r === 'F1-05' || r === 'F1-04' || r === 'F2-18') put(k < .35 ? 'water' : 'litter', x, y, k < .35);
+        else if (r === 'F1-03' || aisle) put(k < .35 ? 'tracks' : k < .55 ? 'cardboard' : 'litter', x, y, k < .55);
+        else put(k < .3 ? 'cardboard' : k < .45 ? 'water' : 'litter', x, y, k < .45);
+    }));
+    return out;
 }
