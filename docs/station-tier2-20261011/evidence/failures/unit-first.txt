@@ -1,0 +1,75 @@
+✔ station upgrades legacy bytes atomically, preserves progress and is idempotent (12.4014ms)
+✔ failed upgrade preserves v3 raw and profile; retry succeeds once (1.5268ms)
+✔ unknown/corrupt saves and non-owning window never overwrite storage (1.958ms)
+✔ active legacy checkpoint is resumed without conversion or RNG changes (12.8576ms)
+✔ snapshot and event payloads cannot mutate session; external tab commits observed once (2.2125ms)
+✔ equipped charm snapshot is detached, follows old-tab commits and reloads without moving inventory (3.9995ms)
+✔ failed charm replacement and removal preserve committed snapshots, raw bytes and item identities on retry (5.851ms)
+✔ run count begins at zero, preserves legacy seven, and increments only on committed departure (15.5759ms)
+✔ inventory split merge rotate transfer and failed write preserve identities and quantities (4.214ms)
+✔ raw compare conflict becomes permanent read-only without retry overwrite (0.9819ms)
+✔ shop retains disposable cart on quota failure and publishes exactly one settlement (3.1626ms)
+✔ shop reasons distinguish funds, stale stash and invalid moves (1.7648ms)
+✔ quest sale requires confirmation bound to the cart and quest need (2.0362ms)
+✔ facilities enforce power, non-relief materials and three-level cap (4.9429ms)
+✔ production cancels only waiting batches, refunds once, completes and claims atomically (7.4136ms)
+✔ training rejects pools, excess speed, false clocks, stationary and hidden inputs (2.7158ms)
+✔ training credits only after 120 real active seconds and shares persisted ten-minute cap (86.7141ms)
+✔ failed five-second checkpoint retains exact training for retry and backup (3.7806ms)
+✔ departure saves once before animation, locks actions and refresh resumes exact checkpoint (10.3251ms)
+✔ pending real settlement blocks return; success produces one ephemeral arrival (5.0642ms)
+✔ import confirmation is exact-text and revision-bound; corrupt and downgrade cannot overwrite (2.2277ms)
+✔ failed base checkpoint blocks old-tab writers and their exports include pending training (3.6ms)
+✔ power event occurs once after durable quest turn-in, never on quota failure or duplicate (2.6103ms)
+✔ shop full stash returns space without paying for a rejected purchase (4.6782ms)
+✔ base supplies and secure transfers use one transaction with body and inventory (3.5787ms)
+✔ failed full-backup import preserves profile, growth, queue and confirmation for retry (3.7161ms)
+✔ v1 expansion upgrade preserves body, facilities and growth without double upgrade (1.2263ms)
+✔ offline production remains finite and cannot bank blocked time; offline movement is never credited (6.5931ms)
+✔ practice rejects repeated timestamps, teleport continuity, out-of-zone and suspended frames (2.0608ms)
+✔ all mutation entry points give conflict priority and cannot mutate after disposal (1.6331ms)
+✔ split defaults to the source rotation and retains relief provenance (1.6941ms)
+✔ economy overflow fails as a rule result without throwing, charging or losing the cart (1.909ms)
+✔ 60 FPS fractional frame seconds survive integer wall-clock rounding without extra credit (97.5683ms)
+✔ effective training view shows sub-checkpoint samples, is detached and has no read side effects (2.7467ms)
+✔ effective view ignores every rejected sample, suspended activity and absent training prerequisites (2.554ms)
+✖ failed reward checkpoint projects its exact candidate once; only retry announces durable growth (23.6703ms)
+✔ cap, shared attribute switch and ten-minute boundary project original practice without resetting on reads (65.8086ms)
+✔ switching, reload and external writers never attach unsaved samples to a new revision (3.4259ms)
+✔ a stale retained candidate stays exportable but is never mixed with replacement training (2.3513ms)
+✔ supply rejection types preserve all bytes and transaction protection takes priority (1.6295ms)
+✔ water, food and medicine remain usable for each secondary effect at full primary resource (6.412ms)
+✔ sustained supplies retain exact renewal and opposite-luck replacement boundaries and boolean callers (3.307ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 41
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 800.5171
+
+✖ failing tests:
+
+test at tests\hideout-runtime.test.ts:1:28535
+✖ failed reward checkpoint projects its exact candidate once; only retry announces durable growth (23.6703ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 2.0816681711721685e-16
+  - 0
+  
+      at TestContext.<anonymous> (D:\bincov\ai-tier2-station\tests\hideout-runtime.test.ts:357:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2.0816681711721685e-16,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

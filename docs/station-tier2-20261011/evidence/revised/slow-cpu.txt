@@ -1,0 +1,4 @@
+PASS P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values
+PASS P04 reward checkpoint quota retains exact candidate; backup and retry credit once

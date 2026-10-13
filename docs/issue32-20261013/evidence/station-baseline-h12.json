@@ -1,0 +1,46 @@
+{
+  "build": "/tmp/escape-bincov-baseline.html",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-13T02:25:16.625Z",
+  "methodology": "Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.",
+  "steps": [
+    {
+      "name": "H12 素材实景：33张逐项覆盖，四NPC工作/近身/说话、遮挡与供电",
+      "status": "failed",
+      "error": "Error: timeout: condition\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:759:84\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:755:3",
+      "ms": 14611
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "frameAudit": [],
+  "expectedLogs": [],
+  "warnings": [
+    {
+      "text": "[.WebGL-0x2ed4001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2ed4001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2ed4001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2ed4001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "url": "https://station.test/?test=1"
+    }
+  ],
+  "coverage": {
+    "art": [],
+    "wallLight": []
+  },
+  "finishedAt": "2026-10-13T02:25:31.492Z",
+  "summary": {
+    "passed": 0,
+    "total": 1
+  },
+  "htmlSha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231"
+}

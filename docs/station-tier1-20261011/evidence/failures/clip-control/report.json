@@ -1,0 +1,76 @@
+{
+  "build": "test-results/tier1/clip-control/index.html",
+  "sha256": "886b50f09e848b89c83ade90a7a7ddfb546ab7b2381641ed6e59c319b56bd2cb",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T11:24:59.401Z",
+  "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Only quota transaction cases fix Date so the unrelated five-second checkpoint cannot consume the fault; timers, animation and real UI keep running. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
+  "cpuRate": 1,
+  "steps": [
+    {
+      "name": "ordinary-new-save-zero",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1280x720",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at readable (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:70:34)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:146:29\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:129:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:142:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1920x1080",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at readable (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:70:34)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:146:29\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:129:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:142:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-390x844",
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at readable (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:70:34)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:146:29\n    at async step (D:\\bincov\\ai-tier1-station\\scripts\\station-tier1-test.mjs:129:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:142:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "old-tabs-equip-and-unequip-refresh-yard",
+      "status": "passed"
+    },
+    {
+      "name": "quota-equip-replace-remove-preserve-inventory-and-retry-once",
+      "status": "passed"
+    },
+    {
+      "name": "departure-failure-seven-success-eight-refresh-no-double-count",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "ordinary-zero-1280.png",
+    "seven-hud-1280.png",
+    "failure-2.png",
+    "charm-gear-1280.png",
+    "seven-hud-1920.png",
+    "failure-4.png",
+    "charm-gear-1920.png",
+    "seven-hud-390.png",
+    "failure-6.png",
+    "charm-gear-390.png",
+    "old-tabs-charm.png",
+    "quota-stash.png",
+    "quota-bag.png",
+    "quota-remove.png"
+  ],
+  "finishedAt": "2026-10-11T11:26:13.722Z",
+  "summary": {
+    "passed": 7,
+    "total": 10
+  }
+}

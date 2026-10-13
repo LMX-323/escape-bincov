@@ -1,0 +1,52 @@
+{
+  "build": "test-results/tier2/baseline/index.html",
+  "sha256": "c628196768e6fede9a3e0a7d330fb18e6a4d609f722f7a5e97ff770b9f5ca46c",
+  "node": "v24.19.0",
+  "platform": "win32",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T12:20:48.710Z",
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "P01 rejected clock samples do not fill the existing scene ring or training prompt",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: rejected real-clock samples must not fill the ring\n+ actual - expected\n\n+ 0.008333333333333333\n- 0\n\n    at file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:104:12\n    at async step (file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:99:3",
+      "ms": 2633
+    },
+    {
+      "name": "P02 cap stays visibly full and explains waiting instead of accumulating display seconds",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: capped training ring must represent the cap\n+ actual - expected\n\n+ 0.008691666666666665\n- 1\n\n    at file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:111:12\n    at async step (file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:107:3",
+      "ms": 2256
+    },
+    {
+      "name": "S01 1280x720 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:145:53\n    at async step (file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:143:63",
+      "ms": 2507
+    },
+    {
+      "name": "S01 1920x1080 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:145:53\n    at async step (file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:143:63",
+      "ms": 2499
+    },
+    {
+      "name": "S01 390x844 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:145:53\n    at async step (file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:92:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:143:63",
+      "ms": 2608
+    }
+  ],
+  "screenshots": [
+    "fail-1.png",
+    "fail-2.png",
+    "fail-3.png",
+    "fail-4.png",
+    "fail-5.png"
+  ],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T12:21:01.218Z",
+  "passed": false
+}

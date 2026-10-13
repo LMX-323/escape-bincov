@@ -1,0 +1,24 @@
+{
+  "build": "dist/index.html",
+  "sha256": "390b244716803312987f5c53f7b08b2188c2a935b9b7ee8fa5b0bc374cbcc71c",
+  "node": "v24.19.0",
+  "platform": "win32",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T12:29:28.769Z",
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes",
+      "status": "passed",
+      "detail": {
+        "revision": 5
+      },
+      "ms": 2465
+    }
+  ],
+  "screenshots": [],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T12:29:31.235Z",
+  "passed": true
+}

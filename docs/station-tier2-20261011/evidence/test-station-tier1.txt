@@ -1,0 +1,12 @@
+$ node --import tsx scripts/station-tier1-test.mjs
+PASS ordinary-new-save-zero
+PASS legacy-seven-copy-1280x720
+PASS charm-snapshot-and-gear-1280x720
+PASS legacy-seven-copy-1920x1080
+PASS charm-snapshot-and-gear-1920x1080
+PASS legacy-seven-copy-390x844
+PASS charm-snapshot-and-gear-390x844
+PASS old-tabs-equip-and-unequip-refresh-yard
+PASS quota-equip-replace-remove-preserve-inventory-and-retry-once
+PASS departure-failure-seven-success-eight-refresh-no-double-count
+{"passed":10,"total":10}

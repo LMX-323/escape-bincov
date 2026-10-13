@@ -1,0 +1,90 @@
+{
+  "build": "test-results/tier1/baseline/index.html",
+  "sha256": "112e7c8e37c91a218351b2fee03c008872bee5ca563d4262e431a57a845c5ef1",
+  "browser": "154.0.8037.99",
+  "startedAt": "2026-10-11T08:22:59.567Z",
+  "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Only quota transaction cases fix Date so the unrelated five-second checkpoint cannot consume the fault; timers, animation and real UI keep running. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
+  "cpuRate": 1,
+  "steps": [
+    {
+      "name": "ordinary-new-save-zero",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^累计出击 0 次 ·/. Input:\n\n'第 1 天 · 应急供电'\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:126:12\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:122:3"
+    },
+    {
+      "name": "legacy-seven-copy-1280x720",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '水产站值守记录 · 第 8 天'\n- '水产站值守记录 · 累计出击 7 次'\n             ^\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:137:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:129:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1280x720",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- null\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:145:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:143:5"
+    },
+    {
+      "name": "legacy-seven-copy-1920x1080",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '水产站值守记录 · 第 8 天'\n- '水产站值守记录 · 累计出击 7 次'\n             ^\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:137:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:129:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1920x1080",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- null\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:145:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:143:5"
+    },
+    {
+      "name": "legacy-seven-copy-390x844",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ '水产站值守记录 · 第 8 天'\n- '水产站值守记录 · 累计出击 7 次'\n             ^\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:137:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:129:5"
+    },
+    {
+      "name": "charm-snapshot-and-gear-390x844",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- null\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:145:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:143:5"
+    },
+    {
+      "name": "old-tabs-equip-and-unequip-refresh-yard",
+      "status": "failed",
+      "error": "TypeError: Cannot read properties of undefined (reading 'uid')\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:161:43\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:156:3"
+    },
+    {
+      "name": "quota-equip-replace-remove-preserve-inventory-and-retry-once",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ null\n- 'bc-mv3k32vf-1d'\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:181:14\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:171:3"
+    },
+    {
+      "name": "departure-failure-seven-success-eight-refresh-no-double-count",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^累计出击 7 次 ·/. Input:\n\n'第 8 天 · 应急供电'\n\n    at file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:191:68\n    at async step (file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:116:22)\n    at async file:///D:/bincov/ai-tier1-station/scripts/station-tier1-test.mjs:187:3"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "ordinary-zero-1280.png",
+    "failure-1.png",
+    "seven-hud-1280.png",
+    "seven-radio-1280.png",
+    "seven-tabs-1280.png",
+    "failure-2.png",
+    "failure-3.png",
+    "seven-hud-1920.png",
+    "seven-radio-1920.png",
+    "seven-tabs-1920.png",
+    "failure-4.png",
+    "failure-5.png",
+    "seven-hud-390.png",
+    "seven-radio-390.png",
+    "seven-tabs-390.png",
+    "failure-6.png",
+    "failure-7.png",
+    "failure-8.png",
+    "quota-stash.png",
+    "failure-9.png",
+    "failure-10.png"
+  ],
+  "finishedAt": "2026-10-11T08:23:20.883Z",
+  "summary": {
+    "passed": 0,
+    "total": 10
+  }
+}

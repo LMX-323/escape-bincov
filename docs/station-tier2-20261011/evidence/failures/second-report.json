@@ -1,0 +1,121 @@
+{
+  "build": "dist/index.html",
+  "sha256": "e3290e2be74cd96a807f4db32f3c769945f11698b3346e60bcdd94f2246142a4",
+  "node": "v24.19.0",
+  "platform": "win32",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-11T12:13:43.810Z",
+  "methodology": "Offline packaged HTML, real Runtime/SaveSession/localStorage and existing mouse/touch controls. Save fixtures, player placement, quota and visibility gates are test-only. Fixed Date is used only for isolated rejection/layout/rollback cases, never the full 120-second training. Scene render is observed, never replaced. 390x844 is touch/viewport emulation, not a real phone. Old-build controls assert existing rendered behavior, not the absence of a new API.",
+  "steps": [
+    {
+      "name": "P01 rejected clock samples do not fill the existing scene ring or training prompt",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:99:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:98:3",
+      "ms": 1779
+    },
+    {
+      "name": "P02 cap stays visibly full and explains waiting instead of accumulating display seconds",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:107:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:106:3",
+      "ms": 1466
+    },
+    {
+      "name": "P03 1280x720 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:114:29\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:113:63",
+      "ms": 1416
+    },
+    {
+      "name": "P03 1920x1080 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:114:29\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:113:63",
+      "ms": 1521
+    },
+    {
+      "name": "P03 390x844 accepted sub-checkpoint ring, hint and panel share Runtime values",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:114:29\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:113:63",
+      "ms": 1412
+    },
+    {
+      "name": "P04 reward checkpoint quota retains exact candidate; backup and retry credit once",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:126:25\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:125:3",
+      "ms": 1448
+    },
+    {
+      "name": "S01 1280x720 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:143:35\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:142:63",
+      "ms": 1533
+    },
+    {
+      "name": "S01 1920x1080 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:143:35\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:142:63",
+      "ms": 1575
+    },
+    {
+      "name": "S01 390x844 compound no-effect rejection is readable and consumes nothing",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:143:35\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:142:63",
+      "ms": 1571
+    },
+    {
+      "name": "S02 missing/non-supply results are stable; secondary and sustained effects retain existing behavior",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:149:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:148:3",
+      "ms": 1489
+    },
+    {
+      "name": "S03 supply write failure rolls back; retry saves first, explicit reuse consumes exactly once",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:162:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:161:3",
+      "ms": 1522
+    },
+    {
+      "name": "S04 real storage peer conflict outranks missing/supply rules and preserves newest bytes",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:170:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:169:3",
+      "ms": 1501
+    },
+    {
+      "name": "P05 old tabs, yard switching and reload follow durable progress and old supply callers",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:176:40\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:175:3",
+      "ms": 1544
+    },
+    {
+      "name": "P06 full real-clock 120-second training; idle/panel/hidden/focus gates never add accepted time",
+      "status": "failed",
+      "error": "page.evaluate: Error: 存档格式不支持或内容不完整，当前进度未改动。\n    at a (https://station.test/?test=1:9103:578447)\n    at vo (https://station.test/?test=1:9103:579246)\n    at Cn (https://station.test/?test=1:9103:573524)\n    at Zl.prepareExpansionMutation (https://station.test/?test=1:9103:609377)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:55)\n    at Object.reseed (https://station.test/?test=1:9164:38331)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:46)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at seed (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:45:14)\n    at D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:186:25\n    at async step (D:\\bincov\\ai-tier2-station\\scripts\\station-tier2-test.mjs:91:22)\n    at async file:///D:/bincov/ai-tier2-station/scripts/station-tier2-test.mjs:185:3",
+      "ms": 1448
+    },
+    {
+      "name": "O01 ordinary offline entry has no test globals and uses the current UI",
+      "status": "passed",
+      "ms": 1732
+    }
+  ],
+  "screenshots": [
+    "fail-1.png",
+    "fail-2.png",
+    "fail-3.png",
+    "fail-4.png",
+    "fail-5.png",
+    "fail-6.png",
+    "fail-7.png",
+    "fail-8.png",
+    "fail-9.png",
+    "fail-10.png",
+    "fail-11.png",
+    "fail-12.png",
+    "fail-13.png",
+    "fail-14.png",
+    "ordinary-offline-1280.png"
+  ],
+  "errors": [],
+  "external": [],
+  "finishedAt": "2026-10-11T12:14:06.775Z",
+  "passed": false
+}

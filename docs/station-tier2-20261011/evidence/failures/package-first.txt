@@ -1,0 +1,13 @@
+$ pnpm build && node scripts/package.mjs
+$ tsc --noEmit && node scripts/build.mjs
+file:///D:/bincov/ai-tier2-station/scripts/build.mjs:38
+  if (missing.length) throw new Error('Regenerate the embedded font for: ' + missing.join(''));
+                            ^
+
+Error: Regenerate the embedded font for: 属毒饮
+    at compile (file:///D:/bincov/ai-tier2-station/scripts/build.mjs:38:29)
+    at async file:///D:/bincov/ai-tier2-station/scripts/build.mjs:50:12
+
+Node.js v24.19.0
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

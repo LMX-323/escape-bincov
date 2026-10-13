@@ -1,0 +1,392 @@
+{
+ "note": "Local run, Windows 10, Node 24.19.0, headless Chrome, 1280x720. Capability: only MAX_TEXTURE_IMAGE_UNITS is simulated (8 while set); losses, restores and draws are real. Real 8-unit devices and real driver capability changes not tested.",
+ "baseline": {
+  "commit": "1dbacb4",
+  "contextProgram": {
+   "build": "af97b2a23a073375af08a5526e14f8c18044593604d866f51b3b93de1df195f0",
+   "browser": "154.0.8037.99",
+   "hardware": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "steps": {
+    "S1": "passed",
+    "S2": "passed",
+    "P1": "passed",
+    "C1": "passed",
+    "C2": "passed",
+    "C3": "passed",
+    "C4": "passed",
+    "C5": "failed",
+    "R1": "passed"
+   },
+   "listenersAfterScratchDraw": "8:3 8:3 16:4 16:4 8:4 8:4 16:5 16:5 8:5 8:5 16:6 16:6 8:6 8:6 16:7 16:7 8:7 8:7 16:8 16:8 8:8 8:8 16:9 16:9",
+   "programsStable": true
+  },
+  "capabilityListeners": {
+   "build": "af97b2a23a073375af08a5526e14f8c18044593604d866f51b3b93de1df195f0",
+   "simulated": "MAX_TEXTURE_IMAGE_UNITS only",
+   "rounds": 3,
+   "workloads": {
+    "probe": {
+     "status": "failed",
+     "error": "AssertionError [ERR_ASSERTION]: listeners left by released or unknown shaders",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 1,
+       "16": 3
+      },
+      {
+       "8": 2,
+       "16": 4
+      },
+      {
+       "8": 3,
+       "16": 5
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": false,
+      "oneDefaultShaderPerCount": false,
+      "sameDefaultShaderListenersEachRound": false,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [
+       "default-shader#4/8: collected shader (first r1-8-2: probe-render-data (test))",
+       "default-shader#10/8: collected shader (first r2-8-7: probe-render-data (test))",
+       "default-shader#16/8: collected shader (first r3-8-12: probe-render-data (test))"
+      ],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "default-shader#7/16: collected shader (first r1-16-4: probe-render-data (test))",
+       "default-shader#13/16: collected shader (first r2-16-9: probe-render-data (test))",
+       "default-shader#19/16: probe-render-data (test) (first r3-16-14: probe-render-data (test))",
+       "graphics-shader#18/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 7,
+     "picture": {
+      "mean": 42.4,
+      "sd": 16
+     },
+     "walked": 47.5
+    },
+    "idle": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#13/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 1,
+     "picture": {
+      "mean": 42.5,
+      "sd": 16.3
+     },
+     "walked": 46.2
+    },
+    "remount": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#13/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 1,
+     "picture": {
+      "mean": 41.6,
+      "sd": 16.4
+     },
+     "walked": 46.2
+    },
+    "trip": {
+     "status": "failed",
+     "error": "AssertionError [ERR_ASSERTION]: listeners left by released or unknown shaders",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 2,
+       "16": 4
+      },
+      {
+       "8": 4,
+       "16": 6
+      },
+      {
+       "8": 6,
+       "16": 8
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": false,
+      "oneDefaultShaderPerCount": false,
+      "sameDefaultShaderListenersEachRound": false,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#3/8: collected shader (first r1-8-1: batch-pipe+product-render-data)",
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#9/8: collected shader (first r2-8-10: batch-pipe+product-render-data)",
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#15/8: collected shader (first r3-8-19: batch-pipe+product-render-data)"
+      ],
+      "16": [
+       "default-shader#1/16: batch-pipe (first start: batch-pipe+product-render-data)",
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#6/16: collected shader (first r1-16-5: batch-pipe+product-render-data)",
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#12/16: collected shader (first r2-16-14: batch-pipe+product-render-data)",
+       "unseen#null/null: never seen with a shader (first null)",
+       "default-shader#18/16: batch-pipe+product-render-data (first r3-16-23: batch-pipe+product-render-data)",
+       "graphics-shader#19/null: graphics-adaptor (first r3-16-25-village: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 7,
+     "picture": {
+      "mean": 70,
+      "sd": 38.6
+     },
+     "walked": 46.2
+    }
+   }
+  }
+ },
+ "fixed": {
+  "contextProgram": {
+   "build": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+   "browser": "154.0.8037.99",
+   "hardware": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "steps": {
+    "S1": "passed",
+    "S2": "passed",
+    "P1": "passed",
+    "C1": "passed",
+    "C2": "passed",
+    "C3": "passed",
+    "C4": "passed",
+    "C5": "passed",
+    "R1": "passed"
+   },
+   "listenersAfterScratchDraw": "8:2 8:2 16:2 16:2 8:2 8:2 16:2 16:2 8:2 8:2 16:2 16:2 8:2 8:2 16:2 16:2 8:2 8:2 16:2 16:2 8:2 8:2 16:2 16:2",
+   "programsStable": true
+  },
+  "capabilityListeners": {
+   "build": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+   "simulated": "MAX_TEXTURE_IMAGE_UNITS only",
+   "rounds": 3,
+   "workloads": {
+    "probe": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [
+       "default-shader#4/8: kept (no current user) (first r1-8-2: probe-render-data (test))"
+      ],
+      "16": [
+       "default-shader#1/16: batch-pipe+probe-render-data (test)+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#14/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 2,
+     "picture": {
+      "mean": 42.4,
+      "sd": 16.1
+     },
+     "walked": 45.5
+    },
+    "idle": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      },
+      {
+       "8": 0,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#13/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 1,
+     "picture": {
+      "mean": 42.4,
+      "sd": 15.9
+     },
+     "walked": 46.2
+    },
+    "remount": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [
+       "default-shader#3/8: kept (no current user) (first r1-8-1: batch-pipe+product-render-data)"
+      ],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#14/null: graphics-adaptor (first r3-16-14: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 2,
+     "picture": {
+      "mean": 41.7,
+      "sd": 16.6
+     },
+     "walked": 46.2
+    },
+    "trip": {
+     "status": "passed",
+     "perRoundListenersAfterGC": [
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      },
+      {
+       "8": 1,
+       "16": 2
+      }
+     ],
+     "checks": {
+      "noReleasedOrUnknownShaderListener": true,
+      "oneDefaultShaderPerCount": true,
+      "sameDefaultShaderListenersEachRound": true,
+      "onlyCurrentGraphicsShader": true,
+      "yardDrawsAndWalks": true
+     },
+     "ownersAfterGC": {
+      "8": [
+       "default-shader#3/8: kept (no current user) (first r1-8-1-village: batch-pipe+product-render-data)"
+      ],
+      "16": [
+       "default-shader#1/16: batch-pipe+product-render-data (first start: batch-pipe+product-render-data)",
+       "graphics-shader#14/null: graphics-adaptor (first r3-16-25-village: graphics-adaptor)"
+      ]
+     },
+     "defaultShaders": 2,
+     "picture": {
+      "mean": 70,
+      "sd": 38.7
+     },
+     "walked": 45.5
+    }
+   }
+  }
+ },
+ "regressions": {
+  "build": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+  "unit": "292/292",
+  "packageReproducible": true,
+  "testStation": "76/76, page errors 0, external 0",
+  "coastLifecycle1280": "5/5",
+  "coastLifecycle1920": "5/5",
+  "coastSample": "51/51, errors 0, external 0"
+ },
+ "diagnosis": "Owner matching per listener bind group; idle/remount/trip/probe workloads in scripts/station-capability-listeners.mjs."
+}
