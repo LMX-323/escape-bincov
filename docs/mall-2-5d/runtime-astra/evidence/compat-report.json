@@ -1,0 +1,78 @@
+{
+  "baseline": "7df2d222210c803ae69ae60e9e709b8db0b12cd2",
+  "baselineHtmlSha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "currentHtmlSha256": "d14cc1360a433657240888de95de48f22970f683aeca167cc7f095855c7ebab6",
+  "fixtureSha256": "e56b0b699b942c0265661572f8207d3ba2892d0b419a24972b930b04ebfb5306",
+  "startedAt": "2026-10-13T14:53:14.267Z",
+  "methodology": "Actual accepted main HTML; new renderer-free production Runtime plus explicit ?test=1 driver. Same HTTPS origin fulfilled offline, real browser localStorage and reloads. Controlled clock; this is save compatibility, not mall-view or natural-input acceptance.",
+  "steps": [
+    {
+      "name": "A4/S-07 actual main creates a v1 raid; its accepted snapshot and abandon result are the reference",
+      "status": "passed",
+      "evidence": {
+        "snapshotSha256": "cb8318de7b5fc26e0792f6977a841d1b5a73e6498a394ff6181f10c2790375d3",
+        "terminalSha256": "9e894cac26eafa159ac17b7375cde48da2e354dfeb6b1c5de2edb66c601430f5",
+        "world": "mall-v1"
+      }
+    },
+    {
+      "name": "A4 v1 snapshot resumes in new Runtime without change and settles identically to actual main",
+      "status": "passed",
+      "evidence": {
+        "exactSnapshot": true,
+        "exactTerminal": true
+      }
+    },
+    {
+      "name": "A4/S-03/S-08 v2 F2 survives browser refresh and exported backup import",
+      "status": "passed",
+      "evidence": {
+        "key": {
+          "runId": "bc-mv6swbj3-b",
+          "worldVersion": "mall-v2",
+          "layoutRevision": "mall-layout-2",
+          "mapId": "mall-f2"
+        },
+        "rawSha256": "1e72554f3922804797330ef33709747987c77c2665894de7acf7fb625de79ad3",
+        "backupSha256": "57d1d3cd979ea863381666c3936939147f7fbcb23de9e6100d9e3d7f037f5bcf"
+      }
+    },
+    {
+      "name": "A4/S-07 actual main HTML rejects a v2 action without a writer lock and preserves exact raw bytes",
+      "status": "passed",
+      "evidence": {
+        "ok": false,
+        "error": "建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。",
+        "write": false,
+        "unchanged": true,
+        "rawSha256": "1e72554f3922804797330ef33709747987c77c2665894de7acf7fb625de79ad3"
+      }
+    },
+    {
+      "name": "S-08 current game native import cancel/failure/confirmation keeps complete v2 F2 backup",
+      "status": "passed",
+      "evidence": {
+        "cancelPreserved": true,
+        "failurePreserved": true,
+        "confirmedWorld": "mall-v2",
+        "confirmedMap": "mall-f2",
+        "refreshPreserved": true
+      }
+    },
+    {
+      "name": "S-06 actual current HTML second tab cannot write the v2 record owned by the first tab",
+      "status": "passed",
+      "evidence": {
+        "ok": false,
+        "write": false,
+        "error": "此存档正在另一窗口使用，或浏览器不支持安全写入。请关闭其他游戏页，再刷新；也可导出备份。",
+        "unchanged": true
+      }
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "155.0.8059.40",
+  "status": "passed",
+  "finishedAt": "2026-10-13T14:53:22.693Z"
+}

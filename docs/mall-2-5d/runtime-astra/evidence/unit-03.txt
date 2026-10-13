@@ -1,0 +1,51 @@
+✖ G-07/S-04: panel blocks transition; held interact/fire stay suppressed with host movement release (316.2637ms)
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (34.0086ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 638.6318
+
+✖ failing tests:
+
+test at tests\mall-runtime.test.ts:1:8378
+✖ G-07/S-04: panel blocks transition; held interact/fire stay suppressed with host movement release (316.2637ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  3 !== 8
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:151:135)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 8,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\mall-runtime.test.ts:1:16778
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (34.0086ms)
+  AssertionError [ERR_ASSERTION]: {"map":"mall-f1","reason":"timeout","hp":100,"elapsed":599.9,"overlay":"checkpoint-error","ending":false,"error":"mall quota fault"}
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:258:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at node:internal/test_runner/test:1305:31
+      at node:internal/process/task_queues:151:7
+      at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+      at AsyncResource.runMicrotask (node:internal/process/task_queues:148:8) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

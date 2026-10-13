@@ -5,7 +5,7 @@ import { generateRun } from './world';
 import { decodeSession, RecoveryStore, StorageConflictError, type SessionRecord } from './recovery-store';
 import { newExpansion, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
-import { initializeMallRaid, mallRunConfig } from './mall-world';
+import { initializeMallRaid, mallRunConfig, mallWorldV2 } from './mall-world';
 import { initializeBuildingRaid, buildingRunConfig } from './building-world';
 import { creditTraining } from './rpg';
 import { advanceRealTime } from './base';
@@ -225,7 +225,8 @@ export class SaveSession {
         this.session.storageOK = false;
     }
 
-    beginRun(seed: number, buildings: boolean | 'mall' = false): boolean {
+    /** Layout is chosen only on deployment; active raids restore their saved world/revision. */
+    beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 } = {}): boolean {
         const s = this.session;
         if (s.state !== 'hideout' || s.conflict || s.pendingSettlement || s.save.activeRun) return false;
         const candidate = structuredClone(s.save);
@@ -237,7 +238,7 @@ export class SaveSession {
         if (buildings) {
             if (expansion!.version === 1) { expansion!.version = 2; expansion!.charm = null; expansion!.awards = []; expansion!.base.cursor = Math.max(expansion!.base.cursor, this.now()); }
             Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
-            if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config);
+            if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
         }
         if (expansion) expansion.base.location = 'raid';

@@ -17,10 +17,10 @@ function dressed(map: SpaceDefinition, x: number, y: number) {
 const furniture = (map: SpaceDefinition) => map.decorations!.filter(d => parseFurnitureName(d.name));
 const free = (map: SpaceDefinition, x: number, y: number) => traversable({ definition: map, doors: {}, highTide: true }, { x: (x + .5) * 32, y: (y + .5) * 32 }, 'body', 10);
 
-test('布局一版逐字节不变：旧进行中行动仍按原世界恢复，二版未注册到普通存档解析', () => {
+test('布局一版逐字节不变：两版按各自世界注册，旧进行中行动仍按原世界恢复', () => {
     assert.equal(createHash('sha256').update(JSON.stringify(V1)).digest('hex'), '1c4ef1c490c41854c7587f6a1ca167d7ef8859b7e3c698e800bbeef570757ffd');
     assert.equal(resolveExpansionWorld('mall-v1'), V1);
-    assert.equal(resolveExpansionWorld(V2.id), undefined);
+    assert.equal(resolveExpansionWorld(V2.id), V2);
     assert.deepEqual([V2.id, V2.revision, V2.enemyCount, V2.spawnMap, V2.spawn], ['mall-v2', 'mall-layout-2', 25, 'mall-f1', MALL_ANCHORS.spawn]);
     assert.equal(mallWorldV2(), V2);
 });

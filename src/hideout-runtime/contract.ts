@@ -116,7 +116,8 @@ export interface HideoutRuntime {
     importBackup(text: string, token: string): Result;
     setVolume(volume: number): Result;
     departure(): { warnings: string[]; weight: number; carry: number };
-    deploy(req: { world: RunWorld; seed: string }): Result & { runId?: string };
+    /** mallLayout defaults to 1 and only applies to a new mall raid. */
+    deploy(req: { world: RunWorld; seed: string; mallLayout?: 1 | 2 }): Result & { runId?: string };
     /** After the host's departure animation; never calls beginRun again. */
     startRaid(runId: string): Result;
     returnToBase(): Result;

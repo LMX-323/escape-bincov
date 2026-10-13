@@ -8,9 +8,8 @@ import { corridor, spacePath, traversable, validateSpaces } from '../src/spatial
 import { advanceLayerShots } from '../src/layer-transition';
 
 const V2 = mallWorldV2();
-/** Revision 2 is not registered for ordinary saves yet; its raids validate against an explicit test resolver. */
-const withV2: WorldResolver = version => version === V2.id ? V2 : resolveExpansionWorld(version);
-const REVISIONS: [string, WorldDefinition, WorldResolver][] = [['', MALL_WORLD, resolveExpansionWorld], ['（布局二版）', V2, withV2]];
+/** Both saved revisions validate through the production registry. */
+const REVISIONS: [string, WorldDefinition, WorldResolver][] = [['', MALL_WORLD, resolveExpansionWorld], ['（布局二版）', V2, resolveExpansionWorld]];
 
 for (const [label, MALL, resolveWorld] of REVISIONS) {
     test(`商场39区域、7同层开口、4成对连接及固定验证锚点合法，两层同坐标各自拥有楼板${label}`, () => {

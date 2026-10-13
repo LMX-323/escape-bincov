@@ -156,8 +156,8 @@ function buildMallWorldV2(): WorldDefinition {
 }
 let worldV2: WorldDefinition | null = null;
 /**
- * Layout revision 2, built on first use. Not registered in resolveExpansionWorld yet: registration, the deploy choice
- * behind ?sample=mall and restore compatibility belong to the Runtime integration, so no ordinary save can reach it.
+ * Layout revision 2, built on first use. Registered for recovery; new deployments must explicitly choose it.
+ * The ordinary deployment path defaults to revision 1. URL/sample selection belongs to the host.
  */
 export function mallWorldV2(): WorldDefinition { return worldV2 ??= buildMallWorldV2(); }
 export function mallRunConfig(seed: number | string): RunConfig {
@@ -166,7 +166,7 @@ export function mallRunConfig(seed: number | string): RunConfig {
     const omitted = Math.floor(random() * 3);
     return { ...config, spawn: MALL_ANCHORS.spawn, exits: exits.filter((_, i) => i !== omitted) };
 }
-/** `world` defaults to revision 1; tests pass revision 2 until the Runtime integration chooses it for ?sample=mall. */
+/** `world` defaults to revision 1; SaveSession passes revision 2 only on an explicit deployment choice. */
 export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout, config: RunConfig, world: WorldDefinition = MALL_WORLD): void {
     const maps: LayeredRaid['maps'] = Object.fromEntries(Object.keys(world.maps).map(id => [id, { doors: {}, localTime: 0, enemies: [], loot: [], containers: [], bullets: [], noise: null }]));
     const random = D.seededRandom(config.seed + 24231), points = (map: SpaceDefinition, inside: boolean): Point[] => {
