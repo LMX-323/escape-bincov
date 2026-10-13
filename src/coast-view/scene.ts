@@ -12,6 +12,7 @@ import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
+import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
 /**
@@ -146,14 +147,22 @@ export class CoastView {
     const k = Math.ceil(s), w = Math.ceil(W / s), h = Math.ceil(H / s);
     this.view = { w, h, s, k, dpr, W, H };
     this.app.renderer.resize(W, H);
-    for (const rt of [this.worldRT, this.lightRT, this.upRT]) if (rt) { rt.destroy(true); lifecycle.renderTextures--; }
-    this.worldRT = this.lightRT = this.upRT = null;
+    this.releaseTargets();
     this.worldRT = RenderTexture.create({ width: w, height: h, scaleMode: 'nearest' }); lifecycle.renderTextures++;
     this.lightRT = RenderTexture.create({ width: w, height: h, scaleMode: 'nearest' }); lifecycle.renderTextures++;
     this.upRT = RenderTexture.create({ width: w * k, height: h * k, scaleMode: 'linear' }); lifecycle.renderTextures++;
     this.lightOverlay.texture = this.lightRT;
     this.upSprite.texture = this.worldRT; this.upSprite.scale.set(k);
     this.screen.texture = this.upRT; this.screen.scale.set(s / k);
+  }
+
+  /** Release only this view's replaced targets, including their now-empty Pixi texture slots. */
+  private releaseTargets() {
+    const targets = [this.worldRT, this.lightRT, this.upRT].filter((rt): rt is RenderTexture => !!rt);
+    const uids = targets.map(rt => rt.source.uid);
+    for (const rt of targets) { rt.destroy(true); lifecycle.renderTextures--; }
+    this.worldRT = this.lightRT = this.upRT = null;
+    releaseManagedSlots(this.app, 'glTexture', uids);
   }
 
   present(batch: PublishedView, dt: number) {
@@ -833,8 +842,7 @@ export class CoastView {
     for (const c of [this.groundRoot, this.upper, this.light?.layer, this.lightHolder, this.upHolder, this.screen,
       this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead, this.debugG, this.exitG, this.highlight, this.lightOverlay, this.upSprite])
       if (c && !c.destroyed) c.destroy({ children: true, context: true });
-    for (const rt of [this.worldRT, this.lightRT, this.upRT]) if (rt) { rt.destroy(true); lifecycle.renderTextures--; }
-    this.worldRT = this.lightRT = this.upRT = null;
+    this.releaseTargets();
     this.tex?.destroy();
     this.map = null; this.last = null;
     CoastView.live.delete(this);
