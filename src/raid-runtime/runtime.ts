@@ -160,6 +160,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private setOverlay(value: string) {
         if (this.overlay === 'checkpoint-error' && !this.session.storageOK && value !== 'checkpoint-error')
             return;
+        if (value !== 'loot') this.lootContext = null;
         this.releaseInput();
         this.overlay = value;
         this.dirty = true;

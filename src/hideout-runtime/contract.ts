@@ -92,6 +92,10 @@ export interface HideoutRuntime {
     move(from: Source, to: Source, uid: string, x: number, y: number, rotated: boolean, quantity?: number): Result;
     split(from: Source, uid: string, quantity: number, x: number, y: number, rotated?: boolean): Result;
     quickMove(from: Source, uid: string): Result;
+    /** Move every bag item to the stash in one commit; equipment and safe contents are excluded. */
+    stashAll(): Result;
+    /** Merge matching relief/ordinary stacks and deterministically repack only the stash. */
+    sortStash(): Result;
     secure(from: Source, uid: string): Result;
     equip(from: Source, uid: string): Result;
     unequip(): Result;

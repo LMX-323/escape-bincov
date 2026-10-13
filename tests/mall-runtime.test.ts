@@ -362,7 +362,7 @@ test('L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities 
         assert.ok(f.r.activate(target)); const before = f.r.snapshotExpansion(), raw = f.raw;
         let slot: Point | undefined;
         for (let y = 0; y < f.state.loadout!.bag.h && !slot; y++) for (let x = 0; x < f.state.loadout!.bag.w && !slot; x++)
-            if (!placementError(crate.inventory, f.state.loadout!.bag, item.uid, x, y, false, 1)) slot = { x, y };
+            if (D.fits(f.state.loadout!.bag, item.id, x, y) && !placementError(crate.inventory, f.state.loadout!.bag, item.uid, x, y, false, 1)) slot = { x, y };
         assert.ok(slot);
         const request = { from: 'container' as const, to: 'bag' as const, uid: item.uid, quantity: 1, runId: crate.runId, containerId: crate.id, ...slot };
         f.fail(); assert.equal(f.r.transferLoot(target, request), 'save-failed'); assert.deepEqual(f.r.snapshotExpansion(), before); assert.equal(f.raw, raw);
@@ -381,7 +381,7 @@ test('L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities 
         assert.ok(f.r.activate(bodyTarget));
         let bodySlot: Point | undefined;
         for (let y = 0; y < f.state.loadout!.bag.h && !bodySlot; y++) for (let x = 0; x < f.state.loadout!.bag.w && !bodySlot; x++)
-            if (!placementError(body.inventory, f.state.loadout!.bag, bodyItem.uid, x, y, false, 1)) bodySlot = { x, y };
+            if (D.fits(f.state.loadout!.bag, bodyItem.id, x, y) && !placementError(body.inventory, f.state.loadout!.bag, bodyItem.uid, x, y, false, 1)) bodySlot = { x, y };
         assert.ok(bodySlot);
         const bodyRequest = { runId: body.runId, containerId: body.id, uid: bodyItem.uid, from: 'container' as const, to: 'bag' as const, quantity: 1, ...bodySlot };
         assert.equal(f.r.transferLoot(bodyTarget, bodyRequest), 'committed');
@@ -439,8 +439,9 @@ test('S-01: original A-BOX-1/2 each retain their remainder and shared bag throug
         f.driver.placePlayer(point, 0, map); const c = f.r.containers.find(c => c.x === point.x && c.y === point.y)!; assert.ok(c);
         const item = c.inventory.items[0], total = c.inventory.items.reduce((n, i) => n + i.qty, 0);
         let slot: Point | undefined;
+        // Since #44 a move onto an occupied slot may swap whole items; this case needs an empty footprint.
         for (let y = 0; y < f.state.loadout!.bag.h && !slot; y++) for (let x = 0; x < f.state.loadout!.bag.w && !slot; x++)
-            if (!placementError(c.inventory, f.state.loadout!.bag, item.uid, x, y, false, 1)) slot = { x, y };
+            if (D.fits(f.state.loadout!.bag, item.id, x, y) && !placementError(c.inventory, f.state.loadout!.bag, item.uid, x, y, false, 1)) slot = { x, y };
         assert.ok(slot); const target = ref(f, 'container', c.id); assert.ok(f.r.activate(target));
         assert.equal(f.r.transferLoot(target, { runId: c.runId, containerId: c.id, uid: item.uid, from: 'container', to: 'bag', quantity: 1, ...slot }), 'committed');
         f.r.setBlocked(false); remainders.push({ map, id: c.id, total: total - 1 });

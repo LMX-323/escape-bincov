@@ -65,7 +65,9 @@ test('container transfers preserve already rotated footprints through recovery',
 
 test('full containers refuse returned items and keep exact coordinates on both sides', () => {
     const f = fixture(), c = f.state.checkpoint!.containers![0];
-    c.inventory.items = Array.from({ length: 30 }, (_, n) => ({ uid: `full-${n}`, id: 'fuse', qty: 4, x: n % 6, y: Math.floor(n / 6) }));
+    c.inventory.items = Array.from({ length: 27 }, (_, n) => ({ uid: `full-${n}`, id: 'fuse', qty: 4, x: n % 6, y: Math.floor(n / 6) }));
+    // The occupied return slot belongs to a gun that cannot fit back inside the safe in either orientation.
+    c.inventory.items.push({ uid: 'full-shotgun', id: 'shotgun', qty: 1, x: 3, y: 4 });
     f.state.loadout!.safe.items = [{ uid: 'return-watch', id: 'watch', qty: 1, x: 1, y: 1 }];
     const before = structuredClone({ c, loadout: f.state.loadout }), bytes = f.data.get(SESSION_KEY);
     assert.equal(f.session.transferLoot(c, { runId: c.runId, containerId: c.id, from: 'safe', to: 'container', uid: 'return-watch', x: 5, y: 4 }), 'rejected');

@@ -9,7 +9,7 @@
  * rolls back the attached Runtime world. The panel never edits PublishedView data or inventory copies.
  */
 import * as D from '../domain';
-import { moveQuantity, placementError, type LootEndpoint } from '../loot';
+import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } from '../loot';
 import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { TargetRef } from '../raid-runtime/contract';
 import type { CoastServices } from './host';
@@ -48,11 +48,12 @@ export class InventoryPanel {
   placement: { rotated?: boolean; quantity?: number } | null = null;
   private drag: Drag | null = null;
   private status = '';
+  private lastClick: { uid: string; source: Source; at: number } | null = null;
 
   constructor(private el: HTMLElement, private host: InventoryHost) {}
 
-  open(mode: 'inventory' | 'loot') { this.cancelDrag(); this.mode = mode; this.selected = null; this.placement = null; this.status = ''; this.render(); }
-  closeTransient() { this.cancelDrag(); this.selected = null; this.placement = null; }
+  open(mode: 'inventory' | 'loot') { this.cancelDrag(); this.mode = mode; this.selected = null; this.placement = null; this.lastClick = null; this.status = ''; this.render(); }
+  closeTransient() { this.cancelDrag(); this.selected = null; this.placement = null; this.lastClick = null; }
 
   /**
    * Grid cell in CSS px. Desktop uses the base UI's 54, where a three-character label (the fuse, carbine rounds) fits the
@@ -84,7 +85,7 @@ export class InventoryPanel {
   }
   private hint() {
     if (this.placement) return `${this.placement.quantity ? `拆分 ${this.placement.quantity} 件：` : ''}点目标格放置 · R 旋转 · Esc 取消`;
-    return this.host.touch() ? '选中物品 → 移动格位 → 点目标格' : '拖到格子放置（R 旋转）· 单击查看 · 绿色可放置，红色不可放置';
+    return this.host.touch() ? '选中物品 → 移动格位 → 点目标格' : '单击查看 · 双击快捷转移 · 拖放可交换物品（R 旋转）';
   }
   /** Display name of the open container, taken from the latest frame by the host. */
   containerLabel = '物资箱';
@@ -114,14 +115,15 @@ export class InventoryPanel {
     const btn = (label: string, action: string, extra = '') => `<button type="button" data-do="${action}" ${extra}>${label}</button>`;
     const actions = [
       carried && SUPPLIES.has(i.id) ? btn('使用', 'inv-use') : '',
-      sel.source === 'bag' && D.WEAPONS[i.id] && i.id !== 'knife' ? btn('装备', 'inv-equip') : '',
+      sel.source === 'bag' && D.WEAPONS[i.id] && i.id !== 'knife' ? btn('装备主武器', 'inv-equip') : '',
       sel.source === 'container' ? btn('拿到背包', 'inv-quick') : btn(sel.source === 'safe' ? '放入背包' : '放入安全箱', 'inv-quick'),
       d.w !== d.h ? btn('旋转', 'inv-rotate') : '',
       btn('移动格位', 'inv-place'),
       i.qty > 1 ? `<label class="cs-split">拆分 <input type="number" min="1" max="${i.qty - 1}" value="${Math.max(1, Math.floor(i.qty / 2))}" data-split aria-label="拆分数量"></label>${btn('拆分放置', 'inv-split')}` : '',
       carried ? btn('丢弃', 'inv-drop', 'class="cs-danger"') : '',
     ].join('');
-    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${(d.weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用或装备。</p>'}`;
+    const gun = !!D.WEAPONS[i.id] && i.id !== 'knife';
+    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${(d.weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${gun && sel.source !== 'bag' ? '<p class="cs-sub">枪械先放入背包，再选中并装备主武器。</p>' : carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用。</p>'}`;
   }
   private weight() {
     const l = this.host.session.loadout!, w = D.WEAPONS[l.weapon || 'knife'];
@@ -132,7 +134,7 @@ export class InventoryPanel {
   /** Returns true when the click was handled by the panel. */
   onClick(e: MouseEvent): boolean {
     const target = e.target as HTMLElement, action = target.closest<HTMLElement>('[data-do]')?.dataset.do;
-    if (action?.startsWith('inv-')) { this.action(action); return true; }
+    if (action?.startsWith('inv-')) { this.lastClick = null; this.action(action); return true; }
     const grid = target.closest<HTMLElement>('[data-grid]');
     if (this.placement && this.selected && grid) {
       const at = this.cellAt(grid, e.clientX, e.clientY);
@@ -140,7 +142,16 @@ export class InventoryPanel {
       return true;
     }
     const item = target.closest<HTMLElement>('[data-uid]');
-    if (item && grid) { this.selected = { uid: item.dataset.uid!, source: item.dataset.source as Source }; this.placement = null; this.status = ''; this.render(); return true; }
+    if (item && grid) {
+      const selected = { uid: item.dataset.uid!, source: item.dataset.source as Source }, at = performance.now();
+      // The first selection rebuilds the panel. Track identity across that rebuild instead of relying on a dblclick target.
+      const twice = !this.host.touch() && e.detail > 0 && this.lastClick?.uid === selected.uid && this.lastClick.source === selected.source && at - this.lastClick.at <= 350;
+      this.selected = selected; this.placement = null; this.status = '';
+      this.lastClick = !this.host.touch() && e.detail > 0 && !twice ? { ...selected, at } : null;
+      if (twice) this.action('inv-quick'); else this.render();
+      return true;
+    }
+    this.lastClick = null;
     return false;
   }
   private action(a: string) {
@@ -148,7 +159,12 @@ export class InventoryPanel {
     const loadout = this.host.session.loadout!;
     switch (a) {
       case 'inv-use': { const r = this.host.services.useSupply(i.id, sel.source as 'bag' | 'safe', i.uid); if (r === 'committed') this.host.used?.(); this.result(r); break; }
-      case 'inv-equip': this.result(this.host.services.equipItem(i.uid)); break;
+      case 'inv-equip': {
+        const r = this.host.services.equipItem(i.uid);
+        this.result(r, true, '无法装备，背包装不下换下的武器和弹药。请先腾出空间。');
+        if (r === 'committed') this.host.toast(`已装备${D.ITEMS[i.id].name}。`);
+        break;
+      }
       case 'inv-drop': this.result(this.host.services.dropItem(i.uid, sel.source as 'bag' | 'safe')); break;
       case 'inv-place': this.placement = {}; this.status = ''; this.render(); break;
       case 'inv-rotate': {
@@ -166,7 +182,7 @@ export class InventoryPanel {
         const to: Source = sel.source === 'safe' ? 'bag' : sel.source === 'bag' ? 'safe' : 'bag';
         const dst = this.inv(to)!;
         if (this.mode === 'inventory') { this.result(this.host.saves.mutate(() => D.transferItem(loadout[sel.source as 'bag' | 'safe'], loadout[to as 'bag' | 'safe'], i.uid)), true, '放不下这件物品，请先整理目标容器。'); break; }
-        const at = slot(dst, i);
+        const at = firstAvailableSlot(dst, i);
         if (!at) { this.host.toast(`${LABEL[to]}空间不足。`, true); break; }
         this.commit(sel.source, to, i.uid, at.x, at.y, at.rotated);
         break;
@@ -215,7 +231,7 @@ export class InventoryPanel {
   pointerMove(e: PointerEvent) {
     const d = this.drag; if (!d || e.pointerId !== d.pointerId) return;
     if (!d.active && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 5) return;
-    if (!d.active) { d.active = true; this.selected = { uid: d.uid, source: d.source }; this.ghost(); }
+    if (!d.active) { d.active = true; this.lastClick = null; this.selected = { uid: d.uid, source: d.source }; this.ghost(); }
     this.moveGhost(e.clientX, e.clientY);
   }
   pointerUp(e: PointerEvent): boolean {
@@ -271,11 +287,4 @@ export class InventoryPanel {
 }
 
 /** First free top-left slot in `to`, merging into a compatible stack first, then trying rotation. */
-export function slot(to: D.Inventory, item: D.Item): { x: number; y: number; rotated: boolean } | null {
-  const def = D.ITEMS[item.id];
-  const stack = to.items.find(t => t.id === item.id && !!t.relief === !!item.relief && t.qty < def.stack);
-  if (stack) return { x: stack.x, y: stack.y, rotated: !!stack.rotated };
-  for (const rotated of def.w === def.h ? [false] : [false, true])
-    for (let y = 0; y < to.h; y++) for (let x = 0; x < to.w; x++) if (D.fits(to, item.id, x, y, undefined, rotated)) return { x, y, rotated };
-  return null;
-}
+export const slot = firstAvailableSlot;
