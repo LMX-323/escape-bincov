@@ -1,0 +1,138 @@
+{
+  "sha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "browser": "155.0.8059.40",
+  "cpuRate": 24,
+  "only": [
+    "390x844"
+  ],
+  "checks": [
+    {
+      "name": "390x844 funds rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 24,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1830,
+            "receivedAt": 1830,
+            "beforeHandlerAt": 1833,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8nls-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1843,
+            "receivedAt": 1843,
+            "beforeHandlerAt": 1844,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8nls-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1962,
+            "receivedAt": 1962,
+            "beforeHandlerAt": 1963,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8nls-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1968,
+            "receivedAt": 1968,
+            "beforeHandlerAt": 1968,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8nls-b"
+          }
+        ],
+        "gapMs": 125,
+        "handlerGapMs": 124
+      },
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 space rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 24,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1791,
+            "receivedAt": 1791,
+            "beforeHandlerAt": 1793,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8t4c-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1802,
+            "receivedAt": 1802,
+            "beforeHandlerAt": 1804,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8t4c-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1921,
+            "receivedAt": 1921,
+            "beforeHandlerAt": 1923,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8t4c-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1927,
+            "receivedAt": 1927,
+            "beforeHandlerAt": 1927,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p8t4c-b"
+          }
+        ],
+        "gapMs": 125,
+        "handlerGapMs": 123
+      },
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    }
+  ]
+}
