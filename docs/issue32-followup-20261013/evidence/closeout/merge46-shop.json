@@ -1,0 +1,358 @@
+{
+  "sha256": "57a16cfdd1e7b010e7c7e61f5e7aa2976b44bcfe6c249db99de8ef7c2729ab5d",
+  "browser": "155.0.8059.40",
+  "cpuRate": 1,
+  "only": [],
+  "checks": [
+    {
+      "name": "1280x720 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 238.5,
+          "y": 576.5,
+          "width": 291,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 225.5,
+          "y": 576.5,
+          "width": 317,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 430.5,
+          "y": 936.5,
+          "width": 291,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 417.5,
+          "y": 936.5,
+          "width": 317,
+          "height": 33.5
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 funds rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1305,
+            "receivedAt": 1304,
+            "beforeHandlerAt": 1305,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq3hd-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1305,
+            "receivedAt": 1305,
+            "beforeHandlerAt": 1305,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq3hd-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1306,
+            "receivedAt": 1306,
+            "beforeHandlerAt": 1306,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq3hd-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1307,
+            "receivedAt": 1307,
+            "beforeHandlerAt": 1307,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq3hd-b"
+          }
+        ],
+        "gapMs": 2,
+        "handlerGapMs": 2
+      },
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "390x844 space rejection",
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": null,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 1270,
+            "receivedAt": 1270,
+            "beforeHandlerAt": 1270,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq4sk-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1270,
+            "receivedAt": 1270,
+            "beforeHandlerAt": 1270,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq4sk-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 1272,
+            "receivedAt": 1272,
+            "beforeHandlerAt": 1272,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq4sk-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 1272,
+            "receivedAt": 1272,
+            "beforeHandlerAt": 1272,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq4sk-b"
+          }
+        ],
+        "gapMs": 2,
+        "handlerGapMs": 2
+      },
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "box": {
+          "x": 97.5,
+          "y": 681,
+          "width": 195,
+          "height": 53
+        },
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "timing: quick input survives a long task before its second pointerup handler",
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 80,
+        "blockSecondUpMs": 450,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 266.2999999988824,
+            "receivedAt": 1289.2999999988824,
+            "beforeHandlerAt": 1289.2999999988824,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq641-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 266.2999999988824,
+            "receivedAt": 1289.5,
+            "beforeHandlerAt": 1289.5,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq641-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 346.2999999988824,
+            "receivedAt": 1291.3999999985099,
+            "beforeHandlerAt": 1291.5,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq641-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 346.2999999988824,
+            "receivedAt": 1291.5,
+            "beforeHandlerAt": 1741.5999999996275,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq641-b"
+          }
+        ],
+        "gapMs": 80,
+        "handlerGapMs": 452.09999999962747
+      },
+      "detail": {
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 350,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 357,
+            "receivedAt": 1375,
+            "beforeHandlerAt": 1375.0999999996275,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq7lg-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 357,
+            "receivedAt": 1375.2000000011176,
+            "beforeHandlerAt": 1375.2000000011176,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq7lg-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 707,
+            "receivedAt": 1376.9000000003725,
+            "beforeHandlerAt": 1376.9000000003725,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq7lg-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 707,
+            "receivedAt": 1380.2000000011176,
+            "beforeHandlerAt": 1380.2000000011176,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6rq7lg-b"
+          }
+        ],
+        "gapMs": 350,
+        "handlerGapMs": 5
+      },
+      "detail": {
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "yard refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "tabs refreshes stale empty cart without reopening",
+      "detail": {
+        "unchangedSave": true,
+        "newStockVisible": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same funds rejection",
+      "detail": {
+        "message": "现金不足，请减少待买物品或增加待卖物品。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "legacy tabs show the same space rejection",
+      "detail": {
+        "message": "仓库空间不足，请先腾出能放下待买物品的空格。",
+        "unchangedSave": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "another window still locks settlement and cannot be overwritten through refresh",
+      "detail": {
+        "result": {
+          "ok": false,
+          "reason": "conflict",
+          "message": "存档已由另一窗口接管，本页不能写入。"
+        },
+        "newerSavePreserved": true
+      },
+      "status": "passed"
+    }
+  ]
+}

@@ -103,12 +103,18 @@ jobs:
       - name: Cold image failure recovery and external view input ownership
         if: matrix.group == 'input'
         run: pnpm test:asset-load && pnpm test:hud-release
+      - name: Village render target replacement and context recovery
+        if: matrix.group == 'input'
+        run: pnpm test:coast-render-targets
       - name: Shop rejection feedback and stale cart recovery
         if: matrix.group == 'inventory'
         run: pnpm test:shop-feedback
       - name: UI layout and screenshot review
         if: matrix.group == 'visual'
         run: pnpm test:ui
+      - name: Village animation presentation contracts
+        if: matrix.group == 'visual'
+        run: pnpm test:coast-animation
       - name: Tactical inventory and pixel artwork regression
         if: matrix.group == 'visual'
         run: pnpm test:tactical && pnpm test:art
