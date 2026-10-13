@@ -9,7 +9,8 @@ import { playerInput } from './input';
 import { app, audio, saveSession, hideoutRuntime } from './app';
 import type { SessionMutation } from './session';
 import { titleScreen } from './title-screen';
-import { moveQuantity, placementError, type LootEndpoint } from './loot';
+import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } from './loot';
+import { transferBagToStash, organizeStash } from './inventory-actions';
 import { ATTRIBUTES, EFFECTS, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, type Facility } from './expansion-state';
 import { FACILITY_COSTS, FACILITY_NAMES, buildFacility, enqueueProduction, claimProduction, cancelProduction } from './base';
 import { equipCharm, unequipCharm, reputationTier } from './reputation-luck';
@@ -231,11 +232,11 @@ function details() {
     if (!item) return `<aside class="details details-empty"><div class="section-label">${app.state === 'run' ? '随身物资' : '出发前检查'}</div><h3>选中一件物品</h3><p class="muted">查看用途、重量和操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>换弹只使用背包内的弹药。</dd></div><div><dt>安全箱</dt><dd>放入这里的物品，撤离失败也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
     const actions = app.state === 'run'
-        ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run', 'primary') : ''}${supplies.includes(item.id) ? btn('使用', 'use', 'primary') : ''}${d.kind === 'accessory' && app.expansion?.raid ? btn('佩戴', 'charm-equip') : ''}${btn(app.selectedSource === 'safe' ? '放入背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
-        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
+        ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备主武器', 'equip-run', 'primary') : ''}${supplies.includes(item.id) ? btn('使用', 'use', 'primary') : ''}${d.kind === 'accessory' && app.expansion?.raid ? btn('佩戴', 'charm-equip') : ''}${btn(app.selectedSource === 'safe' ? '放入背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
+        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
     const baseActions = app.state === 'hideout' && app.expansion?.version === 2 ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${supplies.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
     const size = D.itemSize(item);
-    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${playerInput.touch ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
+    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${playerInput.touch ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
 }
 /** Host calls after a successful runtime.deploy and its animation. Uses the committed checkpoint. */
 export async function startPreparedHideoutRaid(runId: string): Promise<boolean> {
@@ -267,9 +268,9 @@ function shopDetails(item: D.Item | null | undefined) {
 }
 function lootDetails(item: D.Item | null | undefined) {
     if (app.placement) return `<aside class="details loot-details details-empty">${placementControls()}</aside>`;
-    if (!item) return `<aside class="details loot-details details-empty"><div><div class="section-label">取舍，由你决定</div><h3>选中物品查看详情</h3></div><p>把物品拖到另一侧的空格，或拖到可合并的同类物品上。<br>同类堆叠装满后，剩余留在原处 · 可放回来源</p></aside>`;
+    if (!item) return `<aside class="details loot-details details-empty"><div><div class="section-label">取舍，由你决定</div><h3>选中物品查看详情</h3></div><p>把物品拖到另一侧的空格，或拖到可合并的同类物品上。<br>双击拿到背包 · 同类堆叠装满后，剩余留在原处</p></aside>`;
     const def = D.ITEMS[item.id], size = D.itemSize(item), external = app.selectedSource === 'container';
-    const actions = external ? '<span class="inv-help">收入背包或安全箱后，才能使用或装备。</span>' : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run') : ''}${supplies.includes(item.id) ? btn('使用', 'use') : ''}${btn(app.selectedSource === 'safe' ? '移至背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`;
+    const actions = external ? `${btn('拿到背包', 'loot-quick', 'primary')}<span class="inv-help">枪械先放入背包，再选中并装备主武器。</span>` : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备主武器', 'equip-run') : ''}${supplies.includes(item.id) ? btn('使用', 'use') : ''}${btn(app.selectedSource === 'safe' ? '移至背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`;
     return `<aside class="details loot-details"><div class="loot-detail-name"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${external ? '来源物资' : '随身物资'} · ${kindName[def.kind]}</div><h3>${def.name}</h3></div></div><p>${size.w}×${size.h} 格　${item.qty} 件　${(def.weight * item.qty).toFixed(2)} kg${item.relief ? '　<span class="orange">救济 · 不可出售</span>' : ''}</p></div><p class="item-description">${def.description}</p><div class="item-actions">${actions}${def.w !== def.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}${playerInput.touch ? btn('关闭详情', 'clear-selection') : ''}</div></aside>`;
 }
 function lootHtml() {
@@ -374,7 +375,7 @@ function renderHideout() {
     let body = '';
     if (app.tab === 'gear') {
         const weight = preparedWeight();
-        body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="columns gear-columns">${equipmentPanel(s.equipment, s.bag, s.safe)}${bagPanel(s.bag, weight)}<section class="stash-section"><h3 class="section-title"><b class="section-number">03</b>仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'} · 出击时留在水产站</div></section></div>${details()}`;
+        body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="inventory-tools">${btn('背包全部入库', 'stash-all')}${btn('整理仓库', 'sort-stash')}<span>整包入库 · 空间不足则保留原处 · 装备与安全箱不变</span></div><div class="columns gear-columns">${equipmentPanel(s.equipment, s.bag, s.safe)}${bagPanel(s.bag, weight)}<section class="stash-section"><h3 class="section-title"><b class="section-number">03</b>仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'} · 出击时留在水产站</div></section></div>${details()}`;
     } else if (app.tab === 'body') { body = propertyPanel();
     } else if (app.tab === 'facilities') { body = facilityPanel();
     } else if (app.tab === 'arms' || app.tab === 'med') {
@@ -642,6 +643,13 @@ function transferLootItem(source: string, target: string, uid: string, x: number
     }
     render();
 }
+function quickLootItem(source: string, uid: string) {
+    const target = source === 'bag' ? 'safe' : 'bag', item = inventory(source).items.find(i => i.uid === uid);
+    if (!item) { toast('物品已不在原位置，请重新选择。'); return; }
+    const at = firstAvailableSlot(inventory(target), item);
+    if (!at) { toast(`${target === 'bag' ? '背包' : '安全箱'}空间不足，请先整理。`); return; }
+    transferLootItem(source, target, uid, at.x, at.y, at.rotated, item.qty);
+}
 function commitDrop(el: HTMLElement, e: DropPoint, drag: InventoryDrag) {
     clearPlacementPreview();
     try {
@@ -808,9 +816,17 @@ function bind() {
                 mutate(() => D.equip(app.save, app.selected), '主武器已装备。', '无法装备，请给换下的武器和弹药腾出空间。');
                 break;
             case 'equip-run':
-                mutate(() => app.raid?.equipItem(app.selected) ?? false);
-                app.selected = '';
-                render();
+                // RaidScene provides the specific rejection; don't immediately overwrite it with the generic mutation message.
+                mutate(() => app.raid?.equipItem(app.selected) ?? false, '', null);
+                break;
+            case 'loot-quick':
+                if (app.overlay === 'loot') quickLootItem(app.selectedSource, app.selected);
+                break;
+            case 'stash-all':
+                if (app.state === 'hideout' && !shopping()) mutate(() => transferBagToStash(app.save), '背包物品已全部入库，装备与安全箱保留。', app.save.bag.items.length ? '仓库空间不足，背包物品全部留在原处。' : '背包已经是空的。');
+                break;
+            case 'sort-stash':
+                if (app.state === 'hideout' && !shopping()) mutate(() => organizeStash(app.save), '仓库已整理。', '当前无法重新排布，仓库保持原样。');
                 break;
             case 'transfer': {
                 const to = app.selectedSource === 'stash' ? 'bag' : 'stash';
@@ -858,8 +874,13 @@ function bind() {
     });
     ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(el => { el.onclick = () => { if (app.placement) return; app.selected = el.dataset.uid!; app.selectedSource = el.dataset.source!; ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(node => { const active = node.dataset.uid === app.selected; node.classList.toggle('selected', active); node.setAttribute('aria-pressed', String(active)); }); const panel = ui().querySelector('.details'); if (panel)
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
-        el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict || shopping())
-        return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); };
+        el.click(); }; el.ondblclick = () => {
+            if (app.conflict || app.pendingSettlement || shopping() || app.placement || playerInput.touch) return;
+            const from = el.dataset.source!, uid = el.dataset.uid!;
+            if (app.overlay === 'loot') quickLootItem(from, uid);
+            else if (app.state === 'hideout') mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), uid), '物资已转移。', '目标容器空间不足，请先整理。');
+            else if (app.state === 'run') mutate(() => D.transferItem(inventory(from), inventory(from === 'safe' ? 'bag' : 'safe'), uid), '物资已转移。', '目标容器空间不足，请先整理。');
+        };
         el.onpointerdown = e => {
             if (playerInput.touch || e.button !== 0 || app.placement || app.conflict || app.pendingSettlement) return;
             const grid = el.closest<HTMLElement>('[data-grid]'); if (!grid) return;

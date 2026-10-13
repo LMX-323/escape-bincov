@@ -5,13 +5,14 @@ import { paintGround, puddles, type GroundBake } from './art/ground';
 import { groundGeometry } from './art/surface';
 import { LOOT_FOOT, LOOT_H } from './art/props';
 import { solWall, type SolArt } from './art/sol';
-import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDownpipe, paintLintel, paintLow, paintRoof, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
+import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
 import { Fx } from './fx';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
+import { knownDoor, knownStructurePoint, occupiedStructure, structureContains } from './structure-guide';
 
 export const AIM_H = 22;
 /**
@@ -88,6 +89,8 @@ export class CoastView {
   private mapKey = ''; private epoch = -1;
   private occluders: Occluder[] = [];
   private doors = new Map<string, Occluder>();
+  private doorGuides = new Map<string, Sprite>();
+  private stairLabels = new Map<string, Sprite>();
   private actors = new Map<string, ActorGfx>();
   private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number }>();
   private crates = new Map<string, { s: Sprite; shadow: Sprite; empty: boolean; look: 'full' | 'empty' | 'open' }>();
@@ -202,6 +205,7 @@ export class CoastView {
     this.updateExit(f);
     this.updateTall(f);
     this.updateFades(f, dt);
+    this.updateStructureGuides(f);
     this.updateXray(f);
     this.updateHighlight(f, visible);
     this.camera(f, dt);
@@ -217,7 +221,7 @@ export class CoastView {
   private clearScene() {
     for (const layer of [this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead]) for (const c of layer.removeChildren()) c.destroy();
     this.fx?.clear();
-    this.occluders = []; this.pendingChunks = []; this.doors.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
+    this.occluders = []; this.pendingChunks = []; this.doors.clear(); this.doorGuides.clear(); this.stairLabels.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
     this.debugG.clear();
   }
 
@@ -247,6 +251,9 @@ export class CoastView {
     for (const e of m.entries) {
       const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
       s.position.set(Math.floor(e.at.x / 32) * 32, Math.floor(e.at.y / 32) * 32 - 8); this.groundLayer.addChild(s);
+      const label = new Sprite(this.tex.ensure(`stairs-label:${e.label}`, () => paintStairLabel(e.label)));
+      label.anchor.set(.5, 0); label.position.set(e.at.x, e.at.y + 22); label.visible = false;
+      this.overhead.addChild(label); this.stairLabels.set(e.id, label);
     }
     for (const x of m.exits) { const s = new Sprite(this.tex.exitDecal()); s.anchor.set(.5); s.position.set(x.at.x, x.at.y); this.groundLayer.addChild(s); }
     for (const n of m.notes) { const s = new Sprite(this.tex.loot('note')); s.anchor.set(.5, 11 / 14); s.position.set(n.at.x, n.at.y); this.flat.addChild(s); }
@@ -268,7 +275,11 @@ export class CoastView {
         };
         const occ = this.addOccluder(this.wallTexKey(spec), x * 32, y * 32 - WALL_H, (y + 1) * 32, door ? 'door' : 'wall', 6);
         occ.spec = spec;
-        if (door) this.doors.set(door.id, occ);
+        if (door) {
+          this.doors.set(door.id, occ);
+          const guide = new Sprite(); guide.position.set(x * 32, y * 32 - WALL_H); guide.visible = false;
+          this.xray.addChild(guide); this.doorGuides.set(door.id, guide);
+        }
       } else if (bld && cell === 'floor' && !door && (y * 32 === bld.y || (y + 1) * 32 === bld.y + bld.h) && x * 32 > bld.x && (x + 1) * 32 < bld.x + bld.w) {
         this.tex.ensure('lintel', () => paintLintel(32));
         this.addOccluder('lintel', x * 32, y * 32 - WALL_H, (y + 1) * 32, 'lintel', 0);
@@ -652,6 +663,7 @@ export class CoastView {
 
   private updateFades(f: ViewFrame, dt: number) {
     const p = f.player;
+    const occupied = occupiedStructure(this.map!, p);
     const focus: Rect[] = [{ x: p.x - 11, y: p.y - 44, w: 22, h: 44 }];
     if (f.interaction) focus.push({ x: f.interaction.at.x - 8, y: f.interaction.at.y - 20, w: 16, h: 22 });
     // Cull by the last camera: off-screen structure neither renders nor runs fade/tint work.
@@ -659,8 +671,13 @@ export class CoastView {
     for (const o of this.occluders) o.sprite.renderable = intersects(vr, o.rect);
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
-      if (o.kind === 'roof' || o.kind === 'ceiling') { o.target = o.region && f.revealed[o.region] ? 4 : 0; continue; }
-      let t = 0;
+      if (o.kind === 'roof' || o.kind === 'ceiling') {
+        o.target = o.region && (f.revealed[o.region] || occupied?.regionIds.includes(o.region)) ? 4 : 0; continue;
+      }
+      // Cut away the current building's complete floor plan, retaining solid wall feet. Actor/loot permissions
+      // still use only f.revealed; seeing the static layout does not reveal anyone behind a closed room door.
+      const structural = o.kind === 'wall' || o.kind === 'door' || o.kind === 'lintel';
+      let t = structural && structureContains(this.map!, occupied, { x: o.rect.x + 16, y: o.z - 16 }) ? 3 : 0;
       for (const r of focus) {
         if (o.z <= r.y + r.h) continue;
         if (intersects(r, o.rect)) t = Math.max(t, o.kind === 'canopy' ? 3 : 2);
@@ -677,6 +694,18 @@ export class CoastView {
       o.level += Math.sign(o.target - o.level); this.applyFade(o);
     }
     for (const s of this.shadows.children) { const roof = (s as Graphics & { roofOf?: Occluder }).roofOf; if (roof) s.alpha = 1 - roof.level / 4; }
+  }
+  private updateStructureGuides(f: ViewFrame) {
+    const map = this.map!, occupied = occupiedStructure(map, f.player);
+    for (const door of map.doors) {
+      const guide = this.doorGuides.get(door.id)!;
+      guide.visible = knownDoor(map, door, f.revealed, occupied);
+      if (!guide.visible) continue;
+      const open = !!f.doors[door.id];
+      guide.texture = this.tex.ensure(`door-guide:${door.wall}:${open}`, () => paintDoorGuide(door.wall, open));
+      guide.alpha = f.interaction?.ref.id === door.id ? 1 : .82;
+    }
+    for (const entry of map.entries) this.stairLabels.get(entry.id)!.visible = knownStructurePoint(map, entry.at, f.revealed, occupied);
   }
   private applyFade(o: Occluder) {
     if (o.level >= 4) { o.sprite.visible = false; return; }

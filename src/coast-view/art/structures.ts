@@ -5,6 +5,35 @@ export const STOREY_H = 30;
 export const ROOF_MARGIN = 26;
 export const LOW_H = 16;
 
+/** The threshold is in the real door cell; the arrow follows its passable axis, not the drawn leaf. */
+export function paintDoorGuide(wall: 'ew' | 'ns', open: boolean): HTMLCanvasElement {
+  const { c, g } = canvas(32, WALL_H + 32), color = open ? '#b9dec5' : '#e7c28b', y = WALL_H;
+  g.fillStyle = open ? '#233d34' : '#403225'; g.globalAlpha = .65; g.fillRect(2, y + 2, 28, 28); g.globalAlpha = 1;
+  for (const [x, yy] of [[2, 2], [24, 2], [2, 24], [24, 24]]) {
+    rect(g, color, x, y + yy, 6, 2); rect(g, color, x + (x > 2 ? 4 : 0), y + yy, 2, 6);
+  }
+  if (open) {
+    // Two arrowheads and no crossbar distinguish an open passage even without colour.
+    const point = (along: number, across: number) => wall === 'ns' ? [16 + along, y + 16 + across] : [16 + across, y + 16 + along];
+    const a = point(-10, 0), b = point(10, 0); line(g, color, a[0], a[1], b[0], b[1]);
+    for (const sign of [-1, 1]) for (const side of [-1, 1]) {
+      const tip = point(sign * 10, 0), wing = point(sign * 5, side * 4); line(g, color, tip[0], tip[1], wing[0], wing[1]);
+    }
+  } else {
+    if (wall === 'ns') { rect(g, color, 15, y + 4, 2, 24); rect(g, color, 10, 6, 1, WALL_H + 21); rect(g, color, 21, 6, 1, WALL_H + 21); rect(g, color, 10, 6, 12, 1); }
+    else { rect(g, color, 4, y + 15, 24, 2); rect(g, color, 4, 36, 1, 41); rect(g, color, 27, 36, 1, 41); rect(g, color, 4, 35, 24, 1); }
+  }
+  return c;
+}
+
+export function paintStairLabel(label: string): HTMLCanvasElement {
+  const font = '10px "Microsoft YaHei", sans-serif', probe = canvas(1, 1).g; probe.font = font;
+  const { c, g } = canvas(Math.ceil(probe.measureText(label).width) + 10, 18);
+  rect(g, '#272b27', 0, 0, c.width, c.height); rect(g, '#c6c39c', 0, 0, c.width, 1);
+  g.font = font; g.fillStyle = '#eee5c4'; g.textBaseline = 'middle'; g.fillText(label, 5, 9);
+  return c;
+}
+
 export interface WallSpec {
   n: boolean; e: boolean; s: boolean; w: boolean;
   face: 'ext' | 'int';

@@ -145,8 +145,8 @@ async function suite(viewport) {
       await drag('container', 'transfer-fuse', 'container', 0, 3);
       assert.equal((await snapshot()).containers.find(x => x.id === c.id).inventory.items.find(i => i.uid === 'transfer-fuse').y, 3); await screenshot('crate-returned');
     });
-    await step('stacks accept partial merges while occupied cells and out-of-bounds shapes preserve items', async () => {
-      const c = await fixture({ items: [item('stack-ammo', 'ammo9', 8), item('wide-gun', 'pistol', 1, 1), item('overflow-ammo', 'ammo9', 30, 3)], bag: [item('bag-ammo', 'ammo9', 10)] });
+    await step('stacks accept partial merges while multiple occupied targets and out-of-bounds shapes preserve items', async () => {
+      const c = await fixture({ items: [item('stack-ammo', 'ammo9', 8), item('wide-gun', 'pistol', 1, 1), item('overflow-ammo', 'ammo9', 30, 3)], bag: [item('bag-ammo', 'ammo9', 10), item('overlap-blocker', 'fuse', 4, 1)] });
       await open(c.id); await drag('container', 'stack-ammo', 'bag', 0, 0); assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 18);
       await drag('container', 'overflow-ammo', 'bag', 0, 0);
       assert.equal((await snapshot()).loadout.bag.items.find(i => i.uid === 'bag-ammo').qty, 40);
@@ -155,16 +155,29 @@ async function suite(viewport) {
         const before = participants(await snapshot()); await drag('container', uid, 'bag', x, y); assert.deepEqual(participants(await snapshot()), before);
       }
     });
-    await step('full inventory rejects transfer atomically', async () => {
+    await step('full inventory rejects a shape overlapping multiple items atomically', async () => {
       const bag = Array.from({ length: 30 }, (_, i) => item(`full-${i}`, 'fuse', 4, i % 6, Math.floor(i / 6)));
-      const c = await fixture({ items: [item('full-incoming', 'sample')], bag }); await open(c.id);
-      const before = participants(await snapshot()); await drag('container', 'full-incoming', 'bag', 5, 4); assert.deepEqual(participants(await snapshot()), before); await screenshot('full-bag');
+      const c = await fixture({ items: [item('full-incoming', 'pistol')], bag }); await open(c.id);
+      const before = participants(await snapshot()); await drag('container', 'full-incoming', 'bag', 4, 4); assert.deepEqual(participants(await snapshot()), before); await screenshot('full-bag');
     });
-    await step('external selection exposes no direct use or equip; double-click never consumes loot', async () => {
+    await step('swap rejects atomically when the original corner cannot fit the displaced gun in either orientation', async () => {
+      const c = await fixture({ items: [item('corner-source', 'sample', 1, 5, 4)], bag: [item('corner-target', 'pistol')] }); await open(c.id);
+      const before = participants(await snapshot()); await drag('container', 'corner-source', 'bag', 0, 0); assert.deepEqual(participants(await snapshot()), before);
+    });
+    await step('external selection exposes no direct use or equip; double-click picks up without using or equipping', async () => {
       const c = await fixture({ items: [item('external-medical', 'bandage'), item('external-gun', 'pistol', 1, 1)] }); await open(c.id);
       for (const uid of ['external-medical', 'external-gun']) {
-        const before = participants(await snapshot()), el = page.locator(`[data-source="container"][data-uid="${uid}"]`);
-        await el.click(); assert.equal(await action('use').count(), 0); assert.equal(await action('equip-run').count(), 0); await el.dblclick(); assert.deepEqual(participants(await snapshot()), before);
+        const before = await snapshot(), el = page.locator(`[data-source="container"][data-uid="${uid}"]`);
+        const sourceItem = before.containers.find(box => box.id === c.id).inventory.items.find(i => i.uid === uid);
+        await el.click(); assert.equal(await action('use').count(), 0); assert.equal(await action('equip-run').count(), 0);
+        assert.equal(await action('loot-quick').count(), 1); await el.dblclick();
+        const after = await snapshot(), saved = JSON.parse(after.storage);
+        assert.equal(after.containers.find(box => box.id === c.id).inventory.items.some(i => i.uid === uid), false);
+        assert.deepEqual(after.loadout.bag.items.filter(i => i.uid === uid).map(i => ({ id: i.id, qty: i.qty })), [{ id: sourceItem.id, qty: sourceItem.qty }]);
+        assert.equal(after.loadout.weapon, before.loadout.weapon, 'Picking up a gun does not equip it');
+        assert.equal(after.hp, before.hp, 'Picking up medical loot does not consume it');
+        assert.equal(after.mag, before.mag); assert.deepEqual(after.loadout.safe, before.loadout.safe);
+        assert.deepEqual(saved.raid.loadout, after.loadout); assert.deepEqual(saved.raid.containers, after.containers);
       } await screenshot('external-details');
     });
     await step('reopening preserves remaining loot and permits an empty container', async () => {

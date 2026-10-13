@@ -43,7 +43,10 @@
     "test:mall-landing": "node --import tsx scripts/mall-landing.mjs",
     "test:art": "node --import tsx scripts/art-review.mjs",
     "test:tactical": "node --import tsx scripts/tactical-review.mjs",
-    "test:title-water": "node --import tsx scripts/title-water-review.mjs"
+    "test:title-water": "node --import tsx scripts/title-water-review.mjs",
+    "test:issue26-station": "node --import tsx scripts/issue26-station-test.mjs",
+    "test:issue26-inventory": "node scripts/issue26-raid-inventory-test.mjs",
+    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0",

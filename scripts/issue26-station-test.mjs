@@ -1,0 +1,203 @@
+/** #26 inventory feedback: production HTML, real station UI and durable session; explicit fixtures require ?test=1. */
+import assert from 'node:assert/strict';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+import { chromium } from 'playwright';
+import { browserOptions } from './browser-options.mjs';
+import * as D from '../src/domain.ts';
+
+const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
+const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
+const out = resolve(option('out', 'test-results/issue26/station')), only = option('only', '').split(',').filter(Boolean);
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch(browserOptions);
+const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
+  methodology: 'Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.', steps: [], errors: [], external: [], screenshots: [] };
+let context, page, mobile;
+const yard = s => page.locator(`#station-yard ${s}`);
+const tap = el => mobile ? el.tap() : el.click();
+const snapshot = () => page.evaluate(() => window.__bincov.hideoutRuntime.snapshot());
+const raw = () => page.evaluate(() => localStorage.getItem('escape-bincov.session.v2'));
+const writeCount = () => page.evaluate(() => window.__issue26Writes.length);
+const ready = () => page.waitForFunction(() => window.__station?.mounted && window.__station.host.frames > 8);
+const shot = async name => { await page.screenshot({ path: resolve(out, `${name}.png`) }); report.screenshots.push(`${name}.png`); };
+function fixture() {
+  const p = D.newSave(); p.stash = D.createInventory(10, 6); p.bag = D.createInventory(6, 5); p.safe = D.createInventory(2, 2);
+  p.cash = 700; p.equipment = { weapon: null, ammo: 0, ammoRelief: 0, relief: false }; return p;
+}
+function add(inv, id, qty = 1) { assert.equal(D.addItem(inv, id, qty), 0, `fixture ${id}`); return inv.items.at(-1); }
+function totals(p) {
+  const counts = {};
+  for (const inv of [p.bag, p.stash]) for (const item of inv.items) {
+    const key = `${item.id}:${!!item.relief}`; counts[key] = (counts[key] ?? 0) + item.qty;
+  }
+  return counts;
+}
+function full(inv) {
+  for (let y = 0; y < inv.h; y++) for (let x = 0; x < inv.w; x++) inv.items.push({ uid: `full-${x}-${y}`, id: 'watch', qty: 1, x, y, rotated: false });
+}
+async function seed(p) {
+  await page.evaluate(async p => {
+    await window.__station.reseed(() => {
+      const s = window.__bincov.saveSession, t = s.prepareExpansionMutation(d => {
+        for (const key of ['cash', 'stash', 'bag', 'safe', 'equipment', 'upgraded']) d.profile[key] = structuredClone(p[key]);
+      });
+      if (s.commitExpansionMutation(t) !== 'committed') throw Error('fixture did not commit');
+    });
+  }, p);
+  await ready();
+}
+async function open(p = fixture(), size = [1280, 720]) {
+  await context?.close(); mobile = size[0] < 900;
+  context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1, hasTouch: mobile, isMobile: mobile });
+  await context.route('https://station.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
+  await context.addInitScript(() => {
+    window.__issue26Writes = []; window.__issue26Rejected = 0;
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k, v) {
+      const result = write.call(this, k, v);
+      if (k === 'escape-bincov.session.v2') window.__issue26Writes.push(JSON.parse(v).revision);
+      return result;
+    };
+  });
+  context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://station.test/')) report.external.push(r.url()); });
+  page = await context.newPage(); page.setDefaultTimeout(12000); await page.clock.setFixedTime(new Date());
+  page.on('pageerror', e => report.errors.push(String(e.stack)));
+  page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
+  await page.goto('https://station.test/?test=1'); await tap(page.locator('[data-action="enter"]')); await ready(); await seed(p); await gear();
+}
+async function gear() {
+  const btn = yard('[data-quick="gear"]'); if (!await btn.isVisible()) await tap(yard('[data-quickmenu]'));
+  await tap(btn); await yard('[data-grid="bag"]').waitFor();
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.querySelector('#station-yard').shadowRoot.querySelector('.panel').getAnimations()].map(a => a.finished.catch(() => {})));
+  });
+}
+async function readable(selector) {
+  const el = yard(selector); await el.scrollIntoViewIfNeeded();
+  const r = await el.boundingBox(), size = page.viewportSize();
+  assert.ok(r && r.width > 0 && r.height > 0 && r.x >= -1 && r.y >= -1 && r.x + r.width <= size.width + 1 && r.y + r.height <= size.height + 1, `${selector} outside viewport`);
+  assert.equal(await el.evaluate(e => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1), false, `${selector} clipped`);
+}
+async function select(src, uid) {
+  // A deliberate single selection must not become a second click of the preceding quick transfer.
+  await page.waitForTimeout(350); await tap(yard(`[data-grid="${src}"] [data-uid="${uid}"]`));
+}
+async function dbl(src, uid) {
+  const el = yard(`[data-grid="${src}"] [data-uid="${uid}"]`); await el.scrollIntoViewIfNeeded();
+  const r = await el.boundingBox(); assert.ok(r); await page.mouse.dblclick(r.x + 8, r.y + 8, { delay: 80 });
+}
+async function drag(src, uid, to, x, y) {
+  const el = yard(`[data-grid="${src}"] [data-uid="${uid}"]`), target = yard(`[data-grid="${to}"]`);
+  const a = await el.boundingBox(), b = await target.boundingBox(), cell = Number(await target.getAttribute('data-cell')); assert.ok(a && b);
+  await page.mouse.move(a.x + 8, a.y + 8); await page.mouse.down(); await page.mouse.move(a.x + 24, a.y + 20);
+  await page.mouse.move(b.x + x * cell + 8, b.y + y * cell + 8, { steps: 8 });
+  assert.equal(await target.locator('.preview.good').isVisible(), true, 'valid exchange must show valid placement'); await page.mouse.up();
+}
+async function fault(on) {
+  await page.evaluate(on => {
+    window.__issue26Write ??= Storage.prototype.setItem;
+    Storage.prototype.setItem = on ? function(k, v) { if (k === 'escape-bincov.session.v2') { window.__issue26Rejected++; throw new DOMException('issue26 quota fixture', 'QuotaExceededError'); } return window.__issue26Write.call(this, k, v); } : window.__issue26Write;
+  }, on);
+}
+async function recover() {
+  await fault(false); await tap(yard('.dialog [data-act="retry-save"]'));
+  await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().storage.ok && !window.__station.host.ui.dialogKind);
+}
+async function step(name, fn) {
+  if (only.length && !only.some(id => name.startsWith(id))) return;
+  const row = { name }, errorStart = report.errors.length; report.steps.push(row);
+  try { row.detail = await fn(); assert.deepEqual(report.errors.slice(errorStart), []); assert.deepEqual(report.external, []);
+    assert.deepEqual(await page.evaluate(() => window.__station?.host?.errors ?? []), []); row.status = 'passed'; console.log('PASS', name);
+  } catch (e) { row.status = 'failed'; row.error = String(e.stack); await shot(`failure-${report.steps.length}`).catch(() => {}); console.log('FAIL', name, e.message); }
+}
+try {
+  await step('F01-existing-mouse-double-click-roundtrip', async () => {
+    const p = fixture(), gun = add(p.stash, 'pistol'); await open(p); const writes = await writeCount();
+    await dbl('stash', gun.uid); let after = (await snapshot()).profile; assert.equal(D.count(after.bag, 'pistol'), 1); assert.equal(after.stash.items.length, 0); assert.equal(await writeCount(), writes + 1);
+    await dbl('bag', after.bag.items[0].uid); after = (await snapshot()).profile; assert.equal(D.count(after.stash, 'pistol'), 1); assert.equal(after.bag.items.length, 0); assert.equal(await writeCount(), writes + 2);
+    assert.deepEqual(JSON.parse(await raw()).profile.stash, after.stash);
+    await page.reload(); await tap(page.locator('[data-action="enter"]')); await ready();
+    assert.deepEqual((await snapshot()).profile.stash, after.stash); return { committedTransfers: 2, countBefore: totals(p), countAfter: totals(after) };
+  });
+  await step('F01-full-bag-keeps-item-and-shows-reason', async () => {
+    const p = fixture(), gun = add(p.stash, 'pistol'); full(p.bag); await open(p); const before = await raw();
+    await dbl('stash', gun.uid); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.equal(await raw(), before);
+    assert.match(await yard('.toasts').innerText(), /空间|放不下/);
+  });
+  await step('F01-double-click-storage-failure-rolls-back', async () => {
+    const p = fixture(), gun = add(p.stash, 'pistol'); await open(p); const before = await raw(); await fault(true); await dbl('stash', gun.uid);
+    await yard('.dialog [data-act="retry-save"]').waitFor(); assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag);
+    assert.ok(await page.evaluate(() => window.__issue26Rejected > 0));
+    await recover(); const writes = await writeCount(); await dbl('stash', gun.uid); assert.equal(D.count((await snapshot()).profile.bag, 'pistol'), 1); assert.equal(await writeCount(), writes + 1);
+  });
+  for (const failWrite of [false, true]) await step(`F02-real-drag-swap-${failWrite ? 'storage-rollback' : 'persistent'}`, async () => {
+    const p = fixture(), a = add(p.stash, 'watch'), b = add(p.bag, 'fuse'); await open(p); const before = await raw();
+    if (failWrite) await fault(true); const writes = await writeCount();
+    await drag('stash', a.uid, 'bag', b.x, b.y);
+    if (failWrite) {
+      await yard('.dialog [data-act="retry-save"]').waitFor(); assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.equal(await writeCount(), writes);
+      await recover(); await drag('stash', a.uid, 'bag', b.x, b.y);
+    } else assert.equal(await writeCount(), writes + 1);
+    const after = (await snapshot()).profile;
+    assert.equal(after.bag.items.find(i => i.uid === a.uid)?.id, 'watch'); assert.equal(after.stash.items.find(i => i.uid === b.uid)?.id, 'fuse');
+    assert.deepEqual(totals(after), totals(p)); assert.deepEqual(JSON.parse(await raw()).profile.stash, after.stash); assert.deepEqual(JSON.parse(await raw()).profile.bag, after.bag);
+  });
+  for (const size of [[1280, 720], [1920, 1080], [390, 844], [844, 390]]) {
+    await step(`F05-F09-F10-visible-and-persistent-${size.join('x')}`, async () => {
+      const p = fixture(), gun = add(p.bag, 'pistol'); add(p.bag, 'bandage', 3); add(p.safe, 'food', 1);
+      add(p.stash, 'bandage', 2); const cloth = add(p.stash, 'cloth', 2); cloth.x = 8; cloth.y = 4;
+      await open(p, size); await readable('[data-act="stash-all"]'); await readable('[data-act="sort-stash"]'); await shot(`gear-${size.join('x')}`);
+      await readable('[data-grid="bag"]'); await readable('[data-grid="stash"]');
+      assert.equal(await yard('.panel .pbody').evaluate(e => e.scrollWidth > e.clientWidth + 2), false, 'inventory panel must not clip horizontally');
+      await select('bag', gun.uid); assert.equal(await yard('[data-act="equip"]').innerText(), '装备主武器'); await readable('[data-act="equip"]'); await shot(`equip-${size.join('x')}`);
+      await tap(yard('[data-act="equip"]')); assert.equal((await snapshot()).profile.equipment.weapon, 'pistol'); assert.match(await yard('.toasts').innerText(), /已装备主武器/);
+      const before = (await snapshot()).profile;
+      await tap(yard('[data-act="stash-all"]')); const stocked = (await snapshot()).profile;
+      assert.equal(stocked.bag.items.length, 0); assert.deepEqual(totals(stocked), totals(before)); assert.deepEqual(stocked.equipment, before.equipment); assert.deepEqual(stocked.safe, before.safe);
+      assert.equal(await yard('[data-act="stash-all"]').isDisabled(), true);
+      await tap(yard('[data-act="sort-stash"]')); const sorted = (await snapshot()).profile;
+      assert.deepEqual(totals(sorted), totals(before)); assert.deepEqual(sorted.safe, before.safe); assert.deepEqual(sorted.equipment, before.equipment);
+      assert.notDeepEqual(sorted.stash.items, stocked.stash.items); assert.deepEqual(JSON.parse(await raw()).profile.stash, sorted.stash);
+      await page.reload(); await tap(page.locator('[data-action="enter"]')); await ready(); assert.deepEqual((await snapshot()).profile.stash, sorted.stash);
+    });
+  }
+  await step('F05-safe-gun-explains-return-and-keeps-equip-selection', async () => {
+    const p = fixture(), gun = add(p.safe, 'pistol'); await open(p, [390, 844]); await tap(yard('[data-act="pane:safe"]')); await select('safe', gun.uid);
+    assert.equal(await yard('[data-act="equip"]').count(), 0); await readable('.equip-note'); assert.match(await yard('.equip-note').innerText(), /先移回背包/);
+    await tap(yard('[data-act="secure"]')); assert.equal(D.count((await snapshot()).profile.bag, 'pistol'), 1); assert.equal((await snapshot()).profile.equipment.weapon, null);
+    assert.equal(await yard('[data-act="equip"]').innerText(), '装备主武器'); await tap(yard('[data-act="equip"]')); assert.equal((await snapshot()).profile.equipment.weapon, 'pistol');
+  });
+  await step('F05-old-weapon-return-space-explained', async () => {
+    const p = fixture(); full(p.bag); p.bag.items = p.bag.items.filter(i => i.y !== 0 || i.x > 1); const gun = add(p.bag, 'pistol');
+    p.equipment = { weapon: 'carbine', ammo: 2, ammoRelief: 0, relief: false }; await open(p); const before = await raw();
+    await select('bag', gun.uid); await tap(yard('[data-act="equip"]'));
+    assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.deepEqual((await snapshot()).profile.equipment, p.equipment); assert.equal(await raw(), before);
+    assert.match(await yard('.toasts').innerText(), /空间|放不下/); assert.equal(await yard('[data-act="equip"]').count(), 1);
+  });
+  await step('F05-equip-storage-failure-keeps-selection-for-retry', async () => {
+    const p = fixture(), gun = add(p.stash, 'pistol'); await open(p); const before = await raw(); await select('stash', gun.uid); await fault(true);
+    await tap(yard('[data-act="equip"]')); await yard('.dialog [data-act="retry-save"]').waitFor();
+    assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.equal((await snapshot()).profile.equipment.weapon, null);
+    assert.doesNotMatch(await yard('.toasts').innerText(), /已装备主武器/);
+    await recover(); await tap(yard('[data-act="equip"]')); assert.equal((await snapshot()).profile.equipment.weapon, 'pistol'); assert.match(await yard('.toasts').innerText(), /已装备主武器/);
+  });
+  await step('F09-full-stash-rejects-whole-batch', async () => {
+    const p = fixture(); full(p.stash); add(p.bag, 'pistol'); add(p.bag, 'bandage', 2); await open(p); const before = await raw();
+    await tap(yard('[data-act="stash-all"]')); assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.equal(await raw(), before);
+    assert.match(await yard('.toasts').innerText(), /空间|放不下/); await shot('full-stash-refusal');
+  });
+  for (const action of ['stash-all', 'sort-stash']) await step(`F09-F10-${action}-storage-failure-rolls-back`, async () => {
+    const p = fixture(); add(p.bag, 'bandage', 3); const gun = add(p.stash, 'pistol'); gun.x = 8; gun.y = 4; await open(p); const before = await raw(); await fault(true);
+    await tap(yard(`[data-act="${action}"]`)); await yard('.dialog [data-act="retry-save"]').waitFor(); assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.bag, p.bag); assert.deepEqual((await snapshot()).profile.stash, p.stash);
+    await recover(); await tap(yard(`[data-act="${action}"]`)); const after = (await snapshot()).profile; assert.deepEqual(totals(after), totals(p)); assert.notDeepEqual(after.stash, p.stash);
+    assert.deepEqual(JSON.parse(await raw()).profile.stash, after.stash);
+  });
+} finally {
+  await context?.close(); await browser.close(); report.finishedAt = new Date().toISOString();
+  report.summary = { passed: report.steps.filter(s => s.status === 'passed').length, total: report.steps.length };
+  await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify(report.summary));
+  if (report.summary.passed !== report.summary.total || report.errors.length || report.external.length) process.exitCode = 1;
+}
