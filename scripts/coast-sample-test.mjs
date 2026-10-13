@@ -881,21 +881,34 @@ if (!group) {
       const ev = (cause, damage, angle = null) => ({ type: 'hurt', cause, uid: 'player', at: { x: b().frame.player.x, y: b().frame.player.y }, damage, critical: false, angle, seq: 0, stamp: b().stamp, durability: 'accepted' });
       const read = () => ({ chips: [...document.querySelectorAll('[data-drain] i')].map(i => i.textContent), ail: +document.querySelector('[data-ail]').style.opacity || 0, tint: document.querySelector('[data-ail]').style.getPropertyValue('--ail'), edge: +document.querySelector('[data-hurt]').style.opacity || 0 });
       const flashOf = e => { const g = v.actors.get('player'); g.flashT = 0; v.present({ ...b(), events: [e] }, 0); return g.flashT; };
-      const out = { start: read(), sampling: { blowPresentationDelta: 0, fadeWallMilliseconds: 1200 } };
-      let feeding = null; const feed = () => { if (feeding) for (const [c, perSecond] of feeding) h.feedback(ev(c, perSecond * h.app.ticker.deltaMS / 1000), b()); };
+      const out = { start: read(), sampling: { blowPresentationDelta: 0, clock: 'delivered Pixi ticker delta; wall time reported separately', stages: {} } };
+      let feeding = null, presented = 0, ticks = 0;
+      const feed = () => {
+        const dt = h.app.ticker.deltaMS / 1000; presented += dt; ticks++;
+        if (feeding) for (const [c, perSecond] of feeding) h.feedback(ev(c, perSecond * dt), b());
+      };
       h.app.ticker.add(feed);
-      // Waits are in time, not frames: the page may run at 60 or 165 Hz.
-      const forMs = async ms => { const t0 = performance.now(); while (performance.now() - t0 < ms) await frame(); };
-      feeding = [['bleed', 1.2], ['pollution', .5]]; await forMs(2000); out.during = read();
+      // Feedback ages by ticker delta, which Pixi caps on slow software renderers. Waiting 1.5 wall seconds
+      // can deliver less than the .8-second hold. Measure the actual presentation clock, keep the original
+      // expiry assertions and report wall time separately; this is not a natural-frame performance pass.
+      const forSeconds = async (name, seconds) => {
+        const p0 = presented, t0 = performance.now(), f0 = ticks;
+        while (presented - p0 < seconds) {
+          if (performance.now() - t0 > 30000) throw Error(`No bounded presentation progress for ${name}`);
+          await frame();
+        }
+        out.sampling.stages[name] = { presentationSeconds: presented - p0, wallMs: performance.now() - t0, ticks: ticks - f0 };
+      };
+      feeding = [['bleed', 1.2], ['pollution', .5]]; await forSeconds('during', 2); out.during = read();
       // Hold the feed while the test takes a screenshot of the readout.
       window.__drainShot = 'ready'; while (window.__drainShot !== 'taken') await frame();
-      feeding = null; await forMs(1500); out.after = read();
+      feeding = null; await forSeconds('after', 1.5); out.after = read();
       h.feedback(ev('limit-change', 3), b()); await frame(); await frame(); out.limit = read();
-      await forMs(3400); out.limitAfter = read();
+      await forSeconds('limitAfter', 3.4); out.limitAfter = read();
       // Sample the event's own presentation before any arbitrary rAF delay decays the pulse. This is the same real
       // feedback path as above; a zero elapsed interval does not advance simulation or age an effect before reading it.
       h.feedback(ev('blow', .4, 1), b()); h.feedbackFrame(b(), 0); out.blow = read();
-      await forMs(1200); out.blowAfter = read();
+      await forSeconds('blowAfter', 1.2); out.blowAfter = read();
       h.app.ticker.remove(feed);
       out.flash = Object.fromEntries(['bleed', 'pollution', 'dehydration', 'starvation', 'limit-change', 'blow'].map(c => [c, flashOf(ev(c, c === 'blow' ? .4 : 2, c === 'blow' ? 1 : null))]));
       return out;
