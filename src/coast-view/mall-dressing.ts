@@ -82,6 +82,73 @@ export function mallWallFace(m: DressMap, x: number, y: number): string[] {
 }
 export const wallHasEmit = (asset: string) => EMITS.has(asset.replace(/^mall-|-v1$/g, ''));
 
+/**
+ * How a wall cell is drawn. F1's map edge is the blockade hoarding. On F2 everything outside the building is the drop
+ * to the street, except the ring of cells around the terrace, which is its low parapet.
+ */
+export type WallRole = 'wall' | 'boundary' | 'parapet' | 'void';
+export function mallWallRole(m: DressMap, x: number, y: number): WallRole {
+    const rows = m.cells.length, cols = m.cells[0].length;
+    if (m.mapId !== 'mall-f2') return y === 0 || x === 0 || y === rows - 1 || x === cols - 1 ? 'boundary' : 'wall';
+    if (insideFootprint(x, y)) return 'wall';
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const c = m.cells[y + dy]?.[x + dx];
+        if (c && c !== 'wall' && !insideFootprint(x + dx, y + dy)) return 'parapet';
+    }
+    return 'void';
+}
+/** Wall height above the ground line for each role (the 2.5D wall face is 48 px; the parapet stands 24 px). */
+export const WALL_LIFT: Record<WallRole, number> = { wall: 48, boundary: 48, parapet: 24, void: 0 };
+export function mallWallParts(m: DressMap, x: number, y: number): { cap: string[]; face: string[]; rail: string[] } {
+    const role = mallWallRole(m, x, y);
+    if (role === 'boundary') return { cap: [id('wall-hoarding-cap'), id('wall-cap')], face: [id(hash(x, y, 5) < .7 ? 'wall-hoarding-a' : 'wall-hoarding-b'), id('wall-hoarding-a')], rail: [] };
+    if (role === 'parapet') return { cap: [id('wall-parapet-cap'), id('wall-cap')], face: [id('wall-parapet-face')], rail: [id('wall-parapet-rail')] };
+    if (role === 'void') return { cap: [], face: [], rail: [] };
+    return { cap: [id('wall-cap')], face: mallWallFace(m, x, y), rail: [] };
+}
+
+/**
+ * Doorways in east-west walls (one to three open cells between wall cells, open on both sides) get a header at wall
+ * height; north-south openings show no face in this projection. The facade's are entrance headers, the rest shutters.
+ */
+export function mallLintels(m: DressMap): { x: number; y: number; assets: string[] }[] {
+    const f = furnitureAt(m), wall = (x: number, y: number) => m.cells[y]?.[x] === 'wall' && !f.has(`${x},${y}`) && mallWallRole(m, x, y) !== 'void';
+    const open = (x: number, y: number) => { const c = m.cells[y]?.[x]; return !!c && c !== 'wall'; };
+    const out: { x: number; y: number; assets: string[] }[] = [];
+    m.cells.forEach((row, y) => {
+        for (let x = 1; x < row.length - 1; x++) {
+            if (!wall(x - 1, y) || wall(x, y) || !open(x, y)) continue;
+            let end = x; while (end < row.length && !wall(end, y) && open(end, y)) end++;
+            if (end - x > 3 || !wall(end, y) || !wall(x - 2, y) && !wall(end + 1, y)) continue;
+            const through = [...Array(end - x).keys()].every(i => open(x + i, y - 1) && open(x + i, y + 1));
+            if (!through) continue;
+            const facade = m.mapId === 'mall-f1' && (y === 6 || y === 48);
+            for (let i = x; i < end; i++) out.push({ x: i, y, assets: facade ? [id('wall-lintel-entrance')] : [id('wall-lintel-shutter')] });
+        }
+    });
+    return out;
+}
+
+/** Wall-mounted pieces (anchor: bottom centre, `up` px above the wall's ground line) and hanging lights, by floor. */
+const WALL_PROPS: Record<string, readonly [string, number, number, number][]> = {
+    'mall-f1': [['wallprop-exit', 60, 6, 47], ['wallprop-emergency', 56, 6, 40], ['wallprop-emergency', 49, 17, 40],
+        ['wallprop-hydrant', 33, 13, 18], ['wallprop-hydrant', 51, 17, 18], ['wallprop-exit', 37, 13, 47]],
+    'mall-f2': [['sign-board-wall', 59, 6, 34], ['wallprop-exit', 56, 6, 40], ['wallprop-emergency', 62, 6, 40]],
+};
+const TUBES: Record<string, readonly [number, number, boolean][]> = {
+    'mall-f1': [[34, 24, false], [43, 27, false], [50, 24, false], [38, 30, false], [47, 27, true], [59, 10, false], [41, 16, false], [36, 37, false], [48, 37, true]],
+    'mall-f2': [[59, 21, false], [59, 28, true], [59, 35, false], [60, 12, false]],
+};
+export function mallWallProps(m: DressMap): DressSprite[] {
+    return (WALL_PROPS[m.mapId] ?? []).map(([name, x, y, up]) => {
+        const [w, h] = name === 'sign-board-wall' ? [64, 20] : name === 'wallprop-hydrant' ? [22, 30] : name === 'wallprop-exit' ? [20, 10] : [16, 10];
+        return { assets: [id(name)], x: x * TILE + 16 - w / 2, y: (y + 1) * TILE - up - h, z: (y + 1) * TILE + .1, layer: 'sorted', emit: name !== 'wallprop-hydrant' && name !== 'sign-board-wall' };
+    });
+}
+export function mallLights(m: DressMap): DressSprite[] {
+    return (TUBES[m.mapId] ?? []).map(([x, y, broken]) => ({ assets: [id(broken ? 'overhead-tube-hanging' : 'overhead-tube')], x: x * TILE, y: y * TILE + 16 - 64, z: (y + 1) * TILE, layer: 'overhead', emit: true }));
+}
+
 /** One sprite per furniture piece (multi-cell pieces at their north-west part) plus the umbrellas over cafe tables. */
 export function mallProps(m: DressMap): DressSprite[] {
     const at = furnitureAt(m), out: DressSprite[] = [];
@@ -109,8 +176,9 @@ export function mallProps(m: DressMap): DressSprite[] {
 
 /** Hanging signs over the supermarket aisles (overhead, no footprint): anchor is the sign's top centre at ceiling height. */
 export function mallSigns(m: DressMap): DressSprite[] {
-    if (m.mapId !== 'mall-f1') return [];
     const hang = (x: number, y: number, asset: string): DressSprite => ({ assets: [id(asset)], x: x * TILE + 16 - 24, y: y * TILE + 16 - 60, z: (y + 1) * TILE, layer: 'overhead', emit: false });
+    if (m.mapId === 'mall-f2') return [hang(59, 16, 'sign-home')];
+    if (m.mapId !== 'mall-f1') return [];
     return [hang(34, 24, 'sign-hanging-green'), hang(43, 27, 'sign-hanging-green'), hang(50, 24, 'sign-hanging-green'),
         hang(36, 38, 'sign-hanging-blue'), hang(48, 35, 'sign-hanging-frost')];
 }
