@@ -1,0 +1,4798 @@
+{
+  "schema": 1,
+  "source": "Sol batch 1 delivery for issue #47 (external working folder), manifest revision 3; originals and prompts kept with the delivery",
+  "note": "Runtime copies of the mall samples (1x PNG, alpha 0/255, -emit masks). Stairs, hanging tubes and hanging signs are painted or omitted by the view and not copied.",
+  "revision": 3,
+  "assets": [
+    {
+      "id": "mall-ground-plaza-a-v1",
+      "file": "assets/mall/v1/mall-ground-plaza-a-v1.png",
+      "w": 64,
+      "h": 64,
+      "kind": "ground",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        44,
+        35,
+        437,
+        434
+      ],
+      "exportMethod": "Alpha-derived crop; nearest-neighbor to 64x64; 12-color reduction; a/b mean matching; plaza periodic joint/inlay and border pixel repair; opaque RGBA sRGB.",
+      "sha256": "17e01453f2afaa53508b78b3797e56cd83305f4c65b951d2cf32b92d81e4abb3",
+      "revision": 1
+    },
+    {
+      "id": "mall-ground-plaza-b-v1",
+      "file": "assets/mall/v1/mall-ground-plaza-b-v1.png",
+      "w": 64,
+      "h": 64,
+      "kind": "ground",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        553,
+        35,
+        435,
+        434
+      ],
+      "exportMethod": "Alpha-derived crop; nearest-neighbor to 64x64; 12-color reduction; a/b mean matching; plaza periodic joint/inlay and border pixel repair; opaque RGBA sRGB.",
+      "sha256": "83ff36e596b29a55a9b66e03b16d3b531db9e7510593ab13b720a4003922901a",
+      "revision": 1
+    },
+    {
+      "id": "mall-ground-tile-large-a-v1",
+      "file": "assets/mall/v1/mall-ground-tile-large-a-v1.png",
+      "w": 32,
+      "h": 32,
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        1058,
+        35,
+        437,
+        434
+      ],
+      "exportMethod": "R3: retain ceramic16px module and subtle cart wear; grout lightened to adjacent material minus11, with broken worn runs minus2; no dark continuous graph-paper lines.",
+      "sha256": "a8c5732af6e50148a0920fc9d7ac8037a5ffa3cc03e2e72be0bc53aa76f22d99",
+      "revision": 2,
+      "replacesSha256": "b7197a25230968d321a0d8e7d4f92387aa05e044a718fc5fd986e47a0869b9c4",
+      "sourceInputs": [
+        "source/generated-ground-original.png",
+        "source/archive-r2-before-feedback/assets/mall-ground-tile-large-a-v1.png"
+      ],
+      "feedback": "Sol-P1反馈.md §2"
+    },
+    {
+      "id": "mall-ground-tile-large-b-v1",
+      "file": "assets/mall/v1/mall-ground-tile-large-b-v1.png",
+      "w": 32,
+      "h": 32,
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        44,
+        536,
+        437,
+        429
+      ],
+      "exportMethod": "R3: retain ceramic16px module and subtle cart wear; grout lightened to adjacent material minus11, with broken worn runs minus2; no dark continuous graph-paper lines.",
+      "sha256": "6e2834e64f473721b2768c896b5b6387b5c4215393a520754043629229d27bac",
+      "revision": 2,
+      "replacesSha256": "0a1da8fbd3679b1d992620ffaf9a8f216e5c80af8decc385435afb4d9c3f0da3",
+      "sourceInputs": [
+        "source/generated-ground-original.png",
+        "source/archive-r2-before-feedback/assets/mall-ground-tile-large-b-v1.png"
+      ],
+      "feedback": "Sol-P1反馈.md §2"
+    },
+    {
+      "id": "mall-ground-terrazzo-a-v1",
+      "file": "assets/mall/v1/mall-ground-terrazzo-a-v1.png",
+      "w": 64,
+      "h": 64,
+      "kind": "ground",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        553,
+        536,
+        435,
+        429
+      ],
+      "exportMethod": "Alpha-derived crop; nearest-neighbor to 64x64; 12-color reduction; a/b mean matching; terrazzo periodic joint/inlay and border pixel repair; opaque RGBA sRGB.",
+      "sha256": "be33ae565bcf27593c5a1e38776a42ebf3279e088af504ce1e49ae68893e6a3e",
+      "revision": 1
+    },
+    {
+      "id": "mall-ground-terrazzo-b-v1",
+      "file": "assets/mall/v1/mall-ground-terrazzo-b-v1.png",
+      "w": 64,
+      "h": 64,
+      "kind": "ground",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "source": "source/generated-ground-original.png",
+      "sourceRect": [
+        1058,
+        536,
+        437,
+        429
+      ],
+      "exportMethod": "Alpha-derived crop; nearest-neighbor to 64x64; 12-color reduction; a/b mean matching; terrazzo periodic joint/inlay and border pixel repair; opaque RGBA sRGB.",
+      "sha256": "c95c77be69bcf1218c143b53a622b25fcf44e76c72f9185ee60f131b89a59141",
+      "revision": 1
+    },
+    {
+      "id": "mall-wall-cap-v1",
+      "file": "assets/mall/v1/mall-wall-cap-v1.png",
+      "w": 32,
+      "h": 32,
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        52,
+        238,
+        448,
+        442
+      ],
+      "exportMethod": "Cap source crop NN32x32; palette10; gray value80-130; opaque; flat top only.",
+      "sha256": "90c82a11cb908b99158eaac40461af341d1eed1cf23f000085053d80b1eb1b29",
+      "revision": 1
+    },
+    {
+      "id": "mall-wall-edge-n-v1",
+      "file": "assets/mall/v1/mall-wall-edge-n-v1.png",
+      "w": 32,
+      "h": 3,
+      "kind": "wall",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        52,
+        238,
+        448,
+        442
+      ],
+      "exportMethod": "Three material-color rows/columns derived from cap; N/W brighter, S/E darker; no external shadow.",
+      "sha256": "4f63017a644e7fc99884834f575afa81ce24324a954230d005dd689195c1f6c3",
+      "revision": 1,
+      "derivedFrom": "mall-wall-cap-v1",
+      "attachSide": "n"
+    },
+    {
+      "id": "mall-wall-edge-s-v1",
+      "file": "assets/mall/v1/mall-wall-edge-s-v1.png",
+      "w": 32,
+      "h": 3,
+      "kind": "wall",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        52,
+        238,
+        448,
+        442
+      ],
+      "exportMethod": "Three material-color rows/columns derived from cap; N/W brighter, S/E darker; no external shadow.",
+      "sha256": "ac08f0e6a56acc37fbef4dfa4e93a8cc322ddae17bb441fbfa29b96c3362a6be",
+      "revision": 1,
+      "derivedFrom": "mall-wall-cap-v1",
+      "attachSide": "s"
+    },
+    {
+      "id": "mall-wall-edge-e-v1",
+      "file": "assets/mall/v1/mall-wall-edge-e-v1.png",
+      "w": 3,
+      "h": 32,
+      "kind": "wall",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        52,
+        238,
+        448,
+        442
+      ],
+      "exportMethod": "Three material-color rows/columns derived from cap; N/W brighter, S/E darker; no external shadow.",
+      "sha256": "ea8cb036edd6c0fb99e14214c61656713355b6e144872815542d8159517f1bfd",
+      "revision": 1,
+      "derivedFrom": "mall-wall-cap-v1",
+      "attachSide": "e"
+    },
+    {
+      "id": "mall-wall-edge-w-v1",
+      "file": "assets/mall/v1/mall-wall-edge-w-v1.png",
+      "w": 3,
+      "h": 32,
+      "kind": "wall",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        52,
+        238,
+        448,
+        442
+      ],
+      "exportMethod": "Three material-color rows/columns derived from cap; N/W brighter, S/E darker; no external shadow.",
+      "sha256": "94ef99557ceaa1a837007abb3137f9300d0877f76246b7843d2c07185e521ae9",
+      "revision": 1,
+      "derivedFrom": "mall-wall-cap-v1",
+      "attachSide": "w"
+    },
+    {
+      "id": "mall-wall-service-a-v1",
+      "file": "assets/mall/v1/mall-wall-service-a-v1.png",
+      "w": 32,
+      "h": 48,
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        589,
+        65,
+        518,
+        764
+      ],
+      "exportMethod": "NN32x48; preserve generated painted blocks, mud line; exact bottom8 hazard stripe with32px period; final-row contact; boundary texture matched.",
+      "sha256": "a0e8dd6810f55e87f5cfdaa6024f286b82cbc266a759e61013b312a778262c36",
+      "revision": 1
+    },
+    {
+      "id": "mall-wall-curtain-v1",
+      "file": "assets/mall/v1/mall-wall-curtain-v1.png",
+      "w": 32,
+      "h": 48,
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": "mall-wall-curtain-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        1184,
+        60,
+        515,
+        767
+      ],
+      "exportMethod": "Source glass top/bottom resampled separately NN; one left2px mullion; horizontal mullion rows17-19 center18=30px above floor; bottom contact; no light baked.",
+      "sha256": "58aff758d2bd3fc49f1ea88a45fd2a686bb34c35d3ea741a099e5c785c79752c",
+      "revision": 1
+    },
+    {
+      "id": "mall-wall-curtain-emit-v1",
+      "file": "assets/mall/v1/mall-wall-curtain-emit-v1.png",
+      "w": 32,
+      "h": 48,
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-wall-original.png",
+      "sourceRect": [
+        1184,
+        60,
+        515,
+        767
+      ],
+      "exportMethod": "Pure-white binary semantic mask from final base coordinates; clipped to base alpha.",
+      "sha256": "3a3644b11e71711a8c768a5431122c62e1c5f21862ae830c898dd9c568cbac75",
+      "revision": 1,
+      "maskOf": "mall-wall-curtain-v1",
+      "emissionRects": [
+        [
+          2,
+          1,
+          31,
+          16
+        ],
+        [
+          2,
+          20,
+          31,
+          46
+        ]
+      ]
+    },
+    {
+      "id": "mall-prop-gondola-end-w-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-end-w-v1.png",
+      "w": 32,
+      "h": 72,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": "w",
+      "frames": 1,
+      "source": "source/generated-r2-p0-original.png",
+      "sourceRect": [
+        86,
+        157,
+        378,
+        814
+      ],
+      "exportMethod": "P0 feedback: body depth24; transparent y0-3/y68-71; new generated dark steel top y4-27, EW central spine and low-contrast top goods; accepted old south face y32-71 shifted intact to y28-67.",
+      "sha256": "d62c7a76748a4cd8d73397c65497627a9afa09c8f9a982d7b4d0f04f103268f4",
+      "revision": 2,
+      "structureSource": "source/generated-tall-original.png",
+      "structureRects": [
+        [
+          552,
+          57,
+          298,
+          111
+        ],
+        [
+          552,
+          182,
+          298,
+          307
+        ]
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "joinRole": "w",
+      "replacesSha256": "3ca3ea27509b30937da735a55e7ccec7228e1bd829735b8266ca53ade7283d90",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "changeReason": "Reduce bright empty tops; narrower 24px depth; retain front merchandise.",
+      "sourceInputs": [
+        "source/generated-r2-p0-original.png",
+        "source/archive-p0-r1/assets/mall-prop-gondola-end-w-v1.png"
+      ]
+    },
+    {
+      "id": "mall-prop-gondola-mid-full-a-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-mid-full-a-v1.png",
+      "w": 32,
+      "h": 72,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": "full-a",
+      "frames": 1,
+      "source": "source/generated-r2-p0-original.png",
+      "sourceRect": [
+        86,
+        157,
+        378,
+        814
+      ],
+      "exportMethod": "P0 feedback: body depth24; transparent y0-3/y68-71; new generated dark steel top y4-27, EW central spine and low-contrast top goods; accepted old south face y32-71 shifted intact to y28-67.",
+      "sha256": "f462c4216af0d433bd25d08154b5121919b44253f09563481a8f67d5b04c4237",
+      "revision": 2,
+      "structureSource": "source/generated-tall-original.png",
+      "structureRects": [
+        [
+          552,
+          57,
+          298,
+          111
+        ],
+        [
+          552,
+          182,
+          298,
+          307
+        ]
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "joinRole": "mid",
+      "replacesSha256": "aeac9ad57ec25d09c3079b67c0ed76b20cd4a430ff212fc6456aae0be68f8173",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "changeReason": "Reduce bright empty tops; narrower 24px depth; retain front merchandise.",
+      "sourceInputs": [
+        "source/generated-r2-p0-original.png",
+        "source/archive-p0-r1/assets/mall-prop-gondola-mid-full-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-prop-gondola-end-e-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-end-e-v1.png",
+      "w": 32,
+      "h": 72,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": "e",
+      "frames": 1,
+      "source": "source/generated-r2-p0-original.png",
+      "sourceRect": [
+        86,
+        157,
+        378,
+        814
+      ],
+      "exportMethod": "P0 feedback: body depth24; transparent y0-3/y68-71; new generated dark steel top y4-27, EW central spine and low-contrast top goods; accepted old south face y32-71 shifted intact to y28-67.",
+      "sha256": "ee8284a7ce7cc8051f6c96216eaa9e8a3f4a7e72abf2da53a0105f01bf3b5711",
+      "revision": 2,
+      "structureSource": "source/generated-tall-original.png",
+      "structureRects": [
+        [
+          552,
+          57,
+          298,
+          111
+        ],
+        [
+          552,
+          182,
+          298,
+          307
+        ]
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "joinRole": "e",
+      "replacesSha256": "1138e747d7a1346d6e1ed4e6839f96cf69de0f8bcc1de8daa303924105e72e9c",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "changeReason": "Reduce bright empty tops; narrower 24px depth; retain front merchandise.",
+      "sourceInputs": [
+        "source/generated-r2-p0-original.png",
+        "source/archive-p0-r1/assets/mall-prop-gondola-end-e-v1.png"
+      ]
+    },
+    {
+      "id": "mall-prop-fridge-a-v1",
+      "file": "assets/mall/v1/mall-prop-fridge-a-v1.png",
+      "w": 32,
+      "h": 80,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": "mall-prop-fridge-a-emit-v1",
+      "variant": "a",
+      "frames": 1,
+      "source": "source/generated-r2-p0-original.png",
+      "sourceRect": [
+        546,
+        161,
+        381,
+        809
+      ],
+      "exportMethod": "P0 feedback: replace only top32x32 with generated dark metal ventilation grille, cartons/crate and dust, average luma121; lightbox/doors/floor remain identical.",
+      "sha256": "3aec6fd5230ec7f3291b5ed743d6009550098bfeacae98e8b1a453253e56f27f",
+      "revision": 2,
+      "replacesSha256": "7c621a72f433793b2f64bc4766e99a4f4dacc1687d83bab840857751c35a3a10",
+      "changeReason": "Replace pale empty top; preserve front geometry.",
+      "sourceInputs": [
+        "source/generated-r2-p0-original.png",
+        "source/archive-p0-r1/assets/mall-prop-fridge-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-prop-fridge-a-emit-v1",
+      "file": "assets/mall/v1/mall-prop-fridge-a-emit-v1.png",
+      "w": 32,
+      "h": 80,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "source": "source/generated-tall-original.png",
+      "sourceRect": [
+        120,
+        531,
+        346,
+        540
+      ],
+      "exportMethod": "R2 pair revalidated; front geometry unchanged, original mask PNG bytes and emitting coordinates preserved.",
+      "sha256": "bdda2d631483246cc04ebc8f6367b17861bb2eda18bce89ba1d580240c523602",
+      "revision": 2,
+      "maskOf": "mall-prop-fridge-a-v1",
+      "emissionRects": [
+        [
+          2,
+          33,
+          29,
+          37
+        ],
+        [
+          3,
+          41,
+          3,
+          70
+        ],
+        [
+          28,
+          41,
+          28,
+          70
+        ]
+      ],
+      "changeReason": "Paired with fridge-a revision2; no emitting geometry change.",
+      "sourceInputs": [
+        "source/archive-p0-r1/assets/mall-prop-fridge-a-emit-v1.png",
+        "assets/mall/v1/mall-prop-fridge-a-v1.png"
+      ],
+      "baseSha256": "3aec6fd5230ec7f3291b5ed743d6009550098bfeacae98e8b1a453253e56f27f"
+    },
+    {
+      "id": "mall-prop-column-v1",
+      "file": "assets/mall/v1/mall-prop-column-v1.png",
+      "w": 32,
+      "h": 80,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": "B",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "assets/mall/v1/mall-wall-cap-v1.png",
+      "sourceRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "exportMethod": "P0 feedback: exact accepted wall-cap32x32 used as column top; south tile body darkened8 RGB levels; plaque/waist/mud positions preserved.",
+      "sha256": "b7f6fc6f697cd6354acfefbc555fb413ab6e93b65f2b011ba60e2f22f43a683a",
+      "revision": 2,
+      "replacesSha256": "9d0118df63abb7a4ea355ae6abd87a911b7ad55f1cecb6470181897d492fea0b",
+      "derivedFrom": "mall-wall-cap-v1",
+      "changeReason": "Structural cap matches wall cap exactly.",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wall-cap-v1.png",
+        "source/archive-p0-r1/assets/mall-prop-column-v1.png"
+      ]
+    },
+    {
+      "id": "mall-prop-directory-v1",
+      "file": "assets/mall/v1/mall-prop-directory-v1.png",
+      "w": 32,
+      "h": 80,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": "B",
+      "tile": null,
+      "emit": "mall-prop-directory-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-tall-original.png",
+      "sourceRect": [
+        944,
+        532,
+        342,
+        538
+      ],
+      "exportMethod": "NN generated octagonal top32x32; regular octagon alpha repair; only20px south front retained, same width as south octagon edge; side facets discarded; teal crown; abstract16x26 map panel; unlit.",
+      "sha256": "1990af9581f1038e7b172a888e8babf8b9c076b793ff95528904c9322e1e1921",
+      "revision": 1
+    },
+    {
+      "id": "mall-prop-directory-emit-v1",
+      "file": "assets/mall/v1/mall-prop-directory-emit-v1.png",
+      "w": 32,
+      "h": 80,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-tall-original.png",
+      "sourceRect": [
+        944,
+        532,
+        342,
+        538
+      ],
+      "exportMethod": "Pure-white binary semantic mask from final base coordinates; clipped to base alpha.",
+      "sha256": "a68d2d48a50d663015d7d1694366979030401e81143f92240baf2ec2d1e6dbba",
+      "revision": 1,
+      "maskOf": "mall-prop-directory-v1",
+      "emissionRects": [
+        [
+          8,
+          40,
+          23,
+          65
+        ]
+      ]
+    },
+    {
+      "id": "mall-prop-sandbags-2-v1",
+      "file": "assets/mall/v1/mall-prop-sandbags-2-v1.png",
+      "w": 64,
+      "h": 46,
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 14,
+      "anchor": [
+        0,
+        46
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": "2",
+      "frames": 1,
+      "source": "source/generated-low-original.png",
+      "sourceRect": [
+        70,
+        207,
+        658,
+        195
+      ],
+      "exportMethod": "Threshold source alpha220, NN62x27 contour at1,19 on64x46; two flattened layers; visual top depth13 + lift14, within32px footprint; no ground shadow.",
+      "sha256": "3bf6202e92cc11c508ce5ee1ff3b36075788a712d1ee88fcee29c58dfd4ae4ff",
+      "revision": 1
+    },
+    {
+      "id": "mall-prop-sofa-s-v1",
+      "file": "assets/mall/v1/mall-prop-sofa-s-v1.png",
+      "w": 64,
+      "h": 52,
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 20,
+      "anchor": [
+        0,
+        52
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": "s",
+      "frames": 1,
+      "source": "source/generated-r3-furniture-original.png",
+      "sourceRect": [
+        78,
+        225,
+        628,
+        332
+      ],
+      "exportMethod": "R3: north placed60px-wide sofa; generated edit separated into8px backrest +12px seat +20px south front; three cushions wider than deep; contact boundary40, last12rows transparent; canvas/anchor unchanged.",
+      "sha256": "77c0a4912fb9327db6fb49fb897d6f5896f5e378d374c0f793e97893dcb0152c",
+      "revision": 2,
+      "replacesSha256": "7c913ef9a420b9a496a1468faea035bdb0e62c44686a432c374cf04df6c955aa",
+      "bodyTopRect": [
+        2,
+        0,
+        60,
+        20
+      ],
+      "bodyFrontRect": [
+        2,
+        20,
+        60,
+        20
+      ],
+      "backrestRect": [
+        6,
+        0,
+        52,
+        8
+      ],
+      "seatRect": [
+        6,
+        8,
+        52,
+        12
+      ],
+      "visibleGroundLine": 40,
+      "transparentSouthRows": 12,
+      "sourceParts": [
+        [
+          78,
+          225,
+          706,
+          337
+        ],
+        [
+          78,
+          337,
+          706,
+          477
+        ],
+        [
+          78,
+          477,
+          706,
+          557
+        ]
+      ],
+      "sourcePartsFormat": "xyxy",
+      "sourceInputs": [
+        "source/generated-r3-furniture-original.png",
+        "source/archive-r2-before-feedback/assets/mall-prop-sofa-s-v1.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §1",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+    },
+    {
+      "id": "mall-prop-cart-v1",
+      "file": "assets/mall/v1/mall-prop-cart-v1.png",
+      "w": 32,
+      "h": 54,
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 22,
+      "anchor": [
+        0,
+        54
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "source": "source/generated-low-original.png",
+      "sourceRect": [
+        165,
+        539,
+        438,
+        389
+      ],
+      "exportMethod": "Orthographic pixel repair: generated wire top[267,588,325,104] to24x22 at8,10 and south front[272,703,319,87] to24x12 at8,32; open1px wire grid; crushed box11x10 at17,24; 5x6 casters at6,48 and26,48; south face plus wheels22px; handle west, nose east; horizontal/vertical ground axes.",
+      "sha256": "4e5161e180adbd0db8e6d0df891afd9a835c09aa0c217b6ed71cd357e5195e75",
+      "revision": 1,
+      "sourceParts": [
+        [
+          267,
+          588,
+          325,
+          104
+        ],
+        [
+          272,
+          703,
+          319,
+          87
+        ],
+        [
+          369,
+          652,
+          127,
+          106
+        ],
+        [
+          247,
+          877,
+          44,
+          47
+        ]
+      ]
+    },
+    {
+      "id": "mall-ground-tile-fresh-a-v1",
+      "file": "assets/mall/v1/mall-ground-tile-fresh-a-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 2,
+      "exportMethod": "R3: replace black/white checker with dusty fresh-blue/ivory8px tiles; luma contrast reduced >50%; narrow softened grout; source micro-wear retained at10%.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        101,
+        124,
+        273,
+        273
+      ],
+      "sha256": "285ef40a661af5ada1e18292cfda534cdd0d40bfd1ed4fe1423d8c19fbfee05a",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "source/archive-r2-before-feedback/assets/mall-ground-tile-fresh-a-v1.png"
+      ],
+      "replacesSha256": "785e3361f56568cdafd068ab596dc4d0d9e992e330c16a49587aeaef462d069b",
+      "feedback": "Sol-P1反馈.md §2"
+    },
+    {
+      "id": "mall-ground-tile-fresh-b-v1",
+      "file": "assets/mall/v1/mall-ground-tile-fresh-b-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 2,
+      "exportMethod": "R3: replace black/white checker with dusty fresh-blue/ivory8px tiles; luma contrast reduced >50%; narrow softened grout; source micro-wear retained at10%.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        430,
+        124,
+        273,
+        273
+      ],
+      "sha256": "179f566a7f34fbf848554596094a1455e05f09ac535e29fbc3fb4aa72d775745",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "source/archive-r2-before-feedback/assets/mall-ground-tile-fresh-b-v1.png"
+      ],
+      "replacesSha256": "a1f3d98cf9b859ac0f6a10a169b687756038197dbda1af923e95d98e353240f6",
+      "feedback": "Sol-P1反馈.md §2"
+    },
+    {
+      "id": "mall-ground-drain-v1",
+      "file": "assets/mall/v1/mall-ground-drain-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        751,
+        125,
+        274,
+        272
+      ],
+      "sha256": "e3526028404e377ef7fabe6d90f95d127e6d3c984397d63aace1257c70aa103f",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-ground-tile-cold-a-v1",
+      "file": "assets/mall/v1/mall-ground-tile-cold-a-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 2,
+      "exportMethod": "R3: attenuate horizontal dark condensation stripes by85% of row deficit; locally lift remaining dark pixels; retain original pale cold tile/frost marks.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1073,
+        124,
+        273,
+        273
+      ],
+      "sha256": "7534ff451d734b0d8818f24f7a87d64d5f1403460d46a79478267408abb106a2",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "source/archive-r2-before-feedback/assets/mall-ground-tile-cold-a-v1.png"
+      ],
+      "replacesSha256": "5f5fe169df7d7d2fa5399540966291acab421cbb95907df53c2fb3282e75891a",
+      "feedback": "Sol-P1反馈.md §2"
+    },
+    {
+      "id": "mall-ground-wood-a-v1",
+      "file": "assets/mall/v1/mall-ground-wood-a-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1399,
+        124,
+        274,
+        273
+      ],
+      "sha256": "5f6f74cec2a07dbdf2c7ccefc3d84e3aff7ca26ed394ee5405fa9e1486d162e2",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-ground-wood-b-v1",
+      "file": "assets/mall/v1/mall-ground-wood-b-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        100,
+        470,
+        274,
+        272
+      ],
+      "sha256": "cc4e2fe4be1d57835195313dd78fe8de15ada03e3461626d9ba0888d2bc2cfac",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-ground-deck-a-v1",
+      "file": "assets/mall/v1/mall-ground-deck-a-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        430,
+        470,
+        273,
+        272
+      ],
+      "sha256": "683fb3f4520b1b71876187f68c1e2d4203d274e2287a59d454c548f60f33c9c0",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-ground-deck-b-v1",
+      "file": "assets/mall/v1/mall-ground-deck-b-v1.png",
+      "kind": "ground",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        751,
+        470,
+        274,
+        272
+      ],
+      "sha256": "5f8a9d696b4b8ff0cd3ee2a74f55d53db7fa27b3222724a804360e8a866f2d84",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-roof-surface-a-v1",
+      "file": "assets/mall/v1/mall-roof-surface-a-v1.png",
+      "kind": "roof",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "sha256": "c9e4720ea3aa795021de0d7f904170f3bcb32f8438b8469f3da12ab16c3c88aa",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-roof-surface-b-v1",
+      "file": "assets/mall/v1/mall-roof-surface-b-v1.png",
+      "kind": "roof",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Foreground-projection crop; NN32x32; finite palette; periodic grout/plank/drain repair; a/b material brightness matched; opaque sRGB.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1399,
+        470,
+        274,
+        272
+      ],
+      "sha256": "c668df1ab5a072a2573bd2a606a2a188c5148cafdabc33d1b90c5f118ea0926a",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-service-b-v1",
+      "file": "assets/mall/v1/mall-wall-service-b-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "Accepted service-a base retained; generated exposed pipe/clamps NN32x7 at y17; original hazard8px and mud/base line retained.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        105,
+        24,
+        350,
+        472
+      ],
+      "sourceParts": [
+        [
+          105,
+          193,
+          455,
+          255
+        ]
+      ],
+      "derivedFrom": "mall-wall-service-a-v1",
+      "sha256": "4525e36c2a6d318f3a239016fa1554015407a89e873a7c050aa892033d32f3d1",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png",
+        "assets/mall/v1/mall-wall-service-a-v1.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-wall-curtain-broken-v1",
+      "file": "assets/mall/v1/mall-wall-curtain-broken-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": "mall-wall-curtain-broken-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "Accepted curtain mullions kept (center y18); generated lower cracked glass scaled into x2..31/y20..46; tan tape X locally aligned; bottom contact restored.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        590,
+        24,
+        356,
+        472
+      ],
+      "derivedFrom": "mall-wall-curtain-v1",
+      "sha256": "637663e03d3c828b9a62c468286bafaac4af0cc8fd4189ce51b4265dc95a7e30",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png",
+        "assets/mall/v1/mall-wall-curtain-v1.png"
+      ]
+    },
+    {
+      "id": "mall-wall-curtain-broken-emit-v1",
+      "file": "assets/mall/v1/mall-wall-curtain-broken-emit-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-wall-curtain-broken-v1",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        590,
+        24,
+        356,
+        472
+      ],
+      "emissionRects": null,
+      "sha256": "0a840df00b61d3d206e954b8484fe9f1e687c7d1cd4b7a2d384fded51916526f",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wall-curtain-broken-v1.png"
+      ],
+      "baseSha256": "637663e03d3c828b9a62c468286bafaac4af0cc8fd4189ce51b4265dc95a7e30"
+    },
+    {
+      "id": "mall-wall-facade-int-a-v1",
+      "file": "assets/mall/v1/mall-wall-facade-int-a-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "NN32x48 opaque wall face; strip source antialiasing; flat south elevation; no added lighting or shadow.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        1083,
+        25,
+        348,
+        470
+      ],
+      "sha256": "ed28d5b65567f42aae88c609d5c5a8d599f5206a4f19106ba52348c5dad045c1",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-window-2f-v1",
+      "file": "assets/mall/v1/mall-wall-window-2f-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": "mall-wall-window-2f-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "NN32x48 opaque wall face; strip source antialiasing; flat south elevation; no added lighting or shadow.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        92,
+        541,
+        379,
+        438
+      ],
+      "sha256": "e0dff9e53cb901ed70db6ccc6352f35b732f0e4936953216e437b508597ed5c7",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-window-2f-emit-v1",
+      "file": "assets/mall/v1/mall-wall-window-2f-emit-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-wall-window-2f-v1",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        92,
+        541,
+        379,
+        438
+      ],
+      "emissionRects": [
+        [
+          2,
+          2,
+          14,
+          20
+        ],
+        [
+          17,
+          2,
+          29,
+          20
+        ]
+      ],
+      "sha256": "4c72289682803e7cff74d9044c9d46a1841916e6e3a084b66b0ff53016544688",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wall-window-2f-v1.png"
+      ],
+      "baseSha256": "e0dff9e53cb901ed70db6ccc6352f35b732f0e4936953216e437b508597ed5c7"
+    },
+    {
+      "id": "mall-wall-hoarding-a-v1",
+      "file": "assets/mall/v1/mall-wall-hoarding-a-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "NN32x48 opaque wall face; strip source antialiasing; flat south elevation; no added lighting or shadow.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        577,
+        541,
+        379,
+        438
+      ],
+      "sha256": "f401f1e36014b51aaffa600723fe4bb9b9243c93e6fd4cdaab6b9c51fdf8d007",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-hoarding-b-v1",
+      "file": "assets/mall/v1/mall-wall-hoarding-b-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "NN32x48 opaque wall face; strip source antialiasing; flat south elevation; no added lighting or shadow.",
+      "source": "source/generated-r2-walls-a-original.png",
+      "sourceRect": [
+        1064,
+        541,
+        379,
+        438
+      ],
+      "sha256": "234489eefb7d3d81a48c491473349e873a57af6bc158b4ca8147fc17d3f587d1",
+      "sourceInputs": [
+        "source/generated-r2-walls-a-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-lintel-entrance-v1",
+      "file": "assets/mall/v1/mall-wall-lintel-entrance-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": "mall-wall-lintel-entrance-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated structured cap NN32x32 average119 + separate south face NN32x12; exact y32 interface, horizontal repeat.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        98,
+        71,
+        350,
+        455
+      ],
+      "sourceParts": [
+        [
+          98,
+          71,
+          448,
+          398
+        ],
+        [
+          98,
+          398,
+          448,
+          526
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "05f2efbb0f452c7077e50f8199d81213925302cd5b3c9bd8dbc276183dcf8257",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-wall-lintel-entrance-emit-v1",
+      "file": "assets/mall/v1/mall-wall-lintel-entrance-emit-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-wall-lintel-entrance-v1",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        98,
+        71,
+        350,
+        455
+      ],
+      "emissionRects": null,
+      "sha256": "ece3867928b9774277e2e93936cfd6bd43ccde81cf74810261085bbb05faefac",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wall-lintel-entrance-v1.png"
+      ],
+      "baseSha256": "05f2efbb0f452c7077e50f8199d81213925302cd5b3c9bd8dbc276183dcf8257"
+    },
+    {
+      "id": "mall-wall-lintel-shutter-v1",
+      "file": "assets/mall/v1/mall-wall-lintel-shutter-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated structured cap NN32x32 average119 + separate south face NN32x12; exact y32 interface, horizontal repeat.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        583,
+        71,
+        369,
+        455
+      ],
+      "sourceParts": [
+        [
+          583,
+          71,
+          952,
+          398
+        ],
+        [
+          583,
+          398,
+          952,
+          526
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "7a7db10d1ae2db40b2eaa35efe61f93679122835fc1e7a7cf273bb6694452eea",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-wall-parapet-cap-v1",
+      "file": "assets/mall/v1/mall-wall-parapet-cap-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "NN prescribed face/cap size; source material retained; rail opaque unlit glass; hoarding-cap has exact3px south rim when applicable.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        1087,
+        140,
+        357,
+        350
+      ],
+      "sha256": "e40d24c36868534417d72e975eb169c23603a82f5afac4802ae7666c59e32ac8",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-parapet-face-v1",
+      "file": "assets/mall/v1/mall-wall-parapet-face-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 24,
+      "anchor": [
+        0,
+        24
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 24,
+      "revision": 1,
+      "exportMethod": "NN prescribed face/cap size; source material retained; rail opaque unlit glass; hoarding-cap has exact3px south rim when applicable.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        74,
+        514,
+        400,
+        401
+      ],
+      "sha256": "5d3e572ed585cb9a847210b6008ce97976330f166fa34ab28a3f5b5bcbb7df19",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-parapet-rail-v1",
+      "file": "assets/mall/v1/mall-wall-parapet-rail-v1.png",
+      "kind": "wall",
+      "footprint": null,
+      "lift": 14,
+      "anchor": [
+        0,
+        14
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 14,
+      "revision": 1,
+      "exportMethod": "NN prescribed face/cap size; source material retained; rail opaque unlit glass; hoarding-cap has exact3px south rim when applicable.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        556,
+        514,
+        424,
+        326
+      ],
+      "sha256": "387bda987bc1f4d89f566323b06f337a8fcc709cf6f93a8e89c9f48fe5e87bb8",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ]
+    },
+    {
+      "id": "mall-wall-hoarding-cap-v1",
+      "file": "assets/mall/v1/mall-wall-hoarding-cap-v1.png",
+      "kind": "wall",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "xy",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "NN prescribed face/cap size; source material retained; rail opaque unlit glass; hoarding-cap has exact3px south rim when applicable.",
+      "source": "source/generated-r2-walls-b-original.png",
+      "sourceRect": [
+        1087,
+        583,
+        357,
+        344
+      ],
+      "sha256": "ee54882d3e17af9def3a8207b7889caeade0bc63f486e7e9c4785747ac457f84",
+      "sourceInputs": [
+        "source/generated-r2-walls-b-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-gondola-mid-full-b-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-mid-full-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 72,
+      "revision": 1,
+      "exportMethod": "Accepted R2 shelf top/body depth24, front y28-67; source green rails segmented out and each stock tier separately resampled to shared tier rows35/44/53/63; looted floor packets only at y68-71.",
+      "source": "source/generated-r2-super-tall-original.png",
+      "sourceRect": [
+        111,
+        50,
+        478,
+        501
+      ],
+      "sourceParts": [
+        [
+          120,
+          185,
+          580,
+          272
+        ],
+        [
+          120,
+          290,
+          580,
+          356
+        ],
+        [
+          120,
+          375,
+          580,
+          435
+        ],
+        [
+          120,
+          454,
+          580,
+          520
+        ]
+      ],
+      "derivedFrom": "mall-prop-gondola-mid-full-a-v1",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "floorDecalRows": null,
+      "sha256": "6add6747a7060ab03225f7de1792b9d29acfcf3bc0c3db8fde8ae8a4624392b8",
+      "sourceInputs": [
+        "source/generated-r2-super-tall-original.png",
+        "assets/mall/v1/mall-prop-gondola-mid-full-a-v1.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-gondola-mid-sparse-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-mid-sparse-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 72,
+      "revision": 1,
+      "exportMethod": "Accepted R2 shelf top/body depth24, front y28-67; source green rails segmented out and each stock tier separately resampled to shared tier rows35/44/53/63; looted floor packets only at y68-71.",
+      "source": "source/generated-r2-super-tall-original.png",
+      "sourceRect": [
+        748,
+        50,
+        463,
+        545
+      ],
+      "sourceParts": [
+        [
+          757,
+          197,
+          1202,
+          272
+        ],
+        [
+          757,
+          291,
+          1202,
+          357
+        ],
+        [
+          757,
+          375,
+          1202,
+          437
+        ],
+        [
+          757,
+          455,
+          1202,
+          522
+        ]
+      ],
+      "derivedFrom": "mall-prop-gondola-mid-full-a-v1",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "floorDecalRows": null,
+      "sha256": "ea5fd2fad69e1d4bd98685d00451070c44268df2e79976b1450f1cbdb0e1feb6",
+      "sourceInputs": [
+        "source/generated-r2-super-tall-original.png",
+        "assets/mall/v1/mall-prop-gondola-mid-full-a-v1.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-gondola-mid-looted-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-mid-looted-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 72,
+      "revision": 1,
+      "exportMethod": "Accepted R2 shelf top/body depth24, front y28-67; source green rails segmented out and each stock tier separately resampled to shared tier rows35/44/53/63; looted floor packets only at y68-71.",
+      "source": "source/generated-r2-super-tall-original.png",
+      "sourceRect": [
+        111,
+        611,
+        478,
+        535
+      ],
+      "sourceParts": [
+        [
+          120,
+          750,
+          580,
+          833
+        ],
+        [
+          120,
+          851,
+          580,
+          918
+        ],
+        [
+          120,
+          936,
+          580,
+          1000
+        ],
+        [
+          120,
+          1018,
+          580,
+          1086
+        ]
+      ],
+      "derivedFrom": "mall-prop-gondola-mid-full-a-v1",
+      "visibleGroundLine": 68,
+      "bodyTopRect": [
+        0,
+        4,
+        32,
+        24
+      ],
+      "bodyFrontRect": [
+        0,
+        28,
+        32,
+        40
+      ],
+      "tierRows": [
+        35,
+        44,
+        53,
+        63
+      ],
+      "floorDecalRows": [
+        68,
+        72
+      ],
+      "sha256": "01d502140c994802346ccff8d8946d4ce7a212395cdf15b5679502aeca740c39",
+      "sourceInputs": [
+        "source/generated-r2-super-tall-original.png",
+        "assets/mall/v1/mall-prop-gondola-mid-full-a-v1.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-fridge-b-v1",
+      "file": "assets/mall/v1/mall-prop-fridge-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": "mall-prop-fridge-b-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 80,
+      "revision": 1,
+      "exportMethod": "Generated half-stock milk cabinet/open glass door; dark vented top32x32 mean121; south front32x48; blank lightbox and two unlit inner strips aligned.",
+      "source": "source/generated-r2-super-tall-original.png",
+      "sourceRect": [
+        748,
+        595,
+        454,
+        514
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "8a9e73dc9abdd5aeba8238521e0f6908062d8d42f5078ddbdbbe02cd10344bc8",
+      "sourceInputs": [
+        "source/generated-r2-super-tall-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-fridge-b-emit-v1",
+      "file": "assets/mall/v1/mall-prop-fridge-b-emit-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 80,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-prop-fridge-b-v1",
+      "source": "source/generated-r2-super-tall-original.png",
+      "sourceRect": [
+        748,
+        595,
+        454,
+        514
+      ],
+      "emissionRects": [
+        [
+          2,
+          33,
+          29,
+          37
+        ],
+        [
+          8,
+          43,
+          8,
+          70
+        ],
+        [
+          28,
+          43,
+          28,
+          70
+        ]
+      ],
+      "sha256": "ada357dc88c19cefaca1ce7053a1fe5fcde023fbccabc22d9d35421ae42a9f77",
+      "sourceInputs": [
+        "assets/mall/v1/mall-prop-fridge-b-v1.png"
+      ],
+      "baseSha256": "8a9e73dc9abdd5aeba8238521e0f6908062d8d42f5078ddbdbbe02cd10344bc8"
+    },
+    {
+      "id": "mall-prop-promo-table-v1",
+      "file": "assets/mall/v1/mall-prop-promo-table-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 22,
+      "anchor": [
+        0,
+        54
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 54,
+      "revision": 1,
+      "exportMethod": "Generated paired views composited into single top32 + prescribed low south front; NN and binary alpha; no duplicate sprite view.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        57,
+        41,
+        495,
+        485
+      ],
+      "sourceParts": [
+        [
+          67,
+          41,
+          536,
+          288
+        ],
+        [
+          57,
+          303,
+          552,
+          526
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        64,
+        32
+      ],
+      "bodyFrontRect": [
+        0,
+        32,
+        64,
+        22
+      ],
+      "sha256": "6383144ed3b1dffc0c1b039689801b29c185467137030690db1b3523ce3ee0ed",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-pallet-wrapped-v1",
+      "file": "assets/mall/v1/mall-prop-pallet-wrapped-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 24,
+      "anchor": [
+        0,
+        56
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 56,
+      "revision": 1,
+      "exportMethod": "Generated paired views composited into single top32 + prescribed low south front; NN and binary alpha; no duplicate sprite view.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        646,
+        40,
+        246,
+        484
+      ],
+      "sourceParts": [
+        [
+          650,
+          40,
+          890,
+          292
+        ],
+        [
+          646,
+          321,
+          892,
+          524
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "bodyFrontRect": [
+        0,
+        32,
+        32,
+        24
+      ],
+      "sha256": "5bd7a3a8e5b08e17584dbd420b67e7232e568092c0c922cf6a19686a40930b4d",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-ice-bed-v1",
+      "file": "assets/mall/v1/mall-prop-ice-bed-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 22,
+      "anchor": [
+        0,
+        54
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 54,
+      "revision": 1,
+      "exportMethod": "Generated paired views composited into single top32 + prescribed low south front; NN and binary alpha; no duplicate sprite view.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        55,
+        572,
+        495,
+        412
+      ],
+      "sourceParts": [
+        [
+          58,
+          572,
+          548,
+          768
+        ],
+        [
+          55,
+          794,
+          550,
+          984
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        64,
+        32
+      ],
+      "bodyFrontRect": [
+        0,
+        32,
+        64,
+        22
+      ],
+      "sha256": "c3305403dbddf381df49c0fead3f45375ff1bc9c9c613a1ba2f661d9acef0e37",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-scale-counter-v1",
+      "file": "assets/mall/v1/mall-prop-scale-counter-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 24,
+      "anchor": [
+        0,
+        56
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 56,
+      "revision": 1,
+      "exportMethod": "Generated paired views composited into single top32 + prescribed low south front; NN and binary alpha; no duplicate sprite view.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        664,
+        566,
+        212,
+        424
+      ],
+      "sourceParts": [
+        [
+          668,
+          566,
+          870,
+          770
+        ],
+        [
+          664,
+          781,
+          876,
+          990
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "bodyFrontRect": [
+        0,
+        32,
+        32,
+        24
+      ],
+      "sha256": "c3811b54ae2141cd5a15cfc1563dde3061224dbb647b9b401439a7622c48e4e4",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-freezer-v1",
+      "file": "assets/mall/v1/mall-prop-freezer-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 22,
+      "anchor": [
+        0,
+        54
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": "mall-prop-freezer-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 54,
+      "revision": 1,
+      "exportMethod": "Generated paired views composited into single top32 + prescribed low south front; NN and binary alpha; no duplicate sprite view.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        995,
+        572,
+        488,
+        418
+      ],
+      "sourceParts": [
+        [
+          996,
+          572,
+          1481,
+          768
+        ],
+        [
+          995,
+          802,
+          1483,
+          990
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        64,
+        32
+      ],
+      "bodyFrontRect": [
+        0,
+        32,
+        64,
+        22
+      ],
+      "sha256": "f4f67b0195e4d8cf33eb2d9ae61c2061ba22feb1fe8351b788ffded3a8de2915",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-freezer-emit-v1",
+      "file": "assets/mall/v1/mall-prop-freezer-emit-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 22,
+      "anchor": [
+        0,
+        54
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 54,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-prop-freezer-v1",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        995,
+        572,
+        488,
+        418
+      ],
+      "emissionRects": [
+        [
+          5,
+          4,
+          29,
+          26
+        ],
+        [
+          34,
+          4,
+          58,
+          26
+        ]
+      ],
+      "sha256": "839060613679a0e33083960445f805ad1b08be67853b16ded8febcdeea0b684a",
+      "sourceInputs": [
+        "assets/mall/v1/mall-prop-freezer-v1.png"
+      ],
+      "baseSha256": "f4f67b0195e4d8cf33eb2d9ae61c2061ba22feb1fe8351b788ffded3a8de2915"
+    },
+    {
+      "id": "mall-prop-cart-fallen-v1",
+      "file": "assets/mall/v1/mall-prop-cart-fallen-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated fallen wire trolley selected once; NN32x25 at y19, transparent wire gaps; lift12 within32px footprint; no standing trolley silhouette.",
+      "source": "source/generated-r2-super-low-original.png",
+      "sourceRect": [
+        1088,
+        79,
+        365,
+        226
+      ],
+      "sha256": "71e1e1dae1b1a4a40ff74a3882bbca31857a0a4cf926894a8f678b9f029694f2",
+      "sourceInputs": [
+        "source/generated-r2-super-low-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-sandbags-1-v1",
+      "file": "assets/mall/v1/mall-prop-sandbags-1-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 14,
+      "anchor": [
+        0,
+        46
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 46,
+      "revision": 1,
+      "exportMethod": "Generated two-layer single-cell sacks; NN30x27 at1,19; low14 lift, narrower partial-depth footprint; no added shadow.",
+      "source": "source/generated-r2-life-original.png",
+      "sourceRect": [
+        111,
+        203,
+        286,
+        184
+      ],
+      "sha256": "a264bc4dc64dd7ca30977bb257c2de58151d244c174a7233ca5a391af37e41b0",
+      "sourceInputs": [
+        "source/generated-r2-life-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-bench-v1",
+      "file": "assets/mall/v1/mall-prop-bench-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 18,
+      "anchor": [
+        0,
+        50
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 50,
+      "revision": 2,
+      "exportMethod": "R3 five-item check: bench seat was32px deep, shortened to18px; narrow horizontal wood slats, original18px leg rise; contact36, last14rows transparent; canvas64x50/anchor unchanged.",
+      "source": "source/generated-r3-furniture-original.png",
+      "sourceRect": [
+        1472,
+        277,
+        613,
+        280
+      ],
+      "sha256": "381c6b0caab0ee8fdee404836caa32bbadc11c2eed819a18712dbd2e9e4f093c",
+      "sourceInputs": [
+        "source/generated-r3-furniture-original.png",
+        "source/archive-r2-before-feedback/assets/mall-prop-bench-v1.png"
+      ],
+      "replacesSha256": "8dcb91fd95c2778fedb5290e5f0481290ae2d35ad3132520d250fb8bbef024fc",
+      "bodyTopRect": [
+        2,
+        0,
+        60,
+        18
+      ],
+      "bodyFrontRect": [
+        2,
+        18,
+        60,
+        18
+      ],
+      "visibleGroundLine": 36,
+      "transparentSouthRows": 14,
+      "sourceParts": [
+        [
+          1472,
+          277,
+          2085,
+          453
+        ],
+        [
+          1472,
+          453,
+          2085,
+          557
+        ]
+      ],
+      "sourcePartsFormat": "xyxy",
+      "feedback": "Sol-P1补充反馈.md §1",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+    },
+    {
+      "id": "mall-prop-planter-v1",
+      "file": "assets/mall/v1/mall-prop-planter-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 30,
+      "anchor": [
+        0,
+        62
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 62,
+      "revision": 1,
+      "exportMethod": "Generated low pot and sparse dying stems/leaves; NN32x62; literal task-book30px sparse-plant lift, M category; crown transparent gaps retained.",
+      "source": "source/generated-r2-life-original.png",
+      "sourceRect": [
+        1172,
+        48,
+        229,
+        364
+      ],
+      "sparseCrownException": true,
+      "sha256": "5ce10baed67e027ef070e2b8a7c374565546faa11ea5ddbc0967170ba1346dcd",
+      "sourceInputs": [
+        "source/generated-r2-life-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-bed-v1",
+      "file": "assets/mall/v1/mall-prop-bed-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 20,
+      "anchor": [
+        0,
+        84
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 84,
+      "revision": 2,
+      "exportMethod": "R3: wide double bed58px; exposed headboard8px, body top46px incl pillows, south mattress face12px; contact boundary66 and last18rows transparent; canvas64x84/anchor unchanged.",
+      "source": "source/generated-r3-furniture-original.png",
+      "sourceRect": [
+        818,
+        86,
+        521,
+        523
+      ],
+      "sha256": "b62d81bc041f70c3fb263cd5c102a4af850e50076c7ba2de819a8791779e6d37",
+      "sourceInputs": [
+        "source/generated-r3-furniture-original.png",
+        "source/archive-r2-before-feedback/assets/mall-prop-bed-v1.png"
+      ],
+      "replacesSha256": "0cc6fde1ab15dc87611dbbe83e4b301a2a36af11c4f9d51ca8ca02ae31833788",
+      "bodyTopRect": [
+        3,
+        8,
+        58,
+        46
+      ],
+      "headboardRect": [
+        3,
+        0,
+        58,
+        8
+      ],
+      "bodyFrontRect": [
+        3,
+        54,
+        58,
+        12
+      ],
+      "visibleGroundLine": 66,
+      "transparentSouthRows": 18,
+      "sourceParts": [
+        [
+          818,
+          86,
+          1339,
+          143
+        ],
+        [
+          818,
+          143,
+          1339,
+          504
+        ],
+        [
+          818,
+          504,
+          1339,
+          609
+        ]
+      ],
+      "sourcePartsFormat": "xyxy",
+      "feedback": "Sol-P1补充反馈.md §1",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+    },
+    {
+      "id": "mall-prop-coffee-table-v1",
+      "file": "assets/mall/v1/mall-prop-coffee-table-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated matte wooden top/tipped vase NN32x32; separate legs/apron NN32x12; low12 lift.",
+      "source": "source/generated-r2-life-original.png",
+      "sourceRect": [
+        663,
+        654,
+        358,
+        261
+      ],
+      "sha256": "02124ed3f16e364095cdc68c5e3401193ad9dded9b8c2a682f71ad8605b6137a",
+      "sourceInputs": [
+        "source/generated-r2-life-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-floor-lamp-v1",
+      "file": "assets/mall/v1/mall-prop-floor-lamp-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 44,
+      "anchor": [
+        0,
+        76
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": "mall-prop-floor-lamp-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 76,
+      "revision": 1,
+      "exportMethod": "Generated fabric shade24x18 at4,28, thin2px pole and16x8 base; y72 groundcenter minus44=28 shade top; explicit thin-pole M44 exception; no baked light.",
+      "source": "source/generated-r2-life-original.png",
+      "sourceRect": [
+        1213,
+        462,
+        160,
+        501
+      ],
+      "sourceParts": [
+        [
+          1213,
+          462,
+          1373,
+          635
+        ],
+        [
+          1285,
+          640,
+          1300,
+          896
+        ],
+        [
+          1238,
+          896,
+          1358,
+          963
+        ]
+      ],
+      "poleWidth": 2,
+      "groundCenter": [
+        16,
+        72
+      ],
+      "sha256": "faf88e4ff66b99bbe6c08f432a2661ffdbc84c3775073e319be6b32803762984",
+      "sourceInputs": [
+        "source/generated-r2-life-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-floor-lamp-emit-v1",
+      "file": "assets/mall/v1/mall-prop-floor-lamp-emit-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 44,
+      "anchor": [
+        0,
+        76
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 76,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-prop-floor-lamp-v1",
+      "source": "source/generated-r2-life-original.png",
+      "sourceRect": [
+        1213,
+        462,
+        160,
+        501
+      ],
+      "emissionRects": [
+        [
+          6,
+          31,
+          25,
+          43
+        ]
+      ],
+      "sha256": "94fc9e31e7869274eeb833203f5fd13b0798b6b2cd641c00297c9fce6d2835eb",
+      "sourceInputs": [
+        "assets/mall/v1/mall-prop-floor-lamp-v1.png"
+      ],
+      "baseSha256": "faf88e4ff66b99bbe6c08f432a2661ffdbc84c3775073e319be6b32803762984"
+    },
+    {
+      "id": "mall-prop-partition-v1",
+      "file": "assets/mall/v1/mall-prop-partition-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 48,
+      "anchor": [
+        0,
+        80
+      ],
+      "collision": "B",
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 80,
+      "revision": 1,
+      "exportMethod": "Generated structured dark cap32x32 mean118 and warm south panel32x48; wood battens/abstract framed landscape; EW edges flush.",
+      "source": "source/generated-r2-hero-original.png",
+      "sourceRect": [
+        298,
+        55,
+        201,
+        403
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "8555081db72daa23700458d1a15f268c694ee5a9ae9bd82da409585849f85558",
+      "sourceInputs": [
+        "source/generated-r2-hero-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-pylon-v1",
+      "file": "assets/mall/v1/mall-prop-pylon-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 64,
+      "anchor": [
+        0,
+        96
+      ],
+      "collision": "B",
+      "tile": null,
+      "emit": "mall-prop-pylon-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 96,
+      "revision": 1,
+      "exportMethod": "Generated dark metal top32x32 mean119 + tall south front64; blank round plate and abstract unlit plan panel; no text.",
+      "source": "source/generated-r2-hero-original.png",
+      "sourceRect": [
+        960,
+        14,
+        140,
+        449
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "e782e65d1c12fd91cdcf0cbb0e582f1761580792f7571922c0a75848bfadd12e",
+      "sourceInputs": [
+        "source/generated-r2-hero-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-pylon-emit-v1",
+      "file": "assets/mall/v1/mall-prop-pylon-emit-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 64,
+      "anchor": [
+        0,
+        96
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 96,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-prop-pylon-v1",
+      "source": "source/generated-r2-hero-original.png",
+      "sourceRect": [
+        960,
+        14,
+        140,
+        449
+      ],
+      "emissionRects": [
+        [
+          6,
+          52,
+          25,
+          82
+        ]
+      ],
+      "sha256": "facaf0e5791c8cf41c845a1ffb92d1ae5f571ae4626c032121fb21ea560cf8b1",
+      "sourceInputs": [
+        "assets/mall/v1/mall-prop-pylon-v1.png"
+      ],
+      "baseSha256": "e782e65d1c12fd91cdcf0cbb0e582f1761580792f7571922c0a75848bfadd12e"
+    },
+    {
+      "id": "mall-overhead-umbrella-v1",
+      "file": "assets/mall/v1/mall-overhead-umbrella-v1.png",
+      "kind": "overhead",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        32,
+        87
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 88,
+      "revision": 1,
+      "exportMethod": "Generated octagonal64x64 canopy with actual alpha tear; south skirt retained;2px centered pole y64-87; anchor literal32,87.",
+      "source": "source/generated-r2-hero-original.png",
+      "sourceRect": [
+        147,
+        513,
+        376,
+        464
+      ],
+      "sourceParts": [
+        [
+          147,
+          513,
+          523,
+          869
+        ],
+        [
+          326,
+          869,
+          340,
+          977
+        ]
+      ],
+      "holePolygon": [
+        [
+          48,
+          16
+        ],
+        [
+          51,
+          15
+        ],
+        [
+          53,
+          18
+        ],
+        [
+          55,
+          21
+        ],
+        [
+          52,
+          24
+        ],
+        [
+          48,
+          23
+        ],
+        [
+          46,
+          20
+        ]
+      ],
+      "sha256": "772fc0967b05ccdfd19460cb609b81bdc74c40302df270c953f0520052947ecf",
+      "sourceInputs": [
+        "source/generated-r2-hero-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-roof-canopy-entrance-v1",
+      "file": "assets/mall/v1/mall-roof-canopy-entrance-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        64
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 160,
+      "h": 64,
+      "revision": 1,
+      "exportMethod": "Top-only roof canopy NN160x64,exact3px steel perimeter; two jagged glass interiors cut to alpha0 while shards/grid stay opaque; anchor0,64.",
+      "source": "source/generated-r2-hero-original.png",
+      "sourceRect": [
+        631,
+        587,
+        824,
+        293
+      ],
+      "holePolygons": [
+        [
+          [
+            105,
+            5
+          ],
+          [
+            112,
+            3
+          ],
+          [
+            115,
+            8
+          ],
+          [
+            124,
+            12
+          ],
+          [
+            120,
+            19
+          ],
+          [
+            124,
+            24
+          ],
+          [
+            114,
+            28
+          ],
+          [
+            108,
+            24
+          ],
+          [
+            100,
+            23
+          ],
+          [
+            104,
+            16
+          ],
+          [
+            99,
+            11
+          ]
+        ],
+        [
+          [
+            39,
+            37
+          ],
+          [
+            46,
+            36
+          ],
+          [
+            50,
+            42
+          ],
+          [
+            58,
+            46
+          ],
+          [
+            54,
+            53
+          ],
+          [
+            48,
+            59
+          ],
+          [
+            42,
+            56
+          ],
+          [
+            35,
+            57
+          ],
+          [
+            38,
+            49
+          ],
+          [
+            34,
+            44
+          ]
+        ]
+      ],
+      "sha256": "6a96b9d9ecae3e2b56f9c2b46f255a416fea50cca8ade49d8b61dcb2441581be",
+      "sourceInputs": [
+        "source/generated-r2-hero-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-cafe-table-v1",
+      "file": "assets/mall/v1/mall-prop-cafe-table-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 20,
+      "anchor": [
+        0,
+        52
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 52,
+      "revision": 1,
+      "exportMethod": "Generated round tabletop17x17 and folding-chair parts; one fallen chair; table south legs20px, sparse compact1x1 ensemble; no side plane.",
+      "source": "source/generated-r2-outdoor-original.png",
+      "sourceRect": [
+        43,
+        121,
+        606,
+        363
+      ],
+      "sourceParts": [
+        [
+          196,
+          128,
+          446,
+          317
+        ],
+        [
+          42,
+          121,
+          242,
+          466
+        ],
+        [
+          402,
+          254,
+          651,
+          481
+        ]
+      ],
+      "sha256": "7c96ba9482308ab45116c664cde97549aa247dd6eb2aa305740191f7742451ba",
+      "sourceInputs": [
+        "source/generated-r2-outdoor-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-planter-box-v1",
+      "file": "assets/mall/v1/mall-prop-planter-box-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 24,
+      "anchor": [
+        0,
+        56
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 56,
+      "revision": 1,
+      "exportMethod": "Generated long concrete trough and wind-flattened sparse branches; NN64x56,24 lift, no dense tall hedge.",
+      "source": "source/generated-r2-outdoor-original.png",
+      "sourceRect": [
+        730,
+        167,
+        759,
+        347
+      ],
+      "sha256": "687e56a610af8fd43c88d895ba7f9e29bfd8a7c1d0d1b3806752d4951d7db9ac",
+      "sourceInputs": [
+        "source/generated-r2-outdoor-original.png"
+      ]
+    },
+    {
+      "id": "mall-prop-stanchions-v1",
+      "file": "assets/mall/v1/mall-prop-stanchions-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated post/round-base/fallen-post patches retopologized: upright actual12px tall; one post fallen; muted red sagging belt; sparse2x1 footprint.",
+      "source": "source/generated-r2-outdoor-original.png",
+      "sourceRect": [
+        71,
+        648,
+        689,
+        242
+      ],
+      "sourceParts": [
+        [
+          119,
+          646,
+          162,
+          844
+        ],
+        [
+          72,
+          817,
+          211,
+          887
+        ],
+        [
+          455,
+          770,
+          752,
+          889
+        ]
+      ],
+      "postHeight": 12,
+      "sha256": "fdaa2858a9e3df4348ac85b341b6d92ce8ba51f0e62fdd119f7d7674c1b5db76",
+      "sourceInputs": [
+        "source/generated-r2-outdoor-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-prop-adboard-fallen-v1",
+      "file": "assets/mall/v1/mall-prop-adboard-fallen-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "Generated abstract-person advert face rectified by NN quad to54x28, kept low at4,8; folded metal backing below, no standing billboard/text.",
+      "source": "source/generated-r2-outdoor-original.png",
+      "sourceRect": [
+        867,
+        642,
+        604,
+        286
+      ],
+      "sourceQuad": [
+        1001,
+        651,
+        881,
+        836,
+        1218,
+        915,
+        1295,
+        709
+      ],
+      "sha256": "565b24119c3de9c5f512b0d29067454ee95439bbfca3499a0fc5305a57101292",
+      "sourceInputs": [
+        "source/generated-r2-outdoor-original.png"
+      ]
+    },
+    {
+      "id": "mall-wallprop-exit-v1",
+      "file": "assets/mall/v1/mall-wallprop-exit-v1.png",
+      "kind": "wallprop",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        10,
+        10
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": "mall-wallprop-exit-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 20,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Generated running human/door/right-arrow pictogram reduced NN20x10; intrinsic off-white capped175, no letters; wallprop bottom-center10,10.",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        90,
+        120,
+        352,
+        194
+      ],
+      "sha256": "8695a12d87499f7cadf0c13f59c5fcd0f962506b81be88330ab24824ea6a56f7",
+      "sourceInputs": [
+        "source/generated-r2-signs-original.png"
+      ]
+    },
+    {
+      "id": "mall-wallprop-exit-emit-v1",
+      "file": "assets/mall/v1/mall-wallprop-exit-emit-v1.png",
+      "kind": "wallprop",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        10,
+        10
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 20,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-wallprop-exit-v1",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        90,
+        120,
+        352,
+        194
+      ],
+      "emissionRects": null,
+      "sha256": "75d06770ce4f6e56a13712c178e85c0e949307fc43629e10ea9d4b522f439cb3",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wallprop-exit-v1.png"
+      ],
+      "baseSha256": "8695a12d87499f7cadf0c13f59c5fcd0f962506b81be88330ab24824ea6a56f7"
+    },
+    {
+      "id": "mall-wallprop-emergency-v1",
+      "file": "assets/mall/v1/mall-wallprop-emergency-v1.png",
+      "kind": "wallprop",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        8,
+        10
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": "mall-wallprop-emergency-emit-v1",
+      "variant": null,
+      "frames": 1,
+      "w": 16,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Generated twin-head lamp NN16x10, light faces dimmed to unlit color; no halo/ground/background alpha retained.",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        609,
+        120,
+        317,
+        219
+      ],
+      "sha256": "904c61159d8a49f53c43687f3fefe7a175fa84bd0cf8fc7b06c1f562441b92d5",
+      "sourceInputs": [
+        "source/generated-r2-signs-original.png"
+      ]
+    },
+    {
+      "id": "mall-wallprop-emergency-emit-v1",
+      "file": "assets/mall/v1/mall-wallprop-emergency-emit-v1.png",
+      "kind": "wallprop",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        8,
+        10
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 16,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "maskOf": "mall-wallprop-emergency-v1",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        609,
+        120,
+        317,
+        219
+      ],
+      "emissionRects": [
+        [
+          1,
+          1,
+          5,
+          3
+        ],
+        [
+          10,
+          1,
+          14,
+          3
+        ]
+      ],
+      "sha256": "4a4029351e28e00a72b3c8529452f2adeb198b18d959a9e5be865414404bb608",
+      "sourceInputs": [
+        "assets/mall/v1/mall-wallprop-emergency-v1.png"
+      ],
+      "baseSha256": "904c61159d8a49f53c43687f3fefe7a175fa84bd0cf8fc7b06c1f562441b92d5"
+    },
+    {
+      "id": "mall-wallprop-hydrant-v1",
+      "file": "assets/mall/v1/mall-wallprop-hydrant-v1.png",
+      "kind": "wallprop",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        11,
+        30
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 22,
+      "h": 30,
+      "revision": 1,
+      "exportMethod": "Complete generated cracked-glass red cabinet including source portion below nominal row; NN22x30; blank face, no typography.",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        1139,
+        38,
+        248,
+        344
+      ],
+      "sha256": "b6c52688324c256005237b7650bc7fa4e39706a731f56236ac747c503d35def0",
+      "sourceInputs": [
+        "source/generated-r2-signs-original.png"
+      ]
+    },
+    {
+      "id": "mall-sign-board-wall-v1",
+      "file": "assets/mall/v1/mall-sign-board-wall-v1.png",
+      "kind": "sign",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        32,
+        20
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 20,
+      "revision": 1,
+      "exportMethod": "Generated plain teal-border wall board NN64x20, warm-white intrinsic field216/207/182, totally blank face; bottom-center anchor32,20.",
+      "source": "source/generated-r2-signs-original.png",
+      "sourceRect": [
+        1042,
+        807,
+        447,
+        136
+      ],
+      "sha256": "25216250628534bee9fe3da5b4cf17d57e603b0388d51e422bbb73ecf257b54f",
+      "sourceInputs": [
+        "source/generated-r2-signs-original.png"
+      ]
+    },
+    {
+      "id": "mall-roof-edge-n-v1",
+      "file": "assets/mall/v1/mall-roof-edge-n-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "85148de2091a2e453007028f467b80b7d97729d649ab84a950838efed2a4edc6",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-edge-s-v1",
+      "file": "assets/mall/v1/mall-roof-edge-s-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": "ew",
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 6,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "aee2241e555e2f9b26c9763a062d757815a4829c2af109ac15a8af0238f457a8",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-edge-e-v1",
+      "file": "assets/mall/v1/mall-roof-edge-e-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "635f9ce6c75f0e20f07d9c6516993613285d485d1ca952e29710ff6b70865d8b",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-edge-w-v1",
+      "file": "assets/mall/v1/mall-roof-edge-w-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "bef60fdfc09dbf74d13fbba752c6b473d7a6fd07a26ebb50934437461944080f",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-corner-ne-v1",
+      "file": "assets/mall/v1/mall-roof-corner-ne-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "1e6fb7b41f3931b25c6c249d6c08147aba239d6a5538f2536d12128ad05ca768",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-corner-nw-v1",
+      "file": "assets/mall/v1/mall-roof-corner-nw-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 10,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "bafe5384bf183c059c589aa39c3f876dd967b70fd3713c8e73bfc2b7aeec528f",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-corner-se-v1",
+      "file": "assets/mall/v1/mall-roof-corner-se-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 6,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "0500b6db131a872f8eadd22a0f896cf120b00d1a5c07c32a5c57286429ea1173",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-corner-sw-v1",
+      "file": "assets/mall/v1/mall-roof-corner-sw-v1.png",
+      "kind": "roof",
+      "footprint": null,
+      "lift": 0,
+      "anchor": [
+        0,
+        0
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 6,
+      "h": 6,
+      "revision": 1,
+      "exportMethod": "Perimeter cap material sampled from generated roof-surface-a; northern pieces exact6px cap+4px south-facing inner lip; others cap only; no side wall plane.",
+      "source": "source/generated-r2-floors-original.png",
+      "sourceRect": [
+        1072,
+        470,
+        274,
+        273
+      ],
+      "derivedFrom": "mall-roof-surface-a-v1",
+      "sha256": "10fa5768993c37eb18a42ab1523364ec297031c3394317bdfde6849366aca81d",
+      "sourceInputs": [
+        "source/generated-r2-floors-original.png",
+        "assets/mall/v1/mall-roof-surface-a-v1.png"
+      ]
+    },
+    {
+      "id": "mall-roof-hvac-v1",
+      "file": "assets/mall/v1/mall-roof-hvac-v1.png",
+      "kind": "roof",
+      "footprint": [
+        2,
+        2
+      ],
+      "lift": 24,
+      "anchor": [
+        0,
+        88
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 88,
+      "revision": 1,
+      "exportMethod": "Generated structured top and separate south front resampled to exact footprint/lift; top average118; HVAC twin grilles, fan cap, skylight opaque holes, sign truss3blank plates+1missing.",
+      "source": "source/generated-r2-roof-original.png",
+      "sourceRect": [
+        157,
+        42,
+        382,
+        391
+      ],
+      "sourceParts": [
+        [
+          157,
+          42,
+          539,
+          333
+        ],
+        [
+          157,
+          333,
+          539,
+          433
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "sha256": "4a657faaf8137e6a00f1ec18abca0ca1936bdb62cc3b1d84f7b6090d5a3a1f12",
+      "sourceInputs": [
+        "source/generated-r2-roof-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-roof-fan-v1",
+      "file": "assets/mall/v1/mall-roof-fan-v1.png",
+      "kind": "roof",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 16,
+      "anchor": [
+        0,
+        48
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 48,
+      "revision": 1,
+      "exportMethod": "Generated structured top and separate south front resampled to exact footprint/lift; top average118; HVAC twin grilles, fan cap, skylight opaque holes, sign truss3blank plates+1missing.",
+      "source": "source/generated-r2-roof-original.png",
+      "sourceRect": [
+        906,
+        121,
+        234,
+        304
+      ],
+      "sourceParts": [
+        [
+          906,
+          121,
+          1140,
+          336
+        ],
+        [
+          906,
+          336,
+          1140,
+          425
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "sha256": "d36971477a4bbd61837182c80f0bb86c59f9db5baa5b89725b1f6049555d3d31",
+      "sourceInputs": [
+        "source/generated-r2-roof-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-roof-skylight-v1",
+      "file": "assets/mall/v1/mall-roof-skylight-v1.png",
+      "kind": "roof",
+      "footprint": [
+        2,
+        3
+      ],
+      "lift": 16,
+      "anchor": [
+        0,
+        112
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 112,
+      "revision": 1,
+      "exportMethod": "Generated structured top and separate south front resampled to exact footprint/lift; top average118; HVAC twin grilles, fan cap, skylight opaque holes, sign truss3blank plates+1missing.",
+      "source": "source/generated-r2-roof-original.png",
+      "sourceRect": [
+        198,
+        471,
+        279,
+        515
+      ],
+      "sourceParts": [
+        [
+          198,
+          471,
+          477,
+          913
+        ],
+        [
+          198,
+          913,
+          477,
+          986
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        64,
+        96
+      ],
+      "sha256": "32208ba325bb75dc32987b7e76bb1a26d917dfcf0b786f7e4f3f322a722a4210",
+      "sourceInputs": [
+        "source/generated-r2-roof-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-roof-sign-frame-v1",
+      "file": "assets/mall/v1/mall-roof-sign-frame-v1.png",
+      "kind": "roof",
+      "footprint": [
+        5,
+        1
+      ],
+      "lift": 40,
+      "anchor": [
+        0,
+        72
+      ],
+      "collision": null,
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 160,
+      "h": 72,
+      "revision": 1,
+      "exportMethod": "Generated structured top and separate south front resampled to exact footprint/lift; top average118; HVAC twin grilles, fan cap, skylight opaque holes, sign truss3blank plates+1missing.",
+      "source": "source/generated-r2-roof-original.png",
+      "sourceRect": [
+        632,
+        630,
+        813,
+        271
+      ],
+      "sourceParts": [
+        [
+          632,
+          630,
+          1445,
+          724
+        ],
+        [
+          632,
+          724,
+          1445,
+          901
+        ]
+      ],
+      "bodyTopRect": [
+        0,
+        0,
+        160,
+        32
+      ],
+      "sha256": "d7109d9d795e46b14aa55f3b90bf9c1bde936dc4bc7db1733668b38c1e2aa78c",
+      "sourceInputs": [
+        "source/generated-r2-roof-original.png"
+      ],
+      "sourcePartsFormat": "xyxy"
+    },
+    {
+      "id": "mall-decal-litter-a-v1",
+      "file": "assets/mall/v1/mall-decal-litter-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        114,
+        119,
+        246,
+        245
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "18533d68840ce9777d1a2493cab039f9fdd9fac12466fe44a7193eb49ead8e93"
+    },
+    {
+      "id": "mall-decal-litter-b-v1",
+      "file": "assets/mall/v1/mall-decal-litter-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        555,
+        113,
+        242,
+        254
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "18e9626618ff910eaa03766d15be345a6e9120bf0fdc3fe8d3c90d60d286815e"
+    },
+    {
+      "id": "mall-decal-glass-a-v1",
+      "file": "assets/mall/v1/mall-decal-glass-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        999,
+        125,
+        216,
+        228
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "2ed8003248f4c97768ab3c40c42edaf87e088a943c9007c3c36145bef7275822"
+    },
+    {
+      "id": "mall-decal-glass-b-v1",
+      "file": "assets/mall/v1/mall-decal-glass-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        1440,
+        127,
+        209,
+        213
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "8b5a2eb6926517686914decddde210ad1101531f671e7c05a35746eb0ff3c0f1"
+    },
+    {
+      "id": "mall-decal-spill-a-v1",
+      "file": "assets/mall/v1/mall-decal-spill-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        115,
+        572,
+        258,
+        199
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "75d8f9fd330369673d89c75cec9a08002416096ec1ed67eac3d7e520c12c8746"
+    },
+    {
+      "id": "mall-decal-spill-b-v1",
+      "file": "assets/mall/v1/mall-decal-spill-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        560,
+        551,
+        247,
+        232
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "0c2be23313316d22d7c71977fc9ff61322a7c0abefc27f44b02c53b2b1546e30"
+    },
+    {
+      "id": "mall-decal-footprints-a-v1",
+      "file": "assets/mall/v1/mall-decal-footprints-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        989,
+        527,
+        237,
+        269
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "eef4d5d218e7e381ae4b03f4072106b76f16dc82deb6e87555332c201b7bde26"
+    },
+    {
+      "id": "mall-decal-footprints-b-v1",
+      "file": "assets/mall/v1/mall-decal-footprints-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 32,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board alpha-bound crop; NN sparse26px-or-smaller footprint; finite palette and chroma fringe cleanup; value/chroma compressed for flat low-contrast ground debris; no shadow or outline; lift0.",
+      "source": "source/generated-r3-small-decal-original.png",
+      "sourceRect": [
+        1436,
+        515,
+        226,
+        288
+      ],
+      "sourceInputs": [
+        "source/generated-r3-small-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "5f8b25c1ee39e286b75cb5c8999a50d46662c6525f05e02d030096667f2ba258"
+    },
+    {
+      "id": "mall-decal-cardboard-a-v1",
+      "file": "assets/mall/v1/mall-decal-cardboard-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 64,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board NN flat64x32 decal; cardboard fully flattened; dry receded-water silt fragmented with transparent interior, matte intrinsic colours; lift0, no reflection/outline/shadow.",
+      "source": "source/generated-r3-wide-decal-original.png",
+      "sourceRect": [
+        51,
+        116,
+        766,
+        296
+      ],
+      "sourceInputs": [
+        "source/generated-r3-wide-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "262414242321cf3b2b8953b76d6b3b272be981e532f197ff291526e110fff41b"
+    },
+    {
+      "id": "mall-decal-cardboard-b-v1",
+      "file": "assets/mall/v1/mall-decal-cardboard-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 64,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board NN flat64x32 decal; cardboard fully flattened; dry receded-water silt fragmented with transparent interior, matte intrinsic colours; lift0, no reflection/outline/shadow.",
+      "source": "source/generated-r3-wide-decal-original.png",
+      "sourceRect": [
+        962,
+        116,
+        761,
+        290
+      ],
+      "sourceInputs": [
+        "source/generated-r3-wide-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "a8f8408ac08dd18ca8f66f0d76240925a5043cdb3cd62fb8ad421fbf8beeaa45"
+    },
+    {
+      "id": "mall-decal-water-a-v1",
+      "file": "assets/mall/v1/mall-decal-water-a-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "a",
+      "frames": 1,
+      "w": 64,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board NN flat64x32 decal; cardboard fully flattened; dry receded-water silt fragmented with transparent interior, matte intrinsic colours; lift0, no reflection/outline/shadow.",
+      "source": "source/generated-r3-wide-decal-original.png",
+      "sourceRect": [
+        48,
+        556,
+        754,
+        234
+      ],
+      "sourceInputs": [
+        "source/generated-r3-wide-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "c949d5d16a2fb155867174927375936c239bf37b28d6928a71e0bd509dc81740"
+    },
+    {
+      "id": "mall-decal-water-b-v1",
+      "file": "assets/mall/v1/mall-decal-water-b-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 0,
+      "anchor": [
+        0,
+        32
+      ],
+      "collision": "V",
+      "tile": null,
+      "emit": null,
+      "variant": "b",
+      "frames": 1,
+      "w": 64,
+      "h": 32,
+      "revision": 1,
+      "exportMethod": "R3 source board NN flat64x32 decal; cardboard fully flattened; dry receded-water silt fragmented with transparent interior, matte intrinsic colours; lift0, no reflection/outline/shadow.",
+      "source": "source/generated-r3-wide-decal-original.png",
+      "sourceRect": [
+        981,
+        548,
+        745,
+        262
+      ],
+      "sourceInputs": [
+        "source/generated-r3-wide-decal-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": true,
+      "sha256": "a184135f8c891f3f83df0ed7df8ba1b1c3e8b156f6ccb87f384895d838e0ed1a"
+    },
+    {
+      "id": "mall-prop-gondola-toppled-v1",
+      "file": "assets/mall/v1/mall-prop-gondola-toppled-v1.png",
+      "kind": "prop",
+      "footprint": [
+        2,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 64,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "R3 corrected orthographic source crop; NN low fallen heap, physical lift12; north-south rails axis aligned, steel/green strip or broken panels/unlit shade/cable; preserve alpha gaps, no generated shadow; footprint canvas unchanged.",
+      "source": "source/generated-r3-low-debris-original.png",
+      "sourceRect": [
+        58,
+        194,
+        1084,
+        599
+      ],
+      "sourceInputs": [
+        "source/generated-r3-low-debris-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": false,
+      "sha256": "752255a7cb40f5db75de32717256706736f41ce2db208a59d31594299b437365"
+    },
+    {
+      "id": "mall-prop-debris-v1",
+      "file": "assets/mall/v1/mall-prop-debris-v1.png",
+      "kind": "prop",
+      "footprint": [
+        1,
+        1
+      ],
+      "lift": 12,
+      "anchor": [
+        0,
+        44
+      ],
+      "collision": "M",
+      "tile": null,
+      "emit": null,
+      "variant": null,
+      "frames": 1,
+      "w": 32,
+      "h": 44,
+      "revision": 1,
+      "exportMethod": "R3 corrected orthographic source crop; NN low fallen heap, physical lift12; north-south rails axis aligned, steel/green strip or broken panels/unlit shade/cable; preserve alpha gaps, no generated shadow; footprint canvas unchanged.",
+      "source": "source/generated-r3-low-debris-original.png",
+      "sourceRect": [
+        1234,
+        236,
+        518,
+        519
+      ],
+      "sourceInputs": [
+        "source/generated-r3-low-debris-original.png"
+      ],
+      "feedback": "Sol-P1补充反馈.md §3",
+      "phase": "P1-supplement",
+      "flatGroundDecoration": false,
+      "sha256": "d83e40991c6f8116e9cbc18924f95a86d370fec322da5da4087686f96b0c5f31"
+    }
+  ]
+}
