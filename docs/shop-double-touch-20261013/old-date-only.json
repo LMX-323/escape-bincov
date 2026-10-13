@@ -1,0 +1,128 @@
+{
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "155.0.8059.40",
+  "cpuRate": 1,
+  "only": [
+    "timing"
+  ],
+  "checks": [
+    {
+      "name": "timing: quick input survives a long task before its second pointerup handler",
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 80,
+        "blockSecondUpMs": 450,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 636.6999999992549,
+            "receivedAt": 1655.199999999255,
+            "beforeHandlerAt": 1655.199999999255,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q47gi-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 636.6999999992549,
+            "receivedAt": 1655.4000000003725,
+            "beforeHandlerAt": 1655.4000000003725,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q47gi-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 716.6999999992549,
+            "receivedAt": 1657.5,
+            "beforeHandlerAt": 1657.5,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q47gi-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 716.6999999992549,
+            "receivedAt": 1657.5,
+            "beforeHandlerAt": 2107.5,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q47gi-b"
+          }
+        ],
+        "gapMs": 80,
+        "handlerGapMs": 452.09999999962747
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: quick input still enters the cart after the stall\n\n0 !== 1\n\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:140:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:110:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:132:3; taps={\"mode\":\"queued-cdp-touch\",\"interactionCpuRate\":1,\"inputGapMs\":80,\"blockSecondUpMs\":450,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":636.6999999992549,\"receivedAt\":1655.199999999255,\"beforeHandlerAt\":1655.199999999255,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q47gi-b\"},{\"type\":\"pointerup\",\"timeStamp\":636.6999999992549,\"receivedAt\":1655.4000000003725,\"beforeHandlerAt\":1655.4000000003725,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q47gi-b\"},{\"type\":\"pointerdown\",\"timeStamp\":716.6999999992549,\"receivedAt\":1657.5,\"beforeHandlerAt\":1657.5,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q47gi-b\"},{\"type\":\"pointerup\",\"timeStamp\":716.6999999992549,\"receivedAt\":1657.5,\"beforeHandlerAt\":2107.5,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q47gi-b\"}],\"gapMs\":80,\"handlerGapMs\":452.09999999962747}"
+    },
+    {
+      "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+      "clock": {
+        "nativeInputTime": true,
+        "frozenDateNow": true
+      },
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "interactionCpuRate": 1,
+        "inputGapMs": 350,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 320.09999999962747,
+            "receivedAt": 1337,
+            "beforeHandlerAt": 1337,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q498b-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 320.09999999962747,
+            "receivedAt": 1337.199999999255,
+            "beforeHandlerAt": 1337.300000000745,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q498b-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 670.0999999996275,
+            "receivedAt": 1338.9000000003725,
+            "beforeHandlerAt": 1339,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q498b-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 670.0999999996275,
+            "receivedAt": 1342.5,
+            "beforeHandlerAt": 1342.5999999996275,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6q498b-b"
+          }
+        ],
+        "gapMs": 350,
+        "handlerGapMs": 5.299999998882413
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: separate input never enters the cart\n\n1 !== 0\n\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:150:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:110:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:144:3; taps={\"mode\":\"queued-cdp-touch\",\"interactionCpuRate\":1,\"inputGapMs\":350,\"blockSecondUpMs\":0,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":320.09999999962747,\"receivedAt\":1337,\"beforeHandlerAt\":1337,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q498b-b\"},{\"type\":\"pointerup\",\"timeStamp\":320.09999999962747,\"receivedAt\":1337.199999999255,\"beforeHandlerAt\":1337.300000000745,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q498b-b\"},{\"type\":\"pointerdown\",\"timeStamp\":670.0999999996275,\"receivedAt\":1338.9000000003725,\"beforeHandlerAt\":1339,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q498b-b\"},{\"type\":\"pointerup\",\"timeStamp\":670.0999999996275,\"receivedAt\":1342.5,\"beforeHandlerAt\":1342.5999999996275,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6q498b-b\"}],\"gapMs\":350,\"handlerGapMs\":5.299999998882413}"
+    }
+  ]
+}
