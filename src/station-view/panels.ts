@@ -29,13 +29,13 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
 }
 
 const charmRow = (charm: string | null) => charm ? `<div class="charm">${icon(charm, 20)}<span>护符 · ${esc(D.ITEMS[charm]?.name ?? charm)}</span>${btn('取下', 'charm-unequip', 'mini')}</div>` : '';
-const gearActions = (p: Readonly<D.SaveDataV1>) => `<div class="gear-actions">${btn('背包全部入库', 'stash-all', '', p.bag.items.length ? 'title="背包全部移入仓库，空间不足时全部留在原处"' : 'disabled title="背包是空的"')}${btn('整理仓库', 'sort-stash', '', p.stash.items.length ? 'title="只整理仓库：合并同类堆叠，大件优先排列，必要时旋转"' : 'disabled title="仓库是空的"')}<small>入库空间不足时全部留在原处；装备与安全箱不变。</small></div>`;
+export const gearActions = (p: Readonly<D.SaveDataV1>, hint = true) => `<div class="gear-actions">${btn('背包全部入库', 'stash-all', '', p.bag.items.length ? 'title="背包全部移入仓库，空间不足时全部留在原处；装备与安全箱不变"' : 'disabled title="背包是空的"')}${btn('整理仓库', 'sort-stash', '', p.stash.items.length ? 'title="只整理仓库：合并同类堆叠，大件优先排列，必要时旋转"' : 'disabled title="仓库是空的"')}${hint ? '<small>入库空间不足时全部留在原处；装备与安全箱不变。</small>' : ''}</div>`;
 
 export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | null, departure: { weight: number; carry: number }, details = '') {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const ammo = w.ammo ? D.count(p.bag, w.ammo) : 0;
   const over = departure.weight > departure.carry;
-  return `${gearActions(p)}<div class="gear">
+  return `<div class="gear">
     <section class="col left" style="width:${p.bag.w * cell}px">
       <h3><i>01</i>主武器槽</h3>
       <div class="slot ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备">

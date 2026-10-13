@@ -137,7 +137,9 @@ export class UI {
     if (kind === 'gear') {
       // Left: slot, three headings and the weight meter (~224 px) around bag (5 rows) and safe (2 rows); right: stash, upgrade and details (~180 px).
       const byH = Math.min((H - 164 - 326) / 7, (H - 164 - 254) / rows), byW = (Math.min(Wd - 24, Wd * .74) - 70) / 16;
-      return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
+      // Below 36 px, three-character labels such as 保险管 no longer fit after the new gear actions.
+      // Keep labels readable and allow the existing vertical scroll on exceptionally short desktop panels.
+      return Math.max(36, Math.min(56, Math.floor(Math.min(byH, byW))));
     }
     const byH = Math.min((H - 331 - 70) / 6, (H - 331) / rows), byW = (Math.min(Wd - 24, Wd * .76) - 74) / 20;
     return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
@@ -189,7 +191,7 @@ export class UI {
     const tabbed = SHORTCUTS.some(q => q.kind === kind) || kind === 'generator';
     const tabs = tabbed ? `<nav class="ptabs" aria-label="水产站功能">${SHORTCUTS.map(q => `<button data-tab="${q.kind}" class="${q.kind === kind ? 'on' : ''}" ${q.kind === kind ? 'aria-current="page"' : ''}>${q.label}<kbd>${q.key}</kbd></button>`).join('')}</nav>` : '';
     const heading = this.compact && tabbed ? `<button class="tabmenu" data-tabmenu aria-label="切换功能"><h2>${esc(title)}</h2><i class="caret" aria-hidden="true"></i></button>` : `<h2>${esc(title)}</h2>`;
-    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
+    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${kind === 'gear' && !this.compact ? P.gearActions(s.profile, false) : ''}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
     el.querySelector('.pbody')!.scrollTop = scroll;
     el.hidden = false;
     (center ? this.panel : this.modal).hidden = true;

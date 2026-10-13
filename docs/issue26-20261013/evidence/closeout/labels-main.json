@@ -1,0 +1,45 @@
+{
+  "build": "D:\\bincov\\检查记录\\PR43-44收尾-20261013\\pages-current.html",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:35:32.657Z",
+  "methodology": "Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.",
+  "steps": [
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：844×390 整备与修理铺",
+      "status": "passed",
+      "detail": "整备（紧凑） 42px，修理铺（紧凑） 44px",
+      "ms": 3301
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：390×844 整备与修理铺",
+      "status": "passed",
+      "detail": "整备（紧凑） 36px，修理铺（紧凑） 36px",
+      "ms": 3021
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：1280×720 整备与修理铺",
+      "status": "passed",
+      "detail": "整备 40px，修理铺 38px",
+      "ms": 2853
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：1920×1080 整备与修理铺",
+      "status": "passed",
+      "detail": "整备 56px，修理铺 56px",
+      "ms": 3018
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "frameAudit": [],
+  "expectedLogs": [],
+  "warnings": [],
+  "coverage": {
+    "wallLight": []
+  },
+  "finishedAt": "2026-10-13T13:35:45.055Z",
+  "summary": {
+    "passed": 4,
+    "total": 4
+  }
+}

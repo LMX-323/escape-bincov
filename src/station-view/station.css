@@ -152,6 +152,8 @@ button.on { border-color: var(--amber); color: var(--amber2); }
 .gear { display: flex; gap: 16px; align-items: flex-start; }
 .gear-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 10px; }
 .gear-actions small { flex-basis: 100%; color: var(--dim); font-size: 11px; }
+.phead .gear-actions { flex-wrap: nowrap; margin: 0; gap: 6px; }
+.phead .gear-actions button { white-space: nowrap; padding: 5px 8px; }
 .gear-hint { margin: 0 0 5px; color: var(--dim); font-size: 12px; }
 .equip-note { grid-column: 1 / -1; margin: 0; color: var(--amber2); font-size: 12px; }
 .gear .col { display: flex; flex-direction: column; gap: 6px; }

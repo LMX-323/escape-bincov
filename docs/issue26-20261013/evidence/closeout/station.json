@@ -1,8 +1,8 @@
 {
   "build": "dist/index.html",
-  "sha256": "8c274abc506c1ec43e26762336563ff27500f830ef448366350b3780e8f92693",
+  "sha256": "774d9ea4aefa4f683d7fc1f21f0eb33a2d2bca7eb5fa4b630fdbe80686af4c3d",
   "browser": "155.0.8059.40",
-  "startedAt": "2026-10-13T13:20:18.489Z",
+  "startedAt": "2026-10-13T13:38:57.266Z",
   "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
   "steps": [
     {
@@ -10,38 +10,38 @@
       "doubleClicks": [
         [
           {
-            "stamp": 2221,
-            "handled": 2221.4000000003725,
+            "stamp": 2164.699999999255,
+            "handled": 2165.0999999996275,
             "trusted": true,
-            "uid": "bc-mv6pkray-6",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8qk3-6",
+            "x": 880,
+            "y": 177.5
           },
           {
-            "stamp": 2221.0999999996275,
-            "handled": 2226.300000000745,
+            "stamp": 2164.7999999988824,
+            "handled": 2169.699999999255,
             "trusted": true,
-            "uid": "bc-mv6pkray-6",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8qk3-6",
+            "x": 880,
+            "y": 177.5
           }
         ],
         [
           {
-            "stamp": 2268.7000000011176,
-            "handled": 2269.0999999996275,
+            "stamp": 2211.9000000003725,
+            "handled": 2212.199999999255,
             "trusted": true,
-            "uid": "bc-mv6pkrgx-b",
-            "x": 712,
-            "y": 360.5
+            "uid": "bc-mv6q8qq1-b",
+            "x": 648,
+            "y": 294.5
           },
           {
-            "stamp": 2268.800000000745,
-            "handled": 2270.9000000003725,
+            "stamp": 2212,
+            "handled": 2213.9000000003725,
             "trusted": true,
-            "uid": "bc-mv6pkrgx-b",
-            "x": 712,
-            "y": 360.5
+            "uid": "bc-mv6q8qq1-b",
+            "x": 648,
+            "y": 294.5
           }
         ]
       ],
@@ -61,20 +61,20 @@
       "doubleClicks": [
         [
           {
-            "stamp": 1917,
-            "handled": 1920.300000000745,
+            "stamp": 1833,
+            "handled": 1833.5,
             "trusted": true,
-            "uid": "bc-mv6pktur-c",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8t3s-c",
+            "x": 880,
+            "y": 177.5
           },
           {
-            "stamp": 1917.0999999996275,
-            "handled": 1926.5,
+            "stamp": 1833.0999999996275,
+            "handled": 1838.9000000003725,
             "trusted": true,
-            "uid": "bc-mv6pktur-c",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8t3s-c",
+            "x": 880,
+            "y": 177.5
           }
         ]
       ],
@@ -85,20 +85,20 @@
       "doubleClicks": [
         [
           {
-            "stamp": 1954.300000000745,
-            "handled": 1954.699999999255,
+            "stamp": 1917.4000000003725,
+            "handled": 1920.4000000003725,
             "trusted": true,
-            "uid": "bc-mv6pkvgy-i",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8un7-i",
+            "x": 880,
+            "y": 177.5
           },
           {
-            "stamp": 1954.5,
-            "handled": 2359.5999999996275,
+            "stamp": 1917.4000000003725,
+            "handled": 2324.7999999988824,
             "trusted": true,
-            "uid": "bc-mv6pkvgy-i",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8un7-i",
+            "x": 880,
+            "y": 177.5
           }
         ]
       ],
@@ -109,38 +109,38 @@
       "doubleClicks": [
         [
           {
-            "stamp": 1863.4000000003725,
-            "handled": 1867,
+            "stamp": 1834.5,
+            "handled": 1834.9000000003725,
             "trusted": true,
-            "uid": "bc-mv6pkxew-o",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
           },
           {
-            "stamp": 1863.5,
-            "handled": 1872.4000000003725,
+            "stamp": 1834.5,
+            "handled": 1841.2000000011176,
             "trusted": true,
-            "uid": "bc-mv6pkxew-o",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
           }
         ],
         [
           {
-            "stamp": 2248.300000000745,
-            "handled": 2248.7000000011176,
+            "stamp": 2193.60000000149,
+            "handled": 2196,
             "trusted": true,
-            "uid": "bc-mv6pkxew-o",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
           },
           {
-            "stamp": 2248.5,
-            "handled": 2250.2000000011176,
+            "stamp": 2193.7000000011176,
+            "handled": 2197.9000000003725,
             "trusted": true,
-            "uid": "bc-mv6pkxew-o",
-            "x": 920,
-            "y": 243.5
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
           }
         ]
       ],
@@ -208,7 +208,7 @@
     "equip-844x390.png",
     "full-stash-refusal.png"
   ],
-  "finishedAt": "2026-10-13T13:21:03.314Z",
+  "finishedAt": "2026-10-13T13:39:41.209Z",
   "summary": {
     "passed": 16,
     "total": 16

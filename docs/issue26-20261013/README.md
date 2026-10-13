@@ -26,6 +26,10 @@
 
 局内库存20项报告针对存档/多窗口修复后的中间构建；之后仅改院子时间戳与楼梯标签，最终生成包的完整组合由CI执行。自然设备性能、真人观感与原#32未确认项仍未签收。
 
+额外完整院子回归[75/76](evidence/closeout/station-full-first.json)，唯一失败是1280×720扩建仓库的“保险管”短名裁切；同机[main对照4/4](evidence/closeout/labels-main.json)通过，确认为本PR新工具栏挤小格子导致。最终将桌面院子工具按钮放到标题栏，格子至少36px，保留首次选择时几何稳定；[文字/面板高度/真实拖拽旋转双击6/6](evidence/closeout/gear-header.json)通过。只放大格子的中间方案引起29px滚动，该[中间失败](evidence/closeout/gear-labels-first.json)保留。修后站内16项再次完整验证；没有把上述分次结果拼成一轮76/76。
+
+![最终院子桌面工具栏与完整短名](evidence/closeout/gear-header-1280.png)
+
 ![传统整备安全箱恢复可见](evidence/closeout/tactical-1280.png)
 
 ![楼梯标签避开角色与头顶提示](evidence/closeout/stairs-1920.png)
