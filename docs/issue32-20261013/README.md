@@ -12,7 +12,7 @@
 
 ## 可复验命令与方法
 
-环境：Linux 云环境、Node **24.19.0**、pnpm **11.19.0**、Playwright Chromium **153.0.8010.12**；触屏只是浏览器仿真。最终候选 HTML SHA-256：`ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42`。两个 HTML 字节一致，ZIP 与发布清单由 `pnpm package` 生成。
+环境：Linux 云环境、Node **24.19.0**、pnpm **11.19.0**、Playwright Chromium **153.0.8010.12**；触屏只是浏览器仿真。最终 HTML SHA-256：`ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42`。两个 HTML 字节一致，ZIP 与发布清单由 `pnpm package` 生成。负对照为保存的原 main HTML，SHA-256 `2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231`。
 
 ```bash
 pnpm install --frozen-lockfile --registry=https://registry.npmjs.org
@@ -23,28 +23,40 @@ pnpm test:asset-load
 pnpm test:hud-release
 ```
 
-下表已归档的浏览器通过结果对应加入键盘队列补充修复前的候选 `a2db076f…`；最终候选已重新通过 `pnpm test`、严格类型检查与 `pnpm package`，最终浏览器结果待本 PR CI 和补充复验填入。
+下表三项专项已在最终 HTML `ff9b6e5f…` 重新通过，并覆盖键盘队列补充修复。首轮风险矩阵使用此前候选 `a2db076f…`；两个构建的结果在报告中分别标注。最终构建另通过5项院子/经典行动/城中村往返和5项城中村生命周期检查。
 
 三个新专项加入原 CI 的 inventory/input 组，统一 `Build and test` 门禁保留。
 
 | 检查 | 原 main 的有效负对照 | 修复后 |
 | --- | --- | --- |
 | 商店 Runtime 单测 | 新增“具体提示”和“空清单过期刷新”两项失败，第三项确认票据/冲突保护本来通过 | 三项通过，全部单测逐文件隔离运行共 295 项通过 |
-| 商店真实 UI | 原代码的笼统文案及缺失刷新入口 | 11/11：两种桌面与390×844触屏资金/空间拒绝，院子与旧页签刷新，旧页签两种拒绝，真实跨窗口事件 |
+| 商店真实 UI | 同脚本1/11：具体提示和刷新入口10项失败；跨窗口保护原本通过 | 11/11：两种桌面与390×844触屏资金/空间拒绝，院子与旧页签刷新，旧页签两种拒绝，真实跨窗口事件 |
 | 冷图片 | 2/4；PNG `error` 两项原本通过，院子/沿海的 `drawImage` 异常两项均卡住 | 4/4；普通离线入口、没有测试接口；回退后库存/现金等 profile 完全相同，同页第二次解码并成功进入院子 |
-| 旧 HUD | 两尺寸均失败，删除测试强引用后旧 HUD 仍存活 | 两尺寸均通过；保留显式强引用的正控制仍存活，释放后 CDP GC 可回收；原生放弃、结果页停留、回经典行动移动和鼠标继续通过；补充20次真实按键后的休眠队列检查，最终候选待验 |
+| 旧 HUD | 两尺寸均失败，删除测试强引用后旧 HUD 仍存活 | 两尺寸均通过；保留显式强引用的正控制仍存活，释放后 CDP GC 可回收；原生放弃、结果页停留、回经典行动移动和鼠标继续通过；20次真实按键后的休眠队列为0，Phaser键盘和鼠标开关均恢复为true |
 
 `pnpm test` 在此环境的默认 reporter 汇总为30个文件通过，因此额外按每个文件独立 Node 进程运行原测试，确认295个测试全部通过。一次尝试取消文件隔离的实验出现跨文件状态干扰，不作为项目门禁，也没有据此改产品或断言；逐文件隔离结果才是本报告的单测计数。
 
-首轮必要场景11套已通过；额外完整院子测试发现动画及有效训练计时失败，仍在核对原版对照，不将该套算作通过。结果将在转 Ready 前填入 `evidence/regression.json`。完整 CI 的最终提交、检查与合并状态以 PR 为准，不把本地通过写成已发布。
+首轮风险矩阵11套通过：`test:shop-feedback`、`test:browser`、`test:desktop-input`、`test:ui`、`test:title`、`test:save-browser`、`test:portable`、`test:mobile`、`test:mobile-ux`、`test:shop-drag`、`test:hideout`；原始命令、退出码和 HTML 哈希见 [regression.json](evidence/regression.json)。最终 HTML 的17项新专项、5项院子往返和5项城中村生命周期均通过。产品提交 `91a38b1` 的[完整 CI](https://github.com/xuys2025/escape-bincov/actions/runs/38334748843)通过，元数据见 [ci-first.json](evidence/ci-first.json)。最终验收记录提交的检查与合并状态以 [PR #42](https://github.com/xuys2025/escape-bincov/pull/42) 为准，不把 PR 通过写成已发布。
+
+## 额外扩展检查的失败与原版对照
+
+追加的完整旧脚本没有全过：院子 **65/76**，城中村 **47/51**；正常页面错误和外部网络请求均为0。这两套不计入通过清单，也没有删除用例、放宽帧数断言或延长超时来掩盖首败。
+
+- 院子 B3、E4、G7、H2、H3、H5、H6四种尺寸和H12，共11个失败点，全部在未修改的 main 上复现。原脚本按 `--only` 运行，连同依赖前置共14项（3通过、11失败）。原 main 的动画结束、有效训练时间和固定时间内帧数检查产生相同错误，详见 `station-first-run.json`、`station-baseline-failures.json`、`station-baseline-h12.json`。
+- 当前云容器为4 CPU配额，Chromium使用 SwiftShader 软件渲染。比如 H2 在0.5秒只观察到7帧；“卡死”是原测试对固定窗帧数不足的错误文案，不代表观察到循环完全停止。训练规则本身另由完整 CI 的真实训练检查通过，但不能据此把旧脚本 E4 的失败改成通过。
+- 城中村 V03两种美术、V09结算动画和V10受击反馈的4个采样失败，也全部在原 main 上复现。仅提取原脚本完整、独立的死亡/受击场景块和其依赖，断言与操作不变；8项对照为4通过、4失败。V09在原版为14帧、修复版13帧，均低于原断言20帧；V10两版均观察到0.27，V03两版均只有1个倒地帧。保留 `coast-first-run.json`、`coast-baseline-failures.json` 和提取脚本 `coast-control-source.txt`；可将后者放回 `scripts/`，用 `BINCOV_SAMPLE_HTML` 指向原 main HTML 复跑，或直接对原 HTML 运行完整 `scripts/coast-sample-test.mjs`。
+
+这些附加失败保留为环境/计时相关的后续验证项；本次不对动画时长、训练规则、帧数门槛或场景渲染做额外修改。
 
 ## 截图与首败
 
 最终商店截图使用明确的测试库存/资金，交互与提示来自实际离线构建：
 
-- [1280×720 资金不足](evidence/shop-1280.png)
-- [1920×1080 资金不足](evidence/shop-1920.png)
-- [390×844 触屏资金不足](evidence/shop-mobile.png)
+| 尺寸 | 原 main | 修复后 |
+| --- | --- | --- |
+| 1280×720 | [笼统拒绝](evidence/shop-1280-before.png) | [现金不足](evidence/shop-1280.png) |
+| 1920×1080 | [笼统拒绝](evidence/shop-1920-before.png) | [现金不足](evidence/shop-1920.png) |
+| 390×844 触屏 | [笼统拒绝](evidence/shop-mobile-before.png) | [现金不足](evidence/shop-mobile.png) |
 
 冷图片与 HUD 的旧构建失败、商店单测失败及最终专项报告在 `evidence/`。首轮商店浏览器工具用了超过堆叠上限的测试库存，旧页签未触发重绘，双次 locator 点击等待超过双击窗口，另一个窗口又被写入所有权正常拦截；均修正测试设置后复验，产品校验和保护断言没有放宽。原始首轮报告保留为 `shop-first-attempt.json`。
 
@@ -56,6 +68,7 @@ pnpm test:hud-release
 | F20 / ASTRA-STATION-HEAP-01 总堆、原 R/K 管理表 | 仍 PARTIAL；只收口可复现的 Phaser→事件→旧 HUD 路径，不能外推总堆、所有 DOM 或 GPU 内存均有界。未重复历史三组60轮，未改历史失败证据 |
 | ASTRA-SAVE-01、R7-A6-01 | 仍 UNCONFIRMED；故障注入和常规存档通过不是历史偶发异常的根因证据 |
 | 人物缺帧、占位场景、沿海扩量/新接口、昼夜和剧情 | 需要具体产品/素材规格或已有 PR 的后续安排，本次不自行定案 |
+| 旧扩展脚本的计时/帧数失败 | 原 main 同样复现；保持失败，未修改动画/训练或降低断言。需另行验证软件渲染环境与采样方法 |
 | 真机、原生 GPU、真实切窗、长时间手感与平衡 | 未测；云 Chromium 与 GC 探针不能替代设备和真人验收 |
 | #26 其他操作反馈、经济和便利功能建议 | 保持开放，未逐项实现或声称已验收；救济与装备等既有回归不能替代原玩家场景 |
 

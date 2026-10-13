@@ -1,0 +1,142 @@
+{
+  "build": "dist/index.html",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-13T02:18:26.805Z",
+  "methodology": "Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.",
+  "steps": [
+    {
+      "name": "G1 旧页签备用入口：按 0 回到页签界面（Phaser 宿主），“回到院子”再进院子",
+      "status": "passed",
+      "detail": "页签界面运行 Hideout 场景，院子已卸载；“回到院子”按钮重新挂载院子，Phaser 循环休眠",
+      "ms": 6429
+    },
+    {
+      "name": "G2 菜单返回主菜单（backToMenu），再进入仍是院子",
+      "status": "passed",
+      "detail": "标题 ⇄ 院子",
+      "ms": 3583
+    },
+    {
+      "name": "G3 真实出击（沿海封锁区，Phaser）：开门动画 → 局内 → 撤离 → 返回走进院门并显示行动报告",
+      "status": "passed",
+      "detail": "出击 0 → 1；报告只播放一次",
+      "ms": 16018
+    },
+    {
+      "name": "G4 开门动画中刷新：标题恢复原行动（不重开、不进院子），撤离后回到院子",
+      "status": "passed",
+      "detail": "恢复的行动 bc-mv61y6e9-6 与动画前写入的一致",
+      "ms": 9957
+    },
+    {
+      "name": "G5 城中村样板（?sample=village）：院子与局内轮用一个 Pixi 应用；受跟踪计数对照",
+      "status": "passed",
+      "detail": "院子 apps 1/parked 0 → 局内 apps 1/parked 0 → 结果页 parked 1 → 回院子相同；GPU 纹理 203（院子 336）→ 206（院子 347）",
+      "ms": 22779
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "frameAudit": [],
+  "expectedLogs": [],
+  "warnings": [
+    {
+      "text": "[.WebGL-0x328c001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x328c001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x328c001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x328c001aa000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "url": "https://station.test/?test=1"
+    }
+  ],
+  "coverage": {
+    "sharedState": {
+      "cashBefore": 6000,
+      "cashAfter": 5916
+    },
+    "actionReports": [
+      {
+        "label": "first ordinary raid",
+        "last": {
+          "outcome": "extract",
+          "kills": 0,
+          "keptValue": 336,
+          "lostValue": 0,
+          "seed": 42,
+          "recovered": false,
+          "message": "成功撤离，装备和物资已带回水产站。"
+        },
+        "stats": {
+          "runs": 1,
+          "extracts": 1,
+          "kills": 0
+        },
+        "displayed": [
+          "0",
+          "¥ 336",
+          "1 / 1"
+        ]
+      },
+      {
+        "label": "village raid",
+        "last": {
+          "outcome": "extract",
+          "kills": 0,
+          "keptValue": 336,
+          "lostValue": 0,
+          "seed": 42,
+          "recovered": false,
+          "message": "成功撤离，装备和物资已带回水产站。"
+        },
+        "stats": {
+          "runs": 1,
+          "extracts": 1,
+          "kills": 0
+        },
+        "displayed": [
+          "0",
+          "¥ 336",
+          "1 / 1"
+        ]
+      }
+    ],
+    "releasedYard": {
+      "collected": true
+    },
+    "parkedApplication": {
+      "children": 0,
+      "ticker": false,
+      "attached": false,
+      "events": {
+        "attached": false,
+        "roots": {
+          "_rootPointerEvent": false,
+          "_rootWheelEvent": false,
+          "_rootContextMenuEvent": false
+        },
+        "pooled": 0,
+        "native": 0
+      }
+    },
+    "wallLight": []
+  },
+  "webgl": {
+    "vendor": "Google Inc. (Google)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "finishedAt": "2026-10-13T02:19:25.783Z",
+  "summary": {
+    "passed": 5,
+    "total": 5
+  },
+  "htmlSha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42"
+}

@@ -14,7 +14,10 @@ try {
     const row = { size }; report.checks.push(row);
     const context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] } });
     await context.route('https://hud.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
+    const errors = [];
+    context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://hud.test/')) errors.push(`External request: ${r.url()}`); });
     const page = await context.newPage(), cdp = await context.newCDPSession(page); page.setDefaultTimeout(20000);
+    page.on('pageerror', e => errors.push(String(e.stack)));
     try {
       await page.goto('https://hud.test/?test=1&entry=tabs&sample=village');
       await page.locator('[data-action="enter"]').click();
@@ -36,10 +39,11 @@ try {
       await cdp.send('HeapProfiler.collectGarbage');
       row.result = await page.evaluate(() => {
         const input = window.__bincov.app.game.input;
-        return { inputEnabled: input.enabled, oldHudAlive: !!window.__hudWeak.deref(),
+        return { inputEnabled: input.enabled, keyboardEnabled: input.keyboard.enabled, oldHudAlive: !!window.__hudWeak.deref(),
           pointers: input.pointers.map(p => ({ eventInHud: !!p.event?.target?.closest?.('.cs-hud'), downInHud: !!p.downElement?.closest?.('.cs-hud'), upInHud: !!p.upElement?.closest?.('.cs-hud') })) };
       });
       assert.equal(row.result.inputEnabled, true, 'Phaser input is available again on results');
+      assert.equal(row.result.keyboardEnabled, true, 'Phaser keyboard is available again on results');
       assert.ok(row.result.pointers.every(p => !p.eventInHud && !p.downInHud && !p.upInHud), 'Phaser must release every old HUD pointer edge');
       assert.equal(row.result.oldHudAlive, false, 'old HUD can be collected before clicking away from results');
       assert.equal(row.sleepingKeyboardQueue, 0, 'external input must not accumulate in the sleeping Phaser keyboard queue');
@@ -51,6 +55,7 @@ try {
       assert.notEqual(await page.evaluate(() => window.__bincov.app.raid.player.x), before, 'classic movement remains usable after returning from the sample');
       const canvas = page.locator('#game canvas'); await canvas.click({ position: { x: 600, y: 280 } });
       assert.equal(await page.evaluate(() => window.__bincov.app.game.input.mousePointer.event?.target === window.__bincov.app.game.canvas), true);
+      assert.deepEqual(errors, []);
       row.status = 'passed';
     } catch (e) { row.status = 'failed'; row.error = String(e.stack); process.exitCode = 1; }
     finally { await context.close(); }
