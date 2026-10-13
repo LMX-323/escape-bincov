@@ -76,5 +76,6 @@ test('商场布置表：地面杂物只落在空地上，宽件占两格空地�
             }
         }
         assert.deepEqual(mallDecals(m), decals, 'stable');
+        for (const d of decals) assert.equal(d.assets.at(-1), PROCEDURAL + 'decal:' + d.kind, 'procedural fallback last');
     }
 });

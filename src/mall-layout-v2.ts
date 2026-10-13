@@ -36,6 +36,8 @@ export const MALL_FURNITURE = {
     'planter-box': { w: 2, h: 1, kind: 'M' },
     stanchions: { w: 2, h: 1, kind: 'M' },
     adboard: { w: 2, h: 1, kind: 'M' },
+    'gondola-toppled': { w: 2, h: 1, kind: 'M' },
+    debris: { w: 1, h: 1, kind: 'M' },
 } as const satisfies Record<string, FurnitureType>;
 export type FurnitureName = keyof typeof MALL_FURNITURE;
 /** `x, y`: north-west cell. `n`: number of modules for run furniture (east-west). */
@@ -51,8 +53,10 @@ export const MALL_V2_STAIRS = [
     ['S-E', cell(60, 45), cell(60, 45)], ['E-C', cell(38, 16), cell(38, 19)],
 ] as const;
 
-const gondolaRow = (y: number): Placement[] => [
-    { type: 'gondola', x: 31, y, n: 6 }, { type: 'gondola', x: 40, y, n: 5 }, { type: 'gondola', x: 47, y, n: 6 },
+const gondolaRow = (y: number, toppledEnd = false): Placement[] => [
+    { type: 'gondola', x: 31, y, n: 6 }, { type: 'gondola', x: 40, y, n: 5 },
+    // A toppled end lies where it stood (low), so the aisles beside it keep their width.
+    ...(toppledEnd ? [{ type: 'gondola', x: 47, y, n: 4 }, { type: 'gondola-toppled', x: 51, y }] as Placement[] : [{ type: 'gondola', x: 47, y, n: 6 }] as Placement[]),
 ];
 const vignette = (y: number, room: 'living' | 'bed'): Placement[] => [
     { type: 'partition', x: 57, y, n: 4 },
@@ -68,12 +72,12 @@ export const MALL_V2_LAYOUT: Record<'mall-f1' | 'mall-f2', readonly Placement[]>
         { type: 'adboard', x: 51, y: 2 }, { type: 'planter', x: 53, y: 5 }, { type: 'planter', x: 46, y: 5 },
         // F1-11: stairs flight against the east facade, directory column facing the doorway, low sandbag barricade.
         { type: 'stairs-up', x: 61, y: 9 }, { type: 'directory', x: 58, y: 11 }, { type: 'sandbags', x: 57, y: 8 },
-        { type: 'bench', x: 57, y: 14 }, { type: 'planter', x: 63, y: 15 },
+        { type: 'bench', x: 57, y: 14 }, { type: 'planter', x: 63, y: 15 }, { type: 'debris', x: 57, y: 10 },
         // North aisle frontage of the supermarket (west of the power room only, so its two-row aisle stays clear).
         { type: 'promo-table', x: 31, y: 19 }, { type: 'cart', x: 34, y: 19 }, { type: 'pallet', x: 42, y: 19 },
         // F1-03: three east-west gondola rows, a three-cell cross aisle under the escalator and a two-cell one.
-        ...gondolaRow(22), ...gondolaRow(25), ...gondolaRow(28),
-        { type: 'column', x: 30, y: 26 }, { type: 'column', x: 53, y: 26 },
+        ...gondolaRow(22), ...gondolaRow(25), ...gondolaRow(28, true),
+        { type: 'column', x: 30, y: 26 }, { type: 'column', x: 53, y: 26 }, { type: 'debris', x: 53, y: 21 },
         // F1-04: two fresh islands of ice beds with weighing counters.
         { type: 'ice-bed', x: 32, y: 36 }, { type: 'ice-bed', x: 34, y: 36 }, { type: 'ice-bed', x: 36, y: 36 }, { type: 'scale-counter', x: 38, y: 36 },
         { type: 'ice-bed', x: 32, y: 39 }, { type: 'ice-bed', x: 34, y: 39 }, { type: 'scale-counter', x: 36, y: 39 },

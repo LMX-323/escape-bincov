@@ -42,6 +42,7 @@ export const MALL_SPRITE_SIZE: Record<string, readonly [number, number]> = {
     'prop-freezer': [64, 54], 'prop-bench': [64, 50], 'prop-planter': [32, 62], 'prop-bed': [64, 84], 'prop-coffee-table': [32, 44],
     'prop-floor-lamp': [32, 76], 'prop-cafe-table': [32, 52], 'prop-planter-box': [64, 56], 'prop-stanchions': [64, 44],
     'prop-adboard-fallen': [64, 44], 'overhead-umbrella': [64, 88], 'sign-hanging-green': [48, 18],
+    'prop-gondola-toppled': [64, 44], 'prop-debris': [32, 44],
 };
 const SINGLE: Partial<Record<FurnitureName, string>> = {
     column: 'prop-column', directory: 'prop-directory', pylon: 'prop-pylon', 'stairs-up': 'stairs-up', 'stairs-down': 'stairs-down',
@@ -49,6 +50,7 @@ const SINGLE: Partial<Record<FurnitureName, string>> = {
     'ice-bed': 'prop-ice-bed', 'scale-counter': 'prop-scale-counter', freezer: 'prop-freezer', bench: 'prop-bench', planter: 'prop-planter',
     bed: 'prop-bed', 'coffee-table': 'prop-coffee-table', 'floor-lamp': 'prop-floor-lamp', 'cafe-table': 'prop-cafe-table',
     'planter-box': 'prop-planter-box', stanchions: 'prop-stanchions', adboard: 'prop-adboard-fallen', partition: 'prop-partition',
+    'gondola-toppled': 'prop-gondola-toppled', debris: 'prop-debris',
 };
 const EMITS = new Set(['prop-fridge-a', 'prop-fridge-b', 'prop-directory', 'prop-pylon', 'prop-floor-lamp', 'wall-curtain', 'wall-curtain-broken', 'wall-window-2f']);
 
@@ -215,17 +217,19 @@ export function mallSigns(m: DressMap): DressSprite[] {
  * aisles, spilled goods below gondolas, glass under the lobby glazing, mud trodden in at the main entrance, water stains
  * around the cold cases and on the terrace. Free floor cells only; stable per cell, never from the raid RNG.
  */
-export interface MallDecalSpot { kind: 'litter' | 'glass' | 'cardboard' | 'water' | 'mud' | 'tracks' | 'cans'; x: number; y: number; seed: number }
+export interface MallDecalSpot { kind: 'litter' | 'glass' | 'cardboard' | 'water' | 'mud' | 'tracks' | 'cans'; x: number; y: number; seed: number; assets: string[] }
+const DRAWN_DECAL: Partial<Record<MallDecalSpot['kind'], string>> = { litter: 'litter', glass: 'glass', cardboard: 'cardboard', water: 'water', mud: 'footprints', cans: 'spill' };
 export function mallDecals(m: DressMap): MallDecalSpot[] {
     const f = furnitureAt(m), out: MallDecalSpot[] = [], used = new Set<string>();
     const free = (x: number, y: number) => m.cells[y]?.[x] === 'floor' && !f.has(x + ',' + y) && !used.has(x + ',' + y);
     const put = (kind: MallDecalSpot['kind'], x: number, y: number, wide = false) => {
         if (!free(x, y) || wide && !free(x + 1, y)) return;
         used.add(x + ',' + y); if (wide) used.add((x + 1) + ',' + y);
-        out.push({ kind, x: x * TILE, y: y * TILE, seed: Math.floor(hash(x, y, 91) * 1e6) });
+        const seed = Math.floor(hash(x, y, 91) * 1e6), drawn = DRAWN_DECAL[kind];
+        out.push({ kind, x: x * TILE, y: y * TILE, seed, assets: [...drawn ? [id('decal-' + drawn + (seed % 2 ? '-a' : '-b'))] : [], PROCEDURAL + 'decal:' + kind] });
     };
     m.cells.forEach((row, y) => row.forEach((_, x) => {
-        if (f.get(x + ',' + (y - 1))?.type === 'gondola' && hash(x, y, 7) < .45) put('cans', x, y);
+        if (f.get(x + ',' + (y - 1))?.type === 'gondola' && hash(x, y, 7) < .22) put('cans', x, y);
         if (m.mapId === 'mall-f1' && y === 7 && x >= 54 && x <= 63 && hash(x, 6, 9) < .25) put('glass', x, y);
         if (m.mapId === 'mall-f1' && x >= 58 && x <= 62 && y >= 7 && y <= 10 && hash(x, y, 13) < .5) put('mud', x, y);
     }));
