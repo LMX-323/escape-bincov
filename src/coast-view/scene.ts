@@ -7,6 +7,7 @@ import { LOOT_FOOT, LOOT_H } from './art/props';
 import { solWall, type SolArt } from './art/sol';
 import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintOpeningGuide, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
 import { Fx } from './fx';
+import { gait, walkFrame } from '../gait';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
 import { lifecycle } from './scope';
@@ -55,6 +56,8 @@ interface ActorGfx {
   /** Player only: faint warm outline so the player separates from dark asphalt (not the occlusion rim). */
   edge: Sprite | null;
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
+  /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
+  sense: 1 | -1;
   /** Half-cycles of the walk, to put a puff of dust under each sprinting step. */
   step: number;
 }
@@ -566,7 +569,7 @@ export class CoastView {
       const mk = () => { const s = new Sprite(); s.anchor.set(.5, 1); return s; };
       const arm = () => { const s = new Sprite(this.tex.arm(a.kind)); s.anchor.set(0, .5); return s; };
       g = { kind: a.kind, body: mk(), weapon: new Sprite(), flash: mk(), rim: new Sprite(), wrim: new Sprite(), shadow: new Sprite(this.tex.blob(20, 7)), corpse: null, corpseKey: '',
-        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, step: 0 };
+        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, step: 0, sense: 1 };
       g.flash.blendMode = 'add'; g.rim.anchor.set(.5, (48 + 1) / 50); g.shadow.anchor.set(.5); g.wade.anchor.set(.5, .5); g.wade.visible = false;
       this.sorted.addChild(g.body, ...g.arms, g.weapon, g.flash, g.wade); this.xray.addChild(g.rim, g.wrim);
       if (g.edge) { g.edge.anchor.set(.5, (48 + 1) / 50); g.edge.tint = 0xf3dfa8; g.edge.alpha = .38; this.sorted.addChild(g.edge); } this.shadows.addChild(g.shadow);
@@ -577,11 +580,13 @@ export class CoastView {
     g.walk = speed > 5 ? (g.walk + dt * speed / 22) % 4 : 0;
     const step = Math.floor(g.walk / 2);
     if (step !== g.step) { g.step = step; if (speed > 150 && shown && a.alive && dt > 0) this.fx.dust(a.x, a.y, this.rnd, 2); }
-    g.dir = dirOf(a.aim);
+    // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08). The dead
+    // and the falling face the aim as before: a death batch still carries the velocity of the step the actor died in.
+    const gt = gait(a.aim, a.vx, a.vy, speed > 5 && a.alive, g.sense); g.sense = gt.sense; g.dir = gt.dir;
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
     const dying = !a.alive && g.deathT > 0 && g.deathT < FALL_T;
-    const frame = dying ? 0 : speed > 5 ? 1 + Math.floor(g.walk) : 0;
+    const frame = dying ? 0 : speed > 5 ? walkFrame(g.walk, g.sense) : 0;
     const dead = !a.alive && !dying;
     const kx = g.kickT > 0 ? g.kick.x : 0, ky = g.kickT > 0 ? g.kick.y : 0;
     const x = Math.round(a.x + kx), y = Math.round(a.y + ky);

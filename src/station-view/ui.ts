@@ -1,9 +1,11 @@
 import * as D from '../domain';
 import type { Attribute, Facility, HideoutRuntime, HideoutSnapshot, Merchant, Recipe, Result, RunWorld, ShopSession, ShopSource, Source } from '../hideout-runtime/contract';
 import type { Scope } from '../coast-view/scope';
+import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
 import { GridDrag, esc, type DragHooks } from './grid';
 import * as P from './panels';
+import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -24,7 +26,9 @@ export interface UIHost {
 /** A confirmation or failure dialog drawn over the open panel. */
 type Dialog =
   | { kind: 'sale'; token: string; warnings: string[] }
-  | { kind: 'import'; text: string; token: string; name: string }
+  // No preview token is kept: base checkpoints stale it while the dialog is open, so confirming previews again (confirmImport).
+  | { kind: 'import'; text: string; name: string }
+  | { kind: 'reset' }
   | { kind: 'storage' };
 
 const WIDE: PanelKind[] = ['gear', 'arms', 'med'];
@@ -45,7 +49,9 @@ const TITLES: Partial<Record<PanelKind, [string, string]>> = {
   generator: ['发电机', '发电机房'], deploy: ['出击准备', '院门'], body: ['身体与成长', '在站里休息会慢慢恢复'], menu: ['暂停', '滨科夫水产站'], help: ['操作说明', ''],
   board: ['寻人板', '食堂门口'], chat: ['食堂', '炊事员'], report: ['行动报告', ''],
 };
-const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', storage: '存档没有写入' };
+const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入' };
+/** Browser storage for the pre-reset copy; even reading the localStorage property can throw. */
+const browserStorage = () => localStorage;
 
 export class UI {
   readonly root: HTMLElement;
@@ -172,7 +178,12 @@ export class UI {
         const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear');
         body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details) : P.gearHtml(s, cell, sel, this.rt.departure(), details); break;
       }
-      case 'arms': case 'med': { const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null; body = this.compact ? P.shopCompactHtml(v, cell, sel, s.profile.cash, this.shopMode) : P.shopHtml(v, cell, sel, s.profile.cash) + P.detailsHtml(item, this.selected?.src ?? null, 'shop'); break; }
+      case 'arms': case 'med': {
+        const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null;
+        // Sellable stacks still in the bag or safe: this shop sells from the stash only, so its header says so.
+        const outside = [s.profile.bag, s.profile.safe].reduce((n, inv) => n + inv.items.filter(i => !i.relief && (D.ITEMS[i.id]?.sell ?? 0) > 0).length, 0);
+        body = this.compact ? P.shopCompactHtml(v, cell, this.selected, s.profile.cash, this.shopMode, outside) : P.shopHtml(v, cell, sel, s.profile.cash, outside) + P.detailsHtml(item, this.selected?.src ?? null, 'shop', item ? questUses(s.profile, item.id) : []); break;
+      }
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
       case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed); break;
@@ -180,7 +191,7 @@ export class UI {
       case 'body': body = P.bodyHtml(s); break;
       case 'board': body = P.boardHtml(); break;
       case 'chat': body = `<p class="muted">长桌上摆着碗。灶上那锅粥一直温着，谁回来谁盛。</p>`; break;
-      case 'menu': body = P.menuHtml(this.volume); break;
+      case 'menu': body = P.menuHtml(this.volume, readResetCopy(browserStorage) !== null); break;
       case 'help': body = P.helpHtml(this.touch); break;
       case 'report': body = this.summary ? P.reportHtml(this.summary, s) : ''; break;
     }
@@ -202,7 +213,7 @@ export class UI {
     this.dialogEl.hidden = !d; this.root.classList.toggle('has-dialog', !!d);
     if (!d) { this.dialogEl.innerHTML = ''; return; }
     const s = this.rt.snapshot();
-    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : P.storageHtml(s);
+    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : d.kind === 'reset' ? P.resetConfirmHtml() : P.storageHtml(s);
     this.dialogEl.className = `modal dialog k-${d.kind}`;
     const title = d.kind === 'storage' && s.storage.conflict ? '存档已被另一个窗口接管' : DIALOG_TITLES[d.kind];
     this.dialogEl.setAttribute('aria-label', title);
@@ -255,8 +266,10 @@ export class UI {
           // Double-click: catalog <-> buy, stash <-> sell, using the first free cell.
           const to: ShopSource | null = src === 'merchant' ? 'buy' : src === 'buy' ? 'merchant' : src === 'stash' ? 'sell' : src === 'sell' ? 'stash' : null;
           if (!to) return; const target = inv(to);
-          for (let y = 0; y < target.h; y++) for (let x = 0; x < target.w; x++) if (!shop.placementError(src as ShopSource, to, uid, x, y)) { const r = shop.place(src as ShopSource, to, uid, x, y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
-          this.toast(to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。', 'error'); this.host.sound('error');
+          const at = firstShopCell(target.w, target.h, (x, y) => shop.placementError(src as ShopSource, to, uid, x, y));
+          if ('x' in at) { const r = shop.place(src as ShopSource, to, uid, at.x, at.y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
+          // A rule (relief goods, a changed stash) names itself; otherwise only room was missing.
+          this.toast(at.reason ?? (to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。'), 'error'); this.host.sound('error');
         },
         reject: m => { this.toast(m, 'error'); this.host.sound('error'); },
       };
@@ -309,7 +322,28 @@ export class UI {
     const text = await file.text().catch(() => '');
     const preview = text ? this.rt.previewImport(text) : { ok: false as const, reason: 'rule' as const, message: '无法读取这个文件。' };
     if (!preview.ok || !preview.token) { this.result(preview); return; }
-    this.openDialog({ kind: 'import', text, token: preview.token, name: file.name });
+    this.openDialog({ kind: 'import', text, name: file.name });
+  }
+  /** Confirmed fresh start. A refused or failed write leaves the save as it was; success resyncs like an import. */
+  private startOver() {
+    this.dialog = null; this.renderDialog();
+    const r = startOver(this.rt, browserStorage, Date.now(), () => this.host.exportSave());
+    if (r.ok) {
+      // A still pristine save is not copied (fresh-start.ts), so the toast must not claim a new local copy.
+      const message = r.copied !== false ? '存档已清空，重新开始。'
+        : readResetCopy(browserStorage) ? '存档已清空。当前存档没动过，本机保留的仍是之前清空前的存档。' : '存档已清空。当前存档没动过，本机没有另存。';
+      this.toast(message, 'ok'); this.host.sound('ok'); this.host.imported(); this.render(); return;
+    }
+    this.toast(r.message, 'error'); this.host.sound('error');
+    if (r.reason === 'conflict' || !this.rt.snapshot().storage.ok) this.showStorage();
+  }
+  /** The local pre-reset copy goes through the same preview and overwrite confirmation as an imported file. */
+  private restoreCopy() {
+    const copy = readResetCopy(browserStorage);
+    if (!copy) { this.result({ ok: false, reason: 'rule', message: '本机没有清空前的存档。' }); this.render(); return; }
+    const preview = this.rt.previewImport(copy);
+    if (!preview.ok || !preview.token) { this.result(preview); return; }
+    this.openDialog({ kind: 'import', text: copy, name: '清空前的存档' }); this.host.sound('open');
   }
 
   private click = (e: MouseEvent) => {
@@ -358,7 +392,10 @@ export class UI {
       case 'title': this.host.title(); break;
       case 'export': this.host.exportSave(); break;
       case 'import': this.root.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
-      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = this.rt.importBackup(d.text, d.token); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = confirmImport(this.rt, d.text); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'reset': this.openDialog({ kind: 'reset' }); this.host.sound('open'); break;
+      case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
+      case 'reset-restore': this.restoreCopy(); break;
       case 'retry-save': { const r = this.rt.retrySave(); if (r.ok) { this.toast('已重新保存。', 'ok'); this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
       case 'reload': location.reload(); break;
       case 'fac': { this.facility = a1 as Facility; this.station = STATIONS.find(q => q.facility === a1) ?? this.station; this.render(); this.host.panelChanged(this.kind, this.station); break; }

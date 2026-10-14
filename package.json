@@ -28,6 +28,7 @@
     "test:station-tier1": "node --import tsx scripts/station-tier1-test.mjs",
     "test:station-tier2": "node --import tsx scripts/station-tier2-test.mjs",
     "test:station-relief": "node scripts/station-relief-test.mjs",
+    "test:station-reset": "node scripts/station-reset-test.mjs",
     "test:station-capability": "node --import tsx scripts/station-capability-listeners.mjs",
     "test:shop-drag": "node scripts/shop-drag-test.mjs",
     "test:shop-feedback": "node scripts/shop-feedback-test.mjs",
@@ -49,7 +50,8 @@
     "test:title-water": "node --import tsx scripts/title-water-review.mjs",
     "test:issue26-station": "node --import tsx scripts/issue26-station-test.mjs",
     "test:issue26-inventory": "node scripts/issue26-raid-inventory-test.mjs",
-    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs"
+    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs",
+    "test:issue26-phaser-spatial": "node scripts/issue26-phaser-spatial.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0",

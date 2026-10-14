@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ITEMS, SAVE_KEY, QUESTS, STASH_UPGRADE_COST, createInventory, addItem, moveItem, transferItem,
   removeItem, count, weight, fits, newSave, migrateSave, readSave, writeSave, beginRun,
-  checkpointSafe, settleRun, recoverInterrupted, grantRelief, buy, sell, equip, unequip, equipRun,
+  checkpointSafe, settleRun, recoverInterrupted, grantRelief, liquidValue, buy, buyQuantity, sell, equip, unequip, equipRun,
   submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
 } from '../src/domain';
 
@@ -432,6 +432,196 @@ test('relief can use stash space while a full bag remains unchanged', () => {
   assert.equal(count(save.stash, 'bandage'), 1);
   assert.equal(save.stash.items.every(i => i.relief), true);
   assert.equal(save.reliefSupplies, undefined);
+});
+
+// Issue #26 F12/F04: relief also covers the S1-S3 soft locks found in the scout report.
+function brokeSave(cash: number) {
+  const save = newSave();
+  save.cash = cash;
+  save.equipment = { weapon: null, relief: false, ammo: 0, ammoRelief: 0 };
+  save.bag = createInventory(6, 5);
+  save.stash = createInventory(10, 6);
+  save.safe = createInventory(2, 2);
+  return save;
+}
+const kitDelivered = (save: ReturnType<typeof newSave>) =>
+  save.equipment.weapon === 'pistol' && save.equipment.relief && count(save.bag, 'ammo9') === 12 && count(save.bag, 'bandage') === 1
+  && save.bag.items.every(i => i.relief) && save.reliefSupplies === undefined;
+
+test('S1: a gunless player who cannot buy a pistol even after selling everything gets the kit', () => {
+  for (const cash of [0, 199, 200, 250, 319]) {
+    const save = brokeSave(cash);
+    assert.equal(grantRelief(save), true, `cash ${cash}`);
+    assert.ok(kitDelivered(save), `cash ${cash}`);
+    assert.equal(save.cash, cash);
+    assert.equal(grantRelief(save), false, `cash ${cash} repeat`);
+  }
+  // The new boundary is the pistol price, derived from the item data.
+  const rich = brokeSave(ITEMS.pistol.buy), before = JSON.stringify(rich);
+  assert.equal(grantRelief(rich), false);
+  assert.equal(JSON.stringify(rich), before);
+  // Sellable goods count: 250 cash plus a watch can buy a pistol after one sale.
+  const watch = brokeSave(250);
+  addItem(watch.stash, 'watch');
+  assert.equal(liquidValue(watch), 250 + ITEMS.watch.sell);
+  assert.equal(grantRelief(watch), false);
+  assert.equal(watch.equipment.weapon, null);
+  // The old cash < 200 rule still applies on its own, so the rule is never stricter than before.
+  const old = brokeSave(150);
+  addItem(old.stash, 'watch');
+  assert.equal(grantRelief(old), true);
+  assert.equal(old.equipment.relief, true);
+});
+
+test('S1: relief goods and copies an unfinished quest still needs are not counted as sellable', () => {
+  const sample = brokeSave(250);
+  addItem(sample.stash, 'sample');
+  assert.equal(liquidValue(sample), 250);
+  assert.equal(grantRelief(sample), true);
+  const done = brokeSave(250);
+  addItem(done.stash, 'sample');
+  done.quests.sample = true;
+  assert.equal(liquidValue(done), 250 + ITEMS.sample.sell);
+  assert.equal(grantRelief(done), false);
+  // The repair quest needs 3 pump parts; only surplus copies count, wherever they are kept.
+  const parts = brokeSave(250);
+  addItem(parts.stash, 'scrap', 2);
+  addItem(parts.safe, 'scrap', 2);
+  assert.equal(liquidValue(parts), 250 + ITEMS.scrap.sell);
+  assert.equal(grantRelief(parts), true);
+  const surplus = brokeSave(250);
+  addItem(surplus.stash, 'scrap', 5);
+  assert.equal(liquidValue(surplus), 250 + 2 * ITEMS.scrap.sell);
+  assert.equal(grantRelief(surplus), false);
+  const relief = brokeSave(250);
+  addItem(relief.stash, 'bandage', 4, true);
+  addItem(relief.stash, 'ammo9', 40, true);
+  assert.equal(liquidValue(relief), 250);
+  assert.equal(grantRelief(relief), true);
+  assert.equal(relief.equipment.relief, true);
+});
+
+test('S2: a broke player with only a relief pistol and no 9mm anywhere gets 12 relief rounds once', () => {
+  const pack = buyQuantity('ammo9') * ITEMS.ammo9.buy;
+  const reliefOnly = (cash: number) => {
+    const save = brokeSave(cash);
+    save.equipment = { weapon: 'pistol', relief: true, ammo: 0, ammoRelief: 0 };
+    return save;
+  };
+  const save = reliefOnly(50);
+  assert.equal(grantRelief(save), true);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(count(save.bag, 'bandage'), 0);
+  assert.equal(save.bag.items.every(i => i.relief), true);
+  assert.equal(save.reliefSupplies, undefined);
+  assert.equal(sell(save, save.bag.items[0].uid), false);
+  assert.equal(save.cash, 50);
+  assert.equal(grantRelief(save), false);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  // Boundary: one pack is ¥84 (12 × ¥7), derived from the shop data.
+  assert.equal(pack, 84);
+  assert.equal(grantRelief(reliefOnly(pack)), false);
+  assert.equal(grantRelief(reliefOnly(pack - 1)), true);
+  // Any 9mm round blocks it: loaded, stored (relief or not), or already waiting as relief.
+  const loaded = reliefOnly(0);
+  loaded.equipment.ammo = 1;
+  loaded.equipment.ammoRelief = 1;
+  assert.equal(grantRelief(loaded), false);
+  const stored = reliefOnly(0);
+  addItem(stored.stash, 'ammo9', 1);
+  assert.equal(grantRelief(stored), false);
+  const storedRelief = reliefOnly(0);
+  addItem(storedRelief.safe, 'ammo9', 1, true);
+  assert.equal(grantRelief(storedRelief), false);
+  const waiting = reliefOnly(0);
+  waiting.reliefSupplies = [{ id: 'ammo9', qty: 5 }];
+  assert.equal(grantRelief(waiting), true);
+  assert.equal(count(waiting.bag, 'ammo9'), 5);
+  assert.equal(waiting.reliefSupplies, undefined);
+  // An ordinary gun anywhere keeps the old behaviour (no relief), and so does sellable value.
+  const ordinary = reliefOnly(0);
+  addItem(ordinary.stash, 'shotgun');
+  assert.equal(grantRelief(ordinary), false);
+  const valuable = reliefOnly(pack - ITEMS.water.sell);
+  addItem(valuable.stash, 'water');
+  assert.equal(liquidValue(valuable), pack);
+  assert.equal(grantRelief(valuable), false);
+  const cheap = reliefOnly(pack - ITEMS.water.sell - 1);
+  addItem(cheap.stash, 'water');
+  assert.equal(grantRelief(cheap), true);
+  assert.equal(count(cheap.stash, 'water'), 1);
+  assert.equal(count(cheap.bag, 'ammo9'), 12);
+  // The relief pistol may be stored rather than equipped.
+  const stashed = brokeSave(0);
+  addItem(stashed.safe, 'pistol', 1, true);
+  assert.equal(grantRelief(stashed), true);
+  assert.equal(stashed.equipment.weapon, null);
+  assert.equal(count(stashed.bag, 'ammo9'), 12);
+  // A kit reissued after death while only a bandage was still waiting now also gets rounds.
+  const reissued = brokeSave(0);
+  reissued.reliefSupplies = [{ id: 'bandage', qty: 1 }];
+  assert.equal(grantRelief(reissued), true);
+  assert.ok(kitDelivered(reissued));
+});
+
+test('S2: extracting broke with an empty relief pistol refills it at the hideout, never inside the raid', () => {
+  let save = brokeSave(50);
+  save.equipment = { weapon: 'pistol', relief: true, ammo: 8, ammoRelief: 8 };
+  const run = beginRun(save, 905);
+  assert.equal(grantRelief(save), false);
+  assert.equal(save.reliefSupplies, undefined);
+  assert.equal(count(save.bag, 'ammo9'), 0);
+  run.ammo = 0;
+  run.ammoRelief = 0;
+  assert.ok(settleRun(save, run, 'extract', 0));
+  assert.deepEqual(save.equipment, { weapon: 'pistol', relief: true, ammo: 0, ammoRelief: 0 });
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(save.bag.items.every(i => i.relief), true);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.equal(grantRelief(save), false);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+});
+
+test('S3: selling the last ordinary gun to reach ¥210 grants the kit', () => {
+  const save = brokeSave(60);
+  save.equipment = { weapon: 'pistol', relief: false, ammo: 0, ammoRelief: 0 };
+  assert.equal(grantRelief(save), false);
+  assert.equal(unequip(save), true);
+  assert.equal(grantRelief(save), false);
+  const gun = save.stash.items.find(i => i.id === 'pistol')!;
+  assert.equal(gun.relief, undefined);
+  assert.equal(sell(save, gun.uid), true);
+  assert.equal(save.cash, 60 + ITEMS.pistol.sell);
+  assert.equal(save.cash, 210);
+  assert.equal(grantRelief(save), true);
+  assert.ok(kitDelivered(save));
+  assert.equal(save.cash, 210);
+  assert.equal(grantRelief(save), false);
+});
+
+test('rule B rounds wait once when the bag and stash are full and arrive when space opens', () => {
+  let save = brokeSave(0);
+  save.equipment = { weapon: 'pistol', relief: true, ammo: 0, ammoRelief: 0 };
+  // Unsellable relief bandages fill every cell without adding sellable value.
+  assert.equal(addItem(save.bag, 'bandage', 120, true), 0);
+  assert.equal(addItem(save.stash, 'bandage', 240, true), 0);
+  assert.equal(liquidValue(save), 0);
+  assert.equal(grantRelief(save), true);
+  assert.deepEqual(save.reliefSupplies, [{ id: 'ammo9', qty: 12 }]);
+  assert.equal(count(save.bag, 'ammo9') + count(save.stash, 'ammo9'), 0);
+  for (let i = 0; i < 3; i++) assert.equal(grantRelief(save), false);
+  assert.deepEqual(save.reliefSupplies, [{ id: 'ammo9', qty: 12 }]);
+  save = migrateSave(JSON.parse(JSON.stringify(save)));
+  assert.deepEqual(save.reliefSupplies, [{ id: 'ammo9', qty: 12 }]);
+  assert.equal(grantRelief(save), false);
+  assert.equal(removeItem(save.bag, 'bandage', 4), true);
+  assert.equal(grantRelief(save), true);
+  assert.equal(count(save.bag, 'ammo9'), 12);
+  assert.equal(count(save.stash, 'ammo9'), 0);
+  assert.equal(save.reliefSupplies, undefined);
+  assert.equal(save.bag.items.every(i => i.relief), true);
+  assert.equal(grantRelief(save), false);
+  assert.equal(count(save.bag, 'ammo9'), 12);
 });
 
 test('migration normalizes magazine bounds and unique item IDs across every container', () => {

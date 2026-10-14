@@ -191,6 +191,15 @@ button.on { border-color: var(--amber); color: var(--amber2); }
 .details .dacts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
 .shop { display: flex; gap: 14px; align-items: flex-start; }
+.shop h3 small { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Desktop shop details keep one height whether empty or showing any item (kind and quest line, name, two lines of
+   description), so a first click never changes the cell size the fit loop chose and the second click of a double
+   click lands on the same item. */
+.panel.k-arms:not(.compact) .details, .panel.k-med:not(.compact) .details { height: 76px; min-height: 0; padding: 6px 12px; overflow: hidden; }
+.panel.k-arms:not(.compact) .details.empty, .panel.k-med:not(.compact) .details.empty { align-content: center; }
+.panel.k-arms:not(.compact) .dtext small, .panel.k-med:not(.compact) .dtext small { line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel.k-arms:not(.compact) .dtext b, .panel.k-med:not(.compact) .dtext b { line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel.k-arms:not(.compact) .dtext span, .panel.k-med:not(.compact) .dtext span { line-height: 15px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .shop .buffer { display: flex; flex-direction: column; }
 .shop .buffer h3:nth-of-type(2) { margin-top: 10px; }
 .checkout { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 12px; background: #161c1b; border: 1px solid var(--line); }
@@ -335,6 +344,7 @@ button.on { border-color: var(--amber); color: var(--amber2); }
 .seg.tabs2 button { padding: 3px 10px; font-size: 13px; }
 .seg.tabs2 small { color: var(--mute); font-size: 11px; margin-left: 4px; }
 .cshop .seg.tabs2 { margin-bottom: 6px; }
+.cshop .pane h3 small { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .checkout.compact { margin-top: 6px; padding: 6px 10px; }
 .panel.compact .details { margin-top: 6px; padding: 6px 10px; min-height: 0; gap: 4px 10px; }
 .panel.compact .gear-actions button { min-height: 40px; }

@@ -32,7 +32,10 @@ async function open(size, kind, tabs = false, fixedTime = true) {
     const s = window.__bincov.saveSession; if (!s.ensureRpg()) throw Error('fixture upgrade');
     const ticket = s.prepareExpansionMutation(d => {
       d.profile.cash = kind === 'funds' ? 0 : 5000;
-      d.profile.stash.items = kind === 'space' ? Array.from({ length: 60 }, (_, i) => ({ uid: `full-${i}`, id: 'scrap', qty: 5, x: i % 10, y: Math.floor(i / 10) })) : [];
+      d.profile.stash.items = kind === 'space' ? Array.from({ length: 60 }, (_, i) => ({ uid: `full-${i}`, id: 'scrap', qty: 5, x: i % 10, y: Math.floor(i / 10) }))
+        : kind.startsWith('goods') ? [{ uid: 'st-watch', id: 'watch', qty: 1, x: 0, y: 0 }, { uid: 'st-relief', id: 'ammo9', qty: 12, relief: true, x: 1, y: 0 }, { uid: 'st-pistol', id: 'pistol', qty: 1, x: 2, y: 0 }] : [];
+      // 'goods': one sellable watch still in the bag; 'goods-clear': nothing outside the stash.
+      if (kind.startsWith('goods')) { d.profile.bag.items = kind === 'goods' ? [{ uid: 'bag-watch', id: 'watch', qty: 1, x: 0, y: 0 }] : []; d.profile.safe.items = []; }
     });
     if (s.commitExpansionMutation(ticket) !== 'committed') throw Error('fixture commit');
   }, kind);
@@ -195,6 +198,125 @@ try {
     });
     assert.equal(result.reason, 'conflict'); assert.equal(await raw(), newer); await peer.close();
     return { result, newerSavePreserved: true };
+  });
+
+  // #26 F03 yard shop: side-aware price, quest use, real quick-move reasons, stash-first note, compact price.
+  // Selections are single clicks or single taps on different items; the only double tap reuses doubleTap above.
+  const shot = name => page.screenshot({ path: resolve(out, `${name}.png`) });
+  const yard = sel => page.locator(`#station-yard ${sel}`);
+  async function itemTarget(grid, uid) {
+    const item = yard(`[data-grid="${grid}"] [data-uid="${uid}"]`);
+    await item.scrollIntoViewIfNeeded();
+    await page.evaluate(async () => { const root = document.querySelector('#station-yard').shadowRoot; await Promise.all([...root.querySelectorAll('.panel')].flatMap(e => e.getAnimations()).map(a => a.finished.catch(() => {}))); });
+    const box = await item.boundingBox(); assert.ok(box, `${grid} ${uid} is visible`);
+    return { item, uid, x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+  // Every grid's cell size, the merchant pistol's box and the details height: a selection must not change any of them.
+  const shopGeometry = () => page.evaluate(() => {
+    const root = document.querySelector('#station-yard').shadowRoot, uid = window.__station.host.ui.shop.view().catalog.items.find(i => i.id === 'pistol').uid;
+    const r = root.querySelector(`[data-grid="merchant"] [data-uid="${uid}"]`).getBoundingClientRect(), details = root.querySelector('.panel .details');
+    return { cells: Object.fromEntries([...root.querySelectorAll('.grid')].map(g => [g.dataset.grid, Number(g.dataset.cell)])), pistol: [r.x, r.y, r.width, r.height].map(v => Math.round(v * 10) / 10), details: details ? Math.round(details.getBoundingClientRect().height * 10) / 10 : null };
+  });
+  const horizontalOverflow = () => page.evaluate(() => { const p = document.querySelector('#station-yard').shadowRoot.querySelector('.panel'); return p.scrollWidth - p.clientWidth; });
+  const uidOf = id => page.evaluate(id => window.__station.host.ui.shop.view().catalog.items.find(i => i.id === id).uid, id);
+  for (const size of [[1280, 720], [1920, 1080], [1280, 600]]) await check(`F03 C1 ${size.join('x')} details price by side and fixed shop geometry`, async () => {
+    await open(size, 'goods');
+    await itemTarget('merchant', await uidOf('pistol'));
+    const geometry = await shopGeometry(), before = await raw(), rows = [], hint = await yard('.panel .details.empty').innerText();
+    const picks = [['merchant', await uidOf('ammo9'), '买入 ¥ 84'], ['merchant', await uidOf('scrap'), '买入 ¥ 85', '任务用途：让灯亮起来'],
+      ['stash', 'st-watch', '卖出 ¥ 240'], ['stash', 'st-pistol', '卖出 ¥ 150'], ['stash', 'st-relief', '不可出售']];
+    for (const [grid, uid, price, use] of picks) {
+      await yard(`[data-grid="${grid}"] [data-uid="${uid}"]`).click();
+      await yard(`[data-grid="${grid}"] [data-uid="${uid}"].sel`).waitFor();
+      // Geometry first: on the old build the first click grows the details and the fit loop shrinks every cell.
+      assert.deepEqual(await shopGeometry(), geometry, `selecting ${grid} ${uid} must keep the shop geometry`);
+      const shown = await yard('.panel .details').evaluate(el => ({ dl: el.querySelector('dl').innerText.replace(/\s+/g, ' '), kind: el.querySelector('.dtext small').textContent, clipped: el.scrollHeight - el.clientHeight }));
+      assert.ok(shown.dl.endsWith(price), `${uid}: ${shown.dl}`); if (use) assert.ok(shown.kind.includes(use), shown.kind);
+      assert.ok(shown.clipped <= 1, `details content fits its fixed box (${shown.clipped}px)`);
+      rows.push({ uid, ...shown });
+      if (size[1] !== 600 && (uid === 'st-pistol' || use)) await shot(`F03-C1-${size.join('x')}-${grid}`);
+    }
+    assert.match(hint, /双击加入或放回/, 'the empty details mention the double-click move');
+    assert.equal(await raw(), before, 'selection never writes the save');
+    return { geometry, hint, rows };
+  });
+  for (const size of [[1280, 720], [390, 844]]) await check(`F03 C2 ${size.join('x')} quick move of relief goods names the rule`, async () => {
+    await open(size, 'goods');
+    if (size[0] < 500) await yard('[data-act="mode:sell"]').tap();
+    const target = await itemTarget('stash', 'st-relief'), before = await raw();
+    if (size[0] < 500) await doubleTap(target); else await target.item.dblclick();
+    const toast = yard('.toast').last(); await toast.waitFor();
+    const message = await toast.innerText(); assert.equal(message, '这件物品不可出售。');
+    assert.equal(await page.evaluate(() => window.__station.host.ui.shop.view().sell.items.length), 0, 'sell list stays empty');
+    assert.equal(await raw(), before);
+    if (size[0] > 500) { await toast.evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished.catch(() => {}))); }); await shot(`F03-C2-${size.join('x')}-relief-toast`); }
+    return { message, unchangedSave: true };
+  });
+  await check('F03 C2 1280x720 quick move on a changed stash asks for a refresh', async () => {
+    await open([1280, 720], 'goods');
+    await page.evaluate(() => {
+      const s = window.__bincov.saveSession, ticket = s.prepareExpansionMutation(d => { d.profile.stash.items.push({ uid: 'new-stock', id: 'watch', qty: 1, x: 9, y: 5 }); });
+      if (s.commitExpansionMutation(ticket) !== 'committed') throw Error('external commit');
+      window.__bincov.hideoutRuntime.snapshot(); window.__station.host.ui.refresh(true);
+    });
+    const target = await itemTarget('merchant', await uidOf('pistol')), before = await raw();
+    await target.item.dblclick();
+    const toast = yard('.toast').last(); await toast.waitFor();
+    const message = await toast.innerText(); assert.equal(message, '仓库已改变，请刷新清单后重新选择物品。');
+    assert.equal(await page.evaluate(() => window.__station.host.ui.shop.view().buy.items.length), 0, 'buy list stays empty');
+    assert.equal(await raw(), before);
+    return { message, unchangedSave: true };
+  });
+  for (const [size, kind, expected] of [[[1280, 720], 'goods', '整组出售 · 背包与安全箱 1 件需先入库'], [[1280, 720], 'goods-clear', '整组出售'], [[844, 390], 'goods', '整组出售 · 背包与安全箱 1 件需先入库']]) await check(`F03 C3 ${size.join('x')} ${kind} stash header`, async () => {
+    await open(size, kind);
+    const compact = size[0] < 900;
+    if (compact) await yard('[data-act="mode:sell"]').click();
+    const header = yard(compact ? '.cshop .pane' : '.shop section').filter({ has: page.locator('[data-grid="stash"]') }).locator('h3 small');
+    await header.waitFor();
+    const text = await header.innerText(), cut = await header.evaluate(el => el.scrollWidth - el.clientWidth), overflow = await horizontalOverflow();
+    assert.equal(text, expected); assert.ok(cut <= 1, `header text is not cut (${cut}px)`); assert.ok(overflow <= 1, `no horizontal panel overflow (${overflow}px)`);
+    return { text, cut, overflow };
+  });
+  for (const size of [[844, 390], [390, 844]]) await check(`F03 C4 ${size.join('x')} compact header shows the selected price`, async () => {
+    await open(size, 'goods');
+    const press = loc => size[0] < 500 ? loc.tap() : loc.click(), header = yard('.cshop .pane h3 small').first(), rows = [];
+    const pistol = await itemTarget('merchant', await uidOf('pistol')), box = await pistol.item.boundingBox(), before = await raw();
+    assert.equal(await header.innerText(), '按包购买');
+    const expectHeader = async (grid, uid, text) => {
+      await yard(`[data-grid="${grid}"] [data-uid="${uid}"].sel`).waitFor();
+      const shown = await header.innerText(), cut = await header.evaluate(el => el.scrollWidth - el.clientWidth), overflow = await horizontalOverflow();
+      assert.equal(shown, text); assert.ok(cut <= 1, `header text is not cut (${cut}px)`); assert.ok(overflow <= 1, `no horizontal panel overflow (${overflow}px)`);
+      rows.push({ uid, shown, cut, overflow });
+    };
+    await press(pistol.item); await expectHeader('merchant', pistol.uid, '手枪 · 买入 ¥ 320');
+    assert.deepEqual(await pistol.item.boundingBox(), box, 'selecting the pistol does not move it before a second tap');
+    await shot(`F03-C4-${size.join('x')}-buy`);
+    await press(yard('[data-act="mode:sell"]'));
+    await press(yard('[data-grid="stash"] [data-uid="st-watch"]')); await expectHeader('stash', 'st-watch', '怀表 · 卖出 ¥ 240');
+    await shot(`F03-C4-${size.join('x')}-sell`);
+    await press(yard('[data-grid="stash"] [data-uid="st-relief"]')); await expectHeader('stash', 'st-relief', '9mm · 不可出售');
+    assert.equal(await raw(), before, 'selection never writes the save');
+    return { rows };
+  });
+  // A quick move keeps the uid but the selection still names the old pane: neither header may turn into that item's price.
+  for (const size of [[844, 390], [390, 844]]) await check(`F03 C4 ${size.join('x')} compact headers keep totals after a quick move`, async () => {
+    await open(size, 'goods');
+    const touch = size[0] < 500, before = await raw(), rows = [];
+    const headers = () => page.evaluate(() => [...document.querySelector('#station-yard').shadowRoot.querySelectorAll('.cshop .pane h3 small')].map(e => e.textContent));
+    await (touch ? yard('[data-act="mode:sell"]').tap() : yard('[data-act="mode:sell"]').click());
+    for (const [from, to, total] of [['stash', 'sell', '¥ 240'], ['sell', 'stash', '¥ 0']]) {
+      const target = await itemTarget(from, 'st-watch');
+      if (touch) await doubleTap(target); else await target.item.dblclick();
+      await yard(`[data-grid="${to}"] [data-uid="st-watch"]`).waitFor();
+      const shown = await headers(), sell = await page.evaluate(() => window.__station.host.ui.shop.view().sell.items.map(i => i.uid));
+      assert.deepEqual(sell, to === 'sell' ? ['st-watch'] : [], `${from} -> ${to} moved the watch`);
+      rows.push({ from, to, shown, expected: ['整组出售 · 背包与安全箱 1 件需先入库', total] });
+      if (to === 'sell') await shot(`F03-C4-${size.join('x')}-quick-sell`);
+    }
+    // Both directions are compared at once so a failure shows every header that went wrong.
+    assert.deepEqual(rows.map(r => r.shown), rows.map(r => r.expected), 'quick moves keep the stash note and the sell total');
+    assert.equal(await raw(), before, 'quick moves only change the cart, never the save');
+    return { rows };
   });
   assert.ok(report.checks.length, '--only must match at least one check');
 } finally { try { await throttleSession?.detach(); } finally { await context?.close(); await browser.close(); } }

@@ -1,0 +1,677 @@
+{
+  "html": "index.html",
+  "sha256": "44c342912389f91f315e3d9d37b572ba119b3ef6d2f2847dce9c7b2ca4234d03",
+  "browser": "155.0.8059.40",
+  "checks": [
+    {
+      "name": "1280x720 P01 exterior-door-guide-above-roof",
+      "detail": {
+        "cell": {
+          "pixels": 1024,
+          "warm": 192,
+          "mint": 0
+        },
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "closed"
+          },
+          "resident-west": null,
+          "resident-east": null
+        },
+        "stairs": [],
+        "interaction": "E 开门"
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P02 real-E-opens-front-door-and-W-walks-through",
+      "detail": {
+        "player": {
+          "at": {
+            "x": 464,
+            "y": 399.58719999995793
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 448,
+            "y": 383.58719999995793,
+            "w": 32,
+            "h": 32
+          }
+        },
+        "guide": {
+          "wall": "ew",
+          "state": "open"
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "detail": {
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "open"
+          },
+          "resident-west": {
+            "wall": "ns",
+            "state": "open"
+          },
+          "resident-east": {
+            "wall": "ns",
+            "state": "closed"
+          }
+        },
+        "arrow": {
+          "pixels": 208,
+          "warm": 0,
+          "mint": 58
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 560,
+          "y": 340,
+          "width": 64,
+          "height": 40
+        },
+        "pixels": 2560,
+        "body": 549,
+        "covered": 0,
+        "blended": 3,
+        "guide": 640,
+        "overlap": 210,
+        "info": {
+          "layers": [
+            3.5,
+            11.2
+          ],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P06 ground-floor-stair-labels-clear-room-name",
+      "detail": {
+        "labels": [
+          {
+            "text": "上楼 · 二楼",
+            "depth": 3.5,
+            "stair": true,
+            "x": 531,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          },
+          {
+            "text": "下楼 · 地下",
+            "depth": 3.5,
+            "stair": true,
+            "x": 467,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          }
+        ],
+        "room": {
+          "text": "褪色居民楼 · 一楼",
+          "depth": 3,
+          "stair": false,
+          "x": 415.5,
+          "y": 234,
+          "w": 97,
+          "h": 12
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P04 f2-landing-storage-door-and-label",
+      "detail": {
+        "guides": {
+          "resident-f2-west": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-f2-east": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-storage": {
+            "wall": "ew",
+            "state": "closed"
+          }
+        },
+        "cell": {
+          "pixels": 1024,
+          "warm": 148,
+          "mint": 0
+        },
+        "label": {
+          "text": "下楼 · 一楼",
+          "depth": 3.5,
+          "stair": true,
+          "x": 226,
+          "y": 72,
+          "w": 58,
+          "h": 16
+        },
+        "player": {
+          "at": {
+            "x": 304,
+            "y": 80
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 288,
+            "y": 64,
+            "w": 32,
+            "h": 32
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P05 covered-room-zero-pixel-change-with-positive-control",
+      "detail": {
+        "clip": {
+          "x": 488,
+          "y": 304,
+          "width": 80,
+          "height": 144
+        },
+        "from": {
+          "x": 80,
+          "y": 208
+        },
+        "to": {
+          "x": 80,
+          "y": 136
+        },
+        "repeat": {
+          "changed": 0,
+          "max": 0
+        },
+        "moved": {
+          "changed": 0,
+          "max": 0
+        },
+        "control": {
+          "changed": 988,
+          "max": 69
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P07 critical-text-follows-the-drawn-roof",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 0,
+          "visible": 0
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:",
+            "storageCovered": true
+          },
+          "seed": 15,
+          "count": 0,
+          "visible": 0,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 0
+        },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 0,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 666,
+          "y": 260,
+          "width": 80,
+          "height": 40
+        },
+        "roofClip": {
+          "x": 706,
+          "y": 274,
+          "width": 24,
+          "height": 12
+        },
+        "pixels": 3200,
+        "body": 494,
+        "covered": 0,
+        "blended": 0,
+        "guide": 1003,
+        "overlap": 405,
+        "above": {
+          "changed": 288,
+          "max": 160
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": [
+            "西侧住户",
+            "东侧住户",
+            "储藏室"
+          ],
+          "labels": [
+            {
+              "depth": 3.5,
+              "masked": false,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            },
+            {
+              "depth": 11.2,
+              "masked": true,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            }
+          ]
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P01 exterior-door-guide-above-roof",
+      "detail": {
+        "cell": {
+          "pixels": 4096,
+          "warm": 768,
+          "mint": 0
+        },
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "closed"
+          },
+          "resident-west": null,
+          "resident-east": null
+        },
+        "stairs": [],
+        "interaction": "E 开门"
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P02 real-E-opens-front-door-and-W-walks-through",
+      "detail": {
+        "player": {
+          "at": {
+            "x": 464,
+            "y": 399.63199999999966
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 448,
+            "y": 383.63199999999966,
+            "w": 32,
+            "h": 32
+          }
+        },
+        "guide": {
+          "wall": "ew",
+          "state": "open"
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "detail": {
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "open"
+          },
+          "resident-west": {
+            "wall": "ns",
+            "state": "open"
+          },
+          "resident-east": {
+            "wall": "ns",
+            "state": "closed"
+          }
+        },
+        "arrow": {
+          "pixels": 832,
+          "warm": 0,
+          "mint": 232
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 800,
+          "y": 500,
+          "width": 128,
+          "height": 80
+        },
+        "pixels": 10240,
+        "body": 2196,
+        "covered": 0,
+        "blended": 12,
+        "guide": 2564,
+        "overlap": 840,
+        "info": {
+          "layers": [
+            3.5,
+            11.2
+          ],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P06 ground-floor-stair-labels-clear-room-name",
+      "detail": {
+        "labels": [
+          {
+            "text": "上楼 · 二楼",
+            "depth": 3.5,
+            "stair": true,
+            "x": 531,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          },
+          {
+            "text": "下楼 · 地下",
+            "depth": 3.5,
+            "stair": true,
+            "x": 467,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          }
+        ],
+        "room": {
+          "text": "褪色居民楼 · 一楼",
+          "depth": 3,
+          "stair": false,
+          "x": 415.5,
+          "y": 234,
+          "w": 97,
+          "h": 12
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P04 f2-landing-storage-door-and-label",
+      "detail": {
+        "guides": {
+          "resident-f2-west": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-f2-east": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-storage": {
+            "wall": "ew",
+            "state": "closed"
+          }
+        },
+        "cell": {
+          "pixels": 4096,
+          "warm": 592,
+          "mint": 0
+        },
+        "label": {
+          "text": "下楼 · 一楼",
+          "depth": 3.5,
+          "stair": true,
+          "x": 226,
+          "y": 72,
+          "w": 58,
+          "h": 16
+        },
+        "player": {
+          "at": {
+            "x": 304,
+            "y": 80
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 288,
+            "y": 64,
+            "w": 32,
+            "h": 32
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P05 covered-room-zero-pixel-change-with-positive-control",
+      "detail": {
+        "clip": {
+          "x": 656,
+          "y": 428,
+          "width": 160,
+          "height": 288
+        },
+        "from": {
+          "x": 80,
+          "y": 208
+        },
+        "to": {
+          "x": 80,
+          "y": 136
+        },
+        "repeat": {
+          "changed": 0,
+          "max": 0
+        },
+        "moved": {
+          "changed": 0,
+          "max": 0
+        },
+        "control": {
+          "changed": 3952,
+          "max": 69
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P07 critical-text-follows-the-drawn-roof",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 0,
+          "visible": 0
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:",
+            "storageCovered": true
+          },
+          "seed": 15,
+          "count": 0,
+          "visible": 0,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 0
+        },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 0,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 1012,
+          "y": 340,
+          "width": 160,
+          "height": 80
+        },
+        "roofClip": {
+          "x": 1092,
+          "y": 368,
+          "width": 48,
+          "height": 24
+        },
+        "pixels": 12800,
+        "body": 1976,
+        "covered": 0,
+        "blended": 0,
+        "guide": 4012,
+        "overlap": 1620,
+        "above": {
+          "changed": 1152,
+          "max": 160
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": [
+            "西侧住户",
+            "东侧住户",
+            "储藏室"
+          ],
+          "labels": [
+            {
+              "depth": 3.5,
+              "masked": false,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            },
+            {
+              "depth": 11.2,
+              "masked": true,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            }
+          ]
+        }
+      },
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "renderer": "canvas"
+}
