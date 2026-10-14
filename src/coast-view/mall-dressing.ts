@@ -226,9 +226,11 @@ export function mallProps(m: DressMap): DressSprite[] {
         // Painted by the view: the stairs, and the cafe set (the drawn sample fits a whole set into one cell, too small).
         const painted = stairs ? PROCEDURAL + f.type : f.type === 'cafe-table' ? PROCEDURAL + 'cafe-set' : null;
         // The cafe set is wider than its one blocking cell: it is centred on it, chairs reaching into the cells beside.
-        const cafe = f.type === 'cafe-table', left = cafe ? x * TILE + (t.w * TILE - size[0]) / 2 : x * TILE;
+        // The floor lamp stands in the middle of its cell on a small round base: only the base touches the floor.
+        const cafe = f.type === 'cafe-table', lamp = f.type === 'floor-lamp', left = cafe ? x * TILE + (t.w * TILE - size[0]) / 2 : x * TILE;
         out.push({ assets: painted ? [painted] : names.map(id), x: left, y: south - size[1], z: south, layer: 'sorted',
             emit: names.some(n => EMITS.has(n)), foot: cafe ? { x: left + 6, y: y * TILE, w: size[0] - 12, h: t.h * TILE, lift: size[1] - t.h * TILE }
+                : lamp ? { x: x * TILE + 11, y: y * TILE + 12, w: 10, h: 8, lift: 8 }
                 : { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
         if (f.type === 'cafe-table') {
             const [uw, uh] = MALL_SPRITE_SIZE['overhead-umbrella'];

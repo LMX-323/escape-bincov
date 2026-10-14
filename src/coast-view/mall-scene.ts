@@ -128,6 +128,8 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
     // cast from the cell's edge would sit apart from them (the piece would look as if it floated).
     feet: props.flatMap(p => {
       if (!p.foot || p.layer !== 'sorted') return [];
+      // Only a footprint that reaches the sprite's bottom row is trimmed; a piece's own small foot (the lamp) is exact.
+      if (p.foot.y + p.foot.h !== p.z) return [p.foot];
       const c = mallCanvas(art, [p.asset]), gap = c ? bottomGap(c) : 0;
       return [{ ...p.foot, h: Math.max(8, p.foot.h - gap) }];
     }),
@@ -140,7 +142,7 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   for (const p of props) {
     if (/fridge/.test(p.asset)) light(p.x + 16, p.z + 12, 46, 0x7aa0aa, .42);
     else if (/freezer/.test(p.asset)) light(p.x + 32, p.z + 8, 54, 0x7aa0aa, .32);
-    else if (/floor-lamp/.test(p.asset)) light(p.x + 16, p.z - 8, 64, 0xc89a5a, .5);
+    else if (/floor-lamp/.test(p.asset)) light(p.x + 16, p.z - 16, 64, 0xc89a5a, .5);
     else if (/directory|pylon/.test(p.asset)) light(p.x + 16, p.z + 6, 40, 0x8fb8a8, .3);
   }
   const wallProps = resolve(mallWallProps(dress));

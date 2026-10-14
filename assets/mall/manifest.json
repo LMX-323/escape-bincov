@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "source": "Sol batch 1 delivery for issue #47 (external working folder), manifest revision 3; originals and prompts kept with the delivery",
+  "source": "Sol batch 1 delivery for issue #47 (external working folder), manifest revision 4 (F-05 furniture proportions: sofa, coffee table, bed, bench, floor lamp); originals and prompts kept with the delivery",
   "note": "Runtime copies of the mall samples (1x PNG, alpha 0/255, -emit masks). Stairs, hanging tubes and hanging signs are painted or omitted by the view and not copied.",
-  "revision": 3,
+  "revision": 4,
   "assets": [
     {
       "id": "mall-ground-plaza-a-v1",
@@ -932,70 +932,141 @@
       "emit": null,
       "variant": "s",
       "frames": 1,
-      "source": "source/generated-r3-furniture-original.png",
-      "sourceRect": [
-        78,
-        225,
-        628,
-        332
-      ],
-      "exportMethod": "R3: north placed60px-wide sofa; generated edit separated into8px backrest +12px seat +20px south front; three cushions wider than deep; contact boundary40, last12rows transparent; canvas/anchor unchanged.",
-      "sha256": "77c0a4912fb9327db6fb49fb897d6f5896f5e378d374c0f793e97893dcb0152c",
-      "revision": 2,
-      "replacesSha256": "7c913ef9a420b9a496a1468faea035bdb0e62c44686a432c374cf04df6c955aa",
-      "bodyTopRect": [
+      "source": "source/generated-f05-furniture-original.png",
+      "exportMethod": "F-05:24px/m; back22,seat11,arms15,depth22; exact selected1x silhouette; seat14 below back face11; onlytwofrontfeet; flush south,0 transparent rows.",
+      "sha256": "042a6f4c66c9c6e49180b3cf01ef34dfff0eb1102ae53298295affe810241f8b",
+      "revision": 3,
+      "replacesSha256": "77c0a4912fb9327db6fb49fb897d6f5896f5e378d374c0f793e97893dcb0152c",
+      "visibleGroundLine": 52,
+      "transparentSouthRows": 0,
+      "feedback": "Sol-F05家具比例返修.md",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap.",
+      "backrestRect": [
         2,
-        0,
+        8,
         60,
-        20
+        19
+      ],
+      "seatRect": [
+        8,
+        27,
+        48,
+        14
+      ],
+      "armRects": [
+        [
+          2,
+          23,
+          6,
+          14
+        ],
+        [
+          56,
+          23,
+          6,
+          14
+        ]
       ],
       "bodyFrontRect": [
         2,
-        20,
+        41,
         60,
-        20
+        11
       ],
-      "backrestRect": [
-        6,
-        0,
-        52,
-        8
+      "physicalScalePxPerMeter": 24,
+      "physicalHeight": {
+        "back": 22,
+        "seat": 11,
+        "arm": 15
+      },
+      "groundDepth": 22,
+      "sourceRect": [
+        73,
+        140,
+        461,
+        253
       ],
-      "seatRect": [
-        6,
-        8,
-        52,
-        12
-      ],
-      "visibleGroundLine": 40,
-      "transparentSouthRows": 12,
       "sourceParts": [
         [
-          78,
-          225,
-          706,
-          337
+          109,
+          141,
+          501,
+          170
         ],
         [
-          78,
-          337,
-          706,
-          477
+          82,
+          170,
+          524,
+          226
         ],
         [
-          78,
-          477,
-          706,
-          557
+          109,
+          203,
+          501,
+          228
+        ],
+        [
+          109,
+          228,
+          501,
+          334
+        ],
+        [
+          82,
+          185,
+          109,
+          317
+        ],
+        [
+          501,
+          185,
+          524,
+          317
+        ],
+        [
+          82,
+          329,
+          109,
+          377
+        ],
+        [
+          501,
+          329,
+          524,
+          377
+        ],
+        [
+          109,
+          334,
+          501,
+          347
+        ],
+        [
+          109,
+          347,
+          501,
+          377
+        ],
+        [
+          82,
+          377,
+          109,
+          393
+        ],
+        [
+          501,
+          377,
+          524,
+          393
         ]
       ],
       "sourcePartsFormat": "xyxy",
       "sourceInputs": [
-        "source/generated-r3-furniture-original.png",
-        "source/archive-r2-before-feedback/assets/mall-prop-sofa-s-v1.png"
+        "source/generated-f05-furniture-original.png",
+        "source/f05-templates/mall-prop-sofa-s-模板-1x.png"
       ],
-      "feedback": "Sol-P1补充反馈.md §1",
-      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+      "template": "source/f05-templates/mall-prop-sofa-s-模板-1x.png",
+      "templateSha256": "f6d0f24f4c189ea43670eaeee51413741bc7b159e244faee1bbdab5b3b313254"
     },
     {
       "id": "mall-prop-cart-v1",
@@ -2778,52 +2849,77 @@
       "frames": 1,
       "w": 64,
       "h": 50,
-      "revision": 2,
-      "exportMethod": "R3 five-item check: bench seat was32px deep, shortened to18px; narrow horizontal wood slats, original18px leg rise; contact36, last14rows transparent; canvas64x50/anchor unchanged.",
-      "source": "source/generated-r3-furniture-original.png",
-      "sourceRect": [
-        1472,
-        277,
-        613,
-        280
-      ],
-      "sha256": "381c6b0caab0ee8fdee404836caa32bbadc11c2eed819a18712dbd2e9e4f093c",
-      "sourceInputs": [
-        "source/generated-r3-furniture-original.png",
-        "source/archive-r2-before-feedback/assets/mall-prop-bench-v1.png"
-      ],
-      "replacesSha256": "8dcb91fd95c2778fedb5290e5f0481290ae2d35ad3132520d250fb8bbef024fc",
+      "revision": 3,
+      "exportMethod": "F-05:24px/m; bench56wide x16deep,seat11; rows15-30fourwoodslats,31-34edge/brace,35-41twoleggroups;8 transparent south rows.",
+      "source": "source/generated-f05-furniture-original.png",
+      "sha256": "0060afefd49da374e963103e9861c0ec539a3d1d5a44013061beec513c3c16f2",
+      "replacesSha256": "381c6b0caab0ee8fdee404836caa32bbadc11c2eed819a18712dbd2e9e4f093c",
+      "visibleGroundLine": 42,
+      "transparentSouthRows": 8,
+      "feedback": "Sol-F05家具比例返修.md",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap.",
       "bodyTopRect": [
-        2,
-        0,
-        60,
-        18
+        4,
+        15,
+        56,
+        16
       ],
       "bodyFrontRect": [
-        2,
-        18,
-        60,
-        18
+        4,
+        31,
+        56,
+        11
       ],
-      "visibleGroundLine": 36,
-      "transparentSouthRows": 14,
+      "physicalScalePxPerMeter": 24,
+      "physicalHeight": {
+        "seat": 11
+      },
+      "groundDepth": 16,
+      "sourceRect": [
+        99,
+        684,
+        387,
+        165
+      ],
       "sourceParts": [
         [
-          1472,
-          277,
-          2085,
-          453
+          100,
+          684,
+          482,
+          792
         ],
         [
-          1472,
-          453,
-          2085,
-          557
+          102,
+          792,
+          482,
+          801
+        ],
+        [
+          102,
+          801,
+          482,
+          811
+        ],
+        [
+          110,
+          814,
+          135,
+          849
+        ],
+        [
+          449,
+          814,
+          474,
+          849
         ]
       ],
       "sourcePartsFormat": "xyxy",
-      "feedback": "Sol-P1补充反馈.md §1",
-      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+      "sourceInputs": [
+        "source/generated-f05-furniture-original.png",
+        "source/f05-templates/mall-prop-bench-模板-1x.png"
+      ],
+      "template": "source/f05-templates/mall-prop-bench-模板-1x.png",
+      "templateSha256": "75ab4b3bde5a3999fd7822c85f3865aa17e7073c09f15c2347a98cdc518f1495"
     },
     {
       "id": "mall-prop-planter-v1",
@@ -2880,64 +2976,154 @@
       "frames": 1,
       "w": 64,
       "h": 84,
-      "revision": 2,
-      "exportMethod": "R3: wide double bed58px; exposed headboard8px, body top46px incl pillows, south mattress face12px; contact boundary66 and last18rows transparent; canvas64x84/anchor unchanged.",
-      "source": "source/generated-r3-furniture-original.png",
-      "sourceRect": [
-        818,
-        86,
-        521,
-        523
-      ],
-      "sha256": "b62d81bc041f70c3fb263cd5c102a4af850e50076c7ba2de819a8791779e6d37",
-      "sourceInputs": [
-        "source/generated-r3-furniture-original.png",
-        "source/archive-r2-before-feedback/assets/mall-prop-bed-v1.png"
-      ],
-      "replacesSha256": "0cc6fde1ab15dc87611dbbe83e4b301a2a36af11c4f9d51ca8ca02ae31833788",
-      "bodyTopRect": [
-        3,
-        8,
-        58,
-        46
-      ],
+      "revision": 3,
+      "exportMethod": "F-05:24px/m; bed56wide x58deep,headboard26,mattress13; exact row0-83 selected silhouette and pillow10+3 split; onlytwofeet,flush south0 transparent rows.",
+      "source": "source/generated-f05-furniture-original.png",
+      "sha256": "90abb932eedebacfd719b5da48b6b824849ceaafb0ad9102a291fdfeaa976ee3",
+      "replacesSha256": "b62d81bc041f70c3fb263cd5c102a4af850e50076c7ba2de819a8791779e6d37",
+      "visibleGroundLine": 84,
+      "transparentSouthRows": 0,
+      "feedback": "Sol-F05家具比例返修.md",
+      "topBrightnessPolicy": "Natural furniture material; not a structural cap.",
       "headboardRect": [
-        3,
+        4,
         0,
-        58,
-        8
+        56,
+        17
+      ],
+      "bodyTopRect": [
+        4,
+        17,
+        56,
+        54
       ],
       "bodyFrontRect": [
-        3,
-        54,
-        58,
-        12
+        4,
+        71,
+        56,
+        13
       ],
-      "visibleGroundLine": 66,
-      "transparentSouthRows": 18,
+      "pillowTopRects": [
+        [
+          8,
+          14,
+          23,
+          10
+        ],
+        [
+          33,
+          14,
+          23,
+          10
+        ]
+      ],
+      "pillowFrontRects": [
+        [
+          8,
+          24,
+          23,
+          3
+        ],
+        [
+          33,
+          24,
+          23,
+          3
+        ]
+      ],
+      "physicalScalePxPerMeter": 24,
+      "physicalHeight": {
+        "headboard": 26,
+        "mattress": 13
+      },
+      "groundDepth": 58,
+      "sourceRect": [
+        1075,
+        58,
+        362,
+        471
+      ],
       "sourceParts": [
         [
-          818,
-          86,
-          1339,
-          143
+          1082,
+          58,
+          1429,
+          81
         ],
         [
-          818,
-          143,
-          1339,
-          504
+          1082,
+          81,
+          1429,
+          128
         ],
         [
-          818,
-          504,
-          1339,
-          609
+          1096,
+          218,
+          1415,
+          251
+        ],
+        [
+          1082,
+          218,
+          1429,
+          434
+        ],
+        [
+          1103,
+          123,
+          1252,
+          204
+        ],
+        [
+          1263,
+          123,
+          1411,
+          204
+        ],
+        [
+          1103,
+          194,
+          1252,
+          213
+        ],
+        [
+          1263,
+          194,
+          1411,
+          213
+        ],
+        [
+          1082,
+          444,
+          1429,
+          500
+        ],
+        [
+          1082,
+          500,
+          1429,
+          514
+        ],
+        [
+          1082,
+          514,
+          1107,
+          529
+        ],
+        [
+          1404,
+          514,
+          1429,
+          529
         ]
       ],
       "sourcePartsFormat": "xyxy",
-      "feedback": "Sol-P1补充反馈.md §1",
-      "topBrightnessPolicy": "Natural furniture material; not a structural cap."
+      "sourceInputs": [
+        "source/generated-f05-furniture-original.png",
+        "source/f05-templates/mall-prop-bed-模板-1x.png"
+      ],
+      "template": "source/f05-templates/mall-prop-bed-模板-1x.png",
+      "templateSha256": "53ef9714bd83558564320e5d8d51b11b5ea4c447a5da2b278709a99518e7410b"
     },
     {
       "id": "mall-prop-coffee-table-v1",
@@ -2959,19 +3145,76 @@
       "frames": 1,
       "w": 32,
       "h": 44,
-      "revision": 1,
-      "exportMethod": "Generated matte wooden top/tipped vase NN32x32; separate legs/apron NN32x12; low12 lift.",
-      "source": "source/generated-r2-life-original.png",
-      "sourceRect": [
-        663,
-        654,
-        358,
-        261
+      "revision": 2,
+      "exportMethod": "F-05:24px/m; table30wide x16deep,surface10; rows10-25top,26-29edge/apron,30-35twofrontlegs;8 transparent south rows.",
+      "source": "source/generated-f05-furniture-original.png",
+      "sha256": "121d86cdb0f41caf367b9f4f42af9793ef76edda668ac8f52417683fefe55b59",
+      "replacesSha256": "02124ed3f16e364095cdc68c5e3401193ad9dded9b8c2a682f71ad8605b6137a",
+      "bodyTopRect": [
+        1,
+        10,
+        30,
+        16
       ],
-      "sha256": "02124ed3f16e364095cdc68c5e3401193ad9dded9b8c2a682f71ad8605b6137a",
+      "bodyFrontRect": [
+        1,
+        26,
+        30,
+        10
+      ],
+      "visibleGroundLine": 36,
+      "transparentSouthRows": 8,
+      "physicalScalePxPerMeter": 24,
+      "physicalHeight": {
+        "surface": 10
+      },
+      "groundDepth": 16,
+      "sourceRect": [
+        669,
+        159,
+        187,
+        149
+      ],
+      "sourceParts": [
+        [
+          672,
+          159,
+          852,
+          261
+        ],
+        [
+          672,
+          261,
+          852,
+          273
+        ],
+        [
+          680,
+          273,
+          844,
+          281
+        ],
+        [
+          678,
+          282,
+          693,
+          308
+        ],
+        [
+          831,
+          282,
+          846,
+          308
+        ]
+      ],
+      "sourcePartsFormat": "xyxy",
       "sourceInputs": [
-        "source/generated-r2-life-original.png"
-      ]
+        "source/generated-f05-furniture-original.png",
+        "source/f05-templates/mall-prop-coffee-table-模板-1x.png"
+      ],
+      "template": "source/f05-templates/mall-prop-coffee-table-模板-1x.png",
+      "templateSha256": "99a24c66f8a10912e5b646e43b21e7b95fdf3a6a56164f46080ec36bc0a99f74",
+      "feedback": "Sol-F05家具比例返修.md"
     },
     {
       "id": "mall-prop-floor-lamp-v1",
@@ -2993,45 +3236,99 @@
       "frames": 1,
       "w": 32,
       "h": 76,
-      "revision": 1,
-      "exportMethod": "Generated fabric shade24x18 at4,28, thin2px pole and16x8 base; y72 groundcenter minus44=28 shade top; explicit thin-pole M44 exception; no baked light.",
-      "source": "source/generated-r2-life-original.png",
+      "revision": 2,
+      "exportMethod": "F-05:24px/m; lamp shade14wide rows20-35,pole2wide36-55,base56-62,groundcenter16/60;13 transparent south rows; intrinsic unlit material.",
+      "source": "source/generated-f05-furniture-original.png",
+      "sha256": "32c54dae0b0367340149f9745b6d5c1135a1acff808e9beba4196ef9b94b38a1",
+      "replacesSha256": "faf88e4ff66b99bbe6c08f432a2661ffdbc84c3775073e319be6b32803762984",
+      "groundCenter": [
+        16,
+        60
+      ],
+      "poleWidth": 2,
+      "shadeTopRect": [
+        9,
+        20,
+        14,
+        8
+      ],
+      "shadeSideRect": [
+        9,
+        28,
+        14,
+        8
+      ],
+      "poleRect": [
+        15,
+        36,
+        2,
+        20
+      ],
+      "baseTopRect": [
+        11,
+        56,
+        10,
+        5
+      ],
+      "baseFrontRect": [
+        11,
+        61,
+        10,
+        2
+      ],
+      "visibleGroundLine": 63,
+      "transparentSouthRows": 13,
+      "physicalScalePxPerMeter": 24,
+      "physicalHeight": {
+        "shadeTop": 40
+      },
+      "groundDepth": 0,
       "sourceRect": [
-        1213,
-        462,
-        160,
-        501
+        706,
+        664,
+        95,
+        272
       ],
       "sourceParts": [
         [
-          1213,
-          462,
-          1373,
-          635
+          706,
+          665,
+          800,
+          712
         ],
         [
-          1285,
-          640,
-          1300,
-          896
+          706,
+          712,
+          800,
+          764
         ],
         [
-          1238,
-          896,
-          1358,
-          963
+          748,
+          767,
+          758,
+          903
+        ],
+        [
+          722,
+          903,
+          784,
+          927
+        ],
+        [
+          722,
+          927,
+          784,
+          936
         ]
       ],
-      "poleWidth": 2,
-      "groundCenter": [
-        16,
-        72
-      ],
-      "sha256": "faf88e4ff66b99bbe6c08f432a2661ffdbc84c3775073e319be6b32803762984",
+      "sourcePartsFormat": "xyxy",
       "sourceInputs": [
-        "source/generated-r2-life-original.png"
+        "source/generated-f05-furniture-original.png",
+        "source/f05-templates/mall-prop-floor-lamp-模板-1x.png"
       ],
-      "sourcePartsFormat": "xyxy"
+      "template": "source/f05-templates/mall-prop-floor-lamp-模板-1x.png",
+      "templateSha256": "d87a2c783c0d237d2b9e2deb2894d7ad4a4ab57f7f7be5bd37aa5fb5de1c2710",
+      "feedback": "Sol-F05家具比例返修.md"
     },
     {
       "id": "mall-prop-floor-lamp-emit-v1",
@@ -3053,29 +3350,31 @@
       "frames": 1,
       "w": 32,
       "h": 76,
-      "revision": 1,
-      "exportMethod": "Pure-white semantic mask from final base pixel coordinates; clipped to base alpha.",
+      "revision": 2,
+      "exportMethod": "F-05: pure white shade only inclusive x9-22/y20-35 clipped exactly to final shade silhouette; pole/base transparent; paired new base SHA.",
       "maskOf": "mall-prop-floor-lamp-v1",
-      "source": "source/generated-r2-life-original.png",
+      "source": "source/generated-f05-furniture-original.png",
       "sourceRect": [
-        1213,
-        462,
-        160,
-        501
+        706,
+        664,
+        95,
+        272
       ],
       "emissionRects": [
         [
-          6,
-          31,
-          25,
-          43
+          9,
+          20,
+          22,
+          35
         ]
       ],
-      "sha256": "94fc9e31e7869274eeb833203f5fd13b0798b6b2cd641c00297c9fce6d2835eb",
+      "sha256": "a8a9678e43b07e4610c6f109c52e6e26bbcc20b90739c5ab63b3929e0e0e546a",
       "sourceInputs": [
         "assets/mall/v1/mall-prop-floor-lamp-v1.png"
       ],
-      "baseSha256": "faf88e4ff66b99bbe6c08f432a2661ffdbc84c3775073e319be6b32803762984"
+      "baseSha256": "32c54dae0b0367340149f9745b6d5c1135a1acff808e9beba4196ef9b94b38a1",
+      "replacesSha256": "94fc9e31e7869274eeb833203f5fd13b0798b6b2cd641c00297c9fce6d2835eb",
+      "feedback": "Sol-F05家具比例返修.md"
     },
     {
       "id": "mall-prop-partition-v1",

@@ -303,15 +303,23 @@ async function deployTabs(page) {
     });
     await place(page, 62, 27.6, 0, 'mall-f2'); await frames(page, 10);
     const home = await page.evaluate(() => {
-      const d = window.__bincovSample.host.view.mall, sized = n => d.props.filter(p => p.asset.includes(n)).map(p => ({ z: p.z, foot: d.ground.feet.find(f => f.x === p.foot.x && f.y === p.foot.y) }));
-      return { sofa: sized('sofa'), bed: sized('prop-bed'), bench: sized('bench'), cafe: d.props.filter(p => p.asset.includes('cafe-set')).length };
+      const v = window.__bincovSample.host.view, d = v.mall;
+      const gap = asset => { const c = v.tex.canvas('mall:' + asset), a = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let n = 0; for (let y = c.height - 1; y >= 0; y--, n++) { let any = false; for (let x = 0; x < c.width; x++) if (a[(y * c.width + x) * 4 + 3]) { any = true; break; } if (any) break; } return n; };
+      const sized = n => d.props.filter(p => p.asset.includes(n)).map(p => ({ asset: p.asset, z: p.z, gap: gap(p.asset), foot: d.ground.feet.find(f => f.x === p.foot.x && f.y === p.foot.y) }));
+      const lamp = d.props.filter(p => p.asset.includes('floor-lamp')).map(p => ({ z: p.z, foot: p.foot }));
+      return { sofa: sized('sofa'), bed: sized('prop-bed'), bench: sized('bench'), table: sized('coffee-table'), lamp, cafe: d.props.filter(p => p.asset.includes('cafe-set')).length };
     });
     assert.equal(lobby.labels.length, 0, 'no label beside the drawn S-N flight'); assert.ok(lobby.guides.length >= 2 && lobby.guides.every(g => g.dy === -1), JSON.stringify(lobby.guides));
     assert.ok(near.some(l => l.text === '上楼至二层' && /Bincov Text/.test(l.font)), JSON.stringify(near));
     assert.equal(far.length, 0, 'other stairs are not named from across the floor');
     assert.ok(onIt.prompt?.includes('上楼至二层') && onIt.labels.length === 0, JSON.stringify(onIt));
     assert.equal(feet.rendered, false, 'the world-space label sprite is never drawn');
-    for (const p of [...home.sofa, ...home.bed, ...home.bench]) assert.ok(p.foot && p.foot.y + p.foot.h <= p.z - 12, `shadow ends at the drawn base: ${JSON.stringify(p)}`);
+    for (const p of [...home.sofa, ...home.bed, ...home.bench, ...home.table]) assert.ok(p.foot && p.foot.y + p.foot.h === p.z - p.gap, `shadow ends at the drawn base: ${JSON.stringify(p)}`);
+    // F-05 art: the sofa and bed stand on their cell's south edge, the table and bench sit in the middle of theirs.
+    assert.deepEqual([...new Set(home.sofa.map(p => p.gap))], [0]); assert.deepEqual([...new Set(home.bed.map(p => p.gap))], [0]);
+    assert.deepEqual([...new Set(home.table.map(p => p.gap))], [8]);
+    for (const l of home.lamp) assert.ok(l.foot.w <= 12 && l.foot.y + l.foot.h < l.z - 8, `the lamp's shadow is its base: ${JSON.stringify(l)}`);
     assert.equal(home.cafe, 4);
     return { lobby, near, far, onIt, home };
   });

@@ -20,7 +20,9 @@ test('商场布置表：每件家具一张贴图，立在占地南边线上；�
             assert.ok(size, `${p.assets[0]} has a planned size`);
             assert.equal(p.y + size[1], p.z, `${p.assets[0]} stands on its footprint's south edge`);
             assert.ok(p.assets.every(a => /^mall-[a-z0-9-]+-v1$/.test(a) || a === PROCEDURAL + 'stairs-up' || a === PROCEDURAL + 'stairs-down' || a === PROCEDURAL + 'cafe-set'));
-            assert.ok(p.foot && p.foot.y + p.foot.h === p.z, `${p.assets[0]} carries its footprint for the contact shadow`);
+            // The contact shadow's footprint: the whole cell, except the floor lamp's small round base in the middle of it.
+            if (p.assets[0] === 'mall-prop-floor-lamp-v1') assert.ok(p.foot && p.foot.w <= 12 && p.foot.y > p.z - 32 && p.foot.y + p.foot.h < p.z, 'the lamp base');
+            else assert.ok(p.foot && p.foot.y + p.foot.h === p.z, `${p.assets[0]} carries its footprint for the contact shadow`);
         }
         for (const run of MALL_V2_LAYOUT[id].filter(p => p.type === 'gondola')) {
             const row = sorted.filter(p => p.z === (run.y + 1) * 32 && p.x >= run.x * 32 && p.x < (run.x + run.n!) * 32).sort((a, b) => a.x - b.x);
