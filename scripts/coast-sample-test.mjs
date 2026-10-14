@@ -659,7 +659,8 @@ for (const art of ['sol', 'placeholder']) {
 }
 // Issue #26 F08 gait, aiming east. The view is driven with copies of the live batch whose player carries the aim and
 // velocity under test (the V02 pattern: ticker stopped, explicit 0.05 s view delta), so the Runtime, input and save never
-// see the fixture. The old rule (body on the aim, forward 1-4 cycle) is evaluated on the same frames as the negative control.
+// see the fixture. The negative control is this same step run against the pre-F08 build (BINCOV_SAMPLE_HTML pointing
+// at the e9cbaa5 dist/index.html), where it must fail; nothing in this step re-derives the old rule from the new build.
 {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
@@ -673,7 +674,6 @@ for (const art of ['sol', 'placeholder']) {
     for (const [name, [vx, vy]] of Object.entries(CASES)) {
       result[name] = await page.evaluate(([name, vx, vy]) => {
         const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
-        const dirOf = a => ((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8;
         const textures = []; for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) textures.push([d, f, v.tex.actor('player', d, f)]);
         const read = () => { const t = textures.find(e => e[2] === g.body.texture); return t ? [t[0], t[1]] : [-1, -1]; };
         const batch = (vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, vx, vy } } });
@@ -683,7 +683,7 @@ for (const art of ['sol', 'placeholder']) {
         for (let i = 0; i < 16; i++) {
           v.camF = { ...cam }; v.shake = 0; v.present(batch(vx, vy), .05); h.app.render();
           const [dir, frame] = read(), walk = g.walk, phase = Math.floor(walk);
-          rows.push({ walk: +walk.toFixed(3), dir, frame, oldDir: dirOf(0), oldFrame: 1 + phase });
+          rows.push({ walk: +walk.toFixed(3), dir, frame });
           if (rows.length === 1 || phase !== Math.floor(rows.at(-2).walk)) {
             if (window.__gaitCrops.filter(c => c.name === name).length < 4) {
               const c = document.createElement('canvas'); c.width = c.height = 216; const cg = c.getContext('2d'); cg.imageSmoothingEnabled = false;
@@ -737,18 +737,16 @@ for (const art of ['sol', 'placeholder']) {
     await writeFile(resolve(out, 'gait-strip.png'), Buffer.from(strip.split(',')[1], 'base64'));
     const runs = rows => rows.map(r => r.frame).filter((f, i, a) => i === 0 || f !== a[i - 1]);
     const back = [3, 0, 1, 0], phase = r => Math.floor(r.walk);
-    const summary = Object.fromEntries(Object.keys(CASES).map(n => [n, { dirs: [...new Set(result[n].map(r => NAMES[r.dir] ?? r.dir))], frames: runs(result[n]), oldRuleDiffers: result[n].filter(r => r.dir !== r.oldDir || r.frame !== r.oldFrame).length }]));
-    // Forward: the body stays E and the cycle is the old 1-4 (identical to the old rule).
+    const summary = Object.fromEntries(Object.keys(CASES).map(n => [n, { dirs: [...new Set(result[n].map(r => NAMES[r.dir] ?? r.dir))], frames: runs(result[n]) }]));
+    // Forward: the body stays E and plays the 1-4 cycle, unchanged from before F08.
     assert.ok(result.forward.every(r => r.dir === 0 && r.frame === 1 + phase(r)), `forward ${JSON.stringify(result.forward)}`);
-    assert.deepEqual(runs(result.forward), [1, 2, 3, 4, 1]); assert.equal(summary.forward.oldRuleDiffers, 0);
+    assert.deepEqual(runs(result.forward), [1, 2, 3, 4, 1]);
     // Backpedal: the body stays on the aim (E) and plays the short reversed steps.
     assert.ok(result.backpedal.every(r => r.dir === 0 && r.frame === back[phase(r)]), `backpedal ${JSON.stringify(result.backpedal)}`);
     assert.deepEqual(runs(result.backpedal), [3, 0, 1, 0, 3]);
     // Strafes: the hips turn one sector toward the movement, with a forward cycle.
     assert.ok(result.strafeS.every(r => r.dir === 1 && r.frame === 1 + phase(r)), `strafe S ${JSON.stringify(result.strafeS)}`);
     assert.ok(result.strafeN.every(r => r.dir === 7 && r.frame === 1 + phase(r)), `strafe N ${JSON.stringify(result.strafeN)}`);
-    // Negative control: the old rule (body on the aim, 1 + floor(walk)) draws different frames for every one of these.
-    for (const n of ['backpedal', 'strafeS', 'strafeN']) assert.ok(summary[n].oldRuleDiffers >= 12, `${n}: old rule differs on ${summary[n].oldRuleDiffers}/16 frames`);
     for (const n of Object.keys(CASES)) assert.deepEqual(result[n + 'Stop'], { dir: 0, frame: 0, sense: 1 }, `${n}: standing again`);
     assert.ok(killed.slice(0, 4).every(r => r.alive && r.dir === 1), `strafing before the death: SE body ${JSON.stringify(killed)}`);
     assert.deepEqual(killed.slice(4).map(r => [r.alive, r.dir, r.frame, r.deathT > 0 && r.deathT < .16]), [[false, 0, 0, true], [false, 0, 0, true]], `killed mid-strafe: the fall stays on the aim's body ${JSON.stringify(killed)}`);
