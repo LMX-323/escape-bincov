@@ -1,0 +1,180 @@
+{
+  "item": "issue #26 F12 part B / F04 relief extension",
+  "browser": "headless Chromium via scripts/browser-options.mjs, 1280x720, offline context",
+  "before": {
+    "file": "baseline-e9cbaa5.html",
+    "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7"
+  },
+  "after": {
+    "file": "dist/index.html",
+    "sha256": "a9dbb71f60012bd4d5249dc56cf7de214d7f30cd27fa1831c7c3059544e5ab42"
+  },
+  "rows": [
+    {
+      "case": "S1",
+      "state": "no gun, cash ¥250, empty inventories; runtime.enter()",
+      "before": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 250,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      },
+      "after": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 250,
+          "weapon": "pistol",
+          "reliefWeapon": true,
+          "reliefAmmo9": 12,
+          "reliefBandage": 1,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      }
+    },
+    {
+      "case": "S1",
+      "state": "no gun, cash ¥320, empty inventories; runtime.enter()",
+      "before": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 320,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      },
+      "after": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 320,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      }
+    },
+    {
+      "case": "S2",
+      "state": "empty relief pistol equipped, no 9mm, cash ¥50; runtime.enter()",
+      "before": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 50,
+          "weapon": "pistol",
+          "reliefWeapon": true,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      },
+      "after": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 50,
+          "weapon": "pistol",
+          "reliefWeapon": true,
+          "reliefAmmo9": 12,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "sale": null,
+        "afterSale": null,
+        "errors": [],
+        "external": []
+      }
+    },
+    {
+      "case": "S3",
+      "state": "cash ¥60, ordinary pistol in the stash; runtime.enter(), then sell it in the arms shop and settle",
+      "before": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 60,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 1
+        },
+        "sale": {
+          "placed": true,
+          "settled": true
+        },
+        "afterSale": {
+          "cash": 210,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "errors": [],
+        "external": []
+      },
+      "after": {
+        "entered": true,
+        "afterEntry": {
+          "cash": 60,
+          "weapon": null,
+          "reliefWeapon": false,
+          "reliefAmmo9": 0,
+          "reliefBandage": 0,
+          "pending": [],
+          "stashPistols": 1
+        },
+        "sale": {
+          "placed": true,
+          "settled": true
+        },
+        "afterSale": {
+          "cash": 210,
+          "weapon": "pistol",
+          "reliefWeapon": true,
+          "reliefAmmo9": 12,
+          "reliefBandage": 1,
+          "pending": [],
+          "stashPistols": 0
+        },
+        "errors": [],
+        "external": []
+      }
+    }
+  ]
+}
