@@ -756,89 +756,6 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
-// Playtest F-04 camera (src/coast-view/camera.ts; the village, the mall and the yard's mall entry share it). Real keys,
-// pointer, Runtime and present; only the clock is fixed, so the check does not depend on the runner's frame rate (CI
-// draws this scene below 10 fps): the ticker is stopped and each h.frame() starts at a 60 Hz vsync plus 0-3 ms of
-// seeded frame-start jitter (performance.now is stubbed for the Runtime's t0; ticker.deltaMS is the vsync delta).
-// `old` is Math.round(camF), the camera before F-04, on the same frames. The negative control is this step against
-// the pre-F-04 build (BINCOV_SAMPLE_HTML), where the player trembles, the arms and pistol shimmer and a flick slides 96;
-// with only host.ts's `follow` reverted, the `loaded` run fails.
-{
-  const { context, page } = await open('?test=1&entry=tabs&sample=village');
-  await deploy(page);
-  await step('V-CAM camera: a walk keeps the player on one screen pixel (walk, sprint, diagonal aim, late frames) with one weapon and arm offset; the ground never steps back and settles within 1.2 s; the aim look-ahead is 24 px, 81.6 with the right button', async () => {
-    await page.evaluate(() => {
-      const h = window.__bincovSample.host, v = h.view; h.app.ticker.stop();
-      let seed = 26, vsync = performance.now();
-      const rnd = () => { let t = (seed += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-      window.__camFrames = (n, jitter = 3) => {
-        const rows = [];
-        for (let i = 0; i < n; i++) {
-          vsync += 1000 / 60; const t0 = vsync + rnd() * jitter;
-          performance.now = () => t0; h.app.ticker.deltaMS = 1000 / 60; h.frame(); delete performance.now;
-          const p = h.lastBatch.frame.player, g = v.actors.get(p.uid), a = g.arms[0];
-          rows.push({ px: p.x, x: g.body.x - v.cam.x, y: g.body.y - v.cam.y, cx: v.cam.x, old: g.body.x - Math.round(v.camF.x), precise: p.state.precise,
-            weapon: `${g.weapon.x - g.body.x},${g.weapon.y - g.body.y}`, arms: g.arms.map(s => `${s.x - g.body.x},${s.y - g.body.y}`).join(' '),
-            gap: Math.hypot(a.x + Math.cos(a.rotation) * a.scale.x - g.weapon.x, a.y + Math.sin(a.rotation) * a.scale.x - g.weapon.y) });
-        }
-        return rows;
-      };
-    });
-    const frames = (n, jitter) => page.evaluate(([n, jitter]) => window.__camFrames(n, jitter), [n, jitter]);
-    // Pointer at the drawn player's chest plus (dx, dy) world px.
-    const pointTo = async (dx, dy) => { const c = await page.evaluate(([dx, dy]) => { const v = window.__bincovSample.host.view, p = v.last.player; return v.worldToClient({ x: p.x + dx, y: p.y - 22 + dy }); }, [dx, dy]); await page.mouse.move(c.x, c.y); };
-    const changes = xs => xs.filter((x, i) => i && x !== xs[i - 1]).length;
-    // A change against the previous change: the tremble's signature (a lag still settling only steps one way).
-    const reversals = xs => { const d = xs.slice(1).map((x, i) => x - xs[i]).filter(Boolean); return d.filter((x, i) => i && Math.sign(x) !== Math.sign(d[i - 1])).length; };
-    const steps = rows => rows.slice(1).map((r, i) => r.cx - rows[i].cx);
-    await page.evaluate(() => window.__bincovSample.driver.weapon('pistol'));
-    const walks = {}; let oldChanges = 0;
-    // `loaded`: frames start up to 12 ms late. Only a camera that follows on the Runtime's clock (host.ts `follow`) keeps
-    // the player still there; following on ticker.deltaMS moves it for any offset (tests/coast-camera.test.ts replay).
-    for (const [name, keys, aim, jitter] of [['walk', ['d'], [250, 0]], ['sprint', ['Shift', 'd'], [250, 0]], ['diagonal', ['d'], [180, -180]], ['loaded', ['Shift', 'd'], [250, 0], 12]]) {
-      await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(...aim); await frames(60);
-      for (const k of keys) await page.keyboard.down(k);
-      const rows = await frames(90, jitter);
-      for (const k of [...keys].reverse()) await page.keyboard.up(k);
-      const after = name === 'walk' ? await frames(75) : [];
-      // 0.7-1.5 s into the walk the follow lag has settled (0.4% of it left).
-      const steady = rows.slice(42), moved = rows.at(-1).px - rows[0].px, back = steps([...rows, ...after]).filter(d => d < 0).length;
-      const w = walks[name] = { moved: +moved.toFixed(1), screen: changes(steady.map(r => r.x)) + changes(steady.map(r => r.y)),
-        reversals: reversals(steady.map(r => r.x)) + reversals(steady.map(r => r.y)), old: changes(steady.map(r => r.old)),
-        weapon: [...new Set(steady.map(r => r.weapon))], arms: [...new Set(steady.map(r => r.arms))], gap: Math.max(...steady.map(r => r.gap)), back };
-      oldChanges += w.old;
-      assert.ok(moved >= 120, `${name}: moved ${moved}`);
-      assert.ok(w.screen <= 2 && w.reversals === 0, `${name}: the player moved ${w.screen} times on screen while walking steadily ${JSON.stringify(w)}`);
-      assert.equal(w.weapon.length, 1, `${name}: weapon offsets from the body ${w.weapon}`);
-      assert.equal(w.arms.length, 1, `${name}: arm offsets from the body ${w.arms}`);
-      assert.ok(w.gap < .01, `${name}: the trigger arm ends ${w.gap} px from the grip`);
-      assert.equal(back, 0, `${name}: the camera stepped back against the walk`);
-      if (after.length) {
-        // Released: the player stands, the camera takes up its lag forward only, and its last step comes within 1.2 s.
-        const last = steps(after).findLastIndex(d => d !== 0) + 1;
-        w.release = { creep: after.at(-1).cx - rows.at(-1).cx, lastStepFrame: last };
-        assert.ok(after.every(r => r.px === after[0].px), 'standing after the release');
-        assert.ok(w.release.creep >= 8 && last <= 72, `release ${JSON.stringify(w.release)}`);
-      }
-    }
-    // In-run control: the old rounding on the same smoothed camera would have trembled.
-    assert.ok(oldChanges >= 10, `Math.round(camF) changes on the same frames: ${oldChanges}`);
-    // Aim look-ahead: pointer 150 px right, then left of the drawn player (the view slides 2 x 24 px); with the right button
-    // held, left then right (2 x 81.6 px, as before F-04).
-    await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(150, 0); await frames(60);
-    const cam = async () => (await frames(1))[0];
-    const right = await cam(); await pointTo(-150, 0); await frames(60); const left = await cam();
-    await page.mouse.down({ button: 'right' }); await frames(60); const preciseLeft = await cam();
-    await pointTo(150, 0); await frames(60); const preciseRight = await cam();
-    await page.mouse.up({ button: 'right' }); await frames(2);
-    const flick = { slide: right.cx - left.cx, preciseSlide: preciseRight.cx - preciseLeft.cx, precise: [right.precise, left.precise, preciseLeft.precise, preciseRight.precise] };
-    assert.deepEqual(flick.precise, [false, false, true, true], 'the right button holds precise aim');
-    assert.ok(Math.abs(flick.slide - 48) <= 2, `default look-ahead slide ${flick.slide}`);
-    assert.ok(Math.abs(flick.preciseSlide - 163.2) <= 3, `right-button look-ahead slide ${flick.preciseSlide}`);
-    return { walks, oldChanges, flick };
-  });
-  await context.close();
-}
 // Round 6 (experience pass): combat feedback, the exit pointer, the stateless atmosphere and the end-of-run outro.
 // Fixtures only place actors, doors and the player; shots, keys and panels are real input.
 if (!group) {
@@ -1176,6 +1093,94 @@ if (!group) {
     await page.screenshot({ path: resolve(out, 'check-map-tide-1280x720.png') });
     await page.keyboard.press('m'); await frames(page, 4);
     return { flooded: info.flooded.length, ...probe, wade, dry, fade };
+  });
+  await context.close();
+}
+// Playtest F-04 camera (src/coast-view/camera.ts; the village, the mall and the yard's mall entry share it). Real keys,
+// pointer, Runtime and present; only the clock is fixed, so the check does not depend on the runner's frame rate (CI
+// draws this scene below 10 fps): the ticker is stopped and each h.frame() starts at a 60 Hz vsync plus 0-3 ms of
+// seeded frame-start jitter (performance.now is stubbed for the Runtime's t0; ticker.deltaMS is the vsync delta).
+// `old` is Math.round(camF), the camera before F-04, on the same frames. The negative control is this step against
+// the pre-F-04 build (BINCOV_SAMPLE_HTML), where the player trembles, the arms and pistol shimmer and a flick slides 96;
+// with only host.ts's `follow` reverted, the `loaded` run fails. It is the last step of the animation group: its
+// hundreds of scripted frames are the heaviest GPU burst in the file, and on CI's software GL the page opened right
+// after it timed out loading (run 38579899496, twice), so nothing in the group follows it.
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=village');
+  await deploy(page);
+  await step('V-CAM camera: a walk keeps the player on one screen pixel (walk, sprint, diagonal aim, late frames) with one weapon and arm offset; the ground never steps back and settles within 1.2 s; the aim look-ahead is 24 px, 81.6 with the right button', async () => {
+    await page.evaluate(() => {
+      const h = window.__bincovSample.host, v = h.view; h.app.ticker.stop();
+      let seed = 26, vsync = performance.now();
+      const rnd = () => { let t = (seed += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      window.__camFrames = (n, jitter = 3) => {
+        const rows = [];
+        for (let i = 0; i < n; i++) {
+          vsync += 1000 / 60; const t0 = vsync + rnd() * jitter;
+          performance.now = () => t0; h.app.ticker.deltaMS = 1000 / 60; h.frame(); delete performance.now;
+          const p = h.lastBatch.frame.player, g = v.actors.get(p.uid), a = g.arms[0];
+          rows.push({ px: p.x, x: g.body.x - v.cam.x, y: g.body.y - v.cam.y, cx: v.cam.x, old: g.body.x - Math.round(v.camF.x), precise: p.state.precise,
+            weapon: `${g.weapon.x - g.body.x},${g.weapon.y - g.body.y}`, arms: g.arms.map(s => `${s.x - g.body.x},${s.y - g.body.y}`).join(' '),
+            gap: Math.hypot(a.x + Math.cos(a.rotation) * a.scale.x - g.weapon.x, a.y + Math.sin(a.rotation) * a.scale.x - g.weapon.y) });
+        }
+        // Finish the batch's GPU work before returning: these frames run back to back without yielding, and on a
+        // software-GL runner the queued work would outlive the step and hold up the next page's WebGL start.
+        h.app.renderer.gl?.finish();
+        return rows;
+      };
+    });
+    const frames = (n, jitter) => page.evaluate(([n, jitter]) => window.__camFrames(n, jitter), [n, jitter]);
+    // Pointer at the drawn player's chest plus (dx, dy) world px.
+    const pointTo = async (dx, dy) => { const c = await page.evaluate(([dx, dy]) => { const v = window.__bincovSample.host.view, p = v.last.player; return v.worldToClient({ x: p.x + dx, y: p.y - 22 + dy }); }, [dx, dy]); await page.mouse.move(c.x, c.y); };
+    const changes = xs => xs.filter((x, i) => i && x !== xs[i - 1]).length;
+    // A change against the previous change: the tremble's signature (a lag still settling only steps one way).
+    const reversals = xs => { const d = xs.slice(1).map((x, i) => x - xs[i]).filter(Boolean); return d.filter((x, i) => i && Math.sign(x) !== Math.sign(d[i - 1])).length; };
+    const steps = rows => rows.slice(1).map((r, i) => r.cx - rows[i].cx);
+    await page.evaluate(() => window.__bincovSample.driver.weapon('pistol'));
+    const walks = {}; let oldChanges = 0;
+    // `loaded`: frames start up to 12 ms late. Only a camera that follows on the Runtime's clock (host.ts `follow`) keeps
+    // the player still there; following on ticker.deltaMS moves it for any offset (tests/coast-camera.test.ts replay).
+    for (const [name, keys, aim, jitter] of [['walk', ['d'], [250, 0]], ['sprint', ['Shift', 'd'], [250, 0]], ['diagonal', ['d'], [180, -180]], ['loaded', ['Shift', 'd'], [250, 0], 12]]) {
+      await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(...aim); await frames(60);
+      for (const k of keys) await page.keyboard.down(k);
+      const rows = await frames(90, jitter);
+      for (const k of [...keys].reverse()) await page.keyboard.up(k);
+      const after = name === 'walk' ? await frames(75) : [];
+      // 0.7-1.5 s into the walk the follow lag has settled (0.4% of it left).
+      const steady = rows.slice(42), moved = rows.at(-1).px - rows[0].px, back = steps([...rows, ...after]).filter(d => d < 0).length;
+      const w = walks[name] = { moved: +moved.toFixed(1), screen: changes(steady.map(r => r.x)) + changes(steady.map(r => r.y)),
+        reversals: reversals(steady.map(r => r.x)) + reversals(steady.map(r => r.y)), old: changes(steady.map(r => r.old)),
+        weapon: [...new Set(steady.map(r => r.weapon))], arms: [...new Set(steady.map(r => r.arms))], gap: Math.max(...steady.map(r => r.gap)), back };
+      oldChanges += w.old;
+      assert.ok(moved >= 120, `${name}: moved ${moved}`);
+      assert.ok(w.screen <= 2 && w.reversals === 0, `${name}: the player moved ${w.screen} times on screen while walking steadily ${JSON.stringify(w)}`);
+      assert.equal(w.weapon.length, 1, `${name}: weapon offsets from the body ${w.weapon}`);
+      assert.equal(w.arms.length, 1, `${name}: arm offsets from the body ${w.arms}`);
+      assert.ok(w.gap < .01, `${name}: the trigger arm ends ${w.gap} px from the grip`);
+      assert.equal(back, 0, `${name}: the camera stepped back against the walk`);
+      if (after.length) {
+        // Released: the player stands, the camera takes up its lag forward only, and its last step comes within 1.2 s.
+        const last = steps(after).findLastIndex(d => d !== 0) + 1;
+        w.release = { creep: after.at(-1).cx - rows.at(-1).cx, lastStepFrame: last };
+        assert.ok(after.every(r => r.px === after[0].px), 'standing after the release');
+        assert.ok(w.release.creep >= 8 && last <= 72, `release ${JSON.stringify(w.release)}`);
+      }
+    }
+    // In-run control: the old rounding on the same smoothed camera would have trembled.
+    assert.ok(oldChanges >= 10, `Math.round(camF) changes on the same frames: ${oldChanges}`);
+    // Aim look-ahead: pointer 150 px right, then left of the drawn player (the view slides 2 x 24 px); with the right button
+    // held, left then right (2 x 81.6 px, as before F-04).
+    await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(150, 0); await frames(60);
+    const cam = async () => (await frames(1))[0];
+    const right = await cam(); await pointTo(-150, 0); await frames(60); const left = await cam();
+    await page.mouse.down({ button: 'right' }); await frames(60); const preciseLeft = await cam();
+    await pointTo(150, 0); await frames(60); const preciseRight = await cam();
+    await page.mouse.up({ button: 'right' }); await frames(2);
+    const flick = { slide: right.cx - left.cx, preciseSlide: preciseRight.cx - preciseLeft.cx, precise: [right.precise, left.precise, preciseLeft.precise, preciseRight.precise] };
+    assert.deepEqual(flick.precise, [false, false, true, true], 'the right button holds precise aim');
+    assert.ok(Math.abs(flick.slide - 48) <= 2, `default look-ahead slide ${flick.slide}`);
+    assert.ok(Math.abs(flick.preciseSlide - 163.2) <= 3, `right-button look-ahead slide ${flick.preciseSlide}`);
+    return { walks, oldChanges, flick };
   });
   await context.close();
 }
