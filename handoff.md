@@ -1,3 +1,41 @@
+## 2026-10-14 · 商场 2.5D：遗留几项处理（#47 / #48，维护者授权合并）
+
+维护者说“按你的想法改，改完就合并”。先对 5 项分别调查，每项再由一名复核者检查方案（决策记录在会话 scratchpad 的 decisions/*.json）。然后各在独立工作区实现，测试都先在旧代码上确认会失败，最后拣回本分支。
+
+- `5bee2df`：床和长椅的接触暗线只画在图的实际宽度下面（`mall-scene.ts` 的 `sideSpan`、`mall-ground.ts` 的 `band`），M14 检查。
+- `161f599`：`structure-guide.ts` 的 `mallCutaway` 永不剖开 sealed 区域（检修核）。二层 F2-01 包着它，原来人在大厅里时 54 块核墙会变成条纹。新增 `mall-view.test.ts` 一项和 M19。
+- `f6e0fb2`：新文件 `src/coast-view/view-scale.ts`，默认整数倍缩放只往远拉（floor(fit) ≥ 0.75·fit 时取整数，否则保持小数倍）。`?crisp=1` 为 near，`?crisp=0` 为原规则。1920×1080 下 2 倍、960×540 世界像素；1280×720、1366×768 不变。新增 `coast-view-scale.test.ts`，M08 加断言，新增 M16b。这改动修订了 10-08“保持 24 格宽”的记录：只拉远，所以那条理由仍成立。
+- `ec1c792`：`lighting.ts` 的 `revealLevel`，揭示后 0.3 秒升到全亮；隐藏时即使 dt=0 也立刻归零；新建的灯直接取当前状态，闪光不渐变；系统“减少动态效果”时同样渐变。新增 `coast-lighting.test.ts` 和 M17（M17 必须是第一页最后一步）。
+- `34e0f3f`、`31c8e9d`：布局三版 `mall-v3` / `mall-layout-3`。
+  - `MALL_V3_LAYOUT` 由二版按替换表生成：两张茶几改 2×1 `coffee-table-wide`，放在 (58,19)、(58,33)；四组露台桌椅改 2×1 `bistro-set`。
+  - 二版字节钉 SHA-256。`resolveExpansionWorld`、runtime 白名单、presentation、session、hideout、station、sample 都认三版；`sampleMallLayout` 返回 3，`sampleSupports` 同时接受 v2 和 v3。
+  - `mallProps` 对所有件居中，投影按图的宽度。
+  - 新增 M18 和 `mall-runtime-compat.mjs` 的三版步骤（main 的包遇到三版会拒绝并保留原始字节）。
+- `a041898`：新文件 `src/coast-view/camera.ts`。
+  - `snapAxis`：从未取整的人物位置取偏移，在 0.75 像素内保持；加在取整后的人物位置上；按取整后的边界夹住；另有一条“不逆着平滑方向走”的规则，防止起步时回退。
+  - `host.ts`：镜头跟随改用 Runtime 的 t0 增量，夹在 0.1 秒以内。
+  - 前探改为 24×17，右键保持 81.6×57.8；武器和手臂按身体取整后的位置算。
+  - 新增 `coast-camera.test.ts`；`coast-sample-test.mjs` 动画组（CI）加 V-CAM，V05 臂差收紧到小于 0.01。
+- 不改：商场墙高（保持 48）、天花板（不加），理由见 README。
+
+另并入 main `5a11e3d`（#52）。审查只开两名审查者（存档与世界数据、画面代码），没有另设逐条验证。
+
+验证：在合并 main `5a11e3d` 后的包上测试：
+- `pnpm test` 435；
+- `test:mall-sample` 22/22；
+- 城中村 `coast-sample-test.mjs` 全量 53/53（含 V-CAM）；
+- `test:issue26-spatial` 通过，`test:issue26-phaser-spatial` 18/18；
+- `test:coast-render-targets` 5/5（`--wide` 也是 5/5）；
+- `test:hud-release` 通过，`test:issue26-inventory` 20/20。
+
+各分支实现时另跑过 `mall-runtime-compat`、`mall-passages`、`mall-landing`、`systems`，以及新测试在旧代码上必须失败的对照，结果都已核对。其余几套在合并后的包上复跑的结果、完整 CI 记录在 PR #48。
+
+遗留：
+- 水产站院子镜头有同样的取整抖动，没改。
+- 帧率低于约 10 帧时，镜头跟随被夹在 0.1 秒，抖动可能回来。
+- 检修核顶面仍是平灰。
+- 按住右键时画面滑动比原来多约 70%；触屏前探也减半。这几项需要真人试玩确认。
+
 ## 2026-10-14 · 水产站：食堂进不了宿舍（fix/station-dorm-door）
 
 维护者截图问食堂到宿舍的路是不是被挡了。从 main `405d40d` 建 `fix/station-dorm-door`。原因：宿舍只有一扇门，在食堂与宿舍共用的 x=17 墙上 (17,4)；食堂的案台 `pots`（`src/station-view/layout.ts`，1×2，阻挡）放在 (16,4)–(16,5)，正好占住门里侧那格。院子的碰撞（`nav.ts` 的 `Collision`，脚框 12×7）在门这一行只有 26 像素可走，全被案台挡住，人从食堂进不去，休息区（站点在宿舍里，半径 44）走不到。实测：站在 (15.8,4.6) 按住向右 1.2 秒原地不动；从案台上方斜着挤会卡在门框边。原来的 `station-browser-test.mjs` H1 只检查宿舍屋顶掀开（人到门口就会掀开），所以一直通过；E1 直接把人放进宿舍，也没走门。
