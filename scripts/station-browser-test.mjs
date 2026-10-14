@@ -583,19 +583,25 @@ try {
   });
 
   // ================= H. playtest fixes and shortcuts =================
-  const sideDoor = async (at, room, sign, walkKey, into) => {
+  // `past`: the tile column the player's feet must cross after walking, so a lifted roof alone does not pass the step.
+  const sideDoor = async (at, room, sign, walkKey, into, past) => {
     await place(...at); await page.waitForTimeout(400);
     const hidden = await page.evaluate(() => window.__station.host.scene.lastHidden);
     assert.ok(hidden.includes(room), `没有揭开 ${room} 的屋顶：${hidden}`);
     const tag = await page.evaluate(() => { const el = document.querySelector('#station-yard').shadowRoot.querySelector('.doortag'); return el && !el.hidden ? el.textContent : null; });
     assert.equal(tag, sign);
-    if (walkKey) { await walkIn([[walkKey, 900]]); assert.ok((await page.evaluate(() => window.__station.host.scene.lastHidden)).includes(into), `没进 ${into}`); }
-    return `揭开 ${hidden.join('、')}；门牌“${tag}”`;
+    let walked = '';
+    if (walkKey) {
+      await walkIn([[walkKey, 900]]);
+      assert.ok((await page.evaluate(() => window.__station.host.scene.lastHidden)).includes(into), `没进 ${into}`);
+      const x = (await st()).player.x / 32; assert.ok(x > past, `没走过门：脚停在 x=${x.toFixed(2)}，应过 ${past}`); walked = `，走到 x=${x.toFixed(2)}`;
+    }
+    return `揭开 ${hidden.join('、')}；门牌“${tag}”${walked}`;
   };
   await step('H1 F01 侧门：发电机房→电台、食堂→宿舍、院子→加工间', async () => {
     await open({ fixture: preset('repaired') });
-    const a = await sideDoor([26.2, 4.6, 0], 'radio', '电台 →', 'd', 'radio'); await shot('H1-side-door-gen');
-    const b = await sideDoor([15.8, 4.6, 0], 'dorm', '宿舍 →', 'd', 'dorm');
+    const a = await sideDoor([26.2, 4.6, 0], 'radio', '电台 →', 'd', 'radio', 28); await shot('H1-side-door-gen');
+    const b = await sideDoor([15.8, 4.6, 0], 'dorm', '宿舍 →', 'd', 'dorm', 18); await shot('H1-side-door-dorm');
     const c = await sideDoor([9.6, 12.6, 4], 'work', '← 加工间', null, null);
     return [a, b, c].join('；');
   });
