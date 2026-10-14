@@ -86,7 +86,7 @@ test('命中反馈看目标本身：目标所在房间未揭示时，弹着点�
   assert.equal(actorShown({ actors: [enemy], revealed: { 'F2-06': true } }, 'enemy-3'), true);
   assert.equal(actorShown({ actors: [{ uid: 'enemy-4', regionId: null }], revealed: {} }, 'enemy-4'), true, 'in no room');
   assert.equal(actorShown({ actors: [], revealed: {} }, 'player'), true);
-  assert.equal(actorShown({ actors: [], revealed: {} }, 'enemy-9'), false, 'an actor the frame does not carry');
+  assert.equal(actorShown({ actors: [], revealed: {} }, 'enemy-9'), true, 'a target the frame does not carry is left to the hit point');
   const calls: string[] = [];
   const out = new Proxy({}, { get: (_, k) => (...a: unknown[]) => { calls.push(String(k)); void a; } });
   const s = new SampleSound(out as never), hurt = { type: 'hurt', cause: 'blow', uid: 'enemy-3', damage: 8, angle: 0, at: contact, stamp: { world: { mapId: 'mall-f2' } } } as never;

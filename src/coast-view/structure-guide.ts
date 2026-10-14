@@ -42,13 +42,14 @@ export function regionAtClosed(map: MapDef, revealed: Readonly<Record<string, bo
 
 /**
  * Whether the Runtime shows an actor now: the player always, anyone else when the room it counts as (fail closed) is
- * revealed or it stands in no room. Hit and kill feedback must check the target this way: a bullet's contact point lies
- * on a circle around the target and can fall outside its room.
+ * revealed or it stands in no room. Hit feedback checks the target this way as well as the hit point: a bullet's contact
+ * lies on a circle around the target and can fall outside its room. A target the frame does not carry is left to the
+ * hit point alone.
  */
 export function actorShown(frame: { actors: readonly { uid: string; regionId: string | null }[]; revealed: Readonly<Record<string, boolean>> }, uid: string): boolean {
   if (uid === 'player') return true;
   const a = frame.actors.find(x => x.uid === uid);
-  return !!a && (a.regionId === null || frame.revealed[a.regionId] === true);
+  return !a || a.regionId === null || frame.revealed[a.regionId] === true;
 }
 
 export const isMall = (map: MapDef) => map.buildings.some(b => b.kind === 'mall');
