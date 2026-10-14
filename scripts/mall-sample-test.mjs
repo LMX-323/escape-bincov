@@ -259,12 +259,15 @@ async function deployTabs(page) {
     await shot(page, 'm07-f1-fresh-cold-1280.png');
     return { first, last };
   });
-  await step('M08 1920x1080: the lobby and the home store', async () => {
+  await step('M08 1920x1080: the lobby and the home store, at the default whole-number scale (2, 960x540 world px)', async () => {
     await page.setViewportSize({ width: 1920, height: 1080 }); await frames(page, 6);
     await place(page, 59.5, 13.6, Math.PI / 2, 'mall-f1'); await frames(page, 30); await shot(page, 'm08-f1-lobby-1920.png');
     await place(page, 62, 27.6, 0, 'mall-f2'); await frames(page, 30); await shot(page, 'm08-f2-home-1920.png');
-    const s = await page.evaluate(() => ({ view: window.__bincovSample.host.view.view, frameMs: window.__bincovSample.host.view.stats.frameMs }));
-    assert.ok(s.view.W >= 1900); return s;
+    const s = await page.evaluate(() => { const v = window.__bincovSample.host.view; return { view: v.view, screenScale: v.screen.scale.x, frameMs: v.stats.frameMs }; });
+    assert.ok(s.view.W >= 1900);
+    // fit is 2.5 here; the default takes 2, so the upscale is 2x nearest and the screen is copied 1:1.
+    assert.deepEqual([s.view.s, s.view.k, s.view.w, s.view.h], [2, 2, 960, 540]); assert.equal(s.screenScale, 1);
+    return s;
   });
   await step('M15 entrances are marked (door guides over the gap, a sill on the floor), headers only on entrances; the run starts on the plaza; the HUD names places', async () => {
     await place(page, 59.5, 22.5, Math.PI, 'mall-f1'); await frames(page, 10);
@@ -350,6 +353,17 @@ async function deployTabs(page) {
     const v = await page.evaluate(() => { const { s, k, w, h } = window.__bincovSample.host.view.view; return { s, k, w, h }; });
     await shot(page, 'm16-crisp-1280.png');
     assert.equal(v.s, 2); assert.equal(v.k, 2); assert.deepEqual([v.w, v.h], [640, 360]);
+    return v;
+  });
+  await context.close();
+}
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=mall&crisp=0', { width: 1920, height: 1080 });
+  await step('M16b ?crisp=0 keeps the old fractional picture (2.5 at 1920x1080, 24 cells wide) for comparison', async () => {
+    await deployTabs(page);
+    const v = await page.evaluate(() => { const view = window.__bincovSample.host.view, { s, k, w, h } = view.view; return { s, k, w, h, screenScale: view.screen.scale.x }; });
+    await shot(page, 'm16b-crisp0-1920.png');
+    assert.deepEqual([v.s, v.k, v.w, v.h], [2.5, 3, 768, 432]); assert.equal(v.screenScale, 2.5 / 3);
     return v;
   });
   await context.close();

@@ -20,6 +20,7 @@ import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { MALL_V2_REGIONS } from '../mall-layout-v2';
 import { releaseManagedSlots } from './renderer-lifetime';
+import { viewScale, type ViewScaleMode } from './view-scale';
 
 export const AIM_H = 22;
 /** Mall floors name a stair only within this distance of the player (world px, eight cells). */
@@ -77,11 +78,8 @@ export interface ViewOptions {
   mallArt: MallArt | null;
   /** Drizzle on the coast map (default) or a dry overcast; reduced motion keeps only a still mist. */
   weather: WeatherKind;
-  /**
-   * Whole-number scaling only (?crisp=1): every world pixel becomes the same number of screen pixels, so nothing shimmers
-   * while the camera moves, at the cost of a view width that follows the window. Off by default.
-   */
-  crisp?: boolean;
+  /** Device px per world px (view-scale.ts): default 'whole'; ?crisp=1 'near' (closer whole number); ?crisp=0 'fit' (the old fractional picture). */
+  scale?: ViewScaleMode;
 }
 
 export class CoastView {
@@ -166,10 +164,8 @@ export class CoastView {
     const canvas = this.app.canvas, rect = (canvas.parentElement ?? canvas).getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const W = Math.max(1, Math.round((rect.width || innerWidth) * dpr)), H = Math.max(1, Math.round((rect.height || innerHeight) * dpr));
-    const tw = this.opts.viewTiles * 32, th = this.opts.viewTiles === 28 ? 466 : 400;
-    let s = Math.max(1, Math.min(W / tw, H / th));
-    if (this.opts.crisp) s = Math.max(1, Math.round(s));
-    else if (Math.abs(s - Math.round(s)) < .08) s = Math.round(s);
+    const s = viewScale(W, H, this.opts.viewTiles, this.opts.scale);
+    // At a whole-number s, k = s and the screen is copied 1:1.
     const k = Math.ceil(s), w = Math.ceil(W / s), h = Math.ceil(H / s);
     this.view = { w, h, s, k, dpr, W, H };
     this.app.renderer.resize(W, H);
