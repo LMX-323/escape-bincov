@@ -83,11 +83,14 @@ export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: stri
 const checkoutNote = '成交后自动放入仓库';
 /** The yard shop sells from the stash only; `outside` counts sellable stacks still in the bag or safe. */
 const stashNote = (outside: number) => `整组出售${outside > 0 ? ` · 背包与安全箱 ${outside} 件需先入库` : ''}`;
-export function shopCompactHtml(c: CartView, cell: number, selected: string | null, cash: number, mode: 'buy' | 'sell', outside = 0) {
+export function shopCompactHtml(c: CartView, cell: number, sel: { src: string; uid: string } | null, cash: number, mode: 'buy' | 'sell', outside = 0) {
   const [a, b] = mode === 'buy' ? [['商人物品', c.catalog, 'merchant'], ['待买', c.buy, 'buy']] as const : [['仓库', c.stash, 'stash'], ['待卖', c.sell, 'sell']] as const;
+  const selected = sel?.uid ?? null;
   // Compact layouts have no details panel: the pane holding the selected item shows its price in its one-line header.
+  // Match source and uid like the desktop details: a quick move keeps the uid but leaves the old source selected,
+  // and the destination pane must keep its running total.
   const picked = (inv: D.Inventory, src: ShopSource) => {
-    const it = selected ? inv.items.find(i => i.uid === selected) : undefined;
+    const it = sel?.src === src ? inv.items.find(i => i.uid === sel.uid) : undefined;
     return it ? `${esc(D.ITEMS[it.id].short || D.ITEMS[it.id].name)} · ${quoteText(shopQuote(src, it))}` : null;
   };
   return `<div class="cshop">

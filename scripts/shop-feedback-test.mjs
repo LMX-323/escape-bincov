@@ -298,5 +298,25 @@ try {
     assert.equal(await raw(), before, 'selection never writes the save');
     return { rows };
   });
+  // A quick move keeps the uid but the selection still names the old pane: neither header may turn into that item's price.
+  for (const size of [[844, 390], [390, 844]]) await check(`F03 C4 ${size.join('x')} compact headers keep totals after a quick move`, async () => {
+    await open(size, 'goods');
+    const touch = size[0] < 500, before = await raw(), rows = [];
+    const headers = () => page.evaluate(() => [...document.querySelector('#station-yard').shadowRoot.querySelectorAll('.cshop .pane h3 small')].map(e => e.textContent));
+    await (touch ? yard('[data-act="mode:sell"]').tap() : yard('[data-act="mode:sell"]').click());
+    for (const [from, to, total] of [['stash', 'sell', '¥ 240'], ['sell', 'stash', '¥ 0']]) {
+      const target = await itemTarget(from, 'st-watch');
+      if (touch) await doubleTap(target); else await target.item.dblclick();
+      await yard(`[data-grid="${to}"] [data-uid="st-watch"]`).waitFor();
+      const shown = await headers(), sell = await page.evaluate(() => window.__station.host.ui.shop.view().sell.items.map(i => i.uid));
+      assert.deepEqual(sell, to === 'sell' ? ['st-watch'] : [], `${from} -> ${to} moved the watch`);
+      rows.push({ from, to, shown, expected: ['整组出售 · 背包与安全箱 1 件需先入库', total] });
+      if (to === 'sell') await shot(`F03-C4-${size.join('x')}-quick-sell`);
+    }
+    // Both directions are compared at once so a failure shows every header that went wrong.
+    assert.deepEqual(rows.map(r => r.shown), rows.map(r => r.expected), 'quick moves keep the stash note and the sell total');
+    assert.equal(await raw(), before, 'quick moves only change the cart, never the save');
+    return { rows };
+  });
   assert.ok(report.checks.length, '--only must match at least one check');
 } finally { try { await throttleSession?.detach(); } finally { await context?.close(); await browser.close(); } }
