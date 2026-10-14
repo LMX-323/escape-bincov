@@ -17,7 +17,7 @@ const pixiEvents = page => page.evaluate(source => (0,eval)('('+source+')')(wind
 const out = resolve(process.env.BINCOV_SAMPLE_OUT || 'test-results/coast-sample'); await mkdir(out, { recursive: true });
 const htmlPath = resolve(process.env.BINCOV_SAMPLE_HTML || 'dist/index.html'), url = pathToFileURL(htmlPath).href;
 const buildSHA256 = createHash('sha256').update(await readFile(htmlPath)).digest('hex');
-// --group=animation keeps the complete V03/V04 death flow and V10/V11 feedback/tide flow (six checks).
+// --group=animation keeps the complete V03/V04 death flow, the F08 gait check and V10/V11 feedback/tide flow (seven checks).
 const group = process.argv.find(a => a.startsWith('--group='))?.slice(8);
 assert.ok(group === undefined || group === 'animation', 'unknown test group');
 const report = { startedAt: new Date().toISOString(), build: url, buildSHA256, seed: '42', group: group ?? 'all', steps: [], errors: [], requests: [] };
@@ -654,6 +654,104 @@ for (const art of ['sol', 'placeholder']) {
     assert.equal(loaded.find(d => d.uid === indoor).shown, true, 'the corpse by the stairs is on screen after the load');
     noFall(resumed, 'resumed after the load'); await savable();
     return { hidden: { frames: hiddenRows.length, changed: px.changed }, reveal: revealRows.length, indoorFallFrames: indoorRows.filter(r => !r.hasCorpse).length, stairs: stairRows.length, loaded, resumed: resumed.length };
+  });
+  await context.close();
+}
+// Issue #26 F08 gait, aiming east. The view is driven with copies of the live batch whose player carries the aim and
+// velocity under test (the V02 pattern: ticker stopped, explicit 0.05 s view delta), so the Runtime, input and save never
+// see the fixture. The negative control is this same step run against the pre-F08 build (BINCOV_SAMPLE_HTML pointing
+// at the e9cbaa5 dist/index.html), where it must fail; nothing in this step re-derives the old rule from the new build.
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=village');
+  await deploy(page);
+  await step('F08 gait: backpedalling plays short reversed steps 3,0,1,0 on the aim\'s body; strafing turns the body 45 deg toward the movement (S: SE, N: NE); forward, standing and a fall are unchanged', async () => {
+    await page.evaluate(() => window.__bincovSample.driver.weapon('carbine'));
+    await place(page, 640, 456, 0, 'coast'); await page.mouse.move(640 + 220, 360); await frames(page, 12);
+    const NAMES = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+    const CASES = { forward: [112, 0], backpedal: [-112, 0], strafeS: [0, 112], strafeN: [0, -112] };
+    const result = {};
+    await page.evaluate(() => { window.__gaitCrops = []; });
+    for (const [name, [vx, vy]] of Object.entries(CASES)) {
+      result[name] = await page.evaluate(([name, vx, vy]) => {
+        const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
+        const textures = []; for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) textures.push([d, f, v.tex.actor('player', d, f)]);
+        const read = () => { const t = textures.find(e => e[2] === g.body.texture); return t ? [t[0], t[1]] : [-1, -1]; };
+        const batch = (vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, vx, vy } } });
+        const cam = { ...v.camF }, rows = [], k = v.view.k;
+        // A walk starting from a standstill, as the view meets it after any stop (sense is the new field; harmless before).
+        v.camF = { ...cam }; v.shake = 0; v.present(batch(0, 0), 0); g.walk = 0; g.sense = 1;
+        for (let i = 0; i < 16; i++) {
+          v.camF = { ...cam }; v.shake = 0; v.present(batch(vx, vy), .05); h.app.render();
+          const [dir, frame] = read(), walk = g.walk, phase = Math.floor(walk);
+          rows.push({ walk: +walk.toFixed(3), dir, frame });
+          if (rows.length === 1 || phase !== Math.floor(rows.at(-2).walk)) {
+            if (window.__gaitCrops.filter(c => c.name === name).length < 4) {
+              const c = document.createElement('canvas'); c.width = c.height = 216; const cg = c.getContext('2d'); cg.imageSmoothingEnabled = false;
+              cg.drawImage(h.app.renderer.extract.canvas(v.upRT), Math.round((p.x - 36 - v.cam.x) * k), Math.round((p.y - 60 - v.cam.y) * k), 72 * k, 72 * k, 0, 0, 216, 216);
+              window.__gaitCrops.push({ name, dir, frame, canvas: c });
+            }
+          }
+        }
+        return rows;
+      }, [name, vx, vy]);
+      // The last frame is still on the canvas (ticker stopped): a full 1280x720 view of the gait.
+      if (name === 'backpedal' || name === 'strafeS') await page.screenshot({ path: resolve(out, `gait-${name}-1280x720.png`) });
+      // Standing again: the body returns to the aim with the idle frame.
+      result[name + 'Stop'] = await page.evaluate(() => {
+        const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid);
+        v.present({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, vx: 0, vy: 0 } } }, .05);
+        let found = [-1, -1]; for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) if (v.tex.actor('player', d, f) === g.body.texture) found = [d, f];
+        h.app.ticker.start();
+        return { dir: found[0], frame: found[1], sense: g.sense ?? null };
+      });
+    }
+    // Killed mid-strafe: the death batch still carries the velocity of the step the player died in. The fall must start
+    // on the aim's body (E), as before F08, not on the hip-turned SE body for one frame and then jump to E.
+    const killed = await page.evaluate(() => {
+      const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
+      const read = () => { for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) if (v.tex.actor('player', d, f) === g.body.texture) return [d, f]; return [-1, -1]; };
+      const batch = (alive, vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, alive, vx, vy } } });
+      const cam = { ...v.camF }, rows = [];
+      const show = (alive, vx, vy) => { v.camF = { ...cam }; v.shake = 0; v.present(batch(alive, vx, vy), .05); rows.push({ alive, dir: read()[0], frame: read()[1], deathT: +g.deathT.toFixed(3) }); };
+      v.camF = { ...cam }; v.present(batch(true, 0, 0), 0); g.walk = 0; g.sense = 1;
+      for (let i = 0; i < 4; i++) show(true, 0, 112);
+      // The fall starts as the death event starts it in present() (deathT just above 0), still inside FALL_T for both frames.
+      g.deathT = .0001; show(false, 0, 112); show(false, 0, 0);
+      // Back to the live fixture: no fall, standing on the aim.
+      g.deathT = 0; v.camF = { ...cam }; v.present(batch(true, 0, 0), .05); h.app.ticker.start();
+      return rows;
+    });
+    const strip = await page.evaluate(([names]) => {
+      const crops = window.__gaitCrops, order = ['forward', 'backpedal', 'strafeS', 'strafeN'];
+      const label = { forward: 'forward (move E)', backpedal: 'backpedal (move W)', strafeS: 'strafe (move S)', strafeN: 'strafe (move N)' };
+      const s = document.createElement('canvas'); s.width = 170 + 4 * 216; s.height = 28 + order.length * 240; const g = s.getContext('2d'); g.imageSmoothingEnabled = false;
+      g.fillStyle = '#111'; g.fillRect(0, 0, s.width, s.height); g.fillStyle = '#fff'; g.font = '13px monospace';
+      g.fillText('aim E (0 rad); one crop per walk phase, 0.05 s view steps at 112 px/s', 6, 18);
+      order.forEach((n, r) => {
+        g.fillText(label[n], 6, 28 + r * 240 + 120);
+        crops.filter(c => c.name === n).forEach((c, i) => { g.drawImage(c.canvas, 170 + i * 216, 28 + r * 240 + 20); g.fillText(`body ${names[c.dir] ?? '?'} f${c.frame}`, 176 + i * 216, 28 + r * 240 + 14); });
+      });
+      delete window.__gaitCrops;
+      return s.toDataURL();
+    }, [NAMES]);
+    await writeFile(resolve(out, 'gait-strip.png'), Buffer.from(strip.split(',')[1], 'base64'));
+    const runs = rows => rows.map(r => r.frame).filter((f, i, a) => i === 0 || f !== a[i - 1]);
+    const back = [3, 0, 1, 0], phase = r => Math.floor(r.walk);
+    const summary = Object.fromEntries(Object.keys(CASES).map(n => [n, { dirs: [...new Set(result[n].map(r => NAMES[r.dir] ?? r.dir))], frames: runs(result[n]) }]));
+    // Forward: the body stays E and plays the 1-4 cycle, unchanged from before F08.
+    assert.ok(result.forward.every(r => r.dir === 0 && r.frame === 1 + phase(r)), `forward ${JSON.stringify(result.forward)}`);
+    assert.deepEqual(runs(result.forward), [1, 2, 3, 4, 1]);
+    // Backpedal: the body stays on the aim (E) and plays the short reversed steps.
+    assert.ok(result.backpedal.every(r => r.dir === 0 && r.frame === back[phase(r)]), `backpedal ${JSON.stringify(result.backpedal)}`);
+    assert.deepEqual(runs(result.backpedal), [3, 0, 1, 0, 3]);
+    // Strafes: the hips turn one sector toward the movement, with a forward cycle.
+    assert.ok(result.strafeS.every(r => r.dir === 1 && r.frame === 1 + phase(r)), `strafe S ${JSON.stringify(result.strafeS)}`);
+    assert.ok(result.strafeN.every(r => r.dir === 7 && r.frame === 1 + phase(r)), `strafe N ${JSON.stringify(result.strafeN)}`);
+    for (const n of Object.keys(CASES)) assert.deepEqual(result[n + 'Stop'], { dir: 0, frame: 0, sense: 1 }, `${n}: standing again`);
+    assert.ok(killed.slice(0, 4).every(r => r.alive && r.dir === 1), `strafing before the death: SE body ${JSON.stringify(killed)}`);
+    assert.deepEqual(killed.slice(4).map(r => [r.alive, r.dir, r.frame, r.deathT > 0 && r.deathT < .16]), [[false, 0, 0, true], [false, 0, 0, true]], `killed mid-strafe: the fall stays on the aim's body ${JSON.stringify(killed)}`);
+    summary.killedMidStrafe = killed.map(r => `${r.alive ? 'alive' : 'falling'} ${NAMES[r.dir] ?? r.dir} f${r.frame}`);
+    return summary;
   });
   await context.close();
 }

@@ -69,7 +69,9 @@ export class InputState {
         y: movingStick ? movingStick.y : Number(this.keys.has('s')) - Number(this.keys.has('w')),
         sprint: movingStick ? movingStick.distance >= .9 : this.keys.has('shift'),
       },
-      aim: this.touch ? (aimingStick ? Math.atan2(aimingStick.y, aimingStick.x) : null) : aimFromPointer(this.pointer.x, this.pointer.y),
+      // Touch follows the twin-stick convention: with the aim stick idle the body faces where the move stick walks
+      // (issue #26 F08). Firing below still needs the aim stick.
+      aim: this.touch ? (aimingStick ? Math.atan2(aimingStick.y, aimingStick.x) : movingStick ? Math.atan2(movingStick.y, movingStick.x) : null) : aimFromPointer(this.pointer.x, this.pointer.y),
       precise: !aimingStick && this.precise,
       firePressed: this.pressed,
       fireHeld: !!aimingStick && aimingStick.distance >= .62,
