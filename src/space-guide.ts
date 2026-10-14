@@ -37,7 +37,10 @@ export function roofedRegions(context: SpaceContext, player: Point): Region[] {
 
 export const underRoof = (roofs: readonly Rect[], p: Point): boolean => roofs.some(r => rectContains(r, p));
 export const rectsOverlap = (a: Rect, b: Rect): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-/** Whether any part of a rectangle lies under a roof, so a label there must draw above the roof to stay readable. */
+/**
+ * Whether any part of a rectangle lies under a roof. A stair label always stays on the floor layer; when it touches
+ * a roof, a copy clipped to the roofed regions keeps the covered part readable above the roof.
+ */
 export const touchesRoof = (roofs: readonly Rect[], rect: Rect): boolean => roofs.some(r => rectsOverlap(r, rect));
 
 /**

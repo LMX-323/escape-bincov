@@ -4,7 +4,7 @@ import { BUILDING_WORLD } from '../src/building-world';
 import { MALL_WORLD } from '../src/mall-world';
 import { corridor, type SpaceContext, type SpaceDefinition } from '../src/spatial';
 import type { Point } from '../src/world';
-import { doorGuide, doorWall, entryKind, entryShown, floorIndoors, roofedRegions, stairLabelPlacement, touchesRoof, type Rect } from '../src/space-guide';
+import { doorGuide, doorWall, entryKind, entryShown, floorIndoors, roofedRegions, stairLabelPlacement, touchesRoof, underRoof, type Rect } from '../src/space-guide';
 
 const maps = { ...BUILDING_WORLD.maps, ...MALL_WORLD.maps };
 const context = (map: SpaceDefinition, open = false): SpaceContext => ({ definition: map, doors: Object.fromEntries(map.doors.map(d => [d.id, open])), highTide: false });
@@ -107,7 +107,7 @@ test('stair labels avoid region names, platforms and each other, below first', (
     assert.ok(left.x + left.w <= player.x, 'never covers a player standing on the platform');
 });
 
-test('touchesRoof: a label goes above the roof only when part of it lies under one; shared edges do not count', () => {
+test('touchesRoof: a label gets its clipped copy above the roof only when part of it lies under one; shared edges do not count', () => {
     const roof: Rect = { x: 256, y: 96, w: 96, h: 128 };
     assert.equal(touchesRoof([roof], { x: 224, y: 72, w: 60, h: 24 }), false, 'ends on the roof edge');
     assert.equal(touchesRoof([roof], { x: 224, y: 72, w: 60, h: 25 }), true, 'one pixel row under the roof');
@@ -116,4 +116,18 @@ test('touchesRoof: a label goes above the roof only when part of it lies under o
     const map = BUILDING_WORLD.maps['resident-f2'], roofs = roofedRegions(context(map), { x: 304, y: 80 });
     assert.equal(touchesRoof(roofs, { x: 224, y: 72, w: 60, h: 16 }), false);
     assert.equal(touchesRoof(roofs, { x: 274, y: 100, w: 60, h: 16 }), true, 'below the platform it would lie on the east room roof');
+});
+
+test('touchesRoof: from the upper hallway the landing label straddles the storage roof edge over uncovered floor', () => {
+    // Player in the hallway west of the storage room: the room is roofed, the landing label (left of the platform)
+    // crosses its west edge x=256, and the floor where an enemy can stand under the label's left part is uncovered.
+    // The label must therefore stay on the floor layer there; only its clipped copy rises above the roof.
+    const map = BUILDING_WORLD.maps['resident-f2'], label: Rect = { x: 226, y: 72, w: 58, h: 16 };
+    for (const player of [{ x: 200, y: 64 }, { x: 176, y: 80 }]) {
+        const roofs = roofedRegions(context(map), player);
+        assert.ok(roofs.some(r => r.name === '储藏室'), `storage is roofed from ${player.x},${player.y}`);
+        assert.equal(touchesRoof(roofs, label), true);
+        assert.equal(underRoof(roofs, { x: 240, y: 80 }), false, 'the strip under the label left of x=256 is uncovered');
+        assert.equal(underRoof(roofs, { x: 270, y: 80 }), true);
+    }
 });
