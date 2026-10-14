@@ -19,6 +19,31 @@ export function createCart(save: D.SaveDataV1, merchant: Merchant, rpg = false):
     return { merchant, original: JSON.stringify(save.stash), catalog, buy: D.createInventory(4, 3), sell: D.createInventory(4, 3), stash: structuredClone(save.stash) };
 }
 export const shopInventory = (cart: ShopCart, source: ShopSource) => source === 'merchant' ? cart.catalog : cart[source];
+/** The reason a cell gives when it only lacks room; quick moves replace it with their own "area is full" message. */
+export const SHOP_SPACE_MESSAGE = '请选空格，待买按包、待卖按整组放置。';
+export type ShopQuote = { side: 'buy' | 'sell'; total: number | null };
+/**
+ * Price on the side an item trades, with the same numbers cartTotals uses: merchant and buy-list packs cost buy × qty,
+ * stash and sell-list stacks earn sell × qty. A null total means the item cannot be sold (relief or no sale value).
+ */
+export function shopQuote(source: ShopSource, item: Pick<D.Item, 'id' | 'qty' | 'relief'>): ShopQuote {
+    const def = D.ITEMS[item.id];
+    if (source === 'merchant' || source === 'buy') return { side: 'buy', total: def.buy * item.qty };
+    return { side: 'sell', total: item.relief || def.sell <= 0 ? null : def.sell * item.qty };
+}
+/**
+ * Row-major scan for a quick move's first accepted cell. When no cell accepts, the first reason that is not about room
+ * (relief goods, a changed stash) is returned so the player sees why; a null reason means only room was missing.
+ */
+export function firstShopCell(w: number, h: number, check: (x: number, y: number) => string | null): { x: number; y: number } | { reason: string | null } {
+    let reason: string | null = null;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const error = check(x, y);
+        if (!error) return { x, y };
+        if (reason === null && error !== SHOP_SPACE_MESSAGE) reason = error;
+    }
+    return { reason };
+}
 const positions = (inv: D.Inventory) => JSON.stringify({ ...inv, items: [...inv.items].sort((a, b) => a.uid.localeCompare(b.uid)) });
 export const cartDirty = (cart: ShopCart) => !!(cart.buy.items.length || cart.sell.items.length || positions(cart.stash) !== positions(JSON.parse(cart.original)));
 export function shopPlacementError(cart: ShopCart, from: ShopSource, to: ShopSource, uid: string, x: number, y: number): string | null {
@@ -27,7 +52,7 @@ export function shopPlacementError(cart: ShopCart, from: ShopSource, to: ShopSou
     if (from === 'buy' && to === 'merchant') return null;
     if (!((from === 'merchant' && to === 'buy') || (from === 'stash' && to === 'sell') || (from === 'sell' && to === 'stash') || (from === to && from !== 'merchant'))) return '先放入待买或待卖区，再统一结算。';
     if (to === 'sell' && (item.relief || D.ITEMS[item.id].sell <= 0)) return '这件物品不可出售。';
-    return D.fits(shopInventory(cart, to), item.id, x, y, from === to ? uid : undefined, !!item.rotated) ? null : '请选空格，待买按包、待卖按整组放置。';
+    return D.fits(shopInventory(cart, to), item.id, x, y, from === to ? uid : undefined, !!item.rotated) ? null : SHOP_SPACE_MESSAGE;
 }
 /** Only edits the disposable cart. Owned goods and money remain untouched. */
 export function moveShopItem(cart: ShopCart, from: ShopSource, to: ShopSource, uid: string, x: number, y: number): boolean {

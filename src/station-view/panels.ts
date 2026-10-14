@@ -1,6 +1,7 @@
 import * as D from '../domain';
 import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
 import { RECIPES } from '../expansion-state';
+import { shopQuote, type ShopQuote, type ShopSource } from '../shop';
 import { itemArt } from './items';
 import { esc, gridHtml } from './grid';
 
@@ -12,9 +13,16 @@ const total = (s: HideoutSnapshot, id: string) => [s.profile.stash, s.profile.ba
 /** Supplies the station can use on the spot (the Runtime decides whether each one does anything now). */
 export const SUPPLIES = ['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet'];
 
-export function detailsHtml(item: D.Item | null, source: string | null, mode: 'gear' | 'shop') {
-  if (!item) return `<aside class="details empty"><b>选中一件物品</b><span>单击查看 · 拖动整理${mode === 'gear' ? ' · 双击在仓库与背包间转移 · 拖动时按 R 旋转' : ' · 拖到待买或待卖，再统一结算'}</span></aside>`;
+/** Shop price text on the item's trading side: 买入 / 卖出 with the whole pack or stack, or 不可出售. */
+const quoteText = (q: ShopQuote) => q.total === null ? '不可出售' : `${q.side === 'buy' ? '买入' : '卖出'} ¥ ${q.total}`;
+
+/** `uses` lists open quests that still need this item (shop mode); it joins the kind line so the height stays fixed. */
+export function detailsHtml(item: D.Item | null, source: string | null, mode: 'gear' | 'shop', uses: string[] = []) {
+  if (!item) return `<aside class="details empty"><b>选中一件物品</b><span>单击查看${mode === 'gear' ? ' · 拖动整理 · 双击在仓库与背包间转移 · 拖动时按 R 旋转' : ' · 双击加入或放回 · 拖到待买或待卖，再统一结算'}</span></aside>`;
   const d = D.ITEMS[item.id], size = D.itemSize(item);
+  const quote = mode === 'shop' ? shopQuote(source as ShopSource, item) : null;
+  const usesText = uses.length ? ` · 任务用途：${esc(uses.join('、'))}` : '';
+  const price = quote ? `<dt>${quote.side === 'buy' ? '买入' : '卖出'}</dt><dd>${quote.total === null ? '不可出售' : `¥ ${quote.total}`}</dd>` : `<dt>售价</dt><dd>${item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd>`;
   const gun = D.WEAPONS[item.id] && item.id !== 'knife';
   const acts = mode === 'gear' ? [
     gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
@@ -25,7 +33,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
     d.w !== d.h ? btn('旋转', 'rotate') : '',
     item.qty > 1 ? btn('拆分一半', 'split') : '',
   ].join('') : '';
-  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>${mode === 'shop' ? '买价' : '售价'}</dt><dd>${mode === 'shop' ? (d.buy ? `¥ ${d.buy}` : '—') : item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd></div></dl><div class="dacts">${acts}</div>${mode === 'gear' && gun && source === 'safe' ? '<p class="equip-note">安全箱里的枪械请先移回背包，再装备主武器。</p>' : ''}</aside>`;
+  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small${usesText ? ` title="${usesText.slice(3)}"` : ''}>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}${usesText}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div>${price}</div></dl><div class="dacts">${acts}</div>${mode === 'gear' && gun && source === 'safe' ? '<p class="equip-note">安全箱里的枪械请先移回背包，再装备主武器。</p>' : ''}</aside>`;
 }
 
 const charmRow = (charm: string | null) => charm ? `<div class="charm">${icon(charm, 20)}<span>护符 · ${esc(D.ITEMS[charm]?.name ?? charm)}</span>${btn('取下', 'charm-unequip', 'mini')}</div>` : '';
@@ -73,22 +81,32 @@ export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: stri
 
 /** Bought goods go to the stash by the existing rules; the buy grid is a shopping list (CartView.placement). */
 const checkoutNote = '成交后自动放入仓库';
-export function shopCompactHtml(c: CartView, cell: number, selected: string | null, cash: number, mode: 'buy' | 'sell') {
+/** The yard shop sells from the stash only; `outside` counts sellable stacks still in the bag or safe. */
+const stashNote = (outside: number) => `整组出售${outside > 0 ? ` · 背包与安全箱 ${outside} 件需先入库` : ''}`;
+export function shopCompactHtml(c: CartView, cell: number, sel: { src: string; uid: string } | null, cash: number, mode: 'buy' | 'sell', outside = 0) {
   const [a, b] = mode === 'buy' ? [['商人物品', c.catalog, 'merchant'], ['待买', c.buy, 'buy']] as const : [['仓库', c.stash, 'stash'], ['待卖', c.sell, 'sell']] as const;
+  const selected = sel?.uid ?? null;
+  // Compact layouts have no details panel: the pane holding the selected item shows its price in its one-line header.
+  // Match source and uid like the desktop details: a quick move keeps the uid but leaves the old source selected,
+  // and the destination pane must keep its running total.
+  const picked = (inv: D.Inventory, src: ShopSource) => {
+    const it = sel?.src === src ? inv.items.find(i => i.uid === sel.uid) : undefined;
+    return it ? `${esc(D.ITEMS[it.id].short || D.ITEMS[it.id].name)} · ${quoteText(shopQuote(src, it))}` : null;
+  };
   return `<div class="cshop">
     <nav class="seg tabs2">${btn(`买入 <small>${c.buy.items.length} 件 · ¥ ${c.totals.buy}</small>`, 'mode:buy', mode === 'buy' ? 'on' : '')}${btn(`卖出 <small>${c.sell.items.length} 件 · ¥ ${c.totals.sell}</small>`, 'mode:sell', mode === 'sell' ? 'on' : '')}</nav>
     <div class="panes">
-      <section class="pane"><h3>${a[0]} <small>${mode === 'buy' ? '按包购买' : '整组出售'}</small></h3><div class="pane-scroll">${gridHtml(a[1], a[2], cell, selected)}</div></section>
-      <section class="pane"><h3>${b[0]} <small>¥ ${mode === 'buy' ? c.totals.buy : c.totals.sell}${mode === 'buy' ? ` · ${checkoutNote}` : ''}</small></h3><div class="pane-scroll">${gridHtml(b[1], b[2], cell, selected, { empty: '拖到这里' })}</div></section>
+      <section class="pane"><h3>${a[0]} <small>${picked(a[1], a[2]) ?? (mode === 'buy' ? '按包购买' : stashNote(outside))}</small></h3><div class="pane-scroll">${gridHtml(a[1], a[2], cell, selected)}</div></section>
+      <section class="pane"><h3>${b[0]} <small>${picked(b[1], b[2]) ?? `¥ ${mode === 'buy' ? c.totals.buy : c.totals.sell}${mode === 'buy' ? ` · ${checkoutNote}` : ''}`}</small></h3><div class="pane-scroll">${gridHtml(b[1], b[2], cell, selected, { empty: '拖到这里' })}</div></section>
     </div>
     <footer class="checkout compact"><div class="sum"><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后 ¥ ${(cash - c.totals.net).toLocaleString()}</small></div>${c.stale ? '<p class="warn">仓库已改变，请刷新清单后重新选择物品。</p>' : ''}${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn(c.stale ? '刷新清单' : '清空', 'cart-reset', 'mini', c.dirty || c.stale ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty && !c.stale ? '' : 'disabled')}</div></footer></div>`;
 }
 
-export function shopHtml(c: CartView, cell: number, selected: string | null, cash: number) {
+export function shopHtml(c: CartView, cell: number, selected: string | null, cash: number, outside = 0) {
   return `<div class="shop">
     <section><h3>商人物品 <small>按包购买</small></h3>${gridHtml(c.catalog, 'merchant', cell, selected)}</section>
     <section class="buffer"><h3>待买 <small>¥ ${c.totals.buy}</small></h3>${gridHtml(c.buy, 'buy', cell, selected, { empty: '拖到这里' })}<h3>待卖 <small>¥ ${c.totals.sell}</small></h3>${gridHtml(c.sell, 'sell', cell, selected, { empty: '拖到这里' })}</section>
-    <section><h3>仓库 <small>整组出售</small></h3>${gridHtml(c.stash, 'stash', cell, selected)}</section>
+    <section><h3>仓库 <small>${stashNote(outside)}</small></h3>${gridHtml(c.stash, 'stash', cell, selected)}</section>
   </div>
   <footer class="checkout"><div class="sum"><span>待买 ¥ ${c.totals.buy}</span><span>待卖 ¥ ${c.totals.sell}</span><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后现金 ¥ ${(cash - c.totals.net).toLocaleString()} · ${checkoutNote}</small></div>${c.stale ? '<p class="warn">仓库已改变，请刷新清单后重新选择物品。</p>' : ''}${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn(c.stale ? '刷新清单' : '清空', 'cart-reset', '', c.dirty || c.stale ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty && !c.stale ? '' : 'disabled')}</div></footer>`;
 }
