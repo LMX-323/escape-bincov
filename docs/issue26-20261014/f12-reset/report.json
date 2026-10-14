@@ -1,9 +1,9 @@
 {
   "build": "dist/index.html",
-  "sha256": "46f5dc43757bcb8519918c870c3faf7c64c93f62309045a16b638d5ef355ec07",
+  "sha256": "6a375bb5957f26e159c710313ceab91fb910a6e33580a3ca392f3b6b22065630",
   "browser": "155.0.8059.40",
-  "startedAt": "2026-10-14T04:11:45.264Z",
-  "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.",
+  "startedAt": "2026-10-14T05:41:30.962Z",
+  "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons; S3 moves it forward by six seconds while the restore confirmation is open, so one real checkpoint commits before the player confirms.",
   "steps": [
     {
       "name": "S1 1280x720 yard menu offers 清空存档，重新开始 and asks for confirmation",
@@ -36,7 +36,7 @@
       "name": "S2 1280x720 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T04-11-48-445Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T05-41-34-073Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -79,7 +79,7 @@
       }
     },
     {
-      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "passed",
       "detail": {
         "restored": {
@@ -99,7 +99,7 @@
             "blackmarket": 0
           },
           "strength": 14,
-          "revision": 6
+          "revision": 7
         }
       }
     },
@@ -134,7 +134,7 @@
       "name": "S2 1920x1080 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T04-11-54-936Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T05-41-40-442Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -177,7 +177,7 @@
       }
     },
     {
-      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "passed",
       "detail": {
         "restored": {
@@ -197,7 +197,7 @@
             "blackmarket": 0
           },
           "strength": 14,
-          "revision": 6
+          "revision": 7
         }
       }
     },
@@ -232,7 +232,7 @@
       "name": "S2 844x390 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T04-12-01-328Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T05-41-46-828Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -275,7 +275,7 @@
       }
     },
     {
-      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "passed",
       "detail": {
         "restored": {
@@ -295,7 +295,7 @@
             "blackmarket": 0
           },
           "strength": 14,
-          "revision": 6
+          "revision": 7
         }
       }
     },
@@ -355,5 +355,5 @@
     "844x390-menu-after-reset.png",
     "1280x720-refused-conflict.png"
   ],
-  "finishedAt": "2026-10-14T04:12:14.048Z"
+  "finishedAt": "2026-10-14T05:41:59.692Z"
 }

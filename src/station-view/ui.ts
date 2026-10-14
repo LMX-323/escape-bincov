@@ -5,7 +5,7 @@ import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
 import { GridDrag, esc, type DragHooks } from './grid';
 import * as P from './panels';
-import { readResetCopy, startOver } from '../fresh-start';
+import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -26,7 +26,8 @@ export interface UIHost {
 /** A confirmation or failure dialog drawn over the open panel. */
 type Dialog =
   | { kind: 'sale'; token: string; warnings: string[] }
-  | { kind: 'import'; text: string; token: string; name: string }
+  // No preview token is kept: base checkpoints stale it while the dialog is open, so confirming previews again (confirmImport).
+  | { kind: 'import'; text: string; name: string }
   | { kind: 'reset' }
   | { kind: 'storage' };
 
@@ -321,7 +322,7 @@ export class UI {
     const text = await file.text().catch(() => '');
     const preview = text ? this.rt.previewImport(text) : { ok: false as const, reason: 'rule' as const, message: '无法读取这个文件。' };
     if (!preview.ok || !preview.token) { this.result(preview); return; }
-    this.openDialog({ kind: 'import', text, token: preview.token, name: file.name });
+    this.openDialog({ kind: 'import', text, name: file.name });
   }
   /** Confirmed fresh start. A refused or failed write leaves the save as it was; success resyncs like an import. */
   private startOver() {
@@ -342,7 +343,7 @@ export class UI {
     if (!copy) { this.result({ ok: false, reason: 'rule', message: '本机没有清空前的存档。' }); this.render(); return; }
     const preview = this.rt.previewImport(copy);
     if (!preview.ok || !preview.token) { this.result(preview); return; }
-    this.openDialog({ kind: 'import', text: copy, token: preview.token, name: '清空前的存档' }); this.host.sound('open');
+    this.openDialog({ kind: 'import', text: copy, name: '清空前的存档' }); this.host.sound('open');
   }
 
   private click = (e: MouseEvent) => {
@@ -391,7 +392,7 @@ export class UI {
       case 'title': this.host.title(); break;
       case 'export': this.host.exportSave(); break;
       case 'import': this.root.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
-      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = this.rt.importBackup(d.text, d.token); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = confirmImport(this.rt, d.text); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
       case 'reset': this.openDialog({ kind: 'reset' }); this.host.sound('open'); break;
       case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
       case 'reset-restore': this.restoreCopy(); break;

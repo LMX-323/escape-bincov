@@ -64,6 +64,21 @@ function pristineBackup(text: string): boolean {
   try { const data = decodePortableBackup(text); return data.kind === 'session' && isPristine(data.record); } catch { return false; }
 }
 
+/**
+ * The confirmed overwrite behind the yard import dialog (a chosen backup file or the pre-reset copy). The yard keeps
+ * ticking while the dialog is open and every five-second base checkpoint raises the save revision, so the token of
+ * the preview that opened the dialog goes stale within seconds. The player has already confirmed the overwrite, so
+ * the backup is previewed again right here and that fresh token is used. The preview runs the Runtime guard again
+ * (another window, failed storage, a pending base write or settlement, a live raid) and the compare-and-write commit
+ * still refuses a record another window changed; a failed preview is returned as is and nothing is written.
+ */
+export function confirmImport(rt: HideoutRuntime, text: string): Result {
+  const preview = rt.previewImport(text);
+  if (!preview.ok) return preview;
+  if (!preview.token) return { ok: false, reason: 'stale', message: '请重新预览并确认覆盖。' };
+  return rt.importBackup(text, preview.token);
+}
+
 /** The stored pre-reset copy, or null when there is none or browser storage cannot be read. */
 export function readResetCopy(storage: CopyStorage): string | null {
   try { return storage().getItem(RESET_COPY_KEY) || null; } catch { return null; }

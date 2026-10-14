@@ -2,8 +2,8 @@
   "build": "untouched main e9cbaa5 dist/index.html (same bytes, sha256 below)",
   "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7",
   "browser": "155.0.8059.40",
-  "startedAt": "2026-10-14T04:16:17.948Z",
-  "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.",
+  "startedAt": "2026-10-14T05:32:35.260Z",
+  "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons; S3 moves it forward by six seconds while the restore confirmation is open, so one real checkpoint commits before the player confirms.",
   "steps": [
     {
       "name": "S1 1280x720 yard menu offers 清空存档，重新开始 and asks for confirmation",
@@ -16,7 +16,7 @@
       "error": "locator.click: Timeout 20000ms exceeded."
     },
     {
-      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "failed",
       "error": "locator.click: Timeout 20000ms exceeded."
     },
@@ -31,7 +31,7 @@
       "error": "locator.click: Timeout 20000ms exceeded."
     },
     {
-      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "failed",
       "error": "locator.click: Timeout 20000ms exceeded."
     },
@@ -46,7 +46,7 @@
       "error": "locator.tap: Timeout 20000ms exceeded."
     },
     {
-      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
       "status": "failed",
       "error": "locator.tap: Timeout 20000ms exceeded."
     },
@@ -82,6 +82,6 @@
   "errors": [],
   "external": [],
   "screenshots": [],
-  "finishedAt": "2026-10-14T04:20:31.806Z",
-  "purpose": "Negative control: the same scripts/station-reset-test.mjs (14 steps after the wording fix) run against the old build. Expected: every step that needs the new menu entry fails; S7 (never offered elsewhere) passes on both builds."
+  "finishedAt": "2026-10-14T05:36:50.634Z",
+  "purpose": "Negative control: the same scripts/station-reset-test.mjs (14 steps, after the restore-checkpoint and reset-wording fixes) run against the old build. Expected: every step that needs the new menu entry fails; S7 (never offered elsewhere) passes on both builds."
 }

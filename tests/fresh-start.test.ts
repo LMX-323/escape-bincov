@@ -6,7 +6,7 @@ import { SESSION_KEY, decodeSession, type SessionRecord } from '../src/recovery-
 import { decodePortableBackup } from '../src/save-backup';
 import { RealHideoutRuntime, type Result } from '../src/hideout-runtime';
 import { FACILITIES } from '../src/expansion-state';
-import { RESET_COPY_KEY, freshStartRecord, freshStartText, isPristine, readResetCopy, startOver } from '../src/fresh-start';
+import { RESET_COPY_KEY, confirmImport, freshStartRecord, freshStartText, isPristine, readResetCopy, startOver } from '../src/fresh-start';
 
 const NOW = 1800000000000;
 /** One browser origin: every page shares this Map; `failing` injects a quota error for chosen keys only. */
@@ -181,4 +181,52 @@ test('a second reset of a still pristine save keeps the pre-reset copy', () => {
     assert.equal(f.runtime.openShop('arms').view().catalog.items.some(i => i.id === 'ammo9'), true);
     f.setup(d => { d.profile.cash -= 84; D.addItem(d.profile.stash, 'ammo9', 12); }); const current = f.runtime.exportBackup();
     assert.deepEqual(f.reset(), { ok: true, copied: true }); assert.equal(f.copy, current); assert.notEqual(f.copy, copy);
+});
+
+test('a base checkpoint while the restore dialog is open does not void the confirmed overwrite', () => {
+    const f = page(); rich(f); assert.ok(f.reset().ok);
+    const copy = readResetCopy(() => f.o.storage)!; assert.ok(copy);
+    // 恢复清空前的存档 previews once to open the overwrite confirmation.
+    const opened = f.runtime.previewImport(copy); assert.ok(opened.ok && opened.token);
+    // The yard calls tick() every frame while the dialog is open; past five seconds the base checkpoint commits.
+    const revision = f.saves.revision; f.clock.now += 6000; f.runtime.tick(f.clock.now);
+    assert.equal(f.saves.revision, revision + 1, 'the checkpoint committed while the dialog was open');
+    const raw = f.raw, writes = f.o.writes.length;
+    // Negative control: the previous confirm path reused the token of that first preview and was refused.
+    const stale = f.runtime.importBackup(copy, opened.token!);
+    assert.equal(reason(stale), 'stale'); assert.equal(!stale.ok && stale.message, '请重新预览并确认覆盖。');
+    assert.equal(f.raw, raw); assert.equal(f.o.writes.length, writes);
+    // The confirm path previews again and restores in one session commit.
+    assert.deepEqual(confirmImport(f.runtime, copy), { ok: true });
+    assert.equal(f.saves.revision, revision + 2); assert.deepEqual(f.o.writes.slice(writes), [SESSION_KEY]);
+    const s = f.runtime.snapshot();
+    assert.equal(s.profile.cash, 4321); assert.equal(s.base.facilities.rest, 2); assert.equal(s.profile.stats.runs, 9); assert.equal(s.body.attributes.strength.base, 14);
+    assert.equal(f.copy, copy, 'restoring keeps the copy'); assert.equal(f.downloads.length, 1, 'a restore downloads nothing');
+    // The same holds for an imported backup file and for a confirmation that waited through several checkpoints.
+    f.setup(d => { d.profile.cash = 5000; }); const file = f.runtime.exportBackup(); f.setup(d => { d.profile.cash = 10; });
+    assert.ok(f.runtime.previewImport(file).ok); const opened2 = f.saves.revision;
+    for (let i = 0; i < 3; i++) { f.clock.now += 5000; f.runtime.tick(f.clock.now); }
+    assert.equal(f.saves.revision, opened2 + 3, 'three checkpoints while the dialog was open');
+    assert.ok(confirmImport(f.runtime, file).ok); assert.equal(f.runtime.snapshot().profile.cash, 5000);
+});
+
+test('the confirmed import keeps every guard: blocked pages and a newer write elsewhere change nothing', () => {
+    const refused = (f: Page, text: string, expected: string) => {
+        const raw = f.raw, writes = f.o.writes.length, save = structuredClone(f.state.save), result = confirmImport(f.runtime, text);
+        assert.equal(reason(result), expected); assert.equal(f.raw, raw); assert.equal(f.o.writes.length, writes); assert.deepEqual(f.state.save, save);
+        return result;
+    };
+    const backup = (f: Page) => { const text = f.runtime.exportBackup(); f.setup(d => { d.profile.cash = 1; }); return text; };
+    const conflict = page(); rich(conflict); const text = backup(conflict); conflict.saves.markConflict(); refused(conflict, text, 'conflict');
+    const o = origin(), holder = page(o); rich(holder); const viewer = page(o, false); refused(viewer, holder.runtime.exportBackup(), 'conflict');
+    const raid = page(); rich(raid); const before = backup(raid); assert.ok(raid.runtime.deploy({ world: 'coast', seed: 'import-raid' }).ok); refused(raid, before, 'locked');
+    const pending = page(); rich(pending); const kept = backup(pending); pending.o.failing.add(SESSION_KEY); pending.clock.now += 6000; pending.runtime.tick(pending.clock.now);
+    pending.o.failing.delete(SESSION_KEY); assert.equal(pending.runtime.snapshot().storage.pendingBase, true); refused(pending, kept, 'storage');
+    const broken = page(); rich(broken);
+    assert.equal(refused(broken, '{"format":"escape-bincov-recovery-backup"', 'rule').message, '备份损坏或版本不兼容。');
+    // Another page commits after this page opened its dialog: the compare-and-write commit refuses the overwrite.
+    const shared = origin(), a = page(shared); rich(a);
+    const restore = a.runtime.exportBackup(); a.setup(d => { d.profile.cash = 2; }); assert.ok(a.runtime.previewImport(restore).ok);
+    const mine = a.raw, b = page(shared); assert.ok(b.runtime.setVolume(.1).ok); const written = a.raw; assert.notEqual(written, mine);
+    assert.equal(reason(confirmImport(a.runtime, restore)), 'conflict'); assert.equal(a.raw, written); assert.equal(a.state.conflict, true);
 });
