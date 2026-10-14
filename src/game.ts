@@ -18,6 +18,8 @@ import { derivedLimits, entityUid } from './expansion-state';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from './rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, spaceSize, toggleDoor, traversable, type Interaction, type SpaceContext } from './spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy } from './layer-transition';
+import { doorGuide, entryKind, entryShown, floorIndoors, roofedRegions, stairLabelPlacement, underRoof, type DoorGuide, type Rect } from './space-guide';
+import { PIXEL_FONT } from './font';
 import { advancePursuits } from './pursuit';
 import type { ExpansionTransaction } from './session';
 import { render, setOverlay, openLoot, finish, toast, drawMap, refreshQuickPanel } from './ui';
@@ -82,6 +84,12 @@ export class RaidScene extends Phaser.Scene {
     private mapCache = new Map<string, MapData>();
     private roof: Phaser.GameObjects.Graphics | null = null;
     private roofSignature = '';
+    /** Door and stair guides drawn above the roof; drawRoofs decides which ones the player may know. */
+    private guide: Phaser.GameObjects.Graphics | null = null;
+    private stairLabels = new Map<string, Phaser.GameObjects.Text>();
+    private doorFocus = '';
+    /** Last drawn door guides by door id; null means the door is hidden under a roof. */
+    doorGuides: Record<string, DoorGuide | null> = {};
     config!: RunConfig;
     player!: Phaser.GameObjects.Image;
     enemies: Enemy[] = [];
@@ -159,13 +167,16 @@ export class RaidScene extends Phaser.Scene {
         this.extracted = false;
         this.hitTime = 0; this.hitNotice = 0;
         this.noteSeen = new Set();
+        this.doorFocus = '';
         this.shotNoise = null;
         this.noiseTime = 0;
         this.random = D.seededRandom(this.config.seed + 771);
         this.highTide = this.config.initialHigh;
         this.flood = this.add.graphics().setDepth(2);
         this.drawEnvironment();
-        this.player = this.add.image(this.config.spawn.x, this.config.spawn.y, 'player').setDepth(8);
+        // In roofed areas the player draws above roofs (11) so a roof edge never clips the sprite.
+        // Enemies, loot, corpses, effects and bullets stay below the roof. Classic mode keeps depth 8.
+        this.player = this.add.image(this.config.spawn.x, this.config.spawn.y, 'player').setDepth(this.space ? 11.5 : 8);
         this.fx = this.add.graphics().setDepth(9);
         this.weather = this.add.graphics().setDepth(20).setScrollFactor(0);
         this.cross = this.add.graphics().setDepth(30).setScrollFactor(0);
@@ -183,6 +194,8 @@ export class RaidScene extends Phaser.Scene {
             this.restore(app.checkpoint);
             saveSession.attachRaid({ capture: () => this.snapshot(), restore: value => this.restore(value) });
         }
+        // Cover hidden rooms before the first frame, even when the raid resumes behind a paused overlay.
+        this.drawRoofs();
         this.events.once('shutdown', () => { saveSession.attachRaid(null); saveSession.attachExpansion(null); playerInput.clear(); });
         this.checkpointAt = this.elapsed;
         audio.start();
@@ -233,6 +246,7 @@ export class RaidScene extends Phaser.Scene {
     }
     private drawEnvironment(): void {
         this.roof?.destroy(); this.roof = null; this.roofSignature = '';
+        this.guide?.destroy(); this.guide = null; this.stairLabels.clear(); this.doorGuides = {};
         this.worldArt?.destroy(); this.worldLabels.forEach(l => l.destroy()); this.worldLabels = [];
         this.worldArt = drawWorld(this, this.mapData, this.space?.definition).setDepth(0);
         this.mapData.notes.forEach(n => {
@@ -246,11 +260,15 @@ export class RaidScene extends Phaser.Scene {
         if (this.space) {
             const map = this.space.definition, g = this.add.graphics().setDepth(3); this.worldLabels.push(g);
             this.roof = this.add.graphics().setDepth(11);
+            this.guide = this.add.graphics().setDepth(11.2);
+            // Stair labels avoid region names and every stair platform.
+            const blocked: Rect[] = map.entries.map(e => ({ x: e.at.x - 16, y: e.at.y - 16, w: 32, h: 32 }));
             map.regions?.forEach(r => {
                 const color = [0x748c64, 0x6f9795, 0x98775c, 0x7c7794, 0x959261, 0x668580][(r.theme ?? 0) % 6];
                 g.fillStyle(color, r.inside === false ? .03 : .12).fillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
                 g.lineStyle(1, color, .45).strokeRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
-                this.worldLabels.push(this.add.text(r.x + r.w / 2, r.y + 16, r.name, { fontSize: '11px', color: '#dedebd', backgroundColor: '#13241ed9' }).setOrigin(.5).setDepth(3));
+                const name = this.add.text(r.x + r.w / 2, r.y + 16, r.name, { fontSize: '11px', color: '#dedebd', backgroundColor: '#13241ed9' }).setOrigin(.5).setDepth(3);
+                this.worldLabels.push(name); blocked.push({ x: name.x - name.width / 2, y: name.y - name.height / 2, w: name.width, h: name.height });
                 // Distinct floor motifs: clothing diamond, food price bands, wet tile lines,
                 // workshop cable marks and diagonal promotion paint remain visual only.
                 for (let i = 0; i < 4; i++) {
@@ -264,7 +282,7 @@ export class RaidScene extends Phaser.Scene {
                 if (cell === 'window') { g.fillStyle(0x679a9b).fillRect(x * 32 + 3, y * 32 + 10, 26, 12); g.lineStyle(2, 0xa5c4b6).strokeRect(x * 32 + 3, y * 32 + 10, 26, 12); }
                 if (cell === 'low' && !map.decorations?.some(d => Math.floor(d.x / 32) === x && Math.floor(d.y / 32) === y)) { g.fillStyle(0x6e5c44).fillRect(x * 32 + 3, y * 32 + 3, 26, 26); g.lineStyle(2, 0x9b8970).strokeRect(x * 32 + 3, y * 32 + 3, 26, 26); }
             }));
-            map.doors.forEach(d => { const open = this.space!.doors[d.id]; g.fillStyle(open ? 0x9fbd82 : 0x916c4a).fillRect(d.x * 32 + (open ? 2 : 5), d.y * 32 + 3, open ? 4 : 22, 26); });
+            // Doors are drawn by drawRoofs on the guide layer, by wall orientation and known state.
             map.decorations?.filter(d => d.kind === 'V').forEach(d => {
                 g.fillStyle(0xc7b995, .45).fillRect(d.x - 7, d.y - 4, 14, 8);
                 g.lineStyle(1, 0x415c43).lineBetween(d.x - 4, d.y, d.x + 4, d.y);
@@ -272,26 +290,74 @@ export class RaidScene extends Phaser.Scene {
             map.entries.forEach(e => {
                 g.lineStyle(2, 0xd1b778).strokeRect(e.at.x - 13, e.at.y - 13, 26, 26);
                 for (let y = -9; y <= 9; y += 6) g.lineBetween(e.at.x - 10, e.at.y + y, e.at.x + 10, e.at.y + y);
-                this.worldLabels.push(this.add.text(e.at.x, e.at.y - 30, e.label ?? '楼层入口', { fontSize: '11px', color: '#f0dfb0', backgroundColor: '#19281ee6', padding: { x: 3, y: 2 } }).setOrigin(.5).setDepth(3));
+                // Destination labels sit on the guide layer; drawRoofs shows only known stairs.
+                const label = this.add.text(0, 0, e.label ?? '楼层入口', { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f0dfb0', backgroundColor: '#19281ee6', padding: { x: 3, y: 2 } }).setDepth(11.2).setVisible(false);
+                const spot = stairLabelPlacement(e.at, { w: label.width, h: label.height }, blocked);
+                label.setPosition(Math.round(spot.x), Math.round(spot.y)); blocked.push(spot);
+                this.worldLabels.push(label); this.stairLabels.set(e.id, label);
             });
             this.setMapBounds(spaceSize(map));
         }
         this.drawFlood();
+        if (this.player?.scene) this.drawRoofs();
     }
 
     private drawRoofs(): void {
-        if (!this.roof || !this.space) return;
-        const signature = `${Math.floor(this.player.x / 16)},${Math.floor(this.player.y / 16)}:${JSON.stringify(this.space.doors)}`;
+        if (!this.roof || !this.guide || !this.space) return;
+        const signature = `${Math.floor(this.player.x / 16)},${Math.floor(this.player.y / 16)}:${JSON.stringify(this.space.doors)}:${this.doorFocus}`;
         if (signature === this.roofSignature) return;
-        this.roofSignature = signature; this.roof.clear();
-        for (const r of this.space.definition.regions ?? []) {
-            if (r.inside === false) continue;
-            const inside = this.player.x >= r.x && this.player.x < r.x + r.w && this.player.y >= r.y && this.player.y < r.y + r.h;
-            const near = { x: Math.max(r.x + 40, Math.min(r.x + r.w - 40, this.player.x)), y: Math.max(r.y + 40, Math.min(r.y + r.h - 40, this.player.y)) };
-            if (!r.sealed && (inside || distance(this.player, near) < 80 && this.sight(this.player, near))) continue;
-            this.roof.fillStyle(0x263f32, .97).fillRect(r.x, r.y, r.w, r.h);
+        this.roofSignature = signature; this.roof.clear(); this.guide.clear();
+        const map = this.space.definition, roofs = roofedRegions(this.space, this.player), indoors = floorIndoors(map, this.player);
+        for (const r of roofs) {
+            // Fully opaque: a covered room must not leak enemies, loot, corpses or labels.
+            this.roof.fillStyle(0x263f32, 1).fillRect(r.x, r.y, r.w, r.h);
             this.roof.lineStyle(2, 0x70816a, .5).strokeRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
         }
+        this.doorGuides = {};
+        for (const door of map.doors) {
+            const guide = this.doorGuides[door.id] = doorGuide(map, door, this.space.doors, roofs, indoors);
+            if (guide) this.drawDoorGuide(door.x * map.tile, door.y * map.tile, guide, door.id === this.doorFocus);
+        }
+        for (const entry of map.entries) {
+            const shown = entryShown(entry, roofs, indoors), kind = entryKind(entry);
+            this.stairLabels.get(entry.id)?.setVisible(shown);
+            if (shown && kind !== 'portal') this.drawStairChevron(entry.at, kind);
+        }
+    }
+
+    /** Corner brackets: sand when closed, mint when open, grey when the state is unknown. */
+    private drawDoorGuide(x: number, y: number, guide: DoorGuide, focus: boolean): void {
+        const g = this.guide!, ns = guide.wall === 'ns', w = focus ? 3 : 2, arm = 8, l = x - 1, t = y - 1, r = x + 33, b = y + 33;
+        const color = guide.state === 'open' ? 0xb9dec5 : guide.state === 'closed' ? 0xe7c28b : 0x9aa39a;
+        if (guide.state === 'closed') {
+            // The closed leaf lies along the wall line.
+            const leaf = ns ? [x + 13, y + 3, 6, 26] : [x + 3, y + 13, 26, 6];
+            g.fillStyle(0x916c4a, 1).fillRect(leaf[0], leaf[1], leaf[2], leaf[3]);
+            g.lineStyle(1, 0x3f2d1f, 1).strokeRect(leaf[0], leaf[1], leaf[2], leaf[3]);
+        } else if (guide.state === 'open') {
+            // The open leaf rests against one jamb, perpendicular to the wall, and the arrow runs along the passage.
+            const leaf = ns ? [x + 3, y + 1, 26, 5] : [x + 1, y + 3, 5, 26];
+            g.fillStyle(0x916c4a, 1).fillRect(leaf[0], leaf[1], leaf[2], leaf[3]);
+            g.lineStyle(1, 0x3f2d1f, 1).strokeRect(leaf[0], leaf[1], leaf[2], leaf[3]);
+            const cx = x + 16, cy = y + 16, along = (u: number, v: number): [number, number] => ns ? [cx + u, cy + v] : [cx + v, cy + u];
+            for (const [width, tone, alpha] of [[5, 0x13241e, .85], [2, color, 1]] as const) {
+                g.lineStyle(width, tone, alpha).lineBetween(...along(-19, 0), ...along(19, 0));
+                g.fillStyle(tone, alpha);
+                for (const s of [-1, 1]) g.fillTriangle(...along(s * (24 + width / 2), 0), ...along(s * 16, -6 - width / 2), ...along(s * 16, 6 + width / 2));
+            }
+        }
+        g.fillStyle(color, focus ? 1 : .85);
+        for (const [cx, sx] of [[l, 1], [r, -1]] as const) for (const [cy, sy] of [[t, 1], [b, -1]] as const) {
+            g.fillRect(sx > 0 ? cx : cx - arm, sy > 0 ? cy : cy - w, arm, w);
+            g.fillRect(sx > 0 ? cx : cx - w, sy > 0 ? cy : cy - arm, w, arm);
+        }
+    }
+
+    /** Up or down triangle over a known stair; the font subset has no down arrow glyph. */
+    private drawStairChevron(at: Point, kind: 'up' | 'down'): void {
+        const g = this.guide!, d = kind === 'up' ? -1 : 1;
+        g.fillStyle(0x13241e, .9).fillTriangle(at.x, at.y + d * 9, at.x - 10, at.y - d * 6, at.x + 10, at.y - d * 6);
+        g.fillStyle(0xf0dfb0, 1).fillTriangle(at.x, at.y + d * 6, at.x - 6, at.y - d * 4, at.x + 6, at.y - d * 4);
     }
 
     snapshotExpansion(): ExpansionState {
@@ -319,6 +385,8 @@ export class RaidScene extends Phaser.Scene {
             warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
             hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
             enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+        // A new map's roofs follow the restored position, not the one before the transition.
+        if (oldMap !== raid.currentMap) this.drawRoofs();
     }
     retryLayerMutation(): boolean {
         if (!this.pendingLayer) return this.checkpoint();
@@ -865,8 +933,9 @@ export class RaidScene extends Phaser.Scene {
         if (this.layered) {
             const state = this.snapshotExpansion(); advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, (uid, critical) => {
                 audio.hit(); if (critical) {
+                    // This text draws above the roof, so it is skipped for an enemy in a covered room.
                     const enemy = this.enemies.find(e => e.uid === uid);
-                    if (enemy) { const text = this.add.text(enemy.sprite.x, enemy.sprite.y - 35, '爆头', { fontSize: '12px', color: '#ffd596', backgroundColor: '#392a20' }).setOrigin(.5).setDepth(15); this.time.delayedCall(500, () => text.destroy()); }
+                    if (enemy && !underRoof(roofedRegions(this.space!, this.player), enemy.sprite)) { const text = this.add.text(enemy.sprite.x, enemy.sprite.y - 35, '爆头', { fontSize: '12px', color: '#ffd596', backgroundColor: '#392a20' }).setOrigin(.5).setDepth(15); this.time.delayedCall(500, () => text.destroy()); }
                 }
             }, source => { this.showIncomingHit(source); this.extractTime = 0; audio.hit(); });
             this.restoreExpansion(state); if (this.hp <= 0) finish('death'); return;
@@ -1034,6 +1103,7 @@ export class RaidScene extends Phaser.Scene {
             const selected = targets.find(c => c.id === this.lootTargetId);
             if (selected) target = { id: selected.id, kind: 'container', at: selected, label: `搜刮 · ${this.lootTargetName(selected)}` };
         }
+        this.doorFocus = target?.kind === 'door' ? target.id : '';
         if (touch) { touch.textContent = target?.kind === 'exit' ? '按住撤离' : target?.label.split(' · ')[0] ?? '交互'; touch.setAttribute('aria-label', target?.label ?? '交互'); }
         let text = target ? `${playerInput.touch ? '点' : 'E'} ${target.label}` : '';
         if (target?.kind === 'exit') {
