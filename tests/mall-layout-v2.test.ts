@@ -17,8 +17,10 @@ function dressed(map: SpaceDefinition, x: number, y: number) {
 const furniture = (map: SpaceDefinition) => map.decorations!.filter(d => parseFurnitureName(d.name));
 const free = (map: SpaceDefinition, x: number, y: number) => traversable({ definition: map, doors: {}, highTide: true }, { x: (x + .5) * 32, y: (y + .5) * 32 }, 'body', 10);
 
-test('布局一版逐字节不变：两版按各自世界注册，旧进行中行动仍按原世界恢复', () => {
+test('布局一版、二版逐字节不变：两版按各自世界注册，旧进行中行动仍按原世界恢复', () => {
     assert.equal(createHash('sha256').update(JSON.stringify(V1)).digest('hex'), '1c4ef1c490c41854c7587f6a1ca167d7ef8859b7e3c698e800bbeef570757ffd');
+    // Layout 2 is pinned as well: raids saved on it restore on these exact cells and decorations.
+    assert.equal(createHash('sha256').update(JSON.stringify(V2)).digest('hex'), 'f008a5c747851d47d8dc67120705c31235116e779718240b031be2ab177a6c51');
     assert.equal(resolveExpansionWorld('mall-v1'), V1);
     assert.equal(resolveExpansionWorld(V2.id), V2);
     // Layout 2 (the mall sample) starts on the entrance plaza; layout 1 keeps the west pavement.
