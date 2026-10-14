@@ -1,6 +1,6 @@
 {
   "html": "index.html",
-  "sha256": "bf4da1ecef00c19db5a851f4d534536e6c09fadb5c68fe0258a7f175a71585ef",
+  "sha256": "7e84e50b0e7890f7651f0e933ec0c934a6f331d119fe57179fce243087438eb4",
   "browser": "155.0.8059.40",
   "checks": [
     {
@@ -30,12 +30,12 @@
         "player": {
           "at": {
             "x": 464,
-            "y": 399.5423999999679
+            "y": 399.9568000000414
           },
           "depth": 11.5,
           "box": {
             "x": 448,
-            "y": 383.5423999999679,
+            "y": 383.9568000000414,
             "w": 32,
             "h": 32
           }
@@ -73,12 +73,42 @@
       "status": "passed"
     },
     {
+      "name": "1280x720 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 560,
+          "y": 340,
+          "width": 64,
+          "height": 40
+        },
+        "pixels": 2560,
+        "body": 546,
+        "covered": 0,
+        "blended": 0,
+        "guide": 565,
+        "info": {
+          "layers": [
+            3.5,
+            11.2
+          ],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
       "name": "1280x720 P06 ground-floor-stair-labels-clear-room-name",
       "detail": {
         "labels": [
           {
             "text": "上楼 · 二楼",
-            "depth": 11.2,
+            "depth": 3.5,
             "stair": true,
             "x": 531,
             "y": 292,
@@ -87,7 +117,7 @@
           },
           {
             "text": "下楼 · 地下",
-            "depth": 11.2,
+            "depth": 3.5,
             "stair": true,
             "x": 467,
             "y": 292,
@@ -131,7 +161,7 @@
         },
         "label": {
           "text": "下楼 · 一楼",
-          "depth": 11.2,
+          "depth": 3.5,
           "stair": true,
           "x": 226,
           "y": 72,
@@ -187,15 +217,33 @@
       "status": "passed"
     },
     {
-      "name": "1280x720 P07 critical-text-hidden-under-roof-shown-in-view",
+      "name": "1280x720 P07 critical-text-follows-the-drawn-roof",
       "detail": {
         "hidden": {
           "seed": 15,
-          "count": 0
+          "count": 0,
+          "visible": 0
         },
         "visible": {
           "seed": 15,
-          "count": 1
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:",
+            "storageCovered": true
+          },
+          "seed": 15,
+          "count": 0,
+          "visible": 0,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 0
         },
         "player": {
           "x": 304,
@@ -231,12 +279,12 @@
         "player": {
           "at": {
             "x": 464,
-            "y": 399.8224000000203
+            "y": 399.85599999999994
           },
           "depth": 11.5,
           "box": {
             "x": 448,
-            "y": 383.8224000000203,
+            "y": 383.85599999999994,
             "w": 32,
             "h": 32
           }
@@ -274,12 +322,42 @@
       "status": "passed"
     },
     {
+      "name": "1920x1080 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 800,
+          "y": 500,
+          "width": 128,
+          "height": 80
+        },
+        "pixels": 10240,
+        "body": 2184,
+        "covered": 0,
+        "blended": 0,
+        "guide": 2288,
+        "info": {
+          "layers": [
+            3.5,
+            11.2
+          ],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
       "name": "1920x1080 P06 ground-floor-stair-labels-clear-room-name",
       "detail": {
         "labels": [
           {
             "text": "上楼 · 二楼",
-            "depth": 11.2,
+            "depth": 3.5,
             "stair": true,
             "x": 531,
             "y": 292,
@@ -288,7 +366,7 @@
           },
           {
             "text": "下楼 · 地下",
-            "depth": 11.2,
+            "depth": 3.5,
             "stair": true,
             "x": 467,
             "y": 292,
@@ -332,7 +410,7 @@
         },
         "label": {
           "text": "下楼 · 一楼",
-          "depth": 11.2,
+          "depth": 3.5,
           "stair": true,
           "x": 226,
           "y": 72,
@@ -388,15 +466,33 @@
       "status": "passed"
     },
     {
-      "name": "1920x1080 P07 critical-text-hidden-under-roof-shown-in-view",
+      "name": "1920x1080 P07 critical-text-follows-the-drawn-roof",
       "detail": {
         "hidden": {
           "seed": 15,
-          "count": 0
+          "count": 0,
+          "visible": 0
         },
         "visible": {
           "seed": 15,
-          "count": 1
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:",
+            "storageCovered": true
+          },
+          "seed": 15,
+          "count": 0,
+          "visible": 0,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}:"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 0
         },
         "player": {
           "x": 304,
@@ -406,5 +502,6 @@
       "status": "passed"
     }
   ],
-  "errors": []
+  "errors": [],
+  "renderer": "webgl"
 }
