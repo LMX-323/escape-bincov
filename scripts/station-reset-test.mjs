@@ -16,7 +16,7 @@ const SESSION = 'escape-bincov.session.v2', COPY = 'escape-bincov.reset-copy.v1'
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
-  methodology: 'Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.',
+  methodology: 'Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons; S3 moves it forward by six seconds while the restore confirmation is open, so one real checkpoint commits before the player confirms.',
   steps: [], errors: [], external: [], screenshots: [] };
 let context, page, mobile;
 const yard = s => page.locator(`#station-yard ${s}`);
@@ -44,7 +44,8 @@ async function openContext(size) {
   context = await browser.newContext({ offline: true, acceptDownloads: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1, hasTouch: mobile, isMobile: mobile });
   await context.route(`${ORIGIN}**`, r => r.fulfill({ contentType: 'text/html; charset=utf-8', body: html }));
   await context.addInitScript(() => {
-    const fixed = Date.now(); Date.now = () => fixed;
+    // Fixed clock; window.__advanceClock(ms) moves it forward for a step that needs the yard's base checkpoint.
+    const fixed = Date.now(); let offset = 0; Date.now = () => fixed + offset; window.__advanceClock = ms => { offset += ms; };
     window.__resetWrites = [];
     const write = Storage.prototype.setItem;
     Storage.prototype.setItem = function(k, v) { const r = write.call(this, k, v); window.__resetWrites.push(k); return r; };
@@ -128,16 +129,24 @@ try {
       await restore.scrollIntoViewIfNeeded(); await shot(`${tag}-menu-after-reset`);
       return { download: download.suggestedFilename(), backup: summary(backup.record), stored: summary(after), copyBytes: text.length };
     });
-    await step(`S3 ${tag} 恢复清空前的存档 restores through the import confirmation and keeps the copy`, async () => {
-      const copy = await read(page, COPY), before = await stored(page);
+    await step(`S3 ${tag} 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint`, async () => {
+      const copy = await read(page, COPY), before = await stored(page), downloads = page.downloads.length;
       await tap(yard('[data-act="reset-restore"]'));
       const dialog = yard('.dialog.k-import'); await dialog.waitFor();
       assert.match(await dialog.textContent(), /用「清空前的存档」覆盖当前存档？/);
       assert.equal((await stored(page)).revision, before.revision, 'preview writes nothing');
       if (tag === '1280x720') await shot(`${tag}-restore-confirm`);
-      await tap(dialog.locator('[data-act="import-confirm"]')); await toastWith('备份已导入。').waitFor();
+      // The player reads the dialog for six seconds: the yard keeps ticking and commits one base checkpoint meanwhile.
+      await page.evaluate(() => window.__advanceClock(6000));
+      await page.waitForFunction(r => JSON.parse(localStorage.getItem('escape-bincov.session.v2')).revision === r + 1, before.revision);
+      assert.equal(await dialog.isVisible(), true, 'the confirmation is still open after the checkpoint');
+      await page.waitForFunction(() => !document.querySelector('#station-yard').shadowRoot.querySelector('.toasts').children.length);
+      await tap(dialog.locator('[data-act="import-confirm"]'));
+      const toast = yard('.toast').first(); await toast.waitFor();
+      assert.equal(await toast.textContent(), '备份已导入。', 'a checkpoint while the dialog was open must not void the confirmed restore');
       const after = await stored(page);
-      assert.deepEqual(summary(after), { cash: 4321, runs: 9, quests: { repair: true, sample: false, ledger: false }, volume: .6, facilities: { ...freshFacilities, rest: 2 }, strength: 14, revision: before.revision + 1 });
+      assert.deepEqual(summary(after), { cash: 4321, runs: 9, quests: { repair: true, sample: false, ledger: false }, volume: .6, facilities: { ...freshFacilities, rest: 2 }, strength: 14, revision: before.revision + 2 });
+      assert.equal(page.downloads.length, downloads, 'a restore downloads nothing');
       assert.equal(await read(page, COPY), copy, 'the copy stays after a restore');
       assert.equal(await yard('#hud-cash').textContent(), '¥ 4,321'); assert.equal(await page.evaluate(() => window.__station.mounted), true);
       return { restored: summary(after) };
