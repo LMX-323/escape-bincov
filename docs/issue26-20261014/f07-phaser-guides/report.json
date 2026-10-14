@@ -1,6 +1,6 @@
 {
   "html": "index.html",
-  "sha256": "7e84e50b0e7890f7651f0e933ec0c934a6f331d119fe57179fce243087438eb4",
+  "sha256": "44c342912389f91f315e3d9d37b572ba119b3ef6d2f2847dce9c7b2ca4234d03",
   "browser": "155.0.8059.40",
   "checks": [
     {
@@ -30,12 +30,12 @@
         "player": {
           "at": {
             "x": 464,
-            "y": 399.9568000000414
+            "y": 399.396799999833
           },
           "depth": 11.5,
           "box": {
             "x": 448,
-            "y": 383.9568000000414,
+            "y": 383.396799999833,
             "w": 32,
             "h": 32
           }
@@ -86,6 +86,7 @@
         "covered": 0,
         "blended": 0,
         "guide": 565,
+        "overlap": 181,
         "info": {
           "layers": [
             3.5,
@@ -245,9 +246,93 @@
           "visible": 1,
           "visibleAfterCover": 0
         },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 0,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
         "player": {
           "x": 304,
           "y": 80
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 666,
+          "y": 260,
+          "width": 80,
+          "height": 40
+        },
+        "roofClip": {
+          "x": 706,
+          "y": 274,
+          "width": 24,
+          "height": 12
+        },
+        "pixels": 3200,
+        "body": 494,
+        "covered": 0,
+        "blended": 0,
+        "guide": 928,
+        "overlap": 390,
+        "above": {
+          "changed": 288,
+          "max": 160
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": [
+            "西侧住户",
+            "东侧住户",
+            "储藏室"
+          ],
+          "labels": [
+            {
+              "depth": 3.5,
+              "masked": false,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            },
+            {
+              "depth": 11.2,
+              "masked": true,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            }
+          ]
         }
       },
       "status": "passed"
@@ -279,12 +364,12 @@
         "player": {
           "at": {
             "x": 464,
-            "y": 399.85599999999994
+            "y": 399.6319999999998
           },
           "depth": 11.5,
           "box": {
             "x": 448,
-            "y": 383.85599999999994,
+            "y": 383.6319999999998,
             "w": 32,
             "h": 32
           }
@@ -335,6 +420,7 @@
         "covered": 0,
         "blended": 0,
         "guide": 2288,
+        "overlap": 724,
         "info": {
           "layers": [
             3.5,
@@ -494,9 +580,93 @@
           "visible": 1,
           "visibleAfterCover": 0
         },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 0,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
         "player": {
           "x": 304,
           "y": 80
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 1012,
+          "y": 340,
+          "width": 160,
+          "height": 80
+        },
+        "roofClip": {
+          "x": 1092,
+          "y": 368,
+          "width": 48,
+          "height": 24
+        },
+        "pixels": 12800,
+        "body": 1976,
+        "covered": 0,
+        "blended": 0,
+        "guide": 3712,
+        "overlap": 1560,
+        "above": {
+          "changed": 1152,
+          "max": 160
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": [
+            "西侧住户",
+            "东侧住户",
+            "储藏室"
+          ],
+          "labels": [
+            {
+              "depth": 3.5,
+              "masked": false,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            },
+            {
+              "depth": 11.2,
+              "masked": true,
+              "x": 226,
+              "y": 72,
+              "w": 58,
+              "h": 16
+            }
+          ]
         }
       },
       "status": "passed"
