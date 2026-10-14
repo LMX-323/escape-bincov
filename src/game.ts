@@ -95,9 +95,14 @@ export class RaidScene extends Phaser.Scene {
     private guideAbove: Phaser.GameObjects.Graphics | null = null;
     /** Off-list fill-only copy of the roof rectangles that clips guideAbove; the canvas renderer clips by fill paths only. */
     private roofMask: Phaser.GameObjects.Graphics | null = null;
-    /** Critical-hit texts (depth 15) with the enemy position they mark; drawRoofs hides one whose position gets covered. */
+    /**
+     * Critical-hit texts (depth 15) with the enemy position they mark; drawRoofs hides one whose position gets covered.
+     * They outlive same-map redraws (a door opening anywhere redraws the environment) and are cleared only when the
+     * map changes or the scene shuts down, so their lifetime never depends on hidden events.
+     */
     private critTexts: { text: Phaser.GameObjects.Text; at: Point }[] = [];
-    private stairLabels = new Map<string, Phaser.GameObjects.Text>();
+    /** Stair labels on the floor layer, each with a copy above the roof clipped to the roofed regions. */
+    private stairLabels = new Map<string, { label: Phaser.GameObjects.Text; above: Phaser.GameObjects.Text }>();
     private doorFocus = '';
     /** Last drawn door guides by door id; null means the door is hidden under a roof. */
     doorGuides: Record<string, DoorGuide | null> = {};
@@ -207,7 +212,7 @@ export class RaidScene extends Phaser.Scene {
         }
         // Cover hidden rooms before the first frame, even when the raid resumes behind a paused overlay.
         this.drawRoofs();
-        this.events.once('shutdown', () => { saveSession.attachRaid(null); saveSession.attachExpansion(null); playerInput.clear(); });
+        this.events.once('shutdown', () => { this.clearCritTexts(); saveSession.attachRaid(null); saveSession.attachExpansion(null); playerInput.clear(); });
         this.checkpointAt = this.elapsed;
         audio.start();
         render();
@@ -258,8 +263,8 @@ export class RaidScene extends Phaser.Scene {
     private drawEnvironment(): void {
         this.roof?.destroy(); this.roof = null; this.roofSignature = ''; this.drawnRoofs = [];
         this.guide?.destroy(); this.guide = null; this.guideAbove?.destroy(); this.guideAbove = null; this.roofMask?.destroy(); this.roofMask = null;
+        // Stair labels and their copies above the roof are in worldLabels and are destroyed with them.
         this.stairLabels.clear(); this.doorGuides = {};
-        this.critTexts.forEach(m => m.text.destroy()); this.critTexts = [];
         this.worldArt?.destroy(); this.worldLabels.forEach(l => l.destroy()); this.worldLabels = [];
         this.worldArt = drawWorld(this, this.mapData, this.space?.definition).setDepth(0);
         this.mapData.notes.forEach(n => {
@@ -276,7 +281,8 @@ export class RaidScene extends Phaser.Scene {
             // Floor guides draw over the floor marks (3) and under loot (4), enemies (6) and bullets (10).
             this.guide = this.add.graphics().setDepth(3.5);
             this.roofMask = this.make.graphics({}, false);
-            this.guideAbove = this.add.graphics().setDepth(11.2).setMask(this.roofMask.createGeometryMask());
+            const roofClip = this.roofMask.createGeometryMask();
+            this.guideAbove = this.add.graphics().setDepth(11.2).setMask(roofClip);
             // Stair labels avoid region names and every stair platform.
             const blocked: Rect[] = map.entries.map(e => ({ x: e.at.x - 16, y: e.at.y - 16, w: 32, h: 32 }));
             map.regions?.forEach(r => {
@@ -306,16 +312,23 @@ export class RaidScene extends Phaser.Scene {
             map.entries.forEach(e => {
                 g.lineStyle(2, 0xd1b778).strokeRect(e.at.x - 13, e.at.y - 13, 26, 26);
                 for (let y = -9; y <= 9; y += 6) g.lineBetween(e.at.x - 10, e.at.y + y, e.at.x + 10, e.at.y + y);
-                // drawRoofs shows only known stairs, above the roof only when the label touches one.
-                const label = this.add.text(0, 0, e.label ?? '楼层入口', { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f0dfb0', backgroundColor: '#19281ee6', padding: { x: 3, y: 2 } }).setDepth(3.5).setVisible(false);
+                // drawRoofs shows only known stairs. The label stays on the floor layer, under loot, enemies and
+                // bullets; where it overlaps a drawn roof, the clipped copy keeps only that part readable above it.
+                const style = { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f0dfb0', backgroundColor: '#19281ee6', padding: { x: 3, y: 2 } };
+                const label = this.add.text(0, 0, e.label ?? '楼层入口', style).setDepth(3.5).setVisible(false);
                 const spot = stairLabelPlacement(e.at, { w: label.width, h: label.height }, blocked);
                 label.setPosition(Math.round(spot.x), Math.round(spot.y)); blocked.push(spot);
-                this.worldLabels.push(label); this.stairLabels.set(e.id, label);
+                const above = this.add.text(label.x, label.y, label.text, style).setDepth(11.2).setVisible(false).setMask(roofClip);
+                this.worldLabels.push(label, above); this.stairLabels.set(e.id, { label, above });
             });
             this.setMapBounds(spaceSize(map));
         }
         this.drawFlood();
         if (this.player?.scene) this.drawRoofs();
+    }
+
+    private clearCritTexts(): void {
+        this.critTexts.forEach(m => m.text.destroy()); this.critTexts = [];
     }
 
     private drawRoofs(): void {
@@ -341,8 +354,13 @@ export class RaidScene extends Phaser.Scene {
             if (guide) for (const g of layers) this.drawDoorGuide(g, door.x * map.tile, door.y * map.tile, guide, door.id === this.doorFocus);
         }
         for (const entry of map.entries) {
-            const shown = entryShown(entry, roofs, indoors), kind = entryKind(entry), label = this.stairLabels.get(entry.id);
-            label?.setVisible(shown).setDepth(touchesRoof(roofs, { x: label.x, y: label.y, w: label.width, h: label.height }) ? 11.2 : 3.5);
+            const shown = entryShown(entry, roofs, indoors), kind = entryKind(entry), stair = this.stairLabels.get(entry.id);
+            if (stair) {
+                const { label, above } = stair;
+                label.setVisible(shown);
+                // The copy stays hidden unless the label touches a roof, which also keeps the mask path non-empty.
+                above.setVisible(shown && touchesRoof(roofs, { x: label.x, y: label.y, w: label.width, h: label.height }));
+            }
             if (shown && kind !== 'portal') for (const g of layers) this.drawStairChevron(g, entry.at, kind);
         }
     }
@@ -400,7 +418,8 @@ export class RaidScene extends Phaser.Scene {
         // A durable terminal write restores body/base state before the scene stops.
         if (!this.layered.raid) return;
         const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
-        if (oldMap !== raid.currentMap) this.drawEnvironment();
+        // Critical texts belong to the map they were shown on; same-map redraws keep them.
+        if (oldMap !== raid.currentMap) { this.clearCritTexts(); this.drawEnvironment(); }
         this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
             hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
             kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
