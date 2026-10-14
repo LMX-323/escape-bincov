@@ -483,6 +483,7 @@ export class CoastView {
     this.light.lights = [];
     // Room lamps waver slightly and the odd one stutters (stateless in view time; no visibility or combat effect).
     // Mall floors light their halls with the dressing's tubes, cold cases and lamps instead of one lamp per room.
+    // The copy is required: each light keeps its own reveal level (`lit`), and the cached dressing (mallBakes) stays clean.
     if (this.mall) this.light.lights.push(...this.mall.lights.map(l => ({ ...l })));
     else for (const l of regionLamps(m)) this.light.lights.push({ ...lamp(l.x, l.y, l.region, l.warm ? 0xc3a26a : 0xa08a5f), flicker: Math.floor(l.x * 7 + l.y * 13) % 997 });
     if (m.key.mapId === 'coast') {

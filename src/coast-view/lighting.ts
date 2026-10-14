@@ -9,7 +9,10 @@ export type AmbientZone = (x: number, y: number) => 'outdoor' | 'indoor' | 'drop
 /** `flicker`: a stable seed; lamps with one dip and waver as a stateless function of view time (see `level`). */
 export interface Light { x: number; y: number; r: number; color: number; k: number; ttl?: number; age?: number; region?: string | null; flicker?: number;
   /** Every inside region at the light's point (overlapping rooms): shown only when all are revealed. */
-  regions?: readonly string[] }
+  regions?: readonly string[];
+  /** Reveal level 0..1, kept by `sync`: rises over REVEAL_FADE s while every room of the light is revealed, and drops to 0
+   * in the frame one is hidden (a hidden room never shows its light). Unset until the first sync, which takes the current state. */
+  lit?: number }
 export interface Mood { outdoor: number; indoor: number; ruined: number; cellar: number; name: string }
 export const MOODS: Mood[] = [
   { name: 'overcast', outdoor: 0xeeede4, indoor: 0x9a9488, ruined: 0xcfcabe, cellar: 0x837e74 },
@@ -19,6 +22,13 @@ export const MOODS: Mood[] = [
 const rgb = (c: number) => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
 /** Ambient samples per world pixel: one sample every 8 px, drawn with linear filtering (soft, wall-shaped transitions). */
 const AMB = 8;
+/** Seconds a room's lights take to come up once it is revealed; hiding is immediate. */
+export const REVEAL_FADE = .3;
+/** Next reveal level: 0 at once when hidden; a fresh light (`prev` unset) or a flash (`snap`) goes straight to 1; otherwise +dt/REVEAL_FADE. */
+export function revealLevel(prev: number | undefined, on: boolean, dt: number, snap: boolean): number {
+  if (!on) return 0;
+  return prev === undefined || snap ? 1 : Math.min(1, prev + dt / REVEAL_FADE);
+}
 
 /**
  * Light for one view. The ambient term is a low-resolution map baked per map and mood: open ground takes the sky,
@@ -80,17 +90,23 @@ export class Lighting {
     this.backdrop.clear().rect(b.x - 128, b.y - 128, b.w + 256, b.h + 256).fill(coast || zone ? mood.outdoor : cellar ? mood.cellar : mood.indoor);
   }
 
-  /** Additive lights for this frame; `time` (view seconds) drives flicker statelessly, so a re-present is identical. */
+  /**
+   * Additive lights for this frame. `time` (view seconds) drives flicker statelessly. A room's lights rise only with dt
+   * and fall at once even at dt 0, so a dt-0 re-present is identical, and a reveal during a dt-0 present leaves them
+   * where they were. Reduced motion ramps too: a brightness ramp is not motion.
+   */
   sync(dt: number, visible: (l: Light) => boolean, time = this.time) {
     this.time = time;
     this.lights = this.lights.filter(l => { if (l.ttl === undefined) return true; l.age = (l.age ?? 0) + dt; return l.age < l.ttl; });
     let i = 0;
     for (const l of this.lights) {
-      if (!visible(l)) continue;
+      // Flashes keep their own ttl fade and are never ramped.
+      l.lit = revealLevel(l.lit, visible(l), dt, l.ttl !== undefined);
+      if (l.lit <= 0) continue;
       const s = this.pool[i] ?? this.dynamic.addChild(Object.assign(new Sprite(this.lightTex), { blendMode: 'add' as const }));
       this.pool[i++] = s;
       s.visible = true; s.anchor.set(.5); s.position.set(Math.round(l.x), Math.round(l.y));
-      s.scale.set(l.r / 64); s.tint = l.color; s.alpha = Math.min(1, l.k * this.level(l));
+      s.scale.set(l.r / 64); s.tint = l.color; s.alpha = Math.min(1, l.k * this.level(l) * l.lit);
     }
     for (; i < this.pool.length; i++) this.pool[i].visible = false;
   }
@@ -118,10 +134,11 @@ export class Lighting {
       r = s(a.r); g = s(a.g); b = s(a.b);
     }
     for (const l of this.lights) {
-      if (l.region && revealed[l.region] === false || l.regions?.some(r => revealed[r] !== true)) continue;
+      // The region gate fails closed for whatever `revealed` it gets; `lit` keeps it in step with the drawn sprite.
+      if (l.region && revealed[l.region] === false || l.regions?.some(r => revealed[r] !== true) || l.lit === 0) continue;
       const d = Math.hypot(l.x - p.x, l.y - p.y);
       if (d >= l.r) continue;
-      const f = Math.pow(1 - d / l.r, 1.6) * l.k * this.level(l), [lr, lg, lb] = rgb(l.color);
+      const f = Math.pow(1 - d / l.r, 1.6) * l.k * this.level(l) * (l.lit ?? 1), [lr, lg, lb] = rgb(l.color);
       r += lr * f; g += lg * f; b += lb * f;
     }
     return (Math.min(255, r | 0) << 16) | (Math.min(255, g | 0) << 8) | Math.min(255, b | 0);

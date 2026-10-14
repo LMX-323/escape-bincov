@@ -344,6 +344,56 @@ async function deployTabs(page) {
     assert.equal(s.cut, 0, `no core wall is cut away (levels ${s.levels})`);
     return s;
   });
+  await step('M17 a room\'s lights come up over 0.3 s once it is revealed and go out in the frame it is hidden', async () => {
+    // Last step of this page: its synthetic reveal flips leave light state that no later step should inherit.
+    // Wait rule: after a reveal change that does not go through placePlayer (driver.door, real walking), wait 20 frames
+    // before a cross-frame pixel compare or a screenshot.
+    await place(page, 42.5, 27.5, Math.PI / 2, 'mall-f1'); await frames(page, 30);
+    const r = await page.evaluate(room => {
+      const h = window.__bincovSample.host, v = h.view, L = v.light, dt = 1 / 60;
+      h.app.ticker.stop();
+      try {
+        const base = structuredClone(h.lastBatch);
+        base.events = []; base.frame.actors = base.frame.actors.filter(a => a.uid === base.frame.player.uid);
+        base.frame.loot = []; base.frame.containers = []; base.frame.bullets = [];
+        // Pin everything else a present moves (camera, recoil, shake, mist shelter, flicker time), so frames differ only by light.
+        const cam = { ...v.camF }, recoil = { ...v.recoil }, shelter = v.weather.shelter, before = base.frame.revealed[room];
+        const grab = reveal => {
+          const b = structuredClone(base); b.frame.revealed[room] = reveal;
+          v.camF = { ...cam }; v.recoil = { ...recoil }; v.shake = 0; v.weather.shelter = shelter; v.time = 7.25 - dt;
+          v.present(b, dt); h.app.render();
+          return h.app.renderer.extract.pixels(v.upRT).pixels.slice();
+        };
+        const exact = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n; };
+        const coarse = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 12 || Math.abs(a[i + 1] - b[i + 1]) > 12 || Math.abs(a[i + 2] - b[i + 2]) > 12) n++; return n / (a.length / 4); };
+        const lights = L.lights.filter(l => l.regions?.includes(room)), lits = () => lights.map(l => l.lit);
+        const leaks = () => L.pool.filter(s => s.visible && lights.some(l => Math.round(l.x) === s.x && Math.round(l.y) === s.y)).length;
+        const shown = grab(true), shownLit = lits();
+        const hidden = grab(false), hiddenLit = lits(), hiddenLeaks = leaks();
+        let prev = hidden, frame1 = null, frame9 = null; const steps = [];
+        for (let n = 1; n <= 20; n++) {
+          const cur = grab(true);
+          if (n === 1) frame1 = lits();
+          if (n === 9) frame9 = { lit: lits(), vsHidden: exact(cur, hidden), vsShown: exact(cur, shown) };
+          steps.push(coarse(prev, cur)); prev = cur;
+        }
+        const settled = { lit: lits(), vsShown: exact(prev, shown) }, pop = coarse(hidden, shown);
+        const again = grab(false), hide = { lit: lits(), leaks: leaks(), vsHidden: exact(again, hidden) };
+        return { room, before, shelter, lights: lights.length, shownLit, hiddenLit, hiddenLeaks, frame1, frame9, maxStep: Math.max(...steps), steps: steps.map(s => +(s * 100).toFixed(3)), settled, pop, hide };
+      } finally { h.app.ticker.start(); }
+    }, 'F1-03');
+    await frames(page, 4);
+    assert.equal(r.before, true, 'the player stands in the supermarket F1-03'); assert.ok(r.lights >= 3, `F1-03 has its own lights: ${r.lights}`);
+    assert.ok(r.shownLit.every(l => l === 1), `revealed: full ${r.shownLit}`);
+    assert.ok(r.hiddenLit.every(l => l === 0), `hidden: dark ${r.hiddenLit}`); assert.equal(r.hiddenLeaks, 0, 'no light sprite of a hidden room');
+    assert.ok(r.frame1.every(l => l > 0 && l <= .06), `first revealed frame ${r.frame1}`);
+    assert.ok(r.maxStep < .01, `each frame changes under 1% of pixels: ${r.steps}`);
+    assert.ok(r.frame9.vsHidden > 0 && r.frame9.vsShown > 0, `frame 9 is drawn between dark and full: ${JSON.stringify(r.frame9)}`);
+    assert.ok(r.settled.lit.every(l => l === 1), `settled ${r.settled.lit}`); assert.equal(r.settled.vsShown, 0, 'after 20 frames the room matches the instant state');
+    assert.ok(r.pop > .05, `control: the instant switch changes over 5% of pixels (${(r.pop * 100).toFixed(2)}%)`);
+    assert.ok(r.hide.lit.every(l => l === 0), `hidden again: ${r.hide.lit}`); assert.equal(r.hide.leaks, 0); assert.equal(r.hide.vsHidden, 0, 'hiding is immediate');
+    return r;
+  });
   await context.close();
 }
 {
