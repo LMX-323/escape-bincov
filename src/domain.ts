@@ -335,6 +335,9 @@ export function recoverInterrupted(save: SaveDataV1): RunSummary | null {
  * (the same quest needs that Shop.questUses / saleWarnings warn about, read from QUESTS here).
  * The equipped weapon and its magazine are left out: relief only asks this when that weapon is
  * absent or a relief gun with an empty magazine.
+ * Value held in expansion state is not seen here either (an equipped charm, cash and items paid
+ * into workbench batches, finished batches not yet collected): grantRelief only receives the main
+ * save. This can only make relief more generous, never stricter than the old cash rule.
  */
 export function liquidValue(save: SaveDataV1): number {
   const reserved = new Map<string, number>();
