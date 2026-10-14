@@ -119,8 +119,11 @@ export function mallWallParts(m: DressMap, x: number, y: number): { cap: string[
     return { cap: [id('wall-cap')], face: mallWallFace(m, x, y), rail: [] };
 }
 
-/** An entrance: one to three open cells in a wall line, between two jambs (`wall` is the wall line's direction). */
-export interface MallOpening { wall: 'ew' | 'ns'; cells: { x: number; y: number }[]; facade: boolean }
+/**
+ * An entrance: one to three open cells in a wall line, between two jambs (`wall` is the wall line's direction). Through a
+ * two-cell-thick wall the second line of cells is `twin`.
+ */
+export interface MallOpening { wall: 'ew' | 'ns'; cells: { x: number; y: number }[]; facade: boolean; twin?: { x: number; y: number }[] }
 /**
  * Entrances of a mall floor: gaps of one to three cells in a wall line, open on both sides, that join two different
  * places (two rooms, a room and a corridor, or the building and the outside). A gap inside one room or one corridor
@@ -130,7 +133,9 @@ export function mallOpenings(m: DressMap): MallOpening[] {
     const f = furnitureAt(m), wall = (x: number, y: number) => m.cells[y]?.[x] === 'wall' && !f.has(`${x},${y}`) && mallWallRole(m, x, y) !== 'void';
     const open = (x: number, y: number) => { const c = m.cells[y]?.[x]; return !!c && c !== 'wall'; };
     const lone = (x: number, y: number) => !wall(x - 1, y) && !wall(x + 1, y) && !wall(x, y - 1) && !wall(x, y + 1);
-    const place = (x: number, y: number) => insideFootprint(x, y) ? regionAt(m, x, y)?.id ?? '' : 'outside';
+    // The innermost room on each side (rooms may overlap), a corridor, or the outside.
+    const place = (x: number, y: number) => insideFootprint(x, y)
+        ? m.regions.filter(r => r.inside !== false && contains(r, x, y)).sort((a, b) => a.w * a.h - b.w * b.h)[0]?.id ?? regionAt(m, x, y)?.id ?? '' : 'outside';
     const band = (x: number, y: number) => insideFootprint(x, y) && (x <= 9 || x >= 63 || y <= 7 || y >= 47);
     const out: MallOpening[] = [];
     // `along(i)` steps along the wall line, `across(i, s)` to either side of it.
@@ -142,7 +147,8 @@ export function mallOpenings(m: DressMap): MallOpening[] {
             const through = (x: number, y: number) => !wall(x, y) && open(x, y) && open(...side(x, y, -1)) && open(...side(x, y, 1));
             // The gap ends at the next jamb: a wall in the line, or a corner where a wall across the line meets it.
             let end = i; while (end < length && end - i < 4 && through(...cell(line, end))) end++;
-            const [ex, ey] = cell(line, end), corner = !wall(ex, ey) && (wall(...side(ex, ey, -1)) || wall(...side(ex, ey, 1)));
+            // A corner jamb is a wall running across the line beside its end (two cells of it, not a wall alongside).
+            const [ex, ey] = cell(line, end), corner = !wall(ex, ey) && (wall(...side(ex, ey, -1)) && wall(...side(ex, ey, -2)) || wall(...side(ex, ey, 1)) && wall(...side(ex, ey, 2)));
             if (end === i || end - i > 3 || !wall(ex, ey) && !corner) continue;
             // Jambs: no lone pillars, and not two walls running across the line (a slot between two parallel walls).
             const acrossWall = (x: number, y: number) => dir === 'ew' ? wall(x, y - 1) && wall(x, y + 1) : wall(x - 1, y) && wall(x + 1, y);
@@ -156,7 +162,16 @@ export function mallOpenings(m: DressMap): MallOpening[] {
     const rows = m.cells.length, cols = m.cells[0].length;
     scan('ew', rows, cols, (y, x) => [x, y]);
     scan('ns', cols, rows, (x, y) => [x, y]);
-    return out;
+    // One doorway through a two-cell-thick wall is one entrance: keep the outer line (the facade's), the inner as its twin.
+    const key = (o: MallOpening, shift: number) => o.cells.map(c => o.wall === 'ns' ? `${c.x + shift},${c.y}` : `${c.x},${c.y + shift}`).join(' ');
+    const merged: MallOpening[] = [];
+    for (const o of out) {
+        const pair = merged.find(p => p.wall === o.wall && (key(p, 1) === key(o, 0) || key(p, -1) === key(o, 0)));
+        if (!pair) { merged.push(o); continue; }
+        if (o.facade && !pair.facade) { const inner = pair.cells; Object.assign(pair, { cells: o.cells, facade: true, twin: inner }); }
+        else pair.twin = o.cells;
+    }
+    return merged;
 }
 /**
  * Entrances in east-west walls get a header at wall height (north-south openings show no face in this projection): the
@@ -210,8 +225,11 @@ export function mallProps(m: DressMap): DressSprite[] {
         const south = (y + t.h) * TILE, stairs = f.type === 'stairs-up' || f.type === 'stairs-down';
         // Painted by the view: the stairs, and the cafe set (the drawn sample fits a whole set into one cell, too small).
         const painted = stairs ? PROCEDURAL + f.type : f.type === 'cafe-table' ? PROCEDURAL + 'cafe-set' : null;
-        out.push({ assets: painted ? [painted] : names.map(id), x: x * TILE, y: south - size[1], z: south, layer: 'sorted',
-            emit: names.some(n => EMITS.has(n)), foot: { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
+        // The cafe set is wider than its one blocking cell: it is centred on it, chairs reaching into the cells beside.
+        const cafe = f.type === 'cafe-table', left = cafe ? x * TILE + (t.w * TILE - size[0]) / 2 : x * TILE;
+        out.push({ assets: painted ? [painted] : names.map(id), x: left, y: south - size[1], z: south, layer: 'sorted',
+            emit: names.some(n => EMITS.has(n)), foot: cafe ? { x: left + 6, y: y * TILE, w: size[0] - 12, h: t.h * TILE, lift: size[1] - t.h * TILE }
+                : { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
         if (f.type === 'cafe-table') {
             const [uw, uh] = MALL_SPRITE_SIZE['overhead-umbrella'];
             // The pole stands in the table's centre.

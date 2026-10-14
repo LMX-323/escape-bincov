@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mallWorldV2 } from '../src/mall-world';
 import { MALL_FURNITURE, MALL_V2_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
 import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, PROCEDURAL, insideFootprint, mallProps, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
-import { actorShown, isMall, mallCutRooms, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
+import { actorShown, isMall, mallCorridorWalls, mallCutRooms, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
 import { SampleSound } from '../src/coast-view/sound';
 import type { MapDef, PublishedView } from '../src/raid-runtime/contract';
 
@@ -42,10 +42,20 @@ test('商场 2.5D：只切开玩家所在房间（含南墙），进出各有一
   assert.equal(mallCutRooms(m, edge, new Set(['F1-03'])).has('F1-03'), true);
   assert.equal(mallCutRooms(m, outside, new Set(['F1-03'])).has('F1-03'), true);
   assert.equal(mallCutRooms(m, { x: room.x - 48, y: room.y + room.h / 2 }, new Set(['F1-03'])).has('F1-03'), false);
-  // The north facade (y 6) stays solid even with the lobby behind it cut away.
-  const lobby = m.regions.find(r => r.id === 'F1-11')!;
-  assert.equal(mallCutaway(m, new Set(['F1-11']))(centre(58, 6)), false);
-  assert.equal(mallCutaway(m, new Set(['F1-11']))({ x: lobby.x + lobby.w / 2, y: lobby.y + lobby.h + 16 }), true);
+  // Facade cells inside a cut room's rectangle stay solid (F1-06 reaches the east facade at x 63); the south facade is the
+  // room's south wall and is cut with it (F1-14), so the room's last row shows.
+  const store = m.regions.find(r => r.id === 'F1-06')!;
+  assert.ok(store.x + store.w > 63 * 32, 'F1-06 reaches the east facade');
+  assert.equal(mallCutaway(m, new Set(['F1-06']))(centre(63, 20)), false);
+  assert.equal(mallCutaway(m, new Set(['F1-06']))(centre(60, 18)), true);
+  assert.equal(mallCutaway(m, new Set(['F1-14']))(centre(35, 48)), true);
+  assert.equal(mallCutaway(m, new Set(['F1-01']))(centre(10, 8)), false, 'the stepped north-west facade');
+  // In a corridor (no room) the walls just south of the player's corridor run are cut, and nothing else.
+  const f2 = mapOf('mall-f2'), walls = mallCorridorWalls(f2, { x: 22.5 * 32, y: 27.5 * 32 });
+  assert.ok(walls.has('25,28') && walls.has('22,28'), [...walls].join(' '));
+  assert.ok([...walls].every(k => k.endsWith(',28') || k.endsWith(',29')), [...walls].join(' '));
+  assert.equal(mallCutaway(f2, new Set(), walls)(centre(25, 28)), true);
+  assert.equal(mallCorridorWalls(f2, { x: 20.5 * 32, y: 40.5 * 32 }).size, 0, 'inside a room the room rule applies');
   assert.equal(isMall(m), true); assert.equal(isMall(mapOf('mall-f1', 'resident')), false);
 });
 
@@ -102,16 +112,16 @@ test('命中反馈看目标本身：目标所在房间未揭示时，弹着点�
   assert.ok(calls.includes('hit'));
 });
 
-test('露台咖啡桌是两格宽的一组桌椅（程序绘制），伞杆立在桌子中心', () => {
+test('露台咖啡桌是一整组桌椅（程序绘制），以它的一格碰撞为中心，伞杆立在桌子中心；碰撞仍是一格（旧存档有效）', () => {
   const f2 = dress('mall-f2'), props = mallProps(f2), sets = props.filter(p => p.assets[0] === PROCEDURAL + 'cafe-set');
-  const tables = MALL_V2_LAYOUT['mall-f2'].filter(p => p.type === 'cafe-table');
-  assert.equal(MALL_FURNITURE['cafe-table'].w, 2); assert.equal(sets.length, tables.length);
+  const tables = MALL_V2_LAYOUT['mall-f2'].filter(p => p.type === 'cafe-table'), [w, h] = MALL_SPRITE_SIZE['cafe-set'];
+  assert.equal(MALL_FURNITURE['cafe-table'].w, 1); assert.equal(sets.length, tables.length);
   for (const t of tables) {
-    const set = sets.find(s => s.x === t.x * 32)!, umbrella = props.find(p => p.layer === 'overhead' && p.z === set.z && p.x < set.x + 64 && p.x + 64 > set.x)!;
-    assert.deepEqual(set.foot && [set.foot.w, set.foot.h], [64, 32]);
-    assert.equal(set.y + MALL_SPRITE_SIZE['cafe-set'][1], set.z, 'stands on its footprint\'s south edge');
-    assert.equal(umbrella.x + MALL_SPRITE_SIZE['overhead-umbrella'][0] / 2, t.x * 32 + 32, 'pole in the table centre');
-    for (const dx of [0, 1]) assert.equal(f2.cells[t.y][t.x + dx], 'low', 'both cells block movement, not shots');
+    const set = sets.find(s => s.z === (t.y + 1) * 32 && s.x + w / 2 === t.x * 32 + 16), umbrella = props.find(p => p.layer === 'overhead' && set && p.z === set.z && p.x + MALL_SPRITE_SIZE['overhead-umbrella'][0] / 2 === t.x * 32 + 16);
+    assert.ok(set, `set centred on ${t.x},${t.y}`); assert.ok(umbrella, `umbrella over ${t.x},${t.y}`);
+    assert.equal(set.y + h, set.z, 'stands on its cell\'s south edge');
+    assert.equal(f2.cells[t.y][t.x], 'low', 'blocks movement, not shots');
+    for (const dx of [-1, 1]) assert.notEqual(f2.cells[t.y][t.x + dx], 'low', 'the chairs reach into open cells beside it');
   }
 });
 

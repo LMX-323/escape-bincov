@@ -99,7 +99,7 @@ export function paintMallStairsDown(cols = 3, rows = 3): HTMLCanvasElement {
 /** Height of the cafe set's canvas above its 2x1 footprint (chair backs rise 27 px). */
 export const CAFE_LIFT = 26;
 /**
- * Terrace cafe set over a 2x1 footprint, at the scale of the 48 px player and the 64 px umbrella: a round bistro table
+ * Terrace cafe set, centred on its one blocking cell, at the scale of the 48 px player and the 64 px umbrella: a round bistro table
  * (22 px top at 21 px height, pedestal and base) between two chairs facing it (12 px seats at 13 px, backs leaning
  * outward). Weathered green-grey metal like the drawn samples; light from the top left. Canvas 64 x (32 + CAFE_LIFT),
  * bottom row = the footprint's south edge.
@@ -113,7 +113,8 @@ export function paintCafeSet(): HTMLCanvasElement {
         for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + r * .6) dot(g, color, cx + x, cy + y);
     };
     const chair = (side: -1 | 1) => {
-        const x0 = side < 0 ? 6 : 46, x1 = x0 + 11, outer = side < 0 ? x0 : x1, d0 = 10, d1 = 21, sh = 13, back = 27;
+        // Chairs tucked in close to the table (the set spans x 5..59 of the canvas, centred on its one blocking cell).
+        const x0 = side < 0 ? 8 : 45, x1 = x0 + 11, outer = side < 0 ? x0 : x1, d0 = 10, d1 = 21, sh = 13, back = 27;
         // Backrest on the outer side, leaning outward: three rails over two uprights, drawn back to front.
         for (let d = d0; d <= d1; d++) for (let h = sh; h <= back; h++) {
             const lean = Math.round((h - sh) / (back - sh) * 3) * side, [px, py] = at(outer + lean, d, h);

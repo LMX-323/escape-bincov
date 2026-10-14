@@ -54,11 +54,11 @@ export interface StairGuide { x: number; y: number; dx: number; dy: number }
 const T = 32;
 const ZONES = ['indoor', 'outdoor', 'drop'] as const;
 /**
- * Bottom canvas rows of a fading prop that stay solid: its transparent south rows plus a few rows of foot. The stairwell
- * is a hole in the floor, so none of it fades (fading would show the floor it replaces).
+ * Bottom canvas rows of a fading prop that stay solid: its transparent bottom rows plus four rows of foot, so the drawn
+ * base stays on the floor. The stairwell is a hole in the floor, so none of it fades (that would show the floor it
+ * replaces).
  */
-const keepOf = (asset: string) => /stairs-down/.test(asset) ? 1000 : /sofa/.test(asset) ? 16 : /bench/.test(asset) ? 18 : /prop-bed/.test(asset) ? 22
-  : /gondola-(end|mid)/.test(asset) ? 8 : 4;
+const keepOf = (asset: string, c: HTMLCanvasElement) => /stairs-down/.test(asset) ? 1000 : bottomGap(c) + 4;
 /** Colour of an emission overlay by what glows: cold cases, display panels, exit signs, emergency lamps, lamps, daylight. */
 const glowOf = (asset: string) => /fridge|freezer/.test(asset) ? 0xbfe0ea : /exit/.test(asset) ? 0x7fe08f : /emergency/.test(asset) ? 0xe8f0e8
   : /floor-lamp/.test(asset) ? 0xf0c890 : /directory|pylon/.test(asset) ? 0xcfe5dc : 0x9fb0b8;
@@ -81,8 +81,8 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   const cells = all.filter(c => !pillars.includes(c));
   // South of a side entrance the wall steps down (a low jamb, then half height), so its top no longer covers the gap.
   const openingList = mallOpenings(dress), low = new Map<string, number>();
-  for (const o of openingList.filter(o => o.wall === 'ns')) {
-    const last = o.cells[o.cells.length - 1];
+  for (const o of openingList.filter(o => o.wall === 'ns')) for (const line of [o.cells, o.twin ?? []]) {
+    const last = line[line.length - 1]; if (!last) continue;
     if (isWall(last.x, last.y + 1)) low.set(`${last.x},${last.y + 1}`, 16);
     if (isWall(last.x, last.y + 1) && isWall(last.x, last.y + 2)) low.set(`${last.x},${last.y + 2}`, 32);
   }
@@ -171,7 +171,11 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   }
   return {
     dress, ground, walls, lintels, props, wallProps, lights, flights, signs: resolve(mallSigns(dress)),
-    openings: openingList.map(o => { const a = o.cells[0], b = o.cells[o.cells.length - 1]; return { x: a.x * T, y: a.y * T, w: (b.x - a.x + 1) * T, h: (b.y - a.y + 1) * T, wall: o.wall }; }),
+    // Guides cover the whole doorway, both lines of a thick wall.
+    openings: openingList.map(o => {
+      const all = [...o.cells, ...o.twin ?? []], x0 = Math.min(...all.map(c => c.x)), y0 = Math.min(...all.map(c => c.y));
+      return { x: x0 * T, y: y0 * T, w: (Math.max(...all.map(c => c.x)) - x0 + 1) * T, h: (Math.max(...all.map(c => c.y)) - y0 + 1) * T, wall: o.wall };
+    }),
     // Rooms outside the dressed route sit a little darker, so the route reads as the lit way through.
     zone: (x, y) => { const z = ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))]; return z === 'indoor' && undressed(x, y) ? 'dim' : z; },
   };
@@ -254,7 +258,7 @@ export function buildMall(ctx: MallContext, d: MallDress) {
   }
   for (const p of d.props) {
     const key = sample(p.asset), c = tex.canvas(key);
-    const o = ctx.add(key, p.x, p.y, p.layer === 'overhead' ? p.z + .5 : p.z, p.layer === 'overhead' ? 'canopy' : 'prop', p.layer === 'overhead' ? 0 : keepOf(p.asset));
+    const o = ctx.add(key, p.x, p.y, p.layer === 'overhead' ? p.z + .5 : p.z, p.layer === 'overhead' ? 'canopy' : 'prop', p.layer === 'overhead' ? 0 : keepOf(p.asset, c));
     o.tintAt = p.layer === 'overhead' ? { x: p.x + c.width / 2, y: p.z } : { x: p.x + c.width / 2, y: p.z - 6 };
     if (p.foot) for (let y = p.foot.y; y < p.foot.y + p.foot.h; y += T) for (let x = p.foot.x; x < p.foot.x + p.foot.w; x += T) owners.set(`${x / T},${y / T}`, o);
     if (!p.asset.startsWith(PROCEDURAL)) glow(o, p.asset, p.x, p.y);

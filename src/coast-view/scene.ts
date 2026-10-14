@@ -12,7 +12,7 @@ import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
-import { isMall, knownDoor, knownStructurePoint, mallCutRooms, mallCutaway, occupiedStructure, regionAtClosed, shownAt, structureContains } from './structure-guide';
+import { isMall, knownDoor, knownStructurePoint, mallCorridorWalls, mallCutRooms, mallCutaway, occupiedStructure, regionAtClosed, shownAt, structureContains } from './structure-guide';
 import { paintMallGround } from './art/mall-ground';
 import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
 import type { MallArt } from './mall-art';
@@ -304,7 +304,8 @@ export class CoastView {
     const roofs: RoofArea[] = [];
     this.openingGuides = [];
     if (mall) for (const o of mall.openings) {
-      const n = (o.wall === 'ew' ? o.w : o.h) / 32, s = new Sprite(this.tex.ensure(`opening-guide:${o.wall}:${n}`, () => paintOpeningGuide(o.wall, n)));
+      const n = (o.wall === 'ew' ? o.w : o.h) / 32, depth = (o.wall === 'ew' ? o.h : o.w) / 32;
+      const s = new Sprite(this.tex.ensure(`opening-guide:${o.wall}:${n}x${depth}`, () => paintOpeningGuide(o.wall, n, depth)));
       s.position.set(o.x, o.y); s.visible = false; this.xray.addChild(s); this.openingGuides.push({ s, at: { x: o.x + o.w / 2, y: o.y + o.h / 2 } });
     }
     if (mall) buildMall({
@@ -744,7 +745,7 @@ export class CoastView {
     // Mall floors cut away the player's room and the walls just in front; other layered floors their whole plan.
     const map = this.map!, mall = this.mall;
     if (mall) this.cutRooms = mallCutRooms(map, p, this.cutRooms);
-    const cut = mall ? mallCutaway(map, this.cutRooms) : (q: Point) => structureContains(map, occupied, q);
+    const cut = mall ? mallCutaway(map, this.cutRooms, this.cutRooms.size ? undefined : mallCorridorWalls(map, p)) : (q: Point) => structureContains(map, occupied, q);
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
       if (o.kind === 'roof' || o.kind === 'ceiling') {
@@ -942,6 +943,8 @@ export class CoastView {
     return m.regions.find(r => r.id === id)?.name ?? outside?.name ?? null;
   }
   get mapDef() { return this.map; }
+  /** This floor is drawn by the mall builder. */
+  get mallFloor() { return !!this.mall; }
   /** Stair labels to show now: text, world anchor (top centre) and whether the rules show it. */
   stairLabelViews(): { id: string; text: string; x: number; y: number; visible: boolean }[] {
     return (this.map?.entries ?? []).map(e => { const s = this.stairLabels.get(e.id); return { id: e.id, text: e.label, x: s?.x ?? e.at.x, y: s?.y ?? e.at.y, visible: !!s?.visible }; });

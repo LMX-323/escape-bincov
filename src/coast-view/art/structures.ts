@@ -31,8 +31,8 @@ export function paintDoorGuide(wall: 'ew' | 'ns', open: boolean): HTMLCanvasElem
  * whole gap, corner brackets and a double arrow across it, so the way through reads even where wall tops cover it.
  * Canvas the size of the gap on the ground.
  */
-export function paintOpeningGuide(wall: 'ew' | 'ns', cells: number): HTMLCanvasElement {
-  const W = wall === 'ew' ? cells * 32 : 32, H = wall === 'ew' ? 32 : cells * 32, { c, g } = canvas(W, H), color = '#b9dec5';
+export function paintOpeningGuide(wall: 'ew' | 'ns', cells: number, depth = 1): HTMLCanvasElement {
+  const W = wall === 'ew' ? cells * 32 : depth * 32, H = wall === 'ew' ? depth * 32 : cells * 32, { c, g } = canvas(W, H), color = '#b9dec5';
   g.fillStyle = '#233d34'; g.globalAlpha = .35; g.fillRect(2, 2, W - 4, H - 4); g.globalAlpha = 1;
   for (const [x, y] of [[2, 2], [W - 8, 2], [2, H - 4], [W - 8, H - 4]]) rect(g, color, x, y, 6, 2);
   for (const [x, y] of [[2, 2], [W - 4, 2], [2, H - 8], [W - 4, H - 8]]) rect(g, color, x, y, 2, 6);

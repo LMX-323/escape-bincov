@@ -62,7 +62,6 @@ test('商场布置表：一层地图边是封锁围挡，二层楼外是虚空�
     // Headers mark entrances only: gaps that join two places. On F2 every entrance is in a north-south wall.
     for (const key of ['27,13', '28,13', '44,13']) assert.ok(!l1.has(key), `no header at the dead end F1 ${key}`);
     assert.equal(mallLintels(f2).length, 0);
-    assert.ok(mallLintels(f2).every(l => mallWallRole(f2, l.x - 1, l.y) !== 'void'));
     for (const m of [f1, f2]) for (const p of mallWallProps(m)) assert.ok(p.assets.every(a => /^mall-[a-z0-9-]+-v1$/.test(a)));
     // Ceiling lights are light sources only: the ceiling is cut away, so no fixture sprite is drawn.
     for (const m of [f1, f2]) for (const l of mallLights(m)) assert.deepEqual(Object.keys(l).sort(), ['broken', 'r', 'x', 'y']);
@@ -85,15 +84,15 @@ test('商场布置表：地面杂物只落在空地上，宽件占两格空地�
     }
 });
 
-test('商场入口：连接两个不同地方的门洞都算，南北向墙和转角上的也算；房间内部、死胡同口、两道平行墙之间的缝不算', () => {
-    const key = (o: { wall: string; cells: { x: number; y: number }[] }) => `${o.wall}:${o.cells[0].x},${o.cells[0].y}+${o.cells.length}`;
-    const f1 = new Set(mallOpenings(dress('mall-f1')).map(key)), f2 = new Set(mallOpenings(dress('mall-f2')).map(key));
-    // Facade entrances (north, south, west, east, south-east lobby), room side doors, F1-10's corner door, the terrace doors.
-    for (const k of ['ew:59,6+3', 'ew:40,48+3', 'ns:9,12+3', 'ns:63,38+3', 'ns:63,44+3', 'ns:26,14+3', 'ns:26,24+3', 'ns:57,21+3', 'ns:57,30+3', 'ns:57,39+3', 'ns:53,15+2', 'ew:36,13+3'])
-        assert.ok(f1.has(k), `F1 ${k}`);
-    for (const k of ['ns:16,37+3', 'ns:16,44+3', 'ns:18,24+3', 'ns:29,23+3', 'ns:29,30+3', 'ns:64,27+3', 'ns:64,42+3']) assert.ok(f2.has(k), `F2 ${k}`);
-    for (const k of ['ew:27,13+2', 'ew:44,13+1', 'ew:60,20+3', 'ew:10,22+1']) assert.ok(!f1.has(k), `not an entrance: F1 ${k}`);
-    for (const k of ['ew:19,22+3', 'ew:19,28+3', 'ew:30,26+3', 'ew:30,28+3']) assert.ok(!f2.has(k), `not an entrance: F2 ${k}`);
-    const facade = mallOpenings(dress('mall-f1')).filter(o => o.facade).map(key).sort();
-    assert.deepEqual(facade, ['ew:40,48+3', 'ew:59,6+3', 'ns:64,38+3', 'ns:64,44+3', 'ns:8,12+3']);
+test('商场入口：连接两个不同地方的门洞都算（两个方向、房间转角、厚墙算一个）；房间内部、死胡同口、平行墙之间的缝不算', () => {
+    const key = (o: { wall: string; facade: boolean; cells: { x: number; y: number }[]; twin?: { x: number; y: number }[] }) =>
+        `${o.wall}${o.facade ? '*' : ''}:${o.cells[0].x},${o.cells[0].y}+${o.cells.length}${o.twin ? '~' + o.twin[0].x : ''}`;
+    // F1: north, south, west (two-thick, inner line x 9), east (two-thick) and south-east facade entrances; F1-09's door;
+    // the side doors of F1-01, F1-02, F1-06, F1-07, F1-08 and F1-10's corner door.
+    assert.deepEqual(mallOpenings(dress('mall-f1')).map(key).sort(), ['ew*:40,48+3', 'ew*:59,6+3', 'ew:36,13+3', 'ns*:64,38+3~63', 'ns*:64,44+3', 'ns*:8,12+3~9',
+        'ns:26,14+3', 'ns:26,24+3', 'ns:53,15+2', 'ns:57,21+3', 'ns:57,30+3', 'ns:57,39+3'].sort());
+    // F2: the side doors of F2-11, F2-12, F2-07, F2-08, F2-09 and F2-10 (a corner), the corridor's mouth into F2-05, the
+    // two terrace doors. Not: inside F2-10 where it overlaps F2-06 (x 28), the service aisle, the shelf gaps.
+    assert.deepEqual(mallOpenings(dress('mall-f2')).map(key).sort(), ['ns*:64,27+3', 'ns*:64,42+3', 'ns:16,37+3', 'ns:16,44+3', 'ns:18,24+3', 'ns:29,23+3',
+        'ns:29,30+3', 'ns:29,34+1', 'ns:29,36+2'].sort());
 });

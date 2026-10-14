@@ -32,8 +32,8 @@ export const MALL_FURNITURE = {
     bed: { w: 2, h: 2, kind: 'M' },
     'coffee-table': { w: 1, h: 1, kind: 'M' },
     'floor-lamp': { w: 1, h: 1, kind: 'M' },
-    // A bistro table with a chair on each side: two cells wide at the scale of the player and the umbrella.
-    'cafe-table': { w: 2, h: 1, kind: 'M' },
+    // The view draws a whole bistro set centred on this cell; collision stays one cell so saved positions stay valid.
+    'cafe-table': { w: 1, h: 1, kind: 'M' },
     'planter-box': { w: 2, h: 1, kind: 'M' },
     stanchions: { w: 2, h: 1, kind: 'M' },
     adboard: { w: 2, h: 1, kind: 'M' },

@@ -67,18 +67,43 @@ export function mallCutRooms(map: MapDef, player: Point, previous: ReadonlySet<s
   }
   return out;
 }
-/** Two-cell-thick facade band of a mall floor (cells x 8-9 and 63-64, y 6-7 and 47-48 of the building). */
+/**
+ * Facade walls a mall floor never cuts: the north front (rows 6-7 and the stepped north-west block) and the west and east
+ * sides (columns 8-9 and 63-64). Cutting them would only show the outside; the south front hides the rooms' last row,
+ * so it is cut with the room behind it.
+ */
 const facade = (p: Point) => {
   const x = Math.floor(p.x / 32), y = Math.floor(p.y / 32);
-  return x >= 8 && x <= 64 && y >= 6 && y <= 48 && (x <= 9 || x >= 63 || y <= 7 || y >= 47);
+  return x >= 8 && x <= 64 && y >= 6 && y <= 48 && (y <= 7 || x <= 9 || x >= 63 || y <= 10 && x < 13 - (y - 6));
 };
+const inRoom = (map: MapDef, x: number, y: number) => map.regions.some(r => r.inside && contains(r, { x: x * 32 + 16, y: y * 32 + 16 }));
+/**
+ * Walls hiding the corridor the player walks in (indoor floor in no room): along the open cells of the player's row, out
+ * to the next wall or room, the first wall up to two rows ahead (south). It changes only when the player changes row,
+ * so it does not slide along with the player. Keys `x,y`.
+ */
+export function mallCorridorWalls(map: MapDef, player: Point): Set<string> {
+  const out = new Set<string>(), px = Math.floor(player.x / 32), py = Math.floor(player.y / 32);
+  const indoor = (x: number, y: number) => x >= 8 && x <= 64 && y >= 6 && y <= 48;
+  const corridor = (x: number, y: number) => indoor(x, y) && map.cells[y]?.[x] !== undefined && map.cells[y][x] !== 'wall' && !inRoom(map, x, y);
+  if (!corridor(px, py)) return out;
+  let x0 = px, x1 = px;
+  while (corridor(x0 - 1, py)) x0--;
+  while (corridor(x1 + 1, py)) x1++;
+  for (let x = x0; x <= x1; x++) for (let d = 1; d <= 2; d++) {
+    const c = map.cells[py + d]?.[x];
+    if (c === 'wall') { out.add(`${x},${py + d}`); break; }
+    if (!corridor(x, py + d)) break;
+  }
+  return out;
+}
 /**
  * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the
- * cutaway is only the rooms in `rooms` (each with its south wall row); the facade is never cut, so the building reads
- * the same from the plaza and from inside. Walls that hide the player still fade through the focus rule. `p` is a wall
- * cell's centre. Display only, like the rest of this module.
+ * cutaway is the rooms in `rooms` (each with its south wall row) and, in a corridor, the `corridor` walls just ahead;
+ * the facade's north and side walls are never cut, so the building reads the same from the plaza and from inside. Walls
+ * that hide the player still fade through the focus rule. `p` is a wall cell's centre. Display only.
  */
-export function mallCutaway(map: MapDef, rooms: ReadonlySet<string>): (p: Point) => boolean {
+export function mallCutaway(map: MapDef, rooms: ReadonlySet<string>, corridor: ReadonlySet<string> = new Set()): (p: Point) => boolean {
   const rects = map.regions.filter(r => rooms.has(r.id)).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h + 32 }));
-  return p => !facade(p) && rects.some(r => contains(r, p));
+  return p => !facade(p) && (rects.some(r => contains(r, p)) || corridor.has(`${Math.floor(p.x / 32)},${Math.floor(p.y / 32)}`));
 }

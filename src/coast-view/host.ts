@@ -787,13 +787,14 @@ export class CoastSampleHost {
   }
   /**
    * Stair destinations as HUD text in the pixel face, at the place the view keeps for them (below the stair marker, moved
-   * clear of the player). The one the player stands at is named by the interaction prompt instead.
+   * clear of the player), shown by the same rules as before. On mall floors the one the player stands at is named by the
+   * interaction prompt instead.
    */
   private stairEls = new Map<string, HTMLElement>();
   private stairNames(f: PublishedView['frame']) {
-    const box = this.q('[data-stairs]'), seen = new Set<string>(), at = f.interaction?.kind === 'entry' ? f.interaction.ref.id : null;
+    const box = this.q('[data-stairs]'), seen = new Set<string>(), at = this.view.mallFloor && f.interaction?.kind === 'entry' ? f.interaction.ref.id : null;
     for (const l of this.view.stairLabelViews()) {
-      if (!l.visible || this.panel || l.id === at) continue;
+      if (!l.visible || l.id === at) continue;
       seen.add(l.id);
       let el = this.stairEls.get(l.id);
       if (!el) { el = document.createElement('span'); el.className = 'cs-stair'; box.appendChild(el); this.stairEls.set(l.id, el); }

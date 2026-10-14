@@ -66,6 +66,9 @@ for (const [label, MALL, resolveWorld] of REVISIONS) {
             const copy = structuredClone(state); validateExpansion(copy, profile, null, resolveWorld); assert.deepEqual(copy, state);
             assert.equal(config.exits.length, 2);
             for (const layer of Object.values(state.raid!.maps)) for (const p of [...layer.enemies, ...layer.loot, ...layer.containers]) assert.ok(MALL.maps[layer === f1 ? 'mall-f1' : 'mall-f2'].entries.every(e => Math.hypot(e.at.x - p.x, e.at.y - p.y) >= 144));
+            // The run starts at the world's spawn (layout 2: the entrance plaza), with the first floor's pieces 240 px clear of it.
+            assert.deepEqual({ x: state.raid!.player.x, y: state.raid!.player.y }, { x: MALL.spawn.x, y: MALL.spawn.y });
+            for (const p of [...f1.enemies, ...f1.loot, ...f1.containers]) assert.ok(Math.hypot(p.x - MALL.spawn.x, p.y - MALL.spawn.y) >= 240, `seed ${seed}: ${p.x},${p.y} near the start`);
         }
     });
 

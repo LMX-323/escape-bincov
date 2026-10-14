@@ -276,7 +276,8 @@ async function deployTabs(page) {
     await shot(page, 'm15-f1-side-door-1280.png');
     await place(page, 48.5, 3.5, 0, 'mall-f1'); await frames(page, 10);
     const plaza = await page.evaluate(() => document.querySelector('[data-where]').textContent);
-    assert.ok(near.total >= 15 && near.openings === near.total && near.sills === near.total, JSON.stringify(near));
+    assert.equal(near.total, 12, 'one guide per F1 entrance');
+    assert.ok(!near.shown.some(o => o.x <= 9), 'the west entrance, far away, shows no guide');
     assert.ok(near.shown.some(o => o.x === 57 && o.y === 22), `the store's side door is marked: ${JSON.stringify(near.shown)}`);
     assert.equal(near.lintels, 9, 'headers over the three east-west entrances only');
     assert.match(near.where, /一层 · 湾角便利 · 样板外$/); assert.match(plaza, /一层 · 正门广场 · 室外$/);
