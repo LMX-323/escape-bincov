@@ -121,17 +121,22 @@ export function mallWallParts(m: DressMap, x: number, y: number): { cap: string[
 
 /**
  * Doorways in east-west walls (one to three open cells between wall cells, open on both sides) get a header at wall
- * height; north-south openings show no face in this projection. The facade's are entrance headers, the rest shutters.
+ * height; north-south openings show no face in this projection. A gap between the sides of two north-south walls is a
+ * corridor, and a lone pillar (an unnamed corner marker) is no jamb: neither gets a header. The facade's are entrance
+ * headers, the rest shutters.
  */
 export function mallLintels(m: DressMap): { x: number; y: number; assets: string[] }[] {
     const f = furnitureAt(m), wall = (x: number, y: number) => m.cells[y]?.[x] === 'wall' && !f.has(`${x},${y}`) && mallWallRole(m, x, y) !== 'void';
     const open = (x: number, y: number) => { const c = m.cells[y]?.[x]; return !!c && c !== 'wall'; };
+    const lone = (x: number, y: number) => !wall(x - 1, y) && !wall(x + 1, y) && !wall(x, y - 1) && !wall(x, y + 1);
+    const upright = (x: number, y: number) => wall(x, y - 1) && wall(x, y + 1);
     const out: { x: number; y: number; assets: string[] }[] = [];
     m.cells.forEach((row, y) => {
         for (let x = 1; x < row.length - 1; x++) {
             if (!wall(x - 1, y) || wall(x, y) || !open(x, y)) continue;
             let end = x; while (end < row.length && !wall(end, y) && open(end, y)) end++;
             if (end - x > 3 || !wall(end, y) || !wall(x - 2, y) && !wall(end + 1, y)) continue;
+            if (lone(x - 1, y) || lone(end, y) || upright(x - 1, y) && upright(end, y)) continue;
             const through = [...Array(end - x).keys()].every(i => open(x + i, y - 1) && open(x + i, y + 1));
             if (!through) continue;
             const facade = m.mapId === 'mall-f1' && (y === 6 || y === 48);

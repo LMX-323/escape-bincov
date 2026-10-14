@@ -4,6 +4,8 @@ import { canvas, hash } from './art/paint';
 
 interface Particle { region: readonly string[]; s: Sprite; x: number; y: number; h: number; vx: number; vy: number; vh: number; age: number; ttl: number; g: number; settle: 'decal' | 'fade' | 'stay'; color: number }
 
+const rooms = (own: readonly string[], owner: readonly string[]) => owner.length ? [...new Set([...own, ...owner])] : own;
+
 export class Fx {
   private live: Particle[] = [];
   private free: Sprite[] = [];
@@ -51,17 +53,18 @@ export class Fx {
    * Blood pool under a body: a fresh kill spreads it over about three seconds; a body met already dead (loaded, revealed
    * later) has it at full size. Like every decal it belongs to the region under it and shows only once that is revealed.
    */
-  pool(x: number, y: number, seed: number, grow: boolean) {
+  /** `owner`: rooms of the body the pool belongs to; the pool shows only once those are revealed too. */
+  pool(x: number, y: number, seed: number, grow: boolean, owner: readonly string[] = []) {
     const s = new Sprite(this.tex.ensure(`fx:pool:${seed % 3}`, () => paintPool(seed % 3)));
     s.anchor.set(.5); s.position.set(Math.round(x), Math.round(y)); s.scale.set(grow ? .25 : 1);
-    this.flat.addChild(s); this.decals.push({ s, region: this.regionAt(x, y) });
+    this.flat.addChild(s); this.decals.push({ s, region: rooms(this.regionAt(x, y), owner) });
     if (grow) this.pools.push({ s, age: 0 });
   }
   private pools: { s: Sprite; age: number }[] = [];
 
-  decal(x: number, y: number, color: number, size = 1) {
+  decal(x: number, y: number, color: number, size = 1, owner: readonly string[] = []) {
     const s = new Sprite(this.tex.pixel()); s.tint = color; s.scale.set(size); s.position.set(Math.round(x), Math.round(y));
-    this.flat.addChild(s); this.decals.push({ s, region: this.regionAt(x, y) });
+    this.flat.addChild(s); this.decals.push({ s, region: rooms(this.regionAt(x, y), owner) });
     if (this.decals.length > 400) this.decals.shift()!.s.destroy();
   }
 

@@ -149,6 +149,55 @@ async function deployTabs(page) {
     const control = await page.evaluate(uid => { const h = window.__bincovSample.host; return { shown: h.view.actorShown(uid), revealed: Object.entries(h.lastBatch.frame.revealed).filter(([, v]) => v).map(([k]) => k) }; }, r.uid);
     return { pair: { a: pair.a, b: pair.b }, probe, enemy: r, seen, control };
   });
+  await step('M03b at a room\'s edge a hidden target gives no hit marker, and its corpse\'s blood stays hidden past the edge', async () => {
+    // An unrevealed room on F1 whose last column borders open floor in no room; the player waits on the plaza.
+    await place(page, 59.5, 4.5, Math.PI / 2, 'mall-f1'); await frames(page, 8);
+    const spot = await page.evaluate(() => {
+      const h = window.__bincovSample.host, m = h.view.mapDef, f = h.lastBatch.frame, inRoom = (x, y) => m.regions.some(r => r.inside && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+      for (const r of m.regions) {
+        if (!r.inside || f.revealed[r.id]) continue;
+        const cx = (r.x + r.w) / 32 - 1;
+        for (let cy = r.y / 32 + 1; cy < (r.y + r.h) / 32 - 1; cy++) {
+          const p = { x: r.x + r.w - 6, y: cy * 32 + 16 };
+          if (m.cells[cy][cx] === 'floor' && m.cells[cy][cx + 1] === 'floor' && m.cells[cy - 1][cx + 1] === 'floor' && m.cells[cy + 1][cx + 1] === 'floor' && !inRoom(p.x + 16, p.y)) return { room: r.id, p };
+        }
+      }
+      return null;
+    });
+    assert.ok(spot, 'a room edge next to open floor in no room');
+    const enemy = await page.evaluate(([p]) => {
+      const h = window.__bincovSample.host, d = window.__bincovSample.driver, a = h.lastBatch.frame.actors.find(x => x.alive);
+      try { d.placeEnemy(a.uid, p); return a.uid; } catch (e) { return 'error: ' + e; }
+    }, [spot.p]);
+    assert.ok(!enemy.startsWith('error'), enemy); await frames(page, 6);
+    // A player bullet meets the target's circle just outside the room: no marker for a target the Runtime hides.
+    const marker = await page.evaluate(([uid, p]) => {
+      const h = window.__bincovSample.host, contact = { x: p.x + 14, y: p.y };
+      const fire = reveal => {
+        const b = structuredClone(h.lastBatch), a = b.frame.actors.find(x => x.uid === uid);
+        b.frame.revealed[a.regionId] = reveal;
+        b.events = [{ type: 'impact', owner: 'player', bullet: 'mall-edge-' + reveal, reason: 'hit-actor', target: uid, lastFree: contact, contact, stamp: b.stamp, seq: h.lastSeq + 1, durability: 'accepted' }];
+        document.querySelector('[data-hitpop]')?.classList.remove('on'); h.markT = 0;
+        h.view.present(b, 0); h.hud(b);
+        return { region: a.regionId, shownAt: h.view.shownAt(contact, b.frame.revealed), on: !!document.querySelector('[data-hitpop]')?.classList.contains('on') };
+      };
+      return { hidden: fire(false), revealed: fire(true) };
+    }, [enemy, spot.p]);
+    assert.equal(marker.hidden.shownAt, true, 'the contact lies in no room'); assert.equal(marker.hidden.on, false, 'no marker for a hidden target');
+    assert.equal(marker.revealed.on, true, 'control: a revealed target is marked');
+    await page.evaluate(uid => window.__bincovSample.driver.kill(uid), enemy); await frames(page, 10);
+    const blood = () => page.evaluate(([p]) => {
+      const v = window.__bincovSample.host.view, near = v.fx.decals.filter(d => Math.abs(d.s.x - p.x) < 24 && Math.abs(d.s.y - p.y) < 16);
+      return { near: near.length, visible: near.filter(d => d.s.visible).length, outside: near.filter(d => d.s.x >= p.x + 6).length };
+    }, [spot.p]);
+    const hidden = await blood();
+    assert.ok(hidden.near >= 10 && hidden.outside >= 1, JSON.stringify(hidden)); assert.equal(hidden.visible, 0, 'no blood shows while its room is unrevealed');
+    await place(page, spot.p.x / 32 + .5, spot.p.y / 32, Math.PI, 'mall-f1').catch(() => place(page, spot.p.x / 32 + 1, spot.p.y / 32 + 1, Math.PI, 'mall-f1'));
+    await frames(page, 10);
+    const shown = await blood();
+    assert.ok(shown.visible >= 1, 'control: the blood shows once the room is revealed');
+    return { spot, enemy, marker, hidden, shown };
+  });
   await step('M04 the S-N stairs take the player up and back down; each floor keeps its own dressing', async () => {
     const rides = [];
     for (const [from, to, map] of [['mall-f1', 'mall-f2', 'mall-f1'], ['mall-f2', 'mall-f1', 'mall-f2']]) {
@@ -253,8 +302,16 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
     await deployTabs(page);
     const s = await page.evaluate(() => { const c = window.__bincovSample.counts(), v = window.__bincovSample.host.view; return { art: c.art, mallArt: c.mallArt, mall: !!v.mall, occluders: v.stats.occluders }; });
     assert.deepEqual({ art: s.art, mallArt: s.mallArt, mall: s.mall }, { art: 'placeholder', mallArt: 'placeholder', mall: false });
+    // Without the samples the building still keeps the rain out and thins the mist indoors.
+    const weather = async (x, y) => { await place(page, x, y, Math.PI / 2, 'mall-f1'); await wait(1500); await frames(page, 20); return page.evaluate(() => {
+      const w = window.__bincovSample.host.view.weather, inside = s => s.visible && s.x >= 8 * 32 && s.x < 65 * 32 && s.y >= 6 * 32 && s.y < 49 * 32;
+      return { drops: w.stats.drops, splashesInside: w.back.children.filter(inside).length, shelter: w.shelter };
+    }); };
+    const hall = await weather(40, 25), plaza = await weather(59.5, 4.5);
+    assert.equal(hall.splashesInside, 0); assert.ok(hall.shelter > .8, JSON.stringify(hall));
+    assert.ok(plaza.drops > 0 && plaza.shelter < .2, JSON.stringify(plaza));
     await shot(page, 'm11-placeholder-1280.png');
-    return s;
+    return { ...s, hall, plaza };
   });
   await context.close();
 }

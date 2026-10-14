@@ -16,6 +16,7 @@ import { isMall, knownDoor, knownStructurePoint, mallCutaway, occupiedStructure,
 import { paintMallGround } from './art/mall-ground';
 import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
 import type { MallArt } from './mall-art';
+import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
@@ -228,9 +229,9 @@ export class CoastView {
     this.updateXray(f);
     this.updateHighlight(f, visible);
     this.camera(f, dt);
-    if (this.mall) {
+    if (this.map && isMall(this.map)) {
       // Mist thins out indoors over half a second (the mall's plaza and terrace are outdoors, its halls are not).
-      const indoor = this.mall.zone(f.player.x, f.player.y) === 'indoor' ? 1 : 0;
+      const indoor = insideFootprint(Math.floor(f.player.x / 32), Math.floor(f.player.y / 32)) ? 1 : 0;
       this.weather.shelter += (indoor - this.weather.shelter) * Math.min(1, dt * 4);
     }
     this.weather.update(this.time, this.cam, this.view, f.revealed);
@@ -297,7 +298,7 @@ export class CoastView {
     else this.buildGeneric(m, f, M, roofs);
     if (m.key.mapId === 'coast') this.dressCoast();
     // Awnings keep the pavement under them dry; the mall's footprint keeps all of its floor dry.
-    const awnings = m.key.mapId === 'coast' ? [11, 25].map(tx => ({ x: tx * 32, y: 15 * 32 - 8, w: 4 * 32, h: 40 })) : mall ? mall.covered : [];
+    const awnings = m.key.mapId === 'coast' ? [11, 25].map(tx => ({ x: tx * 32, y: 15 * 32 - 8, w: 4 * 32, h: 40 })) : isMall(m) ? [{ ...MALL_FOOTPRINT }] : [];
     this.tide.setMap(m);
     this.weather.setMap(m, bake.puddles, roofs, awnings, (x, y) => M[y >> 5]?.[x >> 5] === 'water' || this.tide.wet(x, y));
     this.light.mood = MOODS[this.opts.mood % MOODS.length]; this.light.setMap(m, mall?.zone ?? null);
@@ -577,8 +578,10 @@ export class CoastView {
         this.flat.addChild(g.corpse);
         const seed = fresh ? null : [...a.uid].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
         let k = seed ?? 0; const r = () => seed === null ? this.rnd() : ((k = (k * 1103515245 + 12345) >>> 0) / 4294967296);
-        for (let i = 0; i < 14; i++) this.fx.decal(a.x - 9 + r() * 18, a.y - 2 + r() * 7, i % 3 ? 0x5a2724 : 0x6e2f2a, r() < .4 ? 2 : 1);
-        if (a.kind !== 'creature') this.fx.pool(a.x + facing * 4, a.y + 1, [...a.uid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 3), fresh);
+        // Spatter and pool belong to the body's rooms too: a drop that lands across a room's edge stays hidden with it.
+        const owner = this.regionsAt(a);
+        for (let i = 0; i < 14; i++) this.fx.decal(a.x - 9 + r() * 18, a.y - 2 + r() * 7, i % 3 ? 0x5a2724 : 0x6e2f2a, r() < .4 ? 2 : 1, owner);
+        if (a.kind !== 'creature') this.fx.pool(a.x + facing * 4, a.y + 1, [...a.uid].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 3), fresh, owner);
         // Pools go under the body: move the corpse to the top of the flat layer again.
         this.flat.addChild(g.corpse);
       }

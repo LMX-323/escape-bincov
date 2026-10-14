@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mallWorldV2 } from '../src/mall-world';
 import { MALL_FURNITURE, parseFurnitureName } from '../src/mall-layout-v2';
 import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, insideFootprint, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
-import { isMall, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
+import { actorShown, isMall, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
 import { SampleSound } from '../src/coast-view/sound';
 import type { MapDef, PublishedView } from '../src/raid-runtime/contract';
 
@@ -76,6 +76,24 @@ test('商场 2.5D：货架端头的通道牌按从北到南、从西到东编号
   const numbers = signs.map(a => Number(a.split(':').at(-1)));
   assert.ok(numbers.length >= 9);
   assert.deepEqual(numbers, numbers.map((_, i) => i + 1));
+});
+
+test('命中反馈看目标本身：目标所在房间未揭示时，弹着点落在房间外的走廊也不提示、不出声', () => {
+  // mall-f2: F2-06 spans x 608..927; an enemy at x 920 counts as F2-06, the bullet meets its 14 px circle at x 934.
+  const m = mapOf('mall-f2'), enemy = { uid: 'enemy-3', regionId: 'F2-06' }, contact = { x: 934, y: 1424 };
+  assert.equal(shownAt(m, {}, contact), true, 'the contact point is in no room');
+  assert.equal(actorShown({ actors: [enemy], revealed: {} }, 'enemy-3'), false);
+  assert.equal(actorShown({ actors: [enemy], revealed: { 'F2-06': true } }, 'enemy-3'), true);
+  assert.equal(actorShown({ actors: [{ uid: 'enemy-4', regionId: null }], revealed: {} }, 'enemy-4'), true, 'in no room');
+  assert.equal(actorShown({ actors: [], revealed: {} }, 'player'), true);
+  assert.equal(actorShown({ actors: [], revealed: {} }, 'enemy-9'), false, 'an actor the frame does not carry');
+  const calls: string[] = [];
+  const out = new Proxy({}, { get: (_, k) => (...a: unknown[]) => { calls.push(String(k)); void a; } });
+  const s = new SampleSound(out as never), hurt = { type: 'hurt', cause: 'blow', uid: 'enemy-3', damage: 8, angle: 0, at: contact, stamp: { world: { mapId: 'mall-f2' } } } as never;
+  s.event(hurt, 'mall-f2', () => true, () => false);
+  assert.ok(!calls.includes('hit'), 'no hit sound for a hidden target');
+  s.event(hurt, 'mall-f2', () => true, () => true);
+  assert.ok(calls.includes('hit'));
 });
 
 test('商场 2.5D：海声只在楼体内闭合，广场和露台是室外', () => {

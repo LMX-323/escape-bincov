@@ -40,6 +40,17 @@ export function regionAtClosed(map: MapDef, revealed: Readonly<Record<string, bo
     .sort((a, b) => Number(!!revealed[a.id]) - Number(!!revealed[b.id]) || a.id.localeCompare(b.id, 'en'))[0]?.id ?? null;
 }
 
+/**
+ * Whether the Runtime shows an actor now: the player always, anyone else when the room it counts as (fail closed) is
+ * revealed or it stands in no room. Hit and kill feedback must check the target this way: a bullet's contact point lies
+ * on a circle around the target and can fall outside its room.
+ */
+export function actorShown(frame: { actors: readonly { uid: string; regionId: string | null }[]; revealed: Readonly<Record<string, boolean>> }, uid: string): boolean {
+  if (uid === 'player') return true;
+  const a = frame.actors.find(x => x.uid === uid);
+  return !!a && (a.regionId === null || frame.revealed[a.regionId] === true);
+}
+
 export const isMall = (map: MapDef) => map.buildings.some(b => b.kind === 'mall');
 /**
  * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the

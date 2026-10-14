@@ -90,7 +90,7 @@ export class SampleSound {
    * outdoors or in a revealed room: a blow landing or a round striking a wall in an unrevealed room makes no sound, as
    * it shows no marker or spark. Gunfire itself carries through walls and stays audible.
    */
-  event(e: StampedEvent, mapId: string, shown: (p: { x: number; y: number }) => boolean = () => true) {
+  event(e: StampedEvent, mapId: string, shown: (p: { x: number; y: number }) => boolean = () => true, actorShown: (uid: string) => boolean = () => true) {
     if (e.stamp.world.mapId !== mapId) return;
     const at = (uid: string) => { const p = this.where.get(uid); return p ? this.spot(p.x, p.y) : undefined; };
     switch (e.type) {
@@ -106,7 +106,8 @@ export class SampleSound {
       case 'hurt': {
         if (e.cause !== 'blow') break;
         if (e.uid === 'player') this.out.hit();
-        else if (shown(e.at)) this.out.hit(this.spot(e.at.x, e.at.y));
+        // The blow lands on an actor: both the actor (as the Runtime shows it) and the hit point must be visible.
+        else if (shown(e.at) && actorShown(e.uid)) this.out.hit(this.spot(e.at.x, e.at.y));
         break;
       }
       case 'impact': if (e.reason === 'blocked' && (e.surface === 'wall' || e.surface === 'door') && shown(e.lastFree)) { const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s); } break;

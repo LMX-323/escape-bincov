@@ -5,7 +5,7 @@
  * (`mallDress`) is computed once per map and view; `buildMall` places sprites on every rebuild.
  */
 import { Sprite } from 'pixi.js';
-import type { MapDef, Point, Rect } from '../raid-runtime/contract';
+import type { MapDef, Point } from '../raid-runtime/contract';
 import type { GroundMaterial } from './appearance';
 import { canvas, rect } from './art/paint';
 import { Lattice } from './art/surface';
@@ -13,7 +13,7 @@ import type { MallGroundBake } from './art/mall-ground';
 import type { AmbientZone, Light } from './lighting';
 import { mallCanvas, mallEmitId, mallPick, type MallArt } from './mall-art';
 import {
-  MALL_FOOTPRINT, PROCEDURAL, WALL_LIFT, mallDecals, mallGround, mallLights, mallLintels, mallProps, mallSigns, mallStandIns,
+  PROCEDURAL, WALL_LIFT, mallDecals, mallGround, mallLights, mallLintels, mallProps, mallSigns, mallStandIns,
   mallWallCells, mallWallParts, mallWallProps, mallWallRole, mallZone, type DressMap, type DressSprite, type WallRole,
 } from './mall-dressing';
 import { MALL_FURNITURE, parseFurnitureName } from '../mall-layout-v2';
@@ -31,7 +31,8 @@ export interface MallContext {
   addSprite(sprite: Sprite): void;
 }
 
-interface WallPiece { x: number; y: number; role: WallRole; lift: number; cap: string | null; face: string | null; rail: string | null; line: boolean; edges: string; tint: Point }
+/** `edges`: open sides of a wall's cap (n s e w, 'x' = open); `link`: parapet neighbours carrying the rail (n s e w, '1'). */
+interface WallPiece { x: number; y: number; role: WallRole; lift: number; cap: string | null; face: string | null; rail: string | null; link: string; edges: string; tint: Point }
 export interface MallDress {
   dress: DressMap;
   ground: MallGroundBake;
@@ -44,14 +45,16 @@ export interface MallDress {
   lights: Light[];
   /** Entries whose generic stair marker is replaced by the drawn flight beside them. */
   flights: Set<string>;
-  /** Building footprint: rain stays outside it. */
-  covered: Rect[];
 }
 
 const T = 32;
 const ZONES = ['indoor', 'outdoor', 'drop'] as const;
-/** Bottom canvas rows of a fading prop that stay solid: its transparent south rows plus a few rows of foot. */
-const keepOf = (asset: string) => /sofa/.test(asset) ? 16 : /bench/.test(asset) ? 18 : /prop-bed/.test(asset) ? 22 : /gondola-(end|mid)/.test(asset) ? 8 : 4;
+/**
+ * Bottom canvas rows of a fading prop that stay solid: its transparent south rows plus a few rows of foot. The stairwell
+ * is a hole in the floor, so none of it fades (fading would show the floor it replaces).
+ */
+const keepOf = (asset: string) => /stairs-down/.test(asset) ? 1000 : /sofa/.test(asset) ? 16 : /bench/.test(asset) ? 18 : /prop-bed/.test(asset) ? 22
+  : /gondola-(end|mid)/.test(asset) ? 8 : 4;
 /** Colour of an emission overlay by what glows: cold cases, display panels, exit signs, emergency lamps, lamps, daylight. */
 const glowOf = (asset: string) => /fridge|freezer/.test(asset) ? 0xbfe0ea : /exit/.test(asset) ? 0x7fe08f : /emergency/.test(asset) ? 0xe8f0e8
   : /floor-lamp/.test(asset) ? 0xf0c890 : /directory|pylon/.test(asset) ? 0xcfe5dc : 0x9fb0b8;
@@ -74,8 +77,9 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
     const edges = role === 'wall' ? [isWall(x, y - 1), isWall(x, y + 1), isWall(x + 1, y), isWall(x - 1, y)].map(w => w ? '-' : 'x').join('') : '----';
     // Lit from the floor in front of the wall, or from its own cell when that floor is the drop or another wall.
     const front = !isWall(x, y + 1) && zoneAt(x, y + 1) !== 2;
+    const link = role === 'parapet' ? [isWall(x, y - 1), isWall(x, y + 1), isWall(x + 1, y), isWall(x - 1, y)].map(w => w ? '1' : '0').join('') : '';
     return { x, y, role, lift: WALL_LIFT[role], cap: mallPick(art, parts.cap), face: mallPick(art, parts.face), rail: mallPick(art, parts.rail),
-      line: isWall(x, y - 1) && isWall(x, y + 1), edges, tint: front ? { x: x * T + 16, y: (y + 1) * T + 8 } : { x: x * T + 16, y: y * T + 16 } };
+      link, edges, tint: front ? { x: x * T + 16, y: (y + 1) * T + 8 } : { x: x * T + 16, y: y * T + 16 } };
   });
 
   const resolve = <S extends DressSprite>(list: S[]) => list.flatMap(s => { const asset = mallPick(art, s.assets); return asset ? [{ ...s, asset }] : []; });
@@ -90,12 +94,13 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   for (let y = 0; y < rows; y++) {
     floor.push([]); mat.push([]);
     for (let x = 0; x < cols; x++) {
-      const i = y * cols + x, c = m.cells[y][x], f = furniture.get(`${x},${y}`);
+      const i = y * cols + x, c = m.cells[y][x], f = furniture.get(`${x},${y}`), well = f === 'stairs-down';
       drop[i] = zones[i] === 2 ? 1 : 0; outdoor[i] = zones[i] === 1 ? 1 : 0;
       wall[i] = drawn[i] || (f && MALL_FURNITURE[f as keyof typeof MALL_FURNITURE].kind === 'B') ? 1 : 0;
-      const ids = drop[i] || c === 'tide' ? [] : mallGround(dress, x, y), sample = mallCanvas(art, ids);
+      // No floor under the stairwell: the opening is dark wherever its sprite does not cover it.
+      const ids = drop[i] || well || c === 'tide' ? [] : mallGround(dress, x, y), sample = mallCanvas(art, ids);
       floor[y].push(sample);
-      mat[y].push(drop[i] ? 'void' : c === 'tide' ? 'mud' : outdoor[i] ? 'concrete' : /wood|deck/.test(mallPick(art, ids) ?? '') ? 'wood' : 'tile');
+      mat[y].push(drop[i] || well ? 'void' : c === 'tide' ? 'mud' : outdoor[i] ? 'concrete' : /wood|deck/.test(mallPick(art, ids) ?? '') ? 'wood' : 'tile');
     }
   }
   const W = cols * T, H = rows * T;
@@ -130,7 +135,7 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   }).map(e => e.id));
   return {
     dress, ground, walls, lintels, props, wallProps, lights, flights, signs: resolve(mallSigns(dress)),
-    zone: (x, y) => ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))], covered: [{ ...MALL_FOOTPRINT }],
+    zone: (x, y) => ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))],
   };
 }
 
@@ -147,11 +152,16 @@ function paintWallPiece(art: MallArt, w: WallPiece): HTMLCanvasElement {
   if (west) edge('mall-wall-edge-w-v1', 0, 0);
   const face = w.face && get(w.face);
   if (face && w.lift) g.drawImage(face, 0, 0, T, w.lift, 0, T, T, w.lift);
-  // Glass rail along east-west parapet runs; a north-south run shows it as a line along the cap.
+  // The glass rail stands on the cap's centre line: an east-west run shows the rail itself, a north-south run its top as
+  // a line along the cap. Both stop at the centre where the run ends, so corners and tees join.
   if (w.rail) {
-    const rail = get(w.rail);
-    if (w.line || !rail) { rect(g, '#b8c6c4', 14, 0, 2, T); rect(g, '#6d7674', 16, 0, 1, T); }
-    else g.drawImage(rail, 0, w.lift - 6);
+    const rail = get(w.rail), [n, s, e, west] = w.link.split('').map(c => c === '1'), across = e || west || !(n || s);
+    if (n || s) { const y0 = n ? 0 : 15, y1 = s ? T : 17; rect(g, '#b8c6c4', 14, y0, 2, y1 - y0); rect(g, '#6d7674', 16, y0, 1, y1 - y0); }
+    if (across) {
+      const x0 = west || !e ? 0 : 14, x1 = e || !west ? T : 17;
+      if (rail) g.drawImage(rail, x0, 0, x1 - x0, rail.height, x0, 16 - rail.height, x1 - x0, rail.height);
+      else rect(g, '#b8c6c4', x0, 14, x1 - x0, 2);
+    }
   }
   return c;
 }
@@ -178,7 +188,7 @@ export function buildMall(ctx: MallContext, d: MallDress) {
   };
 
   for (const w of d.walls) {
-    const key = `mall:wall:${w.cap}|${w.face}|${w.rail}|${w.line ? 1 : 0}|${w.edges}|${w.lift}`;
+    const key = `mall:wall:${w.cap}|${w.face}|${w.rail}|${w.link}|${w.edges}|${w.lift}`;
     tex.ensure(key, () => paintWallPiece(art, w));
     const y = w.y * T - w.lift, o = ctx.add(key, w.x * T, y, (w.y + 1) * T, 'wall', 6);
     o.tintAt = w.tint; owners.set(`${w.x},${w.y}`, o);

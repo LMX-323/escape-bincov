@@ -19,6 +19,7 @@ import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, TargetRef } from '../raid-runtime/contract';
 import type { LootTransfer } from '../loot';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
+import { actorShown } from './structure-guide';
 import { InputState } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
@@ -346,7 +347,7 @@ export class CoastSampleHost {
       // The Runtime names the bullet's owner (R6-L3). Contact is on the ground plane; the marker sits on the chest plane
       // where the bullet is drawn, and only where the hit point is outdoors or in a revealed room.
       const at = e.contact ?? e.lastFree;
-      if (e.owner === 'player' && e.reason === 'hit-actor' && e.target && shown(at)) this.mark(e.target, { x: at.x, y: at.y - AIM_H }, false);
+      if (e.owner === 'player' && e.reason === 'hit-actor' && e.target && shown(at) && actorShown(f, e.target)) this.mark(e.target, { x: at.x, y: at.y - AIM_H }, false);
     } else if (e.type === 'melee' && e.attacker === 'player' && e.hit) {
       const a = f.actors.find(x => x.uid === e.hit); if (a && shown(a)) this.mark(a.uid, { x: a.x, y: a.y - AIM_H }, false);
     } else if (e.type === 'death' && e.uid !== 'player') {
@@ -690,7 +691,7 @@ export class CoastSampleHost {
     // Rooms may overlap: only a point whose every room is revealed (or one in the open) makes a hit or impact sound.
     const shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
     for (const e of b.events) if (e.seq > this.lastSeq) {
-      this.lastSeq = e.seq; this.onEvent(e); this.sound.event(e, b.stamp.world.mapId, shown); this.feedback(e, b);
+      this.lastSeq = e.seq; this.onEvent(e); this.sound.event(e, b.stamp.world.mapId, shown, uid => actorShown(f, uid)); this.feedback(e, b);
       if (e.type === 'looted' || e.type === 'rejected') lootChanged = true;
       const { seq, type, durability, stamp, ...detail } = e;
       this.eventLog.push({ seq, type, durability, map: stamp.world.mapId, epoch: stamp.epoch, detail: detail as Record<string, unknown> });

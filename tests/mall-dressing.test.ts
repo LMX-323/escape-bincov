@@ -57,6 +57,11 @@ test('商场布置表：一层地图边是封锁围挡，二层楼外是虚空�
     const l1 = new Map(mallLintels(f1).map(l => [`${l.x},${l.y}`, l.assets[0]]));
     for (const x of [59, 60, 61]) assert.equal(l1.get(`${x},6`), 'mall-wall-lintel-entrance-v1');
     for (const x of [36, 37, 38]) assert.equal(l1.get(`${x},13`), 'mall-wall-lintel-shutter-v1');
+    // Not doorways: the corridor between two north-south walls, and gaps beside a lone corner-marker pillar.
+    for (const key of ['44,8', '44,10', '44,12', '60,20', '61,20', '62,20', '10,22']) assert.ok(!l1.has(key), `no header at F1 ${key}`);
+    const l2 = new Set(mallLintels(f2).map(l => `${l.x},${l.y}`));
+    for (const key of ['10,24', '10,37', '10,44']) assert.ok(!l2.has(key), `no header at F2 ${key}`);
+    for (const key of ['19,22', '31,26', '30,28']) assert.ok(l2.has(key), `header at F2 ${key}`);
     assert.ok(mallLintels(f2).every(l => mallWallRole(f2, l.x - 1, l.y) !== 'void'));
     for (const m of [f1, f2]) for (const p of mallWallProps(m)) assert.ok(p.assets.every(a => /^mall-[a-z0-9-]+-v1$/.test(a)));
     // Ceiling lights are light sources only: the ceiling is cut away, so no fixture sprite is drawn.

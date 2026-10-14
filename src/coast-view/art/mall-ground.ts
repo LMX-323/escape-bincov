@@ -13,7 +13,7 @@ import type { SolArt } from './sol';
 export interface MallGroundBake {
   /** Wall mask (drawn walls and blocking furniture), materials (wear, mud) and the noise lattices. */
   geo: GroundGeometry;
-  /** Floor sample per cell, or null where the procedural ground paints (drop, tidal mud). */
+  /** Floor sample per cell, or null where the procedural ground paints (drop, stairwell, tidal mud). */
   floor: (HTMLCanvasElement | null)[][];
   /** 1 where the cell is the drop beside the second floor. */
   drop: Uint8Array;
@@ -34,7 +34,8 @@ export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: S
     const X = tx * 32 - b.x, Y = ty * 32 - b.y;
     if (bake.drop[ty * m.cols + tx]) { paintDrop(g, tx, ty, X, Y, !!bake.drop[(ty - 1) * m.cols + tx] || ty === 0); continue; }
     const f = bake.floor[ty][tx];
-    if (!f) tile(g, geo.mat, tx, ty, X, Y, art);
+    // No sample: tidal mud (the coast's ground), or the dark of the stairwell opening.
+    if (!f) { if (geo.mat[ty][tx] === 'void') rect(g, '#121211', X, Y, 32, 32); else tile(g, geo.mat, tx, ty, X, Y, art); }
     else if (f.width >= 64) g.drawImage(f, (tx & 1) * 32, (ty & 1) * 32, 32, 32, X, Y, 32, 32);
     else g.drawImage(f, X, Y);
   }
