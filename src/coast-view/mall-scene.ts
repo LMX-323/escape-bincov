@@ -131,7 +131,9 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
       // Only a footprint that reaches the sprite's bottom row is trimmed; a piece's own small foot (the lamp) is exact.
       if (p.foot.y + p.foot.h !== p.z) return [p.foot];
       const c = mallCanvas(art, [p.asset]), gap = c ? bottomGap(c) : 0;
-      return [{ ...p.foot, h: Math.max(8, p.foot.h - gap) }];
+      // The contact band spans the drawn piece, not the whole footprint: the bed and the bench are narrower than their cells.
+      const [l, r] = c ? sideSpan(c) : [0, p.foot.w], x0 = Math.max(p.foot.x + 2, p.x + l), x1 = Math.min(p.foot.x + p.foot.w - 2, p.x + r);
+      return [{ ...p.foot, h: Math.max(8, p.foot.h - gap), ...x1 > x0 ? { band: { x: x0, w: x1 - x0 } } : {} }];
     }),
   };
 
@@ -183,7 +185,20 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   };
 }
 
-const gaps = new WeakMap<HTMLCanvasElement, number>();
+const gaps = new WeakMap<HTMLCanvasElement, number>(), spans = new WeakMap<HTMLCanvasElement, [number, number]>();
+
+/** The first opaque column and one past the last, over the whole sprite. */
+function sideSpan(c: HTMLCanvasElement): [number, number] {
+  let s = spans.get(c);
+  if (!s) {
+    const d = c.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
+    let l = c.width, r = 0;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 0) { if (x < l) l = x; if (x + 1 > r) r = x + 1; }
+    s = r > l ? [l, r] : [0, c.width];
+    spans.set(c, s);
+  }
+  return s;
+}
 /** Transparent rows at the bottom of a sprite (between its drawn base and the footprint's south edge). */
 function bottomGap(c: HTMLCanvasElement): number {
   let n = gaps.get(c);

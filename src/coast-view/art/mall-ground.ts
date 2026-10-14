@@ -25,7 +25,7 @@ export interface MallGroundBake {
   /** Cells whose wall sprite stands on the ground: they cast a short shadow to the lower right. */
   walls: readonly { x: number; y: number }[];
   /** Furniture footprints (world px, south edge at the drawn base) and standing height above the footprint. */
-  feet: readonly { x: number; y: number; w: number; h: number; lift: number }[];
+  feet: readonly { x: number; y: number; w: number; h: number; lift: number; band?: { x: number; w: number } }[];
 }
 
 export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: SolArt | null): HTMLCanvasElement {
@@ -70,7 +70,7 @@ export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: S
     const sh = Math.round(2 + f.lift / 7);
     rects.push([f.x - b.x + 3 + sh, f.y - b.y + 3 + Math.round(sh * .6), f.w - 6, f.h - 6]);
     // Contact: a dark band right under the drawn base, so the piece sits on the floor.
-    rects.push([f.x - b.x + 2, f.y - b.y + f.h - 2, f.w - 4, 2]);
+    rects.push(f.band ? [f.band.x - b.x, f.y - b.y + f.h - 2, f.band.w, 2] : [f.x - b.x + 2, f.y - b.y + f.h - 2, f.w - 4, 2]);
   }
   const img = g.getImageData(0, 0, b.w, b.h);
   shadeGround(img.data, geo, b.x, b.y, b.w, b.h, shadowMask(rects, b.w, b.h));

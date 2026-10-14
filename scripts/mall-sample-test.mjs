@@ -319,6 +319,8 @@ async function deployTabs(page) {
     // F-05 art: the sofa and bed stand on their cell's south edge, the table and bench sit in the middle of theirs.
     assert.deepEqual([...new Set(home.sofa.map(p => p.gap))], [0]); assert.deepEqual([...new Set(home.bed.map(p => p.gap))], [0]);
     assert.deepEqual([...new Set(home.table.map(p => p.gap))], [8]);
+    // The contact band under the bed and the bench spans the drawn piece (x4-59 of the 64 px canvas), not the whole footprint.
+    for (const p of [...home.bed, ...home.bench]) assert.deepEqual(p.foot.band, { x: p.foot.x + 4, w: 56 }, `contact band under ${p.asset}`);
     for (const l of home.lamp) assert.ok(l.foot.w <= 12 && l.foot.y + l.foot.h < l.z - 8, `the lamp's shadow is its base: ${JSON.stringify(l)}`);
     assert.equal(home.cafe, 4);
     return { lobby, near, far, onIt, home };
