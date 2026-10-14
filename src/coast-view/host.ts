@@ -87,6 +87,7 @@ const HTML = `
   <div class="cs-vignette" aria-hidden="true"></div>
   <div class="cs-hurt" data-hurt aria-hidden="true"></div>
   <div class="cs-ail" data-ail aria-hidden="true"></div>
+  <div class="cs-stairs" data-stairs aria-hidden="true"></div>
   <div class="cs-exitptr" data-exitptr hidden><i></i><span data-exitptr-text></span></div>
   <div class="cs-threats" data-threats aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <section class="cs-status">
@@ -679,6 +680,7 @@ export class CoastSampleHost {
     if ((this.stats.frames & 15) === 0) { const r = this.q('.cs-status').getBoundingClientRect(); this.view.hudTop = innerHeight < 480 ? r.bottom : 0; }
     if ((this.stats.frames & 3) === 0) { const docked = this.panel === 'loot' || this.panel === 'inventory'; this.view.panelInset = docked ? Math.max(0, innerHeight - this.q('[data-panel]').getBoundingClientRect().top) : 0; }
     this.prompt(this.panel ? null : f.interaction, f.player.y);
+    this.stairNames(f);
     const cross = q('[data-cross]'); cross.hidden = this.input.touch || !this.input.pointer.inside || !!this.panel;
     // Recoil kick on the reticle; a ring around it fills while reloading.
     cross.style.transform = `translate(${this.input.pointer.x}px, ${this.input.pointer.y}px) scale(${(1 + this.kick * .32).toFixed(3)})`;
@@ -781,6 +783,24 @@ export class CoastSampleHost {
     this.q('[data-quest-count]').textContent = `· ${progress.length} 项未完成`;
     const html = progress.map(qt => `<section><strong>${esc(qt.name)}</strong>${qt.needs.map(n => `<p>${esc(name(n.id))}：仓库 ${n.stored} · 携带 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
     const list = this.q('[data-quest-list]'); if (list.innerHTML !== html) list.innerHTML = html;
+  }
+  /**
+   * Stair destinations as HUD text in the pixel face, at the place the view keeps for them (below the stair marker, moved
+   * clear of the player). The one the player stands at is named by the interaction prompt instead.
+   */
+  private stairEls = new Map<string, HTMLElement>();
+  private stairNames(f: PublishedView['frame']) {
+    const box = this.q('[data-stairs]'), seen = new Set<string>(), at = f.interaction?.kind === 'entry' ? f.interaction.ref.id : null;
+    for (const l of this.view.stairLabelViews()) {
+      if (!l.visible || this.panel || l.id === at) continue;
+      seen.add(l.id);
+      let el = this.stairEls.get(l.id);
+      if (!el) { el = document.createElement('span'); el.className = 'cs-stair'; box.appendChild(el); this.stairEls.set(l.id, el); }
+      if (el.textContent !== l.text) el.textContent = l.text;
+      const p = this.view.worldToClient({ x: l.x, y: l.y });
+      el.style.transform = `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) translateX(-50%)`; el.hidden = false;
+    }
+    for (const [id, el] of this.stairEls) if (!seen.has(id)) el.hidden = true;
   }
   private prompt(t: Interaction | null, py: number) {
     const el = this.q('[data-prompt]'), list = this.q('[data-choices]'), act = this.q('[data-act]');

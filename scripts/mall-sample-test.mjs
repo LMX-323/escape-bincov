@@ -258,6 +258,38 @@ async function deployTabs(page) {
     const s = await page.evaluate(() => ({ view: window.__bincovSample.host.view.view, frameMs: window.__bincovSample.host.view.stats.frameMs }));
     assert.ok(s.view.W >= 1900); return s;
   });
+  await step('M14 stairs: no label beside the drawn flight but floor arrows to it; other stairs are named in the HUD face when near; pieces sit on their drawn base', async () => {
+    await page.setViewportSize({ width: 1280, height: 720 }); await frames(page, 4);
+    const labels = () => page.evaluate(() => [...document.querySelectorAll('.cs-stair')].filter(e => !e.hidden).map(e => ({ text: e.textContent, font: getComputedStyle(e).fontFamily, r: e.getBoundingClientRect().toJSON() })));
+    await place(page, 59.5, 15.5, Math.PI / 2, 'mall-f1'); await frames(page, 10);
+    const lobby = { labels: await labels(), guides: await page.evaluate(() => window.__bincovSample.host.view.mall.ground.guides) };
+    await shot(page, 'm14-f1-lobby-arrows-1280.png');
+    await place(page, 41.5, 15.5, Math.PI / 2, 'mall-f1'); await frames(page, 10);
+    const near = await labels(); await shot(page, 'm14-f1-escalator-label-1280.png');
+    await place(page, 59.5, 4.5, Math.PI / 2, 'mall-f1'); await frames(page, 10);
+    const far = await labels();
+    // On the stair point the interaction prompt names it; the label steps aside.
+    const ec = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.entries.find(e => e.id === 'E-C-up').at);
+    await place(page, ec.x / 32, ec.y / 32, Math.PI / 2, 'mall-f1'); await frames(page, 10);
+    const onIt = { labels: await labels(), prompt: await page.evaluate(() => { const p = document.querySelector('[data-prompt]'); return p.hidden ? null : p.textContent; }) };
+    const feet = await page.evaluate(() => {
+      const v = window.__bincovSample.host.view, d = v.mall;
+      return { mallF1: d.ground.feet.length, rendered: [...v.stairLabels.values()].some(s => s.renderable) };
+    });
+    await place(page, 62, 27.6, 0, 'mall-f2'); await frames(page, 10);
+    const home = await page.evaluate(() => {
+      const d = window.__bincovSample.host.view.mall, sized = n => d.props.filter(p => p.asset.includes(n)).map(p => ({ z: p.z, foot: d.ground.feet.find(f => f.x === p.foot.x && f.y === p.foot.y) }));
+      return { sofa: sized('sofa'), bed: sized('prop-bed'), bench: sized('bench'), cafe: d.props.filter(p => p.asset.includes('cafe-set')).length };
+    });
+    assert.equal(lobby.labels.length, 0, 'no label beside the drawn S-N flight'); assert.ok(lobby.guides.length >= 2 && lobby.guides.every(g => g.dy === -1), JSON.stringify(lobby.guides));
+    assert.ok(near.some(l => l.text === '上楼至二层' && /Bincov Text/.test(l.font)), JSON.stringify(near));
+    assert.equal(far.length, 0, 'other stairs are not named from across the floor');
+    assert.ok(onIt.prompt?.includes('上楼至二层') && onIt.labels.length === 0, JSON.stringify(onIt));
+    assert.equal(feet.rendered, false, 'the world-space label sprite is never drawn');
+    for (const p of [...home.sofa, ...home.bed, ...home.bench]) assert.ok(p.foot && p.foot.y + p.foot.h <= p.z - 12, `shadow ends at the drawn base: ${JSON.stringify(p)}`);
+    assert.equal(home.cafe, 4);
+    return { lobby, near, far, onIt, home };
+  });
   await context.close();
 }
 const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(localStorage.getItem('escape-bincov.session.v2') ?? '')?.[1] ?? null);

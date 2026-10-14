@@ -3,7 +3,7 @@
  * art/mall.ts behind the same `procedural:` ids the dressing table uses. This module imports no PNG, so the scene and
  * Node tests can use it; only a mall raid with art loads the samples.
  */
-import { paintAisleSign, paintMallDecal, paintMallStairsDown, paintMallStairsUp, type MallDecal } from './art/mall';
+import { paintAisleSign, paintCafeSet, paintMallDecal, paintMallStairsDown, paintMallStairsUp, type MallDecal } from './art/mall';
 import { PROCEDURAL, SIGN_COLORS } from './mall-dressing';
 
 export type MallArt = ReadonlyMap<string, HTMLCanvasElement>;
@@ -14,7 +14,7 @@ export function mallPick(art: MallArt | null, ids: readonly string[]): string | 
   for (const id of ids) {
     if (!id.startsWith(PROCEDURAL)) { if (art?.has(id)) return id; continue; }
     const name = id.slice(PROCEDURAL.length);
-    if (name === 'stairs-up' || name === 'stairs-down' || name.startsWith('sign:') || name.startsWith('decal:')) return id;
+    if (name === 'stairs-up' || name === 'stairs-down' || name === 'cafe-set' || name.startsWith('sign:') || name.startsWith('decal:')) return id;
   }
   return null;
 }
@@ -28,7 +28,7 @@ export function mallCanvas(art: MallArt | null, ids: readonly string[], seed = 0
   const name = id.slice(PROCEDURAL.length), key = name.startsWith('decal:') ? `${name}:${seed}` : name;
   let c = painted.get(key);
   if (!c) {
-    c = name === 'stairs-up' ? paintMallStairsUp(3, 3) : name === 'stairs-down' ? paintMallStairsDown(3, 3)
+    c = name === 'stairs-up' ? paintMallStairsUp(3, 3) : name === 'stairs-down' ? paintMallStairsDown(3, 3) : name === 'cafe-set' ? paintCafeSet()
       : name.startsWith('sign:') ? signOf(name.slice(5))
       : paintMallDecal(name.slice(6) as MallDecal, seed);
     painted.set(key, c);

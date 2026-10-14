@@ -46,6 +46,8 @@ export interface MallDress {
   /** Entries whose generic stair marker is replaced by the drawn flight beside them. */
   flights: Set<string>;
 }
+/** Painted arrows on the floor between a drawn flight's stair point and its foot, pointing at the flight. */
+export interface StairGuide { x: number; y: number; dx: number; dy: number }
 
 const T = 32;
 const ZONES = ['indoor', 'outdoor', 'drop'] as const;
@@ -106,9 +108,15 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   const W = cols * T, H = rows * T;
   const ground: MallGroundBake = {
     geo: { cols, rows, wall, mat, outdoor, wear: new Lattice(72, 5, W, H), grain: new Lattice(22, 6, W, H), damp: new Lattice(40, 7, W, H) },
-    floor, drop, walls: cells,
+    floor, drop, walls: cells, guides: [],
     decals: mallDecals(dress).flatMap(d => { const c = mallCanvas(art, d.assets, d.seed); return c ? [{ c, x: d.x, y: d.y }] : []; }),
-    feet: props.flatMap(p => p.foot && p.layer === 'sorted' ? [p.foot] : []),
+    // Shadows start at the piece's drawn base: sofas, beds and benches leave transparent rows below it, and a shadow
+    // cast from the cell's edge would sit apart from them (the piece would look as if it floated).
+    feet: props.flatMap(p => {
+      if (!p.foot || p.layer !== 'sorted') return [];
+      const c = mallCanvas(art, [p.asset]), gap = c ? bottomGap(c) : 0;
+      return [{ ...p.foot, h: Math.max(8, p.foot.h - gap) }];
+    }),
   };
 
   // Lights: ceiling tubes (light only), the glow of cold cases, panels and lamps, wall lamps and daylight through glazing.
@@ -133,10 +141,35 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (/^stairs-/.test(furniture.get(`${ex + dx},${ey + dy}`) ?? '')) return true;
     return false;
   }).map(e => e.id));
+  // Arrows from the stair point toward the flight (the nearest stairs cell in a straight line), on the cells between.
+  for (const e of m.entries.filter(e => flights.has(e.id))) {
+    const ex = Math.floor(e.at.x / T), ey = Math.floor(e.at.y / T);
+    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+      const cells: [number, number][] = [];
+      let x = ex, y = ey;
+      for (let i = 0; i < 4 && !/^stairs-/.test(furniture.get(`${x},${y}`) ?? ''); i++) { cells.push([x, y]); x += dx; y += dy; }
+      if (!/^stairs-/.test(furniture.get(`${x},${y}`) ?? '')) continue;
+      ground.guides.push(...cells.map(([cx, cy]) => ({ x: cx, y: cy, dx, dy })));
+      break;
+    }
+  }
   return {
     dress, ground, walls, lintels, props, wallProps, lights, flights, signs: resolve(mallSigns(dress)),
     zone: (x, y) => ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))],
   };
+}
+
+const gaps = new WeakMap<HTMLCanvasElement, number>();
+/** Transparent rows at the bottom of a sprite (between its drawn base and the footprint's south edge). */
+function bottomGap(c: HTMLCanvasElement): number {
+  let n = gaps.get(c);
+  if (n === undefined) {
+    const d = c.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
+    n = 0;
+    for (let y = c.height - 1; y >= 0; y--, n++) { let any = false; for (let x = 0; x < c.width && !any; x++) any = d[(y * c.width + x) * 4 + 3] > 0; if (any) break; }
+    gaps.set(c, n);
+  }
+  return n;
 }
 
 /** One canvas per wall composition: cap (with its open edges) above a face as tall as the wall; parapets carry a rail. */

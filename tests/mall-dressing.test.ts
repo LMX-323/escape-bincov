@@ -19,7 +19,7 @@ test('商场布置表：每件家具一张贴图，立在占地南边线上；�
             const size = MALL_SPRITE_SIZE[key] ?? MALL_SPRITE_SIZE[name];
             assert.ok(size, `${p.assets[0]} has a planned size`);
             assert.equal(p.y + size[1], p.z, `${p.assets[0]} stands on its footprint's south edge`);
-            assert.ok(p.assets.every(a => /^mall-[a-z0-9-]+-v1$/.test(a) || a === PROCEDURAL + 'stairs-up' || a === PROCEDURAL + 'stairs-down'));
+            assert.ok(p.assets.every(a => /^mall-[a-z0-9-]+-v1$/.test(a) || a === PROCEDURAL + 'stairs-up' || a === PROCEDURAL + 'stairs-down' || a === PROCEDURAL + 'cafe-set'));
             assert.ok(p.foot && p.foot.y + p.foot.h === p.z, `${p.assets[0]} carries its footprint for the contact shadow`);
         }
         for (const run of MALL_V2_LAYOUT[id].filter(p => p.type === 'gondola')) {

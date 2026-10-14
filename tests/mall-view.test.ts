@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mallWorldV2 } from '../src/mall-world';
-import { MALL_FURNITURE, parseFurnitureName } from '../src/mall-layout-v2';
-import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, insideFootprint, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
+import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, PROCEDURAL, insideFootprint, mallProps, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
 import { actorShown, isMall, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
 import { SampleSound } from '../src/coast-view/sound';
 import type { MapDef, PublishedView } from '../src/raid-runtime/contract';
@@ -94,6 +94,19 @@ test('命中反馈看目标本身：目标所在房间未揭示时，弹着点�
   assert.ok(!calls.includes('hit'), 'no hit sound for a hidden target');
   s.event(hurt, 'mall-f2', () => true, () => true);
   assert.ok(calls.includes('hit'));
+});
+
+test('露台咖啡桌是两格宽的一组桌椅（程序绘制），伞杆立在桌子中心', () => {
+  const f2 = dress('mall-f2'), props = mallProps(f2), sets = props.filter(p => p.assets[0] === PROCEDURAL + 'cafe-set');
+  const tables = MALL_V2_LAYOUT['mall-f2'].filter(p => p.type === 'cafe-table');
+  assert.equal(MALL_FURNITURE['cafe-table'].w, 2); assert.equal(sets.length, tables.length);
+  for (const t of tables) {
+    const set = sets.find(s => s.x === t.x * 32)!, umbrella = props.find(p => p.layer === 'overhead' && p.z === set.z && p.x < set.x + 64 && p.x + 64 > set.x)!;
+    assert.deepEqual(set.foot && [set.foot.w, set.foot.h], [64, 32]);
+    assert.equal(set.y + MALL_SPRITE_SIZE['cafe-set'][1], set.z, 'stands on its footprint\'s south edge');
+    assert.equal(umbrella.x + MALL_SPRITE_SIZE['overhead-umbrella'][0] / 2, t.x * 32 + 32, 'pole in the table centre');
+    for (const dx of [0, 1]) assert.equal(f2.cells[t.y][t.x + dx], 'low', 'both cells block movement, not shots');
+  }
 });
 
 test('商场 2.5D：海声只在楼体内闭合，广场和露台是室外', () => {

@@ -20,6 +20,8 @@ import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
+/** Mall floors name a stair only within this distance of the player (world px, eight cells). */
+const MALL_LABEL_RANGE = 8 * 32;
 /**
  * Held weapons point along the ground-plane aim, but a barrel aimed away from (north) or toward (south) the camera
  * is seen end-on in the 3/4 view, so its drawn length shrinks with |sin(aim)|. Direction stays the aim, so bullets,
@@ -282,8 +284,10 @@ export class CoastView {
         const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
         s.position.set(Math.floor(e.at.x / 32) * 32, Math.floor(e.at.y / 32) * 32 - 8); this.groundLayer.addChild(s);
       }
+      // The label's place and size in the world; the host draws its text in the HUD's own pixel face (world-space text
+      // would be upscaled with the scene and blur), so the sprite itself is never rendered.
       const label = new Sprite(this.tex.ensure(`stairs-label:${e.label}`, () => paintStairLabel(e.label)));
-      label.anchor.set(.5, 0); label.position.set(e.at.x, e.at.y + 22); label.visible = false;
+      label.anchor.set(.5, 0); label.position.set(e.at.x, e.at.y + 22); label.visible = false; label.renderable = false;
       this.overhead.addChild(label); this.stairLabels.set(e.id, label);
     }
     for (const x of m.exits) { const s = new Sprite(this.tex.exitDecal()); s.anchor.set(.5); s.position.set(x.at.x, x.at.y); this.groundLayer.addChild(s); }
@@ -764,6 +768,8 @@ export class CoastView {
     for (const entry of map.entries) {
       const label = this.stairLabels.get(entry.id)!;
       label.visible = knownStructurePoint(map, entry.at, f.revealed, occupied);
+      // Mall floors: a drawn flight needs no label (the floor arrows lead to it); other stairs are named when near.
+      if (this.mall && (this.mall.flights.has(entry.id) || Math.hypot(entry.at.x - f.player.x, entry.at.y - f.player.y) > MALL_LABEL_RANGE)) label.visible = false;
       label.position.set(entry.at.x, entry.at.y + 22);
       // Move below the player when needed; the interaction prompt already occupies the space above the head.
       if (label.visible && intersects({ x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height },
@@ -912,6 +918,10 @@ export class CoastView {
     return m.regions.find(r => r.id === id)?.name ?? null;
   }
   get mapDef() { return this.map; }
+  /** Stair labels to show now: text, world anchor (top centre) and whether the rules show it. */
+  stairLabelViews(): { id: string; text: string; x: number; y: number; visible: boolean }[] {
+    return (this.map?.entries ?? []).map(e => { const s = this.stairLabels.get(e.id); return { id: e.id, text: e.label, x: s?.x ?? e.at.x, y: s?.y ?? e.at.y, visible: !!s?.visible }; });
+  }
   /** Region a point counts as for visibility: an unrevealed containing room first (the Runtime's rule). */
   regionAt(p: Point): string | null { return this.map ? regionAtClosed(this.map, this.last?.revealed ?? {}, p) : null; }
   /** Every inside region containing a point (rooms may overlap). */

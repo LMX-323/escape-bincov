@@ -96,6 +96,50 @@ export function paintMallStairsDown(cols = 3, rows = 3): HTMLCanvasElement {
 }
 
 /** Aisle board standing on a gondola top (blank; the engine writes the text). Anchor: bottom centre of the post. */
+/** Height of the cafe set's canvas above its 2x1 footprint (chair backs rise 27 px). */
+export const CAFE_LIFT = 26;
+/**
+ * Terrace cafe set over a 2x1 footprint, at the scale of the 48 px player and the 64 px umbrella: a round bistro table
+ * (22 px top at 21 px height, pedestal and base) between two chairs facing it (12 px seats at 13 px, backs leaning
+ * outward). Weathered green-grey metal like the drawn samples; light from the top left. Canvas 64 x (32 + CAFE_LIFT),
+ * bottom row = the footprint's south edge.
+ */
+export function paintCafeSet(): HTMLCanvasElement {
+    const W = 64, L = CAFE_LIFT, { c, g } = canvas(W, 32 + L);
+    const frame = '#6b7369', frameLit = '#8b9488', frameDark = '#4a5048', seat = '#7d867a', seatDark = '#5c6359';
+    // Ground point (x, depth d within the footprint, height h) to canvas.
+    const at = (x: number, d: number, h: number) => [Math.round(x), Math.round(L + d - h)] as const;
+    const disc = (cx: number, cy: number, r: number, color: string) => {
+        for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + r * .6) dot(g, color, cx + x, cy + y);
+    };
+    const chair = (side: -1 | 1) => {
+        const x0 = side < 0 ? 6 : 46, x1 = x0 + 11, outer = side < 0 ? x0 : x1, d0 = 10, d1 = 21, sh = 13, back = 27;
+        // Backrest on the outer side, leaning outward: three rails over two uprights, drawn back to front.
+        for (let d = d0; d <= d1; d++) for (let h = sh; h <= back; h++) {
+            const lean = Math.round((h - sh) / (back - sh) * 3) * side, [px, py] = at(outer + lean, d, h);
+            const rail = h === back || h === back - 5 || h === back - 10, upright = d === d0 || d === d1;
+            if (rail || upright) dot(g, rail && h === back ? frameLit : d === d1 ? frame : frameDark, px, py);
+        }
+        // Back legs show only below the seat's north edge; front legs run from the seat to the ground.
+        for (const x of [x0 + 1, x1 - 1]) { const [px, top] = at(x, d1, sh), [, bottom] = at(x, d1, 0); rect(g, frame, px, top + 2, 1, bottom - top - 1); dot(g, frameDark, px, bottom); }
+        for (const x of [x0 + 1, x1 - 1]) { const [px, top] = at(x, d0, sh), [, bottom] = at(x, d0, 0); rect(g, frameDark, px, top + 2, 1, bottom - top - 1); }
+        // Seat: lattice top and a two-pixel front edge.
+        const [sx, sy] = at(x0, d0, sh), [, ey] = at(x0, d1, sh);
+        rect(g, seat, sx, sy, x1 - x0 + 1, ey - sy + 1);
+        for (let y = sy + 1; y < ey; y += 3) rect(g, seatDark, sx + 1, y, x1 - x0 - 1, 1);
+        rect(g, frameLit, sx, sy, x1 - x0 + 1, 1); rect(g, frameDark, sx, ey + 1, x1 - x0 + 1, 2);
+    };
+    chair(-1); chair(1);
+    // Table: flat base on the ground, pedestal, then the top with its rim and the umbrella's hole.
+    const [bx, by] = at(32, 16, 0), [tx, ty] = at(32, 16, 21);
+    disc(bx, by, 5, '#3e423b'); disc(bx - 1, by - 1, 3, '#4f544b');
+    rect(g, frameDark, bx - 1, ty, 3, by - ty); rect(g, frame, bx - 1, ty, 1, by - ty);
+    disc(tx, ty + 2, 11, '#5f5b4e'); disc(tx, ty, 11, '#8c8771'); disc(tx - 2, ty - 2, 7, '#9b9580'); disc(tx - 3, ty - 3, 4, '#a39d84');
+    for (let a = 0; a < 12; a++) { const x = Math.round(tx + Math.cos(a / 12 * Math.PI * 2) * 7), y = Math.round(ty + Math.sin(a / 12 * Math.PI * 2) * 7); dot(g, '#7a7564', x, y); }
+    rect(g, '#2a2925', tx - 1, ty - 1, 2, 2);
+    return c;
+}
+
 export function paintAisleSign(color = '#5f8456', glyph = ''): HTMLCanvasElement {
     const { c, g } = canvas(26, 24);
     rect(g, '#2a2926', 0, 0, 26, 15); rect(g, color, 1, 1, 24, 13); rect(g, mix(color, '#cfc6ad', .5), 2, 3, 22, 8);

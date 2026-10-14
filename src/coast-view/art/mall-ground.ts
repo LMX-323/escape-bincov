@@ -18,9 +18,11 @@ export interface MallGroundBake {
   /** 1 where the cell is the drop beside the second floor. */
   drop: Uint8Array;
   decals: readonly { c: HTMLCanvasElement; x: number; y: number }[];
+  /** Painted floor arrows toward a drawn stair flight (cell, direction). */
+  guides: { x: number; y: number; dx: number; dy: number }[];
   /** Cells whose wall sprite stands on the ground: they cast a short shadow to the lower right. */
   walls: readonly { x: number; y: number }[];
-  /** Furniture footprints (world px) and standing height above the footprint. */
+  /** Furniture footprints (world px, south edge at the drawn base) and standing height above the footprint. */
   feet: readonly { x: number; y: number; w: number; h: number; lift: number }[];
 }
 
@@ -40,6 +42,7 @@ export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: S
     else g.drawImage(f, X, Y);
   }
   for (const d of bake.decals) if (d.x < b.x + b.w && d.x + d.c.width > b.x && d.y < b.y + b.h && d.y + d.c.height > b.y) g.drawImage(d.c, d.x - b.x, d.y - b.y);
+  for (const a of bake.guides) paintGuide(g, a.x * 32 - b.x, a.y * 32 - b.y, a.dx, a.dy, a.x, a.y);
   // Light falls from the upper left: walls and furniture darken the floor to their lower right, a little more for taller
   // pieces. One mask, so neighbouring pieces never darken twice.
   const rects: [number, number, number, number][] = [];
@@ -57,11 +60,30 @@ export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: S
     if (!near(f.x, f.y, f.w, f.h)) continue;
     const sh = Math.round(2 + f.lift / 7);
     rects.push([f.x - b.x + 3 + sh, f.y - b.y + 3 + Math.round(sh * .6), f.w - 6, f.h - 6]);
+    // Contact: a dark band right under the drawn base, so the piece sits on the floor.
+    rects.push([f.x - b.x + 2, f.y - b.y + f.h - 2, f.w - 4, 2]);
   }
   const img = g.getImageData(0, 0, b.w, b.h);
   shadeGround(img.data, geo, b.x, b.y, b.w, b.h, shadowMask(rects, b.w, b.h));
   g.putImageData(img, 0, 0);
   return c;
+}
+
+/**
+ * Worn safety-yellow chevrons on the floor pointing at a stair flight (two per cell, a little paint missing), the way a
+ * mall marks the way to its stairs.
+ */
+function paintGuide(g: CanvasRenderingContext2D, X: number, Y: number, dx: number, dy: number, tx: number, ty: number) {
+  for (let k = 0; k < 2; k++) {
+    // A chevron pointing along (dx, dy): its tip is `along` px ahead of the arms' ends.
+    const c = 10 + k * 12;
+    for (let i = -7; i <= 7; i++) for (let w = 0; w < 3; w++) {
+      const along = c + w - Math.abs(i) * .55 - 3, side = 16 + i;
+      const px = dx ? X + (dx > 0 ? along : 31 - along) : X + side, py = dy ? Y + (dy > 0 ? along : 31 - along) : Y + side;
+      if (hash(tx * 3 + k, ty * 7 + i, 181 + w) < .12) continue;
+      g.fillStyle = w === 0 ? 'rgba(214,180,74,.85)' : 'rgba(184,151,63,.8)'; g.fillRect(Math.round(px), Math.round(py), 1, 1);
+    }
+  }
 }
 
 /**

@@ -40,7 +40,7 @@ export const MALL_SPRITE_SIZE: Record<string, readonly [number, number]> = {
     'prop-pylon': [32, 96], 'stairs-up': [96, 144], 'stairs-down': [96, 112], 'prop-sandbags-2': [64, 46], 'prop-sofa-s': [64, 52],
     'prop-cart': [32, 54], 'prop-promo-table': [64, 54], 'prop-pallet-wrapped': [32, 56], 'prop-ice-bed': [64, 54], 'prop-scale-counter': [32, 56],
     'prop-freezer': [64, 54], 'prop-bench': [64, 50], 'prop-planter': [32, 62], 'prop-bed': [64, 84], 'prop-coffee-table': [32, 44],
-    'prop-floor-lamp': [32, 76], 'prop-cafe-table': [32, 52], 'prop-planter-box': [64, 56], 'prop-stanchions': [64, 44],
+    'prop-floor-lamp': [32, 76], 'cafe-set': [64, 58], 'prop-planter-box': [64, 56], 'prop-stanchions': [64, 44],
     'prop-adboard-fallen': [64, 44], 'overhead-umbrella': [64, 88], 'sign-hanging-green': [48, 18],
     'prop-gondola-toppled': [64, 44], 'prop-debris': [32, 44], 'prop-cart-fallen': [32, 44], 'prop-sandbags-1': [32, 46],
 };
@@ -48,7 +48,7 @@ const SINGLE: Partial<Record<FurnitureName, string>> = {
     column: 'prop-column', directory: 'prop-directory', pylon: 'prop-pylon', 'stairs-up': 'stairs-up', 'stairs-down': 'stairs-down',
     sandbags: 'prop-sandbags-2', sofa: 'prop-sofa-s', cart: 'prop-cart', 'promo-table': 'prop-promo-table', pallet: 'prop-pallet-wrapped',
     'ice-bed': 'prop-ice-bed', 'scale-counter': 'prop-scale-counter', freezer: 'prop-freezer', bench: 'prop-bench', planter: 'prop-planter',
-    bed: 'prop-bed', 'coffee-table': 'prop-coffee-table', 'floor-lamp': 'prop-floor-lamp', 'cafe-table': 'prop-cafe-table',
+    bed: 'prop-bed', 'coffee-table': 'prop-coffee-table', 'floor-lamp': 'prop-floor-lamp',
     'planter-box': 'prop-planter-box', stanchions: 'prop-stanchions', adboard: 'prop-adboard-fallen', partition: 'prop-partition',
     'gondola-toppled': 'prop-gondola-toppled', debris: 'prop-debris',
 };
@@ -184,14 +184,18 @@ export function mallProps(m: DressMap): DressSprite[] {
             names = !w ? ['prop-gondola-end-w'] : !e ? ['prop-gondola-end-e']
                 : [`prop-gondola-${pick(x, y, 17, ['mid-full-a', 'mid-full-b', 'mid-full-a', 'mid-sparse', 'mid-looted'])}`, 'prop-gondola-mid-full-a'];
         } else if (f.type === 'fridge') names = [`prop-fridge-${hash(x, y, 19) < .7 ? 'a' : 'b'}`, 'prop-fridge-a'];
+        else if (f.type === 'cafe-table') names = ['cafe-set'];
         else names = [SINGLE[f.type]!];
         const size = MALL_SPRITE_SIZE[names[0].replace(/-(end-[ew]|mid-.*|[ab])$/, '')] ?? MALL_SPRITE_SIZE[names[0]] ?? [t.w * TILE, t.h * TILE];
         const south = (y + t.h) * TILE, stairs = f.type === 'stairs-up' || f.type === 'stairs-down';
-        out.push({ assets: stairs ? [PROCEDURAL + f.type] : names.map(id), x: x * TILE, y: south - size[1], z: south, layer: 'sorted',
+        // Painted by the view: the stairs, and the cafe set (the drawn sample fits a whole set into one cell, too small).
+        const painted = stairs ? PROCEDURAL + f.type : f.type === 'cafe-table' ? PROCEDURAL + 'cafe-set' : null;
+        out.push({ assets: painted ? [painted] : names.map(id), x: x * TILE, y: south - size[1], z: south, layer: 'sorted',
             emit: names.some(n => EMITS.has(n)), foot: { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
         if (f.type === 'cafe-table') {
             const [uw, uh] = MALL_SPRITE_SIZE['overhead-umbrella'];
-            out.push({ assets: [id('overhead-umbrella')], x: x * TILE + 16 - uw / 2, y: y * TILE + 16 - (uh - 1), z: south, layer: 'overhead', emit: false });
+            // The pole stands in the table's centre.
+            out.push({ assets: [id('overhead-umbrella')], x: x * TILE + t.w * 16 - uw / 2, y: y * TILE + 16 - (uh - 1), z: south, layer: 'overhead', emit: false });
         }
     }
     return out.sort((a, b) => a.z - b.z || a.x - b.x);
