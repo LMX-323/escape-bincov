@@ -20,6 +20,7 @@ import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { MALL_V2_REGIONS } from '../mall-layout-v2';
 import { releaseManagedSlots } from './renderer-lifetime';
+import { aimLead, snapAxis, type AxisHold } from './camera';
 import { viewScale, type ViewScaleMode } from './view-scale';
 
 export const AIM_H = 22;
@@ -123,7 +124,10 @@ export class CoastView {
   private time = 0;
   private destroyed = false;
 
-  cam = { x: 0, y: 0 }; private camF = { x: 0, y: 0 };
+  cam = { x: 0, y: 0 };
+  /** Smoothed camera; hx/hy are what snapAxis carries per axis (never mutated, only replaced), kept on camF so a probe
+   *  that copies and restores camF reproduces the camera exactly (a rebuild's fresh camF drops them). */
+  private camF: { x: number; y: number; hx?: AxisHold; hy?: AxisHold } = { x: 0, y: 0 };
   /** Camera kick opposite the player's shot, settling back within a few frames. */
   private recoil = { x: 0, y: 0 };
   /** Crate whose loot panel is open (set by the host): drawn with its lid up. */
@@ -187,7 +191,8 @@ export class CoastView {
     releaseManagedSlots(this.app, 'glTexture', uids);
   }
 
-  present(batch: PublishedView, dt: number) {
+  /** `follow` is the camera's smoothing step: the Runtime clock's delta from the host, the view delta otherwise. */
+  present(batch: PublishedView, dt: number, follow = dt) {
     if (this.destroyed) return;
     const t0 = performance.now();
     const key = worldKeyString(batch.stamp.world);
@@ -236,7 +241,7 @@ export class CoastView {
     this.updateStructureGuides(f);
     this.updateXray(f);
     this.updateHighlight(f, visible);
-    this.camera(f, dt);
+    this.camera(f, dt, follow);
     if (this.map && isMall(this.map)) {
       // Mist thins out indoors over half a second (the mall's plaza and terrace are outdoors, its halls are not).
       const indoor = insideFootprint(Math.floor(f.player.x / 32), Math.floor(f.player.y / 32)) ? 1 : 0;
@@ -629,11 +634,12 @@ export class CoastView {
     const swing = g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
     const angle = a.aim + reload + swing, c = Math.cos(angle), s = Math.sin(angle);
     g.weapon.texture = art.texture; g.weapon.anchor.set(art.pivotX / art.canvas.width, art.pivotY / art.canvas.height);
-    g.weapon.position.set(Math.round(a.x + kx + c * art.forward), Math.round(a.y + ky - AIM_H + s * art.forward));
+    // Weapon and arms round their offsets, not their positions: on the body's whole pixel they never shimmer against it.
+    g.weapon.position.set(x + Math.round(c * art.forward), y - AIM_H + Math.round(s * art.forward));
     g.weapon.rotation = angle; g.weapon.scale.set(heldLength(angle), Math.cos(a.aim) < 0 ? -1 : 1);
     g.weapon.zIndex = a.y + (Math.sin(a.aim) < -.35 ? -.05 : .05);
     g.weapon.visible = shown && a.weapon !== 'claw' && !dying;
-    this.syncArms(g, a, art, angle, kx, ky);
+    this.syncArms(g, a, art, angle, x, y);
     g.wrim.texture = art.rim; g.wrim.anchor.set((art.pivotX + 1) / (art.canvas.width + 2), (art.pivotY + 1) / (art.canvas.height + 2));
     g.wrim.position.copyFrom(g.weapon.position); g.wrim.rotation = g.weapon.rotation; g.wrim.scale.copyFrom(g.weapon.scale); g.wrim.tint = g.rim.tint;
   }
@@ -642,15 +648,16 @@ export class CoastView {
    * (the character's right is (-sin, cos) of the aim). The trigger arm reaches the grip pivot, the support arm the fore
    * grip along the barrel (or the same grip for a two-handed pistol); one-handed melee leaves the support arm down.
    */
-  private syncArms(g: ActorGfx, a: ActorView, art: { support?: number; oneHanded?: boolean }, angle: number, kx: number, ky: number) {
+  private syncArms(g: ActorGfx, a: ActorView, art: { support?: number; oneHanded?: boolean }, angle: number, x: number, y: number) {
     const on = g.weapon.visible;
     const c = Math.cos(angle), s = Math.sin(angle), hl = heldLength(angle);
     const gx = g.weapon.x, gy = g.weapon.y;
-    const sx = a.x + kx + Math.cos(a.aim) * 1.5, sy = a.y + ky - AIM_H - 7;
+    // (x, y) is the body's whole pixel, so the rounded shoulders keep one offset from it while the actor walks.
+    const sx = x + Math.cos(a.aim) * 1.5, sy = y - AIM_H - 7;
     const rx = -Math.sin(a.aim) * 4, ry = Math.cos(a.aim) * 1.5;
     const reach = (arm: Sprite, x0: number, y0: number, x1: number, y1: number) => {
-      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
-      arm.visible = on && len > 1; arm.position.set(Math.round(x0), Math.round(y0)); arm.rotation = Math.atan2(dy, dx); arm.scale.set(len, 1);
+      const ox = Math.round(x0), oy = Math.round(y0), dx = x1 - ox, dy = y1 - oy, len = Math.hypot(dx, dy);
+      arm.visible = on && len > 1; arm.position.set(ox, oy); arm.rotation = Math.atan2(dy, dx); arm.scale.set(len, 1);
     };
     const support = art.support ?? 0;
     reach(g.arms[0], sx + rx, sy + ry, gx, gy);
@@ -853,21 +860,22 @@ export class CoastView {
     h.visible = true; h.tint = 0xf2deaa; h.alpha = .75 + Math.sin(this.time * 6) * .25;
   }
 
-  private camera(f: ViewFrame, dt: number) {
-    const p = f.player, precise = p.state.precise ? 1.7 : 1;
-    const ax = Math.cos(p.aim) * 48 * precise, ay = Math.sin(p.aim) * 34 * precise;
+  private camera(f: ViewFrame, dt: number, follow = dt) {
+    const p = f.player, { x: ax, y: ay } = aimLead(p.aim, p.state.precise);
     const tx = p.x + ax - this.view.w / 2, ty = p.y - AIM_H + ay - this.view.h / 2 + this.panelInset * this.view.dpr / this.view.s / 2;
-    const k = 1 - Math.exp(-dt * 8);
-    this.camF.x += (tx - this.camF.x) * k; this.camF.y += (ty - this.camF.y) * k;
+    const k = 1 - Math.exp(-follow * 8), mx = (tx - this.camF.x) * k, my = (ty - this.camF.y) * k;
+    this.camF.x += mx; this.camF.y += my;
     // Mall floors end in hoarding or the drop at the map edge: no margin beyond it.
     const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' || isMall(this.map!) ? 0 : 96;
-    const clamp = (v: number, lo: number, hi: number) => lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, v));
     const top = this.hudTop * this.view.dpr / this.view.s;
-    const cx = clamp(this.camF.x, b.x - pad, b.x + b.w + pad - this.view.w), cy = clamp(this.camF.y, b.y - pad - (pad ? 40 : 0) - top, b.y + b.h + pad - this.view.h);
+    // Whole-pixel camera on the player's own rounding: a steady walk keeps the player still on screen (playtest F-04).
+    const X = snapAxis(this.camF.x, p.x, b.x - pad, b.x + b.w + pad - this.view.w, this.camF.hx, mx);
+    const Y = snapAxis(this.camF.y, p.y, b.y - pad - (pad ? 40 : 0) - top, b.y + b.h + pad - this.view.h, this.camF.hy, my);
+    this.camF.hx = { held: X.held, raw: X.raw }; this.camF.hy = { held: Y.held, raw: Y.raw };
     this.shake = Math.max(0, this.shake - dt * 30);
     const settle = Math.exp(-dt * 16); this.recoil.x *= settle; this.recoil.y *= settle;
     const sx = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0, sy = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0;
-    this.cam = { x: Math.round(cx + this.recoil.x) + sx, y: Math.round(cy + this.recoil.y) + sy };
+    this.cam = { x: X.at + Math.round(this.recoil.x) + sx, y: Y.at + Math.round(this.recoil.y) + sy };
   }
 
   private tintUpright(f: ViewFrame) {

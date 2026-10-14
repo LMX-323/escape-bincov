@@ -228,6 +228,8 @@ export class CoastSampleHost {
   private closed = false;
   private contextLost = false;
   private exiting = false;
+  /** t0 of the previous frame: the camera follows on these deltas (see frame()). */
+  private frameAt: number | null = null;
   private mapView = '';
   selectedExit = '';
   /** Label placement of the last map draw (read by the sample checks). */
@@ -287,6 +289,10 @@ export class CoastSampleHost {
     if (!this.mounted) return;
     if (this.exiting) { this.outro(); return; }
     const t0 = performance.now();
+    // The camera follows on the clock the Runtime moved the player on (ActiveClock deltas of t0), not on the rAF
+    // timestamp in ticker.deltaMS: with two clocks the player's whole-pixel offset flips with frame-start jitter.
+    const follow = this.frameAt === null ? this.app.ticker.deltaMS / 1000 : Math.min(.1, Math.max(0, (t0 - this.frameAt) / 1000));
+    this.frameAt = t0;
     const playing = this.panel === null;
     const intent = this.input.read(playing, (x, y) => this.view.aimFromClient(x, y));
     if (intent.firePressed) this.sound.trigger(this.last?.frame.hud.weapon);
@@ -295,7 +301,7 @@ export class CoastSampleHost {
     const t1 = performance.now();
     if (batch.map !== this.last?.map) this.noteTitles = new Set(batch.map.notes.map(n => n.title));
     this.view.openContainer = this.panel === 'loot' ? this.services.lootContext()?.containerId ?? null : null;
-    if (!this.contextLost) this.view.present(batch, this.app.ticker.deltaMS / 1000);
+    if (!this.contextLost) this.view.present(batch, this.app.ticker.deltaMS / 1000, follow);
     const t2 = performance.now();
     this.last = batch;
     if (note) this.readingFor = note;
