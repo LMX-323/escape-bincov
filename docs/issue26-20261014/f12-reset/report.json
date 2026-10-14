@@ -1,0 +1,351 @@
+{
+  "build": "dist/index.html",
+  "sha256": "bfac3d9e4c11126d0c4ae8e40712c1d8ef090a11842a1e54480e2a22f9b4f2cd",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-14T03:54:25.439Z",
+  "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.",
+  "steps": [
+    {
+      "name": "S1 1280x720 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "passed",
+      "detail": {
+        "entry": "清空存档，重新开始",
+        "dialog": "清空存档",
+        "profile": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        }
+      }
+    },
+    {
+      "name": "S2 1280x720 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed",
+      "detail": {
+        "download": "Escape-Bincov-save-2026-10-14T03-54-29-081Z.json",
+        "backup": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        },
+        "stored": {
+          "cash": 700,
+          "runs": 0,
+          "quests": {
+            "repair": false,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 0,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 10,
+          "revision": 5
+        },
+        "copyBytes": 2769
+      }
+    },
+    {
+      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "status": "passed",
+      "detail": {
+        "restored": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 6
+        }
+      }
+    },
+    {
+      "name": "S1 1920x1080 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "passed",
+      "detail": {
+        "entry": "清空存档，重新开始",
+        "dialog": "清空存档",
+        "profile": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        }
+      }
+    },
+    {
+      "name": "S2 1920x1080 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed",
+      "detail": {
+        "download": "Escape-Bincov-save-2026-10-14T03-54-35-771Z.json",
+        "backup": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        },
+        "stored": {
+          "cash": 700,
+          "runs": 0,
+          "quests": {
+            "repair": false,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 0,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 10,
+          "revision": 5
+        },
+        "copyBytes": 2769
+      }
+    },
+    {
+      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "status": "passed",
+      "detail": {
+        "restored": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 6
+        }
+      }
+    },
+    {
+      "name": "S1 844x390 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "passed",
+      "detail": {
+        "entry": "清空存档，重新开始",
+        "dialog": "清空存档",
+        "profile": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        }
+      }
+    },
+    {
+      "name": "S2 844x390 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed",
+      "detail": {
+        "download": "Escape-Bincov-save-2026-10-14T03-54-42-796Z.json",
+        "backup": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 4
+        },
+        "stored": {
+          "cash": 700,
+          "runs": 0,
+          "quests": {
+            "repair": false,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 0,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 10,
+          "revision": 5
+        },
+        "copyBytes": 2769
+      }
+    },
+    {
+      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy",
+      "status": "passed",
+      "detail": {
+        "restored": {
+          "cash": 4321,
+          "runs": 9,
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "volume": 0.6,
+          "facilities": {
+            "rest": 2,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "strength": 14,
+          "revision": 6
+        }
+      }
+    },
+    {
+      "name": "S4 1280x720 a second reset of a still pristine save keeps the pre-reset copy",
+      "status": "passed",
+      "detail": {
+        "copyCash": 4321,
+        "downloads": 2
+      }
+    },
+    {
+      "name": "S5 1280x720 reload shows the title with runs 0 and the copy survives",
+      "status": "passed",
+      "detail": {
+        "runs": 0,
+        "copyKept": true
+      }
+    },
+    {
+      "name": "S6 1280x720 a second tab without the lock cannot reach the reset; a taken-over yard refuses it with raw bytes unchanged",
+      "status": "passed",
+      "detail": {
+        "secondTab": "no lock, title storage modal, enter refused",
+        "takenOver": "conflict toast, storage dialog, bytes unchanged"
+      }
+    },
+    {
+      "name": "S7 never offered on the legacy tab page or for an unreadable save",
+      "status": "passed",
+      "detail": {
+        "legacyTabs": "no entry",
+        "unreadable": "storage modal only, bytes kept"
+      }
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "1280x720-menu.png",
+    "1280x720-confirm.png",
+    "1280x720-menu-after-reset.png",
+    "1280x720-restore-confirm.png",
+    "1920x1080-menu.png",
+    "1920x1080-confirm.png",
+    "1920x1080-menu-after-reset.png",
+    "844x390-menu.png",
+    "844x390-confirm.png",
+    "844x390-menu-after-reset.png",
+    "1280x720-refused-conflict.png"
+  ],
+  "finishedAt": "2026-10-14T03:54:56.055Z"
+}
