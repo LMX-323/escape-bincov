@@ -52,6 +52,18 @@ try{
   await shot('combat-844');await touch('touchEnd',[]);const stopped=(await runtime()).raid;await page.waitForTimeout(650);
   const later=(await runtime()).raid;assert.equal(later.mag,stopped.mag);assert.ok(Math.abs(later.x-stopped.x)<1);
  });
+ await step('move stick alone turns the player toward the walk direction (aim stick idle, issue #26 F08) and never fires',async()=>{
+  await page.evaluate(()=>{const r=__bincov.app.raid;r.player.setPosition(700,784);r.player.rotation=0;});
+  const left=await center('.move-stick'),before=await runtime(),facing=()=>page.evaluate(()=>__bincov.app.raid.player.rotation);
+  const off=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+  await touch('touchStart',[{id:6,...left}]);await touch('touchMove',[{id:6,x:left.x-32,y:left.y}]);await page.waitForTimeout(350);
+  const west=await facing(),walked=await runtime();await shot('touch-facing-west-844');
+  await touch('touchMove',[{id:6,x:left.x,y:left.y+32}]);await page.waitForTimeout(250);const south=await facing();
+  await touch('touchEnd',[]);await page.waitForTimeout(150);const kept=await facing(),after=await runtime();
+  assert.ok(walked.raid.x<before.raid.x-15,JSON.stringify({before,walked}));
+  assert.ok(off(west,Math.PI)<.05,`west ${west}`);assert.ok(off(south,Math.PI/2)<.05,`south ${south}`);assert.ok(off(kept,south)<1e-9,'facing stays after release');
+  assert.equal(after.raid.mag,before.raid.mag,'moving never fires');
+ });
  await step('rejected healing preserves the other thumb movement without consuming medicine',async()=>{
   await page.evaluate(()=>{const r=__bincov.app.raid;r.hp=100;r.bleeding=0;r.player.setPosition(700,784);});
   const before=await page.evaluate(()=>__bincov.app.loadout.bag),left=await center('.move-stick'),heal=await center('[data-command="heal"]');

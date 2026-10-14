@@ -3,6 +3,7 @@ import * as D from '../domain';
 import * as B from '../base';
 import * as Shop from '../shop';
 import { moveQuantity, placementError } from '../loot';
+import { organizeStash, transferBagToStash } from '../inventory-actions';
 import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, type ExpansionState } from '../expansion-state';
 import { useRpgItemResult } from '../rpg';
 import { equipCharm, unequipCharm } from '../reputation-luck';
@@ -171,17 +172,39 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     quickMove(from: C.Source, uid: string): C.Result {
         const blocked = this.guard(); if (blocked) return blocked;
         if (!source(from)) return fail('rule');
-        return this.transaction('quick-move', d => D.transferItem(d.profile[from], d.profile[from === 'stash' ? 'bag' : 'stash'], uid) || fail('space'));
+        if (!this.state.save[from].items.some(item => item.uid === uid)) return fail('missing-item', '物品已不在原位置，请重新选择。');
+        const target = from === 'stash' ? 'bag' : 'stash';
+        return this.transaction('quick-move', d => D.transferItem(d.profile[from], d.profile[target], uid) || fail('space', `${target === 'bag' ? '背包' : '仓库'}空间不足，物品仍在原处。`));
+    }
+    stashAll(): C.Result {
+        this.sync(); const blocked = this.guard(); if (blocked) return blocked;
+        const count = this.state.save.bag.items.length;
+        if (!count) return { ok: true, message: '背包已空，无需入库。' };
+        const result = this.transaction('stash-all', d => transferBagToStash(d.profile) || fail('space', '仓库空间不足，背包物品全部留在原处。'));
+        return result.ok ? { ok: true, message: `背包 ${count} 组物品已全部入库。装备与安全箱保持不变。` } : result;
+    }
+    sortStash(): C.Result {
+        this.sync(); const blocked = this.guard(); if (blocked) return blocked;
+        const candidate = { stash: structuredClone(this.state.save.stash) };
+        if (!organizeStash(candidate)) return fail('space', '仓库无法完成整理，物品与原有位置均未改动。');
+        if (JSON.stringify(candidate.stash) === JSON.stringify(this.state.save.stash)) return { ok: true, message: '仓库已整理，无需改动。' };
+        const result = this.transaction('stash-sort', d => organizeStash(d.profile) || fail('space', '仓库无法完成整理，物品与原有位置均未改动。'));
+        return result.ok ? { ok: true, message: '仓库已整理，同类物品已合堆并排列。' } : result;
     }
     secure(from: C.Source, uid: string): C.Result {
         const blocked = this.guard(); if (blocked) return blocked;
         if (!source(from)) return fail('rule');
-        return this.transaction('secure', d => D.transferItem(d.profile[from], d.profile[from === 'safe' ? 'bag' : 'safe'], uid) || fail('space'));
+        if (!this.state.save[from].items.some(item => item.uid === uid)) return fail('missing-item', '物品已不在原位置，请重新选择。');
+        const target = from === 'safe' ? 'bag' : 'safe';
+        return this.transaction('secure', d => D.transferItem(d.profile[from], d.profile[target], uid) || fail('space', `${target === 'bag' ? '背包' : '安全箱'}空间不足，物品仍在原处。`));
     }
     equip(from: C.Source, uid: string): C.Result {
         const blocked = this.guard(); if (blocked) return blocked;
-        if (!['stash', 'bag'].includes(from) || !this.state.save[from].items.some(i => i.uid === uid)) return fail('rule');
-        return this.transaction('equip', d => D.equip(d.profile, uid));
+        if (!['stash', 'bag'].includes(from)) return fail('rule', '请先把枪械放入背包或仓库，再装备主武器。');
+        const item = this.state.save[from].items.find(i => i.uid === uid);
+        if (!item) return fail('missing-item', '物品已不在原位置，请重新选择。');
+        if (item.id === 'knife' || !Object.hasOwn(D.WEAPONS, item.id)) return fail('rule', '这件物品不能装备为主武器。');
+        return this.transaction('equip', d => D.equip(d.profile, uid) || fail('space', '无法装备：原武器及弹匣余弹在原容器中放不下，请先腾出空间。'));
     }
     unequip() { return this.transaction('unequip', d => D.unequip(d.profile) || fail('space')); }
     useSupply(from: C.Source, uid: string): C.Result {
@@ -329,24 +352,27 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         const warnings = () => Shop.saleWarnings(this.state.save, cart).map(w => `${w.quest}：${D.ITEMS[w.id].name}还需${w.needed}，出售后剩${w.remaining}`);
         const key = () => JSON.stringify([cart, warnings(), this.state.save.quests]);
         const validSource = (value: string) => ['merchant', 'buy', 'sell', 'stash'].includes(value);
+        const stale = () => Shop.cartStale(this.state.save, cart);
+        const rejected = (reason: Shop.CartRejection) => fail(reason, Shop.cartRejectionMessage[reason]);
         return {
-            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), warnings: warnings(), placement: 'automatic-stash' }),
-            placementError: (from, to, uid, x, y) => validSource(from) && validSource(to) ? Shop.shopPlacementError(cart, from, to, uid, x, y) : '无效容器。',
+            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), stale: stale(), warnings: warnings(), placement: 'automatic-stash' }),
+            placementError: (from, to, uid, x, y) => stale() ? Shop.cartRejectionMessage.stale : validSource(from) && validSource(to) ? Shop.shopPlacementError(cart, from, to, uid, x, y) : '无效容器。',
             place: (from, to, uid, x, y) => {
                 const blocked = this.guard(); if (blocked) return blocked;
+                if (stale()) return rejected('stale');
                 if (!validSource(from) || !validSource(to)) return fail('rule');
                 const message = Shop.shopPlacementError(cart, from, to, uid, x, y); if (message) return fail('rule', message);
                 confirmation = null; return Shop.moveShopItem(cart, from, to, uid, x, y) ? ok() : fail('rule');
             },
             settle: token => {
                 const blocked = this.guard(); if (blocked) return blocked;
-                if (JSON.stringify(this.state.save.stash) !== cart.original) return fail('stale', '仓库已改变，请重置购物车。');
+                if (stale()) return rejected('stale');
                 const list = warnings();
                 if (list.length && (!confirmation || confirmation.token !== token || confirmation.key !== key())) {
                     confirmation = { token: `sale-${++this.serial}`, key: key() };
                     return { ok: false, reason: 'rule', message: '出售会消耗未完成任务，请确认。', confirmation: { kind: 'quest-sale', token: confirmation.token, warnings: list } };
                 }
-                const result = this.transaction('shop', d => { const r = Shop.settleCartResult(d.profile, cart, true); return r.ok ? true : fail(r.reason); });
+                const result = this.transaction('shop', d => { const r = Shop.settleCartResult(d.profile, cart, true); return r.ok ? true : rejected(r.reason); });
                 if (result.ok) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } return result;
             },
             reset: () => { if (!this.guard()) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } },

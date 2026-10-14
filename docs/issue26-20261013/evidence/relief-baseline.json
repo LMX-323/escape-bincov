@@ -1,0 +1,92 @@
+{
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "153.0.8010.12",
+  "methodology": "Real offline release, Runtime and SaveSession. Fixtures run at the menu; fixed clock isolates inventory writes. Mouse clicks use original UI. No real-device claim.",
+  "steps": [
+    {
+      "name": "R1 Runtime entry grants once before any renderer exists",
+      "status": "passed",
+      "detail": {
+        "result": {
+          "ok": true
+        },
+        "kit": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        }
+      }
+    },
+    {
+      "name": "R2 1280x720 title enters yard with saved kit; view remount cannot issue relief",
+      "status": "passed",
+      "detail": {
+        "size": [
+          1280,
+          720
+        ],
+        "entry": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        },
+        "viewOnlyRemount": "no relief writes"
+      }
+    },
+    {
+      "name": "R2 1920x1080 title enters yard with saved kit; view remount cannot issue relief",
+      "status": "passed",
+      "detail": {
+        "size": [
+          1920,
+          1080
+        ],
+        "entry": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        },
+        "viewOnlyRemount": "no relief writes"
+      }
+    },
+    {
+      "name": "R3 failed entry stays at menu with original bytes; refresh and retry grant once",
+      "status": "passed",
+      "detail": {
+        "preserved": true,
+        "reloads": 2,
+        "kit": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        }
+      }
+    },
+    {
+      "name": "R4 legacy tab entry still grants the same kit and explicit claim cannot duplicate it",
+      "status": "passed",
+      "detail": {
+        "kit": {
+          "weapon": "pistol",
+          "relief": true,
+          "ammo": 12,
+          "bandage": 1
+        },
+        "explicitDuplicateRefused": true
+      }
+    },
+    {
+      "name": "R5 antidote no-effect message uses the canonical item name",
+      "status": "passed",
+      "detail": {
+        "message": "当前没有污染，使用除藻药剂没有效果。"
+      }
+    }
+  ],
+  "errors": [],
+  "external": []
+}

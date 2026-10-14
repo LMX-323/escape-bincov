@@ -48,6 +48,38 @@ test('relief, malformed pack and changed stash cannot be sold or settled', () =>
     assert.equal(S.settleCart(save, c), false); assert.deepEqual(save, before);
     c.buy.items[0].qty = 12; D.addItem(save.stash, 'water'); assert.equal(S.settleCart(save, c), false);
 });
+test('shopQuote prices the trading side by whole pack or stack and agrees with cart totals', () => {
+    const save = fixture(); D.addItem(save.stash, 'watch'); D.addItem(save.stash, 'pistol'); D.addItem(save.stash, 'ammo9', 12, true); D.addItem(save.stash, 'knife');
+    const c = S.createCart(save, 'arms'), inStash = (id: string, relief = false) => c.stash.items.find(i => i.id === id && !!i.relief === relief)!;
+    assert.deepEqual(S.shopQuote('merchant', c.catalog.items.find(i => i.id === 'ammo9')!), { side: 'buy', total: 84 });
+    assert.deepEqual(S.shopQuote('stash', inStash('watch')), { side: 'sell', total: 240 });
+    assert.deepEqual(S.shopQuote('stash', inStash('pistol')), { side: 'sell', total: 150 });
+    assert.deepEqual(S.shopQuote('stash', inStash('ammo9', true)), { side: 'sell', total: null }, 'relief goods cannot be sold');
+    assert.deepEqual(S.shopQuote('stash', inStash('knife')), { side: 'sell', total: null }, 'no sale value');
+    buy(c, 'ammo9'); buy(c, 'pistol', 1, 0); sell(c, 'watch'); sell(c, 'pistol', 1, 0);
+    assert.deepEqual(S.shopQuote('sell', c.sell.items.find(i => i.id === 'watch')!), { side: 'sell', total: 240 });
+    assert.deepEqual(S.shopQuote('buy', c.buy.items.find(i => i.id === 'ammo9')!), { side: 'buy', total: 84 });
+    const quoted = (src: S.ShopSource, inv: D.Inventory) => inv.items.reduce((n, i) => n + S.shopQuote(src, i).total!, 0);
+    const totals = S.cartTotals(c);
+    assert.deepEqual(totals, { buy: quoted('buy', c.buy), sell: quoted('sell', c.sell), net: quoted('buy', c.buy) - quoted('sell', c.sell) });
+    assert.deepEqual(totals, { buy: 84 + 320, sell: 240 + 150, net: 14 });
+});
+test('firstShopCell scans row-major and reports a rule before the generic space fallback', () => {
+    const save = fixture(); D.addItem(save.stash, 'ammo9', 12, true); D.addItem(save.stash, 'watch'); const c = S.createCart(save, 'arms');
+    const relief = c.stash.items.find(i => i.relief)!.uid, watch = c.stash.items.find(i => i.id === 'watch')!.uid;
+    const toSell = (uid: string) => (x: number, y: number) => S.shopPlacementError(c, 'stash', 'sell', uid, x, y);
+    assert.deepEqual(S.firstShopCell(c.sell.w, c.sell.h, toSell(relief)), { reason: '这件物品不可出售。' });
+    assert.deepEqual(S.firstShopCell(c.sell.w, c.sell.h, toSell(watch)), { x: 0, y: 0 }, 'empty grid');
+    const pistol = () => c.catalog.items.find(i => i.id === 'pistol')!.uid, toBuy = (x: number, y: number) => S.shopPlacementError(c, 'merchant', 'buy', pistol(), x, y);
+    assert.deepEqual(S.firstShopCell(c.buy.w, c.buy.h, toBuy), { x: 0, y: 0 });
+    buy(c, 'pistol'); assert.deepEqual(S.firstShopCell(c.buy.w, c.buy.h, toBuy), { x: 2, y: 0 }, 'merchant to buy keeps the row-major order');
+    c.sell.items = Array.from({ length: c.sell.w * c.sell.h }, (_, i) => ({ uid: `full-${i}`, id: 'scrap', qty: 1, x: i % c.sell.w, y: Math.floor(i / c.sell.w) }));
+    assert.equal(toSell(watch)(0, 0), S.SHOP_SPACE_MESSAGE);
+    assert.deepEqual(S.firstShopCell(c.sell.w, c.sell.h, toSell(watch)), { reason: null }, 'only space blocked');
+    assert.deepEqual(S.firstShopCell(c.sell.w, c.sell.h, toSell(relief)), { reason: '这件物品不可出售。' }, 'the rule wins over a full grid');
+    assert.deepEqual(S.firstShopCell(2, 2, () => S.cartRejectionMessage.stale), { reason: S.cartRejectionMessage.stale });
+    assert.deepEqual(S.firstShopCell(2, 2, (x, y) => x + y < 2 ? S.SHOP_SPACE_MESSAGE : '先放入待买或待卖区，再统一结算。'), { reason: '先放入待买或待卖区，再统一结算。' });
+});
 test('save failure rolls back entire net transaction, retry writes exactly once and reload agrees', () => {
     const state = createSessionState(); let raw: string | null = null, fail = false, writes = 0;
     const session = new SaveSession(state, () => ({ getItem: k => k === SESSION_KEY ? raw : null, setItem: (_k, value) => { if (fail) throw Error('quota'); raw = value; writes++; } }));

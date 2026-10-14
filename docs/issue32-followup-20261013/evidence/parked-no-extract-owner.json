@@ -1,0 +1,13 @@
+{
+  "browser": "153.0.8010.12",
+  "samples": [],
+  "errors": [],
+  "owner": {
+    "collected": false,
+    "destroyed": true,
+    "uid": 439,
+    "paths": [
+      "renderer._lastObjectRendered.renderGroup.instructionSet.instructions.0.textures.textures.0"
+    ]
+  }
+}

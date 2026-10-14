@@ -128,6 +128,8 @@ git push -u <任务远端> <任务分支>
 
 ## 6. 按风险验证
 
+CI 的文档分流、八组浏览器分配、完整回归证据复用边界及 Pages/镜像门禁见 [CI 说明](CI.md)。纯文档快速通道不替代下表中的本地文档审阅；手动运行始终全量。新加浏览器检查时同步 CI 覆盖清单。
+
 | 改动范围 | 最少验证 |
 | --- | --- |
 | 纯文字/文档 | 本地及仓库链接、命令、事实、图片路径；无需新增代码测试 |
@@ -150,6 +152,11 @@ pnpm test:art
 pnpm test:title
 pnpm test:title-water
 pnpm test:save-browser
+pnpm test:shop-feedback
+pnpm test:asset-load
+pnpm test:hud-release
+pnpm test:coast-render-targets
+pnpm test:coast-animation
 pnpm test:expansion
 pnpm test:buildings
 pnpm test:qol-expansion
@@ -171,10 +178,10 @@ CI 对 PR 与 `main` 运行以上完整检查。单元测试及打包只在 `Bui
 
 | 组 | 完整浏览器命令（均保留现有断言和循环） |
 | --- | --- |
-| `visual` | `test:ui`、`test:tactical`、`test:art`、`test:title`、`test:title-water` |
-| `inventory` | `test:save-browser`、`test:expansion`、`test:qol-expansion`、`test:loot`、`test:loot-target`、`test:qol`、`test:portable` |
+| `visual` | `test:ui`、`test:coast-animation`、`test:tactical`、`test:art`、`test:title`、`test:title-water` |
+| `inventory` | `test:save-browser`、`test:shop-feedback`、`test:expansion`、`test:qol-expansion`、`test:loot`、`test:loot-target`、`test:qol`、`test:portable` |
 | `world` | `test:buildings`、`test:systems`、`test:station-tier1`、`test:station-tier2`、`test:station-relief`、`test:mall-passages`、`test:mall-landing` |
-| `input` | `test:browser`、`test:desktop-input`、`test:mobile`、`test:mobile-ux` |
+| `input` | `test:browser`、`test:desktop-input`、`test:shop-drag`、`test:asset-load`、`test:hud-release`、`test:coast-render-targets`、`test:mobile`、`test:mobile-ux` |
 
 诊断附件为 `browser-evidence-visual`、`browser-evidence-inventory`、`browser-evidence-world`、`browser-evidence-input`，保留 14 天；临时构建制品仅保留 1 天。失败时其余组继续收集证据，取消旧运行的规则保持不变。
 

@@ -15,7 +15,13 @@ let loaded: Promise<StationArt> | null = null;
 export function loadStationArt(): Promise<StationArt> {
   loaded ??= Promise.all(Object.entries(STATION_ASSET_URLS).map(([id, url]) => new Promise<[string, HTMLCanvasElement]>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d')!.drawImage(img, 0, 0); resolve([id, c]); };
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const g = c.getContext('2d'); if (!g) throw new Error('Canvas 2D unavailable');
+        g.drawImage(img, 0, 0); resolve([id, c]);
+      } catch (error) { reject(new Error(`Station asset failed to prepare: ${id}`, { cause: error })); }
+    };
     img.onerror = () => reject(new Error(`Station asset failed to decode: ${id}`));
     img.src = url;
   }))).then(entries => { const art = new Map(entries); artReport.delivered = [...art.keys()].sort(); return art; })

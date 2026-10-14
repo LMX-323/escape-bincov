@@ -1,0 +1,68 @@
+{
+  "sha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231",
+  "browser": "153.0.8010.12",
+  "checks": [
+    {
+      "name": "1280x720 funds rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /现金不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "1280x720 space rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /仓库空间不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "1920x1080 funds rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /现金不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "1920x1080 space rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /仓库空间不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "390x844 funds rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /现金不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "390x844 space rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /仓库空间不足/. Input:\n\n'操作未完成，请检查条件后重试。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:63:53\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:50:102"
+    },
+    {
+      "name": "yard refreshes stale empty cart without reopening",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'清空' !== '刷新清单'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:79:35\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:69:37"
+    },
+    {
+      "name": "tabs refreshes stale empty cart without reopening",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"cart-reset\"]') to be visible\u001b[22m\n\n    at /workspace/escape-bincov/scripts/shop-feedback-test.mjs:79:17\n    at async check (/workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:69:37"
+    },
+    {
+      "name": "legacy tabs show the same funds rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /现金不足/. Input:\n\n'交易未完成，请检查现金、仓库空间和清单。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:94:70\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:85:42"
+    },
+    {
+      "name": "legacy tabs show the same space rejection",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /仓库空间不足/. Input:\n\n'交易未完成，请检查现金、仓库空间和清单。'\n\n    at file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:94:70\n    at async check (file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:43:22)\n    at async file:///workspace/escape-bincov/scripts/shop-feedback-test.mjs:85:42"
+    },
+    {
+      "name": "another window still locks settlement and cannot be overwritten through refresh",
+      "detail": {
+        "result": {
+          "ok": false,
+          "reason": "conflict",
+          "message": "存档已由另一窗口接管，本页不能写入。"
+        },
+        "newerSavePreserved": true
+      },
+      "status": "passed"
+    }
+  ]
+}

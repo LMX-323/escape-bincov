@@ -1,0 +1,76 @@
+{
+  "build": "dist/index.html",
+  "sha256": "8c274abc506c1ec43e26762336563ff27500f830ef448366350b3780e8f92693",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:24:20.843Z",
+  "methodology": "Packaged HTML routed offline. Real localStorage/SaveSession and mouse/touch UI. Legacy runs=7 and charm inventory are explicit fixtures; quota is injected. Only quota transaction cases fix Date so the unrelated five-second checkpoint cannot consume the fault; timers, animation and real UI keep running. Narrow screens emulate touch, not real devices. No mock Runtime or renderer.",
+  "cpuRate": 1,
+  "steps": [
+    {
+      "name": "ordinary-new-save-zero",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "charm-snapshot-and-gear-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "legacy-seven-copy-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "charm-snapshot-and-gear-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "old-tabs-equip-and-unequip-refresh-yard",
+      "status": "passed"
+    },
+    {
+      "name": "quota-equip-replace-remove-preserve-inventory-and-retry-once",
+      "status": "passed"
+    },
+    {
+      "name": "departure-failure-seven-success-eight-refresh-no-double-count",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "ordinary-zero-1280.png",
+    "seven-hud-1280.png",
+    "seven-radio-1280.png",
+    "seven-tabs-1280.png",
+    "charm-gear-1280.png",
+    "seven-hud-1920.png",
+    "seven-radio-1920.png",
+    "seven-tabs-1920.png",
+    "charm-gear-1920.png",
+    "seven-hud-390.png",
+    "seven-radio-390.png",
+    "seven-tabs-390.png",
+    "charm-gear-390.png",
+    "old-tabs-charm.png",
+    "quota-stash.png",
+    "quota-bag.png",
+    "quota-remove.png"
+  ],
+  "finishedAt": "2026-10-13T13:24:58.346Z",
+  "summary": {
+    "passed": 10,
+    "total": 10
+  }
+}

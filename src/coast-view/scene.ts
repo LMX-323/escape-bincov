@@ -5,13 +5,16 @@ import { paintGround, puddles, type GroundBake } from './art/ground';
 import { groundGeometry } from './art/surface';
 import { LOOT_FOOT, LOOT_H } from './art/props';
 import { solWall, type SolArt } from './art/sol';
-import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDownpipe, paintLintel, paintLow, paintRoof, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
+import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
 import { Fx } from './fx';
+import { gait, walkFrame } from '../gait';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
+import { knownDoor, knownStructurePoint, occupiedStructure, structureContains } from './structure-guide';
+import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
 /**
@@ -42,6 +45,8 @@ interface ActorGfx {
   /** Player only: faint warm outline so the player separates from dark asphalt (not the occlusion rim). */
   edge: Sprite | null;
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
+  /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
+  sense: 1 | -1;
   /** Half-cycles of the walk, to put a puff of dust under each sprinting step. */
   step: number;
 }
@@ -88,6 +93,8 @@ export class CoastView {
   private mapKey = ''; private epoch = -1;
   private occluders: Occluder[] = [];
   private doors = new Map<string, Occluder>();
+  private doorGuides = new Map<string, Sprite>();
+  private stairLabels = new Map<string, Sprite>();
   private actors = new Map<string, ActorGfx>();
   private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number }>();
   private crates = new Map<string, { s: Sprite; shadow: Sprite; empty: boolean; look: 'full' | 'empty' | 'open' }>();
@@ -146,14 +153,22 @@ export class CoastView {
     const k = Math.ceil(s), w = Math.ceil(W / s), h = Math.ceil(H / s);
     this.view = { w, h, s, k, dpr, W, H };
     this.app.renderer.resize(W, H);
-    for (const rt of [this.worldRT, this.lightRT, this.upRT]) if (rt) { rt.destroy(true); lifecycle.renderTextures--; }
-    this.worldRT = this.lightRT = this.upRT = null;
+    this.releaseTargets();
     this.worldRT = RenderTexture.create({ width: w, height: h, scaleMode: 'nearest' }); lifecycle.renderTextures++;
     this.lightRT = RenderTexture.create({ width: w, height: h, scaleMode: 'nearest' }); lifecycle.renderTextures++;
     this.upRT = RenderTexture.create({ width: w * k, height: h * k, scaleMode: 'linear' }); lifecycle.renderTextures++;
     this.lightOverlay.texture = this.lightRT;
     this.upSprite.texture = this.worldRT; this.upSprite.scale.set(k);
     this.screen.texture = this.upRT; this.screen.scale.set(s / k);
+  }
+
+  /** Release only this view's replaced targets, including their now-empty Pixi texture slots. */
+  private releaseTargets() {
+    const targets = [this.worldRT, this.lightRT, this.upRT].filter((rt): rt is RenderTexture => !!rt);
+    const uids = targets.map(rt => rt.source.uid);
+    for (const rt of targets) { rt.destroy(true); lifecycle.renderTextures--; }
+    this.worldRT = this.lightRT = this.upRT = null;
+    releaseManagedSlots(this.app, 'glTexture', uids);
   }
 
   present(batch: PublishedView, dt: number) {
@@ -202,6 +217,7 @@ export class CoastView {
     this.updateExit(f);
     this.updateTall(f);
     this.updateFades(f, dt);
+    this.updateStructureGuides(f);
     this.updateXray(f);
     this.updateHighlight(f, visible);
     this.camera(f, dt);
@@ -217,7 +233,7 @@ export class CoastView {
   private clearScene() {
     for (const layer of [this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead]) for (const c of layer.removeChildren()) c.destroy();
     this.fx?.clear();
-    this.occluders = []; this.pendingChunks = []; this.doors.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
+    this.occluders = []; this.pendingChunks = []; this.doors.clear(); this.doorGuides.clear(); this.stairLabels.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
     this.debugG.clear();
   }
 
@@ -247,6 +263,9 @@ export class CoastView {
     for (const e of m.entries) {
       const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
       s.position.set(Math.floor(e.at.x / 32) * 32, Math.floor(e.at.y / 32) * 32 - 8); this.groundLayer.addChild(s);
+      const label = new Sprite(this.tex.ensure(`stairs-label:${e.label}`, () => paintStairLabel(e.label)));
+      label.anchor.set(.5, 0); label.position.set(e.at.x, e.at.y + 22); label.visible = false;
+      this.overhead.addChild(label); this.stairLabels.set(e.id, label);
     }
     for (const x of m.exits) { const s = new Sprite(this.tex.exitDecal()); s.anchor.set(.5); s.position.set(x.at.x, x.at.y); this.groundLayer.addChild(s); }
     for (const n of m.notes) { const s = new Sprite(this.tex.loot('note')); s.anchor.set(.5, 11 / 14); s.position.set(n.at.x, n.at.y); this.flat.addChild(s); }
@@ -268,7 +287,11 @@ export class CoastView {
         };
         const occ = this.addOccluder(this.wallTexKey(spec), x * 32, y * 32 - WALL_H, (y + 1) * 32, door ? 'door' : 'wall', 6);
         occ.spec = spec;
-        if (door) this.doors.set(door.id, occ);
+        if (door) {
+          this.doors.set(door.id, occ);
+          const guide = new Sprite(); guide.position.set(x * 32, y * 32 - WALL_H); guide.visible = false;
+          this.xray.addChild(guide); this.doorGuides.set(door.id, guide);
+        }
       } else if (bld && cell === 'floor' && !door && (y * 32 === bld.y || (y + 1) * 32 === bld.y + bld.h) && x * 32 > bld.x && (x + 1) * 32 < bld.x + bld.w) {
         this.tex.ensure('lintel', () => paintLintel(32));
         this.addOccluder('lintel', x * 32, y * 32 - WALL_H, (y + 1) * 32, 'lintel', 0);
@@ -483,7 +506,7 @@ export class CoastView {
       const mk = () => { const s = new Sprite(); s.anchor.set(.5, 1); return s; };
       const arm = () => { const s = new Sprite(this.tex.arm(a.kind)); s.anchor.set(0, .5); return s; };
       g = { kind: a.kind, body: mk(), weapon: new Sprite(), flash: mk(), rim: new Sprite(), wrim: new Sprite(), shadow: new Sprite(this.tex.blob(20, 7)), corpse: null, corpseKey: '',
-        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, step: 0 };
+        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, step: 0, sense: 1 };
       g.flash.blendMode = 'add'; g.rim.anchor.set(.5, (48 + 1) / 50); g.shadow.anchor.set(.5); g.wade.anchor.set(.5, .5); g.wade.visible = false;
       this.sorted.addChild(g.body, ...g.arms, g.weapon, g.flash, g.wade); this.xray.addChild(g.rim, g.wrim);
       if (g.edge) { g.edge.anchor.set(.5, (48 + 1) / 50); g.edge.tint = 0xf3dfa8; g.edge.alpha = .38; this.sorted.addChild(g.edge); } this.shadows.addChild(g.shadow);
@@ -494,11 +517,13 @@ export class CoastView {
     g.walk = speed > 5 ? (g.walk + dt * speed / 22) % 4 : 0;
     const step = Math.floor(g.walk / 2);
     if (step !== g.step) { g.step = step; if (speed > 150 && shown && a.alive && dt > 0) this.fx.dust(a.x, a.y, this.rnd, 2); }
-    g.dir = dirOf(a.aim);
+    // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08). The dead
+    // and the falling face the aim as before: a death batch still carries the velocity of the step the actor died in.
+    const gt = gait(a.aim, a.vx, a.vy, speed > 5 && a.alive, g.sense); g.sense = gt.sense; g.dir = gt.dir;
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
     const dying = !a.alive && g.deathT > 0 && g.deathT < FALL_T;
-    const frame = dying ? 0 : speed > 5 ? 1 + Math.floor(g.walk) : 0;
+    const frame = dying ? 0 : speed > 5 ? walkFrame(g.walk, g.sense) : 0;
     const dead = !a.alive && !dying;
     const kx = g.kickT > 0 ? g.kick.x : 0, ky = g.kickT > 0 ? g.kick.y : 0;
     const x = Math.round(a.x + kx), y = Math.round(a.y + ky);
@@ -652,6 +677,7 @@ export class CoastView {
 
   private updateFades(f: ViewFrame, dt: number) {
     const p = f.player;
+    const occupied = occupiedStructure(this.map!, p);
     const focus: Rect[] = [{ x: p.x - 11, y: p.y - 44, w: 22, h: 44 }];
     if (f.interaction) focus.push({ x: f.interaction.at.x - 8, y: f.interaction.at.y - 20, w: 16, h: 22 });
     // Cull by the last camera: off-screen structure neither renders nor runs fade/tint work.
@@ -659,8 +685,13 @@ export class CoastView {
     for (const o of this.occluders) o.sprite.renderable = intersects(vr, o.rect);
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
-      if (o.kind === 'roof' || o.kind === 'ceiling') { o.target = o.region && f.revealed[o.region] ? 4 : 0; continue; }
-      let t = 0;
+      if (o.kind === 'roof' || o.kind === 'ceiling') {
+        o.target = o.region && (f.revealed[o.region] || occupied?.regionIds.includes(o.region)) ? 4 : 0; continue;
+      }
+      // Cut away the current building's complete floor plan, retaining solid wall feet. Actor/loot permissions
+      // still use only f.revealed; seeing the static layout does not reveal anyone behind a closed room door.
+      const structural = o.kind === 'wall' || o.kind === 'door' || o.kind === 'lintel';
+      let t = structural && structureContains(this.map!, occupied, { x: o.rect.x + 16, y: o.z - 16 }) ? 3 : 0;
       for (const r of focus) {
         if (o.z <= r.y + r.h) continue;
         if (intersects(r, o.rect)) t = Math.max(t, o.kind === 'canopy' ? 3 : 2);
@@ -677,6 +708,25 @@ export class CoastView {
       o.level += Math.sign(o.target - o.level); this.applyFade(o);
     }
     for (const s of this.shadows.children) { const roof = (s as Graphics & { roofOf?: Occluder }).roofOf; if (roof) s.alpha = 1 - roof.level / 4; }
+  }
+  private updateStructureGuides(f: ViewFrame) {
+    const map = this.map!, occupied = occupiedStructure(map, f.player);
+    for (const door of map.doors) {
+      const guide = this.doorGuides.get(door.id)!;
+      guide.visible = knownDoor(map, door, f.revealed, occupied);
+      if (!guide.visible) continue;
+      const open = !!f.doors[door.id];
+      guide.texture = this.tex.ensure(`door-guide:${door.wall}:${open}`, () => paintDoorGuide(door.wall, open));
+      guide.alpha = f.interaction?.ref.id === door.id ? 1 : .82;
+    }
+    for (const entry of map.entries) {
+      const label = this.stairLabels.get(entry.id)!;
+      label.visible = knownStructurePoint(map, entry.at, f.revealed, occupied);
+      label.position.set(entry.at.x, entry.at.y + 22);
+      // Move below the player when needed; the interaction prompt already occupies the space above the head.
+      if (label.visible && intersects({ x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height },
+        { x: f.player.x - 14, y: f.player.y - 44, w: 28, h: 48 })) label.y = f.player.y + 8;
+    }
   }
   private applyFade(o: Occluder) {
     if (o.level >= 4) { o.sprite.visible = false; return; }
@@ -833,8 +883,7 @@ export class CoastView {
     for (const c of [this.groundRoot, this.upper, this.light?.layer, this.lightHolder, this.upHolder, this.screen,
       this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead, this.debugG, this.exitG, this.highlight, this.lightOverlay, this.upSprite])
       if (c && !c.destroyed) c.destroy({ children: true, context: true });
-    for (const rt of [this.worldRT, this.lightRT, this.upRT]) if (rt) { rt.destroy(true); lifecycle.renderTextures--; }
-    this.worldRT = this.lightRT = this.upRT = null;
+    this.releaseTargets();
     this.tex?.destroy();
     this.map = null; this.last = null;
     CoastView.live.delete(this);

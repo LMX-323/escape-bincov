@@ -28,8 +28,14 @@
     "test:station-tier1": "node --import tsx scripts/station-tier1-test.mjs",
     "test:station-tier2": "node --import tsx scripts/station-tier2-test.mjs",
     "test:station-relief": "node scripts/station-relief-test.mjs",
+    "test:station-reset": "node scripts/station-reset-test.mjs",
     "test:station-capability": "node --import tsx scripts/station-capability-listeners.mjs",
     "test:shop-drag": "node scripts/shop-drag-test.mjs",
+    "test:shop-feedback": "node scripts/shop-feedback-test.mjs",
+    "test:asset-load": "node scripts/asset-load-test.mjs",
+    "test:hud-release": "node scripts/hud-release-test.mjs",
+    "test:coast-render-targets": "node scripts/coast-render-target-test.mjs",
+    "test:coast-animation": "node scripts/coast-sample-test.mjs --group=animation",
     "test:qol-expansion": "node scripts/qol-expansion-test.mjs",
     "test:expansion": "node scripts/expansion-browser-test.mjs",
     "test:expansion-benchmark": "node --import tsx scripts/expansion-benchmark.mjs",
@@ -40,7 +46,11 @@
     "test:mall-landing": "node --import tsx scripts/mall-landing.mjs",
     "test:art": "node --import tsx scripts/art-review.mjs",
     "test:tactical": "node --import tsx scripts/tactical-review.mjs",
-    "test:title-water": "node --import tsx scripts/title-water-review.mjs"
+    "test:title-water": "node --import tsx scripts/title-water-review.mjs",
+    "test:issue26-station": "node --import tsx scripts/issue26-station-test.mjs",
+    "test:issue26-inventory": "node scripts/issue26-raid-inventory-test.mjs",
+    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs",
+    "test:issue26-phaser-spatial": "node scripts/issue26-phaser-spatial.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0",

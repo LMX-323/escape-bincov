@@ -1,0 +1,14 @@
+{
+  "baseline": "3f706b77e9b924b0cee085e79c54479a0c19da65",
+  "node": "24.19.0",
+  "pnpm": "11.19.0",
+  "pnpm test": {
+    "passed": 314,
+    "failed": 0
+  },
+  "pnpm package": "passed",
+  "htmlSha256": "c45397f2eea19681483141b040435ae120dd26b8f637ceed46e653a5e17f6a53",
+  "finalBrowserMatrix": "pending",
+  "remoteCI": "pending",
+  "merged": false
+}

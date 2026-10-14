@@ -97,7 +97,13 @@ let loaded: Promise<Map<string, HTMLCanvasElement>> | null = null;
 export function loadCoastAssets(): Promise<Map<string, HTMLCanvasElement>> {
   loaded ??= Promise.all(Object.entries(COAST_ASSET_URLS).map(([id, url]) => new Promise<[string, HTMLCanvasElement]>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d')!.drawImage(img, 0, 0); resolve([id, c]); };
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const g = c.getContext('2d'); if (!g) throw new Error('Canvas 2D unavailable');
+        g.drawImage(img, 0, 0); resolve([id, c]);
+      } catch (error) { reject(new Error(`Coast asset failed to prepare: ${id}`, { cause: error })); }
+    };
     img.onerror = () => reject(new Error(`Coast asset failed to decode: ${id}`));
     img.src = url;
   }))).then(entries => new Map(entries)).catch(error => { loaded = null; throw error; });

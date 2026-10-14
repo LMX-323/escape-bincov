@@ -63,13 +63,35 @@ test('failed entry relief leaves menu and profile intact; retry then re-entry gr
     assert.equal(D.count(f.state.save.bag, 'ammo9'), 12); assert.equal(D.count(f.state.save.bag, 'bandage'), 1);
 });
 test('entry keeps relief eligibility, active-raid and writer protection intact', () => {
+    // Issue #26 F12/F04 moved the cash boundary from ¥200 to the pistol price (¥320) when nothing else can be sold.
     for (const source of ['cash', 'safe'] as const) {
-        const f = poorStation(); f.setup(d => { if (source === 'cash') d.profile.cash = 200; else D.addItem(d.profile.safe, 'pistol'); });
+        const f = poorStation(); f.setup(d => { if (source === 'cash') d.profile.cash = 320; else D.addItem(d.profile.safe, 'pistol'); });
         const raw = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, raw); assert.equal(f.state.save.equipment.weapon, null);
+    }
+    for (const cash of [200, 319]) {
+        const f = poorStation(); f.setup(d => { d.profile.cash = cash; }); const revision = f.saves.revision;
+        assert.ok(f.runtime.enter().ok); assert.equal(f.saves.revision, revision + 1); assert.equal(f.state.save.cash, cash);
+        assert.equal(f.state.save.equipment.weapon, 'pistol'); assert.equal(f.state.save.equipment.relief, true);
+        assert.equal(D.count(f.state.save.bag, 'ammo9'), 12); assert.equal(D.count(f.state.save.bag, 'bandage'), 1);
+        const raw = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, raw);
     }
     const f = poorStation(), raw = f.raw; f.saves.markConflict(); assert.equal(reason(f.runtime.enter()), 'conflict'); assert.equal(f.raw, raw);
     const g = fixture(); assert.ok(g.runtime.deploy({ world: 'coast', seed: 'relief-entry' }).ok);
     const raid = g.raw; assert.equal(reason(g.runtime.enter()), 'locked'); assert.equal(g.raw, raid);
+});
+test('selling the last gun to reach ¥210 issues the relief kit in the same shop commit (S3)', () => {
+    const f = poorStation(); f.setup(d => { d.profile.cash = 60; D.addItem(d.profile.stash, 'pistol'); });
+    assert.ok(f.runtime.enter().ok); assert.equal(f.state.save.equipment.weapon, null); assert.equal(f.state.save.reliefSupplies, undefined);
+    const shop = f.runtime.openShop('arms'), gun = shop.view().stash.items.find(i => i.id === 'pistol')!;
+    assert.ok(shop.place('stash', 'sell', gun.uid, 0, 0).ok); const revision = f.saves.revision;
+    assert.ok(shop.settle().ok); assert.equal(f.saves.revision, revision + 1);
+    const saved = decodeSession(f.raw).profile;
+    for (const save of [f.state.save, saved]) {
+        assert.equal(save.cash, 210); assert.equal(save.stash.items.some(i => i.id === 'pistol'), false);
+        assert.deepEqual(save.equipment, { weapon: 'pistol', relief: true, ammo: 0, ammoRelief: 0 });
+        assert.equal(D.count(save.bag, 'ammo9'), 12); assert.equal(D.count(save.bag, 'bandage'), 1); assert.ok(save.bag.items.every(i => i.relief));
+    }
+    const raw = f.raw; assert.ok(f.runtime.enter().ok); assert.equal(f.raw, raw);
 });
 test('re-entering a training station preserves accepted samples before relief commits', () => {
     const f = poorStation(); f.setup(d => { d.expansion.base.facilities.training = 1; d.expansion.base.training.attribute = 'strength'; });
@@ -200,6 +222,43 @@ test('shop reasons distinguish funds, stale stash and invalid moves', () => {
     assert.ok(shop.place('merchant', 'buy', stock.uid, 0, 0).ok); assert.equal(reason(shop.settle()), 'funds');
     assert.equal(reason(shop.place('merchant', 'stash', stock.uid, 0, 0)), 'rule');
     f.setup(d => { D.addItem(d.profile.stash, 'watch'); }); assert.equal(reason(shop.settle()), 'stale');
+});
+test('shop rejections tell the player whether cash or stash space is missing without changing the cart', () => {
+    for (const blockedBy of ['funds', 'space'] as const) {
+        const f = fixture(); f.setup(d => {
+            d.profile.cash = blockedBy === 'funds' ? 0 : 5000;
+            if (blockedBy === 'space') { d.profile.stash = D.createInventory(10, 6); D.addItem(d.profile.stash, 'watch', 120); }
+        });
+        const shop = f.runtime.openShop('arms'), stock = shop.view().catalog.items.find(i => i.id === 'pistol')!;
+        assert.ok(shop.place('merchant', 'buy', stock.uid, 0, 0).ok);
+        const raw = f.raw, cart = shop.view(), result = shop.settle();
+        assert.equal(reason(result), blockedBy);
+        assert.match(!result.ok ? result.message : '', blockedBy === 'funds' ? /现金不足/ : /仓库空间不足/);
+        assert.equal(f.raw, raw); assert.deepEqual(shop.view(), cart);
+    }
+});
+test('a stale empty cart exposes refresh and reset rebuilds it without reopening or writing progress', () => {
+    const f = fixture(), shop = f.runtime.openShop('arms');
+    f.setup(d => { D.addItem(d.profile.stash, 'watch'); });
+    const raw = f.raw;
+    assert.equal(shop.view().stale, true); assert.equal(shop.view().dirty, false);
+    const stock = shop.view().catalog.items[0];
+    assert.equal(reason(shop.place('merchant', 'buy', stock.uid, 0, 0)), 'stale');
+    shop.reset(); assert.equal(shop.view().stale, false);
+    assert.deepEqual(shop.view().stash, f.state.save.stash); assert.equal(f.raw, raw);
+    assert.ok(shop.place('merchant', 'buy', shop.view().catalog.items[0].uid, 0, 0).ok);
+});
+test('stale cart reset discards the old sale confirmation and never takes over another writer', () => {
+    const f = fixture(); f.setup(d => { D.addItem(d.profile.stash, 'fuse'); });
+    const shop = f.runtime.openShop('arms'), fuse = shop.view().stash.items.find(i => i.id === 'fuse')!;
+    assert.ok(shop.place('stash', 'sell', fuse.uid, 0, 0).ok);
+    const first = shop.settle(); assert.ok(!first.ok && first.confirmation);
+    f.setup(d => { D.addItem(d.profile.stash, 'watch'); });
+    assert.equal(reason(shop.settle(!first.ok ? first.confirmation!.token : '')), 'stale');
+    shop.reset(); assert.ok(shop.place('stash', 'sell', fuse.uid, 0, 0).ok);
+    const again = shop.settle(!first.ok ? first.confirmation!.token : ''); assert.ok(!again.ok && again.confirmation);
+    const cart = shop.view(), raw = f.raw; f.saves.markConflict(); shop.reset();
+    assert.deepEqual(shop.view(), cart); assert.equal(reason(shop.settle()), 'conflict'); assert.equal(f.raw, raw);
 });
 test('quest sale requires confirmation bound to the cart and quest need', () => {
     const f = fixture(); f.setup(d => { D.addItem(d.profile.stash, 'fuse'); });

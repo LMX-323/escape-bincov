@@ -1,0 +1,83 @@
+{
+  "build": "dist/index.html",
+  "sha256": "8c274abc506c1ec43e26762336563ff27500f830ef448366350b3780e8f92693",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:23:33.868Z",
+  "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
+  "steps": [
+    {
+      "name": "F01-queued-double-click-survives-busy-frame",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 7134.300000000745,
+            "handled": 7162.200000001118,
+            "trusted": true,
+            "uid": "bc-mv6poy25-6",
+            "x": 920,
+            "y": 243.5
+          },
+          {
+            "stamp": 7134.4000000003725,
+            "handled": 7818.300000000745,
+            "trusted": true,
+            "uid": "bc-mv6poy25-6",
+            "x": 920,
+            "y": 243.5
+          }
+        ]
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "F01-double-click-storage-failure-rolls-back",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 6600,
+            "handled": 6786.300000000745,
+            "trusted": true,
+            "uid": "bc-mv6pp583-c",
+            "x": 920,
+            "y": 243.5
+          },
+          {
+            "stamp": 6600.0999999996275,
+            "handled": 7035.199999999255,
+            "trusted": true,
+            "uid": "bc-mv6pp583-c",
+            "x": 920,
+            "y": 243.5
+          }
+        ],
+        [
+          {
+            "stamp": 15228.400000000373,
+            "handled": 15249.099999999627,
+            "trusted": true,
+            "uid": "bc-mv6pp583-c",
+            "x": 920,
+            "y": 243.5
+          },
+          {
+            "stamp": 15228.5,
+            "handled": 15350.300000000745,
+            "trusted": true,
+            "uid": "bc-mv6pp583-c",
+            "x": 920,
+            "y": 243.5
+          }
+        ]
+      ],
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [],
+  "finishedAt": "2026-10-13T13:24:00.544Z",
+  "summary": {
+    "passed": 2,
+    "total": 2
+  }
+}

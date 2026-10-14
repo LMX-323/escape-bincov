@@ -9,7 +9,8 @@ import { playerInput } from './input';
 import { app, audio, saveSession, hideoutRuntime } from './app';
 import type { SessionMutation } from './session';
 import { titleScreen } from './title-screen';
-import { moveQuantity, placementError, type LootEndpoint } from './loot';
+import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } from './loot';
+import { transferBagToStash, organizeStash } from './inventory-actions';
 import { ATTRIBUTES, EFFECTS, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, type Facility } from './expansion-state';
 import { FACILITY_COSTS, FACILITY_NAMES, buildFacility, enqueueProduction, claimProduction, cancelProduction } from './base';
 import { equipCharm, unequipCharm, reputationTier } from './reputation-luck';
@@ -45,6 +46,26 @@ export function toast(message: string, kind: 'info' | 'success' = 'info') {
     }, kind === 'success' ? 1500 : 3300);
 }
 function clearSelection() { app.selected = ''; app.placement = false; app.placementRotated = undefined; app.placementQuantity = undefined; }
+let phaserInputBeforeExternal: { enabled: boolean; keyboard: boolean | undefined } | null = null;
+/** Sleeping Phaser still receives window mouse events. External views own input until they hand back control. */
+function externalInput(external: boolean) {
+    const input = app.game?.input; if (!input) return;
+    if (external) {
+        if (phaserInputBeforeExternal === null) phaserInputBeforeExternal = { enabled: input.enabled, keyboard: input.keyboard?.enabled };
+        input.enabled = false;
+        if (input.keyboard) input.keyboard.enabled = false;
+    } else {
+        if (phaserInputBeforeExternal === null) return;
+        input.enabled = phaserInputBeforeExternal.enabled;
+        if (input.keyboard && phaserInputBeforeExternal.keyboard !== undefined) input.keyboard.enabled = phaserInputBeforeExternal.keyboard;
+        phaserInputBeforeExternal = null;
+    }
+    // KeyboardManager has a separate enabled flag and otherwise queues until Phaser's next POST_STEP.
+    const keyboard = input.keyboard as typeof input.keyboard & { queue?: unknown[] };
+    if (Array.isArray(keyboard?.queue)) keyboard.queue.length = 0;
+    // reset() releases event, downElement and upElement as well as held buttons on every pointer.
+    for (const pointer of input.pointers) pointer.reset();
+}
 function saved(ok: boolean): boolean {
     if (!ok && !app.conflict && !app.storageOK)
         toast('存档保存失败。请检查浏览器是否允许保存数据，然后重试。');
@@ -64,7 +85,7 @@ export function initSave(owned = true) {
 export function hideoutExternal(): boolean {
     if (app.pendingSettlement) { setOverlay('save-error'); return false; }
     if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return false; }
-    clearLootContext(); app.raid?.releaseInput(); playerInput.clear(); app.overlay = ''; app.baseWalking = false; app.shop = null; clearSelection();
+    clearLootContext(); app.raid?.releaseInput(); playerInput.clear(); externalInput(true); app.overlay = ''; app.baseWalking = false; app.shop = null; clearSelection();
     app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); return true;
 }
 /** The old tab page's way into the walking hideout: the station yard, or the earlier BaseScene for the legacy fixture. */
@@ -74,8 +95,8 @@ function walkIn() {
 }
 const walkInLabel = () => stationDefault() ? '回到院子' : '走进水产站';
 /** Enter the run state for an external renderer (village sample) without starting the Phaser RaidScene. */
-export function enterExternalRun() { clearLootContext(); playerInput.clear(); app.state = 'run'; app.overlay = ''; app.baseWalking = false; clearSelection(); app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); }
-export function changeState(state: typeof app.state, walking = app.baseWalking) { if (state === 'hideout' && !app.pendingSettlement && !saved(saveSession.ensureRpg())) return; if (app.pendingSettlement) { setOverlay('save-error'); return; } clearLootContext(); app.raid?.releaseInput(); if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return; } playerInput.clear(); app.state = state; app.overlay = ''; app.baseWalking = state === 'hideout' && walking; clearSelection(); if (state === 'hideout') {
+export function enterExternalRun() { clearLootContext(); playerInput.clear(); externalInput(true); app.state = 'run'; app.overlay = ''; app.baseWalking = false; clearSelection(); app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); render(); }
+export function changeState(state: typeof app.state, walking = app.baseWalking) { if (state === 'hideout' && !app.pendingSettlement && !saved(saveSession.ensureRpg())) return; if (app.pendingSettlement) { setOverlay('save-error'); return; } clearLootContext(); app.raid?.releaseInput(); if (app.base && !app.base.checkpoint()) { setOverlay('base-save-error'); return; } playerInput.clear(); externalInput(false); app.state = state; app.overlay = ''; app.baseWalking = state === 'hideout' && walking; clearSelection(); if (state === 'hideout') {
     saved(saveSession.grantRelief());
 } app.game?.scene.getScenes(true).forEach(scene => app.game!.scene.stop(scene.scene.key)); app.game?.scene.start(state === 'hideout' && app.baseWalking ? 'Base' : ({ menu: 'Menu', hideout: 'Hideout', run: 'Raid', result: 'Result' })[state]); render(); }
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -211,11 +232,11 @@ function details() {
     if (!item) return `<aside class="details details-empty"><div class="section-label">${app.state === 'run' ? '随身物资' : '出发前检查'}</div><h3>选中一件物品</h3><p class="muted">查看用途、重量和操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>换弹只使用背包内的弹药。</dd></div><div><dt>安全箱</dt><dd>放入这里的物品，撤离失败也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
     const actions = app.state === 'run'
-        ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run', 'primary') : ''}${supplies.includes(item.id) ? btn('使用', 'use', 'primary') : ''}${d.kind === 'accessory' && app.expansion?.raid ? btn('佩戴', 'charm-equip') : ''}${btn(app.selectedSource === 'safe' ? '放入背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
-        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
+        ? `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备主武器', 'equip-run', 'primary') : ''}${supplies.includes(item.id) ? btn('使用', 'use', 'primary') : ''}${d.kind === 'accessory' && app.expansion?.raid ? btn('佩戴', 'charm-equip') : ''}${btn(app.selectedSource === 'safe' ? '放入背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`
+        : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
     const baseActions = app.state === 'hideout' && app.expansion?.version === 2 ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${supplies.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
     const size = D.itemSize(item);
-    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${playerInput.touch ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
+    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${playerInput.touch ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
 }
 /** Host calls after a successful runtime.deploy and its animation. Uses the committed checkpoint. */
 export async function startPreparedHideoutRaid(runId: string): Promise<boolean> {
@@ -234,7 +255,11 @@ function deploy() {
 }
 function checkout() {
     const current = cart(); app.overlay = app.baseWalking ? 'base-menu' : '';
-    if (mutate(() => Shop.settleCart(app.save, current, app.expansion?.version === 2), '交易完成，物资已存入仓库。', '交易未完成，请检查现金、仓库空间和清单。')) { app.shop = null; render(); }
+    if (mutate(() => {
+        const result = Shop.settleCartResult(app.save, current, app.expansion?.version === 2);
+        if (!result.ok) toast(Shop.cartRejectionMessage[result.reason]);
+        return result.ok;
+    }, '交易完成，物资已存入仓库。', null)) { app.shop = null; render(); }
 }
 function shopDetails(item: D.Item | null | undefined) {
     if (!item) return `<aside class="details shop-details details-empty"><p>从商人拖到待买区，从仓库拖到待卖区。选中物品可查看用途，再点「移动格位」选择位置。</p></aside>`;
@@ -243,9 +268,9 @@ function shopDetails(item: D.Item | null | undefined) {
 }
 function lootDetails(item: D.Item | null | undefined) {
     if (app.placement) return `<aside class="details loot-details details-empty">${placementControls()}</aside>`;
-    if (!item) return `<aside class="details loot-details details-empty"><div><div class="section-label">取舍，由你决定</div><h3>选中物品查看详情</h3></div><p>把物品拖到另一侧的空格，或拖到可合并的同类物品上。<br>同类堆叠装满后，剩余留在原处 · 可放回来源</p></aside>`;
+    if (!item) return `<aside class="details loot-details details-empty"><div><div class="section-label">取舍，由你决定</div><h3>选中物品查看详情</h3></div><p>把物品拖到另一侧的空格，或拖到可合并的同类物品上。<br>双击拿到背包 · 同类堆叠装满后，剩余留在原处</p></aside>`;
     const def = D.ITEMS[item.id], size = D.itemSize(item), external = app.selectedSource === 'container';
-    const actions = external ? '<span class="inv-help">收入背包或安全箱后，才能使用或装备。</span>' : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备', 'equip-run') : ''}${supplies.includes(item.id) ? btn('使用', 'use') : ''}${btn(app.selectedSource === 'safe' ? '移至背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`;
+    const actions = external ? `${btn('拿到背包', 'loot-quick', 'primary')}<span class="inv-help">枪械先放入背包，再选中并装备主武器。</span>` : `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'bag' ? btn('装备主武器', 'equip-run') : ''}${supplies.includes(item.id) ? btn('使用', 'use') : ''}${btn(app.selectedSource === 'safe' ? '移至背包' : '放入安全箱', 'secure')}${btn('丢弃', 'drop', 'danger')}`;
     return `<aside class="details loot-details"><div class="loot-detail-name"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${external ? '来源物资' : '随身物资'} · ${kindName[def.kind]}</div><h3>${def.name}</h3></div></div><p>${size.w}×${size.h} 格　${item.qty} 件　${(def.weight * item.qty).toFixed(2)} kg${item.relief ? '　<span class="orange">救济 · 不可出售</span>' : ''}</p></div><p class="item-description">${def.description}</p><div class="item-actions">${actions}${def.w !== def.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}${playerInput.touch ? btn('关闭详情', 'clear-selection') : ''}</div></aside>`;
 }
 function lootHtml() {
@@ -308,7 +333,8 @@ export function render() {
 function shopCheckout() {
     if (app.placement) return `<div class="shop-placement">${placementControls()}</div>`;
     const c = cart(), totals = Shop.cartTotals(c);
-    return `<div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) ? '' : 'disabled')}<span>背包、安全箱物品请先移入仓库。救济物资不可出售。</span></div>`;
+    const stale = Shop.cartStale(app.save, c);
+    return `<div class="shop-checkout"><strong>${totals.net >= 0 ? '需付' : '可得'} ¥ ${Math.abs(totals.net)}</strong>${stale ? btn('刷新清单', 'cart-reset') : ''}${btn('统一结算', 'checkout', 'primary', Shop.cartDirty(c) && !stale ? '' : 'disabled')}<span>${stale ? Shop.cartRejectionMessage.stale : '背包、安全箱物品请先移入仓库。救济物资不可出售。'}</span></div>`;
 }
 const carryLimit = () => app.raid?.carryLimit() ?? (app.expansion?.version === 2 ? derivedLimits(app.expansion).carry : SURVIVAL.carryLimit);
 function expansionAction(action: (draft: ExpansionDraft) => boolean | void, message: string): boolean {
@@ -346,10 +372,11 @@ function renderHideout() {
         scrollPositions.set(grid.dataset.grid!, grid.parentElement!.scrollTop);
     });
     const s = app.save;
+    const inventoryTools = `<div class="inventory-tools">${btn('背包全部入库', 'stash-all', '', 'title="整包入库，空间不足则全部保留；装备与安全箱不变"')}${btn('整理仓库', 'sort-stash', '', 'title="同类合堆、大件优先，排不下则保持原样"')}</div>`;
     let body = '';
     if (app.tab === 'gear') {
         const weight = preparedWeight();
-        body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}<div class="columns gear-columns">${equipmentPanel(s.equipment, s.bag, s.safe)}${bagPanel(s.bag, weight)}<section class="stash-section"><h3 class="section-title"><b class="section-number">03</b>仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'} · 出击时留在水产站</div></section></div>${details()}`;
+        body = `${playerInput.touch ? `<div class="mobile-inventory-tabs">${[['stash','仓库'],['bag','背包'],['safe','安全箱 / 装备']].map(([id,label]) => btn(label, 'container', app.mobileContainer === id ? 'active' : '', `data-id="${id}"`)).join('')}${btn(app.inventoryGrid ? '物资列表' : '格位整理', 'grid-mode')}</div>` : ''}${placementControls()}${playerInput.touch ? inventoryTools : ''}<div class="columns gear-columns">${equipmentPanel(s.equipment, s.bag, s.safe)}${bagPanel(s.bag, weight)}<section class="stash-section"><h3 class="section-title"><b class="section-number">03</b>仓库 <span>${occupied(s.stash)} / ${s.stash.w * s.stash.h} 格</span></h3>${grid(s.stash, 'stash')}<div class="inv-help">${s.upgraded ? '已扩建 · 10 × 9 格' : '未扩建 · 10 × 6 格'} · 出击时留在水产站</div></section></div>${details()}`;
     } else if (app.tab === 'body') { body = propertyPanel();
     } else if (app.tab === 'facilities') { body = facilityPanel();
     } else if (app.tab === 'arms' || app.tab === 'med') {
@@ -367,7 +394,7 @@ function renderHideout() {
     } else {
         body = `<div class="station-layout"><section class="station-log"><div class="section-label">水产站值守记录 · 累计出击 ${s.stats.runs} 次</div><h3>${s.quests.repair ? '供电已恢复。' : '目前靠应急电源供电。'}</h3><p class="station-copy">出击前查好路线，涉水会积累污染。<br>以下时间从出击开始计算。</p><dl class="tide-notes"><div><dt>04:30</dt><dd>电台预警，离开浅滩。</dd></div><div><dt>05:00</dt><dd>潮位变化，高架路与海堤仍可通行。</dd></div></dl><div class="station-upgrade">${btn(s.upgraded ? '仓库已扩建' : `扩建仓库 · ¥ ${D.STASH_UPGRADE_COST}`, 'upgrade', '', s.upgraded ? 'disabled' : '')}<p class="inv-help">${s.upgraded ? '仓库容量已增至 90 格。' : `完成「${D.QUESTS.repair.name}」后可扩建至 90 格。`}</p></div></section><section class="station-controls"><div class="station-stats"><div><strong>${s.stats.runs}</strong><span>累计出击</span></div><div><strong>${s.stats.extracts}</strong><span>成功撤离</span></div><div><strong>${s.stats.kills}</strong><span>击败敌人</span></div></div><label class="volume-control"><span>游戏音量 <span id="volume-label">${Math.round(s.settings.volume * 100)}%</span></span><input aria-label="游戏音量" id="volume" type="range" min="0" max="1" step="0.05" value="${s.settings.volume}"></label><div class="save-controls"><div><h3>本地存档</h3><p>更换浏览器或游玩地址前，请先导出备份。</p></div><div class="save-actions">${btn('导出存档', 'export-save')}${btn('导入存档', 'import-save')}</div><input id="backup-file" type="file" accept=".json,application/json" hidden></div><div class="station-links">${btn('行动指南', 'help', 'text-button')}${btn('返回主菜单', 'menu', 'text-button')}${btn(walkInLabel(), 'base-enter')}</div></section></div>`;
     }
-    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(app.expansion?.version === 2 ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>沿海封锁区 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域"><option value="coast" ${app.runWorld === 'coast' ? 'selected' : ''}>沿海封锁区 · 经典规则</option><option value="buildings" ${app.runWorld === 'buildings' ? 'selected' : ''}>沿海街区 · 居民楼</option><option value="mall" ${app.runWorld === 'mall' ? 'selected' : ''}>滨湾商场 · 两层与露台</option></select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${app.baseWalking ? btn('返回站内', 'base-return') : btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
+    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(app.expansion?.version === 2 ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}${app.tab === 'gear' && !playerInput.touch ? inventoryTools : ''}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>沿海封锁区 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域"><option value="coast" ${app.runWorld === 'coast' ? 'selected' : ''}>沿海封锁区 · 经典规则</option><option value="buildings" ${app.runWorld === 'buildings' ? 'selected' : ''}>沿海街区 · 居民楼</option><option value="mall" ${app.runWorld === 'mall' ? 'selected' : ''}>滨湾商场 · 两层与露台</option></select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${app.baseWalking ? btn('返回站内', 'base-return') : btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
     bind();
     ui().querySelectorAll<HTMLElement>('.shop-layout [data-grid]').forEach(grid => {
         grid.parentElement!.scrollTop = scrollPositions.get(grid.dataset.grid!) || 0;
@@ -617,6 +644,13 @@ function transferLootItem(source: string, target: string, uid: string, x: number
     }
     render();
 }
+function quickLootItem(source: string, uid: string) {
+    const target = source === 'bag' ? 'safe' : 'bag', item = inventory(source).items.find(i => i.uid === uid);
+    if (!item) { toast('物品已不在原位置，请重新选择。'); return; }
+    const at = firstAvailableSlot(inventory(target), item);
+    if (!at) { toast(`${target === 'bag' ? '背包' : '安全箱'}空间不足，请先整理。`); return; }
+    transferLootItem(source, target, uid, at.x, at.y, at.rotated, item.qty);
+}
 function commitDrop(el: HTMLElement, e: DropPoint, drag: InventoryDrag) {
     clearPlacementPreview();
     try {
@@ -655,6 +689,7 @@ function bind() {
             case 'property': setOverlay('property'); break;
             case 'checkout': if (Shop.saleWarnings(app.save, cart()).length) setOverlay('shop-quest'); else checkout(); break;
             case 'checkout-confirm': checkout(); break;
+            case 'cart-reset': app.shop = null; clearSelection(); render(); break;
             case 'shop-leave-confirm': {
                 const next = app.shopLeave; app.shopLeave = null; app.shop = null; app.overlay = app.baseWalking ? 'base-menu' : ''; clearSelection();
                 if (next?.action === 'tab') { app.tab = next.id; render(); }
@@ -782,9 +817,17 @@ function bind() {
                 mutate(() => D.equip(app.save, app.selected), '主武器已装备。', '无法装备，请给换下的武器和弹药腾出空间。');
                 break;
             case 'equip-run':
-                mutate(() => app.raid?.equipItem(app.selected) ?? false);
-                app.selected = '';
-                render();
+                // RaidScene provides the specific rejection; don't immediately overwrite it with the generic mutation message.
+                mutate(() => app.raid?.equipItem(app.selected) ?? false, '', null);
+                break;
+            case 'loot-quick':
+                if (app.overlay === 'loot') quickLootItem(app.selectedSource, app.selected);
+                break;
+            case 'stash-all':
+                if (app.state === 'hideout' && !shopping()) mutate(() => transferBagToStash(app.save), '背包物品已全部入库，装备与安全箱保留。', app.save.bag.items.length ? '仓库空间不足，背包物品全部留在原处。' : '背包已经是空的。');
+                break;
+            case 'sort-stash':
+                if (app.state === 'hideout' && !shopping()) mutate(() => organizeStash(app.save), '仓库已整理。', '当前无法重新排布，仓库保持原样。');
                 break;
             case 'transfer': {
                 const to = app.selectedSource === 'stash' ? 'bag' : 'stash';
@@ -832,8 +875,13 @@ function bind() {
     });
     ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(el => { el.onclick = () => { if (app.placement) return; app.selected = el.dataset.uid!; app.selectedSource = el.dataset.source!; ui().querySelectorAll<HTMLElement>('[data-uid]').forEach(node => { const active = node.dataset.uid === app.selected; node.classList.toggle('selected', active); node.setAttribute('aria-pressed', String(active)); }); const panel = ui().querySelector('.details'); if (panel)
         panel.outerHTML = details(); bind(); }; el.onkeydown = e => { if (e.key === 'Enter')
-        el.click(); }; el.ondblclick = () => { if (app.state !== 'hideout' || app.conflict || shopping())
-        return; const from = el.dataset.source!; mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), el.dataset.uid!)); };
+        el.click(); }; el.ondblclick = () => {
+            if (app.conflict || app.pendingSettlement || shopping() || app.placement || playerInput.touch) return;
+            const from = el.dataset.source!, uid = el.dataset.uid!;
+            if (app.overlay === 'loot') quickLootItem(from, uid);
+            else if (app.state === 'hideout') mutate(() => D.transferItem(inventory(from), inventory(from === 'stash' ? 'bag' : 'stash'), uid), '物资已转移。', '目标容器空间不足，请先整理。');
+            else if (app.state === 'run') mutate(() => D.transferItem(inventory(from), inventory(from === 'safe' ? 'bag' : 'safe'), uid), '物资已转移。', '目标容器空间不足，请先整理。');
+        };
         el.onpointerdown = e => {
             if (playerInput.touch || e.button !== 0 || app.placement || app.conflict || app.pendingSettlement) return;
             const grid = el.closest<HTMLElement>('[data-grid]'); if (!grid) return;

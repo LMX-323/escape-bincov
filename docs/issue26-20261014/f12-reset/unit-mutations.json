@@ -1,0 +1,32 @@
+{
+  "purpose": "Negative controls for tests/fresh-start.test.ts: src/fresh-start.ts was mutated temporarily, the suite was run, and the original file was restored (byte-compared) after each run.",
+  "command": "node --import tsx --test tests/fresh-start.test.ts",
+  "baseline": { "pass": 9, "fail": 0 },
+  "mutations": [
+    { "mutation": "pristine guard disabled (always write the copy)", "pass": 8, "fail": 1,
+      "failed": ["a second reset of a still pristine save keeps the pre-reset copy"] },
+    { "mutation": "copy written and backup downloaded before the Runtime guard runs", "pass": 4, "fail": 5,
+      "failed": ["reset from a long-played profile wipes it, keeps volume, downloads the old save and keeps one local copy",
+        "a copy that cannot be kept stops the reset before the save or a download is touched",
+        "blocked pages write neither the session nor the copy and download nothing",
+        "two pages on one storage: after a reset the stale page is refused and marked conflicted",
+        "a second reset of a still pristine save keeps the pre-reset copy"] },
+    { "mutation": "a failed copy write is ignored and the reset continues", "pass": 8, "fail": 1,
+      "failed": ["a copy that cannot be kept stops the reset before the save or a download is touched"] },
+    { "mutation": "fresh record keeps the old facility levels", "pass": 4, "fail": 5,
+      "failed": ["reset from a long-played profile wipes it, keeps volume, downloads the old save and keeps one local copy",
+        "a failed session write rolls the reset back; retry and the next reset succeed",
+        "a copy that cannot be kept stops the reset before the save or a download is touched",
+        "blocked pages write neither the session nor the copy and download nothing",
+        "a second reset of a still pristine save keeps the pre-reset copy"] }
+  ],
+  "confirmImport": {
+    "note": "Added with the F12-RESTORE-STALE-TOKEN fix (two new tests, 11 in the file). The four mutations above were recorded with the earlier 9-test file.",
+    "baseline": { "pass": 11, "fail": 0 },
+    "mutations": [
+      { "mutation": "confirmImport confirms with the token of the preview that opened the dialog (the old single-token path, no second preview)", "pass": 9, "fail": 2,
+        "failed": ["a base checkpoint while the restore dialog is open does not void the confirmed overwrite (stale: 请重新预览并确认覆盖。)",
+          "the confirmed import keeps every guard: blocked pages and a newer write elsewhere change nothing (stale instead of conflict on a page that never previewed)"] }
+    ]
+  }
+}

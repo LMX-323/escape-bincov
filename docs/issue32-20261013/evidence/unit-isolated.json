@@ -1,0 +1,152 @@
+[
+  {
+    "file": "tests/base.test.ts",
+    "exit": 0,
+    "tests": 6
+  },
+  {
+    "file": "tests/buildings.test.ts",
+    "exit": 0,
+    "tests": 4
+  },
+  {
+    "file": "tests/coast-sound.test.ts",
+    "exit": 0,
+    "tests": 10
+  },
+  {
+    "file": "tests/domain.test.ts",
+    "exit": 0,
+    "tests": 33
+  },
+  {
+    "file": "tests/expansion-recovery.test.ts",
+    "exit": 0,
+    "tests": 7
+  },
+  {
+    "file": "tests/hideout-runtime.test.ts",
+    "exit": 0,
+    "tests": 50
+  },
+  {
+    "file": "tests/input.test.ts",
+    "exit": 0,
+    "tests": 9
+  },
+  {
+    "file": "tests/layer-transition.test.ts",
+    "exit": 0,
+    "tests": 6
+  },
+  {
+    "file": "tests/loot-recovery.test.ts",
+    "exit": 0,
+    "tests": 5
+  },
+  {
+    "file": "tests/loot-session.test.ts",
+    "exit": 0,
+    "tests": 17
+  },
+  {
+    "file": "tests/loot-world.test.ts",
+    "exit": 0,
+    "tests": 3
+  },
+  {
+    "file": "tests/loot.test.ts",
+    "exit": 0,
+    "tests": 8
+  },
+  {
+    "file": "tests/mall.test.ts",
+    "exit": 0,
+    "tests": 5
+  },
+  {
+    "file": "tests/pursuit.test.ts",
+    "exit": 0,
+    "tests": 7
+  },
+  {
+    "file": "tests/qol-expansion.test.ts",
+    "exit": 0,
+    "tests": 3
+  },
+  {
+    "file": "tests/qol.test.ts",
+    "exit": 0,
+    "tests": 3
+  },
+  {
+    "file": "tests/raid-runtime-r6.test.ts",
+    "exit": 0,
+    "tests": 8
+  },
+  {
+    "file": "tests/raid-runtime-r7.test.ts",
+    "exit": 0,
+    "tests": 1
+  },
+  {
+    "file": "tests/raid-runtime.test.ts",
+    "exit": 0,
+    "tests": 27
+  },
+  {
+    "file": "tests/recovery.test.ts",
+    "exit": 0,
+    "tests": 6
+  },
+  {
+    "file": "tests/renderer-lifetime.test.ts",
+    "exit": 0,
+    "tests": 2
+  },
+  {
+    "file": "tests/reputation-luck.test.ts",
+    "exit": 0,
+    "tests": 8
+  },
+  {
+    "file": "tests/rotation.test.ts",
+    "exit": 0,
+    "tests": 5
+  },
+  {
+    "file": "tests/rpg.test.ts",
+    "exit": 0,
+    "tests": 8
+  },
+  {
+    "file": "tests/save-flow.test.ts",
+    "exit": 0,
+    "tests": 8
+  },
+  {
+    "file": "tests/session.test.ts",
+    "exit": 0,
+    "tests": 12
+  },
+  {
+    "file": "tests/shop.test.ts",
+    "exit": 0,
+    "tests": 6
+  },
+  {
+    "file": "tests/systems-session.test.ts",
+    "exit": 0,
+    "tests": 7
+  },
+  {
+    "file": "tests/title.test.ts",
+    "exit": 0,
+    "tests": 15
+  },
+  {
+    "file": "tests/world.test.ts",
+    "exit": 0,
+    "tests": 6
+  }
+]

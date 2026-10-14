@@ -809,7 +809,11 @@ export class CoastSampleHost {
       if (title) { this.reading = { title, text: e.text.slice(title.length + 1) }; this.readingFor = null; this.openReading(); return; }
       this.radio(e.text, e.seconds); this.sound.radio();
     }
-    else if (e.type === 'rejected') { this.lastRejected = e.action === 'checkpoint' ? 'checkpoint' : e.reason === 'save-failed' ? 'save-failed' : e.action; if (e.action !== 'select-target') this.toast(REASONS[e.reason] ?? e.reason, true); }
+    else if (e.type === 'rejected') {
+      this.lastRejected = e.action === 'checkpoint' ? 'checkpoint' : e.reason === 'save-failed' ? 'save-failed' : e.action;
+      if (e.action !== 'select-target') this.toast(e.action === 'equip' && e.reason === 'rejected'
+        ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : REASONS[e.reason] ?? e.reason, true);
+    }
     else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */

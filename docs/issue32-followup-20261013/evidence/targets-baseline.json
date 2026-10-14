@@ -1,0 +1,2514 @@
+{
+  "html": "test-results/issue32-followup/baseline.html",
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "153.0.8010.12",
+  "size": {
+    "width": 1280,
+    "height": 720
+  },
+  "method": "Offline packaged game; real yard departure, viewport ResizeObserver, native WEBGL_lose_context and UI settlement. Explicit test=1 only for weak resource identity, setViewTiles coverage, AI freezing and player placement. Each replaced source uid checked individually; no heap threshold.",
+  "checks": [
+    {
+      "name": "20 actual viewport changes release each replaced target slot",
+      "samples": [
+        {
+          "old": [
+            {
+              "uid": 437,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 438,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 439,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 451,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 452,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 453,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 3
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 451,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 452,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 453,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 454,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 455,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 456,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 6
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 454,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 455,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 456,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 457,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 458,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 459,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 9
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 457,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 458,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 459,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 460,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 461,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 462,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 12
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 460,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 461,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 462,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 463,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 464,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 465,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 15
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 463,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 464,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 465,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 466,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 467,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 468,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 18
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 466,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 467,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 468,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 469,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 470,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 471,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 21
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 469,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 470,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 471,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 472,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 473,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 474,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 24
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 472,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 473,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 474,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 475,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 476,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 477,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 27
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 475,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 476,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 477,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 478,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 479,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 480,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 30
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 478,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 479,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 480,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 481,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 482,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 483,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 33
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 481,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 482,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 483,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 484,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 485,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 486,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 36
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 484,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 485,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 486,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 487,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 488,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 489,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 39
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 487,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 488,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 489,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 490,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 491,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 492,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 42
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 490,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 491,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 492,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 493,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 494,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 495,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 45
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 493,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 494,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 495,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 496,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 497,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 498,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 48
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 496,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 497,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 498,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 499,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 500,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 501,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 51
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 499,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 500,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 501,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 502,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 503,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 504,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 54
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 502,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 503,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 504,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 505,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 506,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 507,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 57
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 505,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 506,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 507,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 508,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 509,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 510,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 60
+          }
+        }
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: each destroyed target uid must leave the managed hash\n    at assertTargets (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:85:10)\n    at Array.forEach (<anonymous>)\n    at file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:113:17\n    at async check (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:29:9)\n    at async file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:106:3"
+    },
+    {
+      "name": "view-size changes release targets without deleting other live resources or null slots",
+      "probeUid": 511,
+      "samples": [
+        {
+          "old": [
+            {
+              "uid": 508,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 509,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 510,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 512,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 513,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 514,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 64
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 78,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 512,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 513,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 514,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 515,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 516,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 517,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 67
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 81,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 515,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 516,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 517,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 518,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 519,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 520,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 70
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 84,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 518,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 519,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 520,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 521,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 522,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 523,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 73
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 87,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 521,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 522,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 523,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 524,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 525,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 526,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 76
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 90,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 524,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 525,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 526,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 527,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 528,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 529,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 79
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 93,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 527,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 528,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 529,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 530,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 531,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 532,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 82
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 96,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 530,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 531,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 532,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 533,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 534,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 535,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 85
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 99,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 533,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 534,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 535,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 536,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 537,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 538,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 88
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 102,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 536,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 537,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 538,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 539,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 540,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 541,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 91
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 105,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 539,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 540,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 541,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 542,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 543,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 544,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 94
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 108,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 542,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 543,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 544,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 545,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 546,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 547,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 97
+          },
+          "preservation": {
+            "changed": [],
+            "observed": {
+              "graphics": 8,
+              "graphicsContext": 8,
+              "glBuffer": 19,
+              "glTexture": 111,
+              "glGeometry": 9,
+              "tilingSprite": 2
+            },
+            "unrelatedNullKept": true
+          }
+        }
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: each destroyed target uid must leave the managed hash\n    at assertTargets (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:85:10)\n    at file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:146:9\n    at async check (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:29:9)\n    at async file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:116:3"
+    },
+    {
+      "name": "six native context restores release old targets and preserve paused Runtime time",
+      "samples": [
+        {
+          "old": [
+            {
+              "uid": 545,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 546,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 547,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 548,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 549,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 550,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 99
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 548,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 549,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 550,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 551,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 552,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 553,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 102
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 551,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 552,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 553,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 554,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 555,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 556,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 105
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 554,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 555,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 556,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 557,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 558,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 559,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 108
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 557,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 558,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 559,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 560,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 561,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 562,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 111
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        },
+        {
+          "old": [
+            {
+              "uid": 560,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 561,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            },
+            {
+              "uid": 562,
+              "slot": "null",
+              "textureReleased": true,
+              "sourceReleased": true,
+              "gpuReleased": true
+            }
+          ],
+          "current": [
+            {
+              "uid": 563,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 564,
+              "live": true,
+              "destroyed": false
+            },
+            {
+              "uid": 565,
+              "live": true,
+              "destroyed": false
+            }
+          ],
+          "sameRenderer": true,
+          "count": 3,
+          "textureSlots": {
+            "live": 17,
+            "empty": 114
+          },
+          "before": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          },
+          "lost": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": true
+          },
+          "restored": {
+            "elapsed": 0.9613000000000466,
+            "phase": "paused",
+            "player": {
+              "x": 208,
+              "y": 1232
+            },
+            "contextLost": false
+          }
+        }
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: each destroyed target uid must leave the managed hash\n    at assertTargets (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:85:10)\n    at file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:173:7\n    at async check (file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:29:9)\n    at async file:///workspace/escape-bincov/scripts/coast-render-target-test.mjs:154:3"
+    },
+    {
+      "name": "restored world pixels and real keyboard input remain usable",
+      "before": {
+        "elapsed": 0.9613000000000466,
+        "phase": "paused",
+        "player": {
+          "x": 640,
+          "y": 456
+        },
+        "contextLost": false
+      },
+      "after": {
+        "elapsed": 1.6318000000000465,
+        "phase": "running",
+        "player": {
+          "x": 682.1120000000001,
+          "y": 456
+        },
+        "contextLost": false
+      },
+      "pixels": {
+        "width": 1536,
+        "height": 864,
+        "colored": 1327104,
+        "colors": 4425
+      },
+      "status": "passed"
+    },
+    {
+      "name": "real settlement, parked shared renderer and another yard departure release and rebuild cleanly",
+      "parked": {
+        "hostCollected": true,
+        "viewCollected": true,
+        "stage": 0,
+        "attached": false,
+        "ticker": false,
+        "old": [
+          {
+            "uid": 563,
+            "absent": true,
+            "textureCollected": true,
+            "sourceCollected": true,
+            "sourceReleased": true,
+            "gpuReleased": true,
+            "lastStageInstruction": false
+          },
+          {
+            "uid": 564,
+            "absent": true,
+            "textureCollected": true,
+            "sourceCollected": true,
+            "sourceReleased": true,
+            "gpuReleased": true,
+            "lastStageInstruction": false
+          },
+          {
+            "uid": 565,
+            "absent": true,
+            "textureCollected": true,
+            "sourceCollected": false,
+            "sourceReleased": true,
+            "gpuReleased": true,
+            "lastStageInstruction": true
+          }
+        ],
+        "tables": {
+          "schema": "pixi-8.22.0-managed-hashes",
+          "running": false,
+          "required": [
+            "graphics",
+            "graphicsContext",
+            "glBuffer",
+            "glTexture",
+            "glGeometry",
+            "tilingSprite"
+          ],
+          "tables": [
+            {
+              "name": "graphics",
+              "hash": "items",
+              "live": 0,
+              "empty": 0,
+              "keys": 0
+            },
+            {
+              "name": "graphicsContext",
+              "hash": "items",
+              "live": 0,
+              "empty": 0,
+              "keys": 0
+            },
+            {
+              "name": "glBuffer",
+              "hash": "items",
+              "live": 5,
+              "empty": 0,
+              "keys": 5
+            },
+            {
+              "name": "glTexture",
+              "hash": "items",
+              "live": 2,
+              "empty": 0,
+              "keys": 2
+            },
+            {
+              "name": "glGeometry",
+              "hash": "items",
+              "live": 2,
+              "empty": 0,
+              "keys": 2
+            },
+            {
+              "name": "tilingSprite",
+              "hash": "items",
+              "live": 0,
+              "empty": 0,
+              "keys": 0
+            }
+          ],
+          "live": 9,
+          "empty": 0
+        },
+        "events": {
+          "attached": false,
+          "roots": {
+            "_rootPointerEvent": false,
+            "_rootWheelEvent": false,
+            "_rootContextMenuEvent": false
+          },
+          "pooled": 0,
+          "native": 0
+        },
+        "counts": {
+          "listeners": 0,
+          "tickers": 0,
+          "observers": 0,
+          "timers": 0,
+          "apps": 0,
+          "parked": 1,
+          "views": 0,
+          "renderTextures": 0,
+          "liveViews": 0,
+          "canvases": 1,
+          "sampleRoots": 0,
+          "art": "placeholder",
+          "atlasPages": 0,
+          "largeTextures": 0,
+          "gpuTextures": 2,
+          "managedEmpty": 0,
+          "managedLive": 9,
+          "heap": 25866710
+        }
+      },
+      "yardSameRenderer": true,
+      "returnedRelease": [
+        {
+          "uid": 563,
+          "textureCollected": true,
+          "sourceCollected": true
+        },
+        {
+          "uid": 564,
+          "textureCollected": true,
+          "sourceCollected": true
+        },
+        {
+          "uid": 565,
+          "textureCollected": true,
+          "sourceCollected": true
+        }
+      ],
+      "remounted": {
+        "old": [
+          {
+            "uid": 563,
+            "slot": "absent",
+            "textureReleased": true,
+            "sourceReleased": true,
+            "gpuReleased": true
+          },
+          {
+            "uid": 564,
+            "slot": "absent",
+            "textureReleased": true,
+            "sourceReleased": true,
+            "gpuReleased": true
+          },
+          {
+            "uid": 565,
+            "slot": "absent",
+            "textureReleased": true,
+            "sourceReleased": true,
+            "gpuReleased": true
+          }
+        ],
+        "current": [
+          {
+            "uid": 1013,
+            "live": true,
+            "destroyed": false
+          },
+          {
+            "uid": 1014,
+            "live": true,
+            "destroyed": false
+          },
+          {
+            "uid": 1015,
+            "live": true,
+            "destroyed": false
+          }
+        ],
+        "sameRenderer": true,
+        "count": 3,
+        "textureSlots": {
+          "live": 17,
+          "empty": 0
+        }
+      },
+      "pixels": {
+        "width": 1536,
+        "height": 864,
+        "colored": 1327104,
+        "colors": 2867
+      },
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "initialTables": {
+    "schema": "pixi-8.22.0-managed-hashes",
+    "running": false,
+    "required": [
+      "graphics",
+      "graphicsContext",
+      "glBuffer",
+      "glTexture",
+      "glGeometry",
+      "tilingSprite"
+    ],
+    "tables": [
+      {
+        "name": "graphics",
+        "hash": "items",
+        "live": 8,
+        "empty": 0,
+        "keys": 8
+      },
+      {
+        "name": "graphicsContext",
+        "hash": "items",
+        "live": 8,
+        "empty": 0,
+        "keys": 8
+      },
+      {
+        "name": "glBuffer",
+        "hash": "items",
+        "live": 19,
+        "empty": 0,
+        "keys": 19
+      },
+      {
+        "name": "glTexture",
+        "hash": "items",
+        "live": 17,
+        "empty": 0,
+        "keys": 17
+      },
+      {
+        "name": "glGeometry",
+        "hash": "items",
+        "live": 9,
+        "empty": 0,
+        "keys": 9
+      },
+      {
+        "name": "tilingSprite",
+        "hash": "items",
+        "live": 2,
+        "empty": 0,
+        "keys": 2
+      }
+    ],
+    "live": 63,
+    "empty": 0
+  },
+  "finalTables": {
+    "schema": "pixi-8.22.0-managed-hashes",
+    "running": false,
+    "required": [
+      "graphics",
+      "graphicsContext",
+      "glBuffer",
+      "glTexture",
+      "glGeometry",
+      "tilingSprite"
+    ],
+    "tables": [
+      {
+        "name": "graphics",
+        "hash": "items",
+        "live": 8,
+        "empty": 0,
+        "keys": 8
+      },
+      {
+        "name": "graphicsContext",
+        "hash": "items",
+        "live": 8,
+        "empty": 0,
+        "keys": 8
+      },
+      {
+        "name": "glBuffer",
+        "hash": "items",
+        "live": 19,
+        "empty": 0,
+        "keys": 19
+      },
+      {
+        "name": "glTexture",
+        "hash": "items",
+        "live": 17,
+        "empty": 0,
+        "keys": 17
+      },
+      {
+        "name": "glGeometry",
+        "hash": "items",
+        "live": 9,
+        "empty": 0,
+        "keys": 9
+      },
+      {
+        "name": "tilingSprite",
+        "hash": "items",
+        "live": 2,
+        "empty": 0,
+        "keys": 2
+      }
+    ],
+    "live": 63,
+    "empty": 0
+  },
+  "summary": {
+    "passed": 2,
+    "total": 5
+  }
+}
