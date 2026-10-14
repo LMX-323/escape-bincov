@@ -1,6 +1,7 @@
 import * as D from '../domain';
 import type { Attribute, Facility, HideoutRuntime, HideoutSnapshot, Merchant, Recipe, Result, RunWorld, ShopSession, ShopSource, Source } from '../hideout-runtime/contract';
 import type { Scope } from '../coast-view/scope';
+import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
 import { GridDrag, esc, type DragHooks } from './grid';
 import * as P from './panels';
@@ -172,7 +173,12 @@ export class UI {
         const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear');
         body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details) : P.gearHtml(s, cell, sel, this.rt.departure(), details); break;
       }
-      case 'arms': case 'med': { const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null; body = this.compact ? P.shopCompactHtml(v, cell, sel, s.profile.cash, this.shopMode) : P.shopHtml(v, cell, sel, s.profile.cash) + P.detailsHtml(item, this.selected?.src ?? null, 'shop'); break; }
+      case 'arms': case 'med': {
+        const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null;
+        // Sellable stacks still in the bag or safe: this shop sells from the stash only, so its header says so.
+        const outside = [s.profile.bag, s.profile.safe].reduce((n, inv) => n + inv.items.filter(i => !i.relief && (D.ITEMS[i.id]?.sell ?? 0) > 0).length, 0);
+        body = this.compact ? P.shopCompactHtml(v, cell, sel, s.profile.cash, this.shopMode, outside) : P.shopHtml(v, cell, sel, s.profile.cash, outside) + P.detailsHtml(item, this.selected?.src ?? null, 'shop', item ? questUses(s.profile, item.id) : []); break;
+      }
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
       case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed); break;
@@ -255,8 +261,10 @@ export class UI {
           // Double-click: catalog <-> buy, stash <-> sell, using the first free cell.
           const to: ShopSource | null = src === 'merchant' ? 'buy' : src === 'buy' ? 'merchant' : src === 'stash' ? 'sell' : src === 'sell' ? 'stash' : null;
           if (!to) return; const target = inv(to);
-          for (let y = 0; y < target.h; y++) for (let x = 0; x < target.w; x++) if (!shop.placementError(src as ShopSource, to, uid, x, y)) { const r = shop.place(src as ShopSource, to, uid, x, y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
-          this.toast(to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。', 'error'); this.host.sound('error');
+          const at = firstShopCell(target.w, target.h, (x, y) => shop.placementError(src as ShopSource, to, uid, x, y));
+          if ('x' in at) { const r = shop.place(src as ShopSource, to, uid, at.x, at.y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
+          // A rule (relief goods, a changed stash) names itself; otherwise only room was missing.
+          this.toast(at.reason ?? (to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。'), 'error'); this.host.sound('error');
         },
         reject: m => { this.toast(m, 'error'); this.host.sound('error'); },
       };
