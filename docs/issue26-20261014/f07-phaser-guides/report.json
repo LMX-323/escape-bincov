@@ -1,0 +1,410 @@
+{
+  "html": "index.html",
+  "sha256": "bf4da1ecef00c19db5a851f4d534536e6c09fadb5c68fe0258a7f175a71585ef",
+  "browser": "155.0.8059.40",
+  "checks": [
+    {
+      "name": "1280x720 P01 exterior-door-guide-above-roof",
+      "detail": {
+        "cell": {
+          "pixels": 1024,
+          "warm": 221,
+          "mint": 0
+        },
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "closed"
+          },
+          "resident-west": null,
+          "resident-east": null
+        },
+        "stairs": [],
+        "interaction": "E 开门"
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P02 real-E-opens-front-door-and-W-walks-through",
+      "detail": {
+        "player": {
+          "at": {
+            "x": 464,
+            "y": 399.5423999999679
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 448,
+            "y": 383.5423999999679,
+            "w": 32,
+            "h": 32
+          }
+        },
+        "guide": {
+          "wall": "ew",
+          "state": "open"
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "detail": {
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "open"
+          },
+          "resident-west": {
+            "wall": "ns",
+            "state": "open"
+          },
+          "resident-east": {
+            "wall": "ns",
+            "state": "closed"
+          }
+        },
+        "arrow": {
+          "pixels": 208,
+          "warm": 0,
+          "mint": 64
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P06 ground-floor-stair-labels-clear-room-name",
+      "detail": {
+        "labels": [
+          {
+            "text": "上楼 · 二楼",
+            "depth": 11.2,
+            "stair": true,
+            "x": 531,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          },
+          {
+            "text": "下楼 · 地下",
+            "depth": 11.2,
+            "stair": true,
+            "x": 467,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          }
+        ],
+        "room": {
+          "text": "褪色居民楼 · 一楼",
+          "depth": 3,
+          "stair": false,
+          "x": 415.5,
+          "y": 234,
+          "w": 97,
+          "h": 12
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P04 f2-landing-storage-door-and-label",
+      "detail": {
+        "guides": {
+          "resident-f2-west": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-f2-east": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-storage": {
+            "wall": "ew",
+            "state": "closed"
+          }
+        },
+        "cell": {
+          "pixels": 1024,
+          "warm": 177,
+          "mint": 0
+        },
+        "label": {
+          "text": "下楼 · 一楼",
+          "depth": 11.2,
+          "stair": true,
+          "x": 226,
+          "y": 72,
+          "w": 58,
+          "h": 16
+        },
+        "player": {
+          "at": {
+            "x": 304,
+            "y": 80
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 288,
+            "y": 64,
+            "w": 32,
+            "h": 32
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P05 covered-room-zero-pixel-change-with-positive-control",
+      "detail": {
+        "clip": {
+          "x": 488,
+          "y": 304,
+          "width": 80,
+          "height": 144
+        },
+        "from": {
+          "x": 80,
+          "y": 208
+        },
+        "to": {
+          "x": 80,
+          "y": 136
+        },
+        "repeat": {
+          "changed": 0,
+          "max": 0
+        },
+        "moved": {
+          "changed": 0,
+          "max": 0
+        },
+        "control": {
+          "changed": 988,
+          "max": 69
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1280x720 P07 critical-text-hidden-under-roof-shown-in-view",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 0
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P01 exterior-door-guide-above-roof",
+      "detail": {
+        "cell": {
+          "pixels": 4096,
+          "warm": 884,
+          "mint": 0
+        },
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "closed"
+          },
+          "resident-west": null,
+          "resident-east": null
+        },
+        "stairs": [],
+        "interaction": "E 开门"
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P02 real-E-opens-front-door-and-W-walks-through",
+      "detail": {
+        "player": {
+          "at": {
+            "x": 464,
+            "y": 399.8224000000203
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 448,
+            "y": 383.8224000000203,
+            "w": 32,
+            "h": 32
+          }
+        },
+        "guide": {
+          "wall": "ew",
+          "state": "open"
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "detail": {
+        "guides": {
+          "resident-front": {
+            "wall": "ew",
+            "state": "open"
+          },
+          "resident-west": {
+            "wall": "ns",
+            "state": "open"
+          },
+          "resident-east": {
+            "wall": "ns",
+            "state": "closed"
+          }
+        },
+        "arrow": {
+          "pixels": 832,
+          "warm": 0,
+          "mint": 256
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P06 ground-floor-stair-labels-clear-room-name",
+      "detail": {
+        "labels": [
+          {
+            "text": "上楼 · 二楼",
+            "depth": 11.2,
+            "stair": true,
+            "x": 531,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          },
+          {
+            "text": "下楼 · 地下",
+            "depth": 11.2,
+            "stair": true,
+            "x": 467,
+            "y": 292,
+            "w": 58,
+            "h": 16
+          }
+        ],
+        "room": {
+          "text": "褪色居民楼 · 一楼",
+          "depth": 3,
+          "stair": false,
+          "x": 415.5,
+          "y": 234,
+          "w": 97,
+          "h": 12
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P04 f2-landing-storage-door-and-label",
+      "detail": {
+        "guides": {
+          "resident-f2-west": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-f2-east": {
+            "wall": "ns",
+            "state": "closed"
+          },
+          "resident-storage": {
+            "wall": "ew",
+            "state": "closed"
+          }
+        },
+        "cell": {
+          "pixels": 4096,
+          "warm": 708,
+          "mint": 0
+        },
+        "label": {
+          "text": "下楼 · 一楼",
+          "depth": 11.2,
+          "stair": true,
+          "x": 226,
+          "y": 72,
+          "w": 58,
+          "h": 16
+        },
+        "player": {
+          "at": {
+            "x": 304,
+            "y": 80
+          },
+          "depth": 11.5,
+          "box": {
+            "x": 288,
+            "y": 64,
+            "w": 32,
+            "h": 32
+          }
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P05 covered-room-zero-pixel-change-with-positive-control",
+      "detail": {
+        "clip": {
+          "x": 656,
+          "y": 428,
+          "width": 160,
+          "height": 288
+        },
+        "from": {
+          "x": 80,
+          "y": 208
+        },
+        "to": {
+          "x": 80,
+          "y": 136
+        },
+        "repeat": {
+          "changed": 0,
+          "max": 0
+        },
+        "moved": {
+          "changed": 0,
+          "max": 0
+        },
+        "control": {
+          "changed": 3952,
+          "max": 69
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "1920x1080 P07 critical-text-hidden-under-roof-shown-in-view",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 0
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "passed"
+    }
+  ],
+  "errors": []
+}
