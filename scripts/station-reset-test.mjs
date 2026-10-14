@@ -97,7 +97,7 @@ try {
       const before = await read(page, SESSION); await tap(reset);
       const dialog = yard('.dialog.k-reset'); await dialog.waitFor();
       assert.equal(await dialog.locator('h2').textContent(), '清空存档');
-      assert.match(await dialog.textContent(), /现金、物资、任务、设施、身体和成长都会回到新开局，音量设置保留。/);
+      assert.match(await dialog.textContent(), /除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。/);
       assert.match(await dialog.textContent(), /本机只保存一份；当前存档如果还是没动过的新开局，就不另存，原来那一份保留。/, 'the dialog states the pristine exception');
       assert.equal(await dialog.locator('[data-act="reset-confirm"]').textContent(), '下载备份并清空');
       assert.equal(await read(page, SESSION), before, 'opening the dialog writes nothing'); assert.equal(await read(page, COPY), null);
