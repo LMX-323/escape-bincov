@@ -4,7 +4,7 @@ import { BUILDING_WORLD } from '../src/building-world';
 import { MALL_WORLD } from '../src/mall-world';
 import { corridor, type SpaceContext, type SpaceDefinition } from '../src/spatial';
 import type { Point } from '../src/world';
-import { doorGuide, doorWall, entryKind, entryShown, floorIndoors, roofedRegions, stairLabelPlacement, type Rect } from '../src/space-guide';
+import { doorGuide, doorWall, entryKind, entryShown, floorIndoors, roofedRegions, stairLabelPlacement, touchesRoof, type Rect } from '../src/space-guide';
 
 const maps = { ...BUILDING_WORLD.maps, ...MALL_WORLD.maps };
 const context = (map: SpaceDefinition, open = false): SpaceContext => ({ definition: map, doors: Object.fromEntries(map.doors.map(d => [d.id, open])), highTide: false });
@@ -105,4 +105,15 @@ test('stair labels avoid region names, platforms and each other, below first', (
     assert.deepEqual(left, { x: 224, y: 72, w: 60, h: 16 });
     const player = { x: at.x - 16, y: at.y - 16, w: 32, h: 32 };
     assert.ok(left.x + left.w <= player.x, 'never covers a player standing on the platform');
+});
+
+test('touchesRoof: a label goes above the roof only when part of it lies under one; shared edges do not count', () => {
+    const roof: Rect = { x: 256, y: 96, w: 96, h: 128 };
+    assert.equal(touchesRoof([roof], { x: 224, y: 72, w: 60, h: 24 }), false, 'ends on the roof edge');
+    assert.equal(touchesRoof([roof], { x: 224, y: 72, w: 60, h: 25 }), true, 'one pixel row under the roof');
+    assert.equal(touchesRoof([], { x: 0, y: 0, w: 10, h: 10 }), false);
+    // The f2 landing label sits left of the platform, clear of the covered east room, so it stays on the floor layer.
+    const map = BUILDING_WORLD.maps['resident-f2'], roofs = roofedRegions(context(map), { x: 304, y: 80 });
+    assert.equal(touchesRoof(roofs, { x: 224, y: 72, w: 60, h: 16 }), false);
+    assert.equal(touchesRoof(roofs, { x: 274, y: 100, w: 60, h: 16 }), true, 'below the platform it would lie on the east room roof');
 });

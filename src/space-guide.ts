@@ -36,6 +36,9 @@ export function roofedRegions(context: SpaceContext, player: Point): Region[] {
 }
 
 export const underRoof = (roofs: readonly Rect[], p: Point): boolean => roofs.some(r => rectContains(r, p));
+export const rectsOverlap = (a: Rect, b: Rect): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+/** Whether any part of a rectangle lies under a roof, so a label there must draw above the roof to stay readable. */
+export const touchesRoof = (roofs: readonly Rect[], rect: Rect): boolean => roofs.some(r => rectsOverlap(r, rect));
 
 /**
  * Whether the player is inside the building shell of this floor. An upper or lower floor without
@@ -78,6 +81,5 @@ export function stairLabelPlacement(at: Point, size: { w: number; h: number }, b
         { x: at.x - half - size.w, y: at.y - size.h / 2, w: size.w, h: size.h },
         { x: at.x + half, y: at.y - size.h / 2, w: size.w, h: size.h },
     ];
-    const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-    return candidates.find(c => !blocked.some(b => overlaps(c, b))) ?? candidates[0];
+    return candidates.find(c => !blocked.some(b => rectsOverlap(c, b))) ?? candidates[0];
 }

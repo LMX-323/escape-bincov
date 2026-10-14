@@ -1,6 +1,7 @@
 // Ordinary Phaser raid view (no sample flag): door and stair guides above an opaque roof, and the
 // hidden-room pixel rule. Real offline build, real keyboard E/W; ?test=1 only positions the player,
-// pauses the scene while pixels are compared, and stages one probe bullet for the critical-hit check.
+// pauses the scene while pixels are compared, and stages entities and probe bullets through the
+// expansion snapshot for the doorway layer check and the critical-hit check.
 // Run unchanged with --html=<old dist/index.html> for the old-build negative control.
 import assert from 'node:assert/strict';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -41,6 +42,25 @@ const classify = async b64 => page.evaluate(`(async () => { const d = await ${de
 const diff = async (a, b) => page.evaluate(`(async () => { const x = await ${decode(a)}, y = await ${decode(b)}; let changed = 0, max = 0;
   for (let i = 0; i < x.length; i += 4) { const m = Math.max(Math.abs(x[i] - y[i]), Math.abs(x[i + 1] - y[i + 1]), Math.abs(x[i + 2] - y[i + 2])); if (m) changed++; if (m > max) max = m; }
   return { changed, max }; })()`);
+/**
+ * Occlusion of entities by the door guide, from four shots: A entities + guides, B guides only, C entities only, D neither.
+ * body = pixels the entities change (C vs D); guide = pixels the guides draw (B vs D). An entity pixel with alpha a drawn
+ * over the guide gives A - C = (1 - a)(B - D) on every channel, so the guide shows only through translucent entity pixels
+ * (blended). covered = body pixels where A differs from C in any other way, i.e. the guide is drawn on top of the entity.
+ */
+const occlusion = async ({ a, b, c, d }) => page.evaluate(`(async () => { const A = await ${decode(a)}, B = await ${decode(b)}, C = await ${decode(c)}, D = await ${decode(d)};
+  let body = 0, covered = 0, blended = 0, guide = 0; const differs = (x, y, i) => x[i] !== y[i] || x[i + 1] !== y[i + 1] || x[i + 2] !== y[i + 2];
+  for (let i = 0; i < A.length; i += 4) {
+    if (differs(C, D, i)) { body++;
+      if (differs(A, C, i)) {
+        const u = [0, 1, 2].map(j => A[i + j] - C[i + j]), v = [0, 1, 2].map(j => B[i + j] - D[i + j]), vv = v.reduce((s, x) => s + x * x, 0);
+        const k = vv ? u.reduce((s, x, j) => s + x * v[j], 0) / vv : NaN;
+        if (k >= -.02 && k <= 1.02 && u.every((x, j) => Math.abs(x - k * v[j]) <= 3)) blended++; else covered++;
+      }
+    }
+    if (differs(B, D, i)) guide++;
+  }
+  return { pixels: A.length / 4, body, covered, blended, guide }; })()`);
 /** Full viewport plus a crop of the world area under review. */
 const shot = async (name, rect) => {
   const clip = await clipOf(...rect);
@@ -60,7 +80,7 @@ const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h
 
 async function check(name, task) {
   const row = { name: `${size.join('x')} ${name}` }; report.checks.push(row);
-  try { row.detail = await task(); assert.deepEqual(report.errors, []); row.status = 'passed'; }
+  try { row.detail = await task(row); assert.deepEqual(report.errors, []); row.status = 'passed'; }
   catch (e) {
     row.status = 'failed'; row.error = String(e.stack ?? e); process.exitCode = 1;
     await page.screenshot({ path: resolve(out, `failed-${size.join('x')}-${name.split(' ')[0]}.png`) }).catch(() => {});
@@ -81,6 +101,8 @@ try {
       await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42');
       await page.locator('[data-action="deploy"]').click();
       await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+      // Phaser.AUTO falls back to the canvas renderer when WebGL is unavailable; record which one ran.
+      report.renderer = await page.evaluate(() => ({ 1: 'canvas', 2: 'webgl' })[window.__bincov.app.raid.game.renderer.type] ?? 'unknown');
 
       await check('P01 exterior-door-guide-above-roof', async () => {
         await stand(464, 448); const s = await scene();
@@ -117,6 +139,49 @@ try {
         assert.deepEqual(s.guides['resident-west'], { wall: 'ns', state: 'open' });
         assert.deepEqual(s.guides['resident-east'], { wall: 'ns', state: 'closed' });
         return { guides: s.guides, arrow };
+      });
+      await check('P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide', async row => {
+        // Same state as P03: the west door is open and nothing is roofed. A live enemy stands in the door cell
+        // and an enemy bullet sits on the passage arrow; the scene is paused while pixels are compared.
+        await page.evaluate(() => { const r = window.__bincov.app.raid; if (!r.checkpoint()) throw new Error('Fixture checkpoint failed'); r.scene.pause(); });
+        try {
+          const stage = async (entities, guides) => {
+            const info = await page.evaluate(([entities, guides]) => {
+              const r = window.__bincov.app.raid, base = window.__doorwayBase ??= r.snapshotExpansion(), s = structuredClone(base), layer = s.raid.maps[s.raid.currentMap];
+              const e = layer.enemies.find(e => e.hp > 0 && Math.hypot(e.x - 432, e.y - 336) > 120);
+              if (!e) throw new Error('no live enemy away from the doorway');
+              if (entities) {
+                Object.assign(e, { x: 432, y: 336, rotation: 0 });
+                layer.bullets = [{ uid: 'probe-doorway', x: 410, y: 336, rotation: 0, vx: 0, vy: 0, left: 50, damage: 0, enemy: true }];
+              }
+              r.restoreExpansion(s);
+              // The old build has no separate guide layer; its door is part of the depth-3 floor marks.
+              const layers = [r.guide, r.guideAbove].filter(Boolean); layers.forEach(g => g.setVisible(guides));
+              return { layers: layers.map(g => g.depth), enemy: e.uid, enemyDepth: r.enemies.find(x => x.uid === e.uid).sprite.depth, doors: { ...r.space.doors } };
+            }, [entities, guides]);
+            await frames(3); return info;
+          };
+          const clip = await clipOf(400, 316, 64, 40), shots = {};
+          for (const [key, entities, guides] of [['a', true, true], ['b', false, true], ['c', true, false], ['d', false, false]]) {
+            const info = await stage(entities, guides); shots[key] = await grab(clip); shots.info ??= info;
+            if (key === 'a') await page.screenshot({ path: resolve(out, `p08-doorway-enemy-over-guide-${size.join('x')}-crop.png`), clip });
+          }
+          const result = await occlusion(shots);
+          // Kept on failure too, for the negative-control report.
+          row.detail = { clip, ...result, info: shots.info };
+          assert.equal(shots.info.doors['resident-west'], true, 'the west door is open');
+          assert.ok(result.body > 100, `positive control: the enemy and bullet are in the clip (${result.body} px)`);
+          if (shots.info.layers.length) assert.ok(result.guide > 50, `positive control: the guide is drawn in the doorway (${result.guide} px)`);
+          assert.equal(result.covered, 0, `the guide is drawn over ${result.covered} enemy or bullet pixels in a visible doorway`);
+          return row.detail;
+        } finally {
+          await page.evaluate(() => {
+            const r = window.__bincov.app.raid; [r.guide, r.guideAbove].filter(Boolean).forEach(g => g.setVisible(true));
+            if (window.__doorwayBase) r.restoreExpansion(window.__doorwayBase); delete window.__doorwayBase;
+            r.releaseInput(); r.scene.resume();
+          }).catch(() => {});
+          await settle();
+        }
       });
       await check('P06 ground-floor-stair-labels-clear-room-name', async () => {
         const s = await scene(), shown = s.texts.filter(t => t.stair);
@@ -169,31 +234,53 @@ try {
           assert.equal(moved.changed, 0, `moving a hidden enemy under the roof changed ${moved.changed} px (max delta ${moved.max})`);
           return { clip, from: fixture.at, to, repeat, moved, control };
         });
-        await check('P07 critical-text-hidden-under-roof-shown-in-view', async () => {
+        await check('P07 critical-text-follows-the-drawn-roof', async row => {
           const result = await page.evaluate(() => {
             const r = window.__bincov.app.raid, base = r.snapshotExpansion();
-            const crit = player => {
+            const texts = () => r.children.list.filter(c => c.type === 'Text' && c.text === '爆头');
+            // Restore a staged state, then run the roof pass that ends every update step.
+            const put = (state, player) => { const s = structuredClone(state); if (player) s.raid.player = { ...s.raid.player, ...player }; r.restoreExpansion(s); r.drawRoofs(); };
+            const reset = () => { texts().forEach(t => t.destroy()); put(base); };
+            const crit = ({ player, enemy, keep = false }) => {
               for (let seed = 1; seed < 2000; seed++) {
                 const s = structuredClone(base), raid = s.raid, layer = raid.maps[raid.currentMap], e = layer.enemies.find(e => e.uid === 'enemy-0');
-                if (player) raid.player = { ...raid.player, ...player };
+                if (enemy) Object.assign(e, enemy);
                 // Spread candidate stream states: consecutive small states give nearly equal first draws.
                 e.hp = 999; raid.rng = Math.imul(seed, 0x9e3779b1) >>> 0;
                 layer.bullets = [{ uid: 'probe-critical', x: e.x - 40, y: e.y, rotation: 0, vx: 760, vy: 0, left: 200, damage: 10, enemy: false }];
-                r.restoreExpansion(s); r.updateBullets(.1);
+                put(s, player); r.updateBullets(.1);
                 // A critical hit deals 1.5x: 999 - 15 = 984 (an ordinary hit leaves 989).
                 if (r.enemies.find(e => e.uid === 'enemy-0').hp === 984) {
-                  const texts = r.children.list.filter(c => c.type === 'Text' && c.text === '爆头');
-                  const count = texts.length; texts.forEach(t => t.destroy()); r.restoreExpansion(base);
-                  return { seed, count };
+                  const shown = texts(), out = { seed, count: shown.length, visible: shown.filter(t => t.visible).length };
+                  if (!keep) shown.forEach(t => t.destroy());
+                  return out;
                 }
               }
-              r.restoreExpansion(base); return { seed: null, count: null };
+              return { seed: null, count: null };
             };
-            return { hidden: crit(null), visible: crit({ x: 80, y: 150 }), player: { x: r.player.x, y: r.player.y } };
+            const storage = { x: 310, y: 64 }, west = { x: 80, y: 150 }, out = {};
+            out.hidden = crit({}); reset();
+            out.visible = crit({ player: west }); reset();
+            // Same 16px roof cell: roofs drawn at (209,43) keep the storage room covered while the player stands
+            // at (223,43), where a fresh roof computation would uncover it.
+            put(base, { x: 209, y: 43 });
+            const drawn = { signature: r.roofSignature, storageCovered: r.drawnRoofs ? r.drawnRoofs.some(x => x.name === '储藏室') : null };
+            out.sameCell = { drawn, ...crit({ player: { x: 223, y: 43 }, enemy: storage }), signatureAtHit: r.roofSignature }; reset();
+            // A text shown for a visible enemy hides when the roof closes over that spot before the text expires.
+            out.closing = crit({ player: { x: 223, y: 43 }, enemy: storage, keep: true });
+            put(r.snapshotExpansion(), west); out.closing.visibleAfterCover = texts().filter(t => t.visible).length; reset();
+            out.player = { x: r.player.x, y: r.player.y };
+            return out;
           });
-          assert.ok(result.hidden.seed && result.visible.seed, 'a critical hit was produced in both cases');
+          row.detail = result;
+          assert.ok(['hidden', 'visible', 'sameCell', 'closing'].every(k => result[k].seed), 'a critical hit was produced in every case');
           assert.equal(result.hidden.count, 0, 'critical text must not reveal an enemy in a covered room');
           assert.equal(result.visible.count, 1, 'critical text still shows for a visible enemy');
+          assert.equal(result.sameCell.drawn.signature, result.sameCell.signatureAtHit, 'the hit happens in the same roof cell');
+          assert.notEqual(result.sameCell.drawn.storageCovered, false, 'the storage room is drawn covered');
+          assert.equal(result.sameCell.count, 0, 'critical text follows the roof on screen, not a fresh computation from the exact position');
+          assert.deepEqual([result.closing.count, result.closing.visible], [1, 1], 'critical text shows while the storage room is uncovered');
+          assert.equal(result.closing.visibleAfterCover, 0, 'critical text hides once the roof covers its enemy position');
           assert.deepEqual(result.player, { x: 304, y: 80 });
           return result;
         });
