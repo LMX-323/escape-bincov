@@ -1,19 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mallWorldV2 } from '../src/mall-world';
-import { MALL_FURNITURE, MALL_V2_LAYOUT } from '../src/mall-layout-v2';
+import { mallWorldV2, mallWorldV3 } from '../src/mall-world';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V3_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
 import { MALL_SPRITE_SIZE, PROCEDURAL, WALL_LIFT, mallDecals, mallGround, mallLights, mallLintels, mallOpenings, mallProps, mallSigns, mallWallCells, mallWallFace, mallWallParts, mallWallProps, mallWallRole, type DressMap } from '../src/coast-view/mall-dressing';
 import { DECAL_SIZE } from '../src/coast-view/art/mall';
 
-const V2 = mallWorldV2();
-const dress = (id: string): DressMap => { const m = V2.maps[id]; return { mapId: id, cells: m.cells, regions: m.regions!, decorations: m.decorations! }; };
+const V2 = mallWorldV2(), V3 = mallWorldV3();
+const dress = (id: string, world = V2): DressMap => { const m = world.maps[id]; return { mapId: id, cells: m.cells, regions: m.regions!, decorations: m.decorations! }; };
+const REVISIONS = [['二版', V2, MALL_V2_LAYOUT], ['三版', V3, MALL_V3_LAYOUT]] as const;
 
-test('商场布置表：每件家具一张贴图，立在占地南边线上；货架连排两端用端头、中间用中段', () => {
-    for (const id of ['mall-f1', 'mall-f2'] as const) {
-        const m = dress(id), props = mallProps(m), sorted = props.filter(p => p.layer === 'sorted');
-        const pieces = MALL_V2_LAYOUT[id].reduce((n, p) => { const t = MALL_FURNITURE[p.type]; return n + ('run' in t ? p.n ?? 1 : 1); }, 0);
-        assert.equal(sorted.length, pieces, `${id} one sprite per piece or run module`);
-        assert.equal(props.filter(p => p.layer === 'overhead').length, MALL_V2_LAYOUT[id].filter(p => p.type === 'cafe-table').length);
+test('商场布置表：每件家具一张贴图，立在占地南边线上；货架连排两端用端头、中间用中段（布局二版、三版）', () => {
+    for (const [label, world, layout] of REVISIONS) for (const id of ['mall-f1', 'mall-f2'] as const) {
+        const m = dress(id, world), props = mallProps(m), sorted = props.filter(p => p.layer === 'sorted');
+        const pieces = layout[id].reduce((n, p) => { const t = MALL_FURNITURE[p.type]; return n + ('run' in t ? p.n ?? 1 : 1); }, 0);
+        assert.equal(sorted.length, pieces, `${label} ${id} one sprite per piece or run module`);
+        assert.equal(props.filter(p => p.layer === 'overhead').length, layout[id].filter(p => p.type === 'cafe-table' || p.type === 'bistro-set').length);
         for (const p of sorted) {
             const name = p.assets[0].replace(PROCEDURAL, '').replace(/^mall-|-v1$/g, ''), key = name.replace(/-(end-[ew]|mid-.*|[ab])$/, '');
             const size = MALL_SPRITE_SIZE[key] ?? MALL_SPRITE_SIZE[name];
@@ -24,12 +25,37 @@ test('商场布置表：每件家具一张贴图，立在占地南边线上；�
             if (p.assets[0] === 'mall-prop-floor-lamp-v1') assert.ok(p.foot && p.foot.w <= 12 && p.foot.y > p.z - 32 && p.foot.y + p.foot.h < p.z, 'the lamp base');
             else assert.ok(p.foot && p.foot.y + p.foot.h === p.z, `${p.assets[0]} carries its footprint for the contact shadow`);
         }
-        for (const run of MALL_V2_LAYOUT[id].filter(p => p.type === 'gondola')) {
+        for (const run of layout[id].filter(p => p.type === 'gondola')) {
             const row = sorted.filter(p => p.z === (run.y + 1) * 32 && p.x >= run.x * 32 && p.x < (run.x + run.n!) * 32).sort((a, b) => a.x - b.x);
             assert.equal(row.length, run.n);
             assert.equal(row[0].assets[0], 'mall-prop-gondola-end-w-v1'); assert.equal(row.at(-1)!.assets[0], 'mall-prop-gondola-end-e-v1');
             for (const mid of row.slice(1, -1)) assert.match(mid.assets[0], /^mall-prop-gondola-mid-/);
         }
+    }
+});
+
+test('布局二版的贴图和阴影不随居中规则移动：除露台桌椅和落地灯外，每件都从自己格子的西边画起，阴影占满整个占地', () => {
+    for (const id of ['mall-f1', 'mall-f2'] as const) {
+        const sorted = mallProps(dress(id)).filter(p => p.layer === 'sorted');
+        const pieces = V2.maps[id].decorations!.flatMap(d => { const f = parseFurnitureName(d.name); return f && !f.dx && !f.dy && f.type !== 'cafe-table' && f.type !== 'floor-lamp' ? [{ ...f, x: Math.floor(d.x / 32), y: Math.floor(d.y / 32) }] : []; });
+        assert.equal(pieces.length, sorted.filter(p => p.assets[0] !== PROCEDURAL + 'cafe-set' && p.assets[0] !== 'mall-prop-floor-lamp-v1').length);
+        for (const f of pieces) {
+            const t = MALL_FURNITURE[f.type], p = sorted.find(p => p.z === (f.y + t.h) * 32 && p.x === f.x * 32);
+            assert.ok(p, `${id} ${f.type} at ${f.x},${f.y} is drawn from its cell`);
+            assert.deepEqual([p.foot!.x, p.foot!.y, p.foot!.w, p.foot!.h], [f.x * 32, f.y * 32, t.w * 32, t.h * 32], `${id} ${f.type} at ${f.x},${f.y}: footprint shadow`);
+        }
+    }
+});
+
+test('布局三版客厅：茶几画在沙发正前方、两者中心对齐，阴影只在画出的茶几下面', () => {
+    const props = mallProps(dress('mall-f2', V3)), sofas = props.filter(p => p.assets[0] === 'mall-prop-sofa-s-v1');
+    assert.equal(sofas.length, 2);
+    for (const sofa of sofas) {
+        const table = props.find(p => p.assets[0] === 'mall-prop-coffee-table-v1' && p.z === sofa.z + 32);
+        assert.ok(table, `a table right in front of the sofa at ${sofa.x},${sofa.z}`);
+        const [w] = MALL_SPRITE_SIZE['prop-coffee-table'], [sw] = MALL_SPRITE_SIZE['prop-sofa-s'];
+        assert.equal(table.x + w / 2, sofa.x + sw / 2, 'the table is centred on the sofa');
+        assert.deepEqual([table.foot!.x, table.foot!.w], [table.x, w], 'the shadow spans the drawn table, not both cells');
     }
 });
 
@@ -45,6 +71,8 @@ test('商场布置表：家具格不当墙画；大堂北墙是玻璃幕墙，�
     // One standing board per gondola run (on its west end) plus fresh, cold and home-store boards; nothing hangs.
     assert.equal(mallSigns(f1).length, MALL_V2_LAYOUT['mall-f1'].filter(p => p.type === 'gondola').length + 3);
     assert.equal(mallSigns(dress('mall-f2')).length, 2);
+    // The home-store boards stand in the middle of their partition (x 57-60), over the sofa's centre.
+    for (const s of mallSigns(dress('mall-f2'))) assert.equal(s.x + 13, 59 * 32, 'the home board is centred on its partition');
     for (const s of [...mallSigns(f1), ...mallSigns(dress('mall-f2'))]) assert.ok(s.layer === 'sorted' && s.assets[0].startsWith(PROCEDURAL + 'sign:'));
 });
 
@@ -69,9 +97,9 @@ test('商场布置表：一层地图边是封锁围挡，二层楼外是虚空�
     for (const m of [f1, f2]) for (const l of mallLights(m)) assert.deepEqual(Object.keys(l).sort(), ['broken', 'r', 'x', 'y']);
 });
 
-test('商场布置表：地面杂物只落在空地上，宽件占两格空地，不压家具和墙，位置稳定', () => {
-    for (const id of ['mall-f1', 'mall-f2']) {
-        const m = dress(id), decals = mallDecals(m), seen = new Set<string>();
+test('商场布置表：地面杂物只落在空地上，宽件占两格空地，不压家具和墙，位置稳定（布局二版、三版）', () => {
+    for (const [, world] of REVISIONS) for (const id of ['mall-f1', 'mall-f2']) {
+        const m = dress(id, world), decals = mallDecals(m), seen = new Set<string>();
         assert.ok(decals.length > 15, `${id} has clutter (${decals.length})`);
         const furniture = new Set(m.decorations.filter(d => /^[a-z-]+/.test(d.name)).map(d => `${Math.floor(d.x / 32)},${Math.floor(d.y / 32)}`));
         for (const d of decals) {

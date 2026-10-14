@@ -1,7 +1,8 @@
 /**
- * 2.5D sample entries (opt-in): ?sample=village deploys or resumes a coast-buildings raid, ?sample=mall a mall raid on
- * layout revision 2, on the Pixi host over the real Runtime instead of the Phaser RaidScene; without the flag nothing
- * changes. Only one of the two may own the SaveSession: the RaidScene is never started while this host is alive.
+ * 2.5D sample entries (opt-in): ?sample=village deploys or resumes a coast-buildings raid, ?sample=mall deploys a mall
+ * raid on layout revision 3 (and resumes one on revision 2 or 3), on the Pixi host over the real Runtime instead of the
+ * Phaser RaidScene; without the flag nothing changes. Only one of the two may own the SaveSession: the RaidScene is never
+ * started while this host is alive.
  */
 import { app, audio, saveSession } from '../app';
 import { createCoastRaidHost } from '../raid-runtime';
@@ -17,10 +18,16 @@ const params = () => new URLSearchParams(location.search);
 export type SampleMode = 'village' | 'mall';
 export const sampleMode = (): SampleMode | null => { const s = params().get('sample'); return s === 'village' || s === 'mall' ? s : null; };
 export const sampleEnabled = () => sampleMode() !== null;
-/** The raid in the save is one this sample draws: coast-buildings for the village, mall layout 2 for the mall. */
-export const sampleSupports = () => app.expansion?.raid?.worldVersion === (sampleMode() === 'mall' ? 'mall-v2' : 'coast-buildings-v1');
-/** Layout revision for a new mall raid: the mall sample deploys revision 2; everything else keeps the default. */
-export const sampleMallLayout = (world: string): 2 | undefined => sampleMode() === 'mall' && world === 'mall' ? 2 : undefined;
+/**
+ * The raid in the save is one this sample draws: coast-buildings for the village, mall layout 2 or 3 for the mall (a raid
+ * deployed on layout 2 keeps it until it ends).
+ */
+export const sampleSupports = () => {
+  const world = app.expansion?.raid?.worldVersion;
+  return sampleMode() === 'mall' ? world === 'mall-v2' || world === 'mall-v3' : world === 'coast-buildings-v1';
+};
+/** Layout revision for a new mall raid: the mall sample deploys revision 3; everything else keeps the default. */
+export const sampleMallLayout = (world: string): 3 | undefined => sampleMode() === 'mall' && world === 'mall' ? 3 : undefined;
 
 /**
  * Playtest deploy with an empty seed field: take the first seed from the clock whose spawn lies in the dressed village

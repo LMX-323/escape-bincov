@@ -104,6 +104,23 @@ try {
         assert.equal(await page.evaluate(()=>window.__bincov.persist()),false); assert.equal(await raw(page),v2raw);
         await ctx.close(); return {...state,unchanged:true,rawSha256:hash(v2raw)};
     });
+    // Layout 3 (new mall sample raids): the same refresh and backup round trip, and builds that predate it fail closed.
+    await step('A4/S-07 v3 F2 survives browser refresh and backup import; actual main HTML rejects the v3 action and preserves exact raw bytes', async () => {
+        const ctx=await context(), page=await ctx.newPage(); await page.goto('https://mall-runtime.test/runtime?test=1');
+        const before=await page.evaluate(()=>{ const t=window.mallTest, key=t.boot(3); if(key.worldVersion!=='mall-v3'||key.layoutRevision!=='mall-layout-3')throw Error(JSON.stringify(key)); t.host.driver.placePlayer({x:2000,y:432},.3,'mall-f2'); if(!t.host.services.checkpoint())throw Error(t.state.storageError); return t.saves.backupRecord().expansion; });
+        const v3raw=await raw(page), v3backup=await page.evaluate(()=>window.mallTest.backup()); await page.reload();
+        assert.deepEqual(await page.evaluate(()=>{window.mallTest.boot();return window.mallTest.saves.backupRecord().expansion;}),before);
+        const other=await context(), imported=await other.newPage(); await imported.goto('https://mall-runtime.test/runtime?test=1');
+        const key=await imported.evaluate(backup=>window.mallTest.importBackup(backup),v3backup);
+        assert.deepEqual([key.worldVersion,key.layoutRevision,key.mapId],['mall-v3','mall-layout-3','mall-f2']);
+        assert.deepEqual(await imported.evaluate(()=>window.mallTest.saves.backupRecord().expansion),before);
+        const third=await context(), old=await third.newPage(); await old.goto('https://mall-runtime.test/runtime?test=1');
+        await old.evaluate(bytes=>localStorage.setItem('escape-bincov.session.v2',bytes),v3raw);
+        await old.goto('https://mall-runtime.test/old?test=1&entry=tabs'); await ready(old);
+        const state=await old.evaluate(()=>({ok:window.__bincov.app.storageOK,error:window.__bincov.app.storageError,write:window.__bincov.persist()}));
+        assert.equal(state.ok,false); assert.equal(state.write,false); assert.equal(await raw(old),v3raw);
+        await ctx.close(); await other.close(); await third.close(); return {key,...state,unchanged:true,rawSha256:hash(v3raw),backupSha256:hash(v3backup)};
+    });
     await step('S-08 current game native import cancel/failure/confirmation keeps complete v2 F2 backup', async () => {
         const ctx=await context(), page=await ctx.newPage(); await page.goto('https://mall-runtime.test/current?test=1&entry=tabs'); await ready(page);
         await page.locator('[data-action="enter"]').click();

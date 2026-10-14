@@ -48,7 +48,7 @@ const SINGLE: Partial<Record<FurnitureName, string>> = {
     column: 'prop-column', directory: 'prop-directory', pylon: 'prop-pylon', 'stairs-up': 'stairs-up', 'stairs-down': 'stairs-down',
     sandbags: 'prop-sandbags-2', sofa: 'prop-sofa-s', cart: 'prop-cart', 'promo-table': 'prop-promo-table', pallet: 'prop-pallet-wrapped',
     'ice-bed': 'prop-ice-bed', 'scale-counter': 'prop-scale-counter', freezer: 'prop-freezer', bench: 'prop-bench', planter: 'prop-planter',
-    bed: 'prop-bed', 'coffee-table': 'prop-coffee-table', 'floor-lamp': 'prop-floor-lamp',
+    bed: 'prop-bed', 'coffee-table': 'prop-coffee-table', 'coffee-table-wide': 'prop-coffee-table', 'floor-lamp': 'prop-floor-lamp',
     'planter-box': 'prop-planter-box', stanchions: 'prop-stanchions', adboard: 'prop-adboard-fallen', partition: 'prop-partition',
     'gondola-toppled': 'prop-gondola-toppled', debris: 'prop-debris',
 };
@@ -206,7 +206,7 @@ export function mallLights(m: DressMap): MallLight[] {
     return (TUBES[m.mapId] ?? []).map(([x, y, broken]) => ({ x: x * TILE + 16, y: y * TILE + 16, r: broken ? 80 : 115, broken }));
 }
 
-/** One sprite per furniture piece (multi-cell pieces at their north-west part) plus the umbrellas over cafe tables. */
+/** One sprite per furniture piece (multi-cell pieces at their north-west part) plus the umbrellas over cafe sets. */
 export function mallProps(m: DressMap): DressSprite[] {
     const at = furnitureAt(m), out: DressSprite[] = [];
     const same = (x: number, y: number, type: string) => at.get(`${x},${y}`)?.type === type;
@@ -219,20 +219,23 @@ export function mallProps(m: DressMap): DressSprite[] {
             names = !w ? ['prop-gondola-end-w'] : !e ? ['prop-gondola-end-e']
                 : [`prop-gondola-${pick(x, y, 17, ['mid-full-a', 'mid-full-b', 'mid-full-a', 'mid-sparse', 'mid-looted'])}`, 'prop-gondola-mid-full-a'];
         } else if (f.type === 'fridge') names = [`prop-fridge-${hash(x, y, 19) < .7 ? 'a' : 'b'}`, 'prop-fridge-a'];
-        else if (f.type === 'cafe-table') names = ['cafe-set'];
+        else if (f.type === 'cafe-table' || f.type === 'bistro-set') names = ['cafe-set'];
         else names = [SINGLE[f.type]!];
         const size = MALL_SPRITE_SIZE[names[0].replace(/-(end-[ew]|mid-.*|[ab])$/, '')] ?? MALL_SPRITE_SIZE[names[0]] ?? [t.w * TILE, t.h * TILE];
         const south = (y + t.h) * TILE, stairs = f.type === 'stairs-up' || f.type === 'stairs-down';
         // Painted by the view: the stairs, and the cafe set (the drawn sample fits a whole set into one cell, too small).
-        const painted = stairs ? PROCEDURAL + f.type : f.type === 'cafe-table' ? PROCEDURAL + 'cafe-set' : null;
-        // The cafe set is wider than its one blocking cell: it is centred on it, chairs reaching into the cells beside.
+        const cafe = names[0] === 'cafe-set', lamp = f.type === 'floor-lamp';
+        const painted = stairs ? PROCEDURAL + f.type : cafe ? PROCEDURAL + 'cafe-set' : null;
+        // Every piece is centred on its footprint. Most fill it exactly; the one-cell cafe table's set is wider (chairs
+        // reaching into the cells beside), the two-cell table of layout 3 narrower (it spans the sofa behind it).
         // The floor lamp stands in the middle of its cell on a small round base: only the base touches the floor.
-        const cafe = f.type === 'cafe-table', lamp = f.type === 'floor-lamp', left = cafe ? x * TILE + (t.w * TILE - size[0]) / 2 : x * TILE;
+        // A piece narrower than its footprint casts its shadow from the drawn piece, not from the whole footprint.
+        const left = x * TILE + (t.w * TILE - size[0]) / 2;
         out.push({ assets: painted ? [painted] : names.map(id), x: left, y: south - size[1], z: south, layer: 'sorted',
             emit: names.some(n => EMITS.has(n)), foot: cafe ? { x: left + 6, y: y * TILE, w: size[0] - 12, h: t.h * TILE, lift: size[1] - t.h * TILE }
                 : lamp ? { x: x * TILE + 11, y: y * TILE + 12, w: 10, h: 8, lift: 8 }
-                : { x: x * TILE, y: y * TILE, w: t.w * TILE, h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
-        if (f.type === 'cafe-table') {
+                : { x: Math.max(x * TILE, left), y: y * TILE, w: Math.min(t.w * TILE, size[0]), h: t.h * TILE, lift: stairs ? 0 : size[1] - t.h * TILE } });
+        if (cafe) {
             const [uw, uh] = MALL_SPRITE_SIZE['overhead-umbrella'];
             // The pole stands in the table's centre.
             out.push({ assets: [id('overhead-umbrella')], x: x * TILE + t.w * 16 - uw / 2, y: y * TILE + 16 - (uh - 1), z: south, layer: 'overhead', emit: false });
@@ -259,7 +262,8 @@ export function mallSigns(m: DressMap): DressSprite[] {
     ends.forEach(([x, y], i) => out.push(stand(x, y, 40, 'aisle:' + (i + 1))));
     const extra: Record<string, readonly [number, number, number, string][]> = {
         'mall-f1': [[38, 36, 24, 'fresh'], [36, 39, 24, 'fresh'], [48, 33, 48, 'cold']],
-        'mall-f2': [[58, 17, 48, 'home'], [58, 31, 48, 'home']],
+        // The home-store boards stand in the middle of their four-module partition, over the sofa's centre.
+        'mall-f2': [[58.5, 17, 48, 'home'], [58.5, 31, 48, 'home']],
     };
     for (const [x, y, top, kind] of extra[m.mapId] ?? []) out.push(stand(x, y, top, kind));
     return out;

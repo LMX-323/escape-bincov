@@ -3,6 +3,7 @@ import { SURVIVAL as B } from '../balance';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
+import { isMallWorld } from '../mall-world';
 import type { CoastRaidRuntime } from './runtime';
 import type { ActorView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
 
@@ -25,7 +26,7 @@ export const contains = (r: RegionDef, p: Point) => p.x >= r.x && p.x < r.x + r.
 export function mapView(r: CoastRaidRuntime, key: WorldKey): MapDef {
     const space = r.space?.definition, data = r.mapData;
     const prefix = `${key.worldVersion}/${key.layoutRevision ?? '-'}/${key.mapId}`;
-    const mall = key.worldVersion === 'mall-v1' || key.worldVersion === 'mall-v2';
+    const mall = isMallWorld(key.worldVersion);
     const buildingId = `${prefix}/building/${mall ? 'mall' : 'resident'}`;
     const regions: RegionDef[] = (space?.regions ?? []).map(region => {
         const definitionKey = region.id ?? regionKeys[`${key.mapId}:${region.name}`];

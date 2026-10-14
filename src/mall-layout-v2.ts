@@ -1,9 +1,10 @@
 /**
- * Mall layout revision 2 (data only). Furniture is laid out per cell so its collision class (B blocks bodies, sight and
- * bullets; M blocks bodies; V is visual) is materialized into the same cells the art stands on, and the 2.5D view can
- * draw each piece from the decoration it owns. Outer walls, rooms, passages, anchors, exits and the four connection
- * groups stay as in revision 1; only the stairs S-N landing moves inside the same two lobbies. Regions listed in
- * MALL_V2_REGIONS are dressed by this table instead of the revision-1 corner markers; the rest keep revision 1.
+ * Mall layout revisions 2 and 3 (data only). Furniture is laid out per cell so its collision class (B blocks bodies,
+ * sight and bullets; M blocks bodies; V is visual) is materialized into the same cells the art stands on, and the 2.5D
+ * view can draw each piece from the decoration it owns. Outer walls, rooms, passages, anchors, exits and the four
+ * connection groups stay as in revision 1; only the stairs S-N landing moves inside the same two lobbies. Regions listed
+ * in MALL_V2_REGIONS are dressed by this table instead of the revision-1 corner markers; the rest keep revision 1.
+ * Revision 3 is revision 2 with a few F2 pieces replaced (MALL_V3_LAYOUT); revision 2 stays as saved raids know it.
  */
 import type { Point } from './world';
 
@@ -39,6 +40,9 @@ export const MALL_FURNITURE = {
     adboard: { w: 2, h: 1, kind: 'M' },
     'gondola-toppled': { w: 2, h: 1, kind: 'M' },
     debris: { w: 1, h: 1, kind: 'M' },
+    // Revision 3 only (names: letters and hyphens). The table spans the sofa's width; the whole bistro set blocks.
+    'coffee-table-wide': { w: 2, h: 1, kind: 'M' },
+    'bistro-set': { w: 2, h: 1, kind: 'M' },
 } as const satisfies Record<string, FurnitureType>;
 export type FurnitureName = keyof typeof MALL_FURNITURE;
 /** `x, y`: north-west cell. `n`: number of modules for run furniture (east-west). */
@@ -102,6 +106,25 @@ export const MALL_V2_LAYOUT: Record<'mall-f1' | 'mall-f2', readonly Placement[]>
         { type: 'planter-box', x: 66, y: 26 }, { type: 'planter-box', x: 70, y: 26 }, { type: 'planter-box', x: 70, y: 44 },
         { type: 'cafe-table', x: 67, y: 31 }, { type: 'cafe-table', x: 70, y: 31 }, { type: 'cafe-table', x: 67, y: 36 }, { type: 'cafe-table', x: 69, y: 40 },
     ],
+};
+
+/**
+ * Revision 3: the pieces of revision 2 that change, replaced in place (the list order, and so the decoration order, is
+ * kept). Each living-room coffee table moves up against its sofa and takes the sofa's width; each terrace cafe table
+ * becomes a two-cell bistro set under its drawn chairs, aligned with the planter boxes. F1 is revision 2's list.
+ */
+const V3_REPLACED: readonly [Placement, Placement][] = [
+    [{ type: 'coffee-table', x: 58, y: 20 }, { type: 'coffee-table-wide', x: 58, y: 19 }],
+    [{ type: 'coffee-table', x: 58, y: 34 }, { type: 'coffee-table-wide', x: 58, y: 33 }],
+    [{ type: 'cafe-table', x: 67, y: 31 }, { type: 'bistro-set', x: 66, y: 31 }],
+    [{ type: 'cafe-table', x: 70, y: 31 }, { type: 'bistro-set', x: 70, y: 31 }],
+    [{ type: 'cafe-table', x: 67, y: 36 }, { type: 'bistro-set', x: 66, y: 36 }],
+    [{ type: 'cafe-table', x: 69, y: 40 }, { type: 'bistro-set', x: 68, y: 40 }],
+];
+const v3 = (p: Placement) => V3_REPLACED.find(([a]) => a.type === p.type && a.x === p.x && a.y === p.y)?.[1] ?? p;
+export const MALL_V3_LAYOUT: Record<'mall-f1' | 'mall-f2', readonly Placement[]> = {
+    'mall-f1': MALL_V2_LAYOUT['mall-f1'],
+    'mall-f2': MALL_V2_LAYOUT['mall-f2'].map(v3),
 };
 
 /** Decoration name per cell: plain type for single cells and run modules, `type#dx,dy` for parts of larger pieces. */

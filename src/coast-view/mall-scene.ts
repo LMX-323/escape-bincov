@@ -1,5 +1,5 @@
 /**
- * Mall floors in the 2.5D view (layout revision 2 with Sol's samples, issue #47): the ground bake, wall compositions,
+ * Mall floors in the 2.5D view (layout revisions 2 and 3, Sol's samples, issue #47): the ground bake, wall compositions,
  * door headers, furniture, signs, wall pieces, emission overlays, lights and ambient zones, all read from the dressing
  * table (mall-dressing.ts). Display only: collision, visibility and loot stay with the Runtime. The per-map part
  * (`mallDress`) is computed once per map and view; `buildMall` places sprites on every rebuild.

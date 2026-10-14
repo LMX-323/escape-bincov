@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mallWorldV2 } from '../src/mall-world';
-import { MALL_FURNITURE, MALL_V2_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
+import { mallWorldV2, mallWorldV3 } from '../src/mall-world';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V3_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
 import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, PROCEDURAL, insideFootprint, mallProps, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
 import { actorShown, isMall, mallCorridorWalls, mallCutRooms, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
 import { SampleSound } from '../src/coast-view/sound';
@@ -128,7 +128,7 @@ test('命中反馈看目标本身：目标所在房间未揭示时，弹着点�
   assert.ok(calls.includes('hit'));
 });
 
-test('露台咖啡桌是一整组桌椅（程序绘制），以它的一格碰撞为中心，伞杆立在桌子中心；碰撞仍是一格（旧存档有效）', () => {
+test('布局二版露台咖啡桌是一整组桌椅（程序绘制），以它的一格碰撞为中心，伞杆立在桌子中心；碰撞仍是一格（旧存档有效）', () => {
   const f2 = dress('mall-f2'), props = mallProps(f2), sets = props.filter(p => p.assets[0] === PROCEDURAL + 'cafe-set');
   const tables = MALL_V2_LAYOUT['mall-f2'].filter(p => p.type === 'cafe-table'), [w, h] = MALL_SPRITE_SIZE['cafe-set'];
   assert.equal(MALL_FURNITURE['cafe-table'].w, 1); assert.equal(sets.length, tables.length);
@@ -138,6 +138,21 @@ test('露台咖啡桌是一整组桌椅（程序绘制），以它的一格碰�
     assert.equal(set.y + h, set.z, 'stands on its cell\'s south edge');
     assert.equal(f2.cells[t.y][t.x], 'low', 'blocks movement, not shots');
     for (const dx of [-1, 1]) assert.notEqual(f2.cells[t.y][t.x + dx], 'low', 'the chairs reach into open cells beside it');
+  }
+});
+
+test('布局三版露台：每组桌椅占两格碰撞，画面正好盖住这两格，伞杆立在两格中间；两侧仍是空地', () => {
+  const m = mallWorldV3().maps['mall-f2'], f2: DressMap = { mapId: 'mall-f2', cells: m.cells, regions: m.regions!, decorations: m.decorations! };
+  const props = mallProps(f2), sets = props.filter(p => p.assets[0] === PROCEDURAL + 'cafe-set');
+  const tables = MALL_V3_LAYOUT['mall-f2'].filter(p => p.type === 'bistro-set'), [w, h] = MALL_SPRITE_SIZE['cafe-set'], [uw] = MALL_SPRITE_SIZE['overhead-umbrella'];
+  assert.equal(MALL_FURNITURE['bistro-set'].w, 2); assert.equal(w, 64);
+  assert.equal(tables.length, 4); assert.equal(sets.length, tables.length);
+  for (const t of tables) {
+    const set = sets.find(s => s.z === (t.y + 1) * 32 && s.x === t.x * 32);
+    assert.ok(set, `set drawn over ${t.x}-${t.x + 1},${t.y}`); assert.equal(set.y + h, set.z, 'stands on the south edge of its cells');
+    assert.ok(props.some(p => p.layer === 'overhead' && p.z === set.z && p.x + uw / 2 === (t.x + 1) * 32), `umbrella over the middle of ${t.x},${t.y}`);
+    for (const dx of [0, 1]) assert.equal(f2.cells[t.y][t.x + dx], 'low', 'the whole set blocks movement, not shots');
+    for (const dx of [-1, 2]) assert.notEqual(f2.cells[t.y][t.x + dx], 'low', 'open floor beside the set');
   }
 });
 

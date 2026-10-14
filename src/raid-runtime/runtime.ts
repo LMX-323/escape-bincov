@@ -4,7 +4,7 @@ import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
 import { mapPresentation, buildingRunConfig } from '../building-world';
-import { mallRunConfig } from '../mall-world';
+import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from '../rpg';
@@ -118,9 +118,9 @@ export class CoastRaidRuntime implements RaidRuntime {
             throw new Error('Resume or deploy a valid owned raid before creating Runtime.');
         this.layered = session.expansion?.raid ? structuredClone(session.expansion) : null;
         const world = this.layered?.raid?.worldVersion;
-        if (world && !['coast-buildings-v1', 'mall-v1', 'mall-v2'].includes(world))
+        if (world && world !== 'coast-buildings-v1' && !isMallWorld(world))
             throw new Error('Sample Runtime does not support this world.');
-        this.config = this.layered ? (world === 'mall-v1' || world === 'mall-v2' ? mallRunConfig : buildingRunConfig)(this.layered.raid!.seed)
+        this.config = this.layered ? (isMallWorld(world) ? mallRunConfig : buildingRunConfig)(this.layered.raid!.seed)
             : generateRun(session.checkpoint!.seed);
         this.terminalLoadout = structuredClone(session.loadout);
         if (this.layered)

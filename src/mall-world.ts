@@ -4,7 +4,7 @@ import { entityUid, newTraining, type ExpansionState, type LayeredRaid, type Wor
 import { initialLuck } from './reputation-luck';
 import { traversable, type SpaceDefinition } from './spatial';
 import type { Point, RunConfig } from './world';
-import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_SPAWN, MALL_V2_STAIRS, furnitureCellName, type FurnitureType, type Placement } from './mall-layout-v2';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_SPAWN, MALL_V2_STAIRS, MALL_V3_LAYOUT, furnitureCellName, type FurnitureType, type Placement } from './mall-layout-v2';
 
 const at = (x: number, y: number): Point => ({ x: (x + .5) * 32, y: (y + .5) * 32 });
 export const MALL_ANCHORS = {
@@ -132,36 +132,42 @@ function mallWorld(): WorldDefinition {
 export const MALL_WORLD = mallWorld();
 
 /** Each furniture cell takes its collision class and a decoration naming the piece the view draws there. */
-function furnish(map: SpaceDefinition, placements: readonly Placement[]) {
+function furnish(map: SpaceDefinition, placements: readonly Placement[], revision: string) {
     for (const p of placements) {
         const t: FurnitureType = MALL_FURNITURE[p.type];
         for (let i = 0; i < (t.run ? p.n ?? 1 : 1); i++) for (let dy = 0; dy < t.h; dy++) for (let dx = 0; dx < t.w; dx++) {
             const x = p.x + i * t.w + dx, y = p.y + dy;
             if (map.cells[y]?.[x] !== 'floor' || map.decorations!.some(d => Math.floor(d.x / 32) === x && Math.floor(d.y / 32) === y))
-                throw new Error(`Mall layout 2: ${p.type} at ${x},${y} is not on open floor.`);
+                throw new Error(`${revision}: ${p.type} at ${x},${y} is not on open floor.`);
             if (t.kind !== 'V') map.cells[y][x] = t.kind === 'B' ? 'wall' : 'low';
             map.decorations!.push({ ...at(x, y), kind: t.kind, name: furnitureCellName(p.type, dx, dy) });
         }
     }
 }
-function buildMallWorldV2(): WorldDefinition {
+/** Revisions 2 and 3: the same skeleton, stairs and dressed regions, furnished from their own table. */
+function buildDressedMall(worldId: string, revision: string, layout: Record<'mall-f1' | 'mall-f2', readonly Placement[]>): WorldDefinition {
     const { f1, f2 } = mallSkeleton(), dressed = new Set<string>(MALL_V2_REGIONS);
     for (const [id, a, b] of MALL_V2_STAIRS) connect(f1, `${id}-up`, a, '上楼至二层', f2, `${id}-down`, b, '下楼至一层');
     for (const map of [f1, f2]) cornerMarkers(map, dressed);
     shelves(f2);
     floorTwoFixtures(f2);
     settle(f1, f2);
-    furnish(f1, MALL_V2_LAYOUT['mall-f1']); furnish(f2, MALL_V2_LAYOUT['mall-f2']);
+    furnish(f1, layout['mall-f1'], revision); furnish(f2, layout['mall-f2'], revision);
     // The ground floor is indoors and out; its name says only which floor it is (the HUD adds the place).
     f1.floor = '一层';
-    return { id: 'mall-v2', revision: 'mall-layout-2', maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_V2_SPAWN };
+    return { id: worldId, revision, maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_V2_SPAWN };
 }
-let worldV2: WorldDefinition | null = null;
+let worldV2: WorldDefinition | null = null, worldV3: WorldDefinition | null = null;
 /**
- * Layout revision 2, built on first use. Registered for recovery; new deployments must explicitly choose it.
- * The ordinary deployment path defaults to revision 1. URL/sample selection belongs to the host.
+ * Layout revisions 2 and 3, built on first use. Both stay registered for recovery (a raid restores on the revision it
+ * was deployed on); new deployments must explicitly choose one. The ordinary deployment path defaults to revision 1.
+ * URL/sample selection belongs to the host.
  */
-export function mallWorldV2(): WorldDefinition { return worldV2 ??= buildMallWorldV2(); }
+export function mallWorldV2(): WorldDefinition { return worldV2 ??= buildDressedMall('mall-v2', 'mall-layout-2', MALL_V2_LAYOUT); }
+export function mallWorldV3(): WorldDefinition { return worldV3 ??= buildDressedMall('mall-v3', 'mall-layout-3', MALL_V3_LAYOUT); }
+/** Every registered mall world id: these raids use the mall run config and draw as the mall building. */
+export const MALL_WORLD_IDS = ['mall-v1', 'mall-v2', 'mall-v3'] as const;
+export const isMallWorld = (id?: string | null): boolean => !!id && (MALL_WORLD_IDS as readonly string[]).includes(id);
 export function mallRunConfig(seed: number | string): RunConfig {
     const config = buildingRunConfig(seed), random = D.seededRandom(config.seed + 23191);
     const exits = [{ id: 'X-N', name: '北侧接应', ...MALL_ANCHORS.north }, { id: 'X-S', name: '南街接应', ...MALL_ANCHORS.south }, { id: 'X-L', name: '卸货接应', ...MALL_ANCHORS.loading }];
@@ -169,8 +175,8 @@ export function mallRunConfig(seed: number | string): RunConfig {
     return { ...config, spawn: MALL_ANCHORS.spawn, exits: exits.filter((_, i) => i !== omitted) };
 }
 /**
- * `world` defaults to revision 1; SaveSession passes revision 2 only on an explicit deployment choice. The run starts at
- * the world's spawn (revision 1: the same point as the run config).
+ * `world` defaults to revision 1; SaveSession passes revision 2 or 3 only on an explicit deployment choice. The run
+ * starts at the world's spawn (revision 1: the same point as the run config).
  */
 export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout, config: RunConfig, world: WorldDefinition = MALL_WORLD): void {
     const spawn = world.spawn;

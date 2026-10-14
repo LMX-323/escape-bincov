@@ -38,8 +38,8 @@ export interface StationHooks {
   departed(runId: string): void;
   /** Seed the Runtime should use for an empty seed field (village corner for the sample), or '' for the clock. */
   seedFor(world: RunWorld): string;
-  /** Layout revision for a new mall raid (2 for the mall sample); undefined keeps the Runtime default. */
-  mallLayout?(world: RunWorld): 1 | 2 | undefined;
+  /** Layout revision for a new mall raid (3 for the mall sample); undefined keeps the Runtime default. */
+  mallLayout?(world: RunWorld): 1 | 2 | 3 | undefined;
   tabs(): void;
   title(): void;
   exportSave(): void;

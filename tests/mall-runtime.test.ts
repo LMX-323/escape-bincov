@@ -4,9 +4,9 @@ import * as D from '../src/domain';
 import { SaveSession, createSessionState } from '../src/session';
 import { SESSION_KEY } from '../src/recovery-store';
 import { encodeRecoveryBackup, decodePortableBackup } from '../src/save-backup';
-import { mallRunConfig, MALL_ANCHORS, MALL_PASSAGES } from '../src/mall-world';
+import { mallRunConfig, mallWorldV2, mallWorldV3, MALL_ANCHORS, MALL_PASSAGES } from '../src/mall-world';
 import { BUILDING_WORLD } from '../src/building-world';
-import { entityUid, type ExpansionState } from '../src/expansion-state';
+import { entityUid, type ExpansionState, type WorldDefinition } from '../src/expansion-state';
 import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime';
 import { createRuntimeTestDriver, createTestCoastHost } from '../src/raid-runtime/test-support';
 import { RealHideoutRuntime } from '../src/hideout-runtime';
@@ -26,7 +26,7 @@ function session(raw?: string) {
     return { state, saves, data, storage, initialized, fail: (value = true) => { failed = value; },
         get raw() { return data.get(SESSION_KEY)!; }, get writes() { return writes; } };
 }
-function fixture(layout: 1 | 2 = 2, seed = 42) {
+function fixture(layout: 1 | 2 | 3 = 2, seed = 42) {
     const f = session(); assert.ok(f.initialized); f.state.state = 'hideout';
     assert.ok(f.saves.beginRun(seed, 'mall', { mallLayout: layout })); f.state.state = 'run';
     const r = new CoastRaidRuntime(f.state, f.saves), driver = createRuntimeTestDriver(r, '?test=1'); driver.freezeAI(true);
@@ -62,23 +62,23 @@ function change(f: Fixture, id: string, map?: string) {
 }
 const population = (state: ExpansionState) => Object.values(state.raid!.maps).flatMap(m => m.enemies.map(e => e.uid)).concat(state.raid!.pursuits.map(p => p.enemy.uid)).sort();
 
-test('A1: deployment defaults to v1; explicit v2 is atomic and cannot change an active raid or other routes', () => {
-    for (const layout of [undefined, 1, 2] as const) {
+test('A1: deployment defaults to v1; explicit v2 or v3 is atomic and cannot change an active raid or other routes', () => {
+    for (const layout of [undefined, 1, 2, 3] as const) {
         const f = session(); f.state.state = 'hideout'; const before = f.raw, profile = structuredClone(f.state.save);
         f.fail(); assert.equal(f.saves.beginRun(42, 'mall', { mallLayout: layout }), false);
         assert.equal(f.raw, before); assert.deepEqual(f.state.save, profile); assert.equal(f.state.expansion, null);
         f.fail(false); assert.ok(f.saves.beginRun(42, 'mall', { mallLayout: layout }));
-        assert.equal(f.state.expansion!.raid!.worldVersion, layout === 2 ? 'mall-v2' : 'mall-v1');
+        assert.equal(f.state.expansion!.raid!.worldVersion, `mall-v${layout ?? 1}`); assert.equal(f.state.expansion!.raid!.layoutRevision, `mall-layout-${layout ?? 1}`);
         const active = f.raw; assert.equal(f.saves.beginRun(43, 'mall', { mallLayout: layout === 2 ? 1 : 2 }), false); assert.equal(f.raw, active);
     }
-    for (const buildings of [false, true]) {
-        const f = session(); f.state.state = 'hideout'; assert.ok(f.saves.beginRun(42, buildings, { mallLayout: 2 }));
+    for (const [buildings, mallLayout] of [[false, 2], [true, 2], [false, 3], [true, 3]] as const) {
+        const f = session(); f.state.state = 'hideout'; assert.ok(f.saves.beginRun(42, buildings, { mallLayout }));
         assert.equal(buildings ? f.state.expansion!.raid!.worldVersion : f.state.checkpoint!.worldVersion, buildings ? BUILDING_WORLD.id : 'coast-v2');
     }
 });
 
 test('A1/A3: yard forwards the layout once and the explicitly gated host driver works on both mall floors', () => {
-    for (const layout of [undefined, 2] as const) {
+    for (const layout of [undefined, 2, 3] as const) {
         const f = session(), yard = new RealHideoutRuntime(f.state, f.saves, now); assert.ok(yard.enter().ok);
         const deploy = yard.deploy({ world: 'mall', seed: '42', mallLayout: layout }); assert.ok(deploy.ok);
         const bytes = f.raw; assert.ok(yard.startRaid(deploy.runId!).ok); assert.equal(f.raw, bytes);
@@ -87,7 +87,7 @@ test('A1/A3: yard forwards the layout once and the explicitly gated host driver 
         const host = createTestCoastHost(f.state, f.saves, '?test=1'); host.driver.freezeAI(true);
         for (const map of ['mall-f1', 'mall-f2']) {
             host.driver.placePlayer(at(60, 45), 0, map); const batch = host.runtime.current();
-            assert.equal(batch.map.key.mapId, map); assert.equal(batch.map.key.worldVersion, layout === 2 ? 'mall-v2' : 'mall-v1');
+            assert.equal(batch.map.key.mapId, map); assert.equal(batch.map.key.worldVersion, `mall-v${layout ?? 1}`);
             assert.throws(() => host.driver.placePlayer(at(0, 0), 0, map), /Invalid fixture position/);
             const enemy = batch.frame.actors.find(e => e.alive)!; host.driver.kill(enemy.uid);
             assert.equal(host.runtime.current().frame.actors.find(e => e.uid === enemy.uid)!.alive, false);
@@ -95,9 +95,9 @@ test('A1/A3: yard forwards the layout once and the explicitly gated host driver 
     }
 });
 
-test('A2: both mall layouts use the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits', () => {
+test('A2: every mall layout uses the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits', () => {
     const combos = new Set<string>();
-    for (const layout of [1, 2] as const) for (let seed = 1; seed <= 20; seed++) {
+    for (const layout of [1, 2, 3] as const) for (let seed = 1; seed <= 20; seed++) {
         const f = fixture(layout, seed); assert.deepEqual(f.r.config, mallRunConfig(seed)); combos.add(f.r.config.exits.map(e => e.id).join(','));
         for (const mapId of ['mall-f1', 'mall-f2']) {
             f.driver.placePlayer(at(60, 45), 0, mapId); const map = f.r.current().map;
@@ -115,14 +115,15 @@ test('A2: both mall layouts use the exact Phaser mallRunConfig; stable building/
     assert.throws(() => new CoastRaidRuntime(f.state, f.saves), /does not support/);
 });
 
-test('A4/S-03/S-07/S-08: both floors and layouts survive refresh and recovery backup; malformed worlds never overwrite', () => {
-    for (const layout of [1, 2] as const) for (const map of ['mall-f1', 'mall-f2']) {
+test('A4/S-03/S-07/S-08: both floors and every layout survive refresh and recovery backup; malformed worlds never overwrite', () => {
+    for (const layout of [1, 2, 3] as const) for (const map of ['mall-f1', 'mall-f2']) {
         const f = fixture(layout); f.driver.placePlayer(at(62, 13), .3, map); assert.ok(f.r.checkpoint());
         const expected = f.r.snapshotExpansion(), g = restore(f.raw); assert.deepEqual(g.r.snapshotExpansion(), expected);
         const decoded = decodePortableBackup(encodeRecoveryBackup(f.saves.backupRecord()!)); assert.equal(decoded.kind, 'session');
         if (decoded.kind !== 'session') throw Error('expected live backup');
         const imported = restore(JSON.stringify(decoded.record)); assert.deepEqual(imported.r.snapshotExpansion(), expected);
-        for (const [world, revision] of [['mall-v9', 'mall-layout-9'], [`mall-v${layout}`, 'mall-layout-999'], [`mall-v${layout}`, `mall-layout-${layout === 1 ? 2 : 1}`]]) {
+        for (const [world, revision] of [['mall-v9', 'mall-layout-9'], [`mall-v${layout}`, 'mall-layout-999'], [`mall-v${layout}`, `mall-layout-${layout === 1 ? 2 : 1}`],
+            ['mall-v3', 'mall-layout-2'], ['mall-v2', 'mall-layout-3']]) {
             const record = JSON.parse(f.raw); Object.assign(record.expansion.raid, { worldVersion: world, layoutRevision: revision });
             const bytes = JSON.stringify(record), broken = session(bytes); assert.equal(broken.initialized, false); assert.equal(broken.raw, bytes);
             assert.equal(broken.saves.persist(), false); assert.equal(broken.raw, bytes); assert.equal(broken.writes, 0);
@@ -130,8 +131,22 @@ test('A4/S-03/S-07/S-08: both floors and layouts survive refresh and recovery ba
     }
 });
 
-test('G-06: every connector round-trips ten times in both layouts without respawn or duplicate entities', () => {
-    for (const layout of [1, 2] as const) {
+test('A5: a layout-2 raid standing where layout 3 put the new table restores on layout 2; relabelled as layout 3 it never loads or writes', () => {
+    // Open floor between the sofa and the old table in layout 2; under the new table in layout 3.
+    const p = at(58, 19), fits = (world: WorldDefinition) => traversable({ definition: world.maps['mall-f2'], doors: {}, highTide: true }, p, 'body', 10);
+    assert.equal(fits(mallWorldV2()), true); assert.equal(fits(mallWorldV3()), false);
+    const f = fixture(2); f.driver.placePlayer(p, 0, 'mall-f2'); assert.ok(f.r.checkpoint());
+    const expected = f.r.snapshotExpansion(), g = restore(f.raw), key = g.r.current().map.key;
+    assert.deepEqual(g.r.snapshotExpansion(), expected);
+    assert.deepEqual([key.worldVersion, key.layoutRevision, key.mapId], ['mall-v2', 'mall-layout-2', 'mall-f2']);
+    assert.deepEqual([g.r.player.x, g.r.player.y], [p.x, p.y]); assert.ok(g.r.walkable(p.x, p.y, true));
+    const record = JSON.parse(f.raw); Object.assign(record.expansion.raid, { worldVersion: 'mall-v3', layoutRevision: 'mall-layout-3' });
+    const bytes = JSON.stringify(record), broken = session(bytes); assert.equal(broken.initialized, false); assert.equal(broken.raw, bytes);
+    assert.equal(broken.saves.persist(), false); assert.equal(broken.raw, bytes); assert.equal(broken.writes, 0);
+});
+
+test('G-06: every connector round-trips ten times in every layout without respawn or duplicate entities', () => {
+    for (const layout of [1, 2, 3] as const) {
         const f = fixture(layout), original = population(f.r.snapshotExpansion()), maps = f.r.snapshotExpansion().raid!.maps;
         for (const name of ['S-W', 'S-N', 'S-E', 'E-C']) for (let i = 0; i < 10; i++) for (const direction of ['up', 'down']) {
             change(f, `${name}-${direction}`, direction === 'up' ? 'mall-f1' : 'mall-f2');
@@ -305,22 +320,24 @@ test('G-01: all seven same-floor passages walk/sprint ten round trips with diago
 });
 
 test('G-02/G-03/G-04/G-05/G-09: runtime collision/sight/bullets agree with all furniture; forbidden bounds and props cannot be looted', () => {
-    const f = fixture();
-    for (const mapId of ['mall-f1', 'mall-f2']) {
-        f.driver.placePlayer(at(62, 13), 0, mapId); const map = f.r.space!.definition;
-        for (const d of map.decorations!) {
-            assert.equal(f.r.walkable(d.x, d.y, false), d.kind === 'V', `${mapId}/${d.name} body`);
-            assert.equal(f.r.sight({ x: d.x - 14, y: d.y }, { x: d.x + 14, y: d.y }), d.kind !== 'B', `${mapId}/${d.name} sight`);
-            edit(f, state => { const raid = state.raid!; raid.maps[mapId].bullets = [{ uid: entityUid(raid, raid.nextEntity++), x: d.x - 14, y: d.y, vx: 100, vy: 0, left: 200, rotation: 0, damage: 1, enemy: false }]; });
-            f.r.updateBullets(.28); assert.equal(f.r.bullets.length, d.kind === 'B' ? 0 : 1, `${mapId}/${d.name} bullet`);
+    for (const layout of [2, 3] as const) {
+        const f = fixture(layout);
+        for (const mapId of ['mall-f1', 'mall-f2']) {
+            f.driver.placePlayer(at(62, 13), 0, mapId); const map = f.r.space!.definition;
+            for (const d of map.decorations!) {
+                assert.equal(f.r.walkable(d.x, d.y, false), d.kind === 'V', `${mapId}/${d.name} body`);
+                assert.equal(f.r.sight({ x: d.x - 14, y: d.y }, { x: d.x + 14, y: d.y }), d.kind !== 'B', `${mapId}/${d.name} sight`);
+                edit(f, state => { const raid = state.raid!; raid.maps[mapId].bullets = [{ uid: entityUid(raid, raid.nextEntity++), x: d.x - 14, y: d.y, vx: 100, vy: 0, left: 200, rotation: 0, damage: 1, enemy: false }]; });
+                f.r.updateBullets(.28); assert.equal(f.r.bullets.length, d.kind === 'B' ? 0 : 1, `${mapId}/${d.name} bullet`);
+            }
+            edit(f, state => { state.raid!.maps[mapId].bullets = []; });
+            assert.equal(f.r.activate(ref(f, 'container', f.r.current().map.decorations[0].id)), false);
         }
-        edit(f, state => { state.raid!.maps[mapId].bullets = []; });
-        assert.equal(f.r.activate(ref(f, 'container', f.r.current().map.decorations[0].id)), false);
+        for (const [map, p] of [['mall-f1', at(10, 6)], ['mall-f1', at(15, 53)], ['mall-f2', at(23, 13)], ['mall-f2', at(23, 42)], ['mall-f2', at(73, 35)]] as const) {
+            assert.throws(() => f.driver.placePlayer(p, 0, map), /Invalid fixture position/);
+        }
+        for (const p of [at(21, 42), at(26, 42), at(23, 40), at(23, 44), MALL_ANCHORS.edge]) f.driver.placePlayer(p, 0, 'mall-f2');
     }
-    for (const [map, p] of [['mall-f1', at(10, 6)], ['mall-f1', at(15, 53)], ['mall-f2', at(23, 13)], ['mall-f2', at(23, 42)], ['mall-f2', at(73, 35)]] as const) {
-        assert.throws(() => f.driver.placePlayer(p, 0, map), /Invalid fixture position/);
-    }
-    for (const p of [at(21, 42), at(26, 42), at(23, 40), at(23, 44), MALL_ANCHORS.edge]) f.driver.placePlayer(p, 0, 'mall-f2');
 });
 
 test('L-01/L-03: same-coordinate actors are hit and hear gunshots only on their own layer', () => {
@@ -399,8 +416,8 @@ test('L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities 
 test('L-09/G-03: every accessible region has runtime routes through stairs to each exit combination in both tides', () => {
     const seeds = new Map<string, number>(); for (let seed = 1; seed <= 20; seed++) seeds.set(mallRunConfig(seed).exits.map(e => e.id).join(','), seed);
     assert.equal(seeds.size, 3);
-    for (const seed of seeds.values()) for (const high of [false, true]) {
-        const f = fixture(2, seed);
+    for (const layout of [2, 3] as const) for (const seed of seeds.values()) for (const high of [false, true]) {
+        const f = fixture(layout, seed);
         for (const mapId of ['mall-f1', 'mall-f2']) {
             f.driver.placePlayer(at(62, 13), 0, mapId); const map = f.r.space!.definition, target = mapId === 'mall-f1' ? f.r.config.exits[0] : map.entries.find(e => e.id === 'S-N-down')!.at;
             for (const region of map.regions!.filter(r => !r.sealed)) {
