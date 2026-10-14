@@ -155,7 +155,7 @@ jobs:
         run: pnpm test:station-tier2
       - name: Station entry owns relief delivery
         if: matrix.group == 'world'
-        run: pnpm test:station-relief
+        run: pnpm test:station-relief && pnpm test:station-reset
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
         run: pnpm test:mall-passages

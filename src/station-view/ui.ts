@@ -5,6 +5,7 @@ import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
 import { GridDrag, esc, type DragHooks } from './grid';
 import * as P from './panels';
+import { readResetCopy, startOver } from '../fresh-start';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -26,6 +27,7 @@ export interface UIHost {
 type Dialog =
   | { kind: 'sale'; token: string; warnings: string[] }
   | { kind: 'import'; text: string; token: string; name: string }
+  | { kind: 'reset' }
   | { kind: 'storage' };
 
 const WIDE: PanelKind[] = ['gear', 'arms', 'med'];
@@ -46,7 +48,9 @@ const TITLES: Partial<Record<PanelKind, [string, string]>> = {
   generator: ['发电机', '发电机房'], deploy: ['出击准备', '院门'], body: ['身体与成长', '在站里休息会慢慢恢复'], menu: ['暂停', '滨科夫水产站'], help: ['操作说明', ''],
   board: ['寻人板', '食堂门口'], chat: ['食堂', '炊事员'], report: ['行动报告', ''],
 };
-const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', storage: '存档没有写入' };
+const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入' };
+/** Browser storage for the pre-reset copy; even reading the localStorage property can throw. */
+const browserStorage = () => localStorage;
 
 export class UI {
   readonly root: HTMLElement;
@@ -186,7 +190,7 @@ export class UI {
       case 'body': body = P.bodyHtml(s); break;
       case 'board': body = P.boardHtml(); break;
       case 'chat': body = `<p class="muted">长桌上摆着碗。灶上那锅粥一直温着，谁回来谁盛。</p>`; break;
-      case 'menu': body = P.menuHtml(this.volume); break;
+      case 'menu': body = P.menuHtml(this.volume, readResetCopy(browserStorage) !== null); break;
       case 'help': body = P.helpHtml(this.touch); break;
       case 'report': body = this.summary ? P.reportHtml(this.summary, s) : ''; break;
     }
@@ -208,7 +212,7 @@ export class UI {
     this.dialogEl.hidden = !d; this.root.classList.toggle('has-dialog', !!d);
     if (!d) { this.dialogEl.innerHTML = ''; return; }
     const s = this.rt.snapshot();
-    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : P.storageHtml(s);
+    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : d.kind === 'reset' ? P.resetConfirmHtml() : P.storageHtml(s);
     this.dialogEl.className = `modal dialog k-${d.kind}`;
     const title = d.kind === 'storage' && s.storage.conflict ? '存档已被另一个窗口接管' : DIALOG_TITLES[d.kind];
     this.dialogEl.setAttribute('aria-label', title);
@@ -319,6 +323,27 @@ export class UI {
     if (!preview.ok || !preview.token) { this.result(preview); return; }
     this.openDialog({ kind: 'import', text, token: preview.token, name: file.name });
   }
+  /** Confirmed fresh start. A refused or failed write leaves the save as it was; success resyncs like an import. */
+  private startOver() {
+    this.dialog = null; this.renderDialog();
+    const r = startOver(this.rt, browserStorage, Date.now(), () => this.host.exportSave());
+    if (r.ok) {
+      // A still pristine save is not copied (fresh-start.ts), so the toast must not claim a new local copy.
+      const message = r.copied !== false ? '存档已清空，重新开始。'
+        : readResetCopy(browserStorage) ? '存档已清空。当前存档没动过，本机保留的仍是之前清空前的存档。' : '存档已清空。当前存档没动过，本机没有另存。';
+      this.toast(message, 'ok'); this.host.sound('ok'); this.host.imported(); this.render(); return;
+    }
+    this.toast(r.message, 'error'); this.host.sound('error');
+    if (r.reason === 'conflict' || !this.rt.snapshot().storage.ok) this.showStorage();
+  }
+  /** The local pre-reset copy goes through the same preview and overwrite confirmation as an imported file. */
+  private restoreCopy() {
+    const copy = readResetCopy(browserStorage);
+    if (!copy) { this.result({ ok: false, reason: 'rule', message: '本机没有清空前的存档。' }); this.render(); return; }
+    const preview = this.rt.previewImport(copy);
+    if (!preview.ok || !preview.token) { this.result(preview); return; }
+    this.openDialog({ kind: 'import', text: copy, token: preview.token, name: '清空前的存档' }); this.host.sound('open');
+  }
 
   private click = (e: MouseEvent) => {
     const t = e.target as HTMLElement;
@@ -367,6 +392,9 @@ export class UI {
       case 'export': this.host.exportSave(); break;
       case 'import': this.root.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
       case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = this.rt.importBackup(d.text, d.token); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'reset': this.openDialog({ kind: 'reset' }); this.host.sound('open'); break;
+      case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
+      case 'reset-restore': this.restoreCopy(); break;
       case 'retry-save': { const r = this.rt.retrySave(); if (r.ok) { this.toast('已重新保存。', 'ok'); this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
       case 'reload': location.reload(); break;
       case 'fac': { this.facility = a1 as Facility; this.station = STATIONS.find(q => q.facility === a1) ?? this.station; this.render(); this.host.panelChanged(this.kind, this.station); break; }
