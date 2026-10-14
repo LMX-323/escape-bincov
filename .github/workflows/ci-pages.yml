@@ -19,10 +19,17 @@ jobs:
     name: Build shared game
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      browser_required: ${{ steps.scope.outputs.browser_required }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          # Include the synthetic PR merge's base, not just its final commit.
+          fetch-depth: 2
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -33,15 +40,30 @@ jobs:
         run: pnpm install --frozen-lockfile --registry=https://registry.npmjs.org
       - name: Domain, world and save tests
         run: pnpm test
+      - name: CI selection and coverage safeguards
+        run: node --test scripts/ci/*.test.mjs
       - name: Build and package
         run: pnpm package
       - name: Verify committed game matches source
-        run: git diff --exit-code -- dist/index.html 'start the game.html'
+        run: git diff --exit-code -- dist/index.html 'start the game.html' release/Escape-Bincov-portable.zip release/Escape-Bincov-web.zip docs/release-manifest.json
       - name: Record shared artifact checksums
         run: |
           sha256sum dist/index.html 'start the game.html' \
             release/Escape-Bincov-portable.zip release/Escape-Bincov-web.zip \
             docs/release-manifest.json > build-checksums.sha256
+      - name: Select browser regression from validated main history
+        id: scope
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/plan.mjs
+      - name: Save CI selection evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-selection
+          path: test-results/ci-plan.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload shared game
         uses: actions/upload-artifact@v6
         with:
@@ -60,14 +82,15 @@ jobs:
   browser:
     name: Browser / ${{ matrix.group }}
     needs: build
+    if: needs.build.outputs.browser_required == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       # Independent runners avoid competing Chromium processes and report paths.
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 8
       matrix:
-        group: [visual, inventory, world, input]
+        group: [visual, title, inventory, station-inventory, raid-inventory, input, world, training]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -101,17 +124,20 @@ jobs:
         if: matrix.group == 'input'
         run: pnpm test:shop-drag
       - name: Cold image failure recovery and external view input ownership
-        if: matrix.group == 'input'
+        if: matrix.group == 'visual'
         run: pnpm test:asset-load && pnpm test:hud-release
       - name: Village render target replacement and context recovery
-        if: matrix.group == 'input'
+        if: matrix.group == 'visual'
         run: pnpm test:coast-render-targets
       - name: Shop rejection feedback and stale cart recovery
         if: matrix.group == 'inventory'
         run: pnpm test:shop-feedback
-      - name: Player inventory feedback and atomic transfers
-        if: matrix.group == 'inventory'
-        run: pnpm test:issue26-station && pnpm test:issue26-inventory
+      - name: Station inventory feedback and atomic transfers
+        if: matrix.group == 'station-inventory'
+        run: pnpm test:issue26-station
+      - name: Raid inventory feedback and atomic transfers
+        if: matrix.group == 'raid-inventory'
+        run: pnpm test:issue26-inventory
       - name: Building cutaway and hidden-room visibility
         if: matrix.group == 'world'
         run: pnpm test:issue26-spatial && pnpm test:issue26-phaser-spatial
@@ -125,18 +151,18 @@ jobs:
         if: matrix.group == 'visual'
         run: pnpm test:tactical && pnpm test:art
       - name: Responsive title and motion regression
-        if: matrix.group == 'visual'
+        if: matrix.group == 'title'
         run: pnpm test:title && pnpm test:title-water
       - name: Save reliability regression
-        if: matrix.group == 'inventory'
+        if: matrix.group == 'title'
         run: pnpm test:save-browser
       - name: Obtain actual pre-expansion client
-        if: matrix.group == 'inventory'
+        if: matrix.group == 'title'
         run: |
           mkdir -p test-results
           curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb/dist/index.html --output test-results/pre-m0.html
       - name: Expansion storage and actual old-client regression
-        if: matrix.group == 'inventory'
+        if: matrix.group == 'title'
         run: pnpm test:expansion
       - name: Buildings and floor controls
         if: matrix.group == 'world'
@@ -148,13 +174,13 @@ jobs:
         if: matrix.group == 'world'
         run: pnpm test:systems
       - name: Station run count and equipped charm snapshot
-        if: matrix.group == 'world'
+        if: matrix.group == 'station-inventory'
         run: pnpm test:station-tier1
       - name: Station trusted training progress and supply feedback
-        if: matrix.group == 'world'
+        if: matrix.group == 'training'
         run: pnpm test:station-tier2
       - name: Station entry owns relief delivery
-        if: matrix.group == 'world'
+        if: matrix.group == 'training'
         run: pnpm test:station-relief && pnpm test:station-reset
       - name: Repeated same-layer mall passages
         if: matrix.group == 'world'
@@ -169,7 +195,7 @@ jobs:
         if: matrix.group == 'inventory'
         run: pnpm test:loot
       - name: Nearby loot target selection
-        if: matrix.group == 'inventory'
+        if: matrix.group == 'raid-inventory'
         run: pnpm test:loot-target
       - name: QOL transactions and information regression
         if: matrix.group == 'inventory'
@@ -181,7 +207,7 @@ jobs:
         if: matrix.group == 'input'
         run: pnpm test:mobile-ux
       - name: Offline portable regression
-        if: matrix.group == 'inventory'
+        if: matrix.group == 'title'
         run: pnpm test:portable
       - name: Save diagnostic reports and screenshots
         if: always()
@@ -200,15 +226,21 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Require build and every browser group to succeed
+      - name: Require build and the selected browser policy to succeed
         env:
           BUILD_RESULT: ${{ needs.build.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
+          BROWSER_REQUIRED: ${{ needs.build.outputs.browser_required }}
         run: |
-          if [[ "$BUILD_RESULT" != success || "$BROWSER_RESULT" != success ]]; then
-            echo "Build: $BUILD_RESULT; browser groups: $BROWSER_RESULT"
+          if [[ "$BUILD_RESULT" != success ]]; then
+            echo "Build: $BUILD_RESULT"
             exit 1
           fi
+          case "$BROWSER_REQUIRED:$BROWSER_RESULT" in
+            true:success) echo "Every browser group passed." ;;
+            false:skipped) echo "Documentation validated; reused full main browser evidence." ;;
+            *) echo "Unexpected browser policy/result: $BROWSER_REQUIRED:$BROWSER_RESULT"; exit 1 ;;
+          esac
       - name: Download validated game
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/download-artifact@v8
