@@ -1,7 +1,8 @@
 /**
- * Village sample entry (opt-in with ?sample=village). Deploying or resuming a coast-buildings raid mounts the
- * Pixi host on the real Runtime instead of starting the Phaser RaidScene; without the flag nothing changes.
- * Only one of the two may own the SaveSession: the RaidScene is never started while this host is alive.
+ * 2.5D sample entries (opt-in): ?sample=village deploys or resumes a coast-buildings raid, ?sample=mall deploys a mall
+ * raid on layout revision 3 (and resumes one on revision 2 or 3), on the Pixi host over the real Runtime instead of the
+ * Phaser RaidScene; without the flag nothing changes. Only one of the two may own the SaveSession: the RaidScene is never
+ * started while this host is alive.
  */
 import { app, audio, saveSession } from '../app';
 import { createCoastRaidHost } from '../raid-runtime';
@@ -14,8 +15,19 @@ import { SAMPLE_AREA } from './appearance';
 import { generateRunBase } from '../world';
 
 const params = () => new URLSearchParams(location.search);
-export const sampleEnabled = () => params().get('sample') === 'village';
-export const sampleSupports = () => app.expansion?.raid?.worldVersion === 'coast-buildings-v1';
+export type SampleMode = 'village' | 'mall';
+export const sampleMode = (): SampleMode | null => { const s = params().get('sample'); return s === 'village' || s === 'mall' ? s : null; };
+export const sampleEnabled = () => sampleMode() !== null;
+/**
+ * The raid in the save is one this sample draws: coast-buildings for the village, mall layout 2 or 3 for the mall (a raid
+ * deployed on layout 2 keeps it until it ends).
+ */
+export const sampleSupports = () => {
+  const world = app.expansion?.raid?.worldVersion;
+  return sampleMode() === 'mall' ? world === 'mall-v2' || world === 'mall-v3' : world === 'coast-buildings-v1';
+};
+/** Layout revision for a new mall raid: the mall sample deploys revision 3; everything else keeps the default. */
+export const sampleMallLayout = (world: string): 3 | undefined => sampleMode() === 'mall' && world === 'mall' ? 3 : undefined;
 
 /**
  * Playtest deploy with an empty seed field: take the first seed from the clock whose spawn lies in the dressed village
@@ -49,9 +61,15 @@ export async function startCoastSample(paused = false): Promise<boolean> {
       reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
       viewTiles: p.get('view') === '28' ? 28 : 24, collapseTall: p.get('collapse') !== '0',
       weather: p.get('weather') === 'clear' ? 'clear' : 'rain',
-      // Loaded on demand: esbuild still inlines the module, but the app's module graph (and Node tests) never import PNGs.
-      art: p.get('art') === 'placeholder' ? null : await (await import('./assets')).loadCoastAssets(),
+      scale: p.get('crisp') === '1' ? 'near' : p.get('crisp') === '0' ? 'fit' : 'whole',
+      art: null, mallArt: null,
     };
+    // Loaded on demand: esbuild still inlines the modules, but the app's module graph (and Node tests) never import PNGs.
+    // The mall samples are optional: without them the mall floors keep the generic placeholder pipeline.
+    if (p.get('art') !== 'placeholder') [opts.art, opts.mallArt] = await Promise.all([
+      import('./assets').then(m => m.loadCoastAssets()),
+      sampleMode() === 'mall' ? import('./mall-art-load').then(m => m.loadMallAssets()).catch(error => { console.error(error); return null; }) : null,
+    ]);
     created = test ? createTestCoastHost(app, saveSession, location.search) : createCoastRaidHost(app, saveSession);
     const host: CoastSampleHost = new CoastSampleHost(created as unknown as CoastHandle, app, saveSession, opts, () => finish(host), exportSave);
     app.coastSample = host;
@@ -95,6 +113,7 @@ function expose(driver: unknown) {
     counts: () => ({ ...lifecycle, liveViews: CoastView.live.size, canvases: document.querySelectorAll('canvas').length,
       sampleRoots: document.querySelectorAll('.coast-sample').length,
       art: [...CoastView.live].some(v => v.opts.art) ? 'sol' : 'placeholder',
+      mallArt: [...CoastView.live].some(v => v.opts.mallArt) ? 'sol' : 'placeholder',
       atlasPages: [...CoastView.live].reduce((n, v) => n + v.tex.atlas.stats.pages, 0),
       largeTextures: [...CoastView.live].reduce((n, v) => n + v.tex.atlas.stats.largeTextures, 0),
       gpuTextures: gpuTextures(),

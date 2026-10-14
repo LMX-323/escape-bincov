@@ -18,7 +18,8 @@ export function floors(session: SessionState): { id: string; label: string }[] {
 }
 
 export function mapPanelHtml(session: SessionState, batch: PublishedView, view: string, selectedExit: string, touch: boolean) {
-  const exits = batch.map.key.mapId === 'coast' ? batch.map.exits : [];
+  // The Runtime publishes the visible exits of the floor being played (none on upper floors and in cellars).
+  const exits = batch.map.exits;
   const tabs = floors(session).map(f => `<button type="button" data-do="map-floor" data-id="${f.id}"${f.id === view ? ' aria-current="page"' : ''}>${esc(f.label)}</button>`).join('');
   const options = exits.map(e => `<option value="${esc(e.name)}"${e.name === selectedExit ? ' selected' : ''}>${esc(e.name)}</option>`).join('');
   return `<header class="cs-inv-head"><div><h2>${esc(batch.map.name)} · ${esc(batch.map.floor)}</h2><span class="cs-sub">${touch ? '不暂停行动' : '不暂停行动 · M 关闭'}</span></div><button type="button" data-do="close">关闭</button></header>
@@ -54,7 +55,7 @@ export function drawMap(canvas: HTMLCanvasElement, session: SessionState, batch:
   g.font = `${size}px ${touch ? '"Microsoft YaHei", sans-serif' : '"Bincov Text", "Microsoft YaHei", sans-serif'}`; g.textAlign = 'center';
   definition?.entries.forEach(e => { g.fillStyle = '#d8bc76'; g.fillRect(X(e.at.x) - 4 * k, Y(e.at.y) - 4 * k, 8 * k, 8 * k); });
   definition?.doors.forEach(d => { g.fillStyle = '#b68552'; g.fillRect(X(d.x * 32), Y(d.y * 32), 32 * scale, 32 * scale); });
-  const current = view === batch.stamp.world.mapId, exits = current && view === 'coast' ? batch.map.exits : [];
+  const current = view === batch.stamp.world.mapId, exits = current ? batch.map.exits : [];
   const p = current ? batch.frame.player : null;
   for (const e of exits) { g.strokeStyle = '#d7ed90'; g.lineWidth = 2 * k; g.strokeRect(X(e.at.x) - 6 * k, Y(e.at.y) - 6 * k, 12 * k, 12 * k); }
   if (p) { g.fillStyle = '#fff'; g.beginPath(); g.arc(X(p.x), Y(p.y), 4 * k, 0, Math.PI * 2); g.fill(); }

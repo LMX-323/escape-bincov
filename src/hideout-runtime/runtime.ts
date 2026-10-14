@@ -310,12 +310,12 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
             + (weapon.ammo ? D.ITEMS[weapon.ammo].weight * p.equipment.ammo : 0) + (this.state.expansion?.charm ? D.ITEMS[this.state.expansion.charm.id].weight : 0);
         return { warnings: [...departureWarnings(s.profile), ...(weight > s.body.carry ? ['携行重量超过当前负重'] : []), ...(s.body.hp < s.body.hpMax ? ['生命尚未恢复'] : [])], weight, carry: s.body.carry };
     }
-    deploy(req: { world: C.RunWorld; seed: string }): C.Result & { runId?: string } {
+    deploy(req: { world: C.RunWorld; seed: string; mallLayout?: 1 | 2 | 3 }): C.Result & { runId?: string } {
         const blocked = this.guard(); if (blocked) return blocked;
         if (!req || !['coast', 'buildings', 'mall'].includes(req.world) || typeof req.seed !== 'string' || req.seed.length > 200) return fail('rule');
         if (this.samples.length) { const flushed = this.transaction('checkpoint', () => true, true); if (!flushed.ok) return flushed; }
         const seed = generateRun(req.seed.trim() || this.now()).seed;
-        if (!this.saves.beginRun(seed, req.world === 'mall' ? 'mall' : req.world === 'buildings')) return this.failed('deploy');
+        if (!this.saves.beginRun(seed, req.world === 'mall' ? 'mall' : req.world === 'buildings', { mallLayout: req.mallLayout })) return this.failed('deploy');
         this.preparedRun = this.state.save.activeRun!.runId!; this.arrival = null; this.setActivity(false); this.sync('deploy');
         return { ok: true, runId: this.preparedRun };
     }

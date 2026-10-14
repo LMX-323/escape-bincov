@@ -19,6 +19,7 @@ import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, TargetRef } from '../raid-runtime/contract';
 import type { LootTransfer } from '../loot';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
+import { actorShown } from './structure-guide';
 import { InputState } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
@@ -86,6 +87,7 @@ const HTML = `
   <div class="cs-vignette" aria-hidden="true"></div>
   <div class="cs-hurt" data-hurt aria-hidden="true"></div>
   <div class="cs-ail" data-ail aria-hidden="true"></div>
+  <div class="cs-stairs" data-stairs aria-hidden="true"></div>
   <div class="cs-exitptr" data-exitptr hidden><i></i><span data-exitptr-text></span></div>
   <div class="cs-threats" data-threats aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <section class="cs-status">
@@ -226,6 +228,8 @@ export class CoastSampleHost {
   private closed = false;
   private contextLost = false;
   private exiting = false;
+  /** t0 of the previous frame: the camera follows on these deltas (see frame()). */
+  private frameAt: number | null = null;
   private mapView = '';
   selectedExit = '';
   /** Label placement of the last map draw (read by the sample checks). */
@@ -285,6 +289,10 @@ export class CoastSampleHost {
     if (!this.mounted) return;
     if (this.exiting) { this.outro(); return; }
     const t0 = performance.now();
+    // The camera follows on the clock the Runtime moved the player on (ActiveClock deltas of t0), not on the rAF
+    // timestamp in ticker.deltaMS: with two clocks the player's whole-pixel offset flips with frame-start jitter.
+    const follow = this.frameAt === null ? this.app.ticker.deltaMS / 1000 : Math.min(.1, Math.max(0, (t0 - this.frameAt) / 1000));
+    this.frameAt = t0;
     const playing = this.panel === null;
     const intent = this.input.read(playing, (x, y) => this.view.aimFromClient(x, y));
     if (intent.firePressed) this.sound.trigger(this.last?.frame.hud.weapon);
@@ -293,7 +301,7 @@ export class CoastSampleHost {
     const t1 = performance.now();
     if (batch.map !== this.last?.map) this.noteTitles = new Set(batch.map.notes.map(n => n.title));
     this.view.openContainer = this.panel === 'loot' ? this.services.lootContext()?.containerId ?? null : null;
-    if (!this.contextLost) this.view.present(batch, this.app.ticker.deltaMS / 1000);
+    if (!this.contextLost) this.view.present(batch, this.app.ticker.deltaMS / 1000, follow);
     const t2 = performance.now();
     this.last = batch;
     if (note) this.readingFor = note;
@@ -339,14 +347,14 @@ export class CoastSampleHost {
   private markAt = { x: 0, y: 0 };
   /** Feedback for one new event. Hits are marked only where the hit point is in a revealed area (or outdoors). */
   private feedback(e: StampedEvent, b: PublishedView) {
-    const f = b.frame, shown = (p: { x: number; y: number }) => { const r = this.view.regionAt(p); return r === null || f.revealed[r] === true; };
+    const f = b.frame, shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
     if (e.type === 'shot' && e.shooter === 'player') {
       this.kick = Math.min(1.4, this.kick + (e.weapon === 'shotgun' ? 1.2 : .8));
     } else if (e.type === 'impact') {
       // The Runtime names the bullet's owner (R6-L3). Contact is on the ground plane; the marker sits on the chest plane
       // where the bullet is drawn, and only where the hit point is outdoors or in a revealed room.
       const at = e.contact ?? e.lastFree;
-      if (e.owner === 'player' && e.reason === 'hit-actor' && e.target && shown(at)) this.mark(e.target, { x: at.x, y: at.y - AIM_H }, false);
+      if (e.owner === 'player' && e.reason === 'hit-actor' && e.target && shown(at) && actorShown(f, e.target)) this.mark(e.target, { x: at.x, y: at.y - AIM_H }, false);
     } else if (e.type === 'melee' && e.attacker === 'player' && e.hit) {
       const a = f.actors.find(x => x.uid === e.hit); if (a && shown(a)) this.mark(a.uid, { x: a.x, y: a.y - AIM_H }, false);
     } else if (e.type === 'death' && e.uid !== 'player') {
@@ -670,7 +678,8 @@ export class CoastSampleHost {
     q('.cs-status').classList.toggle('low', h.hp / h.maxHp < .35);
     if ((this.stats.frames & 7) === 0) this.slowHud(b);
     const region = this.view.regionName();
-    q('[data-where]').textContent = `${b.map.name} · ${b.map.floor}${region ? ` · ${region}` : ''}${this.view.outsideSample() ? ' · 样板外（通用占位画面）' : ''}`;
+    const note = this.view.sampleNote();
+    q('[data-where]').textContent = `${b.map.name} · ${b.map.floor}${region ? ` · ${region}` : ''}${note ? ` · ${note}` : ''}`;
     const t = Math.ceil(h.timeLeft);
     q('[data-time]').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     q('[data-tide]').textContent = h.tideWarning ? '潮汐预警' : h.highTide ? '高潮' : '';
@@ -678,6 +687,7 @@ export class CoastSampleHost {
     if ((this.stats.frames & 15) === 0) { const r = this.q('.cs-status').getBoundingClientRect(); this.view.hudTop = innerHeight < 480 ? r.bottom : 0; }
     if ((this.stats.frames & 3) === 0) { const docked = this.panel === 'loot' || this.panel === 'inventory'; this.view.panelInset = docked ? Math.max(0, innerHeight - this.q('[data-panel]').getBoundingClientRect().top) : 0; }
     this.prompt(this.panel ? null : f.interaction, f.player.y);
+    this.stairNames(f);
     const cross = q('[data-cross]'); cross.hidden = this.input.touch || !this.input.pointer.inside || !!this.panel;
     // Recoil kick on the reticle; a ring around it fills while reloading.
     cross.style.transform = `translate(${this.input.pointer.x}px, ${this.input.pointer.y}px) scale(${(1 + this.kick * .32).toFixed(3)})`;
@@ -687,9 +697,10 @@ export class CoastSampleHost {
     if (reload) cross.style.setProperty('--reload', `${Math.round((1 - reload.left / Math.max(.01, reload.total)) * 360)}deg`);
     this.root.classList.toggle('touch', this.input.touch);
     let lootChanged = false;
-    const shown = (p: { x: number; y: number }) => { const r = this.view.regionAt(p); return r === null || f.revealed[r] === true; };
+    // Rooms may overlap: only a point whose every room is revealed (or one in the open) makes a hit or impact sound.
+    const shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
     for (const e of b.events) if (e.seq > this.lastSeq) {
-      this.lastSeq = e.seq; this.onEvent(e); this.sound.event(e, b.stamp.world.mapId, shown); this.feedback(e, b);
+      this.lastSeq = e.seq; this.onEvent(e); this.sound.event(e, b.stamp.world.mapId, shown, uid => actorShown(f, uid)); this.feedback(e, b);
       if (e.type === 'looted' || e.type === 'rejected') lootChanged = true;
       const { seq, type, durability, stamp, ...detail } = e;
       this.eventLog.push({ seq, type, durability, map: stamp.world.mapId, epoch: stamp.epoch, detail: detail as Record<string, unknown> });
@@ -732,7 +743,7 @@ export class CoastSampleHost {
    * at it with its straight-line distance in tiles. Exits are the Runtime's visible exits; nothing else is pointed at.
    */
   private exitPointer(b: PublishedView) {
-    const el = this.q('[data-exitptr]'), exit = b.stamp.world.mapId === 'coast' && !this.panel ? b.map.exits.find(e => e.name === this.selectedExit) : undefined;
+    const el = this.q('[data-exitptr]'), exit = !this.panel ? b.map.exits.find(e => e.name === this.selectedExit) : undefined;
     if (!exit) { el.hidden = true; return; }
     const p = b.frame.player, at = this.view.worldToClient({ x: exit.at.x, y: exit.at.y - 30 }), W = innerWidth, H = innerHeight;
     const ground = this.view.worldToClient(exit.at), tiles = Math.hypot(exit.at.x - p.x, exit.at.y - p.y) / 32;
@@ -779,6 +790,25 @@ export class CoastSampleHost {
     this.q('[data-quest-count]').textContent = `· ${progress.length} 项未完成`;
     const html = progress.map(qt => `<section><strong>${esc(qt.name)}</strong>${qt.needs.map(n => `<p>${esc(name(n.id))}：仓库 ${n.stored} · 携带 ${n.carried} / 需 ${n.needed}</p>`).join('')}</section>`).join('') || '<p>全部任务已交付。</p>';
     const list = this.q('[data-quest-list]'); if (list.innerHTML !== html) list.innerHTML = html;
+  }
+  /**
+   * Stair destinations as HUD text in the pixel face, at the place the view keeps for them (below the stair marker, moved
+   * clear of the player), shown by the same rules as before. On mall floors the one the player stands at is named by the
+   * interaction prompt instead.
+   */
+  private stairEls = new Map<string, HTMLElement>();
+  private stairNames(f: PublishedView['frame']) {
+    const box = this.q('[data-stairs]'), seen = new Set<string>(), at = this.view.mallFloor && f.interaction?.kind === 'entry' ? f.interaction.ref.id : null;
+    for (const l of this.view.stairLabelViews()) {
+      if (!l.visible || l.id === at) continue;
+      seen.add(l.id);
+      let el = this.stairEls.get(l.id);
+      if (!el) { el = document.createElement('span'); el.className = 'cs-stair'; box.appendChild(el); this.stairEls.set(l.id, el); }
+      if (el.textContent !== l.text) el.textContent = l.text;
+      const p = this.view.worldToClient({ x: l.x, y: l.y });
+      el.style.transform = `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) translateX(-50%)`; el.hidden = false;
+    }
+    for (const [id, el] of this.stairEls) if (!seen.has(id)) el.hidden = true;
   }
   private prompt(t: Interaction | null, py: number) {
     const el = this.q('[data-prompt]'), list = this.q('[data-choices]'), act = this.q('[data-act]');

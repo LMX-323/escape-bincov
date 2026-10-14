@@ -1,0 +1,29 @@
+{
+  "baseline": "7df2d222210c803ae69ae60e9e709b8db0b12cd2",
+  "baselineHtmlSha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "currentHtmlSha256": "d14cc1360a433657240888de95de48f22970f683aeca167cc7f095855c7ebab6",
+  "fixtureSha256": "4c559cb75e88b6861a5a1fe95975d35a7d8156ff6a50f25819fa82134765ee33",
+  "startedAt": "2026-10-13T14:50:36.271Z",
+  "methodology": "Actual accepted main HTML; new renderer-free production Runtime plus explicit ?test=1 driver. Same HTTPS origin fulfilled offline, real browser localStorage and reloads. Controlled clock; this is save compatibility, not mall-view or natural-input acceptance.",
+  "steps": [
+    {
+      "name": "A4/S-07 actual main creates a v1 raid; its accepted snapshot and abandon result are the reference",
+      "status": "failed",
+      "evidence": {
+        "snapshotSha256": "3c2fe82a82687954d571655b4df0c6da75c595c3ecbf4d63037a56f3c043ffc7",
+        "terminalSha256": "07d4aac61ccafeeabe42c099324aae81a4b2a04ccc83fa58ae149e2bad7bf1b0",
+        "world": "mall-v1"
+      },
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   \"TypeError: Cannot read properties of null (reading 'weapon')\\n\" +\n+     '    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\\n' +\n+     '    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\\n' +\n+     '    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\\n' +\n+     '    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\\n' +\n+     '    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\\n' +\n+     '    at https://mall-runtime.test/old?test=1&entry=tabs:9171:4842',\n+   \"TypeError: Cannot read properties of null (reading 'weapon')\\n\" +\n+     '    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\\n' +\n+     '    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\\n' +\n+     '    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\\n' +\n+     '    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\\n' +\n+     '    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\\n' +\n+     '    at HTMLDocument.<anonymous> (https://mall-runtime.test/old?test=1&entry=tabs:9171:4803)'\n+ ]\n- []\n\n    at step (file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:60:49)\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:65:5"
+    }
+  ],
+  "errors": [
+    "TypeError: Cannot read properties of null (reading 'weapon')\n    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\n    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\n    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\n    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\n    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\n    at https://mall-runtime.test/old?test=1&entry=tabs:9171:4842",
+    "TypeError: Cannot read properties of null (reading 'weapon')\n    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\n    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\n    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\n    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\n    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\n    at HTMLDocument.<anonymous> (https://mall-runtime.test/old?test=1&entry=tabs:9171:4803)"
+  ],
+  "requests": [],
+  "browser": "155.0.8059.40",
+  "status": "failed",
+  "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   \"TypeError: Cannot read properties of null (reading 'weapon')\\n\" +\n+     '    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\\n' +\n+     '    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\\n' +\n+     '    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\\n' +\n+     '    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\\n' +\n+     '    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\\n' +\n+     '    at https://mall-runtime.test/old?test=1&entry=tabs:9171:4842',\n+   \"TypeError: Cannot read properties of null (reading 'weapon')\\n\" +\n+     '    at Fm.carriedWeight (https://mall-runtime.test/old?test=1&entry=tabs:9166:13203)\\n' +\n+     '    at Fm.updateHud (https://mall-runtime.test/old?test=1&entry=tabs:9167:1458)\\n' +\n+     '    at Kt (https://mall-runtime.test/old?test=1&entry=tabs:9165:65611)\\n' +\n+     '    at Ut (https://mall-runtime.test/old?test=1&entry=tabs:9165:95710)\\n' +\n+     '    at r (https://mall-runtime.test/old?test=1&entry=tabs:9171:4696)\\n' +\n+     '    at HTMLDocument.<anonymous> (https://mall-runtime.test/old?test=1&entry=tabs:9171:4803)'\n+ ]\n- []\n\n    at step (file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:60:49)\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:65:5",
+  "finishedAt": "2026-10-13T14:50:38.552Z"
+}

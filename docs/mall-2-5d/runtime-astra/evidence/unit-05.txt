@@ -1,0 +1,51 @@
+✔ A1: deployment defaults to v1; explicit v2 is atomic and cannot change an active raid or other routes (64.0444ms)
+✔ A1/A3: yard forwards the layout once and the explicitly gated host driver works on both mall floors (29.6562ms)
+✔ A2: both mall layouts use the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits (341.8599ms)
+✔ A4/S-03/S-07/S-08: both floors and layouts survive refresh and recovery backup; malformed worlds never overwrite (80.3046ms)
+✔ G-06: every connector round-trips ten times in both layouts without respawn or duplicate entities (869.4681ms)
+✔ G-07/S-04: panel blocks transition; held interact/fire stay suppressed with host movement release (289.603ms)
+✔ G-08: crowded landing is deterministic; fully blocked landing refuses and a freed slot allows exactly one transition (14.4384ms)
+✔ L-06/S-02/S-03: departure settles hit/wall/range/enemy bullets once, freezes source, and failed commit restores every byte (149.4085ms)
+✔ L-04/L-05: all four stairs preserve pursuing identities and HP; arrival waits for occupied landing then resumes (1229.7555ms)
+✔ L-07/L-08: terrace never extracts; only O-06 floods, one warning/flip, indoor and F2 remain dry (329.1644ms)
+✔ S-09: only active ground exits, stationary held 3s, durable settlement before success, single retry award (464.0545ms)
+✔ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (95.4696ms)
+✔ G-01: all seven same-floor passages walk/sprint ten round trips with diagonal grazing and no respawn (10977.5942ms)
+✔ G-02/G-03/G-04/G-05/G-09: runtime collision/sight/bullets agree with all furniture; forbidden bounds and props cannot be looted (239.4587ms)
+✔ L-01/L-03: same-coordinate actors are hit and hear gunshots only on their own layer (28.0067ms)
+✖ L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities through failed transfer, failed stairs and refresh (13.0605ms)
+✔ L-09/G-03: every accessible region has runtime routes through stairs to each exit combination in both tides (119.2829ms)
+✔ S-06/S-08: stale writer cannot overwrite; active v2 backup import is atomic and restores the exact F2 world (26.5662ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15673.6608
+
+✖ failing tests:
+
+test at tests\mall-runtime.test.ts:1:21978
+✖ L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities through failed transfer, failed stairs and refresh (13.0605ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'rejected'
+  - 'save-failed'
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:345:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'rejected',
+    expected: 'save-failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

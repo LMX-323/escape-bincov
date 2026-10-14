@@ -100,11 +100,17 @@ try {
         const sample = await page.evaluate(() => {
           const h = window.__bincovSample.host, p = h.lastBatch.frame.player;
           const entry = h.lastBatch.map.entries.find(e => e.kind === 'up'), label = h.view.stairLabels.get(entry.id);
-          return { player: { x: p.x, y: p.y }, label: { x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height, visible: label.visible } };
+          // The label the player sees is HUD text placed at the view's label box; check that element on screen too.
+          const el = [...document.querySelectorAll('.cs-stair')].find(e => !e.hidden && e.textContent === entry.label), r = el?.getBoundingClientRect();
+          const a = h.view.worldToClient({ x: p.x - 14, y: p.y - 44 }), b = h.view.worldToClient({ x: p.x + 14, y: p.y + 4 });
+          return { player: { x: p.x, y: p.y }, label: { x: label.x - label.width / 2, y: label.y, w: label.width, h: label.height, visible: label.visible },
+            hud: r ? { x: r.left, y: r.top, w: r.width, h: r.height } : null, body: { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y } };
         });
-        const p = sample.player, l = sample.label;
+        const p = sample.player, l = sample.label, hud = sample.hud, body = sample.body;
         assert.ok(l.visible, 'known stair destination remains visible');
         assert.ok(l.x + l.w <= p.x - 14 || l.x >= p.x + 14 || l.y + l.h <= p.y - 44 || l.y >= p.y + 4, 'stair destination must not cover the player');
+        assert.ok(hud, 'the stair destination is shown on screen');
+        assert.ok(hud.x + hud.w <= body.x || hud.x >= body.x + body.w || hud.y + hud.h <= body.y || hud.y >= body.y + body.h, `shown destination must not cover the player: ${JSON.stringify({ hud, body })}`);
         samples.push(sample);
       }
       return samples;

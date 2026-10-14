@@ -188,6 +188,9 @@ jobs:
       - name: Mall landing congestion and held input
         if: matrix.group == 'world'
         run: pnpm test:mall-landing
+      - name: Mall 2.5D sample (layout 3 on the Pixi view; layout 2 raids resume)
+        if: matrix.group == 'world'
+        run: pnpm test:mall-sample
       - name: Crate and corpse inventory regression
         if: matrix.group == 'inventory'
         run: pnpm test:loot
