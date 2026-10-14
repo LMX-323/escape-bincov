@@ -663,7 +663,7 @@ for (const art of ['sol', 'placeholder']) {
 {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
-  await step('F08 gait: backpedalling plays short reversed steps 3,0,1,0 on the aim\'s body; strafing turns the body 45 deg toward the movement (S: SE, N: NE); forward and standing are unchanged', async () => {
+  await step('F08 gait: backpedalling plays short reversed steps 3,0,1,0 on the aim\'s body; strafing turns the body 45 deg toward the movement (S: SE, N: NE); forward, standing and a fall are unchanged', async () => {
     await page.evaluate(() => window.__bincovSample.driver.weapon('carbine'));
     await place(page, 640, 456, 0, 'coast'); await page.mouse.move(640 + 220, 360); await frames(page, 12);
     const NAMES = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
@@ -705,6 +705,22 @@ for (const art of ['sol', 'placeholder']) {
         return { dir: found[0], frame: found[1], sense: g.sense ?? null };
       });
     }
+    // Killed mid-strafe: the death batch still carries the velocity of the step the player died in. The fall must start
+    // on the aim's body (E), as before F08, not on the hip-turned SE body for one frame and then jump to E.
+    const killed = await page.evaluate(() => {
+      const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
+      const read = () => { for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) if (v.tex.actor('player', d, f) === g.body.texture) return [d, f]; return [-1, -1]; };
+      const batch = (alive, vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, alive, vx, vy } } });
+      const cam = { ...v.camF }, rows = [];
+      const show = (alive, vx, vy) => { v.camF = { ...cam }; v.shake = 0; v.present(batch(alive, vx, vy), .05); rows.push({ alive, dir: read()[0], frame: read()[1], deathT: +g.deathT.toFixed(3) }); };
+      v.camF = { ...cam }; v.present(batch(true, 0, 0), 0); g.walk = 0; g.sense = 1;
+      for (let i = 0; i < 4; i++) show(true, 0, 112);
+      // The fall starts as the death event starts it in present() (deathT just above 0), still inside FALL_T for both frames.
+      g.deathT = .0001; show(false, 0, 112); show(false, 0, 0);
+      // Back to the live fixture: no fall, standing on the aim.
+      g.deathT = 0; v.camF = { ...cam }; v.present(batch(true, 0, 0), .05); h.app.ticker.start();
+      return rows;
+    });
     const strip = await page.evaluate(([names]) => {
       const crops = window.__gaitCrops, order = ['forward', 'backpedal', 'strafeS', 'strafeN'];
       const label = { forward: 'forward (move E)', backpedal: 'backpedal (move W)', strafeS: 'strafe (move S)', strafeN: 'strafe (move N)' };
@@ -734,6 +750,9 @@ for (const art of ['sol', 'placeholder']) {
     // Negative control: the old rule (body on the aim, 1 + floor(walk)) draws different frames for every one of these.
     for (const n of ['backpedal', 'strafeS', 'strafeN']) assert.ok(summary[n].oldRuleDiffers >= 12, `${n}: old rule differs on ${summary[n].oldRuleDiffers}/16 frames`);
     for (const n of Object.keys(CASES)) assert.deepEqual(result[n + 'Stop'], { dir: 0, frame: 0, sense: 1 }, `${n}: standing again`);
+    assert.ok(killed.slice(0, 4).every(r => r.alive && r.dir === 1), `strafing before the death: SE body ${JSON.stringify(killed)}`);
+    assert.deepEqual(killed.slice(4).map(r => [r.alive, r.dir, r.frame, r.deathT > 0 && r.deathT < .16]), [[false, 0, 0, true], [false, 0, 0, true]], `killed mid-strafe: the fall stays on the aim's body ${JSON.stringify(killed)}`);
+    summary.killedMidStrafe = killed.map(r => `${r.alive ? 'alive' : 'falling'} ${NAMES[r.dir] ?? r.dir} f${r.frame}`);
     return summary;
   });
   await context.close();

@@ -517,8 +517,9 @@ export class CoastView {
     g.walk = speed > 5 ? (g.walk + dt * speed / 22) % 4 : 0;
     const step = Math.floor(g.walk / 2);
     if (step !== g.step) { g.step = step; if (speed > 150 && shown && a.alive && dt > 0) this.fx.dust(a.x, a.y, this.rnd, 2); }
-    // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08).
-    const gt = gait(a.aim, a.vx, a.vy, speed > 5, g.sense); g.sense = gt.sense; g.dir = gt.dir;
+    // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08). The dead
+    // and the falling face the aim as before: a death batch still carries the velocity of the step the actor died in.
+    const gt = gait(a.aim, a.vx, a.vy, speed > 5 && a.alive, g.sense); g.sense = gt.sense; g.dir = gt.dir;
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
     const dying = !a.alive && g.deathT > 0 && g.deathT < FALL_T;

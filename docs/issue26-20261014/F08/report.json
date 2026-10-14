@@ -4,7 +4,8 @@
   "base": "origin/main e9cbaa5",
   "builds": {
     "before": { "file": "e9cbaa5 dist/index.html", "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7" },
-    "after": { "file": "local pnpm build of branch wip/i26-gait (not committed; the orchestrator regenerates dist)", "sha256": "e152c386cfbd869fec54adc9c5ee25a63bb5ec3a3d421398b07f5a99bc92cbd8" }
+    "after": { "file": "local pnpm build of branch wip/i26-gait with the review fix (not committed; the orchestrator regenerates dist)", "sha256": "0253f2b8bd36474d5588f4ec741cbb90d4d74a246a5f9cfc03edf7f7a28696fb" },
+    "afterBeforeReviewFix": { "file": "local pnpm build of wip/i26-gait at dd230a8 (gait also applied to falling actors)", "sha256": "e152c386cfbd869fec54adc9c5ee25a63bb5ec3a3d421398b07f5a99bc92cbd8" }
   },
   "pixiGait": {
     "check": "scripts/coast-sample-test.mjs step 'F08 gait' (runs in pnpm test:coast-animation). Player aim E (0 rad), synthetic copies of the live batch, 16 view frames at 0.05 s and 112 px/s per case; body direction and frame read from the body texture.",
@@ -14,17 +15,24 @@
       "backpedal": { "body": ["E"], "frameRuns": [3, 0, 1, 0, 3], "framesDifferingFromOldRule": 16 },
       "strafeS": { "body": ["SE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
       "strafeN": { "body": ["NE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
-      "standingAgain": { "body": "E", "frame": 0, "sense": 1 }
+      "standingAgain": { "body": "E", "frame": 0, "sense": 1 },
+      "killedMidStrafe": ["alive SE f1", "alive SE f1", "alive SE f1", "alive SE f2", "falling E f0", "falling E f0"]
     },
     "before": {
       "status": "failed (negative control)",
       "reason": "backpedal plays the forward cycle 1,2,3,4 on the E body (identical to the old rule); strafes keep the E body",
       "animationGroup": "6/7 passed, only F08 gait failed"
     },
+    "reviewFixFallKeepsAim": {
+      "issue": "the death batch still carries the velocity of the step the actor died in, so a player killed mid-strafe drew the first fall frame on the hip-turned SE body, then jumped to E",
+      "fix": "src/coast-view/scene.ts syncActor passes `speed > 5 && a.alive` as gait's moving flag, so the dead and the falling face the aim as before F08",
+      "beforeFix": "F08 gait step failed on the dd230a8 build (animation group 6/7): falling frames were SE f0, then E f0",
+      "afterFix": "passed: falling frames E f0, E f0"
+    },
     "images": {
-      "before": "gait-strip-before-1280x720.png",
-      "after": ["gait-strip-after-1280x720.png", "gait-backpedal-after-1280x720.png", "gait-strafe-after-1280x720.png"],
-      "note": "Strips are crops of the composited view target captured in a 1280x720 viewport, one crop per walk phase."
+      "before": "gait-strip-before-1034x988.png",
+      "after": ["gait-strip-after-1034x988.png", "gait-backpedal-after-1280x720.png", "gait-strafe-after-1280x720.png"],
+      "note": "Strips (1034x988) are crops of the composited view target captured in a 1280x720 viewport, one crop per walk phase. The two full screenshots are 1280x720 pages of the new build."
     }
   },
   "touchFacing": {
