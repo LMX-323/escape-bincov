@@ -1,8 +1,8 @@
 {
   "build": "dist/index.html",
-  "sha256": "bfac3d9e4c11126d0c4ae8e40712c1d8ef090a11842a1e54480e2a22f9b4f2cd",
+  "sha256": "46f5dc43757bcb8519918c870c3faf7c64c93f62309045a16b638d5ef355ec07",
   "browser": "155.0.8059.40",
-  "startedAt": "2026-10-14T03:54:25.439Z",
+  "startedAt": "2026-10-14T04:11:45.264Z",
   "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.",
   "steps": [
     {
@@ -36,7 +36,7 @@
       "name": "S2 1280x720 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T03-54-29-081Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T04-11-48-445Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -134,7 +134,7 @@
       "name": "S2 1920x1080 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T03-54-35-771Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T04-11-54-936Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -232,7 +232,7 @@
       "name": "S2 844x390 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
       "status": "passed",
       "detail": {
-        "download": "Escape-Bincov-save-2026-10-14T03-54-42-796Z.json",
+        "download": "Escape-Bincov-save-2026-10-14T04-12-01-328Z.json",
         "backup": {
           "cash": 4321,
           "runs": 9,
@@ -330,6 +330,14 @@
         "legacyTabs": "no entry",
         "unreadable": "storage modal only, bytes kept"
       }
+    },
+    {
+      "name": "S8 1280x720 resetting an untouched new game makes no local copy and says so",
+      "status": "passed",
+      "detail": {
+        "copy": null,
+        "downloads": 1
+      }
     }
   ],
   "errors": [],
@@ -347,5 +355,5 @@
     "844x390-menu-after-reset.png",
     "1280x720-refused-conflict.png"
   ],
-  "finishedAt": "2026-10-14T03:54:56.055Z"
+  "finishedAt": "2026-10-14T04:12:14.048Z"
 }

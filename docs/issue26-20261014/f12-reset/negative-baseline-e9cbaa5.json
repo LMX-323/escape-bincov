@@ -2,7 +2,7 @@
   "build": "untouched main e9cbaa5 dist/index.html (same bytes, sha256 below)",
   "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7",
   "browser": "155.0.8059.40",
-  "startedAt": "2026-10-14T03:37:32.189Z",
+  "startedAt": "2026-10-14T04:16:17.948Z",
   "methodology": "Packaged HTML served offline on one origin. Real yard menu and dialogs (mouse at 1280x720 and 1920x1080, touch emulation at 844x390, not a real device), real Runtime, SaveSession, Web Locks, storage events and downloads. Fixtures (a long-played profile, a peer write, an unreadable record) use ?test=1 hooks or raw localStorage. Date.now is fixed per page so the five-second base checkpoint cannot add writes to the byte comparisons.",
   "steps": [
     {
@@ -72,11 +72,16 @@
         "legacyTabs": "no entry",
         "unreadable": "storage modal only, bytes kept"
       }
+    },
+    {
+      "name": "S8 1280x720 resetting an untouched new game makes no local copy and says so",
+      "status": "failed",
+      "error": "locator.click: Timeout 20000ms exceeded."
     }
   ],
   "errors": [],
   "external": [],
   "screenshots": [],
-  "finishedAt": "2026-10-14T03:41:24.477Z",
-  "purpose": "Negative control: the same scripts/station-reset-test.mjs run against the old build. Expected: every step that needs the new menu entry fails; S7 (never offered elsewhere) passes on both builds."
+  "finishedAt": "2026-10-14T04:20:31.806Z",
+  "purpose": "Negative control: the same scripts/station-reset-test.mjs (14 steps after the wording fix) run against the old build. Expected: every step that needs the new menu entry fails; S7 (never offered elsewhere) passes on both builds."
 }
