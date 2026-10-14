@@ -11,17 +11,22 @@
     "check": "scripts/coast-sample-test.mjs step 'F08 gait' (runs in pnpm test:coast-animation). Player aim E (0 rad), synthetic copies of the live batch, 16 view frames at 0.05 s and 112 px/s per case; body direction and frame read from the body texture.",
     "after": {
       "status": "passed",
-      "forward": { "body": ["E"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 0 },
-      "backpedal": { "body": ["E"], "frameRuns": [3, 0, 1, 0, 3], "framesDifferingFromOldRule": 16 },
-      "strafeS": { "body": ["SE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
-      "strafeN": { "body": ["NE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
+      "animationGroup": "7/7 passed on the after build (sha256 0253f2b8...), 2026-10-14",
+      "forward": { "body": ["E"], "frameRuns": [1, 2, 3, 4, 1] },
+      "backpedal": { "body": ["E"], "frameRuns": [3, 0, 1, 0, 3] },
+      "strafeS": { "body": ["SE"], "frameRuns": [1, 2, 3, 4, 1] },
+      "strafeN": { "body": ["NE"], "frameRuns": [1, 2, 3, 4, 1] },
       "standingAgain": { "body": "E", "frame": 0, "sense": 1 },
       "killedMidStrafe": ["alive SE f1", "alive SE f1", "alive SE f1", "alive SE f2", "falling E f0", "falling E f0"]
     },
     "before": {
       "status": "failed (negative control)",
-      "reason": "backpedal plays the forward cycle 1,2,3,4 on the E body (identical to the old rule); strafes keep the E body",
-      "animationGroup": "6/7 passed, only F08 gait failed"
+      "negativeControl": "the only negative control for this step: the same, unchanged step run against the e9cbaa5 build; the step itself does not re-derive the old rule from the new build",
+      "command": "BINCOV_SAMPLE_HTML=<e9cbaa5 dist/index.html> node scripts/coast-sample-test.mjs --group=animation",
+      "run": { "startedAt": "2026-10-14T05:28:06.363Z", "buildSHA256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7", "chromium": "155.0.8059.40", "exitCode": 1 },
+      "animationGroup": "6/7 passed, only F08 gait failed; errors 0; external requests 0",
+      "firstFailure": "backpedal: body E on all 16 frames with the forward cycle (frame runs 1,2,3,4,1; expected 3,0,1,0,3)",
+      "strafes": "not reached by the assertions (the step stops at the backpedal failure); the before strip, read from the body texture ahead of the assertions, shows body E f1-f4 for both strafes"
     },
     "reviewFixFallKeepsAim": {
       "issue": "the death batch still carries the velocity of the step the actor died in, so a player killed mid-strafe drew the first fall frame on the hip-turned SE body, then jumped to E",
