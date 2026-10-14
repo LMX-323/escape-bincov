@@ -713,6 +713,8 @@ export class RaidScene extends Phaser.Scene {
         if (input) {
             if (frame.touch) {
                 if (frame.aim) this.player.rotation = Math.atan2(frame.aim.y, frame.aim.x);
+                // Aim stick idle: face the walk direction (twin-stick convention, issue #26 F08); firing still needs the aim stick.
+                else if (dx || dy) this.player.rotation = Math.atan2(dy, dx);
             } else {
                 const rect = this.game.canvas.getBoundingClientRect();
                 const world = this.cameras.main.getWorldPoint((frame.pointer.x - rect.left) / rect.width * 960, (frame.pointer.y - rect.top) / rect.height * 540);

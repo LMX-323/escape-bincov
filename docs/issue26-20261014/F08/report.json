@@ -1,0 +1,43 @@
+{
+  "item": "issue #26 F08: non-forward walking looks like a moonwalk",
+  "date": "2026-10-14",
+  "base": "origin/main e9cbaa5",
+  "builds": {
+    "before": { "file": "e9cbaa5 dist/index.html", "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7" },
+    "after": { "file": "local pnpm build of branch wip/i26-gait (not committed; the orchestrator regenerates dist)", "sha256": "e152c386cfbd869fec54adc9c5ee25a63bb5ec3a3d421398b07f5a99bc92cbd8" }
+  },
+  "pixiGait": {
+    "check": "scripts/coast-sample-test.mjs step 'F08 gait' (runs in pnpm test:coast-animation). Player aim E (0 rad), synthetic copies of the live batch, 16 view frames at 0.05 s and 112 px/s per case; body direction and frame read from the body texture.",
+    "after": {
+      "status": "passed",
+      "forward": { "body": ["E"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 0 },
+      "backpedal": { "body": ["E"], "frameRuns": [3, 0, 1, 0, 3], "framesDifferingFromOldRule": 16 },
+      "strafeS": { "body": ["SE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
+      "strafeN": { "body": ["NE"], "frameRuns": [1, 2, 3, 4, 1], "framesDifferingFromOldRule": 16 },
+      "standingAgain": { "body": "E", "frame": 0, "sense": 1 }
+    },
+    "before": {
+      "status": "failed (negative control)",
+      "reason": "backpedal plays the forward cycle 1,2,3,4 on the E body (identical to the old rule); strafes keep the E body",
+      "animationGroup": "6/7 passed, only F08 gait failed"
+    },
+    "images": {
+      "before": "gait-strip-before-1280x720.png",
+      "after": ["gait-strip-after-1280x720.png", "gait-backpedal-after-1280x720.png", "gait-strafe-after-1280x720.png"],
+      "note": "Strips are crops of the composited view target captured in a 1280x720 viewport, one crop per walk phase."
+    }
+  },
+  "touchFacing": {
+    "pixi": {
+      "check": "tests/coast-input.test.ts (InputState, touch)",
+      "after": "4/4 passed",
+      "before": "2/4 passed against the e9cbaa5 src/coast-view/input.ts: aim stays null with only the move stick (expected PI/2) and after releasing the aim stick (expected 0)"
+    },
+    "phaser": {
+      "check": "scripts/mobile-test.mjs step 'move stick alone turns the player toward the walk direction' (844x390 landscape, CDP touch)",
+      "after": "passed: rotation PI while walking west, PI/2 while walking south, kept after release, magazine unchanged",
+      "before": "failed on the e9cbaa5 build: 'west 0' (the player keeps facing east while walking west)",
+      "images": { "before": "phaser-touch-facing-west-before-844x390.png", "after": "phaser-touch-facing-west-after-844x390.png" }
+    }
+  }
+}
