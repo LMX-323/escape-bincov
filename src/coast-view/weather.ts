@@ -139,9 +139,9 @@ export class Weather {
       }
     }
     for (let i = gl; i < this.glints.length; i++) this.glints[i].visible = false;
-    // Scraps of paper and leaves crossing the screen with the wind, fluttering between two frames.
+    // Scraps of paper and leaves crossing the screen with the wind, fluttering between two frames (not under a roof).
     let q = 0;
-    if (!this.still) for (let j = 0; j < 3; j++) {
+    if (!this.still && this.shelter < .5) for (let j = 0; j < 3; j++) {
       const period = 11 + j * 3.7, t = (time + j * 5.3) / period, c = Math.floor(t), f = frac(t);
       const x = cam.x + view.w + 24 - f * (view.w + 48), y = cam.y + view.h * (.15 + .7 * hash(j, c, 221)) + Math.sin(time * 3.1 + j) * 6 - f * 20;
       const sp = this.scraps[q] ?? this.front.addChild(new Sprite());

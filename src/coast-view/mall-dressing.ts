@@ -119,31 +119,51 @@ export function mallWallParts(m: DressMap, x: number, y: number): { cap: string[
     return { cap: [id('wall-cap')], face: mallWallFace(m, x, y), rail: [] };
 }
 
+/** An entrance: one to three open cells in a wall line, between two jambs (`wall` is the wall line's direction). */
+export interface MallOpening { wall: 'ew' | 'ns'; cells: { x: number; y: number }[]; facade: boolean }
 /**
- * Doorways in east-west walls (one to three open cells between wall cells, open on both sides) get a header at wall
- * height; north-south openings show no face in this projection. A gap between the sides of two north-south walls is a
- * corridor, and a lone pillar (an unnamed corner marker) is no jamb: neither gets a header. The facade's are entrance
- * headers, the rest shutters.
+ * Entrances of a mall floor: gaps of one to three cells in a wall line, open on both sides, that join two different
+ * places (two rooms, a room and a corridor, or the building and the outside). A gap inside one room or one corridor
+ * (between shelving, the mouth of a dead end, beside a lone corner-marker pillar) is not an entrance.
  */
-export function mallLintels(m: DressMap): { x: number; y: number; assets: string[] }[] {
+export function mallOpenings(m: DressMap): MallOpening[] {
     const f = furnitureAt(m), wall = (x: number, y: number) => m.cells[y]?.[x] === 'wall' && !f.has(`${x},${y}`) && mallWallRole(m, x, y) !== 'void';
     const open = (x: number, y: number) => { const c = m.cells[y]?.[x]; return !!c && c !== 'wall'; };
     const lone = (x: number, y: number) => !wall(x - 1, y) && !wall(x + 1, y) && !wall(x, y - 1) && !wall(x, y + 1);
-    const upright = (x: number, y: number) => wall(x, y - 1) && wall(x, y + 1);
-    const out: { x: number; y: number; assets: string[] }[] = [];
-    m.cells.forEach((row, y) => {
-        for (let x = 1; x < row.length - 1; x++) {
-            if (!wall(x - 1, y) || wall(x, y) || !open(x, y)) continue;
-            let end = x; while (end < row.length && !wall(end, y) && open(end, y)) end++;
-            if (end - x > 3 || !wall(end, y) || !wall(x - 2, y) && !wall(end + 1, y)) continue;
-            if (lone(x - 1, y) || lone(end, y) || upright(x - 1, y) && upright(end, y)) continue;
-            const through = [...Array(end - x).keys()].every(i => open(x + i, y - 1) && open(x + i, y + 1));
-            if (!through) continue;
-            const facade = m.mapId === 'mall-f1' && (y === 6 || y === 48);
-            for (let i = x; i < end; i++) out.push({ x: i, y, assets: facade ? [id('wall-lintel-entrance')] : [id('wall-lintel-shutter')] });
+    const place = (x: number, y: number) => insideFootprint(x, y) ? regionAt(m, x, y)?.id ?? '' : 'outside';
+    const band = (x: number, y: number) => insideFootprint(x, y) && (x <= 9 || x >= 63 || y <= 7 || y >= 47);
+    const out: MallOpening[] = [];
+    // `along(i)` steps along the wall line, `across(i, s)` to either side of it.
+    const scan = (dir: 'ew' | 'ns', lines: number, length: number, cell: (line: number, i: number) => [number, number]) => {
+        for (let line = 0; line < lines; line++) for (let i = 1; i < length - 1; i++) {
+            const [px, py] = cell(line, i - 1), [x0, y0] = cell(line, i);
+            if (!wall(px, py) || wall(x0, y0) || !open(x0, y0)) continue;
+            const side = (x: number, y: number, s: number): [number, number] => dir === 'ew' ? [x, y + s] : [x + s, y];
+            const through = (x: number, y: number) => !wall(x, y) && open(x, y) && open(...side(x, y, -1)) && open(...side(x, y, 1));
+            // The gap ends at the next jamb: a wall in the line, or a corner where a wall across the line meets it.
+            let end = i; while (end < length && end - i < 4 && through(...cell(line, end))) end++;
+            const [ex, ey] = cell(line, end), corner = !wall(ex, ey) && (wall(...side(ex, ey, -1)) || wall(...side(ex, ey, 1)));
+            if (end === i || end - i > 3 || !wall(ex, ey) && !corner) continue;
+            // Jambs: no lone pillars, and not two walls running across the line (a slot between two parallel walls).
+            const acrossWall = (x: number, y: number) => dir === 'ew' ? wall(x, y - 1) && wall(x, y + 1) : wall(x - 1, y) && wall(x + 1, y);
+            if (lone(px, py) || !corner && (lone(ex, ey) || acrossWall(px, py) && acrossWall(ex, ey))) continue;
+            const cells = [...Array(end - i).keys()].map(k => cell(line, i + k));
+            const [mx, my] = cells[cells.length >> 1], a = place(...side(mx, my, -1)), b = place(...side(mx, my, 1));
+            if (a === b) continue;
+            out.push({ wall: dir, cells: cells.map(([x, y]) => ({ x, y })), facade: cells.some(([x, y]) => band(x, y)) && (a === 'outside' || b === 'outside') });
         }
-    });
+    };
+    const rows = m.cells.length, cols = m.cells[0].length;
+    scan('ew', rows, cols, (y, x) => [x, y]);
+    scan('ns', cols, rows, (x, y) => [x, y]);
     return out;
+}
+/**
+ * Entrances in east-west walls get a header at wall height (north-south openings show no face in this projection): the
+ * facade's are entrance headers, the rest shutters.
+ */
+export function mallLintels(m: DressMap): { x: number; y: number; assets: string[] }[] {
+    return mallOpenings(m).filter(o => o.wall === 'ew').flatMap(o => o.cells.map(({ x, y }) => ({ x, y, assets: o.facade ? [id('wall-lintel-entrance')] : [id('wall-lintel-shutter')] })));
 }
 
 /** Wall-mounted pieces (anchor: bottom centre, `up` px above the wall's ground line) and hanging lights, by floor. */

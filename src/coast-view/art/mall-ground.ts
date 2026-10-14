@@ -18,6 +18,8 @@ export interface MallGroundBake {
   /** 1 where the cell is the drop beside the second floor. */
   drop: Uint8Array;
   decals: readonly { c: HTMLCanvasElement; x: number; y: number }[];
+  /** Entrances: a worn metal sill across the open cells along the wall line. */
+  sills: readonly { wall: 'ew' | 'ns'; cells: readonly { x: number; y: number }[] }[];
   /** Painted floor arrows toward a drawn stair flight (cell, direction). */
   guides: { x: number; y: number; dx: number; dy: number }[];
   /** Cells whose wall sprite stands on the ground: they cast a short shadow to the lower right. */
@@ -43,6 +45,13 @@ export function paintMallGround(m: MapDef, b: Rect, bake: MallGroundBake, art: S
   }
   for (const d of bake.decals) if (d.x < b.x + b.w && d.x + d.c.width > b.x && d.y < b.y + b.h && d.y + d.c.height > b.y) g.drawImage(d.c, d.x - b.x, d.y - b.y);
   for (const a of bake.guides) paintGuide(g, a.x * 32 - b.x, a.y * 32 - b.y, a.dx, a.dy, a.x, a.y);
+  for (const s of bake.sills) for (const c of s.cells) {
+    const X = c.x * 32 - b.x, Y = c.y * 32 - b.y;
+    if (X < -32 || Y < -32 || X > b.w || Y > b.h) continue;
+    // Shutter track / door sill along the wall line: a dark groove between two worn metal edges.
+    if (s.wall === 'ew') { rect(g, '#8f8977', X, Y + 13, 32, 1); rect(g, '#2e2c27', X, Y + 14, 32, 2); rect(g, '#6e695d', X, Y + 16, 32, 1); }
+    else { rect(g, '#8f8977', X + 13, Y, 1, 32); rect(g, '#2e2c27', X + 14, Y, 2, 32); rect(g, '#6e695d', X + 16, Y, 1, 32); }
+  }
   // Light falls from the upper left: walls and furniture darken the floor to their lower right, a little more for taller
   // pieces. One mask, so neighbouring pieces never darken twice.
   const rects: [number, number, number, number][] = [];

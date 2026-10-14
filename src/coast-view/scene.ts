@@ -5,18 +5,19 @@ import { paintGround, puddles, type GroundBake } from './art/ground';
 import { groundGeometry } from './art/surface';
 import { LOOT_FOOT, LOOT_H } from './art/props';
 import { solWall, type SolArt } from './art/sol';
-import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
+import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintOpeningGuide, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
 import { Fx } from './fx';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
-import { isMall, knownDoor, knownStructurePoint, mallCutaway, occupiedStructure, regionAtClosed, shownAt, structureContains } from './structure-guide';
+import { isMall, knownDoor, knownStructurePoint, mallCutRooms, mallCutaway, occupiedStructure, regionAtClosed, shownAt, structureContains } from './structure-guide';
 import { paintMallGround } from './art/mall-ground';
 import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
 import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
+import { MALL_V2_REGIONS } from '../mall-layout-v2';
 import { releaseManagedSlots } from './renderer-lifetime';
 
 export const AIM_H = 22;
@@ -73,6 +74,11 @@ export interface ViewOptions {
   mallArt: MallArt | null;
   /** Drizzle on the coast map (default) or a dry overcast; reduced motion keeps only a still mist. */
   weather: WeatherKind;
+  /**
+   * Whole-number scaling only (?crisp=1): every world pixel becomes the same number of screen pixels, so nothing shimmers
+   * while the camera moves, at the cost of a view width that follows the window. Off by default.
+   */
+  crisp?: boolean;
 }
 
 export class CoastView {
@@ -159,7 +165,8 @@ export class CoastView {
     const W = Math.max(1, Math.round((rect.width || innerWidth) * dpr)), H = Math.max(1, Math.round((rect.height || innerHeight) * dpr));
     const tw = this.opts.viewTiles * 32, th = this.opts.viewTiles === 28 ? 466 : 400;
     let s = Math.max(1, Math.min(W / tw, H / th));
-    if (Math.abs(s - Math.round(s)) < .08) s = Math.round(s);
+    if (this.opts.crisp) s = Math.max(1, Math.round(s));
+    else if (Math.abs(s - Math.round(s)) < .08) s = Math.round(s);
     const k = Math.ceil(s), w = Math.ceil(W / s), h = Math.ceil(H / s);
     this.view = { w, h, s, k, dpr, W, H };
     this.app.renderer.resize(W, H);
@@ -248,7 +255,7 @@ export class CoastView {
   private clearScene() {
     for (const layer of [this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead]) for (const c of layer.removeChildren()) c.destroy();
     this.fx?.clear();
-    this.occluders = []; this.pendingChunks = []; this.doors.clear(); this.doorGuides.clear(); this.stairLabels.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
+    this.occluders = []; this.openingGuides = []; this.pendingChunks = []; this.doors.clear(); this.doorGuides.clear(); this.stairLabels.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
     this.debugG.clear();
   }
 
@@ -265,6 +272,7 @@ export class CoastView {
     if (!bake) { const geo = groundGeometry(m, M); bake = { geo, puddles: puddles(m, M, geo) }; this.bakes.set(mapKey, bake); }
     // Mall floors with Sol's samples: dressing tables, ground inputs and lights depend only on the map (one per floor).
     const mall = this.mall = this.opts.mallArt && isMall(m) ? this.mallFor(m, mapKey, this.opts.mallArt) : null;
+    this.cutRooms = new Set();
     const art = this.opts.art, groundBake = bake;
     const paint = (r: Rect) => mall ? () => paintMallGround(m, r, mall.ground, art) : () => paintGround(m, r, M, art, groundBake);
 
@@ -294,6 +302,11 @@ export class CoastView {
     for (const n of m.notes) { const s = new Sprite(this.tex.loot('note')); s.anchor.set(.5, 11 / 14); s.position.set(n.at.x, n.at.y); this.flat.addChild(s); }
 
     const roofs: RoofArea[] = [];
+    this.openingGuides = [];
+    if (mall) for (const o of mall.openings) {
+      const n = (o.wall === 'ew' ? o.w : o.h) / 32, s = new Sprite(this.tex.ensure(`opening-guide:${o.wall}:${n}`, () => paintOpeningGuide(o.wall, n)));
+      s.position.set(o.x, o.y); s.visible = false; this.xray.addChild(s); this.openingGuides.push({ s, at: { x: o.x + o.w / 2, y: o.y + o.h / 2 } });
+    }
     if (mall) buildMall({
       tex: this.tex, art: this.opts.mallArt!,
       add: (key, x, y, z, kind, keep) => this.addOccluder(key, x, y, z, kind, keep),
@@ -398,6 +411,8 @@ export class CoastView {
   /** Mall floors: dressing per map (kept like the ground inputs), and the current floor's. */
   private mallBakes = new Map<string, MallDress>();
   private mall: MallDress | null = null;
+  /** Mall floors: rooms cut away now (kept between frames for the doorway hysteresis). */
+  private cutRooms = new Set<string>();
   private mallFor(m: MapDef, key: string, art: MallArt): MallDress {
     let d = this.mallBakes.get(key);
     if (!d) { d = mallDress(m, art, this.opts.reducedMotion); this.mallBakes.set(key, d); }
@@ -728,7 +743,8 @@ export class CoastView {
     for (const o of this.occluders) { o.sprite.renderable = intersects(vr, o.rect); if (o.links) for (const l of o.links) l.sprite.renderable = o.sprite.renderable; }
     // Mall floors cut away the player's room and the walls just in front; other layered floors their whole plan.
     const map = this.map!, mall = this.mall;
-    const cut = mall ? mallCutaway(map, p, mall.zone(p.x, p.y) === 'indoor') : (q: Point) => structureContains(map, occupied, q);
+    if (mall) this.cutRooms = mallCutRooms(map, p, this.cutRooms);
+    const cut = mall ? mallCutaway(map, this.cutRooms) : (q: Point) => structureContains(map, occupied, q);
     for (const o of this.occluders) {
       if (!o.sprite.renderable) continue;
       if (o.kind === 'roof' || o.kind === 'ceiling') {
@@ -755,8 +771,14 @@ export class CoastView {
     }
     for (const s of this.shadows.children) { const roof = (s as Graphics & { roofOf?: Occluder }).roofOf; if (roof) s.alpha = 1 - roof.level / 4; }
   }
+  /** Mall entrances: guides shown within this many world px of the player, fully opaque within two cells. */
+  private openingGuides: { s: Sprite; at: Point }[] = [];
   private updateStructureGuides(f: ViewFrame) {
     const map = this.map!, occupied = occupiedStructure(map, f.player);
+    for (const o of this.openingGuides) {
+      const d = Math.hypot(o.at.x - f.player.x, o.at.y - f.player.y);
+      o.s.visible = d < 9 * 32; o.s.alpha = d < 2.5 * 32 ? .95 : .7;
+    }
     for (const door of map.doors) {
       const guide = this.doorGuides.get(door.id)!;
       guide.visible = knownDoor(map, door, f.revealed, occupied);
@@ -915,7 +937,9 @@ export class CoastView {
   regionName(): string | null {
     const p = this.last?.player, m = this.map; if (!p || !m) return null;
     const id = regionAtClosed(m, this.last!.revealed, p);
-    return m.regions.find(r => r.id === id)?.name ?? null;
+    // Mall floors name the open-air place too (the entrance plaza, the terrace) when the player is in no room.
+    const outside = !id && this.mall ? m.regions.find(r => !r.inside && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h) : undefined;
+    return m.regions.find(r => r.id === id)?.name ?? outside?.name ?? null;
   }
   get mapDef() { return this.map; }
   /** Stair labels to show now: text, world anchor (top centre) and whether the rules show it. */
@@ -932,6 +956,14 @@ export class CoastView {
   get hiddenFx() { return this.fx.hidden; }
   actorShown(uid: string): boolean { const g = this.actors.get(uid); return !!g && (g.body.visible || !!g.corpse?.visible); }
   /** Player is on the coast map but outside the dressed village corner (generic placeholder rendering). */
+  /** HUD note for where the player is: outside the dressed sample (the coast's corner, or a mall room not yet dressed). */
+  sampleNote(): string | null {
+    if (this.outsideSample()) return '样板外（通用占位画面）';
+    const p = this.last?.player, m = this.map;
+    if (!p || !m || !this.mall) return null;
+    const id = regionAtClosed(m, this.last!.revealed, p);
+    return id && !(MALL_V2_REGIONS as readonly string[]).includes(id) ? '样板外' : null;
+  }
   outsideSample(): boolean {
     const p = this.last?.player, m = this.map, a = SAMPLE_AREA;
     return !!p && !!m && m.key.mapId === 'coast' && !(p.x >= a.x && p.x < a.x + a.w && p.y >= a.y && p.y < a.y + a.h);

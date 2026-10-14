@@ -13,10 +13,10 @@ import type { MallGroundBake } from './art/mall-ground';
 import type { AmbientZone, Light } from './lighting';
 import { mallCanvas, mallEmitId, mallPick, type MallArt } from './mall-art';
 import {
-  PROCEDURAL, WALL_LIFT, mallDecals, mallGround, mallLights, mallLintels, mallProps, mallSigns, mallStandIns,
+  PROCEDURAL, WALL_LIFT, mallDecals, mallGround, mallLights, mallLintels, mallOpenings, mallProps, mallSigns, mallStandIns,
   mallWallCells, mallWallParts, mallWallProps, mallWallRole, mallZone, type DressMap, type DressSprite, type WallRole,
 } from './mall-dressing';
-import { MALL_FURNITURE, parseFurnitureName } from '../mall-layout-v2';
+import { MALL_FURNITURE, MALL_V2_REGIONS, parseFurnitureName } from '../mall-layout-v2';
 import type { Textures } from './textures';
 
 export type OccluderKind = 'wall' | 'door' | 'roof' | 'ceiling' | 'canopy' | 'lintel' | 'prop';
@@ -45,6 +45,8 @@ export interface MallDress {
   lights: Light[];
   /** Entries whose generic stair marker is replaced by the drawn flight beside them. */
   flights: Set<string>;
+  /** Entrances (world px rectangle of the open cells, the wall line's direction), for the door guides. */
+  openings: { x: number; y: number; w: number; h: number; wall: 'ew' | 'ns' }[];
 }
 /** Painted arrows on the floor between a drawn flight's stair point and its foot, pointing at the flight. */
 export interface StairGuide { x: number; y: number; dx: number; dy: number }
@@ -71,21 +73,33 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
 
   // Walls: every drawn wall cell (not furniture, not the drop) with its parts and open sides.
   const drawn = new Uint8Array(cols * rows);
-  const cells = mallWallCells(dress).filter(c => mallWallRole(dress, c.x, c.y) !== 'void');
-  for (const c of cells) drawn[c.y * cols + c.x] = 1;
+  const all = mallWallCells(dress).filter(c => mallWallRole(dress, c.x, c.y) !== 'void');
+  for (const c of all) drawn[c.y * cols + c.x] = 1;
   const isWall = (x: number, y: number) => x >= 0 && y >= 0 && x < cols && y < rows && drawn[y * cols + x] === 1;
+  // A lone blocking cell (an unnamed corner marker) is a pillar, not a stub of wall that reads as a door frame.
+  const pillars = all.filter(({ x, y }) => mallWallRole(dress, x, y) === 'wall' && !isWall(x - 1, y) && !isWall(x + 1, y) && !isWall(x, y - 1) && !isWall(x, y + 1));
+  const cells = all.filter(c => !pillars.includes(c));
+  // South of a side entrance the wall steps down (a low jamb, then half height), so its top no longer covers the gap.
+  const openingList = mallOpenings(dress), low = new Map<string, number>();
+  for (const o of openingList.filter(o => o.wall === 'ns')) {
+    const last = o.cells[o.cells.length - 1];
+    if (isWall(last.x, last.y + 1)) low.set(`${last.x},${last.y + 1}`, 16);
+    if (isWall(last.x, last.y + 1) && isWall(last.x, last.y + 2)) low.set(`${last.x},${last.y + 2}`, 32);
+  }
   const walls: WallPiece[] = cells.map(({ x, y }) => {
     const role = mallWallRole(dress, x, y), parts = mallWallParts(dress, x, y);
     const edges = role === 'wall' ? [isWall(x, y - 1), isWall(x, y + 1), isWall(x + 1, y), isWall(x - 1, y)].map(w => w ? '-' : 'x').join('') : '----';
     // Lit from the floor in front of the wall, or from its own cell when that floor is the drop or another wall.
     const front = !isWall(x, y + 1) && zoneAt(x, y + 1) !== 2;
     const link = role === 'parapet' ? [isWall(x, y - 1), isWall(x, y + 1), isWall(x + 1, y), isWall(x - 1, y)].map(w => w ? '1' : '0').join('') : '';
-    return { x, y, role, lift: WALL_LIFT[role], cap: mallPick(art, parts.cap), face: mallPick(art, parts.face), rail: mallPick(art, parts.rail),
+    return { x, y, role, lift: role === 'wall' ? low.get(`${x},${y}`) ?? WALL_LIFT.wall : WALL_LIFT[role], cap: mallPick(art, parts.cap), face: mallPick(art, parts.face), rail: mallPick(art, parts.rail),
       link, edges, tint: front ? { x: x * T + 16, y: (y + 1) * T + 8 } : { x: x * T + 16, y: y * T + 16 } };
   });
 
   const resolve = <S extends DressSprite>(list: S[]) => list.flatMap(s => { const asset = mallPick(art, s.assets); return asset ? [{ ...s, asset }] : []; });
-  const props = resolve([...mallProps(dress), ...mallStandIns(dress)]);
+  const column = (x: number, y: number): DressSprite => ({ assets: ['mall-prop-column-v1'], x: x * T, y: (y + 1) * T - 80, z: (y + 1) * T, layer: 'sorted', emit: false,
+    foot: { x: x * T, y: y * T, w: T, h: T, lift: 48 } });
+  const props = resolve([...mallProps(dress), ...mallStandIns(dress), ...pillars.map(p => column(p.x, p.y))]);
   const lintels = mallLintels(dress).flatMap(l => { const asset = mallPick(art, l.assets); return asset ? [{ x: l.x, y: l.y, asset }] : []; });
 
   // Ground: floor sample per cell (none for the drop and the tidal mud), decals, cast-shadow sources.
@@ -108,7 +122,7 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   const W = cols * T, H = rows * T;
   const ground: MallGroundBake = {
     geo: { cols, rows, wall, mat, outdoor, wear: new Lattice(72, 5, W, H), grain: new Lattice(22, 6, W, H), damp: new Lattice(40, 7, W, H) },
-    floor, drop, walls: cells, guides: [],
+    floor, drop, walls: cells, guides: [], sills: openingList,
     decals: mallDecals(dress).flatMap(d => { const c = mallCanvas(art, d.assets, d.seed); return c ? [{ c, x: d.x, y: d.y }] : []; }),
     // Shadows start at the piece's drawn base: sofas, beds and benches leave transparent rows below it, and a shadow
     // cast from the cell's edge would sit apart from them (the piece would look as if it floated).
@@ -136,6 +150,8 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   }
   for (const w of walls) if (w.face && /curtain|window/.test(w.face) && zoneAt(w.x, w.y + 1) === 0) light(w.x * T + 16, (w.y + 1.6) * T, 70, 0x8796a0, .45);
 
+  const dressed = new Set<string>(MALL_V2_REGIONS), rooms = m.regions.filter(r => r.inside);
+  const undressed = (x: number, y: number) => { const r = rooms.find(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h); return !!r && !dressed.has(r.id); };
   const flights = new Set(m.entries.filter(e => {
     const ex = Math.floor(e.at.x / T), ey = Math.floor(e.at.y / T);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (/^stairs-/.test(furniture.get(`${ex + dx},${ey + dy}`) ?? '')) return true;
@@ -155,7 +171,9 @@ export function mallDress(m: MapDef, art: MallArt, reduced: boolean): MallDress 
   }
   return {
     dress, ground, walls, lintels, props, wallProps, lights, flights, signs: resolve(mallSigns(dress)),
-    zone: (x, y) => ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))],
+    openings: openingList.map(o => { const a = o.cells[0], b = o.cells[o.cells.length - 1]; return { x: a.x * T, y: a.y * T, w: (b.x - a.x + 1) * T, h: (b.y - a.y + 1) * T, wall: o.wall }; }),
+    // Rooms outside the dressed route sit a little darker, so the route reads as the lit way through.
+    zone: (x, y) => { const z = ZONES[zoneAt(Math.floor(x / T), Math.floor(y / T))]; return z === 'indoor' && undressed(x, y) ? 'dim' : z; },
   };
 }
 
@@ -184,7 +202,8 @@ function paintWallPiece(art: MallArt, w: WallPiece): HTMLCanvasElement {
   if (e) edge('mall-wall-edge-e-v1', T - 3, 0);
   if (west) edge('mall-wall-edge-w-v1', 0, 0);
   const face = w.face && get(w.face);
-  if (face && w.lift) g.drawImage(face, 0, 0, T, w.lift, 0, T, T, w.lift);
+  // A low wall shows the foot of the face (skirting and base), not its top band.
+  if (face && w.lift) g.drawImage(face, 0, Math.max(0, face.height - w.lift), T, Math.min(w.lift, face.height), 0, T, T, Math.min(w.lift, face.height));
   // The glass rail stands on the cap's centre line: an east-west run shows the rail itself, a north-south run its top as
   // a line along the cap. Both stop at the centre where the run ends, so corners and tees join.
   if (w.rail) {
@@ -223,7 +242,8 @@ export function buildMall(ctx: MallContext, d: MallDress) {
   for (const w of d.walls) {
     const key = `mall:wall:${w.cap}|${w.face}|${w.rail}|${w.link}|${w.edges}|${w.lift}`;
     tex.ensure(key, () => paintWallPiece(art, w));
-    const y = w.y * T - w.lift, o = ctx.add(key, w.x * T, y, (w.y + 1) * T, 'wall', 6);
+    // A cut-away wall keeps the cell it blocks solid (its bottom 32 rows), so a ghosted wall never reads as floor.
+    const y = w.y * T - w.lift, o = ctx.add(key, w.x * T, y, (w.y + 1) * T, 'wall', Math.min(32, T + w.lift));
     o.tintAt = w.tint; owners.set(`${w.x},${w.y}`, o);
     if (w.face) glow(o, w.face, w.x * T, y + T);
   }

@@ -48,6 +48,11 @@ export interface Placement { type: FurnitureName; x: number; y: number; n?: numb
 export const MALL_V2_REGIONS = ['O-02', 'F1-03', 'F1-04', 'F1-05', 'F1-11', 'F2-13', 'F2-14', 'F2-18'] as const;
 
 const cell = (x: number, y: number): Point => ({ x: (x + .5) * 32, y: (y + .5) * 32 });
+/**
+ * Where a layout-2 run starts: the west end of the entrance plaza (O-02), facing the main doors, clear of the north exit
+ * and of the furniture. Revision 1 keeps its start on the west pavement.
+ */
+export const MALL_V2_SPAWN = cell(48, 3);
 /** Same ids and pairs as revision 1. S-N moves east so its flight stands beside the entrance instead of in front of it. */
 export const MALL_V2_STAIRS = [
     ['S-W', cell(14, 41), cell(14, 31)], ['S-N', cell(62, 13), cell(62, 13)],

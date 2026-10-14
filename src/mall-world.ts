@@ -4,7 +4,7 @@ import { entityUid, newTraining, type ExpansionState, type LayeredRaid, type Wor
 import { initialLuck } from './reputation-luck';
 import { traversable, type SpaceDefinition } from './spatial';
 import type { Point, RunConfig } from './world';
-import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_STAIRS, furnitureCellName, type FurnitureType, type Placement } from './mall-layout-v2';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_SPAWN, MALL_V2_STAIRS, furnitureCellName, type FurnitureType, type Placement } from './mall-layout-v2';
 
 const at = (x: number, y: number): Point => ({ x: (x + .5) * 32, y: (y + .5) * 32 });
 export const MALL_ANCHORS = {
@@ -152,7 +152,9 @@ function buildMallWorldV2(): WorldDefinition {
     floorTwoFixtures(f2);
     settle(f1, f2);
     furnish(f1, MALL_V2_LAYOUT['mall-f1']); furnish(f2, MALL_V2_LAYOUT['mall-f2']);
-    return { id: 'mall-v2', revision: 'mall-layout-2', maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_ANCHORS.spawn };
+    // The ground floor is indoors and out; its name says only which floor it is (the HUD adds the place).
+    f1.floor = '一层';
+    return { id: 'mall-v2', revision: 'mall-layout-2', maps: { [f1.id]: f1, [f2.id]: f2 }, enemyCount: 25, spawnMap: f1.id, spawn: MALL_V2_SPAWN };
 }
 let worldV2: WorldDefinition | null = null;
 /**
@@ -166,14 +168,18 @@ export function mallRunConfig(seed: number | string): RunConfig {
     const omitted = Math.floor(random() * 3);
     return { ...config, spawn: MALL_ANCHORS.spawn, exits: exits.filter((_, i) => i !== omitted) };
 }
-/** `world` defaults to revision 1; SaveSession passes revision 2 only on an explicit deployment choice. */
+/**
+ * `world` defaults to revision 1; SaveSession passes revision 2 only on an explicit deployment choice. The run starts at
+ * the world's spawn (revision 1: the same point as the run config).
+ */
 export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout, config: RunConfig, world: WorldDefinition = MALL_WORLD): void {
+    const spawn = world.spawn;
     const maps: LayeredRaid['maps'] = Object.fromEntries(Object.keys(world.maps).map(id => [id, { doors: {}, localTime: 0, enemies: [], loot: [], containers: [], bullets: [], noise: null }]));
     const random = D.seededRandom(config.seed + 24231), points = (map: SpaceDefinition, inside: boolean): Point[] => {
         const result: Point[] = [], context = { definition: map, doors: {}, highTide: true };
         for (let y = 1; y < map.cells.length - 1; y++) for (let x = 1; x < map.cells[y].length - 1; x++) {
             const p = at(x, y), indoors = x > 8 && x < 64 && y > 6 && y < 48;
-            if (MALL_PASSAGES.some(entry => entry.map === map.id && Math.hypot(entry.at.x - p.x, entry.at.y - p.y) < 96) || inside !== indoors || !traversable(context, p, 'body', 10) || map.entries.some(e => Math.hypot(e.at.x - p.x, e.at.y - p.y) < 144) || Math.hypot(p.x - config.spawn.x, p.y - config.spawn.y) < 240) continue;
+            if (MALL_PASSAGES.some(entry => entry.map === map.id && Math.hypot(entry.at.x - p.x, entry.at.y - p.y) < 96) || inside !== indoors || !traversable(context, p, 'body', 10) || map.entries.some(e => Math.hypot(e.at.x - p.x, e.at.y - p.y) < 144) || Math.hypot(p.x - spawn.x, p.y - spawn.y) < 240) continue;
             result.push(p);
         }
         for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; }
@@ -201,7 +207,7 @@ export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout,
     }
     state.base.location = 'raid'; state.base.restSeconds = 0; state.base.energizedGranted = false;
     state.raid = { version: 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
-        currentMap: 'mall-f1', player: { ...config.spawn, rotation: 0 }, loadout: structuredClone(loadout), elapsed: 0, initialHigh: config.initialHigh, highTide: config.initialHigh, warned: false, tideChanged: false,
+        currentMap: 'mall-f1', player: { ...spawn, rotation: 0 }, loadout: structuredClone(loadout), elapsed: 0, initialHigh: config.initialHigh, highTide: config.initialHigh, warned: false, tideChanged: false,
         kills: 0, rng: (config.seed + 771) >>> 0, nextEntity: serial, maps, pursuits: [], training: newTraining(), reloadLeft: 0, fireCooldown: 0, knife: false, hitTime: 0,
         roster: Object.values(maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id }))), eventRolled: false, mapEvent: 'none' };
     initialLuck(state);

@@ -59,6 +59,8 @@ async function deployTabs(page) {
   const { context, page } = await open('?test=1&entry=tabs&sample=mall');
   await step('M00 the mall sample deploys layout revision 2 on the Pixi host with both art sets', async () => {
     await deployTabs(page);
+    const spawn = await page.evaluate(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return [p.x, p.y]; });
+    assert.deepEqual(spawn, [48.5 * 32, 3.5 * 32], 'layout 2 starts on the entrance plaza');
     const s = await page.evaluate(() => {
       const h = window.__bincovSample.host, c = window.__bincovSample.counts();
       return { state: window.__bincov.app.state, phaser: !!window.__bincov.app.raid, worldVersion: h.session.expansion.raid.worldVersion, map: h.lastBatch.stamp.world.mapId,
@@ -85,25 +87,31 @@ async function deployTabs(page) {
     await shot(page, 'm01-f1-supermarket-1280.png');
     return s;
   });
-  await step('M02 from the plaza the facade stays solid; inside the lobby the walls in front are cut away', async () => {
+  await step('M02 the facade stays solid from the plaza and from inside; only the player\'s room is cut away, keeping each wall\'s blocked cell solid', async () => {
     const facade = () => page.evaluate(() => {
       const v = window.__bincovSample.host.view, curtain = v.occluders.filter(o => o.kind === 'wall' && o.key.includes('curtain'));
       return { curtain: curtain.length, levels: [...new Set(curtain.map(o => o.level))], mist: v.weather.shelter };
     });
     await place(page, 59.5, 4.5, Math.PI / 2, 'mall-f1'); await wait(1500); await frames(page, 10);
     const outside = await facade(); await shot(page, 'm02-f1-entrance-outside-1280.png');
-    await place(page, 59.5, 15.5, Math.PI / 2, 'mall-f1'); await wait(1500); await frames(page, 10);
+    // A walled room (the convenience store F1-06): its own walls are cut, the facade beside it is not.
+    await place(page, 60, 21.5, Math.PI / 2, 'mall-f1'); await wait(1500); await frames(page, 10);
     const lobby = await page.evaluate(() => {
-      const v = window.__bincovSample.host.view, p = window.__bincovSample.host.lastBatch.frame.player;
-      // Walls whose cell centre lies up to four rows in front of the player and six cells to either side.
-      const ahead = v.occluders.filter(o => o.kind === 'wall' && o.z > p.y + 8 && o.z < p.y + 128 && Math.abs(o.rect.x + 16 - p.x) < 180);
-      return { ahead: ahead.length, cut: ahead.filter(o => o.level === 3).length, mist: v.weather.shelter };
+      const v = window.__bincovSample.host.view, m = v.mapDef, rooms = [...v.cutRooms];
+      const cell = o => ({ x: Math.floor(o.rect.x / 32), y: Math.floor((o.z - 16) / 32) });
+      const band = c => c.x >= 8 && c.x <= 64 && c.y >= 6 && c.y <= 48 && (c.x <= 9 || c.x >= 63 || c.y <= 7 || c.y >= 47);
+      const cut = v.occluders.filter(o => o.kind === 'wall' && o.level === 3), rects = m.regions.filter(r => rooms.includes(r.id));
+      const inRoom = o => rects.some(r => o.rect.x + 16 >= r.x && o.rect.x + 16 < r.x + r.w && o.z - 16 >= r.y && o.z - 16 < r.y + r.h + 32);
+      return { rooms, cut: cut.length, outside: cut.filter(o => !inRoom(o)).length, facade: cut.filter(o => band(cell(o))).length,
+        keep: [...new Set(cut.map(o => o.keepBottom))], mist: v.weather.shelter };
     });
-    await shot(page, 'm02-f1-lobby-1280.png');
+    await shot(page, 'm02-f1-store-cutaway-1280.png');
     // Only the player's own focus fade (levels 1-2 next to the body) may touch it; the structural cutaway (3) must not.
     assert.ok(outside.curtain >= 6, 'glass curtain cells'); assert.ok(outside.levels.every(l => l < 3) && outside.levels.includes(0), `curtain wall solid from outside: ${outside.levels}`);
     assert.ok(outside.mist < .2, `mist outdoors: ${outside.mist}`);
-    assert.ok(lobby.ahead > 0 && lobby.cut === lobby.ahead, JSON.stringify(lobby)); assert.ok(lobby.mist > .8, `mist thins indoors: ${lobby.mist}`);
+    assert.deepEqual(lobby.rooms, ['F1-06'], JSON.stringify(lobby)); assert.ok(lobby.cut > 0, 'the store\'s own walls are cut away');
+    assert.equal(lobby.outside, 0, 'nothing outside the player\'s room is cut'); assert.equal(lobby.facade, 0, 'the facade is never cut');
+    assert.deepEqual(lobby.keep, [32], 'a cut wall keeps its blocked cell solid'); assert.ok(lobby.mist > .8, `mist thins indoors: ${lobby.mist}`);
     return { outside, lobby };
   });
   await step('M03 overlapping rooms fail closed: an enemy in an unrevealed room inside a revealed one stays hidden', async () => {
@@ -258,6 +266,22 @@ async function deployTabs(page) {
     const s = await page.evaluate(() => ({ view: window.__bincovSample.host.view.view, frameMs: window.__bincovSample.host.view.stats.frameMs }));
     assert.ok(s.view.W >= 1900); return s;
   });
+  await step('M15 entrances are marked (door guides over the gap, a sill on the floor), headers only on entrances; the run starts on the plaza; the HUD names places', async () => {
+    await place(page, 59.5, 22.5, Math.PI, 'mall-f1'); await frames(page, 10);
+    const near = await page.evaluate(() => {
+      const v = window.__bincovSample.host.view, list = v.openingGuides;
+      return { total: list.length, shown: list.filter(o => o.s.visible).map(o => ({ x: Math.round(o.at.x / 32 - .5), y: Math.round(o.at.y / 32 - .5) })), openings: v.mall.openings.length,
+        sills: v.mall.ground.sills.length, lintels: v.mall.lintels.length, where: document.querySelector('[data-where]').textContent };
+    });
+    await shot(page, 'm15-f1-side-door-1280.png');
+    await place(page, 48.5, 3.5, 0, 'mall-f1'); await frames(page, 10);
+    const plaza = await page.evaluate(() => document.querySelector('[data-where]').textContent);
+    assert.ok(near.total >= 15 && near.openings === near.total && near.sills === near.total, JSON.stringify(near));
+    assert.ok(near.shown.some(o => o.x === 57 && o.y === 22), `the store's side door is marked: ${JSON.stringify(near.shown)}`);
+    assert.equal(near.lintels, 9, 'headers over the three east-west entrances only');
+    assert.match(near.where, /一层 · 湾角便利 · 样板外$/); assert.match(plaza, /一层 · 正门广场 · 室外$/);
+    return { near, plaza };
+  });
   await step('M14 stairs: no label beside the drawn flight but floor arrows to it; other stairs are named in the HUD face when near; pieces sit on their drawn base', async () => {
     await page.setViewportSize({ width: 1280, height: 720 }); await frames(page, 4);
     const labels = () => page.evaluate(() => [...document.querySelectorAll('.cs-stair')].filter(e => !e.hidden).map(e => ({ text: e.textContent, font: getComputedStyle(e).fontFamily, r: e.getBoundingClientRect().toJSON() })));
@@ -289,6 +313,17 @@ async function deployTabs(page) {
     for (const p of [...home.sofa, ...home.bed, ...home.bench]) assert.ok(p.foot && p.foot.y + p.foot.h <= p.z - 12, `shadow ends at the drawn base: ${JSON.stringify(p)}`);
     assert.equal(home.cafe, 4);
     return { lobby, near, far, onIt, home };
+  });
+  await context.close();
+}
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=mall&crisp=1');
+  await step('M16 ?crisp=1 scales the world by a whole number (2 at 1280x720), so world pixels stay square', async () => {
+    await deployTabs(page);
+    const v = await page.evaluate(() => { const { s, k, w, h } = window.__bincovSample.host.view.view; return { s, k, w, h }; });
+    await shot(page, 'm16-crisp-1280.png');
+    assert.equal(v.s, 2); assert.equal(v.k, 2); assert.deepEqual([v.w, v.h], [640, 360]);
+    return v;
   });
   await context.close();
 }

@@ -672,7 +672,8 @@ export class CoastSampleHost {
     q('.cs-status').classList.toggle('low', h.hp / h.maxHp < .35);
     if ((this.stats.frames & 7) === 0) this.slowHud(b);
     const region = this.view.regionName();
-    q('[data-where]').textContent = `${b.map.name} · ${b.map.floor}${region ? ` · ${region}` : ''}${this.view.outsideSample() ? ' · 样板外（通用占位画面）' : ''}`;
+    const note = this.view.sampleNote();
+    q('[data-where]').textContent = `${b.map.name} · ${b.map.floor}${region ? ` · ${region}` : ''}${note ? ` · ${note}` : ''}`;
     const t = Math.ceil(h.timeLeft);
     q('[data-time]').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     q('[data-tide]').textContent = h.tideWarning ? '潮汐预警' : h.highTide ? '高潮' : '';

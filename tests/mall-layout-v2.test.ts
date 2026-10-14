@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { MALL_WORLD, MALL_ANCHORS, MALL_PASSAGES, mallWorldV2 } from '../src/mall-world';
-import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, parseFurnitureName } from '../src/mall-layout-v2';
+import { MALL_FURNITURE, MALL_V2_LAYOUT, MALL_V2_REGIONS, MALL_V2_SPAWN, parseFurnitureName } from '../src/mall-layout-v2';
 import { resolveExpansionWorld } from '../src/expansion-worlds';
 import { traversable, type SpaceDefinition } from '../src/spatial';
 
@@ -21,7 +21,9 @@ test('布局一版逐字节不变：两版按各自世界注册，旧进行中�
     assert.equal(createHash('sha256').update(JSON.stringify(V1)).digest('hex'), '1c4ef1c490c41854c7587f6a1ca167d7ef8859b7e3c698e800bbeef570757ffd');
     assert.equal(resolveExpansionWorld('mall-v1'), V1);
     assert.equal(resolveExpansionWorld(V2.id), V2);
-    assert.deepEqual([V2.id, V2.revision, V2.enemyCount, V2.spawnMap, V2.spawn], ['mall-v2', 'mall-layout-2', 25, 'mall-f1', MALL_ANCHORS.spawn]);
+    // Layout 2 (the mall sample) starts on the entrance plaza; layout 1 keeps the west pavement.
+    assert.deepEqual([V2.id, V2.revision, V2.enemyCount, V2.spawnMap, V2.spawn], ['mall-v2', 'mall-layout-2', 25, 'mall-f1', MALL_V2_SPAWN]);
+    assert.deepEqual(V1.spawn, MALL_ANCHORS.spawn);
     assert.equal(mallWorldV2(), V2);
 });
 
@@ -76,7 +78,7 @@ test('连接落点 3×3 无遮挡且 64 像素内至少 9 个可落位；同层�
             for (let a = -2; a <= 2; a++) for (let b = -1; b <= 1; b++) assert.ok(!occupied.has(vertical ? `${px + b},${py + a}` : `${px + a},${py + b}`), `${p.id} lane`);
         }
         // Exits and the spawn keep a clear standing area; fixed test anchors keep their cell and at least three neighbours.
-        const open = map.id === 'mall-f1' ? [MALL_ANCHORS.north, MALL_ANCHORS.south, MALL_ANCHORS.loading, MALL_ANCHORS.spawn] : [];
+        const open = map.id === 'mall-f1' ? [MALL_ANCHORS.north, MALL_ANCHORS.south, MALL_ANCHORS.loading, MALL_ANCHORS.spawn, MALL_V2_SPAWN] : [];
         for (const p of open) {
             const [x, y] = cellOf(p);
             for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) assert.ok(!occupied.has(`${x + dx},${y + dy}`) && free(map, x + dx, y + dy), `${map.id} exit or spawn ${x},${y}`);

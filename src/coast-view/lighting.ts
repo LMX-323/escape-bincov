@@ -4,7 +4,8 @@ import { hasRoof } from './appearance';
 import { hash, hex, radialLight } from './art/paint';
 import type { Textures } from './textures';
 
-export type AmbientZone = (x: number, y: number) => 'outdoor' | 'indoor' | 'drop';
+/** `dim`: indoors, a little darker (the mall's rooms outside the dressed route). */
+export type AmbientZone = (x: number, y: number) => 'outdoor' | 'indoor' | 'drop' | 'dim';
 /** `flicker`: a stable seed; lamps with one dip and waver as a stateless function of view time (see `level`). */
 export interface Light { x: number; y: number; r: number; color: number; k: number; ttl?: number; age?: number; region?: string | null; flicker?: number;
   /** Every inside region at the light's point (overlapping rooms): shown only when all are revealed. */
@@ -54,7 +55,7 @@ export class Lighting {
     const m = this.map!, b = m.bounds, w = Math.ceil(b.w / AMB), h = Math.ceil(b.h / AMB), mood = this.mood;
     const coast = m.key.mapId === 'coast', cellar = m.key.mapId.endsWith('-b1');
     const [or, og, ob] = rgb(mood.outdoor), [ir, ig, ib] = rgb(cellar ? mood.cellar : mood.indoor), [rr, rg, rb] = rgb(mood.ruined);
-    const zone = this.zone, drop = [or * .42, og * .44, ob * .46];
+    const zone = this.zone, drop = [or * .42, og * .44, ob * .46], dim = [ir * .78, ig * .78, ib * .8];
     const r = new Float32Array(w * h), g = new Float32Array(w * h), bl = new Float32Array(w * h);
     const roofed = coast ? m.buildings.filter(q => hasRoof(m, q)) : [], ruins = coast ? m.buildings.filter(q => !hasRoof(m, q)) : [];
     const inside = (list: typeof roofed, x: number, y: number) => list.some(q => x >= q.x && x < q.x + q.w && y >= q.y && y < q.y + q.h);
@@ -62,7 +63,7 @@ export class Lighting {
       const wx = b.x + x * AMB + AMB / 2, wy = b.y + y * AMB + AMB / 2, i = y * w + x;
       // Layered floors are interiors throughout; on the coast, roofed footprints are indoor and roofless ruins half-shaded.
       const z = zone?.(wx, wy);
-      const [cr, cg, cb] = z ? z === 'outdoor' ? [or, og, ob] : z === 'drop' ? drop : [ir, ig, ib]
+      const [cr, cg, cb] = z ? z === 'outdoor' ? [or, og, ob] : z === 'drop' ? drop : z === 'dim' ? dim : [ir, ig, ib]
         : !coast || inside(roofed, wx, wy) ? [ir, ig, ib] : inside(ruins, wx, wy) ? [rr, rg, rb] : [or, og, ob];
       r[i] = cr; g[i] = cg; bl[i] = cb;
     }

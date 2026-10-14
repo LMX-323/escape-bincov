@@ -54,13 +54,31 @@ export function actorShown(frame: { actors: readonly { uid: string; regionId: st
 
 export const isMall = (map: MapDef) => map.buildings.some(b => b.kind === 'mall');
 /**
- * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the
- * cutaway is the room the player stands in (with its south wall), plus, indoors, the walls within a few cells in front
- * of the player (corridors have no room). `p` is a wall cell's centre. Display only, like the rest of this module.
+ * Rooms whose walls a mall floor cuts away: the rooms the player stands in, with one cell of hysteresis so the cutaway
+ * does not flicker at a doorway: a room joins once the player is a cell inside it and leaves once the player is a cell
+ * outside it. `previous` is last frame's set.
  */
-export function mallCutaway(map: MapDef, player: Point, indoors: boolean): (p: Point) => boolean {
-  const rooms = map.regions.filter(r => r.inside && contains(r, player)).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h + 32 }));
-  // Outdoors (the plaza, the terrace) the facade stays solid: only the player's own focus fade applies there.
-  const ahead = indoors ? { x: player.x - 6 * 32, y: player.y - 16, w: 12 * 32, h: 4 * 32 } : null;
-  return p => !!ahead && contains(ahead, p) || rooms.some(r => contains(r, p));
+export function mallCutRooms(map: MapDef, player: Point, previous: ReadonlySet<string> = new Set()): Set<string> {
+  const out = new Set<string>();
+  for (const r of map.regions) {
+    if (!r.inside) continue;
+    const m = previous.has(r.id) ? -32 : Math.min(32, Math.floor(Math.min(r.w, r.h) / 2) - 1);
+    if (contains({ x: r.x + m, y: r.y + m, w: r.w - m * 2, h: r.h - m * 2 }, player)) out.add(r.id);
+  }
+  return out;
+}
+/** Two-cell-thick facade band of a mall floor (cells x 8-9 and 63-64, y 6-7 and 47-48 of the building). */
+const facade = (p: Point) => {
+  const x = Math.floor(p.x / 32), y = Math.floor(p.y / 32);
+  return x >= 8 && x <= 64 && y >= 6 && y <= 48 && (x <= 9 || x >= 63 || y <= 7 || y >= 47);
+};
+/**
+ * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the
+ * cutaway is only the rooms in `rooms` (each with its south wall row); the facade is never cut, so the building reads
+ * the same from the plaza and from inside. Walls that hide the player still fade through the focus rule. `p` is a wall
+ * cell's centre. Display only, like the rest of this module.
+ */
+export function mallCutaway(map: MapDef, rooms: ReadonlySet<string>): (p: Point) => boolean {
+  const rects = map.regions.filter(r => rooms.has(r.id)).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h + 32 }));
+  return p => !facade(p) && rects.some(r => contains(r, p));
 }

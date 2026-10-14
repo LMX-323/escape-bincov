@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mallWorldV2 } from '../src/mall-world';
 import { MALL_FURNITURE, MALL_V2_LAYOUT, parseFurnitureName } from '../src/mall-layout-v2';
 import { MALL_FOOTPRINT, MALL_SPRITE_SIZE, PROCEDURAL, insideFootprint, mallProps, mallSigns, mallStandIns, mallZone, type DressMap } from '../src/coast-view/mall-dressing';
-import { actorShown, isMall, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
+import { actorShown, isMall, mallCutRooms, mallCutaway, regionAtClosed, shownAt } from '../src/coast-view/structure-guide';
 import { SampleSound } from '../src/coast-view/sound';
 import type { MapDef, PublishedView } from '../src/raid-runtime/contract';
 
@@ -29,17 +29,23 @@ test('商场 2.5D：房间重叠时按“未揭示优先”判断，内层房间
   assert.equal(shownAt(m, {}, { x: 70 * 32, y: 30 * 32 }), true, 'the terrace is no room');
 });
 
-test('商场 2.5D：切开的是玩家所在房间（含南墙）和室内正前方几格的墙；在室外时外立面不切', () => {
+test('商场 2.5D：只切开玩家所在房间（含南墙），进出各有一格缓冲；外立面永远不切', () => {
   const m = mapOf('mall-f1'), room = m.regions.find(r => r.id === 'F1-03')!;
-  const player = { x: room.x + room.w / 2, y: room.y + 64 }, cut = mallCutaway(m, player, true);
+  const deep = { x: room.x + room.w / 2, y: room.y + 64 }, rooms = mallCutRooms(m, deep), cut = mallCutaway(m, rooms);
+  assert.ok(rooms.has('F1-03'));
   assert.equal(cut({ x: room.x + 16, y: room.y + room.h + 16 }), true, 'the room\'s south wall row');
   assert.equal(cut({ x: room.x + room.w - 16, y: room.y + 16 }), true, 'a wall cell inside the room');
-  assert.equal(cut({ x: room.x - 200, y: player.y + 400 }), false, 'a wall far from the room');
-  // Lobby of the north entrance from the plaza: nothing in front is cut outdoors, the same spot indoors cuts ahead.
-  const plaza = { x: 59.5 * 32, y: 4.5 * 32 }, facade = centre(58, 6);
-  assert.equal(mallCutaway(m, plaza, false)(facade), false);
-  assert.equal(mallCutaway(m, plaza, true)(facade), true);
-  assert.equal(mallCutaway(m, plaza, true)({ x: facade.x, y: plaza.y - 64 }), false, 'never behind the player');
+  assert.equal(cut({ x: room.x - 200, y: deep.y + 400 }), false, 'a wall far from the room');
+  // Hysteresis: half a cell inside the edge does not join; once joined, half a cell outside does not leave.
+  const edge = { x: room.x + 16, y: room.y + room.h / 2 }, outside = { x: room.x - 16, y: room.y + room.h / 2 };
+  assert.equal(mallCutRooms(m, edge).has('F1-03'), false);
+  assert.equal(mallCutRooms(m, edge, new Set(['F1-03'])).has('F1-03'), true);
+  assert.equal(mallCutRooms(m, outside, new Set(['F1-03'])).has('F1-03'), true);
+  assert.equal(mallCutRooms(m, { x: room.x - 48, y: room.y + room.h / 2 }, new Set(['F1-03'])).has('F1-03'), false);
+  // The north facade (y 6) stays solid even with the lobby behind it cut away.
+  const lobby = m.regions.find(r => r.id === 'F1-11')!;
+  assert.equal(mallCutaway(m, new Set(['F1-11']))(centre(58, 6)), false);
+  assert.equal(mallCutaway(m, new Set(['F1-11']))({ x: lobby.x + lobby.w / 2, y: lobby.y + lobby.h + 16 }), true);
   assert.equal(isMall(m), true); assert.equal(isMall(mapOf('mall-f1', 'resident')), false);
 });
 
