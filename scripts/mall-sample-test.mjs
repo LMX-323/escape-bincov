@@ -325,6 +325,22 @@ async function deployTabs(page) {
     assert.equal(home.cafe, 4);
     return { lobby, near, far, onIt, home };
   });
+  await step('M19 the sealed maintenance core is never cut away, even from the F2 hall that contains it', async () => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await place(page, 49.5, 16.5, Math.PI / 2, 'mall-f2'); await wait(1500); await frames(page, 10);
+    const s = await page.evaluate(() => {
+      const v = window.__bincovSample.host.view;
+      // The core is x45-53, y7-13 on both floors; a wall piece's cell is (rect.x, z - 16).
+      const core = v.occluders.filter(o => o.kind === 'wall' && o.rect.x >= 45 * 32 && o.rect.x < 54 * 32 && o.z - 16 >= 7 * 32 && o.z - 16 < 14 * 32);
+      return { rooms: [...v.cutRooms], core: core.length, renderable: core.filter(o => o.sprite.renderable).length,
+        levels: [...new Set(core.map(o => o.level))].sort(), cut: core.filter(o => o.level >= 3).length };
+    });
+    await shot(page, 'm19-f2-hall-core-1280.png');
+    assert.ok(s.rooms.includes('F2-01'), `the player stands in the hall around the core: ${s.rooms}`);
+    assert.equal(s.core, 63, 'one wall piece per core cell'); assert.equal(s.renderable, 63, 'the whole core is in view');
+    assert.equal(s.cut, 0, `no core wall is cut away (levels ${s.levels})`);
+    return s;
+  });
   await context.close();
 }
 {

@@ -100,10 +100,13 @@ export function mallCorridorWalls(map: MapDef, player: Point): Set<string> {
 /**
  * Mall floors are one building each, so the layered-floor rule would cut every wall of the floor away at once. Here the
  * cutaway is the rooms in `rooms` (each with its south wall row) and, in a corridor, the `corridor` walls just ahead;
- * the facade's north and side walls are never cut, so the building reads the same from the plaza and from inside. Walls
- * that hide the player still fade through the focus rule. `p` is a wall cell's centre. Display only.
+ * the facade's north and side walls are never cut, so the building reads the same from the plaza and from inside. Nor is
+ * a sealed block (the maintenance core): there is no floor behind it, so cutting it would only show stacked wall feet. On
+ * F2 it lies inside F2-01. Walls that hide the player still fade through the focus rule. `p` is a wall cell's centre.
+ * Display only.
  */
 export function mallCutaway(map: MapDef, rooms: ReadonlySet<string>, corridor: ReadonlySet<string> = new Set()): (p: Point) => boolean {
   const rects = map.regions.filter(r => rooms.has(r.id)).map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h + 32 }));
-  return p => !facade(p) && (rects.some(r => contains(r, p)) || corridor.has(`${Math.floor(p.x / 32)},${Math.floor(p.y / 32)}`));
+  const sealed = map.regions.filter(r => r.sealed);
+  return p => !facade(p) && !sealed.some(r => contains(r, p)) && (rects.some(r => contains(r, p)) || corridor.has(`${Math.floor(p.x / 32)},${Math.floor(p.y / 32)}`));
 }

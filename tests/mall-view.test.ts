@@ -59,6 +59,22 @@ test('商场 2.5D：只切开玩家所在房间（含南墙），进出各有一
   assert.equal(isMall(m), true); assert.equal(isMall(mapOf('mall-f1', 'resident')), false);
 });
 
+test('商场 2.5D：封存检修核后面没有地面，任何房间或走廊剖开都不切它（二层它在 F2-01 里面）', () => {
+  // The F2 hall contains the core, so standing in it must not vacuously miss the case this guards.
+  assert.ok(mallCutRooms(mapOf('mall-f2'), centre(49, 16)).has('F2-01'));
+  for (const id of ['mall-f1', 'mall-f2']) {
+    const m = mapOf(id), core = m.regions.filter(r => r.sealed);
+    assert.deepEqual(core.map(r => [r.x, r.y, r.w, r.h]), [[45 * 32, 7 * 32, 9 * 32, 7 * 32]], `${id} has one sealed core at x45 y7, 9x7`);
+    const hits = new Set<string>();
+    m.cells.forEach((row, y) => row.forEach((c, x) => {
+      if (c === 'wall') return;
+      const p = centre(x, y), rooms = mallCutRooms(m, p), cut = mallCutaway(m, rooms, rooms.size ? undefined : mallCorridorWalls(m, p));
+      for (let cy = 7; cy <= 13; cy++) for (let cx = 45; cx <= 53; cx++) if (cut(centre(cx, cy))) hits.add(`${cx},${cy}`);
+    }));
+    assert.deepEqual([...hits], [], `${id}: core walls cut from some open cell`);
+  }
+});
+
 test('商场 2.5D：环境光分区——楼体内为室内，二层楼外只有露台一圈是室外，其余是临空', () => {
   const f1 = dress('mall-f1'), f2 = dress('mall-f2'), count = (m: DressMap, z: string) => m.cells.flatMap((row, y) => row.map((_, x) => mallZone(m, x, y))).filter(v => v === z).length;
   assert.equal(count(f1, 'drop'), 0);
