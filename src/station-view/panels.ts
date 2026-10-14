@@ -196,10 +196,17 @@ export function helpHtml(touch: boolean) {
   return `<div class="help"><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></div>`;
 }
 
-export function menuHtml(volume: number) {
+/** `resetCopy`: a pre-reset copy is stored locally, so the menu also offers to restore it. */
+export function menuHtml(volume: number, resetCopy = false) {
   return `<div class="menu">${btn('继续', 'close', 'primary wide')}<label class="vol">游戏音量 <b id="volv">${Math.round(volume * 100)}%</b><input id="vol" type="range" min="0" max="1" step="0.05" value="${volume}" aria-label="游戏音量"></label>${btn('操作说明', 'help', 'wide')}${btn('切换到旧版页签', 'tabs', 'wide')}
   <h4>本地存档</h4><p class="muted">更换浏览器或游玩地址前，请先导出备份。</p><div class="seg">${btn('导出存档', 'export')}${btn('导入存档', 'import')}</div><input id="backup-file" type="file" accept=".json,application/json" hidden>
+  ${btn('清空存档，重新开始', 'reset', 'danger wide')}${resetCopy ? btn('恢复清空前的存档', 'reset-restore', 'wide') : ''}
   ${btn('返回主菜单', 'title', 'wide')}</div>`;
+}
+
+/** Fresh start confirmation (yard menu only): a backup download and a local copy come before the wipe. */
+export function resetConfirmHtml() {
+  return `<div class="confirm"><p>现金、物资、任务、设施、身体和成长都会回到新开局，音量设置保留。</p><p class="muted">确认后会先下载一份当前存档的备份，本机也会留一份；需要时可在菜单「恢复清空前的存档」找回。本机只留最近一次清空前的存档。</p><div class="acts">${btn('下载备份并清空', 'reset-confirm', 'danger')}${btn('再想想', 'close')}</div></div>`;
 }
 
 /** Save failed or another window took the save over: nothing else can be done until it is resolved. */
