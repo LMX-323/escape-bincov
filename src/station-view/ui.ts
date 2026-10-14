@@ -319,7 +319,12 @@ export class UI {
   private startOver() {
     this.dialog = null; this.renderDialog();
     const r = startOver(this.rt, browserStorage, Date.now(), () => this.host.exportSave());
-    if (r.ok) { this.toast('存档已清空，重新开始。', 'ok'); this.host.sound('ok'); this.host.imported(); this.render(); return; }
+    if (r.ok) {
+      // A still pristine save is not copied (fresh-start.ts), so the toast must not claim a new local copy.
+      const message = r.copied !== false ? '存档已清空，重新开始。'
+        : readResetCopy(browserStorage) ? '存档已清空。当前存档没动过，本机保留的仍是之前清空前的存档。' : '存档已清空。当前存档没动过，本机没有另存。';
+      this.toast(message, 'ok'); this.host.sound('ok'); this.host.imported(); this.render(); return;
+    }
     this.toast(r.message, 'error'); this.host.sound('error');
     if (r.reason === 'conflict' || !this.rt.snapshot().storage.ok) this.showStorage();
   }

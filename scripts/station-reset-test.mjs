@@ -98,6 +98,7 @@ try {
       const dialog = yard('.dialog.k-reset'); await dialog.waitFor();
       assert.equal(await dialog.locator('h2').textContent(), '清空存档');
       assert.match(await dialog.textContent(), /现金、物资、任务、设施、身体和成长都会回到新开局，音量设置保留。/);
+      assert.match(await dialog.textContent(), /本机只保存一份；当前存档如果还是没动过的新开局，就不另存，原来那一份保留。/, 'the dialog states the pristine exception');
       assert.equal(await dialog.locator('[data-act="reset-confirm"]').textContent(), '下载备份并清空');
       assert.equal(await read(page, SESSION), before, 'opening the dialog writes nothing'); assert.equal(await read(page, COPY), null);
       await shot(`${tag}-confirm`);
@@ -150,8 +151,10 @@ try {
       await downloaded; await page.waitForFunction(r => JSON.parse(localStorage.getItem('escape-bincov.session.v2')).revision === r + 1, rev);
     };
     await resetOnce(); const copy = await read(page, COPY); assert.equal(JSON.parse(copy).record.profile.cash, 4321);
+    await toastWith('存档已清空，重新开始。').waitFor();
     const writesBefore = (await writes(page)).length;
     await resetOnce();
+    await toastWith('存档已清空。当前存档没动过，本机保留的仍是之前清空前的存档。').waitFor();
     assert.equal(await read(page, COPY), copy, 'resetting an untouched fresh start keeps the real pre-reset copy');
     assert.deepEqual((await writes(page)).slice(writesBefore), [SESSION], 'no copy write');
     assert.equal(page.downloads.length, 2, 'the backup download still happens');
@@ -203,5 +206,17 @@ try {
     assert.equal(await page.locator('#station-yard').count(), 0); assert.equal(await page.locator('body').evaluate(el => el.innerText.includes('清空存档')), false);
     assert.equal(await read(page, SESSION), future, 'unreadable bytes are kept'); assert.equal(await read(page, COPY), null);
     return { legacyTabs: 'no entry', unreadable: 'storage modal only, bytes kept' };
+  });
+  await step('S8 1280x720 resetting an untouched new game makes no local copy and says so', async () => {
+    await openContext([1280, 720]); page = await openPage(); await enterYard(); await openMenu();
+    assert.equal(await yard('[data-act="reset-restore"]').count(), 0);
+    const before = await stored(page), writesBefore = (await writes(page)).length, downloaded = expectDownload();
+    await tap(yard('.modal.k-menu [data-act="reset"]')); await tap(yard('.dialog [data-act="reset-confirm"]'));
+    await downloaded; await toastWith('存档已清空。当前存档没动过，本机没有另存。').waitFor();
+    assert.equal((await stored(page)).revision, before.revision + 1, 'the reset itself still commits');
+    assert.equal(await read(page, COPY), null, 'a pristine save is not copied');
+    assert.deepEqual((await writes(page)).slice(writesBefore), [SESSION], 'no copy write');
+    assert.equal(await yard('[data-act="reset-restore"]').count(), 0, 'no restore entry without a copy');
+    return { copy: null, downloads: page.downloads.length };
   });
 } finally { await context?.close(); await browser.close(); report.finishedAt = new Date().toISOString(); await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2)); }

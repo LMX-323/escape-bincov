@@ -206,7 +206,7 @@ export function menuHtml(volume: number, resetCopy = false) {
 
 /** Fresh start confirmation (yard menu only): a backup download and a local copy come before the wipe. */
 export function resetConfirmHtml() {
-  return `<div class="confirm"><p>现金、物资、任务、设施、身体和成长都会回到新开局，音量设置保留。</p><p class="muted">确认后会先下载一份当前存档的备份，本机也会留一份；需要时可在菜单「恢复清空前的存档」找回。本机只留最近一次清空前的存档。</p><div class="acts">${btn('下载备份并清空', 'reset-confirm', 'danger')}${btn('再想想', 'close')}</div></div>`;
+  return `<div class="confirm"><p>现金、物资、任务、设施、身体和成长都会回到新开局，音量设置保留。</p><p class="muted">确认后会先下载一份当前存档的备份，本机也会另存一份，需要时可在菜单「恢复清空前的存档」找回。本机只保存一份；当前存档如果还是没动过的新开局，就不另存，原来那一份保留。</p><div class="acts">${btn('下载备份并清空', 'reset-confirm', 'danger')}${btn('再想想', 'close')}</div></div>`;
 }
 
 /** Save failed or another window took the save over: nothing else can be done until it is resolved. */
