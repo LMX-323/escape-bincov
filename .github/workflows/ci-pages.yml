@@ -114,7 +114,7 @@ jobs:
         run: pnpm test:issue26-station && pnpm test:issue26-inventory
       - name: Building cutaway and hidden-room visibility
         if: matrix.group == 'world'
-        run: pnpm test:issue26-spatial
+        run: pnpm test:issue26-spatial && pnpm test:issue26-phaser-spatial
       - name: UI layout and screenshot review
         if: matrix.group == 'visual'
         run: pnpm test:ui
