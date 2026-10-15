@@ -15,6 +15,7 @@ import { mapPresentation } from './building-world';
 import { resolveExpansionWorld } from './expansion-worlds';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
 import { derivedLimits, entityUid } from './expansion-state';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot } from './raid-state-projection';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from './rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, spaceSize, toggleDoor, traversable, type Interaction, type SpaceContext } from './spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy } from './layer-transition';
@@ -400,32 +401,27 @@ export class RaidScene extends Phaser.Scene {
         g.fillStyle(0xf0dfb0, 1).fillTriangle(at.x, at.y + d * 6, at.x - 6, at.y - d * 4, at.x + 6, at.y - d * 4);
     }
 
+    /**
+     * Capture live state, not the last committed record; snapshot also synchronizes live ammo.
+     * Clone layered first, then overlay current entities; pursuits retain enemy ownership.
+     * The returned candidate is isolated, but only SaveSession can make it durable.
+     * No clock/RNG advance or publication occurs here; a missing layered raid throws.
+     * @see applyActiveRaidSnapshot
+     */
     snapshotExpansion(): ExpansionState {
         if (!this.layered?.raid) throw new Error('没有多层行动。');
-        const state = structuredClone(this.layered), raid = state.raid!, c = this.snapshot(), layer = raid.maps[raid.currentMap];
-        Object.assign(state.body, { hp: this.hp, stamina: this.stamina, pollution: this.pollution, bleeding: !!this.bleeding, exhausted: this.exhausted });
-        Object.assign(raid, { player: c.player, loadout: c.loadout, elapsed: c.elapsed, highTide: c.highTide, warned: c.warned, tideChanged: c.tideChanged,
-            kills: c.kills, rng: c.rng, nextEntity: c.nextEntity, reloadLeft: c.reloadLeft, fireCooldown: c.fireCooldown, knife: c.knife, hitTime: c.hitTime });
-        const projected = raid.pursuits.filter(p => p.sourceMap === raid.currentMap);
-        layer.enemies = c.enemies.filter(e => !projected.some(p => p.enemy.uid === e.uid));
-        projected.forEach(p => { const enemy = c.enemies.find(e => e.uid === p.enemy.uid); if (enemy) p.enemy = enemy; });
-        Object.assign(layer, { loot: c.loot, containers: c.containers!, bullets: c.bullets,
-            noise: c.shotNoise && c.noiseTime > 0 ? { at: c.shotNoise, radius: c.noiseRadius, remaining: c.noiseTime } : null });
+        const state = structuredClone(this.layered), c = this.snapshot();
+        applyActiveRaidSnapshot(state.body, state.raid!, c);
         return state;
     }
     restoreExpansion(state: ExpansionState): void {
         const oldMap = this.layered?.raid?.currentMap; this.layered = structuredClone(state);
         // A durable terminal write restores body/base state before the scene stops.
         if (!this.layered.raid) return;
-        const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
+        const raid = this.layered.raid!;
         // Critical texts belong to the map they were shown on; same-map redraws keep them.
         if (oldMap !== raid.currentMap) { this.clearCritTexts(); this.drawEnvironment(); }
-        this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
-            hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
-            kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
-            warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
-            hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
-            enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+        this.restore(activeRaidCheckpoint(state.body, raid, this.stepTime));
         // A new map's roofs follow the restored position, not the one before the transition.
         if (oldMap !== raid.currentMap) this.drawRoofs();
     }

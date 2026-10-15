@@ -157,7 +157,7 @@ pnpm dev
 
 ## 🤝 协作与发布
 
-本仓库是项目权威来源，`main` 是已接受版本。接手先读 [AGENTS.md](AGENTS.md)、[开发手册](docs/AGENT-HANDBOOK.md)、[任务清单](docs/WORK-QUEUE.md) 和 [handoff.md](handoff.md)，再核对相关 PR 的实时状态；历史报告中的“待审”“未合并”只代表当时记录。
+本仓库是项目权威来源，`main` 是已接受版本。接手先读 [AGENTS.md](AGENTS.md)，从[代码导航](docs/CODEMAP.md)选择任务、定位契约和测试，再核对[任务清单当前入口](docs/WORK-QUEUE.md)与相关 PR 的实时状态。[开发手册](docs/AGENT-HANDBOOK.md)按相关流程/风险小节读取；[handoff.md](handoff.md)及历史报告按任务需要查证，不再要求每次全文加载。
 
 同一交付目标继续原分支与 PR，独立任务才另开分支；不得覆盖他人工作或直接推送 `main`。源码、打包脚本或游玩说明变化后按仓库要求重新打包。存档兼容、写入失败回滚与单文件离线能力必须保留。
 

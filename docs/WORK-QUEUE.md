@@ -1,3 +1,21 @@
+# 当前任务入口
+
+最近核对：2026-10-15，已接受 main `773dcdf`。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+
+| 目标 | 承接入口 | 接手提示 |
+| --- | --- | --- |
+| 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [当前实施摘要](tasks/quality-entropy.md) | `agent/quality-entropy`；导航/契约与共享投影，后续阶段继续原总单 |
+| 行动默认 2.5D | [PR #57](https://github.com/xuys2025/escape-bincov/pull/57) | 与输入修复及旧行动恢复协调；不重复承接 |
+| 开场制作与分镜 | [PR #56](https://github.com/xuys2025/escape-bincov/pull/56) · [PR #41](https://github.com/xuys2025/escape-bincov/pull/41) | 实现、素材与原方案继续原 PR |
+| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | 行动规则收敛前核对在途设计 |
+| 暴击/Perk 方案 | [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) | 方案与实现状态以 PR 为准 |
+| 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
+
+开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
+
+<details>
+<summary>历史交接与旧任务快照（按需查证，保留原文）</summary>
+
 ## 2026-10-15 · 行动种子超过 10 亿时结算存不下来（fix/run-seed-overflow）
 
 线上问题：2026-10-14 18:09 UTC 起，用时钟种子出击的行动结算都会保存失败，持续到 2026-11-21 17:25 UTC，之后每 49.7 天里约有 38 天复发。也会让所有 PR 的 CI 在 `test:save-browser` 失败。修复只改“上次行动结果”种子的校验上限，并补回归测试；独立 PR，不混入开场动画 #56。
@@ -275,3 +293,5 @@ Astra按维护者要求从5075ed6续作，见[第三轮资源报告](station-yar
 2026-10-09 Opus 从 `5b09c05` 处理 R7-F20-FE-01/02：停放渲染器时重建 Pixi 的 GC 管理表，去掉空槽（实测六张表都在长，不只 Graphics）；初始化后摘下样板不用的 Pixi 事件系统，不再保留旧 HUD，指针和触屏样式由 coast.css 保留。命名快照第 6/20/40/60 轮空槽和旧 HUD 都为 0。同口径严格 60 轮第 56–60 轮 +939,563 B → +797,456 B，F20 仍 PARTIAL。样板 51/51、Sol 边界 7 项通过、生命周期 2×4/4、CI 同款 20/20。见[报告](coast-sample-view/opus-f20-20261009/README.md)。仅本地提交。
 
 2026-10-09 Sol 从 `6e34e96` 独立复验 F20：先补六表原始结构门禁及59个负对照；FE-01 PASS，FE-02 Pixi链PASS但广义HUD释放PARTIAL（Phaser mousePointer事件在放弃结果页保留1棵、原生返回后0，交Astra SOL-F20-HUD-01）。原严格正式包60轮三个窗口+358879.2/+620021.6/+794532.8 B，总堆仍PARTIAL；命名四快照六表空槽/旧HUD/Pixi native均0，宿主12类owner保留/释放1→0。243单测、package、样板51项、桌面/移动输入、F14/F16、普通生命周期两尺寸4/4通过；六制品不变。ASTRA-SAVE-01未确认、真机真人未测。见[签收](coast-sample-view/sol-f20-20261009/README.md)、[分工清单](coast-sample-view/sol-f20-20261009/defects.md)。仅本地测试报告提交后停止，不扩功能/素材、不推送/合并/发布。
+
+</details>
