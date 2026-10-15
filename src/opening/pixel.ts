@@ -25,6 +25,7 @@ export class Palette {
   /** Pixel values for an ImageData Uint32 view (little-endian ABGR). */
   readonly rgba = new Uint32Array(256);
   readonly lab: Lab[] = [];
+  readonly rgb: [number, number, number][] = [];
   private readonly lookup = new Map<number, number>();
 
   index(r: number, g: number, b: number): number {
@@ -35,6 +36,7 @@ export class Palette {
       if (i >= CLEAR) throw new Error('Opening palette exceeds 255 colours.');
       this.lookup.set(key, i);
       this.lab.push(oklab(r, g, b));
+      this.rgb.push([r, g, b]);
       this.rgba[i] = ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
     }
     return i;
@@ -53,6 +55,13 @@ export class Palette {
   nearest(hex: string): number {
     const n = parseInt(hex.slice(1), 16);
     return this.nearestLab(oklab((n >> 16) & 255, (n >> 8) & 255, n & 255));
+  }
+  /** A lookup table moving every colour through fn in RGB (0..255) to its nearest palette colour; CLEAR stays CLEAR. */
+  lutRgb(fn: (c: [number, number, number]) => [number, number, number]): Uint8Array {
+    const table = new Uint8Array(256).fill(CLEAR);
+    const c8 = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+    this.rgb.forEach((c, i) => { const [r, g, b] = fn(c); table[i] = this.nearestLab(oklab(c8(r), c8(g), c8(b))); });
+    return table;
   }
   /** A lookup table moving every colour through fn (in OKLab) to its nearest palette colour; CLEAR stays CLEAR. */
   lut(fn: (c: Lab) => Lab): Uint8Array {
@@ -190,6 +199,37 @@ export class Frame {
       if (e2 >= dy) { e += dy; x0 += sx; }
       if (e2 <= dx) { e += dx; y0 += sy; }
     }
+  }
+
+  /**
+   * Map a small layer onto a quadrilateral (corners top-left, top-right, bottom-right, bottom-left) by inverse
+   * bilinear interpolation, nearest sample: screen content on a tilted phone. Pixels listed in keep stay on top.
+   */
+  quad(src: Indexed, q: readonly (readonly [number, number])[], keep?: Int32Array): void {
+    const xs = q.map(p => p[0]), ys = q.map(p => p[1]);
+    const [a, b, c, d] = q;
+    const ex = b[0] - a[0], ey = b[1] - a[1], fx = d[0] - a[0], fy = d[1] - a[1];
+    const gx = a[0] - b[0] + c[0] - d[0], gy = a[1] - b[1] + c[1] - d[1];
+    const cross = (px: number, py: number, qx: number, qy: number) => px * qy - py * qx;
+    const k2 = cross(gx, gy, fx, fy);
+    for (let y = Math.max(0, Math.floor(Math.min(...ys))); y <= Math.min(H - 1, Math.ceil(Math.max(...ys))); y++) {
+      for (let x = Math.max(0, Math.floor(Math.min(...xs))); x <= Math.min(W - 1, Math.ceil(Math.max(...xs))); x++) {
+        const hx = x + 0.5 - a[0], hy = y + 0.5 - a[1];
+        const k1 = cross(ex, ey, fx, fy) + cross(hx, hy, gx, gy), k0 = cross(hx, hy, ex, ey);
+        let u: number, v: number;
+        if (Math.abs(k2) < 1e-9) { v = -k0 / k1; u = (hx - fx * v) / (ex + gx * v); }
+        else {
+          const w = k1 * k1 - 4 * k0 * k2; if (w < 0) continue;
+          const root = Math.sqrt(w);
+          v = (-k1 - root) / (2 * k2); u = (hx - fx * v) / (ex + gx * v);
+          if (u < 0 || u > 1 || v < 0 || v > 1) { v = (-k1 + root) / (2 * k2); u = (hx - fx * v) / (ex + gx * v); }
+        }
+        if (!(u >= 0 && u < 1 && v >= 0 && v < 1)) continue;
+        const s = src.px[Math.floor(v * src.h) * src.w + Math.floor(u * src.w)];
+        if (s !== CLEAR) this.px[y * W + x] = s;
+      }
+    }
+    if (keep) for (let k = 0; k < keep.length; k++) { const i = keep[k]; this.px[i] = keep[++k]; }
   }
 
   present(g: CanvasRenderingContext2D, image: ImageData, palette: Palette): void {

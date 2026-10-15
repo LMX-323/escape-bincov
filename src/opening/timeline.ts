@@ -65,8 +65,8 @@ export const SHOTS: readonly Shot[] = [
   { id: 'A14', ms: 3000, scene: 'hatch-near', captions: [], rain: 0.4, cues: [{ at: 600, cue: 'crush' }, { at: 1900, cue: 'crush' }] },
   { id: 'A15', ms: 3000, scene: 'retreat', captions: [line('你，你站那不要动！')], rain: 0.4, cues: [{ at: 300, cue: 'heart' }, { at: 1300, cue: 'heart' }, { at: 2300, cue: 'heart' }] },
   { id: 'A16', ms: 3000, scene: 'face', captions: [], rain: 0.2, cues: [{ at: 1500, cue: 'shriek' }] },
-  { id: 'A17', ms: 5000, scene: 'ship-full', captions: [{ text: '满船嘶吼', sound: true }], rain: 0.6,
-    cues: [{ at: 100, cue: 'roar' }, { at: 1200, cue: 'roar' }, { at: 2400, cue: 'roar' }, { at: 3900, cue: 'splash' }] },
+  { id: 'A17', ms: 5000, scene: 'ship-full', captions: [{ text: '满船嘶吼', sound: true }], rain: 0.6, flashes: [300, 1900],
+    cues: [{ at: 100, cue: 'roar' }, { at: 450, cue: 'thunder' }, { at: 1200, cue: 'roar' }, { at: 2050, cue: 'thunder' }, { at: 2400, cue: 'roar' }, { at: 4000, cue: 'splash' }] },
   // Part two: sixteen days
   { id: 'B01', ms: 3000, scene: 'black', captions: [card('那天夜里，海堤漫了顶。')], rain: 0.3, cues: [{ at: 300, cue: 'surge' }] },
   { id: 'B02', ms: 6000, scene: 'flood', fadeIn: true, captions: [line('人们纷纷逃离此地，可是异常的潮水淹没了离开的路。')], wind: 0.7 },

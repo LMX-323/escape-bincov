@@ -8,7 +8,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const manifest = JSON.parse(await readFile('assets/opening/manifest.json', 'utf8'));
 const sha = b => createHash('sha256').update(b).digest('hex');
-const key = id => id.replace(/-v\d+$/, '');
+// A placement may point at an earlier delivery with a prefix (r2:op-bg05-hatch-lit-v2).
+const key = id => id.replace(/^r\d+:/, '').replace(/-v\d+$/, '');
 const seen = new Set(), lines = [], table = [], meta = [];
 for (const a of manifest.assets) {
   const bytes = await readFile(a.file);
