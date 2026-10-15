@@ -31,9 +31,10 @@ export const sampleEnabled = () => sampleMode() !== null;
 export const legacyRaid = () => params().get('test') === '1' && !sampleEnabled();
 /**
  * Areas a player can deploy to. The classic coast area is closed: it repeated the street's coast map and will be
- * redone as a new map. Raids already started there still resume and settle.
+ * redone as a new map. Raids already started there still resume and settle. Under `?test=1` it stays deployable, so a
+ * suite can start a Phaser raid on the same page after a 2.5D one (test:hud-release).
  */
-export const raidWorlds = (): RunWorld[] => legacyRaid() ? ['coast', 'buildings', 'mall'] : ['buildings', 'mall'];
+export const raidWorlds = (): RunWorld[] => params().get('test') === '1' ? ['coast', 'buildings', 'mall'] : ['buildings', 'mall'];
 /** Area selected when the page opens. */
 export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : legacyRaid() ? 'coast' : 'buildings';
 /**

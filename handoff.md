@@ -3,7 +3,7 @@
 维护者准备全面 2.5D 化：封锁区和街区是同一张图，关掉封锁区以后重做；不再支持没有 WebGL 的设备；能跑 2.5D 的设备都要能完整玩。起点 main `50a05aa`。
 
 - 路由按世界走，不再看网址：`src/coast-view/sample.ts` 的 `sampleSupports()` 接受 `coast-buildings-v1`、`mall-v2`、`mall-v3`；`sampleMallLayout()` 对商场一律给 3；`raidWorlds()` / `defaultWorld()` 给出可选区域和默认区域（沿海街区）。院子（`HostOptions.worlds` → `UI` → `deployHtml`）和旧页签的下拉都用这份列表。
-- 测试夹具 `legacyRaid()`：`?test=1` 且不带 `sample` 时保持旧行为（Phaser 局内、三个区域且默认封锁区、商场一版），所以约 20 个旧局内浏览器测试不用改。带 `sample=` 的样板测试走新路由。
+- 测试夹具 `legacyRaid()`：`?test=1` 且不带 `sample` 时保持旧行为（Phaser 局内、三个区域且默认封锁区、商场一版），所以约 20 个旧局内浏览器测试不用改。带 `sample=` 的样板测试走新路由；只要带 `test=1`，`raidWorlds()` 仍包含封锁区，`test:hud-release` 才能在同一页面先打 2.5D 再打旧画面。
 - 旧行动：存档里的经典封锁区（`coast-v2` 检查点）和商场一版，`sampleSupports()` 为否，仍从标题页「继续」进 Phaser 打完。
 - 商场素材按行动世界加载（以前只在 `?sample=mall` 下加载）。
 - 样板标记（街口外压暗、HUD「样板外」）只在 `?sample=` 下画：`ViewOptions.sampleMarks`。
