@@ -271,7 +271,8 @@ export function migrateSave(raw: unknown): SaveDataV1 {
     if (supplies.length) save.reliefSupplies = supplies;
   }
   if (isObject(raw.lastResult) && ['extract', 'death', 'timeout'].includes(raw.lastResult.outcome)) {
-    save.lastResult = { outcome: raw.lastResult.outcome, kills: integer(raw.lastResult.kills), keptValue: integer(raw.lastResult.keptValue), lostValue: integer(raw.lastResult.lostValue), seed: integer(raw.lastResult.seed), recovered: raw.lastResult.recovered === true, message: typeof raw.lastResult.message === 'string' ? raw.lastResult.message.slice(0, 500) : '' };
+    // Run seeds are 32-bit (normalizeSeed: Date.now() >>> 0), the same range activeRun.seed accepts above.
+    save.lastResult = { outcome: raw.lastResult.outcome, kills: integer(raw.lastResult.kills), keptValue: integer(raw.lastResult.keptValue), lostValue: integer(raw.lastResult.lostValue), seed: integer(raw.lastResult.seed, 0, 0xffffffff), recovered: raw.lastResult.recovered === true, message: typeof raw.lastResult.message === 'string' ? raw.lastResult.message.slice(0, 500) : '' };
   }
   return save;
 }
