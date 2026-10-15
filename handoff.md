@@ -1,3 +1,14 @@
+# 任务交接入口
+
+当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
+
+- 2026-10-15 · [#60 质量与减熵实施摘要](docs/tasks/quality-entropy.md)：代码导航、局部契约与共享投影。实际测试状态随该摘要及 PR 更新。
+- 2026-10-15 · [#61 / PR #62 CI 改造](https://github.com/xuys2025/escape-bincov/pull/62)：完整 36 套件八组重排、存档前置与计时门禁；维护者已授权合并，最新基线与已验/未验结果以 PR 为准。
+- 下方保留以往交接全文；其中“当前”“未合并”“已通过”等仅对各自日期/提交有效。按任务索引、标题或符号检索相关段落，需要首败/兼容依据时再展开。
+
+<details>
+<summary>历史交接全文（按需查证，保留原文）</summary>
+
 ## 2026-10-15 · CI 第二阶段：八组均衡与执行耗时（#61）
 
 维护者授权开始推进 [#61](https://github.com/xuys2025/escape-bincov/issues/61)。分支 `ci/balanced-regressions` 从最新 main `a2d716d` 开始，纳入刚合入 #57 的第 36 条 raid-default。首批集中在整套件八组重排、存档检查前置、逐命令耗时与完整执行记录门禁；保留游戏/测试行为、真实训练、单文件离线和发布契约。后续 case 分片与诊断采样优化仍由 #61 承接，见 [CI 说明](docs/CI.md)。同一目标保持一个 PR。
@@ -1248,3 +1259,5 @@ CI 首轮移动专项暴露测试夹具竞态：恢复的 0.8 秒换弹会在医
 ## 后续
 
 本轮将项目迁入公开 GitHub 仓库，增加真实截图 README、Agent 协作规范、PR 模板、CODEOWNERS、CI 与 GitHub Pages 自动发布；菜单增加仓库跳转，打包改为固定 ZIP 时间戳并自动生成制品哈希。试玩入口：https://xuys2025.github.io/escape-bincov/ 。部署状态以仓库 Actions 为准；大陆三网尚未实测，EdgeOne 镜像尚未部署。当前只支持桌面键鼠单人游戏。下一轮玩法工作应依据真人试玩反馈；自动玩家已能清空本局固定敌人，后半局持续目标与威胁可作为设计讨论项。
+
+</details>
