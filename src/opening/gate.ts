@@ -6,10 +6,10 @@ let seen = false;
 let playing = false;
 
 /**
- * Autoplay for players goes live in P2, together with the browser suites that enter a new save the ordinary way.
- * Until then players see the opening from the title's replay entry, and test pages opt in with ?test=1&opening=auto.
+ * Autoplay for players on a new save. Browser suites that enter the ordinary way skip it with Esc
+ * (scripts/yard-entry.mjs skipOpening); test pages keep the old flow unless they ask with ?test=1&opening=auto.
  */
-export const OPENING_AUTOPLAY_LIVE = false;
+export const OPENING_AUTOPLAY_LIVE = true;
 
 /** Autoplay on a new save's first "enter the station" in this page: no raid ever started and nothing to resume. */
 export function openingAutoplay(runs: number, resume: boolean, search = globalThis.location?.search ?? ''): boolean {

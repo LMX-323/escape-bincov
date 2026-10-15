@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { throughYard } from './yard-entry.mjs';
+import { skipOpening, throughYard } from './yard-entry.mjs';
 import * as D from '../src/domain.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
@@ -38,7 +38,7 @@ async function open({ size = [1280, 720], legacy, test = true, mobile = false, f
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   await page.goto(`https://station.test/${test ? '?test=1' : ''}`);
   await tap(page.locator('[data-action="enter"]'));
-  if (test) await ready(); else await yard('#hud-sub').waitFor();
+  if (test) await ready(); else { await skipOpening(page); await yard('#hud-sub').waitFor(); }
 }
 async function panel(kind) {
   const current = await page.evaluate(() => window.__station.host.ui.kind);

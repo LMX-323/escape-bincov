@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { throughYard } from './yard-entry.mjs';
+import { skipOpening, throughYard } from './yard-entry.mjs';
 import * as D from '../src/domain.ts';
 import { validPractice } from '../src/hideout-runtime/training.ts';
 import { newExpansion, derivedLimits } from '../src/expansion-state.ts';
@@ -38,7 +38,7 @@ async function open(size = [1280, 720], fixed = false, ordinary = false) {
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   if (fixed) await page.clock.setFixedTime(new Date());
   await page.goto(`https://station.test/${ordinary ? '' : '?test=1'}`); await tap(page.locator('[data-action="enter"]'));
-  if (ordinary) await yard('#hud-sub').waitFor(); else await ready();
+  if (ordinary) { await skipOpening(page); await yard('#hud-sub').waitFor(); } else await ready();
 }
 async function seed({ training = true, seconds = 0, quantity = 0, body = {} } = {}) {
   const p = D.newSave(), e = newExpansion(Date.now()), l = derivedLimits(e);
