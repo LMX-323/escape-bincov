@@ -53,6 +53,7 @@ try {
     assert.equal(await page.evaluate(() => [typeof window.__bincovOpening, typeof window.__bincov].join()), 'undefined,undefined');
     assert.equal(await page.evaluate(() => document.getElementById('opening').shadowRoot.activeElement?.className), 'pause', 'focus starts on 暂停');
     assert.equal(await page.evaluate(() => document.getElementById('frame').hasAttribute('inert')), true);
+    assert.equal(await page.evaluate(() => document.getElementById('opening').shadowRoot.querySelector('.tag').hidden), true, 'players never see the review tag');
     await page.waitForFunction(() => document.getElementById('opening').shadowRoot.querySelector('.caption').textContent === '台风进港那天夜里');
     assert.equal(await storage(page), before, 'playback reads and writes no storage');
     await page.screenshot({ path: resolve(out, 'ordinary-a01.png') });

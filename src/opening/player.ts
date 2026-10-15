@@ -10,8 +10,8 @@ import { OpeningSound } from './sound';
 import { loadOpeningArt } from './assets';
 import { indexPlates, prepare, type Prepared } from './scenes';
 
-/** P0 review aid: the shot id and running time in the corner. P2 removes it. */
-const SHOW_SHOT_TAG = true;
+/** Review aid on test pages (?test=1) only: the shot id and running time in the corner. Players never see it. */
+const SHOW_SHOT_TAG = new URLSearchParams(location.search).get('test') === '1';
 const CUES: { at: number; cue: Cue }[] = TIMELINE.shots.flatMap(s => (s.cues ?? []).map(c => ({ at: s.start + c.at, cue: c.cue }))).sort((a, b) => a.at - b.at);
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 /** A01 is a black title card: the art and the sound get ready behind it, and the clock waits on its last frame until they are. */
