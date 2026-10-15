@@ -87,7 +87,14 @@ export function toIndexed(image: HTMLImageElement, palette: Palette): Indexed {
   g.drawImage(image, 0, 0);
   const data = g.getImageData(0, 0, image.width, image.height).data;
   const px = new Uint8Array(image.width * image.height);
-  for (let i = 0, j = 0; i < px.length; i++, j += 4) px[i] = data[j + 3] < 128 ? CLEAR : palette.index(data[j], data[j + 1], data[j + 2]);
+  // Runs of one colour are common in pixel art: look a colour up only when it changes.
+  let lastKey = -1, last = CLEAR;
+  for (let i = 0, j = 0; i < px.length; i++, j += 4) {
+    if (data[j + 3] < 128) { px[i] = CLEAR; continue; }
+    const key = (data[j] << 16) | (data[j + 1] << 8) | data[j + 2];
+    if (key !== lastKey) { lastKey = key; last = palette.index(data[j], data[j + 1], data[j + 2]); }
+    px[i] = last;
+  }
   canvas.width = canvas.height = 0;
   return { w: image.width, h: image.height, px };
 }

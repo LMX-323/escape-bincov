@@ -1,8 +1,8 @@
 /**
  * The painted shots (Sol's plates) rendered through the indexed compositor: camera moves on whole art pixels, torch
  * light in dithered steps between the plate's dark, mid and lit versions, lightning as Sol's flash plates or a palette
- * lift with a bolt, two-layer rain with splashes, water glints, motes in the beam and drifting mist. Shots without
- * plates keep the placeholder painters in render.ts.
+ * lift with a bolt, two-layer rain with splashes, water glints, motes in the beam and drifting mist. If the plates
+ * cannot be loaded, the placeholder painters in render.ts stand in.
  */
 import { OPENING_ASSET_META, type OpeningArt } from './assets';
 import type { TimedShot } from './timeline';
@@ -25,7 +25,7 @@ export interface Prepared {
   ink: {
     rainFar: number; rainNear: number; rainLit: number; splash: number; mote: number; boltCore: number; boltGlow: number;
     mistSea: number; mistCity: number; drip: number; screenBg: number; screenBar: number; screenText: number; screenDim: number;
-    screenWarm: number; screenCard: number; screenThumb: number; screenShape: number;
+    screenWarm: number; screenCard: number; screenThumb: number; screenShape: number; ripple: number;
   };
   phone: { hand: Indexed; body: Indexed; quad: Point[]; keep: Int32Array; screen: Indexed; clock: Record<string, Uint8Array>; news: Uint8Array };
   shed: { far: Indexed[]; shelter: Indexed[]; eave: Indexed[]; pose: Record<string, Person>; wangFlash: Indexed; phoneFx: Indexed[]; phoneAt: Point };
@@ -35,7 +35,15 @@ export interface Prepared {
   hatch: { plate: Versions; crew: Versions[]; crewAt: Point; farBack: Versions; farAt: Point; mid: Record<'turn' | 'step' | 'stop', Versions>; midAt: Point };
   face: { down: Versions; up: Versions };
   ship: { plate: Versions; flash: Indexed; shadows: Versions[]; shadowsFlash: Indexed[]; lunge: Versions; torch: Indexed[]; torchAt: Point; splash: Indexed[]; splashAt: Point };
-  roof: { sky: Indexed; mid: Indexed; near: Indexed; glow: Indexed[]; you: Indexed; glints: Int32Array; glowAt: Point; youAt: Point };
+  roof: { sky: Indexed; mid: Indexed; near: Indexed; glow: Indexed[]; you: Indexed; glints: Int32Array; glowAt: Point; youAt: Point; climb: Indexed; climbAt: Point };
+  flood: { sky: Indexed; city: Indexed; water: Indexed; glints: Int32Array };
+  street: { plate: Indexed; water: Indexed; stand: Indexed; sit: Indexed; standAt: Point; sitAt: Point; glints: Int32Array };
+  dayHarbor: { sky: Indexed; mid: Indexed; breakwater: Indexed; near: Indexed; ship: Indexed; shipAt: Point; glints: Int32Array };
+  hiding: { room: Indexed; cloth: Indexed; you: Indexed; youAt: Point };
+  gap: { street: Indexed; mask: Indexed; looter: Indexed[]; looterAt: Point; fight: Indexed[]; fightAt: Point; drag: Indexed; dragAt: Point };
+  bottles: Indexed[];
+  close: { plate: Indexed; near: Indexed; glowLit: Indexed; glowAt: Point; glints: Int32Array };
+  lane: { plate: Indexed; water: Indexed; wade: Indexed[]; at: Point; foot: Point; glints: Int32Array };
 }
 
 /** First opaque row per column of a layer (layer coordinates), -1 where the column is empty. */
@@ -45,10 +53,10 @@ function columnTops(src: Indexed): Int16Array {
   return out;
 }
 /** The brightest colours covering about `share` of a region's opaque pixels: candidates for glints. */
-function brightest(src: Indexed, pal: Palette, y0: number, y1: number, share: number): Set<number> {
+function brightest(src: Indexed, pal: Palette, y0: number, y1: number, share: number, keep: (v: number) => boolean = () => true): Set<number> {
   const counts = new Map<number, number>(); let total = 0;
   for (let y = y0; y < Math.min(y1, src.h); y++) for (let x = 0; x < src.w; x++) {
-    const v = src.px[y * src.w + x]; if (v === CLEAR) continue;
+    const v = src.px[y * src.w + x]; if (v === CLEAR || !keep(v)) continue;
     counts.set(v, (counts.get(v) ?? 0) + 1); total++;
   }
   const byLight = [...counts.keys()].sort((a, b) => pal.lab[b][0] - pal.lab[a][0]);
@@ -82,9 +90,22 @@ function textMask(text: string, w: number, h: number): Uint8Array {
 const SCREEN_QUAD: Point[] = [[281, 40], [392, 50], [372, 246], [259, 236]];
 const SCREEN_W = 112, SCREEN_H = 200;
 
-export function prepare(art: OpeningArt): Prepared {
-  const pal = new Palette();
-  const get = (id: string) => { const image = art[id]; if (!image) throw new Error(`Opening plate missing: ${id}`); return toIndexed(image, pal); };
+/** Every plate indexed into one palette. */
+export interface Indexing { pal: Palette; plates: Map<string, Indexed> }
+
+/** Index the plates one at a time, calling pause() between them so the page keeps drawing and answering. */
+export async function indexPlates(art: OpeningArt, pause: () => Promise<void>): Promise<Indexing> {
+  const pal = new Palette(), plates = new Map<string, Indexed>();
+  for (const [id, image] of Object.entries(art)) { plates.set(id, toIndexed(image, pal)); await pause(); }
+  return { pal, plates };
+}
+
+export function prepare(art: OpeningArt, indexed?: Indexing): Prepared {
+  const pal = indexed?.pal ?? new Palette();
+  const get = (id: string) => {
+    const done = indexed?.plates.get(id); if (done) return done;
+    const image = art[id]; if (!image) throw new Error(`Opening plate missing: ${id}`); return toIndexed(image, pal);
+  };
   // Decode every plate first so the palette is complete before any lookup table is built.
   const harborSky = get('op-bg03-harbor-sky-night'), harborMid = get('op-bg03-harbor-mid-night'), harborNear = get('op-bg03-harbor-near-night');
   const shipDark = get('op-sp01-ship-dark'), shipFlash = get('op-sp01-ship-flash'), breakwater = get('op-bg03-harbor-breakwater-night');
@@ -106,6 +127,16 @@ export function prepare(art: OpeningArt): Prepared {
   const ship17 = [get('op-bg07-ship-dark'), get('op-bg07-ship-flash')];
   const shadows = ['deck', 'porthole', 'hatch'].map(k => [get(`op-bg07-shadow-${k}-dark-f0`), get(`op-bg07-shadow-${k}-flash-f0`)]);
   const lunge = get('op-ch03-lunge-f0'), torch = [get('op-fx-flashlight-f0'), get('op-fx-flashlight-f1')], splash = [get('op-fx-splash-f0'), get('op-fx-splash-f1')];
+  const floodSky = get('op-bg08-sky-day'), floodCity = get('op-bg08-city-day'), floodWater = get('op-bg08-water-day');
+  const streetPlate = get('op-bg09-street-day'), streetWater = get('op-bg09-water-day'), crowdStand = get('op-bg09-crowd-stand-f0'), crowdSit = get('op-bg09-crowd-sit-f0');
+  const daySky = get('op-bg03-harbor-sky-day'), dayMid = get('op-bg03-harbor-mid-day'), dayBreakwater = get('op-bg03-harbor-breakwater-day');
+  const dayNear = get('op-bg03-harbor-near-day'), dayShip = get('op-sp01-ship-day');
+  const room = get('op-bg10-room-night'), roomCloth = get('op-bg10-cloth-night'), crouch = get('op-ch04-crouch-night-f0');
+  const gapStreet = get('op-bg11-street-night'), gapMask = get('op-bg11-cloth-mask-night'), drag = get('op-bg11-drag-f0');
+  const looter = [get('op-bg11-looter-f0'), get('op-bg11-looter-f1')], fight = [get('op-bg11-fight-f0'), get('op-bg11-fight-f1'), get('op-bg11-fallen-f0')];
+  const bottleFrames = [get('op-bg12-bottle-f0'), get('op-bg12-bottle-f1')], climb = get('op-ch04-climb-f0');
+  const closePlate = get('op-bg13b-sky-city-night'), closeNear = get('op-bg13b-hero-tank-near');
+  const lanePlate = get('op-bg14-lane-day'), laneWater = get('op-bg14-water-day'), wade = [get('op-ch04-wade-f0'), get('op-ch04-wade-f1')];
 
   // Effect colours are picked from the plates' own palette, never added.
   const ink = {
@@ -113,7 +144,7 @@ export function prepare(art: OpeningArt): Prepared {
     mote: pal.nearest('#e2d6b8'), boltCore: pal.nearest('#f2f4ee'), boltGlow: pal.nearest('#9fb8c8'), mistSea: pal.nearest('#263942'),
     mistCity: pal.nearest('#1c2c35'), drip: pal.nearest('#c9d2d0'), screenBg: pal.nearest('#16232c'), screenBar: pal.nearest('#3f6f73'),
     screenText: pal.nearest('#e8e2cf'), screenDim: pal.nearest('#7d8f93'), screenWarm: pal.nearest('#c9a65e'), screenCard: pal.nearest('#25404a'),
-    screenThumb: pal.nearest('#3b5653'), screenShape: pal.nearest('#8f9a8a'),
+    screenThumb: pal.nearest('#3b5653'), screenShape: pal.nearest('#8f9a8a'), ripple: pal.nearest('#c5cacc'),
   };
   const lutMid = pal.lut(shade(0.5)), lutHot = pal.lut(warmLift(0.07));
   const lutDark = pal.lut(c => [c[0] * 0.3, c[1] * 0.3 - 0.004, c[2] * 0.3 - 0.016]);
@@ -132,6 +163,24 @@ export function prepare(art: OpeningArt): Prepared {
     const v = phoneBody.px[y * phoneBody.w + x]; if (v === CLEAR) continue;
     if (pal.lab[v][0] > 0.62) keep.push(y * W + x, v);
   }
+
+  // Water glints: bright bluish or grey colours only, so sand, wood and rust never twinkle.
+  const water = (v: number) => pal.lab[v][2] < 0.005;
+  const glintsOf = (src: Indexed, y0: number, share: number) => pixelsIn(src, brightest(src, pal, y0, H, share, water), y0, H);
+  // C05's backdrop is r2's roof at camera x=320 with the glow's first frame baked in (Sol). The flicker patches in the
+  // second frame where the city does not cover it, and the sky where only the first frame had light.
+  const glowWorld = placed('op-bg13-glow-f0'), closeGlowAt: Point = [glowWorld[0] - 320, glowWorld[1]];
+  const glowLit = { w: glow[1].w, h: glow[1].h, px: new Uint8Array(glow[1].w * glow[1].h) };
+  for (let y = 0; y < glowLit.h; y++) for (let x = 0; x < glowLit.w; x++) {
+    const sx = closeGlowAt[0] + x, sy = closeGlowAt[1] + y, wx = sx + 320;
+    let v = closePlate.px[sy * closePlate.w + sx];
+    if (roofMid.px[sy * roofMid.w + wx] === CLEAR) {
+      const lit = glow[1].px[y * glow[1].w + x], base = x < glow[0].w && y < glow[0].h ? glow[0].px[y * glow[0].w + x] : CLEAR;
+      if (lit !== CLEAR) v = lit; else if (base !== CLEAR) v = roofSky.px[sy * roofSky.w + wx];
+    }
+    glowLit.px[y * glowLit.w + x] = v;
+  }
+  const wadeAt = placed('op-ch04-wade-f0'), wadeAnchor = OPENING_ASSET_META['op-ch04-wade-f0'].anchor ?? [24, 60];
 
   return {
     pal, frame: new Frame(), image: new ImageData(W, H),
@@ -165,7 +214,24 @@ export function prepare(art: OpeningArt): Prepared {
       plate: versions(ship17[1], ship17[0]), flash: ship17[1], shadows: shadows.map(([dark, lit]) => versions(lit, dark)), shadowsFlash: shadows.map(s => s[1]),
       lunge: versions(lunge, mapped(lunge, lutHuman)), torch, torchAt: placed('op-fx-flashlight-f0'), splash, splashAt: placed('op-fx-splash-f0'),
     },
-    roof: { sky: roofSky, mid: roofMid, near: roofNear, glow, you, glints: pixelsIn(roofMid, brightest(roofMid, pal, 236, 360, 0.04), 236, 360), glowAt: placed('op-bg13-glow-f0'), youAt: placed('op-ch04-sit-f0') },
+    roof: {
+      sky: roofSky, mid: roofMid, near: roofNear, glow, you, glints: pixelsIn(roofMid, brightest(roofMid, pal, 236, 360, 0.04), 236, 360),
+      glowAt: placed('op-bg13-glow-f0'), youAt: placed('op-ch04-sit-f0'), climb, climbAt: placed('op-ch04-climb-f0'),
+    },
+    flood: { sky: floodSky, city: floodCity, water: floodWater, glints: glintsOf(floodWater, 150, 0.05) },
+    street: {
+      plate: streetPlate, water: streetWater, stand: crowdStand, sit: crowdSit, standAt: placed('op-bg09-crowd-stand-f0'), sitAt: placed('op-bg09-crowd-sit-f0'),
+      glints: glintsOf(streetWater, 200, 0.05),
+    },
+    dayHarbor: { sky: daySky, mid: dayMid, breakwater: dayBreakwater, near: dayNear, ship: dayShip, shipAt: placed('op-sp01-ship-day'), glints: glintsOf(dayMid, 215, 0.05) },
+    hiding: { room, cloth: roomCloth, you: crouch, youAt: placed('op-ch04-crouch-night-f0') },
+    gap: {
+      street: gapStreet, mask: gapMask, looter, looterAt: placed('op-bg11-looter-f0'), fight, fightAt: placed('op-bg11-fight-f0'),
+      drag, dragAt: placed('op-bg11-drag-f0'),
+    },
+    bottles: bottleFrames,
+    close: { plate: closePlate, near: closeNear, glowLit, glowAt: closeGlowAt, glints: pixelsIn(closePlate, brightest(closePlate, pal, 236, 360, 0.04), 236, 360) },
+    lane: { plate: lanePlate, water: laneWater, wade, at: wadeAt, foot: [wadeAt[0] + wadeAnchor[0], wadeAt[1] + wadeAnchor[1]], glints: glintsOf(laneWater, 240, 0.05) },
   };
 }
 
@@ -380,7 +446,69 @@ function shipFull(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): v
   if (p >= 0.84) f.mapDithered(null, a.lut.black, Math.min(1, (p - 0.84) / 0.05));
 }
 
+// --- Part two ---------------------------------------------------------------------------------------------------
+
+/** B02: the low town under grey daylight, the roads out under water; the water glints. */
+function flood(f: Frame, a: Prepared, t: number, o: Look): void {
+  const s = a.flood;
+  f.copy(s.sky, 0, 0);
+  f.blit(s.city, 0, 0);
+  f.blit(s.water, 0, 0);
+  shimmer(f, t, s.glints, 0, 0, a.lut.glint, 0.06, o.calm);
+}
+
+/** B03: salt lines on the walls, people crowded on a roof and at the bridgehead; the water glints. */
+function street(f: Frame, a: Prepared, t: number, o: Look): void {
+  const s = a.street;
+  f.copy(s.plate, 0, 0);
+  f.blit(s.stand, s.standAt[0], s.standAt[1]);
+  f.blit(s.sit, s.sitAt[0], s.sitAt[1]);
+  f.blit(s.water, 0, 0);
+  shimmer(f, t, s.glints, 0, 0, a.lut.glint, 0.06, o.calm);
+}
+
+/** B04: the same harbour by day, the ship aground where A08 left it; the camera drifts back to A08's last framing. */
+function dayHarbor(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void {
+  const d = a.dayHarbor, cam = o.calm ? 0 : Math.round((1 - ease(t / shot.ms)) * 160);
+  f.copy(d.sky, -Math.round(cam * 0.6), 0);
+  f.blit(d.mid, -cam, 0);
+  shimmer(f, t, d.glints, -cam, 0, a.lut.glint, 0.05, o.calm);
+  f.blit(d.ship, d.shipAt[0] - cam, d.shipAt[1]);
+  f.blit(d.breakwater, -cam, 0);
+  f.blit(d.near, -cam, 0);
+}
+
 // --- Part three -------------------------------------------------------------------------------------------------
+
+/** C01: crouched by the bagged-up window of the unfinished building, a hand at the gap. */
+function hiding(f: Frame, a: Prepared): void {
+  const h = a.hiding;
+  f.copy(h.room, 0, 0);
+  f.blit(h.you, h.youAt[0], h.youAt[1]);
+  f.blit(h.cloth, 0, 0);
+}
+
+/** When the two in C02 change holds, until one goes down at 3 s and stays down. */
+const FIGHT_HOLDS = [450, 800, 1300, 1650, 2150, 2600];
+/** C02 through the gap: a looter at the smashed shutter makes off with a bag, two fight over one until one stays down, a hunched figure drags something away up the flooded lane. Light rain. */
+function throughGap(f: Frame, a: Prepared, t: number, o: Look): void {
+  const g = a.gap, carry = t >= 2400;
+  f.copy(g.street, 0, 0);
+  const slide = carry && !o.calm ? Math.round(Math.min(1, (t - 2400) / 3600) * 8) : 0;
+  f.blit(g.looter[carry ? 1 : 0], g.looterAt[0] + slide, g.looterAt[1]);
+  const pose = t >= 3000 ? 2 : o.calm ? (t < 1500 ? 0 : 1) : FIGHT_HOLDS.filter(at => t >= at).length % 2;
+  f.blit(g.fight[pose], g.fightAt[0], g.fightAt[1]);
+  const away = o.calm ? 0 : t / 6000;
+  f.blit(g.drag, g.dragAt[0] + Math.round(away * 2), g.dragAt[1] - Math.round(away * 8));
+  rain(f, t, { far: 46, near: 0, farColour: a.ink.rainFar, nearColour: a.ink.rainFar, wind: 6, seed: 51 }, o.calm);
+  f.blit(g.mask, 0, 0);
+}
+
+/** C03: the row of empty bottles; the last one is crushed on the cue. */
+function bottles(f: Frame, a: Prepared, shot: TimedShot, t: number): void {
+  const crush = shot.cues?.find(c => c.cue === 'crush')?.at ?? 2200;
+  f.copy(a.bottles[t < crush ? 0 : 1], 0, 0);
+}
 
 /** C04: from the water tank to the light in the south-west; the near roof slides a little faster than the city. */
 function roof(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void {
@@ -394,10 +522,47 @@ function roof(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void 
   shimmer(f, t, r.glints, -cam, 0, a.lut.glint, 0.05, o.calm);
   const near = Math.round(cam * 1.15);
   f.blit(r.near, -near, 0);
-  f.blit(r.you, r.youAt[0] - near, r.youAt[1]);
+  // Up the ladder a rung at a time, then sitting on the tank as the camera starts to move.
+  if (p < 0.2) f.blit(r.climb, r.climbAt[0] - near, r.climbAt[1] - (o.calm ? 0 : Math.min(2, Math.floor(p / 0.07)) * 2));
+  else f.blit(r.you, r.youAt[0] - near, r.youAt[1]);
 }
 
-const PAINTED = new Set(['phone-news', 'phone-videos', 'shed', 'harbor', 'beach', 'bow', 'hatch', 'hatch-near', 'retreat', 'face', 'ship-full', 'roof']);
+/** C05: close on you sitting on the tank, watching the light; it flickers as in C04 and the far water glints. */
+function closeOnTank(f: Frame, a: Prepared, t: number, o: Look): void {
+  const c = a.close;
+  f.copy(c.plate, 0, 0);
+  if (!o.calm && noise1(t / 260, 3) > 0.62) f.copy(c.glowLit, c.glowAt[0], c.glowAt[1]);
+  shimmer(f, t, c.glints, 0, 0, a.lut.glint, 0.05, o.calm);
+  f.blit(c.near, 0, 0);
+}
+
+/** A ring spreading on the water from a step: the front half of a flat ellipse, thinning as it fades. */
+function ripple(f: Frame, x: number, y: number, age: number, colour: number): void {
+  if (age < 0 || age > 900) return;
+  const u = age / 900, rx = 4 + u * 16, ry = 1 + u * 3, n = Math.round(rx * 2.4);
+  for (let k = 0; k <= n; k++) {
+    if (u > 0.45 && (k + Math.floor(age / 120)) % 2) continue;
+    const th = (k / n) * Math.PI;
+    f.put(Math.round(x + Math.cos(th) * rx), Math.round(y + Math.sin(th) * ry), colour);
+  }
+}
+
+/** C06: first light in a flooded lane; you wade off toward the glow, one key pose per step, a ripple at each. */
+function lane(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void {
+  const l = a.lane, steps = (shot.cues ?? []).filter(c => c.cue === 'wade').map(c => c.at);
+  const n = steps.filter(at => t >= at).length;
+  f.copy(l.plate, 0, 0);
+  f.blit(l.wade[n % 2], l.at[0], l.at[1]);
+  f.blit(l.water, 0, 0);
+  shimmer(f, t, l.glints, 0, 0, a.lut.glint, 0.05, o.calm);
+  // The water line at the knees (Sol: y=240 here).
+  if (!o.calm && n > 0) ripple(f, l.foot[0], 240, t - steps[n - 1], a.ink.ripple);
+}
+
+const PAINTED = new Set([
+  'phone-news', 'phone-videos', 'shed', 'harbor', 'beach', 'bow', 'hatch', 'hatch-near', 'retreat', 'face', 'ship-full',
+  'flood', 'street', 'ship-day', 'shelter', 'gap', 'bottles', 'roof', 'roof-sit', 'lane',
+]);
 
 /** Paint a painted shot; returns false when the shot has no plates yet. */
 export function paintPlates(g: CanvasRenderingContext2D, a: Prepared, shot: TimedShot, t: number, calm: boolean, flash: number): boolean {
@@ -413,7 +578,15 @@ export function paintPlates(g: CanvasRenderingContext2D, a: Prepared, shot: Time
     case 'bow': if (t < shot.ms * 0.48) bowSweep(f, a, t, shot.ms * 0.48, o); else hatch(f, a, shot, t, o); break;
     case 'face': face(f, a, shot, t, o); break;
     case 'ship-full': shipFull(f, a, shot, t, o); break;
+    case 'flood': flood(f, a, t, o); break;
+    case 'street': street(f, a, t, o); break;
+    case 'ship-day': dayHarbor(f, a, shot, t, o); break;
+    case 'shelter': hiding(f, a); break;
+    case 'gap': throughGap(f, a, t, o); break;
+    case 'bottles': bottles(f, a, shot, t); break;
     case 'roof': roof(f, a, shot, t, o); break;
+    case 'roof-sit': closeOnTank(f, a, t, o); break;
+    case 'lane': lane(f, a, shot, t, o); break;
     default: hatch(f, a, shot, t, o);
   }
   // Fade up from black through the palette, in dithered steps.

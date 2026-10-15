@@ -8,7 +8,7 @@ import { TIMELINE, captionAt, shotAt, type Cue, type TimedCaption, type TimedSho
 import { H, W, paint } from './render';
 import { OpeningSound } from './sound';
 import { loadOpeningArt } from './assets';
-import { prepare, type Prepared } from './scenes';
+import { indexPlates, prepare, type Prepared } from './scenes';
 
 /** P0 review aid: the shot id and running time in the corner. P2 removes it. */
 const SHOW_SHOT_TAG = true;
@@ -16,6 +16,16 @@ const CUES: { at: number; cue: Cue }[] = TIMELINE.shots.flatMap(s => (s.cues ?? 
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 /** A01 is a black title card: the art and the sound get ready behind it, and the clock waits on its last frame until they are. */
 const HOLD = TIMELINE.shots[0].end - 1;
+
+/** A pause for long work behind the title card: gives the page a turn about once a frame. */
+function slicer(): () => Promise<void> {
+  let mark = performance.now();
+  return async () => {
+    if (performance.now() - mark < 12) return;
+    await new Promise(resolve => setTimeout(resolve, 0));
+    mark = performance.now();
+  };
+}
 
 /** Shows the player at once (still inside the click), then loads behind the title card. */
 export function play(mode: 'first' | 'replay'): Promise<void> {
@@ -76,12 +86,16 @@ class Session {
     void this.load();
   }
 
-  /** Behind A01: bake the sound (the card's thunder first) while the plates decode, then index them. A failure keeps the placeholder frames. */
+  /** Behind A01: bake the sound (the card's thunder first) while the plates decode, then index them in slices. A failure keeps the placeholder frames. */
   private async load(): Promise<void> {
     const sound = this.sound.bake(() => this.done).catch(error => console.warn('Opening sound could not be prepared; playing silently.', error));
     const art = await loadOpeningArt();
     if (this.done) return;
-    try { this.plates = art ? prepare(art) : null; } catch (error) { console.error('Opening plates could not be prepared; showing the placeholder frames.', error); }
+    try {
+      const indexed = art ? await indexPlates(art, slicer()) : undefined;
+      if (this.done) return;
+      this.plates = art ? prepare(art, indexed) : null;
+    } catch (error) { console.error('Opening plates could not be prepared; showing the placeholder frames.', error); }
     await sound;
     if (this.done) return;
     this.ready = true;

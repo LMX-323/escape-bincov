@@ -13,7 +13,7 @@ const SCENE_AMBIENCE: Partial<Record<Scene, { roof?: number; sea?: number; hall?
   'phone-news': { roof: 0.5, sea: 0.3 }, 'phone-videos': { roof: 0.5, sea: 0.3 }, shed: { roof: 0.9, sea: 0.45 },
   harbor: { sea: 1 }, beach: { sea: 0.75 }, bow: { sea: 0.5, hall: 0.25 }, hatch: { sea: 0.35, hall: 0.45 },
   'hatch-near': { sea: 0.3, hall: 0.5 }, retreat: { sea: 0.35, hall: 0.4 }, face: { hall: 0.55 }, 'ship-full': { sea: 0.8, hall: 0.15 },
-  flood: { sea: 0.35 }, street: { sea: 0.2 }, 'ship-day': { sea: 0.6 },
+  flood: { sea: 0.35 }, street: { sea: 0.2 }, 'ship-day': { sea: 0.6 }, gap: { sea: 0.15 }, roof: { sea: 0.3 }, 'roof-sit': { sea: 0.25 },
 };
 const BED_GAIN: Record<Bed, number> = { rain: 0.16, roof: 0.12, wind: 0.2, sea: 0.22 };
 const CUE_GAIN: Record<Cue, number> = {

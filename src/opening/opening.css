@@ -35,7 +35,11 @@ canvas {
   font-size: var(--font);
   line-height: 1.25;
   text-wrap: balance;
-  text-shadow: 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000;
+  /* A one-art-pixel outline all round, so the words hold up over bright water by day. */
+  --o: max(2px, calc(var(--font) / 16));
+  text-shadow:
+    0 var(--o) 0 #000, var(--o) 0 0 #000, calc(-1 * var(--o)) 0 0 #000, 0 calc(-1 * var(--o)) 0 #000,
+    var(--o) var(--o) 0 #000, calc(-1 * var(--o)) var(--o) 0 #000, var(--o) calc(-1 * var(--o)) 0 #000, calc(-1 * var(--o)) calc(-1 * var(--o)) 0 #000;
 }
 .caption:empty { display: none; }
 .caption .who { color: #c9a65e; }

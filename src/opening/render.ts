@@ -1,7 +1,7 @@
 /**
  * P0 animatic painter: every shot as flat colour blocks and silhouettes on the 640x360 art grid, so the cut can be
- * timed in the browser before the real art exists. Sol's plates replace these painters shot by shot (P2); the
- * contract stays the same: paint(ctx, shot, t, options) fills the whole canvas for shot-local time t.
+ * timed in the browser before the real art existed. Sol's plates (scenes.ts) now paint every shot; these are the
+ * fallback when the plates cannot load. paint(ctx, shot, t, options) fills the whole canvas for shot-local time t.
  */
 import type { TimedShot } from './timeline';
 import { paintPlates, type Prepared } from './scenes';
