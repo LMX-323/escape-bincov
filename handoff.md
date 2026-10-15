@@ -13,6 +13,7 @@
 - `src/opening/`：时间轴（28 镜、139 秒，字幕与[分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md)逐字一致，单测核对）；独立 Canvas 2D 播放器（640×360 整数倍放大、HTML 字幕、跳过/暂停、失焦自动暂停、减少动态效果）；临时合成音；新存档第一次「进入水产站」自动播放，主菜单「序幕」重看，只记页面内存，不读写存档。
 - 正式画面走索引色合成器（`pixel.ts`、`scenes.ts`）：手电光在暗、半明、亮和中心暖光四档之间按点阵逐级变化；闪电按色板提亮并画分叉闪电；两层雨、水花、进光圈的雨点变亮；水面闪光、光束里的盐尘、城市薄雾、横移视差。减少动态时不横移、不闪电、雨静止。
 - 素材：Sol 定调三镜 r2（A08、A14、C04，16 张索引色 PNG，341,558 字节），维护者已确认画风；第一批因导出时的中值、众数清理过粗而被替换。A11～A13、A15 远处的人影暂用近景图缩小代替，其余镜头仍是色块占位，等 Sol 第二批（任务书已备）。
+- 验收：`pnpm test:opening`（`scripts/opening-test.mjs`，CI visual 组，约 17 秒）按玩家方式走普通入口（新存档自动播、Esc 跳过进院子、页面没有测试接口），并查老存档不自动播、暂停与失焦、「序幕」重看与焦点、减少动态、1920 三倍与手机尺寸、连续重看 20 次监听器和画布不增长、无网络请求。合成器按 4×4 块算光：CPU 降速 4 倍时每帧 8 毫秒以内。素材模块由 `scripts/opening-assets.mjs` 按清单生成（按去掉版本号的编号索引，位置读清单）。
 - 测试：`tests/opening.test.ts`、`tests/opening-pixel.test.ts`；`title-review` 按新菜单顺序更新 Tab 断言；按普通入口用新存档进入的套件（asset-load、portable、station-tier1/tier2 普通路径，以及 `scripts/yard-entry.mjs` 的公共函数）用 `skipOpening` 按 Esc 跳过开场。字体子集新增 70 字；构建校验 `assets/opening/manifest.json`。
 
 ## 2026-10-15 · 开场动画定稿（#41）
