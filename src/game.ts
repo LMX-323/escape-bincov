@@ -15,7 +15,7 @@ import { mapPresentation } from './building-world';
 import { resolveExpansionWorld } from './expansion-worlds';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
 import { derivedLimits, entityUid } from './expansion-state';
-import { activeRaidCheckpoint, applyActiveRaidSnapshot } from './raid-state-projection';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from './raid-state-projection';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from './rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, spaceSize, toggleDoor, traversable, type Interaction, type SpaceContext } from './spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy } from './layer-transition';
@@ -488,7 +488,7 @@ export class RaidScene extends Phaser.Scene {
         else { setOverlay('checkpoint-error'); audio.stop(); }
         return ok;
     }
-    snapshot(): RaidCheckpoint {
+    snapshot(): ActiveRaidSnapshot {
         this.syncMagazine();
         const actor = (sprite: Phaser.GameObjects.Image) => ({ x: sprite.x, y: sprite.y, rotation: sprite.rotation });
         return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: app.loadout!.runId!,

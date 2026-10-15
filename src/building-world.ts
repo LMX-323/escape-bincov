@@ -22,7 +22,7 @@ export function connect(a: SpaceDefinition, aId: string, aAt: Point, aLabel: str
 }
 
 function residentWorld(): WorldDefinition {
-    const coast: SpaceDefinition = { id: 'coast', name: '沿海封锁区', floor: '室外 / 一楼', tile: 32, doors: [], entries: [],
+    const coast: SpaceDefinition = { id: 'coast', name: '沿海街区', floor: '室外 / 一楼', tile: 32, doors: [], entries: [],
         cells: WORLD.tiles.map(row => row.map((t): Cell => t === 2 || t === 3 ? 'wall' : t === 4 ? 'tide' : 'floor')) };
     // Enlarge only the new world's resident footprint. Original coast-v1/v2 remain untouched.
     for (let y = 7; y <= 12; y++) for (let x = 10; x <= 18; x++) coast.cells[y][x] = x === 10 || x === 18 || y === 7 || y === 12 ? 'wall' : 'floor';

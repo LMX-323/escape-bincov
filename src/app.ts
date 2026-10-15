@@ -14,13 +14,13 @@ export const app = {
     game: null as Phaser.Game | null,
     raid: null as RaidScene | null,
     base: null as BaseScene | null,
-    /** Opt-in Pixi village sample host (?sample=village); while set, the Phaser RaidScene is never started. */
+    /** 2.5D raid host (coast-view/sample.ts); while set, the Phaser RaidScene is never started. */
     coastSample: null as { checkpoint(): boolean } | null,
     /** Station yard host (default hideout view); while set, no Phaser scene runs and the old tab page is cleared. */
     station: null as { checkpoint(): boolean } | null,
     baseWalking: false, baseFacility: 'rest', mapView: '',
     tab: 'gear', overlay: '', helpReturn: '', selected: '', selectedSource: '', seed: '',
-    runWorld: 'coast' as 'coast' | 'buildings' | 'mall',
+    runWorld: 'buildings' as 'coast' | 'buildings' | 'mall',
     lootContext: null as { containerId: string; runId: string } | null,
     mobileContainer: 'bag', runContainer: 'bag', inventoryGrid: false, placement: false, placementRotated: undefined as boolean | undefined, placementQuantity: undefined as number | undefined,
     reading: null as { title: string; text: string } | null,

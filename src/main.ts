@@ -9,14 +9,16 @@ import { SAVE_KEY } from './domain';
 import { SESSION_KEY, ownSession } from './recovery-store';
 import { playerInput } from './input';
 import { installControls } from './mobile';
-import { sampleMode } from './coast-view/sample';
+import { defaultWorld } from './coast-view/sample';
+import { showWebglRequired, webglSupported } from './webgl';
 
 async function boot() {
+    // Devices without WebGL are not supported: show the notice before the save is read.
+    if (!webglSupported()) { showWebglRequired(); return; }
     await Promise.all([loadPixelFont(), loadTitleArt()]);
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
-    const sample = sampleMode();
-    if (sample) app.runWorld = sample === 'mall' ? 'mall' : 'buildings';
+    app.runWorld = defaultWorld();
     app.menuMotion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
     app.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 960, height: 540, backgroundColor: '#122021', pixelArt: true, roundPixels: true, antialias: false, audio: { noAudio: true }, input: { mouse: { preventDefaultWheel: true } }, fps: { target: 60, smoothStep: false }, scene: [BootScene, MenuScene, HideoutScene, BaseScene, RaidScene, ResultScene], render: { powerPreference: 'high-performance' } });
     const coarse = matchMedia('(pointer: coarse)'), fine = matchMedia('(any-pointer: fine)');

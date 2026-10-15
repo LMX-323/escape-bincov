@@ -7,7 +7,7 @@ import { mapPresentation, buildingRunConfig } from '../building-world';
 import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
-import { activeRaidCheckpoint, applyActiveRaidSnapshot } from '../raid-state-projection';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
@@ -317,7 +317,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         return ok;
     }
-    snapshot(): RaidCheckpoint {
+    snapshot(): ActiveRaidSnapshot {
         this.syncMagazine();
         return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: this.terminalLoadout.runId!,
             loadout: this.session.loadout ?? this.terminalLoadout, player: this.player, hp: this.hp, stamina: this.stamina, pollution: this.pollution,

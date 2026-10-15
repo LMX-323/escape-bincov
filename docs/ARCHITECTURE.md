@@ -4,7 +4,9 @@
 
 ## 当前结构
 
-技术栈为 TypeScript、Phaser 与 PixiJS，保持单文件离线。普通据点入口为水产站院子，旧页签保留；行动仍保留 Phaser `RaidScene`，`?sample=village` / `?sample=mall` 由 Pixi 宿主运行真实 `CoastRaidRuntime`。当前入口判断分别在 [station-view/route.ts](../src/station-view/route.ts) 与 [coast-view/sample.ts](../src/coast-view/sample.ts)；未合并的默认入口方案不属于本页现状。
+技术栈为 TypeScript、Phaser 与 PixiJS，保持单文件离线。普通据点入口为水产站院子，旧页签保留；普通玩家新行动仅可选择街区和商场，默认街区，均由 Pixi 宿主运行真实 `CoastRaidRuntime`；新商场行动使用布局三版。`?sample=village` / `?sample=mall` 继续用于预选区域和样板试玩，并非开启 Pixi 的必要开关。
+
+入口判断以 [station-view/route.ts](../src/station-view/route.ts) 与 [coast-view/sample.ts](../src/coast-view/sample.ts) 为准：`raidWorlds` / `defaultWorld` 选择可出击区域和默认值，`sampleSupports` 将已保存的街区及商场二/三版行动交给 Pixi。旧沿海检查点（含 `coast-v1/v2`）及 `mall-v1` 行动仍由 Phaser `RaidScene` 恢复并结算；`legacyRaid` 为 `?test=1` 且无 `sample` 的旧测试夹具保留 Phaser、沿海默认区域及商场一版。测试例外不等于普通入口可新开沿海行动。
 
 | 边界 | 当前责任 | 调用约束 |
 | --- | --- | --- |

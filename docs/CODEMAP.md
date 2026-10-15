@@ -44,7 +44,7 @@
 
 ## 行动输入
 
-**职责与所有者。** 输入适配器产生意图，行动执行器消费意图。当前 `RaidScene` 与 `CoastRaidRuntime` 都存在；同一次行动只交给一个执行器和宿主。
+**职责与所有者。** 输入适配器产生意图，行动执行器消费意图。普通街区/商场行动默认走 Pixi + `CoastRaidRuntime`；`RaidScene` 保留旧沿海/商场一版恢复及 `?test=1` 无 `sample` 的旧测试夹具。同一次行动只交给一个执行器和宿主。
 
 **首读路径：增加一种命令或修改按下/按住语义。**
 
@@ -67,6 +67,7 @@
 
 - 新触屏按钮：[mobile.ts](../src/mobile.ts) 的 `data-command` 绑定与 [coast-view/host.ts](../src/coast-view/host.ts) 的按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
+- 选择执行器/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `legacyRaid`、`raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
@@ -79,12 +80,12 @@
 **首读路径：增加持久字段或修改恢复行为。**
 
 1. [expansion-state.ts](../src/expansion-state.ts)：字段所属类型、`newExpansion`、`validateExpansion` / `exactKeys`。纯派生显示值无需自动入档。
-2. [session.ts](../src/session.ts)：`ensureRpg` / `enableRpg`、`enableExpansion`、`beginRun`；读取 `persist` 的完整写入链，而非只搜字段名。
+2. [session.ts](../src/session.ts)：`ensureRpg` / `enableRpg`、`enableExpansion`、`beginRun` → [building-world.ts](../src/building-world.ts) 的 `initializeBuildingRaid` / [mall-world.ts](../src/mall-world.ts) 的 `initializeMallRaid`；读取 `persist` 的完整写入链，而非只搜字段名。
 3. 同文件继续按操作读：`prepareExpansionMutation` / `commitExpansionMutation`、`prepareSettlement` / `retrySettlement`、`backupRecord`、`importRecord`。
 4. [recovery-store.ts](../src/recovery-store.ts)：`SessionRecord`、`decodeSession`、`RecoveryStore.commit`；[save-backup.ts](../src/save-backup.ts)：`encodeRecoveryBackup` / `decodePortableBackup`。
 5. [hideout-runtime/runtime.ts](../src/hideout-runtime/runtime.ts)：`previewImport` / `importBackup` 的确认与升级；[fresh-start.ts](../src/fresh-start.ts)：`freshStartRecord` / `startOver` 的完整新档路径。
 6. 当前层与完整记录的共享映射：[raid-state-projection.ts](../src/raid-state-projection.ts) 的 `applyActiveRaidSnapshot` / `activeRaidCheckpoint`；这里不克隆、不提交。
-7. 两个调用端仍需核对：[game.ts](../src/game.ts) 与 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion`；旧检查点还读 [checkpoint.ts](../src/checkpoint.ts)。
+7. 两个调用端仍需核对：[game.ts](../src/game.ts) 与 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion`；旧检查点还读 [checkpoint.ts](../src/checkpoint.ts) 的 `RaidCheckpoint` / `initialCheckpoint` / `validateCheckpoint`。
 
 **调用契约的维护位置。** 字段单位和合法范围归类型/校验器；`persist` 写入时的捕获与发布归会话入口；兼容策略归 [ARCHITECTURE](ARCHITECTURE.md#格式与恢复兼容)。卡片只维护路径，不再复制 schema。
 

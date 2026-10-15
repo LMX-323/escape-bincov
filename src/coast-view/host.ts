@@ -113,7 +113,7 @@ const HTML = `
   <div data-hitpop class="cs-hitpop" aria-hidden="true"><b><i></i><i></i><i></i><i></i></b></div>
   <div data-fade class="cs-fade"></div>
   <div data-curtain class="cs-curtain" aria-live="assertive"><b data-curtain-text></b></div>
-  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-act>交互</button></div>
+  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button></div>
 </div>
 <section class="cs-panel" data-panel hidden role="dialog" aria-modal="true"></section>`;
 
@@ -493,6 +493,8 @@ export class CoastSampleHost {
     s.on(act, 'pointercancel', e => this.input.release(e.pointerId));
     s.on(this.q('[data-reload]'), 'pointerdown', e => { e.preventDefault(); this.input.press('reload'); });
     s.on(this.q('[data-heal]'), 'pointerdown', e => { e.preventDefault(); this.input.press('heal'); });
+    // Touch has no 1 / 2 keys: one button switches between the primary weapon and the knife, labelled with the other one.
+    s.on(this.q('[data-swap]'), 'pointerdown', e => { e.preventDefault(); this.input.press(this.weaponShown === 'knife' ? 'primary' : 'knife'); });
     s.on(this.q('[data-bag]'), 'click', () => { if (!this.panel) this.openInventory(); else if (this.panel === 'inventory') this.closePanel(true); });
     s.on(this.q('[data-choices]'), 'click', e => { const id = (e.target as HTMLElement).closest('[data-id]')?.getAttribute('data-id'); if (id) this.input.select(id); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
@@ -669,7 +671,7 @@ export class CoastSampleHost {
     q('[data-hp]').style.width = `${Math.max(0, h.hp / h.maxHp) * 100}%`; q('[data-hp-text]').textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;
     q('[data-st]').style.width = `${Math.max(0, h.stamina / h.maxStamina) * 100}%`; q('[data-st-text]').textContent = `${Math.round(h.stamina)}`;
     const w = h.weapon;
-    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id); q('[data-weapon-name]').textContent = w.name; }
+    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id); q('[data-weapon-name]').textContent = w.name; q('[data-swap]').textContent = w.id === 'knife' ? '主武器' : '匕首'; }
     q('[data-mag]').textContent = !w.magSize ? '近战' : w.reloading ? '换弹中' : `${w.mag} / ${w.magSize}`;
     q('[data-reserve]').textContent = w.magSize ? `备用 ${w.reserve}` : '';
     q('[data-weapon]').classList.toggle('empty', !!w.magSize && w.mag === 0 && !w.reloading);

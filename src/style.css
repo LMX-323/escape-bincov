@@ -212,6 +212,11 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .modal h2 { margin: 8px 0 16px; font-size: 23px; line-height: 1.4; letter-spacing: 1px; font-weight: 600; }
 .modal p { font-size: 12px; line-height: 1.9; color: #acb99f; }
 .modal .orange { color: #d4ad7f; }
+/* Shown instead of the game when the browser has no WebGL (webgl.ts). */
+.webgl-required { width: min(480px, calc(100vw - 32px)); padding: 26px 28px; border-top: 2px solid #9daa72; }
+.webgl-required h2 { margin: 8px 0 16px; font-size: 23px; line-height: 1.4; letter-spacing: 1px; font-weight: 600; }
+.webgl-required p { font-size: 14px; line-height: 1.9; color: #acb99f; margin: 0 0 8px; }
+.webgl-required p.muted { color: var(--muted); margin-top: 16px; }
 .modal .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 18px; margin-top: 18px; border-top: 1px solid #374c38; }
 .result { width: 544px; padding: 30px 32px; border-top: 2px solid #aabd79; }
 .result .stamp { display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #a5b590; letter-spacing: 1px; }
