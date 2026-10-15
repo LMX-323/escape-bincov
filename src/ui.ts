@@ -21,7 +21,7 @@ import { criticalChance, useRpgItem } from './rpg';
 import type { ExpansionDraft } from './session';
 import { PIXEL_FONT } from './font';
 import { inventoryArtSize } from './art/inventory';
-import { sampleEnabled, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
+import { raidWorlds, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
 import { enterStation, returnToStation, stationDefault } from './station-view/route';
 type InventoryDrag = { uid: string; source: string; token: number; runId: string | null; containerId: string | null; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
@@ -242,15 +242,16 @@ function details() {
 export async function startPreparedHideoutRaid(runId: string): Promise<boolean> {
     const result = hideoutRuntime.startRaid(runId); if (!result.ok) return false;
     app.shop = null;
-    if (sampleEnabled() && sampleSupports()) { await startCoastSample(); return !!app.coastSample; }
+    if (sampleSupports()) { await startCoastSample(); return !!app.coastSample; }
     const raid = app.expansion?.raid, seed = app.save.activeRun!.seed;
     app.game?.registry.set('runConfig', raid?.worldVersion.startsWith('mall') ? mallRunConfig(seed) : generateRun(seed));
     changeState('run'); return true;
 }
+const WORLD_OPTION: Record<'coast' | 'buildings' | 'mall', string> = { coast: '沿海封锁区 · 经典规则', buildings: '沿海街区 · 居民楼', mall: '滨湾商场 · 两层与露台' };
 function deploy() {
     const cfg = app.runWorld === 'mall' ? mallRunConfig(app.seed || Date.now()) : generateRun(app.seed || (sampleMode() === 'village' && app.runWorld === 'buildings' ? villageSeed() : Date.now()));
     if (!saved(saveSession.beginRun(cfg.seed, app.runWorld === 'mall' ? 'mall' : app.runWorld === 'buildings', { mallLayout: sampleMallLayout(app.runWorld) }))) return;
-    if (sampleEnabled() && sampleSupports()) { app.shop = null; void startCoastSample(); return; }
+    if (sampleSupports()) { app.shop = null; void startCoastSample(); return; }
     app.shop = null; app.game!.registry.set('runConfig', cfg); changeState('run');
 }
 function checkout() {
@@ -394,7 +395,7 @@ function renderHideout() {
     } else {
         body = `<div class="station-layout"><section class="station-log"><div class="section-label">水产站值守记录 · 累计出击 ${s.stats.runs} 次</div><h3>${s.quests.repair ? '供电已恢复。' : '目前靠应急电源供电。'}</h3><p class="station-copy">出击前查好路线，涉水会积累污染。<br>以下时间从出击开始计算。</p><dl class="tide-notes"><div><dt>04:30</dt><dd>电台预警，离开浅滩。</dd></div><div><dt>05:00</dt><dd>潮位变化，高架路与海堤仍可通行。</dd></div></dl><div class="station-upgrade">${btn(s.upgraded ? '仓库已扩建' : `扩建仓库 · ¥ ${D.STASH_UPGRADE_COST}`, 'upgrade', '', s.upgraded ? 'disabled' : '')}<p class="inv-help">${s.upgraded ? '仓库容量已增至 90 格。' : `完成「${D.QUESTS.repair.name}」后可扩建至 90 格。`}</p></div></section><section class="station-controls"><div class="station-stats"><div><strong>${s.stats.runs}</strong><span>累计出击</span></div><div><strong>${s.stats.extracts}</strong><span>成功撤离</span></div><div><strong>${s.stats.kills}</strong><span>击败敌人</span></div></div><label class="volume-control"><span>游戏音量 <span id="volume-label">${Math.round(s.settings.volume * 100)}%</span></span><input aria-label="游戏音量" id="volume" type="range" min="0" max="1" step="0.05" value="${s.settings.volume}"></label><div class="save-controls"><div><h3>本地存档</h3><p>更换浏览器或游玩地址前，请先导出备份。</p></div><div class="save-actions">${btn('导出存档', 'export-save')}${btn('导入存档', 'import-save')}</div><input id="backup-file" type="file" accept=".json,application/json" hidden></div><div class="station-links">${btn('行动指南', 'help', 'text-button')}${btn('返回主菜单', 'menu', 'text-button')}${btn(walkInLabel(), 'base-enter')}</div></section></div>`;
     }
-    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(app.expansion?.version === 2 ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}${app.tab === 'gear' && !playerInput.touch ? inventoryTools : ''}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>沿海封锁区 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域"><option value="coast" ${app.runWorld === 'coast' ? 'selected' : ''}>沿海封锁区 · 经典规则</option><option value="buildings" ${app.runWorld === 'buildings' ? 'selected' : ''}>沿海街区 · 居民楼</option><option value="mall" ${app.runWorld === 'mall' ? 'selected' : ''}>滨湾商场 · 两层与露台</option></select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${app.baseWalking ? btn('返回站内', 'base-return') : btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
+    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(app.expansion?.version === 2 ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}${app.tab === 'gear' && !playerInput.touch ? inventoryTools : ''}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>行动规则 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域">${raidWorlds().map(w => `<option value="${w}" ${app.runWorld === w ? 'selected' : ''}>${WORLD_OPTION[w]}</option>`).join('')}</select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${app.baseWalking ? btn('返回站内', 'base-return') : btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
     bind();
     ui().querySelectorAll<HTMLElement>('.shop-layout [data-grid]').forEach(grid => {
         grid.parentElement!.scrollTop = scrollPositions.get(grid.dataset.grid!) || 0;
@@ -754,7 +755,7 @@ function bind() {
             case 'enter':
                 if (app.checkpoint || app.expansion?.raid) {
                     if (saveSession.resumeRun()) {
-                        if (sampleEnabled() && sampleSupports()) { void startCoastSample(true); break; }
+                        if (sampleSupports()) { void startCoastSample(true); break; }
                         app.game!.registry.set('runConfig', app.expansion?.raid?.worldVersion.startsWith('mall') ? mallRunConfig(app.expansion.raid.seed) : generateRun(app.expansion?.raid?.seed ?? app.checkpoint!.seed));
                         changeState('run'); app.overlay = 'pause'; render();
                     }

@@ -12,7 +12,7 @@
 ![Phaser](https://img.shields.io/badge/Phaser-3.90.0-cb906b?style=flat-square&labelColor=142323)
 ![PixiJS](https://img.shields.io/badge/PixiJS-8.22.0-cb906b?style=flat-square&labelColor=142323)
 
-### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [🏘️ 城中村样板](https://xuys2025.github.io/escape-bincov/?sample=village) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)
+### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
   <img src="docs/station-relief-20261011/evidence/entry-1920x1080.png" alt="水产站雨夜院子：院门、火桶、居民与整备快捷入口" width="100%">
@@ -26,9 +26,9 @@
 
 超强台风与异常赤潮封锁了虚构的滨科夫县。你从滨科夫水产站出发，在限时行动中搜集物资、应对交战，带着战利品回来交易、交任务、修建设施，再准备下一次出击。
 
-游戏采用俯视角像素画面，**2.5D 水产站院子已成为默认据点入口**，城中村也提供接入真实游戏逻辑与存档的 2.5D 可玩样板。项目仍在开发中，已有完整的「整备 → 出击 → 搜刮与交战 → 撤离或失败 → 回站」单人循环。
+游戏采用俯视角像素画面，**水产站院子和行动都使用 2.5D 画面**。项目仍在开发中，已有完整的「整备 → 出击 → 搜刮与交战 → 撤离或失败 → 回站」单人循环。
 
-> 本页于 **2026-10-12** 按已合并至 `main` 的内容整理，核对基线为 [`1dbacb4`](https://github.com/xuys2025/escape-bincov/commit/1dbacb41eccf5441b5f2e403fe284a6eca9f67f0)。包版本号仍为 `0.2.0`；[v0.2.0 公告](docs/releases/v0.2.0.md)记录的是早期发版，后续已合并功能见下文。最新构建与上线状态以 [Actions](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml) 为准。
+> 本页于 **2026-10-12** 按已合并至 `main` 的内容整理，核对基线为 [`1dbacb4`](https://github.com/xuys2025/escape-bincov/commit/1dbacb41eccf5441b5f2e403fe284a6eca9f67f0)；**2026-10-15** 更新了区域、2.5D 画面与 WebGL 要求。包版本号仍为 `0.2.0`；[v0.2.0 公告](docs/releases/v0.2.0.md)记录的是早期发版，后续已合并功能见下文。最新构建与上线状态以 [Actions](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml) 为准。
 
 ## 🏚️ 现在可以玩什么
 
@@ -37,25 +37,28 @@
 | 水产站院子 | 雨夜院落、进屋揭顶、人物互动、修复供电；可步行、点击寻路，也可用快捷栏直接打开功能。 |
 | 整备与交易 | 仓库、背包、安全箱、武器与护符；拖放、旋转、拆分物品；修理铺和卫生所先加入购物车，再统一结算。 |
 | 据点成长 | 电台任务、仓库扩建、身体与成长，以及休息区、医疗区、训练区、工作台、黑市五项设施；支持生产、领取与实际走动训练。 |
-| 行动 | 三个区域入口、枪械与近战、箱子和尸体搜刮、地图与撤离指引；每局限时 10 分钟，撤离需要停稳并按住交互键 3 秒。 |
+| 行动 | 两个区域入口、枪械与近战、箱子和尸体搜刮、地图与撤离指引；每局限时 10 分钟，撤离需要停稳并按住交互键 3 秒。 |
 | 潮汐与生存 | 行动第 4 分 30 秒预警、第 5 分钟潮位变化；留意污染、流血、水分、饱食与携行重量。 |
 | 存档与恢复 | 浏览器本地保存、检查点续局、JSON 备份迁移；交易与结算写入失败可重试，多窗口冲突有保护。 |
 
-出击面板提供以下区域，**2.5D 样板仅覆盖其中一部分**：
+出击面板提供两个区域，都使用 2.5D 画面，美术仍在补齐：
 
-| 区域 | 普通入口 | 带 `?sample=village` 的入口 |
+| 区域 | 内容 | 美术进度 |
 | --- | --- | --- |
-| 沿海封锁区 | 经典沿海行动 | 相同 |
-| 沿海街区 | 可进入建筑的沿海行动 | 使用 PixiJS 城中村样板；街口以外仍有通用占位画面 |
-| 滨湾商场 | 两层与露台的商场行动 | 相同 |
+| 沿海街区 | 沿海街区，以及可进入的居民楼一楼、二楼和地下 | 街口一带已精修；其余地方暂用通用画面 |
+| 滨湾商场 | 两层与露台（布局三版） | 正门广场到露台一段已布置；其余区域陆续补齐（[#47](https://github.com/xuys2025/escape-bincov/issues/47)） |
 
-普通局内仍由 Phaser 绘制；院子与城中村样板使用 PixiJS。二者共用正式的会话、存档和交易服务。院子画面启动失败时会回到旧页签界面；玩家也可以主动切换。
+原「沿海封锁区」和沿海街区是同一张地图，已经关闭，之后作为新地图重做。此前开始、还没结束的封锁区行动和商场旧布局行动，仍可从标题页「继续」，在原来的画面上打完。
+
+院子与行动使用 PixiJS；标题页、结算页和上面那些旧行动仍由 Phaser 绘制。二者共用正式的会话、存档和交易服务。院子画面启动失败时会回到旧页签界面；玩家也可以主动切换。
 
 ![训练区与设施面板：真实训练进度、修建材料与功能页签](docs/station-tier2-20261011/evidence/final/training-panel-1280x720.png)
 
 <sub>本页复用 2026-10-11 的实际构建验收截图，包含测试用进度和物资配置，不代表新档初始资源。截图来源：[进站验收](docs/station-relief-20261011/README.md)、[训练与补给验收](docs/station-tier2-20261011/README.md)。</sub>
 
 ## ▶️ 开始第一局
+
+游戏需要浏览器支持 **WebGL**；不支持时页面只显示提示，不进入游戏，存档不受影响。
 
 **在线：** 用电脑端 Chrome 或 Edge 打开 [GitHub Pages](https://xuys2025.github.io/escape-bincov/)。页面加载完成后，游戏运行无需外部素材、账号或服务器连接。
 
@@ -68,11 +71,11 @@
 
 成功撤离会保留带回的物资；死亡、超时或放弃会失去背包物资与主武器，安全箱物品和水手匕首保留。负重上限会受成长等状态影响，以界面显示为准。
 
-### 试玩城中村 2.5D 样板
+### 样板入口（看美术进度用）
 
-打开 [城中村样板入口](https://xuys2025.github.io/escape-bincov/?sample=village)，进院子后在出击面板选择 **「沿海街区」**，种子留空。该入口会选择适合从样板街口开始的种子；手填种子可能出生在尚未精修的区域。普通入口的沿海街区继续使用原局内画面。
+普通入口已经是 2.5D 画面。另有两个样板入口，方便看美术做到哪里：[`?sample=village`](https://xuys2025.github.io/escape-bincov/?sample=village) 预选沿海街区，种子留空时挑一个从精修街口出发的种子；[`?sample=mall`](https://xuys2025.github.io/escape-bincov/?sample=mall) 预选滨湾商场。两个入口都会把还没精修的地方压暗，并在左上角地点后标「样板外」。
 
-本地仓库可双击根目录的 `城中村试玩.html`。使用下载的便携包时，先正常打开游戏，再在**浏览器地址栏**的 `.html` 后追加 `?sample=village`；不要把带问号的字符串当文件名打开。样板和普通入口在同一网站使用同一份存档，换入口前建议先导出备份。
+本地仓库可双击根目录的 `城中村试玩.html` 或 `商场试玩.html`。样板和普通入口在同一网站使用同一份存档。
 
 ### 保存与迁移
 
@@ -136,7 +139,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-打开 `http://127.0.0.1:4173`；城中村使用 `http://127.0.0.1:4173/?sample=village`，再选沿海街区。修改源码后刷新会重新构建。
+打开 `http://127.0.0.1:4173`；样板入口在地址后加 `?sample=village` 或 `?sample=mall`。修改源码后刷新会重新构建。
 
 | 命令 | 用途 |
 | --- | --- |
@@ -145,6 +148,7 @@ pnpm dev
 | `pnpm package` | 构建并生成离线 ZIP、网页 ZIP 和 `docs/release-manifest.json` |
 | `pnpm test:station` / `pnpm test:hideout` | 院子交互与宿主切换 / 据点接口浏览器回归 |
 | `pnpm test:station-tier1` / `pnpm test:station-tier2` / `pnpm test:station-relief` | 计数与护符 / 训练与补给 / 进站救济专项 |
+| `pnpm test:raid-default` | 普通入口：两个区域、街区和商场走 2.5D、旧行动续玩、无 WebGL 提示 |
 | `node scripts/coast-sample-test.mjs` | 真实 Runtime 上的城中村样板门禁 |
 | `node scripts/coast-audio-test.mjs` | 样板实际音频输出、暂停与恢复 |
 | `pnpm test:shop-drag` / `pnpm test:save-browser` | 商店拖放及触控 / 存档失败、导入导出与回滚 |

@@ -1,3 +1,26 @@
+## 2026-10-15 · 行动默认走 2.5D，关闭沿海封锁区，不再支持无 WebGL 设备（`feat/2-5d-default`）
+
+维护者准备全面 2.5D 化：封锁区和街区是同一张图，关掉封锁区以后重做；不再支持没有 WebGL 的设备；能跑 2.5D 的设备都要能完整玩。起点 main `50a05aa`。
+
+- 路由按世界走，不再看网址：`src/coast-view/sample.ts` 的 `sampleSupports()` 接受 `coast-buildings-v1`、`mall-v2`、`mall-v3`；`sampleMallLayout()` 对商场一律给 3；`raidWorlds()` / `defaultWorld()` 给出可选区域和默认区域（沿海街区）。院子（`HostOptions.worlds` → `UI` → `deployHtml`）和旧页签的下拉都用这份列表。
+- 测试夹具 `legacyRaid()`：`?test=1` 且不带 `sample` 时保持旧行为（Phaser 局内、三个区域且默认封锁区、商场一版），所以约 20 个旧局内浏览器测试不用改。带 `sample=` 的样板测试走新路由。
+- 旧行动：存档里的经典封锁区（`coast-v2` 检查点）和商场一版，`sampleSupports()` 为否，仍从标题页「继续」进 Phaser 打完。
+- 商场素材按行动世界加载（以前只在 `?sample=mall` 下加载）。
+- 样板标记（街口外压暗、HUD「样板外」）只在 `?sample=` 下画：`ViewOptions.sampleMarks`。
+- `src/webgl.ts`：启动第一步按 Pixi 的 `isWebGLSupported` 同样条件检查（`webgl` + stencil），不支持就移除 `#frame`、显示提示并返回，不读写存档。院子“启动失败退回页签”的退路保留，它处理的是启动后才出问题的情况（`station-browser-test` A4）。
+- 街区室外地图 `name` 改为“沿海街区”（`building-world.ts`，世界数据不钉哈希）；旧页签底栏“沿海封锁区”改“行动规则”。
+- 2.5D 手机操作加 `[data-swap]` 切换武器按钮，文字是要换成的武器。
+- 测试：新增 `scripts/raid-default-test.mjs`（`test:raid-default`，CI title 组，第 36 条，R1–R9）；`portable-test` 和 `systems-browser-test` 的普通入口步骤改用 2.5D 画面的界面元素；`mall-sample-test` M12 改名。
+
+验证（本机 Windows，Node 24，离线打包文件）：
+- `pnpm test` 435/435；`node --test scripts/ci/*.test.mjs` 13/13；`pnpm package` 通过；
+- `test:raid-default` 9/9（截图见 [docs/2-5d-default](docs/2-5d-default/README.md)）；
+- `test:portable`、`test:systems`（16 步）、`test:coast-animation` 8/8、`test:mall-sample` 22/22、`test:station-tier1` 10/10、`test:coast-render-targets` 5/5、`test:title` 通过；
+- `test:save-browser` 第 9 步“跨窗口冲突时导出备份”等下载超时；main `50a05aa` 的包在本机同样失败，留给 CI 判断；
+- 发现并修正：启动检测若像 Pixi 那样主动让探测上下文丢失（`WEBGL_lose_context`），`test:title` 稳定失败（标题场景还没启动菜单就出现了），去掉后连续通过，原因写在 `src/webgl.ts`。
+
+没有做：真机手机试玩；去掉 Phaser（旧行动收尾、约 20 个旧局内测试迁移、标题与结算页）；美术补齐（#47）和敌人素材；新的沿海封锁区。
+
 ## 2026-10-14 · 商场 2.5D：遗留几项处理（#47 / #48，维护者授权合并）
 
 维护者说“按你的想法改，改完就合并”。先对 5 项分别调查，每项再由一名复核者检查方案（决策记录在会话 scratchpad 的 decisions/*.json）。然后各在独立工作区实现，测试都先在旧代码上确认会失败，最后拣回本分支。

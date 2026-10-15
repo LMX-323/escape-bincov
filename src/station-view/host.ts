@@ -38,7 +38,7 @@ export interface StationHooks {
   departed(runId: string): void;
   /** Seed the Runtime should use for an empty seed field (village corner for the sample), or '' for the clock. */
   seedFor(world: RunWorld): string;
-  /** Layout revision for a new mall raid (3 for the mall sample); undefined keeps the Runtime default. */
+  /** Layout revision for a new mall raid (3, the 2.5D one); undefined keeps the Runtime default. */
   mallLayout?(world: RunWorld): 1 | 2 | 3 | undefined;
   tabs(): void;
   title(): void;
@@ -54,6 +54,8 @@ export interface HostOptions {
   app: Application; shadow: ShadowRoot; mount: HTMLElement; rt: HideoutRuntime; sol: Map<string, HTMLCanvasElement>; art: StationArt;
   test: boolean; reduced: boolean; frozen: boolean; mood: string; touch: boolean; volume: number;
   arrival: { runId: string; summary: D.RunSummary } | null; world: RunWorld; seed: string; hooks: StationHooks;
+  /** Areas the deploy panel offers. */
+  worlds: readonly RunWorld[];
 }
 
 /** Owns the yard while it is mounted: input, movement, NPC behaviour, interaction, camera and the gate / power sequences. */
@@ -108,7 +110,7 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-    }, this.scope, { world: opts.world, seed: opts.seed });
+    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds });
     this.ui.volume = opts.volume;
     this.ui.setTouch(opts.touch);
     const unsubscribe = rt.subscribe(e => this.event(e));
