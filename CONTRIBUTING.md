@@ -2,7 +2,7 @@
 
 欢迎修复问题、改进体验和补充文档。项目唯一权威仓库是 [xuys2025/escape-bincov](https://github.com/xuys2025/escape-bincov)，已接受版本在 `main`。
 
-所有贡献者（包括 AI agents）请先阅读 [AGENTS.md](AGENTS.md) 和 [开发手册](docs/AGENT-HANDBOOK.md)。
+所有贡献者（包括 AI agents）先读 [AGENTS.md](AGENTS.md)，从[代码导航](docs/CODEMAP.md)选择任务，再读[开发手册](docs/AGENT-HANDBOOK.md)的相关流程与验证要求；历史交接按需查证。
 
 ## 提交方式
 
