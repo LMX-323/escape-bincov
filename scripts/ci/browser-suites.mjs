@@ -1,0 +1,21 @@
+// One reviewed schedule for execution, evidence validation and docs-fast-lane jobs.
+// Whole suites stay sequential on each runner; no test assertions are removed.
+const schedule = {
+  'batch-1': ['browser', 'qol-expansion', 'station-tier2'],
+  'batch-2': ['save-browser', 'asset-load', 'hud-release', 'issue26-inventory'],
+  'batch-3': ['desktop-input', 'portable', 'shop-drag', 'title', 'title-water'],
+  'batch-4': ['issue26-station', 'issue26-spatial', 'issue26-phaser-spatial', 'tactical', 'art'],
+  'batch-5': ['buildings', 'station-tier1', 'shop-feedback', 'mobile-ux'],
+  'batch-6': ['loot-target', 'mall-sample', 'qol', 'coast-render-targets'],
+  'batch-7': ['raid-default', 'ui', 'mall-landing', 'coast-animation', 'station-relief', 'station-reset'],
+  'batch-8': ['expansion', 'mobile', 'loot', 'mall-passages', 'systems'],
+};
+
+export const browserGroups = Object.freeze(Object.keys(schedule));
+export const allSuiteIds = Object.freeze(Object.values(schedule).flat());
+export function suitesForGroup(group) {
+  if (!Object.hasOwn(schedule, group)) throw new Error(`Unknown browser group: ${group}`);
+  return schedule[group].map(id => ({ id, command: `test:${id}` }));
+}
+
+export const oldClientGroup = browserGroups.find(group => schedule[group].includes('expansion'));

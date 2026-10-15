@@ -1,9 +1,10 @@
 # 当前任务入口
 
-最近核对：2026-10-15，已接受 main `a2d716d`。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-15，已接受 main `eb512ea`（已合入 #63）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
+| CI 八组均衡与执行证据 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) · [PR #62](https://github.com/xuys2025/escape-bincov/pull/62) | 已授权合并；同步 eb512ea 后以准确 head 全量 CI 为准，后续性能验收与自然运行观察仍归 #61 |
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [当前实施摘要](tasks/quality-entropy.md) | `agent/quality-entropy`；导航/契约与共享投影，后续阶段继续原总单 |
 | 行动默认 2.5D | [PR #57](https://github.com/xuys2025/escape-bincov/pull/57) | 已合入 a2d716d；后续输入/旧行动问题继续相关任务，保留该版本依据 |
 | 开场制作与分镜 | [PR #56](https://github.com/xuys2025/escape-bincov/pull/56) · [PR #41](https://github.com/xuys2025/escape-bincov/pull/41) | 实现、素材与原方案继续原 PR |
@@ -15,6 +16,12 @@
 
 <details>
 <summary>历史交接与旧任务快照（按需查证，保留原文）</summary>
+
+## 2026-10-15 · CI 第二阶段：八组均衡与执行耗时（#61）
+
+维护者授权开始推进 [#61](https://github.com/xuys2025/escape-bincov/issues/61)。分支 `ci/balanced-regressions` 从最新 main `a2d716d` 开始，纳入刚合入 #57 的第 36 条 raid-default。首批集中在整套件八组重排、存档检查前置、逐命令耗时与完整执行记录门禁；保留游戏/测试行为、真实训练、单文件离线和发布契约。后续 case 分片与诊断采样优化仍由 #61 承接，见 [CI 说明](CI.md)。同一目标保持一个 PR。
+
+本地 437 单测及 package 已通过，生成物与起点字节一致。CI 规则/执行器验证、固定版本三轮 Linux 对照与准确 head 的实际结果更新承接 PR；本记录不表示已经合并、上线或已达到提速目标。其他 Agent 的产品提交独立推进，提交前再次 fetch 并正常合并必要基线，不覆盖他人工作。
 
 ## 2026-10-15 · 行动默认走 2.5D，关闭沿海封锁区，不再支持无 WebGL 设备
 
