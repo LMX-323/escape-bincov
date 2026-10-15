@@ -124,8 +124,8 @@ function harbor(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): voi
 
 /**
  * Torch light from two beams (the men stand below the frame), flickering and trembling. Levels for four versions:
- * 0 dark, 1/3 mid, 2/3 lit (the plateau inside a beam), 1 warm hot spot at a beam's centre. Computed on a half-size
- * grid; the ordered dither in Frame.blitLit works on full art pixels, so the steps stay crisp.
+ * 0 dark, 1/3 mid, 2/3 lit (the plateau inside a beam), 1 warm hot spot at a beam's centre. Computed per 4x4 block,
+ * aligned with the dither cells; the ordered dither in Frame.blitLit still works per art pixel, so the steps stay crisp.
  */
 function torchField(f: Frame, t: number, cx: number, cy: number, rx: number, ry: number, tremble: number, power: number, calm: boolean): void {
   const L = f.light;
@@ -134,17 +134,17 @@ function torchField(f: Frame, t: number, cx: number, cy: number, rx: number, ry:
     const flicker = calm ? 1 : 0.8 + 0.2 * noise1(t / 55, 31 + k);
     return { x: cx + (k ? 26 : -22) + jx, y: cy + (k ? 8 : -6) + jy, rx: rx * (k ? 0.86 : 1), ry: ry * (k ? 0.86 : 1), hot: power * flicker };
   });
-  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
+  for (let y = 0; y < H; y += 4) for (let x = 0; x < W; x += 4) {
     let v = 0;
     for (const b of beams) {
-      const dx = (x + 1 - b.x) / b.rx, dy = (y + 1 - b.y) / b.ry, d = Math.sqrt(dx * dx + dy * dy);
-      if (d >= 1.12) continue;
+      const dx = (x + 2 - b.x) / b.rx, dy = (y + 2 - b.y) / b.ry, d2 = dx * dx + dy * dy;
+      if (d2 >= 1.2544) continue;
+      const d = Math.sqrt(d2);
       const edge = Math.min(1, (1.12 - d) * 7), core = Math.min(1, Math.max(0, (0.5 - d) * 3.5)) * b.hot;
       const l = (edge * 2 + core) / 3;
       if (l > v) v = l;
     }
-    const i = y * W + x;
-    L[i] = L[i + 1] = L[i + W] = L[i + W + 1] = v;
+    for (let r = 0, i = y * W + x; r < 4; r++, i += W) { L[i] = L[i + 1] = L[i + 2] = L[i + 3] = v; }
   }
 }
 
@@ -157,7 +157,6 @@ function hatch(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void
     : beat === 'near' ? { x: 352, y: 150, r: 205 + ease(p / 0.5) * 35, shake: 3 + 2 * p }
     : beat === 'retreat' ? { x: 352 - back * 30, y: 170 + back * 20, r: 215 - back * 70, shake: 6 }
     : { x: 344, y: 165, r: 215, shake: beat === 'turn' ? 2.5 : 1.5 };
-  f.light.fill(0);
   torchField(f, t, aim.x, aim.y, aim.r * 1.12, aim.r, aim.shake, 1 - back * 0.25, o.calm);
   f.blitLit(h.plate, 0, 0);
   const frame = !o.calm && Math.floor(t / 430 + noise1(t / 900, 4) * 0.6) % 2 ? 1 : 0;
@@ -200,7 +199,6 @@ export function paintPlates(g: CanvasRenderingContext2D, a: Prepared, shot: Time
   const scene = shot.scene;
   if (scene !== 'harbor' && scene !== 'bow' && scene !== 'hatch' && scene !== 'hatch-near' && scene !== 'retreat' && scene !== 'roof') return false;
   const f = a.frame;
-  f.light.fill(0);
   const o: Look = { calm, flash };
   if (scene === 'harbor') harbor(f, a, shot, t, o);
   else if (scene === 'roof') roof(f, a, shot, t, o);

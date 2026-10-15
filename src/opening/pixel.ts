@@ -93,6 +93,7 @@ export function mapped(src: Indexed, table: Uint8Array): Indexed {
 /** 4x4 ordered-dither thresholds in (0, 1). */
 const BAYER = Float32Array.from([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], v => (v + 0.5) / 16);
 export const bayer = (x: number, y: number) => BAYER[((y & 3) << 2) | (x & 3)];
+const BAYER_ROWS = [0, 1, 2, 3].map(r => BAYER.subarray(r * 4, r * 4 + 4));
 
 /** Stable hash noise in [0, 1). */
 export function hash(a: number, b = 0): number {
@@ -141,15 +142,21 @@ export class Frame {
   blitLit(versions: readonly Indexed[], x: number, y: number): void {
     x = Math.round(x); y = Math.round(y);
     const top = versions.length - 1, first = versions[0];
+    if (top > 3) throw new Error('blitLit takes at most four versions.');
+    // Hot loop: plain typed arrays, no calls; v1..v3 repeat the top version when fewer are given.
+    const v0 = first.px, v1 = versions[Math.min(1, top)].px, v2 = versions[Math.min(2, top)].px, v3 = versions[top].px;
+    const L = this.light, P = this.px, w = first.w;
     const sx0 = Math.max(0, -x), sx1 = Math.min(first.w, W - x), sy0 = Math.max(0, -y), sy1 = Math.min(first.h, H - y);
     for (let sy = sy0; sy < sy1; sy++) {
-      const dy = sy + y;
-      let s = sy * first.w + sx0, d = dy * W + sx0 + x;
+      const dy = sy + y, row = BAYER_ROWS[dy & 3];
+      let s = sy * w + sx0, d = dy * W + sx0 + x;
       for (let sx = sx0; sx < sx1; sx++, s++, d++) {
-        if (first.px[s] === CLEAR) continue;
-        const q = this.light[d] * top, base = q | 0;
-        const level = Math.min(top, base + (q - base > bayer(sx + x, dy) ? 1 : 0));
-        this.px[d] = versions[level].px[s];
+        const dark = v0[s];
+        if (dark === CLEAR) continue;
+        const q = L[d] * top;
+        let level = q | 0;
+        if (q - level > row[(sx + x) & 3] && level < top) level++;
+        P[d] = level === 0 ? dark : level === 1 ? v1[s] : level === 2 ? v2[s] : v3[s];
       }
     }
   }
