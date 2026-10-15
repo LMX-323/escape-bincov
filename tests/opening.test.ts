@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHOTS, TIMELINE, captionAt, layout, minCaptionMs, shotAt } from '../src/opening/timeline';
-import { openingAutoplay, resetOpeningGate } from '../src/opening/gate';
+import { OPENING_AUTOPLAY_LIVE, openingAutoplay, resetOpeningGate } from '../src/opening/gate';
 
 /** Section 3 of the storyboard: one row per shot (id, seconds, captions with their speakers). */
 function storyboard() {
@@ -66,7 +66,7 @@ test('lightning keeps to three flashes a second and cues fall inside their shots
 
 test('autoplay only for a new save with nothing to resume; test pages opt in', () => {
   resetOpeningGate();
-  assert.equal(openingAutoplay(0, false, ''), true);
+  assert.equal(openingAutoplay(0, false, ''), OPENING_AUTOPLAY_LIVE);
   assert.equal(openingAutoplay(1, false, ''), false);
   assert.equal(openingAutoplay(0, true, ''), false);
   assert.equal(openingAutoplay(0, false, '?test=1'), false);

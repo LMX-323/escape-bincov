@@ -6,13 +6,17 @@ let seen = false;
 let playing = false;
 
 /**
- * Autoplay on a new save's first "enter the station" in this page: no raid ever started and nothing to resume.
- * Test pages (?test=1) keep the old flow unless they ask for it with &opening=auto.
+ * Autoplay for players goes live in P2, together with the browser suites that enter a new save the ordinary way.
+ * Until then players see the opening from the title's replay entry, and test pages opt in with ?test=1&opening=auto.
  */
+export const OPENING_AUTOPLAY_LIVE = false;
+
+/** Autoplay on a new save's first "enter the station" in this page: no raid ever started and nothing to resume. */
 export function openingAutoplay(runs: number, resume: boolean, search = globalThis.location?.search ?? ''): boolean {
   if (seen || playing || runs > 0 || resume) return false;
   const p = new URLSearchParams(search);
-  return p.get('test') !== '1' || p.get('opening') === 'auto';
+  if (p.get('test') === '1') return p.get('opening') === 'auto';
+  return OPENING_AUTOPLAY_LIVE;
 }
 
 /** Play the opening; resolves when it ends or is skipped. A failure is logged and treated as skipped. */

@@ -1,3 +1,9 @@
+## 2026-10-15 · 开场动画 P0 动态分镜（feat/opening-cutscene）
+
+维护者要求开实现 PR。从 #41 的 `456d96f`（已含 main `50a05aa`）建 `feat/opening-cutscene`，按[制作方案](docs/OPENING-CUTSCENE-PLAN.md)做 P0。新增 `src/opening/`：时间轴（28 镜、139 秒，字幕与[分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md)逐字一致，单测核对）、独立 Canvas 2D 播放器（640×360 整数倍放大、HTML 字幕、跳过/暂停、失焦自动暂停、减少动态效果）、色块占位画面和临时合成音。主菜单加「序幕」，玩家可随时看；新存档第一次进入自动播放的规则已写好但先关着（`OPENING_AUTOPLAY_LIVE`），P2 与按普通入口进院子的浏览器套件一起打开，测试页用 `?test=1&opening=auto` 启用。动画不读写存档。
+
+A08、A11～A14、C04 先用 Sol 定调第一批图。维护者看过认为和其他画面差距大、不够精细；对比确认主要是导出流程里的中值和众数清理把细节磨平，返修时改成主菜单的做法。字体子集按固定上游重新生成，新增 70 字；构建校验 `assets/opening/manifest.json`。`title-review` 按新菜单顺序更新 Tab 断言；`scripts/yard-entry.mjs` 加 `skipOpening`，自动播放打开后普通入口的套件照常进院子。
+
 ## 2026-10-15 · 开场动画定稿（#41）
 
 维护者确认[制作方案](docs/OPENING-CUTSCENE-PLAN.md)第 10 节和[分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md)第 2 节的七项改动（含船艏露出「远汐」）。定稿：新存档第一次点「进入水产站」自动播放，主菜单「序幕」重看；删去 A18、B00 和到站的 D02～D04，第四段只留「第十七天」字卡，没有台词的镜头各缩 1～2 秒，创作者原话全部保留，约 2 分 19 秒；图片体积上限 1.5 MB；素材清单按此更新。先正常合入 main `50a05aa`，交接记录和任务清单按日期保留双方条目。
