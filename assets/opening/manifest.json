@@ -1,0 +1,428 @@
+{
+  "schema": 1,
+  "scope": [
+    "A08",
+    "A14",
+    "C04"
+  ],
+  "artGrid": [
+    640,
+    360
+  ],
+  "subtitleY": 288,
+  "palette": "assets/opening/palette.json",
+  "assets": [
+    {
+      "id": "op-bg03-harbor-sky-night-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-sky-night-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 14,
+      "source": "source/originals/op-bg03-harbor-sky-night.png",
+      "sourceInputs": [
+        "source/originals/op-bg03-harbor-sky-night.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "fd103e9e5504646a468acf585a004bfa5a2bac3baed395bd5e7a0c6e7c28251f",
+      "bytes": 27597,
+      "revision": 1
+    },
+    {
+      "id": "op-bg03-harbor-mid-night-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-mid-night-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "mid",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 26,
+      "source": "source/originals/op-bg03-harbor-mid-night.png",
+      "sourceInputs": [
+        "source/originals/op-bg03-harbor-mid-night.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "339e0636f34cf215d6307107de3b35e11e17c69b5e19298d46f7d116310e3d86",
+      "bytes": 20578,
+      "revision": 1
+    },
+    {
+      "id": "op-bg03-harbor-near-night-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-near-night-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 22,
+      "source": "source/originals/op-bg03-harbor-near-night.png",
+      "sourceInputs": [
+        "source/originals/op-bg03-harbor-near-night.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "0d66fe8c0e722f0b6777f3cc28c12b8f86765bda65da69a536f107965ffe6fe9",
+      "bytes": 8612,
+      "revision": 1
+    },
+    {
+      "id": "op-sp01-ship-dark-v1",
+      "file": "assets/opening/v1/op-sp01-ship-dark-v1.png",
+      "w": 400,
+      "h": 160,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sprite",
+      "variant": "dark",
+      "pairedWith": "op-sp01-ship-flash-v1",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 13,
+      "source": "source/originals/op-sp01-ship-flash.png",
+      "sourceInputs": [
+        "source/originals/op-sp01-ship-flash.png",
+        "source/originals/op-sp01-ship-dark.png"
+      ],
+      "exportMethod": "Lighting study plus same lit master geometry; fixed palette tonal remap (no independent redraw registration)",
+      "sha256": "6b0756a7cc7922f46cc50e24e05cb92213a6a117498cf90b40ea0144d78f25e4",
+      "bytes": 7859,
+      "revision": 1
+    },
+    {
+      "id": "op-sp01-ship-flash-v1",
+      "file": "assets/opening/v1/op-sp01-ship-flash-v1.png",
+      "w": 400,
+      "h": 160,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sprite",
+      "variant": "flash",
+      "pairedWith": "op-sp01-ship-dark-v1",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 54,
+      "source": "source/originals/op-sp01-ship-flash.png",
+      "sourceInputs": [
+        "source/originals/op-sp01-ship-flash.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup",
+      "sha256": "68cba5324ef46b8270929a9024d8f7e3d3e559e9e21815c328ab41d4a63a6324",
+      "bytes": 12033,
+      "revision": 1
+    },
+    {
+      "id": "op-bg05-hatch-dark-v1",
+      "file": "assets/opening/v1/op-bg05-hatch-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A14"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "pairedWith": "op-bg05-hatch-lit-v1",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 11,
+      "source": "source/originals/op-bg05-hatch-lit.png",
+      "sourceInputs": [
+        "source/originals/op-bg05-hatch-lit.png",
+        "source/originals/op-bg05-hatch-dark.png"
+      ],
+      "exportMethod": "Lighting study plus same lit master geometry; fixed palette tonal remap (no independent redraw registration)",
+      "sha256": "37397d5274be688acf8fb8fabc1d1c97352170776a97ec683713c3649af53698",
+      "bytes": 27127,
+      "revision": 1
+    },
+    {
+      "id": "op-bg05-hatch-lit-v1",
+      "file": "assets/opening/v1/op-bg05-hatch-lit-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A14"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "pairedWith": "op-bg05-hatch-dark-v1",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 29,
+      "source": "source/originals/op-bg05-hatch-lit.png",
+      "sourceInputs": [
+        "source/originals/op-bg05-hatch-lit.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "d8c1f3d02d0080fbc20c8472095cac74b74de427ade6873129411471a1acd810",
+      "bytes": 47951,
+      "revision": 1
+    },
+    {
+      "id": "op-ch03-near-f0-v1",
+      "file": "assets/opening/v1/op-ch03-near-f0-v1.png",
+      "w": 160,
+      "h": 280,
+      "shots": [
+        "A14"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": [
+        80,
+        360
+      ],
+      "place": {
+        "layer": "op-bg05-hatch-lit-v1",
+        "xy": [
+          272,
+          4
+        ]
+      },
+      "colours": 47,
+      "source": "source/originals/op-ch03-near-f0.png",
+      "sourceInputs": [
+        "source/originals/op-ch03-near-f0.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup",
+      "sha256": "2da692006959a081c10098377d99533123ab3342af3fa49ea152e32f9e8a4a74",
+      "bytes": 16857,
+      "revision": 1
+    },
+    {
+      "id": "op-ch03-near-f1-v1",
+      "file": "assets/opening/v1/op-ch03-near-f1-v1.png",
+      "w": 160,
+      "h": 280,
+      "shots": [
+        "A14"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "pairedWith": null,
+      "frame": 1,
+      "anchor": [
+        80,
+        360
+      ],
+      "place": {
+        "layer": "op-bg05-hatch-lit-v1",
+        "xy": [
+          272,
+          4
+        ]
+      },
+      "colours": 53,
+      "source": "source/originals/op-ch03-near-f1.png",
+      "sourceInputs": [
+        "source/originals/op-ch03-near-f1.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup",
+      "sha256": "f1d12408e4417017fe63f3a7af181f6d4a3188231aa5d707cfa239745781dd52",
+      "bytes": 17121,
+      "revision": 1
+    },
+    {
+      "id": "op-bg13-roof-sky-v1",
+      "file": "assets/opening/v1/op-bg13-roof-sky-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 24,
+      "source": "source/originals/op-bg13-roof-sky.png",
+      "sourceInputs": [
+        "source/originals/op-bg13-roof-sky.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "d0daaae0cc7248e50fcb0b20afb3fe3fee6b5d857a5b5f381dc8a35109fc3b9c",
+      "bytes": 26174,
+      "revision": 1
+    },
+    {
+      "id": "op-bg13-roof-mid-v1",
+      "file": "assets/opening/v1/op-bg13-roof-mid-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "mid",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 18,
+      "source": "source/originals/op-bg13-roof-mid.png",
+      "sourceInputs": [
+        "source/originals/op-bg13-roof-mid.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "d5f03722e9df2cd6145013dbe703c0dec6d05ad91509196357f6d36c18a8fb9f",
+      "bytes": 11292,
+      "revision": 1
+    },
+    {
+      "id": "op-bg13-roof-near-v1",
+      "file": "assets/opening/v1/op-bg13-roof-near-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 23,
+      "source": "source/originals/op-bg13-roof-near.png",
+      "sourceInputs": [
+        "source/originals/op-bg13-roof-near.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup; 3x3 median then two 3x3 cluster-mode passes",
+      "sha256": "6cac313cb154c810612bab2c015eb19a1b8588c6c927a8c12b1aa793e5eb87ef",
+      "bytes": 17869,
+      "revision": 1
+    },
+    {
+      "id": "op-bg13-glow-f0-v1",
+      "file": "assets/opening/v1/op-bg13-glow-f0-v1.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "C04"
+      ],
+      "layer": "fx",
+      "variant": null,
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": null,
+      "place": {
+        "layer": "op-bg13-roof-sky-v1",
+        "xy": [
+          869,
+          202
+        ]
+      },
+      "colours": 12,
+      "source": "source/originals/op-bg13-glow-f0.png",
+      "sourceInputs": [
+        "source/originals/op-bg13-glow-f0.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup",
+      "sha256": "c56ab54c6d36afaa1adf5f3a6f1a84a90a95ae39d1a17e30962c86cfe2d537a6",
+      "bytes": 1295,
+      "revision": 1
+    },
+    {
+      "id": "op-bg13-glow-f1-v1",
+      "file": "assets/opening/v1/op-bg13-glow-f1-v1.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "C04"
+      ],
+      "layer": "fx",
+      "variant": null,
+      "pairedWith": null,
+      "frame": 1,
+      "anchor": null,
+      "place": {
+        "layer": "op-bg13-roof-sky-v1",
+        "xy": [
+          869,
+          202
+        ]
+      },
+      "colours": 5,
+      "source": "source/originals/op-bg13-glow-f0.png",
+      "sourceInputs": [
+        "source/originals/op-bg13-glow-f0.png",
+        "source/originals/op-bg13-glow-f1.png"
+      ],
+      "exportMethod": "Second ImageGen lighting study; same f0 master silhouette; 0.91 RGB factor; shared warm palette",
+      "sha256": "3b53b38692e77c40a0016eab5d4f04430d9e8015f9c3a774e0496f88beecca12",
+      "bytes": 1236,
+      "revision": 1
+    },
+    {
+      "id": "op-ch04-sit-f0-v1",
+      "file": "assets/opening/v1/op-ch04-sit-f0-v1.png",
+      "w": 64,
+      "h": 76,
+      "shots": [
+        "C04"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": [
+        49,
+        71
+      ],
+      "place": {
+        "layer": "op-bg13-roof-near-v1",
+        "xy": [
+          215,
+          108
+        ]
+      },
+      "colours": 23,
+      "source": "source/originals/op-ch04-sit-f0.png",
+      "sourceInputs": [
+        "source/originals/op-ch04-sit-f0.png"
+      ],
+      "exportMethod": "ImageGen source; BOX sampling; shared palette without dithering; binary alpha; enclosed-island cleanup",
+      "sha256": "02b8987134094c0a990117f63d11fafb27ef7d3125b326fa5283b969bb108560",
+      "bytes": 2188,
+      "revision": 1
+    }
+  ],
+  "totals": {
+    "files": 15,
+    "pngBytes": 245789
+  },
+  "imageGenCalls": 15,
+  "notes": {
+    "nearCrewAnchor": "virtual foot projection below knees-up crop; same [80,360] in both frames",
+    "shipPlacement": "preview uses sky > mid > ship > near; ship xy is independent of camera",
+    "glow": "sky contains f0 base; overwrite its exact same rectangle with f0/f1, do not additively blend"
+  }
+}

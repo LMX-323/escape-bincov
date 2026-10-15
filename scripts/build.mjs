@@ -39,6 +39,15 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Mall asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Mall asset size mismatch: ${a.file}`);
   }
+  // Opening cutscene art (Sol): same rule as the station yard.
+  const opening = JSON.parse(await readFile('assets/opening/manifest.json','utf8'));
+  const openingImports = [...(await readFile('src/opening/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/opening\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  if (JSON.stringify(openingImports) !== JSON.stringify(opening.assets.map(a => a.file).sort())) throw new Error('Opening asset imports do not match assets/opening/manifest.json.');
+  for (const a of opening.assets) {
+    const bytes = await readFile(a.file);
+    if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Opening asset hash mismatch: ${a.file}`);
+    if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Opening asset size mismatch: ${a.file}`);
+  }
   const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl','.css':'text'},define:{'process.env.NODE_ENV':'"production"'}});
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));

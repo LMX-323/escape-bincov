@@ -23,6 +23,7 @@ import { PIXEL_FONT } from './font';
 import { inventoryArtSize } from './art/inventory';
 import { sampleEnabled, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
 import { enterStation, returnToStation, stationDefault } from './station-view/route';
+import { openingAutoplay, playOpening } from './opening/gate';
 type InventoryDrag = { uid: string; source: string; token: number; runId: string | null; containerId: string | null; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
 let dragToken = 0;
@@ -92,6 +93,14 @@ export function hideoutExternal(): boolean {
 function walkIn() {
     if (stationDefault()) { void enterStation(); return; }
     if (saved(saveSession.enableRpg())) { app.baseWalking = true; changeState('hideout'); }
+}
+/** Title "enter": the yard by default, the old tab page as the fallback; reports an interrupted raid once. */
+function enterHideout() {
+    if (stationDefault()) void enterStation(); else changeState('hideout');
+    if (app.recovery) {
+        toast('上次行动中断，已按撤离失败处理。安全箱内的物品和水手匕首保留。');
+        app.recovery = false;
+    }
 }
 const walkInLabel = () => stationDefault() ? '回到院子' : '走进水产站';
 /** Enter the run state for an external renderer (village sample) without starting the Phaser RaidScene. */
@@ -760,11 +769,12 @@ function bind() {
                     }
                     break;
                 }
-                if (stationDefault()) void enterStation(); else changeState('hideout');
-                if (app.recovery) {
-                    toast('上次行动中断，已按撤离失败处理。安全箱内的物品和水手匕首保留。');
-                    app.recovery = false;
-                }
+                // A new save's first entry plays the opening first (docs/OPENING-CUTSCENE-PLAN.md section 3).
+                if (openingAutoplay(app.save.stats.runs, false)) { void playOpening('first').then(enterHideout); break; }
+                enterHideout();
+                break;
+            case 'opening':
+                void playOpening('replay').then(() => { if (app.state !== 'menu') return; render(); ui().querySelector<HTMLElement>('[data-action="opening"]')?.focus(); });
                 break;
             case 'return':
                 // The yard plays the walk-in with the Runtime's one-time arrival; if it cannot, the tab page still works.
