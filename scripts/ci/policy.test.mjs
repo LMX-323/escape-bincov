@@ -114,7 +114,7 @@ test('workflow preserves every original browser command exactly once across eigh
   const yaml = readFileSync(resolve('.github/workflows/ci-pages.yml'), 'utf8');
   const browser = yaml.split('\n  browser:')[1].split('\n  verify:')[0];
   const expected = ['browser', 'desktop-input', 'shop-drag', 'asset-load', 'hud-release', 'coast-render-targets', 'shop-feedback',
-    'issue26-station', 'issue26-inventory', 'issue26-spatial', 'issue26-phaser-spatial', 'ui', 'coast-animation', 'tactical', 'art',
+    'issue26-station', 'issue26-inventory', 'issue26-spatial', 'issue26-phaser-spatial', 'ui', 'coast-animation', 'tactical', 'art', 'opening',
     'title', 'title-water', 'save-browser', 'expansion', 'buildings', 'qol-expansion', 'systems', 'station-tier1', 'station-tier2',
     'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable'];
   assert.deepEqual([...browser.matchAll(/pnpm test:([\w-]+)/g)].map(m => m[1]).sort(), expected.sort());

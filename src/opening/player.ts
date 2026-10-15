@@ -164,6 +164,7 @@ class Session {
   private expose(): void {
     (globalThis as { __bincovOpening?: unknown }).__bincovOpening = {
       mode: this.mode,
+      shots: () => TIMELINE.shots.map(s => ({ id: s.id, start: s.start, end: s.end })),
       state: () => ({ t: Math.round(this.t), shot: shotAt(this.t).id, caption: this.caption ? `${this.caption.speaker ? this.caption.speaker + '：' : ''}${this.caption.text}` : '', paused: this.paused, calm: this.calm, total: TIMELINE.total }),
       seek: (ms: number) => {
         this.t = Math.max(0, Math.min(TIMELINE.total - 1, ms));
