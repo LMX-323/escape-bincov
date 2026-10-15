@@ -11,7 +11,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { deployFromYard, throughYard } from './yard-entry.mjs';
+import { deployFromYard, skipOpening, throughYard } from './yard-entry.mjs';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const out = resolve(option('out', 'test-results/raid-default'));
@@ -55,7 +55,8 @@ async function title(query = '') {
   await page.locator('[data-action="enter"]').waitFor();
 }
 async function yard(query = '') {
-  await title(query); await page.locator('[data-action="enter"]').click();
+  // A new save plays the opening first on the ordinary entry; skip it as a player can.
+  await title(query); await page.locator('[data-action="enter"]').click(); await skipOpening(page);
   await page.locator('#station-yard [data-quickmenu], #station-yard [data-quick="deploy"]').first().waitFor({ state: 'attached' });
 }
 /** The yard's area choices, read from its departure panel (opened and closed again). */

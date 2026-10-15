@@ -3,8 +3,20 @@
  * does: the yard's departure panel, or its 页签 button back to the old tab page. With ?test=1&entry=tabs the old tab
  * page is the entry and these helpers are not needed.
  */
+/**
+ * A new save's first ordinary entry plays the opening cutscene before the yard (docs/OPENING-CUTSCENE-PLAN.md
+ * section 3). Skip it with Esc, as a player can; returns at once when the yard or the tab page came up instead.
+ */
+export async function skipOpening(page) {
+  const first = await page.waitForFunction(() => document.getElementById('opening') ? 'opening'
+    : document.getElementById('station-yard') || document.querySelector('#ui .panel.hideout') ? 'entered' : false, null, { timeout: 30000 });
+  if (await first.jsonValue() !== 'opening') return;
+  await page.keyboard.press('Escape');
+  await page.locator('#opening').waitFor({ state: 'detached' });
+}
 /** From the yard to the old tab page (the shortcut fallback entry). */
 export async function throughYard(page, { tap = false } = {}) {
+  await skipOpening(page);
   const tabs = page.locator('#station-yard [data-tabs]'), more = page.locator('#station-yard [data-quickmenu]');
   await tabs.waitFor({ state: 'attached', timeout: 30000 });
   // Narrow screens fold the shortcut bar into “功能”: open it first, as a player would.
@@ -15,6 +27,7 @@ export async function throughYard(page, { tap = false } = {}) {
 }
 /** Deploy from the yard's departure panel (7): pick the area, type the seed, open the gate. */
 export async function deployFromYard(page, { world, seed } = {}) {
+  await skipOpening(page);
   const go = page.locator('#station-yard [data-quick="deploy"]');
   await go.waitFor({ state: 'attached', timeout: 30000 });
   if (!await go.isVisible()) await page.locator('#station-yard [data-quickmenu]').click();

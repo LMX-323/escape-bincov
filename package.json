@@ -18,6 +18,7 @@
     "test:mobile": "node scripts/mobile-test.mjs",
     "test:mobile-ux": "node --import tsx scripts/mobile-ux-test.mjs",
     "test:title": "node scripts/title-review.mjs",
+    "test:opening": "node --import tsx scripts/opening-test.mjs",
     "title:art": "node --import tsx scripts/title-art/generate.ts",
     "title:evidence": "node scripts/title-evidence.mjs",
     "test:loot": "node scripts/loot-browser-test.mjs",

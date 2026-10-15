@@ -1,0 +1,2748 @@
+{
+  "schema": 1,
+  "revision": 2,
+  "scope": [
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12",
+    "A13",
+    "A14",
+    "A15",
+    "A16",
+    "A17",
+    "B02",
+    "B03",
+    "B04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06"
+  ],
+  "artGrid": [
+    640,
+    360
+  ],
+  "subtitleY": 288,
+  "palette": "assets/opening/palette.json",
+  "assets": [
+    {
+      "id": "op-bg03-harbor-sky-night-v2",
+      "file": "assets/opening/v2/op-bg03-harbor-sky-night-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 15,
+      "horizontalSameRatio": 0.8719325686478971,
+      "source": "source/originals/op-bg03-harbor-sky-night.png",
+      "pngTransparentIndex": 15,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "b3351dc4e1fa89644db0021475f14b0c819d5aa43774ef5535b9d10b25d9df0d",
+      "bytes": 38652,
+      "revision": 2
+    },
+    {
+      "id": "op-bg03-harbor-mid-night-v2",
+      "file": "assets/opening/v2/op-bg03-harbor-mid-night-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "mid",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 56,
+      "horizontalSameRatio": 0.8223923104307582,
+      "source": "source/originals/op-bg03-harbor-mid-night.png",
+      "pngTransparentIndex": 56,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "e9f411ad61068552a2ef09d7604adafad6cecd17f807b60e0469ee87bcfaf4fd",
+      "bytes": 20291,
+      "revision": 2
+    },
+    {
+      "id": "op-bg03-harbor-breakwater-night-v2",
+      "file": "assets/opening/v2/op-bg03-harbor-breakwater-night-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 62,
+      "horizontalSameRatio": 0.6540268071944094,
+      "source": "source/originals/op-bg03-harbor-mid-night.png",
+      "pngTransparentIndex": 62,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128; registered layer split",
+      "sha256": "58b6829d1eba8617bc0895edfe6e02d853cbc2ca6ec50d12cdc16a45b34e4fed",
+      "bytes": 6724,
+      "revision": 2,
+      "role": "breakwater",
+      "order": 3
+    },
+    {
+      "id": "op-bg03-harbor-near-night-v2",
+      "file": "assets/opening/v2/op-bg03-harbor-near-night-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A08"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 40,
+      "horizontalSameRatio": 0.5730990571813396,
+      "source": "source/originals/op-bg03-harbor-near-night.png",
+      "pngTransparentIndex": 40,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "b14031343c030cd86b543edd168f90537b293c7204cb6fa9c2ffc03a7d46c403",
+      "bytes": 10456,
+      "revision": 2
+    },
+    {
+      "id": "op-sp01-ship-dark-v2",
+      "file": "assets/opening/v2/op-sp01-ship-dark-v2.png",
+      "w": 400,
+      "h": 160,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sprite",
+      "variant": "dark",
+      "pairedWith": "op-sp01-ship-flash-v2",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 4,
+      "horizontalSameRatio": 0.8331810289682903,
+      "source": "source/originals/op-sp01-ship-flash.png",
+      "pngTransparentIndex": 4,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128; 2.5deg clockwise on high-res master",
+      "sha256": "f259719552e6f2d576443874b1cd7a04380ab5a57e55ca5029785c170070a31d",
+      "bytes": 3438,
+      "revision": 2
+    },
+    {
+      "id": "op-sp01-ship-flash-v2",
+      "file": "assets/opening/v2/op-sp01-ship-flash-v2.png",
+      "w": 400,
+      "h": 160,
+      "shots": [
+        "A08"
+      ],
+      "layer": "sprite",
+      "variant": "flash",
+      "pairedWith": "op-sp01-ship-dark-v2",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 52,
+      "horizontalSameRatio": 0.49575070821529743,
+      "source": "source/originals/op-sp01-ship-flash.png",
+      "pngTransparentIndex": 52,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128; 2.5deg clockwise on high-res master",
+      "sha256": "c585145fc2e3e26b759efc80f0c539aa077c558a40d29d20c731f3854d324658",
+      "bytes": 10577,
+      "revision": 2
+    },
+    {
+      "id": "op-bg05-hatch-dark-v2",
+      "file": "assets/opening/v2/op-bg05-hatch-dark-v2.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A14"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "pairedWith": "op-bg05-hatch-lit-v2",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 23,
+      "horizontalSameRatio": 0.6990479916536254,
+      "source": "source/originals/op-bg05-hatch-lit.png",
+      "pngTransparentIndex": 23,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "bfbe6c7f3e1485a84da8454e5609b8941d1858cfa9dd38eae265e6fd710b741b",
+      "bytes": 49400,
+      "revision": 2
+    },
+    {
+      "id": "op-bg05-hatch-lit-v2",
+      "file": "assets/opening/v2/op-bg05-hatch-lit-v2.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A14"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "pairedWith": "op-bg05-hatch-dark-v2",
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 74,
+      "horizontalSameRatio": 0.5170665971135455,
+      "source": "source/originals/op-bg05-hatch-lit.png",
+      "pngTransparentIndex": 74,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "c3b94d702f3da1f7a812e217a3e290f8561d79620fcf0389db07664c1fc1cb84",
+      "bytes": 92198,
+      "revision": 2
+    },
+    {
+      "id": "op-ch03-near-f0-v2",
+      "file": "assets/opening/v2/op-ch03-near-f0-v2.png",
+      "w": 160,
+      "h": 280,
+      "shots": [
+        "A14"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": [
+        80,
+        360
+      ],
+      "place": {
+        "layer": "op-bg05-hatch-lit-v2",
+        "xy": [
+          272,
+          4
+        ]
+      },
+      "colours": 59,
+      "horizontalSameRatio": 0.34241427900422733,
+      "source": "source/edits/op-ch03-near-f0-r2-original.png",
+      "pngTransparentIndex": 59,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128; enlarged arms, fixed anchor",
+      "sha256": "618e18b21c3b8e709f9227c971edf939e8faaa780c7a7ba450b472c41685c019",
+      "bytes": 15816,
+      "revision": 2
+    },
+    {
+      "id": "op-ch03-near-f1-v2",
+      "file": "assets/opening/v2/op-ch03-near-f1-v2.png",
+      "w": 160,
+      "h": 280,
+      "shots": [
+        "A14"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "pairedWith": null,
+      "frame": 1,
+      "anchor": [
+        80,
+        360
+      ],
+      "place": {
+        "layer": "op-bg05-hatch-lit-v2",
+        "xy": [
+          272,
+          4
+        ]
+      },
+      "colours": 62,
+      "horizontalSameRatio": 0.359027191352812,
+      "source": "source/edits/op-ch03-near-f1-r2-original.png",
+      "pngTransparentIndex": 62,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128; enlarged arms, fixed anchor",
+      "sha256": "837063dad531f607a2779747f9670a4102c8180183036bf8a6b15649a0d61589",
+      "bytes": 14751,
+      "revision": 2
+    },
+    {
+      "id": "op-bg13-roof-sky-v2",
+      "file": "assets/opening/v2/op-bg13-roof-sky-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 36,
+      "horizontalSameRatio": 0.8559089329162322,
+      "source": "source/originals/op-bg13-roof-sky.png",
+      "pngTransparentIndex": 36,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "1db66d2e05d19914acd58139e50b7083be94f277c5d0c0b1c02942db025b4cba",
+      "bytes": 41166,
+      "revision": 2
+    },
+    {
+      "id": "op-bg13-roof-mid-v2",
+      "file": "assets/opening/v2/op-bg13-roof-mid-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "mid",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 25,
+      "horizontalSameRatio": 0.8329621131568639,
+      "source": "source/originals/op-bg13-roof-mid.png",
+      "pngTransparentIndex": 25,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "a12291d4125902d45590b442071c4d5975b577fcb71e668ebb81b270aa8a1cbc",
+      "bytes": 13510,
+      "revision": 2
+    },
+    {
+      "id": "op-bg13-roof-near-v2",
+      "file": "assets/opening/v2/op-bg13-roof-near-v2.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "C04"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": null,
+      "anchor": null,
+      "place": null,
+      "colours": 34,
+      "horizontalSameRatio": 0.6428634178787916,
+      "source": "source/originals/op-bg13-roof-near.png",
+      "pngTransparentIndex": 34,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "ac1bd19855048efeec5d6d25bf76002e34e42f65db1df79ea4a586cc685e6553",
+      "bytes": 22681,
+      "revision": 2
+    },
+    {
+      "id": "op-bg13-glow-f0-v2",
+      "file": "assets/opening/v2/op-bg13-glow-f0-v2.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "C04"
+      ],
+      "layer": "fx",
+      "variant": null,
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": null,
+      "place": {
+        "layer": "op-bg13-roof-sky-v2",
+        "xy": [
+          869,
+          202
+        ]
+      },
+      "colours": 12,
+      "horizontalSameRatio": 0.6822429906542056,
+      "source": "source/originals/op-bg13-glow-f0.png",
+      "pngTransparentIndex": 12,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "5eb25aab6eebe4df8db0422176286c9a4183b27a4818f3804deb31a467455133",
+      "bytes": 318,
+      "revision": 2
+    },
+    {
+      "id": "op-bg13-glow-f1-v2",
+      "file": "assets/opening/v2/op-bg13-glow-f1-v2.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "C04"
+      ],
+      "layer": "fx",
+      "variant": null,
+      "pairedWith": null,
+      "frame": 1,
+      "anchor": null,
+      "place": {
+        "layer": "op-bg13-roof-sky-v2",
+        "xy": [
+          869,
+          202
+        ]
+      },
+      "colours": 9,
+      "horizontalSameRatio": 0.794392523364486,
+      "source": "source/originals/op-bg13-glow-f0.png",
+      "pngTransparentIndex": 9,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "67a03f6be61b7e16b73bd7d4163eb249f41338eef98423694f5d09da53543aa9",
+      "bytes": 278,
+      "revision": 2
+    },
+    {
+      "id": "op-ch04-sit-f0-v2",
+      "file": "assets/opening/v2/op-ch04-sit-f0-v2.png",
+      "w": 64,
+      "h": 76,
+      "shots": [
+        "C04"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "pairedWith": null,
+      "frame": 0,
+      "anchor": [
+        49,
+        71
+      ],
+      "place": {
+        "layer": "op-bg13-roof-near-v2",
+        "xy": [
+          215,
+          108
+        ]
+      },
+      "colours": 34,
+      "horizontalSameRatio": 0.31498079385403327,
+      "source": "source/originals/op-ch04-sit-f0.png",
+      "pngTransparentIndex": 34,
+      "exportMethod": "BOX>OKLab83 nearest>singleton1>alpha128",
+      "sha256": "d857588ae79a061dd5fa6cde8817508fa6c8ca2d9343ca9d11ae68bf07428625",
+      "bytes": 1302,
+      "revision": 2
+    },
+    {
+      "id": "op-bg02-phone-v1",
+      "file": "assets/opening/v1/op-bg02-phone-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A02",
+        "A04"
+      ],
+      "layer": "sprite",
+      "variant": "lit",
+      "source": "source/originals/op-bg02-phone-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "colours": 63,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "9d83ba2ada38b58e29231a2cc9c260b4b726ca27e49c4471632c75dbdf2451bf",
+      "bytes": 8346,
+      "revision": 1,
+      "horizontalSameRatio": 0.737972,
+      "pngTransparentIndex": 63,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg02-hand-v1",
+      "file": "assets/opening/v1/op-bg02-hand-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A02",
+        "A04"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "source": "source/originals/op-bg02-phone-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "colours": 61,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "204efd8dff39d4de35fe558ae9316698f8fa77c6c932b12d2fa4c79e6554bf5d",
+      "bytes": 18029,
+      "revision": 1,
+      "horizontalSameRatio": 0.909781,
+      "pngTransparentIndex": 61,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg01-far-flash-v1",
+      "file": "assets/opening/v1/op-bg01-far-flash-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "sky",
+      "variant": "flash",
+      "source": "source/originals/op-bg01-far-fill.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-far-dark-v1",
+      "colours": 35,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "4f8f5339286ef4ef37104f3edd1ac87e0eede52a1213cf4e05a04ee4fcde3dd6",
+      "bytes": 65031,
+      "revision": 1,
+      "horizontalSameRatio": 0.647479,
+      "pngTransparentIndex": 35
+    },
+    {
+      "id": "op-bg01-far-dark-v1",
+      "file": "assets/opening/v1/op-bg01-far-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg01-far-fill.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-far-flash-v1",
+      "colours": 18,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "b0e3eb96267d42d1251213ec5942c9f3c16211e83200dd9923c67bb382844f0f",
+      "bytes": 33808,
+      "revision": 1,
+      "horizontalSameRatio": 0.815271,
+      "pngTransparentIndex": 18
+    },
+    {
+      "id": "op-bg01-shelter-flash-v1",
+      "file": "assets/opening/v1/op-bg01-shelter-flash-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "mid",
+      "variant": "flash",
+      "source": "source/originals/op-bg01-shelter-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-shelter-dark-v1",
+      "colours": 76,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "9ef0c7010cdd5309af76b4e030f1cd050a6b366cff9a5255d587a2205a903875",
+      "bytes": 70471,
+      "revision": 1,
+      "horizontalSameRatio": 0.375493,
+      "pngTransparentIndex": 76
+    },
+    {
+      "id": "op-bg01-shelter-dark-v1",
+      "file": "assets/opening/v1/op-bg01-shelter-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "mid",
+      "variant": "dark",
+      "source": "source/originals/op-bg01-shelter-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-shelter-flash-v1",
+      "colours": 27,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "df5ae0968aaea4ec7f6f737842f85335393b8a87d4dc2c31e88b8c8648ea95b6",
+      "bytes": 40388,
+      "revision": 1,
+      "horizontalSameRatio": 0.583168,
+      "pngTransparentIndex": 27
+    },
+    {
+      "id": "op-bg01-eave-flash-v1",
+      "file": "assets/opening/v1/op-bg01-eave-flash-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "near",
+      "variant": "flash",
+      "source": "source/originals/op-bg01-shelter-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-eave-dark-v1",
+      "colours": 64,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "d30245e1871f94c68d417c081774508f514cbfb924202c461067fd629fbfdd47",
+      "bytes": 13275,
+      "revision": 1,
+      "horizontalSameRatio": 0.431946,
+      "pngTransparentIndex": 64
+    },
+    {
+      "id": "op-bg01-eave-dark-v1",
+      "file": "assets/opening/v1/op-bg01-eave-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A03",
+        "A05",
+        "A06",
+        "A07",
+        "A09"
+      ],
+      "layer": "near",
+      "variant": "dark",
+      "source": "source/originals/op-bg01-shelter-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg01-eave-flash-v1",
+      "colours": 14,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "1572d084201511205fb5f14a2d0db6cd6be66b37bb4644bb0885a2982e69fb30",
+      "bytes": 6448,
+      "revision": 1,
+      "horizontalSameRatio": 0.668058,
+      "pngTransparentIndex": 14
+    },
+    {
+      "id": "op-ch01-sit-f0-v1",
+      "file": "assets/opening/v1/op-ch01-sit-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A03"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-sit.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          167,
+          174
+        ]
+      },
+      "frame": 0,
+      "colours": 50,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "42d2da9a08f0ff769fbbbb00c2d15360847e9de76eb47552f3b687988fd41006",
+      "bytes": 1622,
+      "revision": 1,
+      "horizontalSameRatio": 0.285314,
+      "pngTransparentIndex": 50,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch01-startled-f0-v1",
+      "file": "assets/opening/v1/op-ch01-startled-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A05"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-startled.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          167,
+          174
+        ]
+      },
+      "frame": 0,
+      "colours": 48,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "d0edc4e97deabd1449c10a68e9f5ed70cacc6f2b733343d739053c725a2aa39c",
+      "bytes": 1801,
+      "revision": 1,
+      "horizontalSameRatio": 0.348101,
+      "pngTransparentIndex": 48,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch01-pickup-f0-v1",
+      "file": "assets/opening/v1/op-ch01-pickup-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A06"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-pickup.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          167,
+          174
+        ]
+      },
+      "frame": 0,
+      "colours": 49,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "53690470e9470d83eeac08d3827c83c878cecf577b1929a2eb90f389ec9c39de",
+      "bytes": 2086,
+      "revision": 1,
+      "horizontalSameRatio": 0.347877,
+      "pngTransparentIndex": 49,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch01-look-f0-v1",
+      "file": "assets/opening/v1/op-ch01-look-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A07"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-look.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          167,
+          174
+        ]
+      },
+      "frame": 0,
+      "colours": 43,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "a5ad7b963cce8a2b6a870573468bd6b5f72bed062fff19098784600790252516",
+      "bytes": 1621,
+      "revision": 1,
+      "horizontalSameRatio": 0.295254,
+      "pngTransparentIndex": 43,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch01-raincoat-f0-v1",
+      "file": "assets/opening/v1/op-ch01-raincoat-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A09"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-raincoat.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          167,
+          174
+        ]
+      },
+      "frame": 0,
+      "colours": 44,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "bef750c0caf98230c06022d4bbaa9f9798604539e5c3783f6797e161f1f5713d",
+      "bytes": 1778,
+      "revision": 1,
+      "horizontalSameRatio": 0.244357,
+      "pngTransparentIndex": 44,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch02-stand-f0-v1",
+      "file": "assets/opening/v1/op-ch02-stand-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A05"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch02-stand.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          442,
+          170
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-ch02-stand-flash-f0-v1",
+      "colours": 37,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "712f057d02ed4882435cf00fe220d9dfef46b7c912c463f746d5a75051013ed3",
+      "bytes": 1354,
+      "revision": 1,
+      "horizontalSameRatio": 0.268112,
+      "pngTransparentIndex": 37
+    },
+    {
+      "id": "op-ch02-stand-flash-f0-v1",
+      "file": "assets/opening/v1/op-ch02-stand-flash-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A05"
+      ],
+      "layer": "char",
+      "variant": "flash",
+      "source": "source/originals/op-ch02-stand.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          442,
+          170
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-ch02-stand-f0-v1",
+      "colours": 50,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "7c24909d742f2b272c9549f0385efbc60933e15cb831744c44353cfb5f9ce440",
+      "bytes": 1528,
+      "revision": 1,
+      "horizontalSameRatio": 0.239589,
+      "pngTransparentIndex": 50
+    },
+    {
+      "id": "op-ch02-approach-f0-v1",
+      "file": "assets/opening/v1/op-ch02-approach-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A06"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch02-approach.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          372,
+          170
+        ]
+      },
+      "frame": 0,
+      "colours": 45,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "f11bbfc35069a09300492cba39ee7e37a8cd767a77838ffb7338d90d608b44b6",
+      "bytes": 1611,
+      "revision": 1,
+      "horizontalSameRatio": 0.248775,
+      "pngTransparentIndex": 45,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch02-lookback-f0-v1",
+      "file": "assets/opening/v1/op-ch02-lookback-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A07"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch02-lookback.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          372,
+          170
+        ]
+      },
+      "frame": 0,
+      "colours": 45,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "b00dd073fc888d728b2e696b64e9e6061d1feca35555fcd51a18916ac3f80247",
+      "bytes": 1373,
+      "revision": 1,
+      "horizontalSameRatio": 0.243888,
+      "pngTransparentIndex": 45,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch02-phone-f0-v1",
+      "file": "assets/opening/v1/op-ch02-phone-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "A09"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch02-phone.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          372,
+          170
+        ]
+      },
+      "frame": 0,
+      "colours": 51,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "229bfee3d85116836127c82e7c010b9f6df0f9197a3e49a70b2af2c6cbded894",
+      "bytes": 1485,
+      "revision": 1,
+      "horizontalSameRatio": 0.234943,
+      "pngTransparentIndex": 51,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg04-far-lit-v1",
+      "file": "assets/opening/v1/op-bg04-far-lit-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A10"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "source": "source/originals/op-bg04-mudflat-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg04-far-dark-v1",
+      "colours": 45,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "fdfdad9d6f6581e91d88111527694fca7b57c286b1ebf609b5245480d47cdd25",
+      "bytes": 24245,
+      "revision": 1,
+      "horizontalSameRatio": 0.917298,
+      "pngTransparentIndex": 45
+    },
+    {
+      "id": "op-bg04-far-dark-v1",
+      "file": "assets/opening/v1/op-bg04-far-dark-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A10"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg04-mudflat-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg04-far-lit-v1",
+      "colours": 9,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "75c0b563eb3e145d1c8b34e330120a2d523751372d7664ee4b404ab08645a32e",
+      "bytes": 9612,
+      "revision": 1,
+      "horizontalSameRatio": 0.966867,
+      "pngTransparentIndex": 9
+    },
+    {
+      "id": "op-bg04-near-lit-v1",
+      "file": "assets/opening/v1/op-bg04-near-lit-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A10"
+      ],
+      "layer": "near",
+      "variant": "lit",
+      "source": "source/originals/op-bg04-mudflat-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg04-near-dark-v1",
+      "colours": 77,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "b8733aaa7e83c82c854e85c0f6275e02e7dc7d9481e932a8f43a072f95cc706e",
+      "bytes": 92394,
+      "revision": 1,
+      "horizontalSameRatio": 0.44155,
+      "pngTransparentIndex": 77
+    },
+    {
+      "id": "op-bg04-near-dark-v1",
+      "file": "assets/opening/v1/op-bg04-near-dark-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "A10"
+      ],
+      "layer": "near",
+      "variant": "dark",
+      "source": "source/originals/op-bg04-mudflat-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg04-near-lit-v1",
+      "colours": 25,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e977376df676210e581a8786961d6ffa2faf347ae47991ace08cd71eb5c3f66b",
+      "bytes": 49330,
+      "revision": 1,
+      "horizontalSameRatio": 0.64701,
+      "pngTransparentIndex": 25
+    },
+    {
+      "id": "op-ch01-far-walk-f0-v1",
+      "file": "assets/opening/v1/op-ch01-far-walk-f0-v1.png",
+      "w": 48,
+      "h": 56,
+      "shots": [
+        "A10"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch01-far-walk.png",
+      "anchor": [
+        24,
+        52
+      ],
+      "place": {
+        "layer": "op-bg04-near-lit-v1",
+        "xy": [
+          436,
+          216
+        ]
+      },
+      "frame": 0,
+      "colours": 33,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e91ed432d44399d458dac9c9cf8249563b99444e04d55b95e954c18bce527e6b",
+      "bytes": 529,
+      "revision": 1,
+      "horizontalSameRatio": 0.245734,
+      "pngTransparentIndex": 33,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch02-far-walk-f0-v1",
+      "file": "assets/opening/v1/op-ch02-far-walk-f0-v1.png",
+      "w": 48,
+      "h": 56,
+      "shots": [
+        "A10"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch02-far-walk.png",
+      "anchor": [
+        24,
+        52
+      ],
+      "place": {
+        "layer": "op-bg04-near-lit-v1",
+        "xy": [
+          481,
+          215
+        ]
+      },
+      "frame": 0,
+      "colours": 25,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8a5e437c84aedc168fd854c5b91ffe5f0528042e435b7600c4077e4fdbfac7df",
+      "bytes": 484,
+      "revision": 1,
+      "horizontalSameRatio": 0.225914,
+      "pngTransparentIndex": 25,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg05b-bow-lit-v1",
+      "file": "assets/opening/v1/op-bg05b-bow-lit-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A11"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "source": "source/originals/op-bg05b-bow.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg05b-bow-dark-v1",
+      "colours": 75,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "81c72b2e084ee3f54ece2da76072478f75ecac593141c24aed26193b3c65cc03",
+      "bytes": 84694,
+      "revision": 1,
+      "horizontalSameRatio": 0.546709,
+      "pngTransparentIndex": 75
+    },
+    {
+      "id": "op-bg05b-bow-dark-v1",
+      "file": "assets/opening/v1/op-bg05b-bow-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A11"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg05b-bow.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg05b-bow-lit-v1",
+      "colours": 23,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "f01b34b80569812d5832e3e1894bcc2be96c0edf7637f2792f07de6e1126f884",
+      "bytes": 45296,
+      "revision": 1,
+      "horizontalSameRatio": 0.720722,
+      "pngTransparentIndex": 23
+    },
+    {
+      "id": "op-ch03-far-back-f0-v1",
+      "file": "assets/opening/v1/op-ch03-far-back-f0-v1.png",
+      "w": 64,
+      "h": 72,
+      "shots": [
+        "A11",
+        "A12"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch03-far-back-corrected.png",
+      "anchor": [
+        32,
+        68
+      ],
+      "place": {
+        "layer": "r2:op-bg05-hatch-lit-v2",
+        "xy": [
+          292,
+          170
+        ]
+      },
+      "frame": 0,
+      "colours": 16,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "b214f10823306595fb93a21cbb5d503578c220d48b5f17af19589e5a1cda8c99",
+      "bytes": 785,
+      "revision": 1,
+      "horizontalSameRatio": 0.366829,
+      "pngTransparentIndex": 16,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch03-mid-turn-f0-v1",
+      "file": "assets/opening/v1/op-ch03-mid-turn-f0-v1.png",
+      "w": 128,
+      "h": 152,
+      "shots": [
+        "A13",
+        "A15"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch03-mid-turn.png",
+      "anchor": [
+        64,
+        148
+      ],
+      "place": {
+        "layer": "r2:op-bg05-hatch-lit-v2",
+        "xy": [
+          260,
+          116
+        ]
+      },
+      "frame": 0,
+      "colours": 45,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "a118cd333dfe8fb94dc27fe6fb7be6029f2e56cf3c7e65c42889b2cbd2f92a15",
+      "bytes": 4095,
+      "revision": 1,
+      "horizontalSameRatio": 0.265628,
+      "pngTransparentIndex": 45,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch03-mid-step-f0-v1",
+      "file": "assets/opening/v1/op-ch03-mid-step-f0-v1.png",
+      "w": 128,
+      "h": 152,
+      "shots": [
+        "A13",
+        "A15"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch03-mid-step.png",
+      "anchor": [
+        64,
+        148
+      ],
+      "place": {
+        "layer": "r2:op-bg05-hatch-lit-v2",
+        "xy": [
+          260,
+          116
+        ]
+      },
+      "frame": 0,
+      "colours": 50,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "baa79bcf936ef18d417f91bc425463c6a8026138d268b5ae649aaa14f9151b11",
+      "bytes": 4265,
+      "revision": 1,
+      "horizontalSameRatio": 0.260473,
+      "pngTransparentIndex": 50,
+      "pairedWith": null
+    },
+    {
+      "id": "op-ch03-mid-stop-f0-v1",
+      "file": "assets/opening/v1/op-ch03-mid-stop-f0-v1.png",
+      "w": 128,
+      "h": 152,
+      "shots": [
+        "A13",
+        "A15"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch03-mid-stop.png",
+      "anchor": [
+        64,
+        148
+      ],
+      "place": {
+        "layer": "r2:op-bg05-hatch-lit-v2",
+        "xy": [
+          260,
+          116
+        ]
+      },
+      "frame": 0,
+      "colours": 44,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "c34661d56e84a07f44e0ff97c1fc97f45d4644edebe608ef48cc2c65c2ce8540",
+      "bytes": 4162,
+      "revision": 1,
+      "horizontalSameRatio": 0.279391,
+      "pngTransparentIndex": 44,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg06-head-down-lit-v1",
+      "file": "assets/opening/v1/op-bg06-head-down-lit-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A16"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "source": "source/originals/op-bg06-head-down-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg06-head-down-dark-v1",
+      "colours": 74,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "cc653a64a06a4049244e4fa3ee40c03da535d37261c3c93489b916d0bfee7849",
+      "bytes": 92833,
+      "revision": 1,
+      "horizontalSameRatio": 0.435055,
+      "pngTransparentIndex": 74
+    },
+    {
+      "id": "op-bg06-head-down-dark-v1",
+      "file": "assets/opening/v1/op-bg06-head-down-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A16"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg06-head-down-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg06-head-down-lit-v1",
+      "colours": 25,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "3d51c6a47b2d572ab48ac283b7c8396b7d5765806c1879785879b041bb8d76c7",
+      "bytes": 50313,
+      "revision": 1,
+      "horizontalSameRatio": 0.643949,
+      "pngTransparentIndex": 25
+    },
+    {
+      "id": "op-bg06-head-up-lit-v1",
+      "file": "assets/opening/v1/op-bg06-head-up-lit-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A16"
+      ],
+      "layer": "sky",
+      "variant": "lit",
+      "source": "source/originals/op-bg06-head-up.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg06-head-up-dark-v1",
+      "colours": 75,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8e26f1e904ed60e68f34794a6d65146f43252321023a7487d51d50fff485dcd6",
+      "bytes": 96466,
+      "revision": 1,
+      "horizontalSameRatio": 0.424587,
+      "pngTransparentIndex": 75
+    },
+    {
+      "id": "op-bg06-head-up-dark-v1",
+      "file": "assets/opening/v1/op-bg06-head-up-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A16"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg06-head-up.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg06-head-up-lit-v1",
+      "colours": 24,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "a81e762c7811ea751a2e37ef45d26d492da367e4e9e27c8a3a9bbc842c6c69fa",
+      "bytes": 54296,
+      "revision": 1,
+      "horizontalSameRatio": 0.60383,
+      "pngTransparentIndex": 24
+    },
+    {
+      "id": "op-bg07-ship-flash-v1",
+      "file": "assets/opening/v1/op-bg07-ship-flash-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "sky",
+      "variant": "flash",
+      "source": "source/originals/op-bg07-ship-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg07-ship-dark-v1",
+      "colours": 65,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e63209eeb932a85543d62ab5256adaced93d74693eea2a4b8431b7d2d9d84bfb",
+      "bytes": 74046,
+      "revision": 1,
+      "horizontalSameRatio": 0.601095,
+      "pngTransparentIndex": 65
+    },
+    {
+      "id": "op-bg07-ship-dark-v1",
+      "file": "assets/opening/v1/op-bg07-ship-dark-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "sky",
+      "variant": "dark",
+      "source": "source/originals/op-bg07-ship-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": "op-bg07-ship-flash-v1",
+      "colours": 18,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "7d00eea5b4e90bfc51aba658c7180072d8827e23336e3004d4c2087b3f7736d6",
+      "bytes": 36556,
+      "revision": 1,
+      "horizontalSameRatio": 0.777452,
+      "pngTransparentIndex": 18
+    },
+    {
+      "id": "op-bg07-shadow-deck-dark-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-deck-dark-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "dark",
+      "source": "source/originals/op-bg07-shadow-deck.png",
+      "anchor": [
+        231,
+        175
+      ],
+      "place": {
+        "layer": "op-bg07-ship-dark-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-deck-flash-f0-v1",
+      "colours": 5,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "4f481da0ef9f288ad7dbbafb3acdd5ea5110de78df83c57b5dba387516d051f8",
+      "bytes": 743,
+      "revision": 1,
+      "horizontalSameRatio": 0.71729,
+      "pngTransparentIndex": 5
+    },
+    {
+      "id": "op-bg07-shadow-deck-flash-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-deck-flash-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "flash",
+      "source": "source/originals/op-bg07-shadow-deck.png",
+      "anchor": [
+        231,
+        175
+      ],
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-deck-dark-f0-v1",
+      "colours": 12,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "14535030c42753efef400ad8f42638f6bf7fc5ec8c5b0c11b21106ec5fb3b133",
+      "bytes": 866,
+      "revision": 1,
+      "horizontalSameRatio": 0.408879,
+      "pngTransparentIndex": 12
+    },
+    {
+      "id": "op-bg07-shadow-porthole-dark-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-porthole-dark-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "dark",
+      "source": "source/originals/op-bg07-shadow-porthole.png",
+      "anchor": [
+        428,
+        227
+      ],
+      "place": {
+        "layer": "op-bg07-ship-dark-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-porthole-flash-f0-v1",
+      "colours": 3,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "2541fa016d6538b6c8e7be843cc947b2ff1f0094c6995e9086528921cd94ad1e",
+      "bytes": 643,
+      "revision": 1,
+      "horizontalSameRatio": 0.674556,
+      "pngTransparentIndex": 3
+    },
+    {
+      "id": "op-bg07-shadow-porthole-flash-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-porthole-flash-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "flash",
+      "source": "source/originals/op-bg07-shadow-porthole.png",
+      "anchor": [
+        428,
+        227
+      ],
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-porthole-dark-f0-v1",
+      "colours": 8,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "04fe3044154d07abd64434a9f82e5e59469d4a07e40e0f8e96a3c9bced82bfb2",
+      "bytes": 702,
+      "revision": 1,
+      "horizontalSameRatio": 0.426036,
+      "pngTransparentIndex": 8
+    },
+    {
+      "id": "op-bg07-shadow-hatch-dark-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-hatch-dark-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "dark",
+      "source": "source/originals/op-bg07-shadow-hatch.png",
+      "anchor": [
+        340,
+        220
+      ],
+      "place": {
+        "layer": "op-bg07-ship-dark-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-hatch-flash-f0-v1",
+      "colours": 3,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "9aadcab348385cf58712c094df45f6f6ad7291ddd3fb4009ccccab531a217e53",
+      "bytes": 652,
+      "revision": 1,
+      "horizontalSameRatio": 0.561497,
+      "pngTransparentIndex": 3
+    },
+    {
+      "id": "op-bg07-shadow-hatch-flash-f0-v1",
+      "file": "assets/opening/v1/op-bg07-shadow-hatch-flash-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "flash",
+      "source": "source/originals/op-bg07-shadow-hatch.png",
+      "anchor": [
+        340,
+        220
+      ],
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "pairedWith": "op-bg07-shadow-hatch-dark-f0-v1",
+      "colours": 10,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8ffc5500a66bd1c0e9a827eb522ff93a740a115804650ec98ff35b4409c885f1",
+      "bytes": 726,
+      "revision": 1,
+      "horizontalSameRatio": 0.390374,
+      "pngTransparentIndex": 10
+    },
+    {
+      "id": "op-ch03-lunge-f0-v1",
+      "file": "assets/opening/v1/op-ch03-lunge-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "A17"
+      ],
+      "layer": "char",
+      "variant": "lit",
+      "source": "source/originals/op-ch03-lunge.png",
+      "anchor": [
+        320,
+        410
+      ],
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          0,
+          0
+        ]
+      },
+      "frame": 0,
+      "colours": 22,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "73a68ec784862219e1b4f6984987fc4b85e2dbb2cb51e50842203396ec5e5073",
+      "bytes": 26452,
+      "revision": 1,
+      "horizontalSameRatio": 0.582547,
+      "pngTransparentIndex": 22,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-phone-f0-v1",
+      "file": "assets/opening/v1/op-fx-phone-f0-v1.png",
+      "w": 48,
+      "h": 48,
+      "shots": [
+        "A05"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-phone-f0.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          230,
+          235
+        ]
+      },
+      "frame": 0,
+      "colours": 27,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "739050bb682d13c7cb017ffc198c6d3bb21a55c79ec53486a7d4ed19adfa3e7b",
+      "bytes": 436,
+      "revision": 1,
+      "horizontalSameRatio": 0.504178,
+      "pngTransparentIndex": 27,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-phone-f1-v1",
+      "file": "assets/opening/v1/op-fx-phone-f1-v1.png",
+      "w": 48,
+      "h": 48,
+      "shots": [
+        "A05"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-phone-f1.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg01-shelter-flash-v1",
+        "xy": [
+          230,
+          235
+        ]
+      },
+      "frame": 1,
+      "colours": 21,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "94b9f0a09ead797e89ecc4ee201767effc0b88b155a65c8037c7ba3c55679a1c",
+      "bytes": 398,
+      "revision": 1,
+      "horizontalSameRatio": 0.567568,
+      "pngTransparentIndex": 21,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-flashlight-f0-v1",
+      "file": "assets/opening/v1/op-fx-flashlight-f0-v1.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "A17"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-flashlight-f0.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          340,
+          236
+        ]
+      },
+      "frame": 0,
+      "colours": 30,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "0712721c56ff35d38e5215305ab3103128d5dd52cfe3f82c802284f40f0c03bf",
+      "bytes": 560,
+      "revision": 1,
+      "horizontalSameRatio": 0.21447,
+      "pngTransparentIndex": 30,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-flashlight-f1-v1",
+      "file": "assets/opening/v1/op-fx-flashlight-f1-v1.png",
+      "w": 64,
+      "h": 48,
+      "shots": [
+        "A17"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-flashlight-f1.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          340,
+          236
+        ]
+      },
+      "frame": 1,
+      "colours": 37,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "2e60c1253c5359c13759d796f42063892a00ccd50eb4e1ca97032f560e484e4d",
+      "bytes": 561,
+      "revision": 1,
+      "horizontalSameRatio": 0.342711,
+      "pngTransparentIndex": 37,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-splash-f0-v1",
+      "file": "assets/opening/v1/op-fx-splash-f0-v1.png",
+      "w": 96,
+      "h": 64,
+      "shots": [
+        "A17"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-splash-f0.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          324,
+          220
+        ]
+      },
+      "frame": 0,
+      "colours": 30,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "2087143056c6dfaa8213b5193af14969d549148c84f78d6b3ae7a28c68f37b09",
+      "bytes": 1164,
+      "revision": 1,
+      "horizontalSameRatio": 0.227683,
+      "pngTransparentIndex": 30,
+      "pairedWith": null
+    },
+    {
+      "id": "op-fx-splash-f1-v1",
+      "file": "assets/opening/v1/op-fx-splash-f1-v1.png",
+      "w": 96,
+      "h": 64,
+      "shots": [
+        "A17"
+      ],
+      "layer": "fx",
+      "variant": "lit",
+      "source": "source/originals/op-fx-splash-f1.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg07-ship-flash-v1",
+        "xy": [
+          324,
+          220
+        ]
+      },
+      "frame": 1,
+      "colours": 31,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "6d7fde021eb52c6915e5c6388e50bd8409a99f712446105a1ea0317be20cbb59",
+      "bytes": 712,
+      "revision": 1,
+      "horizontalSameRatio": 0.2827,
+      "pngTransparentIndex": 31,
+      "pairedWith": null
+    },
+    {
+      "id": "op-bg08-sky-day-v1",
+      "file": "assets/opening/v1/op-bg08-sky-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "B02"
+      ],
+      "layer": "sky",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg08-flood-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "sourceInputs": [
+        "source/half2/originals/op-bg08-sky-fill.png"
+      ],
+      "colours": 56,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "1322e908ec4b1f04be213ea012c97b5e10623ee1c49e69802130e4c53c4cee58",
+      "bytes": 26440,
+      "revision": 1,
+      "horizontalSameRatio": 0.859072,
+      "pngTransparentIndex": 56
+    },
+    {
+      "id": "op-bg08-city-day-v1",
+      "file": "assets/opening/v1/op-bg08-city-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "B02"
+      ],
+      "layer": "mid",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg08-flood-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 75,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "633cb759ff4a26e13f0197c7900b1a35cd51edf32383db48569ea05c3604cf6a",
+      "bytes": 32596,
+      "revision": 1,
+      "horizontalSameRatio": 0.519528,
+      "pngTransparentIndex": 75
+    },
+    {
+      "id": "op-bg08-water-day-v1",
+      "file": "assets/opening/v1/op-bg08-water-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "B02"
+      ],
+      "layer": "near",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg08-flood-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 73,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "989720bc5d9de6b9805afe371fc2859a3e8ce3bf8e8d907dad07375fa8349176",
+      "bytes": 31634,
+      "revision": 1,
+      "horizontalSameRatio": 0.624214,
+      "pngTransparentIndex": 73
+    },
+    {
+      "id": "op-bg09-street-day-v1",
+      "file": "assets/opening/v1/op-bg09-street-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "B03"
+      ],
+      "layer": "sky",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg09-salt-street-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 79,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "29ba034234a8c52700f9321dcf161f6c237137fe50d09fef119bc0c434d3d495",
+      "bytes": 93883,
+      "revision": 1,
+      "horizontalSameRatio": 0.52124,
+      "pngTransparentIndex": 79
+    },
+    {
+      "id": "op-bg09-water-day-v1",
+      "file": "assets/opening/v1/op-bg09-water-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "B03"
+      ],
+      "layer": "near",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg09-salt-street-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 71,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "860dbe9160621784aa65edec93087538160030697e9fc24bc3ad669b339d4753",
+      "bytes": 25053,
+      "revision": 1,
+      "horizontalSameRatio": 0.607125,
+      "pngTransparentIndex": 71
+    },
+    {
+      "id": "op-bg09-crowd-stand-f0-v1",
+      "file": "assets/opening/v1/op-bg09-crowd-stand-f0-v1.png",
+      "w": 128,
+      "h": 56,
+      "shots": [
+        "B03"
+      ],
+      "layer": "char",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg09-crowd-stand-f0.png",
+      "anchor": [
+        64,
+        52
+      ],
+      "place": {
+        "layer": "op-bg09-street-day-v1",
+        "xy": [
+          172,
+          -13
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 33,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "593c29a6a6e36c8161bb0a303807a602cbb9df94b2375ee9f21c8c60c242d236",
+      "bytes": 909,
+      "revision": 1,
+      "horizontalSameRatio": 0.210744,
+      "pngTransparentIndex": 33
+    },
+    {
+      "id": "op-bg09-crowd-sit-f0-v1",
+      "file": "assets/opening/v1/op-bg09-crowd-sit-f0-v1.png",
+      "w": 128,
+      "h": 56,
+      "shots": [
+        "B03"
+      ],
+      "layer": "char",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg09-crowd-sit-f0.png",
+      "anchor": [
+        64,
+        52
+      ],
+      "place": {
+        "layer": "op-bg09-street-day-v1",
+        "xy": [
+          410,
+          145
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 40,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8960c452045ee7f4574d77539159320cf26cea0060c2da820f83e7d70e22fc43",
+      "bytes": 1004,
+      "revision": 1,
+      "horizontalSameRatio": 0.231047,
+      "pngTransparentIndex": 40
+    },
+    {
+      "id": "op-bg03-harbor-sky-day-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-sky-day-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "B04"
+      ],
+      "layer": "sky",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg03-harbor-sky-day.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 28,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "7a726130475bd59c84368fac1e4e5919d3d1bf34a9a5750c9781c21b58010618",
+      "bytes": 64041,
+      "revision": 1,
+      "horizontalSameRatio": 0.764428,
+      "pngTransparentIndex": 28
+    },
+    {
+      "id": "op-bg03-harbor-mid-day-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-mid-day-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "B04"
+      ],
+      "layer": "mid",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg03-harbor-mid-day-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 50,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "6ec3bfa78cbe47e3407264a3f93ec66dc4ed5f61583aeccb50f7a420bbf30329",
+      "bytes": 19502,
+      "revision": 1,
+      "horizontalSameRatio": 0.853799,
+      "pngTransparentIndex": 50
+    },
+    {
+      "id": "op-bg03-harbor-breakwater-day-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-breakwater-day-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "B04"
+      ],
+      "layer": "near",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg03-harbor-breakwater-day.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 70,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "7979778a21c032656370840853482bf103dadcf3e98b7b5cfe07bc8e96ba359a",
+      "bytes": 11900,
+      "revision": 1,
+      "horizontalSameRatio": 0.428112,
+      "pngTransparentIndex": 70
+    },
+    {
+      "id": "op-bg03-harbor-near-day-v1",
+      "file": "assets/opening/v1/op-bg03-harbor-near-day-v1.png",
+      "w": 960,
+      "h": 360,
+      "shots": [
+        "B04"
+      ],
+      "layer": "near",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg03-harbor-near-day.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 66,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8c1ef1bb31a1bef89fd9fdc094d64b41cf1279315451e942332baa825b9a2558",
+      "bytes": 20600,
+      "revision": 1,
+      "horizontalSameRatio": 0.40693,
+      "pngTransparentIndex": 66
+    },
+    {
+      "id": "op-sp01-ship-day-v1",
+      "file": "assets/opening/v1/op-sp01-ship-day-v1.png",
+      "w": 400,
+      "h": 160,
+      "shots": [
+        "B04"
+      ],
+      "layer": "sprite",
+      "variant": "day",
+      "source": "source/half2/originals/op-sp01-ship-day.png",
+      "anchor": null,
+      "place": {
+        "layer": "op-bg03-harbor-mid-day-v1",
+        "xy": [
+          220,
+          108
+        ]
+      },
+      "frame": null,
+      "pairedWith": null,
+      "colours": 69,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "5fafeae620f21bc1a7ac28390f6e40a2e5fea557f222adbabb90d2bb0fe66244",
+      "bytes": 12566,
+      "revision": 1,
+      "horizontalSameRatio": 0.428672,
+      "pngTransparentIndex": 69
+    },
+    {
+      "id": "op-bg10-room-night-v1",
+      "file": "assets/opening/v1/op-bg10-room-night-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C01"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg10-room-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 59,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "0cf411eadd75ba1368a372804571a6f0de7d17ecb4a901e67b5fc75ef4cf9d68",
+      "bytes": 71738,
+      "revision": 1,
+      "horizontalSameRatio": 0.589989,
+      "pngTransparentIndex": 59
+    },
+    {
+      "id": "op-bg10-cloth-night-v1",
+      "file": "assets/opening/v1/op-bg10-cloth-night-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C01"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg10-room-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 51,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "2763d693671b9ed499c1b44fa99e3cc570b103c0f95410f21d134d477f0363fb",
+      "bytes": 19859,
+      "revision": 1,
+      "horizontalSameRatio": 0.338736,
+      "pngTransparentIndex": 51
+    },
+    {
+      "id": "op-ch04-crouch-night-f0-v1",
+      "file": "assets/opening/v1/op-ch04-crouch-night-f0-v1.png",
+      "w": 96,
+      "h": 112,
+      "shots": [
+        "C01"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-ch04-crouch-night-f0.png",
+      "anchor": [
+        48,
+        108
+      ],
+      "place": {
+        "layer": "op-bg10-room-night-v1",
+        "xy": [
+          364,
+          158
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 37,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "a487c6ede62ccd62b456a7eb82e5474823dfd28aefa9cdca63d2c661f3225c0e",
+      "bytes": 1952,
+      "revision": 1,
+      "horizontalSameRatio": 0.308978,
+      "pngTransparentIndex": 37
+    },
+    {
+      "id": "op-bg11-street-night-v1",
+      "file": "assets/opening/v1/op-bg11-street-night-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C02"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-street-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 66,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "4284a6a6939184462b47d758e71dd462c2b2574face76c1f21409408115dc0a4",
+      "bytes": 97050,
+      "revision": 1,
+      "horizontalSameRatio": 0.473318,
+      "pngTransparentIndex": 66
+    },
+    {
+      "id": "op-bg11-cloth-mask-night-v1",
+      "file": "assets/opening/v1/op-bg11-cloth-mask-night-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C02"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-cloth-mask-night.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 24,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "1be83a4e536ef398614a94a79f5ae78d435b52acc720a1c8f33f763625f18963",
+      "bytes": 30029,
+      "revision": 1,
+      "horizontalSameRatio": 0.37957,
+      "pngTransparentIndex": 24
+    },
+    {
+      "id": "op-bg11-looter-f0-v1",
+      "file": "assets/opening/v1/op-bg11-looter-f0-v1.png",
+      "w": 80,
+      "h": 88,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-looter-f0.png",
+      "anchor": [
+        40,
+        84
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          185,
+          148
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 28,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e5209bfe3f29a6f4a32c53b45077fec8768bab443052dce4fe8d5665effe3ebc",
+      "bytes": 991,
+      "revision": 1,
+      "horizontalSameRatio": 0.295947,
+      "pngTransparentIndex": 28
+    },
+    {
+      "id": "op-bg11-looter-f1-v1",
+      "file": "assets/opening/v1/op-bg11-looter-f1-v1.png",
+      "w": 80,
+      "h": 88,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-looter-f1.png",
+      "anchor": [
+        40,
+        84
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          185,
+          148
+        ]
+      },
+      "frame": 1,
+      "pairedWith": null,
+      "colours": 24,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "85e3c129c27653214b25726932b31a7e852a38ae0986e0223b79d80782bb6607",
+      "bytes": 832,
+      "revision": 1,
+      "horizontalSameRatio": 0.331066,
+      "pngTransparentIndex": 24
+    },
+    {
+      "id": "op-bg11-fight-f0-v1",
+      "file": "assets/opening/v1/op-bg11-fight-f0-v1.png",
+      "w": 128,
+      "h": 88,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-fight-f0.png",
+      "anchor": [
+        64,
+        84
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          322,
+          162
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 31,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e8c2b67dfc7585e1c5f25bf99a0c948d9d7a690176f5274cf36e3148f74f3ce9",
+      "bytes": 1576,
+      "revision": 1,
+      "horizontalSameRatio": 0.332638,
+      "pngTransparentIndex": 31
+    },
+    {
+      "id": "op-bg11-fight-f1-v1",
+      "file": "assets/opening/v1/op-bg11-fight-f1-v1.png",
+      "w": 128,
+      "h": 88,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-fight-f1.png",
+      "anchor": [
+        64,
+        84
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          322,
+          162
+        ]
+      },
+      "frame": 1,
+      "pairedWith": null,
+      "colours": 29,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "abb8adcd0a9d16905aa8303b473d8973cebf7586d5f31a41258290da5d715543",
+      "bytes": 1470,
+      "revision": 1,
+      "horizontalSameRatio": 0.352878,
+      "pngTransparentIndex": 29
+    },
+    {
+      "id": "op-bg11-fallen-f0-v1",
+      "file": "assets/opening/v1/op-bg11-fallen-f0-v1.png",
+      "w": 128,
+      "h": 88,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-fallen-f0.png",
+      "anchor": [
+        64,
+        84
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          322,
+          162
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 31,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "63e143dc5bfe20790d4ca86eb73f992df13f6d645756059aec4efbb7ac5b74b0",
+      "bytes": 992,
+      "revision": 1,
+      "horizontalSameRatio": 0.306897,
+      "pngTransparentIndex": 31
+    },
+    {
+      "id": "op-bg11-drag-f0-v1",
+      "file": "assets/opening/v1/op-bg11-drag-f0-v1.png",
+      "w": 96,
+      "h": 72,
+      "shots": [
+        "C02"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg11-drag-f0.png",
+      "anchor": [
+        48,
+        68
+      ],
+      "place": {
+        "layer": "op-bg11-street-night-v1",
+        "xy": [
+          443,
+          134
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 11,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "391467184e32d1f7f6d7ccacf8af22fcfcfc8af9e46527bb8155c2f2e4ddd0ba",
+      "bytes": 564,
+      "revision": 1,
+      "horizontalSameRatio": 0.380323,
+      "pngTransparentIndex": 11
+    },
+    {
+      "id": "op-bg12-bottle-f0-v1",
+      "file": "assets/opening/v1/op-bg12-bottle-f0-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C03"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg12-bottles-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": 0,
+      "pairedWith": null,
+      "sourceInputs": [
+        "source/half2/originals/op-bg12-hand-f0.png"
+      ],
+      "colours": 59,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "648fcca9168372b7ed895495119e2f11f755dd8052547337949dbd34ce2efecf",
+      "bytes": 89028,
+      "revision": 1,
+      "horizontalSameRatio": 0.47543,
+      "pngTransparentIndex": 59
+    },
+    {
+      "id": "op-bg12-bottle-f1-v1",
+      "file": "assets/opening/v1/op-bg12-bottle-f1-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C03"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg12-bottles-corrected.png",
+      "anchor": null,
+      "place": null,
+      "frame": 1,
+      "pairedWith": null,
+      "sourceInputs": [
+        "source/half2/originals/op-bg12-hand-f1.png"
+      ],
+      "colours": 60,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "d8730a3874fd8db1256f24715f30195f317b7aa92b339636f7c07d23804c05c8",
+      "bytes": 89493,
+      "revision": 1,
+      "horizontalSameRatio": 0.472001,
+      "pngTransparentIndex": 60
+    },
+    {
+      "id": "op-ch04-climb-f0-v1",
+      "file": "assets/opening/v1/op-ch04-climb-f0-v1.png",
+      "w": 64,
+      "h": 76,
+      "shots": [
+        "C04"
+      ],
+      "layer": "char",
+      "variant": "night",
+      "source": "source/half2/originals/op-ch04-climb-f0.png",
+      "anchor": [
+        49,
+        71
+      ],
+      "place": {
+        "layer": "r2:op-bg13-roof-near-v2",
+        "xy": [
+          305,
+          177
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 26,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "8ca8693c491655361b26edf4259d4eebf175b8f87bc8ac14fea127ccce2fa322",
+      "bytes": 847,
+      "revision": 1,
+      "horizontalSameRatio": 0.295159,
+      "pngTransparentIndex": 26
+    },
+    {
+      "id": "op-bg13b-sky-city-night-v1",
+      "file": "assets/opening/v1/op-bg13b-sky-city-night-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C05"
+      ],
+      "layer": "sky",
+      "variant": "night",
+      "source": "r2:op-bg13-roof-sky-v2",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "sourceInputs": [
+        "r2:op-bg13-roof-mid-v2",
+        "r2:op-bg13-glow-f0-v2"
+      ],
+      "colours": 44,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "1ea4b4810205a27f99000277368daa4a4bd505b9946f74cbc3405f7860ff25a7",
+      "bytes": 28917,
+      "revision": 1,
+      "horizontalSameRatio": 0.851778,
+      "pngTransparentIndex": 44
+    },
+    {
+      "id": "op-bg13b-hero-tank-near-v1",
+      "file": "assets/opening/v1/op-bg13b-hero-tank-near-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C05"
+      ],
+      "layer": "near",
+      "variant": "night",
+      "source": "source/half2/originals/op-bg13b-hero-tank-near.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 58,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e3c349f8c484592bcf335481ea8179adb9c97711183b74883954fc33e474258f",
+      "bytes": 27910,
+      "revision": 1,
+      "horizontalSameRatio": 0.47716,
+      "pngTransparentIndex": 58
+    },
+    {
+      "id": "op-bg14-lane-day-v1",
+      "file": "assets/opening/v1/op-bg14-lane-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C06"
+      ],
+      "layer": "sky",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg14-dawn-lane-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 74,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "bffd7737886052a0d8f7c0b867e704a2a448dc65695099a5cce615b369806e4a",
+      "bytes": 98155,
+      "revision": 1,
+      "horizontalSameRatio": 0.484585,
+      "pngTransparentIndex": 74
+    },
+    {
+      "id": "op-bg14-water-day-v1",
+      "file": "assets/opening/v1/op-bg14-water-day-v1.png",
+      "w": 640,
+      "h": 360,
+      "shots": [
+        "C06"
+      ],
+      "layer": "near",
+      "variant": "day",
+      "source": "source/half2/originals/op-bg14-dawn-lane-master.png",
+      "anchor": null,
+      "place": null,
+      "frame": null,
+      "pairedWith": null,
+      "colours": 69,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "17f11a520f7eb9d4433e7a1c24f536a53ab7b2e104a191e5dacb9fc3a6141d51",
+      "bytes": 25015,
+      "revision": 1,
+      "horizontalSameRatio": 0.622209,
+      "pngTransparentIndex": 69
+    },
+    {
+      "id": "op-ch04-wade-f0-v1",
+      "file": "assets/opening/v1/op-ch04-wade-f0-v1.png",
+      "w": 48,
+      "h": 64,
+      "shots": [
+        "C06"
+      ],
+      "layer": "char",
+      "variant": "day",
+      "source": "source/half2/originals/op-ch04-wade-f0.png",
+      "anchor": [
+        24,
+        60
+      ],
+      "place": {
+        "layer": "op-bg14-lane-day-v1",
+        "xy": [
+          300,
+          195
+        ]
+      },
+      "frame": 0,
+      "pairedWith": null,
+      "colours": 22,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "e5860f320c90efdac3681fa3080b6975766b910bae756f59ea26a3db06430781",
+      "bytes": 604,
+      "revision": 1,
+      "horizontalSameRatio": 0.277108,
+      "pngTransparentIndex": 22
+    },
+    {
+      "id": "op-ch04-wade-f1-v1",
+      "file": "assets/opening/v1/op-ch04-wade-f1-v1.png",
+      "w": 48,
+      "h": 64,
+      "shots": [
+        "C06"
+      ],
+      "layer": "char",
+      "variant": "day",
+      "source": "source/half2/originals/op-ch04-wade-f1.png",
+      "anchor": [
+        24,
+        60
+      ],
+      "place": {
+        "layer": "op-bg14-lane-day-v1",
+        "xy": [
+          300,
+          195
+        ]
+      },
+      "frame": 1,
+      "pairedWith": null,
+      "colours": 26,
+      "exportMethod": "High-resolution source -> registered crop/mask -> area average (Pillow BOX) -> nearest Euclidean OKLab shared palette87 -> one synchronous true isolated-pixel pass preserving diagonal details and bright highlights -> alpha threshold128. No dithering, median, mode, smoothing or sharpening. Exact used-colour PLTE/tRNS packing, lossless compression.",
+      "sha256": "41b18872d4a242d3346fb48e3090bf8c4cd2d50f57daaada976b4a528af3c362",
+      "bytes": 707,
+      "revision": 1,
+      "horizontalSameRatio": 0.310236,
+      "pngTransparentIndex": 26
+    }
+  ],
+  "totals": {
+    "files": 97,
+    "pngBytes": 2300486
+  },
+  "imageGenCalls": 2,
+  "notes": {
+    "horizontalSameRatio": "equal RGB horizontal pairs / pairs whose two pixels are opaque; transparent pairs excluded",
+    "A08LayerOrder": [
+      "sky",
+      "mid",
+      "ship",
+      "breakwater",
+      "near"
+    ],
+    "C04Coordinates": "unchanged from r1",
+    "A14Anchor": "virtual foot projection [80,360], below knees-up crop, unchanged",
+    "PNGCompression": "lossless palette subset/index packing, PNG row predictors and Zopfli, no image smoothing",
+    "exportRules": "BOX area average; nearest shared OKLab colour; one isolated-pixel pass protecting highlights and diagonal continuity; alpha>=128; no median, mode, smoothing, sharpening or dithering",
+    "detailedStatistics": "source/asset-statistics.json"
+  },
+  "deliveries": [
+    {
+      "batch": "r2",
+      "directory": "D:\\bincov\\开场动画素材-r2-20261015",
+      "files": 16
+    },
+    {
+      "batch": "second-batch-3.1-3.2",
+      "directory": "D:\\bincov\\开场动画素材-第二批-20261015",
+      "files": 49
+    },
+    {
+      "batch": "second-batch-3.3-3.4",
+      "directory": "D:\\bincov\\开场动画素材-第二批-20261015",
+      "files": 32
+    }
+  ]
+}

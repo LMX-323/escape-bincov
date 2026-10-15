@@ -8,6 +8,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { executablePath, browserOptions } from './browser-options.mjs';
+import { skipOpening } from './yard-entry.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const archive = join(root, 'release', 'Escape-Bincov-portable.zip');
@@ -162,7 +163,7 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
   });
 
   await step('enter the safe house and deploy seed 42 using real buttons', async () => {
-    await action('enter').click();
+    await action('enter').click(); await skipOpening(page);
     // The ordinary entry is the station yard; its departure panel deploys with the same seed field. The default area
     // (沿海街区) runs on the 2.5D view.
     await page.locator('#station-yard [data-quick="deploy"]').click();

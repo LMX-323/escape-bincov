@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { skipOpening } from './yard-entry.mjs';
 const option = (key, fallback) => process.argv.find(a => a.startsWith(`--${key}=`))?.slice(key.length + 3) ?? fallback;
 const html = await readFile(option('html', 'dist/index.html'), 'utf8'), out = resolve(option('out', 'test-results/asset-load'));
 await mkdir(out, { recursive: true });
@@ -45,7 +46,7 @@ try {
         await page.goto('https://assets.test/');
         await page.locator('[data-action="enter"]').waitFor();
         const before = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, key);
-        await page.locator('[data-action="enter"]').click();
+        await page.locator('[data-action="enter"]').click(); await skipOpening(page);
         await page.locator('[data-action="base-enter"]').waitFor();
         assert.equal(await page.locator('#station-yard').count(), 0, 'failed cold load must remove the yard and restore usable tabs');
         assert.deepEqual(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, key), before);

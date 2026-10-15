@@ -32,7 +32,7 @@ PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略
 
 ## 八组分配
 
-各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **36** 条浏览器命令，包括 #48 的商场样板与 #57 的普通 2.5D 行动检查。没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **37** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查与 #56 的开场动画验收（约 20 秒，排在 batch-3）。没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
 
 [scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数（例如动画组过滤）仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
 
@@ -40,7 +40,7 @@ PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略
 | --- | --- |
 | batch-1 | `test:browser`、`test:qol-expansion`、`test:station-tier2` |
 | batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory` |
-| batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water` |
+| batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
 | batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:issue26-phaser-spatial`、`test:tactical`、`test:art` |
 | batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux` |
 | batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets` |

@@ -3,7 +3,7 @@
 const schedule = {
   'batch-1': ['browser', 'qol-expansion', 'station-tier2'],
   'batch-2': ['save-browser', 'asset-load', 'hud-release', 'issue26-inventory'],
-  'batch-3': ['desktop-input', 'portable', 'shop-drag', 'title', 'title-water'],
+  'batch-3': ['desktop-input', 'portable', 'shop-drag', 'title', 'title-water', 'opening'],
   'batch-4': ['issue26-station', 'issue26-spatial', 'issue26-phaser-spatial', 'tactical', 'art'],
   'batch-5': ['buildings', 'station-tier1', 'shop-feedback', 'mobile-ux'],
   'batch-6': ['loot-target', 'mall-sample', 'qol', 'coast-render-targets'],

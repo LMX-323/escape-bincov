@@ -93,6 +93,8 @@ try {
       await modal.waitFor({ state: 'detached' });
       assert.equal(await page.locator('[data-action="help"]').evaluate(el => el === document.activeElement), true);
       await page.keyboard.press('Tab');
+      assert.equal(await page.locator('[data-action="opening"]').evaluate(el => el === document.activeElement), true, 'Native Tab navigation is blocked');
+      await page.keyboard.press('Tab');
       assert.equal(await page.locator('[data-action="title-motion"]').evaluate(el => el === document.activeElement), true, 'Native Tab navigation is blocked');
       await page.keyboard.press('Space');
       assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false', 'Reduced motion control misrepresents its effective state');
