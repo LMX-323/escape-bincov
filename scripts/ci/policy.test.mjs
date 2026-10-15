@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { browserGroups, choosePlan, fingerprint, fullyTested, isDocumentation } from './policy.mjs';
 import { checkDocumentation, localLinks } from './check-docs.mjs';
+import { allSuiteIds, oldClientGroup, suitesForGroup } from './browser-suites.mjs';
 
 const entry = (path, sha = 'a'.repeat(40), mode = '100644', type = 'blob') => ({ path, sha, mode, type });
 const source = entry('src/session.ts'), doc = entry('docs/MAIN-STORY.md');
@@ -67,10 +68,17 @@ test('manual runs always perform full regression', async () => {
 test('missing, failed, cancelled, duplicate and skipped groups cannot authorize reuse', async () => {
   assert.ok(fullyTested(allJobs));
   for (const bad of [allJobs.slice(1), [...allJobs, allJobs[0]],
-    ...['failure', 'cancelled', 'skipped'].map(conclusion => allJobs.map(j => j.name === 'Browser / world' ? { ...j, conclusion } : j))]) {
+    ...['failure', 'cancelled', 'skipped'].map(conclusion => allJobs.map(j => j.name === `Browser / ${browserGroups[0]}` ? { ...j, conclusion } : j))]) {
     assert.ok(!fullyTested(bad));
     assert.equal((await choosePlan(fixture({ jobs: async () => bad }))).browserRequired, true);
   }
+});
+
+test('previous eight-group job names cannot authorize the new schedule', () => {
+  const previousGroups = ['visual', 'title', 'inventory', 'station-inventory', 'raid-inventory', 'input', 'world', 'training'];
+  const previousJobs = allJobs.filter(j => !j.name.startsWith('Browser /')).concat(
+    previousGroups.map(group => ({ name: `Browser / ${group}`, status: 'completed', conclusion: 'success' })));
+  assert.equal(fullyTested(previousJobs), false);
 });
 
 test('PR, different repository/workflow and unsuccessful main runs are not evidence', async () => {
@@ -110,25 +118,40 @@ test('new documentation links are checked with real Git history, including encod
   assert.deepEqual(localLinks('```md\n[x](missing)\n```\n[a](https://example.com) [b](#x) [c](<docs/a b.md>)'), ['docs/a b.md']);
 });
 
-test('workflow preserves every original browser command exactly once across eight groups', () => {
+test('schedule preserves every baseline browser command exactly once and runs the full groups', () => {
   const yaml = readFileSync(resolve('.github/workflows/ci-pages.yml'), 'utf8');
   const browser = yaml.split('\n  browser:')[1].split('\n  verify:')[0];
   const expected = ['browser', 'desktop-input', 'shop-drag', 'asset-load', 'hud-release', 'coast-render-targets', 'shop-feedback',
     'issue26-station', 'issue26-inventory', 'issue26-spatial', 'issue26-phaser-spatial', 'ui', 'coast-animation', 'tactical', 'art',
     'title', 'title-water', 'save-browser', 'expansion', 'buildings', 'qol-expansion', 'systems', 'station-tier1', 'station-tier2',
     'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable', 'raid-default'];
-  assert.deepEqual([...browser.matchAll(/pnpm test:([\w-]+)/g)].map(m => m[1]).sort(), expected.sort());
+  assert.deepEqual([...allSuiteIds].sort(), expected.sort());
+  assert.equal(new Set(allSuiteIds).size, expected.length);
+  const scripts = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).scripts;
+  for (const group of browserGroups) for (const { id, command } of suitesForGroup(group)) {
+    assert.equal(command, `test:${id}`);
+    assert.ok(scripts[command], `Missing package script: ${command}`);
+  }
+  assert.match(scripts['test:coast-animation'], / --group=animation$/);
+  assert.throws(() => suitesForGroup('unknown'));
+  assert.throws(() => suitesForGroup('__proto__'));
+  assert.equal(suitesForGroup('batch-2')[0].id, 'save-browser', 'Storage failures must not wait for long presentation suites');
   assert.deepEqual(browser.match(/group: \[([^\]]+)\]/)[1].split(',').map(s => s.trim()), browserGroups);
   for (const m of browser.matchAll(/matrix.group == '([^']+)'/g)) assert.ok(browserGroups.includes(m[1]));
   assert.match(browser, /max-parallel: 8/);
   // The old-client fixture must travel with its consumer after regrouping.
-  assert.match(browser, /name: Obtain actual pre-expansion client\s+if: matrix.group == 'title'/);
-  assert.match(browser, /name: Expansion storage and actual old-client regression\s+if: matrix.group == 'title'/);
+  assert.match(browser, new RegExp(`name: Obtain actual pre-expansion client\\s+if: matrix.group == '${oldClientGroup}'`));
+  assert.equal(suitesForGroup(oldClientGroup).filter(s => s.id === 'expansion').length, 1);
+  assert.match(browser, /BROWSER_GROUP: \$\{\{ matrix.group \}\}/);
+  assert.match(browser, /run: node scripts\/ci\/run-browser\.mjs "\$BROWSER_GROUP"\n/);
+  assert.match(browser, /name: browser-timing-\$\{\{ matrix.group \}\}-attempt-\$\{\{ github.run_attempt \}\}/);
+  assert.match(browser, /path: test-results\/ci-timing\/\$\{\{ matrix.group \}\}-attempt-\$\{\{ github.run_attempt \}\}\.json/);
+  assert.match(yaml, /name: Require every scheduled suite to have passed\s+if: needs.build.outputs.browser_required == 'true'\s+run: node scripts\/ci\/verify-timings\.mjs/);
 });
 
 test('actual shell gate rejects missing policy, failed build and unintended skipped/cancelled browsers', () => {
   const yaml = readFileSync(resolve('.github/workflows/ci-pages.yml'), 'utf8');
-  const block = yaml.split('name: Require build and the selected browser policy to succeed')[1].split('\n      - name:')[0];
+  const block = yaml.split('name: Require build and the selected browser policy to succeed')[1].split('\n      - ')[0];
   const script = block.split('run: |\n')[1].split('\n').map(line => line.slice(10)).join('\n');
   const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
   for (const build of ['success', 'failure', 'skipped', 'cancelled', '']) for (const required of ['true', 'false', '']) {

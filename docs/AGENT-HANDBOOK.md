@@ -139,53 +139,9 @@ CI 的文档分流、八组浏览器分配、完整回归证据复用边界及 P
 | 打包、依赖或发布 | `pnpm package`、`pnpm test:portable`、ZIP 内容/哈希与线上普通入口检查 |
 | 战斗、AI、潮汐、持续负载 | 对应回归 + `pnpm test:play`；另明确真人平衡性是否验证 |
 
-完整自动检查命令：
+完整自动检查为单测、CI 策略/执行记录测试、打包与生成物一致性，以及 [CI 说明](CI.md) 中的 36 条浏览器套件。套件及顺序只在 [browser-suites.mjs](../scripts/ci/browser-suites.mjs) 维护；手册不另复制容易过时的分组表。
 
-```bash
-pnpm test
-pnpm package
-pnpm test:browser
-pnpm test:desktop-input
-pnpm test:ui
-pnpm test:tactical
-pnpm test:art
-pnpm test:title
-pnpm test:title-water
-pnpm test:save-browser
-pnpm test:shop-feedback
-pnpm test:asset-load
-pnpm test:hud-release
-pnpm test:coast-render-targets
-pnpm test:coast-animation
-pnpm test:expansion
-pnpm test:buildings
-pnpm test:qol-expansion
-pnpm test:systems
-pnpm test:station-tier1
-pnpm test:station-tier2
-pnpm test:station-relief
-pnpm test:mall-passages
-pnpm test:mall-landing
-pnpm test:loot
-pnpm test:loot-target
-pnpm test:qol
-pnpm test:portable
-pnpm test:mobile
-pnpm test:mobile-ux
-```
-
-CI 对 PR 与 `main` 运行以上完整检查。单元测试及打包只在 `Build shared game` 执行一次，四组浏览器任务在独立 Ubuntu runner 上并行下载同一次运行的 `built-game` 制品，并核对 HTML、ZIP 和发布清单的 SHA-256。分组如下：
-
-| 组 | 完整浏览器命令（均保留现有断言和循环） |
-| --- | --- |
-| `visual` | `test:ui`、`test:coast-animation`、`test:tactical`、`test:art`、`test:title`、`test:title-water` |
-| `inventory` | `test:save-browser`、`test:shop-feedback`、`test:expansion`、`test:qol-expansion`、`test:loot`、`test:loot-target`、`test:qol`、`test:portable` |
-| `world` | `test:buildings`、`test:systems`、`test:station-tier1`、`test:station-tier2`、`test:station-relief`、`test:mall-passages`、`test:mall-landing` |
-| `input` | `test:browser`、`test:desktop-input`、`test:shop-drag`、`test:asset-load`、`test:hud-release`、`test:coast-render-targets`、`test:mobile`、`test:mobile-ux` |
-
-诊断附件为 `browser-evidence-visual`、`browser-evidence-inventory`、`browser-evidence-world`、`browser-evidence-input`，保留 14 天；临时构建制品仅保留 1 天。失败时其余组继续收集证据，取消旧运行的规则保持不变。
-
-统一检查名仍为 `Build and test`：构建及每组浏览器检查必须全部成功，失败、取消或跳过均不能通过。只有 main 的 push 或手动运行在该门禁成功后，才会校验并上传同一份 `dist/`，随后执行 `Deploy Pages`；PR 不发布，现有公开 Pages 镜像的两个成功检查名保持兼容。当前仓库公开且使用标准 GitHub 托管 runner，计算时间免费；附件仍应控制体积与保留时间。
+单测和打包只在 Build shared game 执行一次，八组独立 runner 下载同份 built-game 并校验 SHA-256。每条原命令单独记录耗时；失败停止本组后续套件，其余组继续收集证据。Build and test 保留必需检查名，并核对完整运行证据；只有有主线完整证据的文档分流才能按计划跳过。main 验证成功后校验并发布同一制品，Deploy Pages 和镜像契约保持。详见 [分组、证据与发布](CI.md)。
 
 真实计时脚本约 10 分钟，不在每次 CI 中默认执行。
 
