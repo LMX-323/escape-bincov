@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
+import { browserGroups } from './browser-suites.mjs';
 
-export const browserGroups = ['visual', 'title', 'inventory', 'station-inventory', 'raid-inventory', 'input', 'world', 'training'];
+export { browserGroups };
 const rootDocs = new Set(['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'handoff.md', '.github/PULL_REQUEST_TEMPLATE.md']);
 
 // This is an allowlist, not an extension-based exclusion of build inputs.

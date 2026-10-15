@@ -1,6 +1,6 @@
 # CI 分流与浏览器分组
 
-2026-10-14。流程入口为 [ci-pages.yml](../.github/workflows/ci-pages.yml)。本次基线 `5a11e3d`，纯文档 PR #51 的检查为 24 分 40 秒、合并后为 31 分 06 秒；当次构建任务只用 34 秒，主要时间在浏览器组内串行测试。
+2026-10-15 更新（#61 首批，基线 a2d716d）。流程入口为 [ci-pages.yml](../.github/workflows/ci-pages.yml)。前次 #54 基线 `5a11e3d`，纯文档 PR #51 的检查为 24 分 40 秒、合并后为 31 分 06 秒；当次构建任务只用 34 秒，主要时间在浏览器组内串行测试。
 
 ## 每次仍然执行的检查
 
@@ -32,22 +32,36 @@ PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略
 
 ## 八组分配
 
-各组在独立执行机顺序运行，最多同时八组，`fail-fast: false` 保留失败诊断。不减少现有 34 条浏览器命令、用例或验收断言；#48 合并时加入第 35 条 `test:mall-sample`（商场 2.5D 样板），放在 world 组。2.5D 默认接入时加入第 36 条 `test:raid-default`（普通入口的区域列表、街区与商场走 2.5D、旧行动回旧画面、无 WebGL 提示），放在 title 组。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **37** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查与 #56 的开场动画验收（约 20 秒，排在 batch-3）。没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
 
-| 组 | 内容 |
+[scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数（例如动画组过滤）仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
+
+| 组 | 顺序执行的完整命令 |
 | --- | --- |
-| visual | UI、城中村动画、战术/美术、开场动画、图片加载/输入所有权、渲染目标恢复 |
-| title | 标题/水面动态、存档、扩展旧客户端兼容、离线包、2.5D 默认入口与 WebGL 提示 |
-| inventory | 商店反馈、QOL 扩展、箱子尸体、QOL 事务 |
-| station-inventory | 院子库存原子转移、行动次数与护符快照 |
-| raid-inventory | 局内库存原子转移、附近搜刮目标 |
-| input | 基础浏览器、桌面/混合输入、商店拖放、移动输入及反馈 |
-| world | 建筑空间与揭顶、楼层、RPG/基地/商场事务、通道和落点、商场 2.5D 样板 |
-| training | 训练与补给、进站救济、清档与救济 |
+| batch-1 | `test:browser`、`test:qol-expansion`、`test:station-tier2` |
+| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory` |
+| batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
+| batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:issue26-phaser-spatial`、`test:tactical`、`test:art` |
+| batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux` |
+| batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets` |
+| batch-7 | `test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
+| batch-8 | `test:expansion`、`test:mobile`、`test:loot`、`test:mall-passages`、`test:systems` |
 
-旧客户端下载与扩展测试同处 title 组。每组诊断上传为不同制品，保留 14 天。八组可缩短墙钟等待，但有重复环境准备和并发排队成本；实际收益以新 CI 记录为准。
+本轮按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 36 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
 
-增加浏览器测试时，同步工作流、`scripts/ci/policy.test.mjs` 的覆盖清单和本表。改变组名还需更新 `scripts/ci/policy.mjs` 的证据要求；旧组证据不会自动满足新组。
+每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
+
+## 耗时与执行证据
+
+每条套件开始和结束时写 JSON，记录组、套件 ID/命令、状态、退出码/信号、单调时钟耗时、run/attempt/SHA 及 Node、Playwright、对应 Chromium 构建元信息。Chromium 元信息来自已安装 Playwright 的浏览器清单，实际浏览器版本仍以原浏览器报告为准。不记录环境变量全集或凭据。
+
+浏览器组 Summary 展示每条套件时长；`Build and test` 在原结果门禁之外下载并核对全部预期组和套件报告，再汇总耗时。缺报告、错误运行/提交、失败/中断、未执行/重复/遗漏套件及无效时长均不能放行。报告只代表完整套件的实际执行，不宣称本批已经完成每个 case 的新计时或分片清单；原测试报告仍保留。后续分片必须另验 case 全集、空选择及分片完整性。
+
+这些耗时表不含 runner 排队、安装、构建或 Pages 等待；评估整条 CI 时用 Actions job/step 时间另行拆分，既报告触发到必需门禁的墙钟等待，也报告累计 runner 分钟。Pages 与镜像激活另计。
+
+诊断制品 `browser-evidence-<group>-attempt-<n>` 和耗时制品 `browser-timing-<group>-attempt-<n>` 保留 14 天；构建制品仍保留 1 天。JSON 文件为 `<group>-attempt-<n>.json`，本地无 Actions 环境时使用 `local` 后缀。仅重跑失败任务时，汇总读取同一 run/SHA 下各组最新报告，允许保留之前成功组；最新失败不能退回旧成功，未知文件或未来 attempt 拒绝通过。原 GitHub job 结果门禁同时生效。失败或取消不能被计成成功，首败与重跑结果分列。八组只限制一次矩阵的并行度，多个 PR 可同时各用八台，记录并发与排队影响。
+
+增加浏览器测试时更新 package.json、套件清单、覆盖测试和本表。工作流矩阵必须与清单一致；修改组名会改变主线证据要求。工作流/清单/测试属于非文档指纹，因此新策略 PR 和首次 main 必须全量执行；完整 main 通过后文档快速通道才能复用新证据。旧客户端下载必须随消费者迁组，新增输出目录不得覆盖其他报告。
 
 ## Pages 与镜像
 

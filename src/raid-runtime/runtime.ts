@@ -7,6 +7,7 @@ import { mapPresentation, buildingRunConfig } from '../building-world';
 import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
@@ -316,7 +317,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         return ok;
     }
-    snapshot(): RaidCheckpoint {
+    snapshot(): ActiveRaidSnapshot {
         this.syncMagazine();
         return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: this.terminalLoadout.runId!,
             loadout: this.session.loadout ?? this.terminalLoadout, player: this.player, hp: this.hp, stamina: this.stamina, pollution: this.pollution,
@@ -546,19 +547,18 @@ export class CoastRaidRuntime implements RaidRuntime {
         points.sort((a, b) => distance(from, a) - distance(from, b) || a.y - b.y || a.x - b.x);
         return points.find(p => spacePath({ ...context, highTide: false }, from, p, true).length) ?? null;
     }
+    /**
+     * Capture live state, not the last committed record; snapshot also synchronizes live ammo.
+     * Clone layered first, then overlay current entities; pursuits retain enemy ownership.
+     * The returned candidate is isolated, but only SaveSession can make it durable.
+     * No clock/RNG advance or publication occurs here; a missing layered raid throws.
+     * @see applyActiveRaidSnapshot
+     */
     snapshotExpansion(): ExpansionState {
         if (!this.layered?.raid)
             throw new Error('没有多层行动。');
-        const state = structuredClone(this.layered), raid = state.raid!, c = this.snapshot(), layer = raid.maps[raid.currentMap];
-        Object.assign(state.body, { hp: this.hp, stamina: this.stamina, pollution: this.pollution, bleeding: !!this.bleeding, exhausted: this.exhausted });
-        Object.assign(raid, { player: c.player, loadout: c.loadout, elapsed: c.elapsed, highTide: c.highTide, warned: c.warned, tideChanged: c.tideChanged,
-            kills: c.kills, rng: c.rng, nextEntity: c.nextEntity, reloadLeft: c.reloadLeft, fireCooldown: c.fireCooldown, knife: c.knife, hitTime: c.hitTime });
-        const projected = raid.pursuits.filter(p => p.sourceMap === raid.currentMap);
-        layer.enemies = c.enemies.filter(e => !projected.some(p => p.enemy.uid === e.uid));
-        projected.forEach(p => { const enemy = c.enemies.find(e => e.uid === p.enemy.uid); if (enemy)
-            p.enemy = enemy; });
-        Object.assign(layer, { loot: c.loot, containers: c.containers!, bullets: c.bullets,
-            noise: c.shotNoise && c.noiseTime > 0 ? { at: c.shotNoise, radius: c.noiseRadius, remaining: c.noiseTime } : null });
+        const state = structuredClone(this.layered), c = this.snapshot();
+        applyActiveRaidSnapshot(state.body, state.raid!, c);
         return state;
     }
     restoreExpansion(state: ExpansionState): void {
@@ -566,13 +566,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         // A durable terminal write restores body/base state before the scene stops.
         if (!this.layered.raid)
             return;
-        const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
-        this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
-            hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
-            kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
-            warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
-            hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
-            enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+        this.restore(activeRaidCheckpoint(state.body, this.layered.raid, this.stepTime));
     }
     getLootContainer(id: string): LootContainer | undefined { return this.containers.find(container => container.id === id); }
     canLootContainer(id: string, runId: string): boolean {
