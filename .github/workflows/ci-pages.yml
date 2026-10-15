@@ -212,6 +212,9 @@ jobs:
       - name: Offline portable regression
         if: matrix.group == 'title'
         run: pnpm test:portable
+      - name: 2.5D raid view default, closed classic area and WebGL notice
+        if: matrix.group == 'title'
+        run: pnpm test:raid-default
       - name: Save diagnostic reports and screenshots
         if: always()
         uses: actions/upload-artifact@v6

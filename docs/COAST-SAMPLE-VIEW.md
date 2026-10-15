@@ -1,5 +1,7 @@
 # 城中村可玩样板：Pixi 画面接入真实 Runtime
 
+> **2026-10-15 更新：** 2.5D 画面已是沿海街区和滨湾商场的默认画面，`?sample=village` 只用于预选区域、挑街口种子和标出未精修区域。见[任务清单](WORK-QUEUE.md)当天条目。下文是样板阶段的历史记录。
+
 2026-10-08（UTC+8）。承接 [PR #22](https://github.com/xuys2025/escape-bincov/pull/22) 原分支 `docs/coast-2-5d-art-design`，续作本地提交 `4d89f27`（[Runtime 交付](COAST-RUNTIME-SAMPLE.md)）。
 
 > **第三轮（Sol 验收返修）已在本分支本地完成。** 内容包括：

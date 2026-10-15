@@ -150,6 +150,8 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
     if (message.type() === 'error') report.errors.push({ type: 'console', message: message.text() });
   });
   const action = name => page.locator(`[data-action="${name}"]`);
+  const timer = page.locator('.coast-sample [data-time]'), ammo = page.locator('.coast-sample [data-mag]');
+  const seconds = value => value.split(':').reduce((minutes, part) => minutes * 60 + Number(part), 0);
 
   await step('normal offline entry shows the menu without exposing test hooks', async () => {
     await page.goto(entryURL, { waitUntil: 'load' });
@@ -162,21 +164,21 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
 
   await step('enter the safe house and deploy seed 42 using real buttons', async () => {
     await action('enter').click(); await skipOpening(page);
-    // The ordinary entry is the station yard; its departure panel deploys with the same seed field.
+    // The ordinary entry is the station yard; its departure panel deploys with the same seed field. The default area
+    // (沿海街区) runs on the 2.5D view.
     await page.locator('#station-yard [data-quick="deploy"]').click();
     await page.locator('#station-yard #seed').fill('42');
     assert.equal(await page.locator('#station-yard #seed').inputValue(), '42');
     await page.locator('#station-yard [data-act="deploy"]').click();
-    await page.locator('#timer').waitFor({ state: 'visible' });
-    await page.waitForFunction(() => /^08\s*\//.test(document.getElementById('ammo')?.textContent || ''));
-    const timerAtDeploy = (await page.locator('#timer').innerText()).trim();
-    assert.match(timerAtDeploy, /^\d{2}:\d{2}$/);
+    await timer.waitFor({ state: 'visible' });
+    await page.waitForFunction(() => /^8\s*\//.test(document.querySelector('.coast-sample [data-mag]')?.textContent || ''));
+    const timerAtDeploy = (await timer.innerText()).trim();
+    assert.match(timerAtDeploy, /^\d{1,2}:\d{2}$/);
     await page.waitForFunction(before => {
-      const timer = document.getElementById('timer')?.textContent?.trim();
-      return /^\d{2}:\d{2}$/.test(timer || '') && timer !== before;
+      const value = document.querySelector('.coast-sample [data-time]')?.textContent?.trim();
+      return /^\d{1,2}:\d{2}$/.test(value || '') && value !== before;
     }, timerAtDeploy, { timeout: 5000 });
-    const timerAfter = (await page.locator('#timer').innerText()).trim();
-    const seconds = value => value.split(':').reduce((minutes, part) => minutes * 60 + Number(part), 0);
+    const timerAfter = (await timer.innerText()).trim();
     assert.ok(seconds(timerAfter) < seconds(timerAtDeploy), 'The visible action clock must count down');
     report.seed = 42;
     report.timer = { atDeploy: timerAtDeploy, after: timerAfter, countedDown: true };
@@ -184,14 +186,14 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
   });
 
   await step('one real left click fires one round: 8 to 7', async () => {
-    const before = Number.parseInt(await page.locator('#ammo').innerText(), 10);
+    const before = Number.parseInt(await ammo.innerText(), 10);
     assert.equal(before, 8);
-    const canvas = await page.locator('#game canvas').boundingBox();
+    const canvas = await page.locator('.coast-sample canvas').boundingBox();
     assert.ok(canvas && canvas.width > 0 && canvas.height > 0, 'A visible game canvas is required');
     const target = { x: canvas.x + canvas.width * 0.58, y: canvas.y + canvas.height * 0.5 };
     await page.mouse.click(target.x, target.y, { button: 'left', delay: 90 });
-    await page.waitForFunction(() => /^07\s*\//.test(document.getElementById('ammo')?.textContent || ''));
-    const after = Number.parseInt(await page.locator('#ammo').innerText(), 10);
+    await page.waitForFunction(() => /^7\s*\//.test(document.querySelector('.coast-sample [data-mag]')?.textContent || ''));
+    const after = Number.parseInt(await ammo.innerText(), 10);
     assert.equal(after, 7);
     report.ammo = { before, after, input: 'real left mouse click', target };
     return report.ammo;
@@ -199,24 +201,25 @@ with zipfile.ZipFile(os.environ['BINCOV_PORTABLE_ARCHIVE']) as archive:
 
   await step('Tab opens the action inventory and its close button dismisses it', async () => {
     await page.keyboard.press('Tab');
-    await page.locator('.inventory-modal').waitFor({ state: 'visible' });
-    assert.equal(await page.locator('.inventory-modal .inventory-header strong').innerText(), '随身物资');
-    await page.locator('.inventory-modal [data-grid="bag"]').waitFor({ state: 'visible' });
-    await page.locator('.inventory-modal [data-grid="safe"]').waitFor({ state: 'visible' });
-    await action('close').click();
-    await page.locator('.inventory-modal').waitFor({ state: 'detached' });
+    const panel = page.locator('.coast-sample [data-panel]');
+    await panel.waitFor({ state: 'visible' });
+    assert.equal(await panel.locator('.cs-inv-head h2').innerText(), '随身物资');
+    await panel.locator('[data-grid="bag"]').waitFor({ state: 'visible' });
+    await panel.locator('[data-grid="safe"]').waitFor({ state: 'visible' });
+    await panel.locator('[data-do="close"]').click();
+    await panel.waitFor({ state: 'hidden' });
     report.inventory = { openedWithTab: true, closedWithButton: true };
     return report.inventory;
   });
 
   await step('Escape pauses play and the visible clock stays unchanged', async () => {
-    const running = (await page.locator('#timer').innerText()).trim();
+    const running = (await timer.innerText()).trim();
     await page.keyboard.press('Escape');
-    await page.getByRole('heading', { name: '行动暂停', exact: true }).waitFor({ state: 'visible' });
-    const before = (await page.locator('#timer').innerText()).trim();
-    assert.ok(before <= running, 'Opening pause must not reset the visible clock to 10:00');
+    await page.getByRole('heading', { name: '已暂停', exact: true }).waitFor({ state: 'visible' });
+    const before = (await timer.innerText()).trim();
+    assert.ok(seconds(before) <= seconds(running), 'Opening pause must not reset the visible clock to 10:00');
     await page.waitForTimeout(1500);
-    const after = (await page.locator('#timer').innerText()).trim();
+    const after = (await timer.innerText()).trim();
     assert.equal(after, before, 'The pause clock must remain unchanged for more than one displayed second');
     assert.equal(await page.evaluate(() => '__bincov' in window), false);
     report.pause = { before, after, observedMs: 1500, unchanged: true };

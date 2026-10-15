@@ -1,5 +1,7 @@
 # 滨湾商场 2.5D 化
 
+> **2026-10-15 更新：** 普通入口的商场新出击已改用布局三版和 2.5D 画面；下文“普通入口不变”等说法是当时的状态。见[任务清单](../WORK-QUEUE.md)当天条目。
+
 登记：[#47](https://github.com/xuys2025/escape-bincov/issues/47)。分支 `feat/mall-2-5d`，起点 main `7df2d22`。本页记录范围、维护者决定和布局二版坐标；进度以对应 PR 为准。
 
 2026-10-13 Runtime 本地交付：独立 `agent/mall-runtime` 从本分支 `846954f` 接手，已接两版 Runtime、显式出击参数和恢复解析；[接口、实际验证、首败与 34 条用例登记](runtime-astra/README.md)。之后已合入本分支（#48）。

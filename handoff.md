@@ -1,3 +1,26 @@
+## 2026-10-15 · 行动默认走 2.5D，关闭沿海封锁区，不再支持无 WebGL 设备（`feat/2-5d-default`）
+
+维护者准备全面 2.5D 化：封锁区和街区是同一张图，关掉封锁区以后重做；不再支持没有 WebGL 的设备；能跑 2.5D 的设备都要能完整玩。起点 main `50a05aa`。
+
+- 路由按世界走，不再看网址：`src/coast-view/sample.ts` 的 `sampleSupports()` 接受 `coast-buildings-v1`、`mall-v2`、`mall-v3`；`sampleMallLayout()` 对商场一律给 3；`raidWorlds()` / `defaultWorld()` 给出可选区域和默认区域（沿海街区）。院子（`HostOptions.worlds` → `UI` → `deployHtml`）和旧页签的下拉都用这份列表。
+- 测试夹具 `legacyRaid()`：`?test=1` 且不带 `sample` 时保持旧行为（Phaser 局内、三个区域且默认封锁区、商场一版），所以约 20 个旧局内浏览器测试不用改。带 `sample=` 的样板测试走新路由；只要带 `test=1`，`raidWorlds()` 仍包含封锁区，`test:hud-release` 才能在同一页面先打 2.5D 再打旧画面。
+- 旧行动：存档里的经典封锁区（`coast-v2` 检查点）和商场一版，`sampleSupports()` 为否，仍从标题页「继续」进 Phaser 打完。
+- 商场素材按行动世界加载（以前只在 `?sample=mall` 下加载）。
+- 样板标记（街口外压暗、HUD「样板外」）只在 `?sample=` 下画：`ViewOptions.sampleMarks`。
+- `src/webgl.ts`：启动第一步按 Pixi 的 `isWebGLSupported` 同样条件检查（`webgl` + stencil），不支持就移除 `#frame`、显示提示并返回，不读写存档。院子“启动失败退回页签”的退路保留，它处理的是启动后才出问题的情况（`station-browser-test` A4）。
+- 街区室外地图 `name` 改为“沿海街区”（`building-world.ts`，世界数据不钉哈希）；旧页签底栏“沿海封锁区”改“行动规则”。
+- 2.5D 手机操作加 `[data-swap]` 切换武器按钮，文字是要换成的武器。
+- 测试：新增 `scripts/raid-default-test.mjs`（`test:raid-default`，CI title 组，第 36 条，R1–R9）；`portable-test` 和 `systems-browser-test` 的普通入口步骤改用 2.5D 画面的界面元素；`mall-sample-test` M12 改名。
+
+验证（本机 Windows，Node 24，离线打包文件）：
+- `pnpm test` 435/435；`node --test scripts/ci/*.test.mjs` 13/13；`pnpm package` 通过；
+- `test:raid-default` 9/9（截图见 [docs/2-5d-default](docs/2-5d-default/README.md)）；
+- `test:portable`、`test:systems`（16 步）、`test:coast-animation` 8/8、`test:mall-sample` 22/22、`test:station-tier1` 10/10、`test:coast-render-targets` 5/5、`test:title` 通过；
+- `test:save-browser` 第 9 步“跨窗口冲突时导出备份”当时在所有分支失败，原因是种子超过 10 亿时结算存不下来，已由 #58 修复；合并 main `773dcdf` 后重跑通过；
+- 发现并修正：启动检测若像 Pixi 那样主动让探测上下文丢失（`WEBGL_lose_context`），`test:title` 稳定失败（标题场景还没启动菜单就出现了），去掉后连续通过，原因写在 `src/webgl.ts`。
+
+没有做：真机手机试玩；去掉 Phaser（旧行动收尾、约 20 个旧局内测试迁移、标题与结算页）；美术补齐（#47）和敌人素材；新的沿海封锁区。
+
 ## 2026-10-15 · 行动种子超过 10 亿时结算存不下来（fix/run-seed-overflow）
 
 做开场动画 PR #56 时，CI 的 `test:save-browser` 在“跨窗口冲突后导出结算备份”一步超时；基线 main `50a05aa` 本地同样失败，昨天的 main CI 却通过。原因：行动种子取 `Date.now() >>> 0`（`normalizeSeed`），是 32 位数；当前行动、检查点和恢复记录都按 `0xffffffff` 校验，唯独 `migrateSave` 把“上次行动结果”的 `seed` 按默认上限 1e9 截断。种子超过 1e9 时，结算写入前的严格复核（`decodeSession` 比对规范化结果）不一致，整次保存被拒，玩家看到“结算尚未保存”；导出备份同样失败。时钟种子每 49.7 天里约 38 天超过 1e9：这一轮从 2026-10-14 18:09 UTC 到 2026-11-21 17:25 UTC。问题从首次导入就存在，之前开发恰好落在种子小于 1e9 的 11.6 天里。
@@ -74,7 +97,6 @@
 
 本地 Node 24.21.0、pnpm 11.19.0：358 项单测通过，13 项 CI 策略测试通过（含真实临时 Git 仓库链接检查、75 种汇总 shell 门禁组合、原浏览器命令覆盖）。打包生成物与基线一致。GitHub 完整回归与实际耗时见本任务 PR；此记录不表示已合并/上线。未改游戏源码、存档、玩法、素材、断言或真实计时要求，未复用 PR 检查或调整服务器。
 
-
 ## 2026-10-14 · 水产站：食堂进不了宿舍（fix/station-dorm-door）
 
 维护者截图问食堂到宿舍的路是不是被挡了。从 main `405d40d` 建 `fix/station-dorm-door`。原因：宿舍只有一扇门，在食堂与宿舍共用的 x=17 墙上 (17,4)；食堂的案台 `pots`（`src/station-view/layout.ts`，1×2，阻挡）放在 (16,4)–(16,5)，正好占住门里侧那格。院子的碰撞（`nav.ts` 的 `Collision`，脚框 12×7）在门这一行只有 26 像素可走，全被案台挡住，人从食堂进不去，休息区（站点在宿舍里，半径 44）走不到。实测：站在 (15.8,4.6) 按住向右 1.2 秒原地不动；从案台上方斜着挤会卡在门框边。原来的 `station-browser-test.mjs` H1 只检查宿舍屋顶掀开（人到门口就会掀开），所以一直通过；E1 直接把人放进宿舍，也没走门。
@@ -112,7 +134,6 @@
 共用修正二：命中标记与受击声改为同时看目标本身（弹着点可能落在房间外），隐藏尸体的血迹随尸体房间隐藏；两处在本分支之前就有。多代理审查（5 个方向，每条发现由验证者复核）确认的 6 个问题已全部修复。
 
 验证：`pnpm test` 354 项（新增 `tests/mall-view.test.ts` 7 项）；`test:mall-sample` 15/15（修复前的包对照，新加的三项都失败）；最终包上村庄 `coast-sample-test.mjs` 51/51、`test:coast-render-targets` 5/5、`test:mall-landing` 通过、`test:mall-passages` 7/7。中途一版命中判断把帧里没有的目标也当作不可见，村庄 V06 的契约探针（虚构目标、空地命中应提示一次）因此失败；已改为帧里没有的目标只看弹着点，复跑通过。`coast-launcher-check.mjs` 失败是脚本过时（假定普通入口直接进标签页），不在 CI，未改。已知问题：外立面朝外一面暂用室内立面图；未布置区域只有替身杂物；两层地面块保留约 35 MB 显存。手感、掩体与敌人路线未做真人评估。以下历史记录保留。
-
 
 ## 2026-10-14 · 《等海退去》Gemini 改稿集成
 

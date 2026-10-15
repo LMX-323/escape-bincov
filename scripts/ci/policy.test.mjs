@@ -116,7 +116,7 @@ test('workflow preserves every original browser command exactly once across eigh
   const expected = ['browser', 'desktop-input', 'shop-drag', 'asset-load', 'hud-release', 'coast-render-targets', 'shop-feedback',
     'issue26-station', 'issue26-inventory', 'issue26-spatial', 'issue26-phaser-spatial', 'ui', 'coast-animation', 'tactical', 'art', 'opening',
     'title', 'title-water', 'save-browser', 'expansion', 'buildings', 'qol-expansion', 'systems', 'station-tier1', 'station-tier2',
-    'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable'];
+    'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable', 'raid-default'];
   assert.deepEqual([...browser.matchAll(/pnpm test:([\w-]+)/g)].map(m => m[1]).sort(), expected.sort());
   assert.deepEqual(browser.match(/group: \[([^\]]+)\]/)[1].split(',').map(s => s.trim()), browserGroups);
   for (const m of browser.matchAll(/matrix.group == '([^']+)'/g)) assert.ok(browserGroups.includes(m[1]));

@@ -9,7 +9,7 @@
  */
 import { app, audio, hideoutRuntime } from '../app';
 import { changeState, hideoutExternal, render, startPreparedHideoutRaid, toast } from '../ui';
-import { sampleMallLayout, sampleMode, villageSeed } from '../coast-view/sample';
+import { raidWorlds, sampleMallLayout, sampleMode, villageSeed } from '../coast-view/sample';
 import { gpuTextures, managedSlots, parkApp, takeApp } from '../coast-view/host';
 import { lifecycle } from '../coast-view/scope';
 import type { HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
@@ -72,7 +72,7 @@ async function openStation(arrival: Arrival): Promise<boolean> {
       app: pixi, shadow, mount: shadow.querySelector<HTMLElement>('.mount')!, rt: hideoutRuntime, sol, art,
       test, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, frozen: test && p.get('freeze') === '1', mood: 'night',
       touch: document.documentElement.classList.contains('mobile'), volume: app.save.settings.volume,
-      arrival, world: app.runWorld, seed: app.seed, hooks: {
+      arrival, world: app.runWorld, seed: app.seed, worlds: raidWorlds(), hooks: {
         departed: runId => { closeStation(); void startPreparedHideoutRaid(runId).then(ok => { if (!ok) { toast('行动已保存，但没能启动。请在标题页继续行动。'); changeState('menu'); } }); },
         seedFor: (world: RunWorld) => sampleMode() === 'village' && world === 'buildings' ? String(villageSeed()) : '',
         mallLayout: (world: RunWorld) => sampleMallLayout(world),

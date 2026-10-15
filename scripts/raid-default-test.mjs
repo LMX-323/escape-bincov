@@ -1,0 +1,226 @@
+/**
+ * The 2.5D raid view is the default (no ?sample): the deploy panels offer 沿海街区 and 滨湾商场 only (the classic coast
+ * area is closed), both run on the Pixi view without the playtest marks, a new mall raid uses layout 3, raids started
+ * before the switch (classic coast, mall layout 1) still resume on the Phaser view, and a browser without WebGL gets a
+ * notice instead of the game while its save stays byte for byte. The ordinary entry has no test interface: checks read
+ * the page and the stored session. `?test=1` (no sample) is the legacy fixture that still deploys the old raids.
+ */
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { chromium } from 'playwright';
+import { browserOptions } from './browser-options.mjs';
+import { deployFromYard, skipOpening, throughYard } from './yard-entry.mjs';
+
+const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
+const out = resolve(option('out', 'test-results/raid-default'));
+const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
+const ORIGIN = 'https://default.test/';
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch(browserOptions);
+const report = { html: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), checks: [], errors: [], requests: [] };
+const context = await browser.newContext({ offline: true, viewport: { width: 1280, height: 720 } });
+await context.route(`${ORIGIN}**`, r => r.fulfill({ contentType: 'text/html', body: html }));
+context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith(ORIGIN)) report.requests.push(r.url()); });
+let page = await open();
+
+async function open() {
+  const p = await context.newPage(); p.setDefaultTimeout(30000);
+  p.on('pageerror', e => report.errors.push(String(e.stack)));
+  p.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
+  return p;
+}
+async function check(name, fn) {
+  const row = { name }; report.checks.push(row);
+  try { row.result = await fn() ?? null; row.status = 'passed'; }
+  catch (error) { row.status = 'failed'; row.error = String(error.stack); process.exitCode = 1; await page.screenshot({ path: resolve(out, `failure-${report.checks.length}.png`) }).catch(() => {}); }
+  console.log(row.status, name, row.error?.split('\n')[0] ?? '');
+  await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2));
+}
+const shot = name => page.screenshot({ path: resolve(out, `${name}.png`) });
+/** World versions in the stored session (the record nests JSON strings, so walk those too). */
+const stored = () => page.evaluate(() => {
+  const found = [], walk = v => {
+    if (typeof v === 'string' && /^[[{]/.test(v)) { try { walk(JSON.parse(v)); } catch { /* not JSON */ } return; }
+    if (!v || typeof v !== 'object') return;
+    for (const [k, x] of Object.entries(v)) { if (k === 'worldVersion' && typeof x === 'string') found.push(x); else walk(x); }
+  };
+  walk(localStorage.getItem('escape-bincov.session.v2'));
+  return [...new Set(found)];
+});
+const storage = () => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)])));
+async function title(query = '') {
+  await page.goto(`${ORIGIN}${query}`);
+  await page.locator('[data-action="enter"]').waitFor();
+}
+async function yard(query = '') {
+  // A new save plays the opening first on the ordinary entry; skip it as a player can.
+  await title(query); await page.locator('[data-action="enter"]').click(); await skipOpening(page);
+  await page.locator('#station-yard [data-quickmenu], #station-yard [data-quick="deploy"]').first().waitFor({ state: 'attached' });
+}
+/** The yard's area choices, read from its departure panel (opened and closed again). */
+async function yardWorlds() {
+  const go = page.locator('#station-yard [data-quick="deploy"]');
+  if (!await go.isVisible()) await page.locator('#station-yard [data-quickmenu]').click();
+  await go.click();
+  await page.locator('#station-yard label.world').first().waitFor();
+  const r = await page.evaluate(() => {
+    const root = document.querySelector('#station-yard').shadowRoot ?? document.querySelector('#station-yard');
+    const inputs = [...root.querySelectorAll('label.world input')];
+    return { worlds: inputs.map(i => i.value), checked: inputs.find(i => i.checked)?.value ?? null, names: [...root.querySelectorAll('label.world b')].map(b => b.textContent) };
+  });
+  return r;
+}
+const pixiRunning = () => page.waitForFunction(() => document.documentElement.dataset.coastSample === 'run' && !!document.querySelector('.coast-sample canvas'));
+const where = async () => { await page.waitForFunction(() => (document.querySelector('.coast-sample [data-where]')?.textContent ?? '').length > 0); return page.locator('.coast-sample [data-where]').textContent(); };
+async function abandonPixi() {
+  await page.keyboard.press('Escape');
+  await page.locator('[data-do="abandon"]').click(); await page.locator('[data-do="abandon-yes"]').click();
+  await page.waitForFunction(() => !document.querySelector('.coast-sample') && !!document.querySelector('#ui [data-action="return"]'), null, { timeout: 30000 });
+}
+/** A resumed Phaser raid opens on its pause overlay; abandon it from there. */
+async function abandonPhaser() {
+  await page.locator('#ui [data-action="abandon"]').click(); await page.locator('#ui [data-action="confirm-abandon"]').click();
+  await page.locator('#ui [data-action="return"]').waitFor({ timeout: 30000 });
+}
+/** Legacy fixture (?test=1 without sample): deploy an old-style raid on the Phaser view, then leave the page mid-raid. */
+async function legacyRaid(world) {
+  await yard('?test=1');
+  const choice = await yardWorlds();
+  assert.deepEqual(choice.worlds, ['coast', 'buildings', 'mall'], 'the legacy fixture still offers the classic area');
+  await page.locator(`#station-yard label.world:has(input[value="${world}"])`).click();
+  await page.locator('#station-yard #seed').fill('7');
+  await page.locator('#station-yard [data-act="deploy"]').click();
+  await page.waitForFunction(() => window.__bincov?.app.state === 'run' && !!window.__bincov.app.raid && !document.documentElement.dataset.coastSample, null, { timeout: 30000 });
+}
+
+await check('R1 yard: the deploy panel offers 沿海街区 (selected) and 滨湾商场; 沿海封锁区 is closed', async () => {
+  await yard();
+  const r = await yardWorlds();
+  assert.deepEqual(r, { worlds: ['buildings', 'mall'], checked: 'buildings', names: ['沿海街区', '滨湾商场'] });
+  await page.waitForTimeout(800); await shot('R1-yard-deploy-panel');
+  return r;
+});
+
+await check('R2 old tab page (页签 from the yard): the area list has the same two areas', async () => {
+  await yard(); await throughYard(page);
+  const r = await page.evaluate(() => ({ options: [...document.querySelectorAll('#run-world option')].map(o => [o.value, o.textContent, o.selected]),
+    note: document.querySelector('.departure-note strong')?.textContent ?? null }));
+  assert.deepEqual(r.options, [['buildings', '沿海街区 · 居民楼', true], ['mall', '滨湾商场 · 两层与露台', false]]);
+  assert.ok(!r.note?.includes('沿海封锁区'), r.note);
+  return r;
+});
+
+await check('R3 沿海街区 deploys on the 2.5D view; outside the dressed corner there is no playtest mark', async () => {
+  await yard(); await deployFromYard(page, { world: 'buildings', seed: 42 });
+  await pixiRunning();
+  const text = await where();
+  assert.ok(text.startsWith('沿海街区 · 室外 / 一楼'), text);
+  assert.ok(!text.includes('样板外'), text);
+  assert.deepEqual(await stored(), ['coast-buildings-v1']);
+  assert.equal(await page.evaluate(() => !!window.__bincov || !!window.__bincovSample), false, 'no test interface on the ordinary entry');
+  await page.waitForTimeout(1500); await shot('R3-street-2.5d-seed42');
+  await abandonPixi();
+  return { where: text };
+});
+
+await check('R4 滨湾商场 deploys layout 3 on the 2.5D view', async () => {
+  await yard(); await deployFromYard(page, { world: 'mall', seed: 42 });
+  await pixiRunning();
+  const text = await where();
+  assert.ok(text.startsWith('滨湾商场'), text);
+  assert.ok(!text.includes('样板外'), text);
+  assert.deepEqual(await stored(), ['mall-v3']);
+  await page.waitForTimeout(1500); await shot('R4-mall-2.5d');
+  await abandonPixi();
+  return { where: text };
+});
+
+await check('R5 a classic coast raid started before the switch resumes on the Phaser view and settles', async () => {
+  await legacyRaid('coast');
+  assert.ok((await stored()).includes('coast-v2'), 'legacy fixture deployed a classic raid');
+  await title(); await page.locator('[data-action="enter"]').click();
+  await page.locator('#ui [data-action="abandon"]').waitFor();
+  const r = await page.evaluate(() => ({ pixi: !!document.documentElement.dataset.coastSample || !!document.querySelector('.coast-sample'), phaser: !!document.querySelector('#game canvas') }));
+  assert.deepEqual(r, { pixi: false, phaser: true });
+  await shot('R5-classic-resume-phaser');
+  await abandonPhaser();
+  return r;
+});
+
+await check('R6 a mall layout 1 raid started before the switch resumes on the Phaser view and settles', async () => {
+  await legacyRaid('mall');
+  assert.deepEqual(await stored(), ['mall-v1']);
+  await title(); await page.locator('[data-action="enter"]').click();
+  await page.locator('#ui [data-action="abandon"]').waitFor();
+  const r = await page.evaluate(() => ({ pixi: !!document.documentElement.dataset.coastSample || !!document.querySelector('.coast-sample'), phaser: !!document.querySelector('#game canvas') }));
+  assert.deepEqual(r, { pixi: false, phaser: true });
+  await abandonPhaser();
+  return r;
+});
+
+await check('R7 the view follows the raid, not the playtest flag: ?sample=village draws a mall raid with the mall art', async () => {
+  await yard('?test=1&sample=village'); await deployFromYard(page, { world: 'mall', seed: 42 });
+  await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch);
+  const r = await page.evaluate(() => ({ mallArt: window.__bincovSample.counts().mallArt, art: window.__bincovSample.counts().art }));
+  assert.deepEqual(r, { mallArt: 'sol', art: 'sol' });
+  assert.deepEqual(await stored(), ['mall-v3']);
+  await abandonPixi();
+  return r;
+});
+
+await check('R8 without WebGL the page shows the notice instead of the game and leaves the save untouched', async () => {
+  await title();
+  const before = await storage();
+  assert.ok(Object.keys(before).length > 0, 'a save exists to protect');
+  await page.close();
+  page = await open();
+  await page.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...rest) { return /webgl/.test(type) ? null : get.call(this, type, ...rest); };
+    Object.defineProperty(navigator, 'gpu', { get: () => undefined });
+  });
+  await page.goto(ORIGIN);
+  await page.locator('.webgl-required').waitFor();
+  const r = await page.evaluate(() => ({ heading: document.querySelector('.webgl-required h2')?.textContent, frame: !!document.getElementById('frame'), canvases: document.querySelectorAll('canvas').length }));
+  assert.deepEqual(r, { heading: '需要支持 WebGL 的浏览器', frame: false, canvases: 0 });
+  await page.waitForTimeout(500);
+  assert.deepEqual(await storage(), before, 'storage unchanged byte for byte');
+  await shot('R8-webgl-required-1280');
+  await page.setViewportSize({ width: 390, height: 844 }); await shot('R8-webgl-required-390');
+  return r;
+});
+
+await check('R9 phone (844x390 touch): the 2.5D raid has a weapon button that switches to the knife and back', async () => {
+  const phone = await browser.newContext({ offline: true, viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  await phone.route(`${ORIGIN}**`, r => r.fulfill({ contentType: 'text/html', body: html }));
+  phone.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith(ORIGIN)) report.requests.push(r.url()); });
+  const desktop = page;
+  try {
+    page = await phone.newPage(); page.setDefaultTimeout(30000);
+    page.on('pageerror', e => report.errors.push(String(e.stack)));
+    await yard(); await deployFromYard(page, { world: 'buildings', seed: 42 });
+    await pixiRunning();
+    const swap = page.locator('.coast-sample [data-swap]'), name = page.locator('.coast-sample [data-weapon-name]');
+    await swap.waitFor({ state: 'visible' });
+    const start = { weapon: await name.textContent(), label: await swap.textContent() };
+    await swap.tap();
+    await page.waitForFunction(() => document.querySelector('.coast-sample [data-weapon-name]')?.textContent === '水手匕首');
+    const knife = { weapon: await name.textContent(), label: await swap.textContent() };
+    await shot('R9-phone-knife');
+    await swap.tap();
+    await page.waitForFunction(w => document.querySelector('.coast-sample [data-weapon-name]')?.textContent === w, start.weapon);
+    const back = { weapon: await name.textContent(), label: await swap.textContent() };
+    assert.deepEqual({ start, knife, back }, { start: { weapon: start.weapon, label: '匕首' }, knife: { weapon: '水手匕首', label: '主武器' }, back: { weapon: start.weapon, label: '匕首' } });
+    assert.notEqual(start.weapon, '水手匕首', 'a new save starts with a primary weapon');
+    return { start, knife, back };
+  } finally { await phone.close(); page = desktop; }
+});
+
+assert.deepEqual(report.requests, [], 'offline: no network requests');
+// The legacy raids and the abandoned runs log nothing; any page error fails the suite.
+if (report.errors.length) { console.log('page errors:', report.errors); process.exitCode = 1; }
+await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2));
+await browser.close();
+console.log(`${report.checks.filter(c => c.status === 'passed').length}/${report.checks.length} passed`);
