@@ -4,7 +4,7 @@
  * two-layer rain with splashes, water glints, motes in the beam and drifting mist. Shots without plates keep the
  * placeholder painters in render.ts.
  */
-import type { OpeningArt } from './assets';
+import { OPENING_ASSET_META, type OpeningArt } from './assets';
 import type { TimedShot } from './timeline';
 import {
   CLEAR, Frame, H, Palette, W, bolt, flashLift, hash, mapped, mist, motes, noise1, rain, shade, shimmer, toIndexed, warmLift,
@@ -20,8 +20,8 @@ export interface Prepared {
   lut: { flash: Uint8Array; flashSoft: Uint8Array; glint: Uint8Array; fade: Uint8Array };
   ink: { rainFar: number; rainNear: number; rainLit: number; splash: number; mote: number; boltCore: number; boltGlow: number; mistSea: number; mistCity: number; drip: number };
   harbor: { sky: Indexed; mid: Indexed; breakwater: Indexed; near: Indexed; shipDark: Indexed; shipFlash: Indexed; glints: Int32Array; tops: Int16Array };
-  hatch: { plate: Indexed[]; crew: Indexed[][]; far: Indexed[][] };
-  roof: { sky: Indexed; mid: Indexed; near: Indexed; glow: Indexed[]; you: Indexed; glints: Int32Array };
+  hatch: { plate: Indexed[]; crew: Indexed[][]; far: Indexed[][]; crewAt: [number, number] };
+  roof: { sky: Indexed; mid: Indexed; near: Indexed; glow: Indexed[]; you: Indexed; glints: Int32Array; glowAt: [number, number]; youAt: [number, number] };
 }
 
 /** First opaque row per column of a layer (layer coordinates), -1 where the column is empty. */
@@ -57,16 +57,24 @@ function reduced(src: Indexed, k: number): Indexed {
   return { w, h, px };
 }
 
+/** Top-left of a sprite on its layer, as Sol registered it in the manifest. */
+function placed(id: string): [number, number] {
+  const place = OPENING_ASSET_META[id]?.place;
+  if (!place) throw new Error(`No placement registered for ${id}`);
+  return place.xy;
+}
+
 export function prepare(art: OpeningArt): Prepared {
   const pal = new Palette();
   const ix = (image: HTMLImageElement) => toIndexed(image, pal);
-  const harborSky = ix(art.harborSky), harborMid = ix(art.harborMid), harborNear = ix(art.harborNear);
-  const shipDark = ix(art.shipDark), shipFlash = ix(art.shipFlash);
-  const breakwater = ix(art.harborBreakwater);
-  const hatchDark = ix(art.hatchDark), hatchLit = ix(art.hatchLit);
-  const crew = [ix(art.crewNear0), ix(art.crewNear1)];
-  const roofSky = ix(art.roofSky), roofMid = ix(art.roofMid), roofNear = ix(art.roofNear);
-  const glow = [ix(art.glow0), ix(art.glow1)], you = ix(art.youSit);
+  const get = (id: string) => { const image = art[id]; if (!image) throw new Error(`Opening plate missing: ${id}`); return ix(image); };
+  const harborSky = get('op-bg03-harbor-sky-night'), harborMid = get('op-bg03-harbor-mid-night'), harborNear = get('op-bg03-harbor-near-night');
+  const shipDark = get('op-sp01-ship-dark'), shipFlash = get('op-sp01-ship-flash');
+  const breakwater = get('op-bg03-harbor-breakwater-night');
+  const hatchDark = get('op-bg05-hatch-dark'), hatchLit = get('op-bg05-hatch-lit');
+  const crew = [get('op-ch03-near-f0'), get('op-ch03-near-f1')];
+  const roofSky = get('op-bg13-roof-sky'), roofMid = get('op-bg13-roof-mid'), roofNear = get('op-bg13-roof-near');
+  const glow = [get('op-bg13-glow-f0'), get('op-bg13-glow-f1')], you = get('op-ch04-sit-f0');
   // Effect colours are picked from the plates' own palette, never added.
   const ink = {
     rainFar: pal.nearest('#34505c'), rainNear: pal.nearest('#7d98a2'), rainLit: pal.nearest('#d9cdb0'), splash: pal.nearest('#a9bec2'),
@@ -85,8 +93,8 @@ export function prepare(art: OpeningArt): Prepared {
       sky: harborSky, mid: harborMid, breakwater, near: harborNear, shipDark, shipFlash,
       glints: pixelsIn(harborMid, brightest(harborMid, pal, 215, 360, 0.06), 215, 360), tops: columnTops(harborNear),
     },
-    hatch: { plate: [hatchDark, mapped(hatchLit, lutMid), hatchLit, mapped(hatchLit, lutHot)], crew: crewVersions, far },
-    roof: { sky: roofSky, mid: roofMid, near: roofNear, glow, you, glints: pixelsIn(roofMid, brightest(roofMid, pal, 236, 360, 0.04), 236, 360) },
+    hatch: { plate: [hatchDark, mapped(hatchLit, lutMid), hatchLit, mapped(hatchLit, lutHot)], crew: crewVersions, far, crewAt: placed('op-ch03-near-f0') },
+    roof: { sky: roofSky, mid: roofMid, near: roofNear, glow, you, glints: pixelsIn(roofMid, brightest(roofMid, pal, 236, 360, 0.04), 236, 360), glowAt: placed('op-bg13-glow-f0'), youAt: placed('op-ch04-sit-f0') },
   };
 }
 
@@ -162,7 +170,7 @@ function hatch(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void
   const frame = !o.calm && Math.floor(t / 430 + noise1(t / 900, 4) * 0.6) % 2 ? 1 : 0;
   if (beat === 'near') {
     const lurch = o.calm ? 0 : Math.round(Math.max(0, Math.sin(t / 430 * Math.PI)) * 2);
-    f.blitLit(h.crew[frame], 272, 4 + lurch);
+    f.blitLit(h.crew[frame], h.crewAt[0], h.crewAt[1] + lurch);
   } else if (beat !== 'bow' || p > 0.55) {
     // Farther figure: smallest when it first shows, a step closer per beat (stand-in sizes, see reduced()).
     const step = beat === 'turn' ? (p < 0.35 ? 0 : p < 0.7 ? 1 : 2) : beat === 'retreat' ? 2 : 0;
@@ -185,13 +193,13 @@ function roof(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void 
   const cam = o.calm ? (p < 0.5 ? 0 : 320) : Math.round(ease((p - 0.22) / 0.78) * 320);
   f.copy(r.sky, -cam, 0);
   const lit = !o.calm && noise1(t / 260, 3) > 0.62 ? 1 : 0;
-  f.blit(r.glow[lit], 869 - cam, 202);
+  f.blit(r.glow[lit], r.glowAt[0] - cam, r.glowAt[1]);
   mist(f, t, 226, 258, a.ink.mistCity, 0.55, 0.05, o.calm);
   f.blit(r.mid, -cam, 0);
   shimmer(f, t, r.glints, -cam, 0, a.lut.glint, 0.05, o.calm);
   const near = Math.round(cam * 1.15);
   f.blit(r.near, -near, 0);
-  f.blit(r.you, 215 - near, 108);
+  f.blit(r.you, r.youAt[0] - near, r.youAt[1]);
 }
 
 /** Paint a painted shot; returns false when the shot has no plates yet. */
