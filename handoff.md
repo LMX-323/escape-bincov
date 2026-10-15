@@ -8,9 +8,12 @@
 
 ## 2026-10-15 · 开场动画 P0 动态分镜（feat/opening-cutscene）
 
-维护者要求开实现 PR。从 #41 的 `456d96f`（已含 main `50a05aa`）建 `feat/opening-cutscene`，按[制作方案](docs/OPENING-CUTSCENE-PLAN.md)做 P0。新增 `src/opening/`：时间轴（28 镜、139 秒，字幕与[分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md)逐字一致，单测核对）、独立 Canvas 2D 播放器（640×360 整数倍放大、HTML 字幕、跳过/暂停、失焦自动暂停、减少动态效果）、色块占位画面和临时合成音。主菜单加「序幕」，玩家可随时看；新存档第一次进入自动播放的规则已写好但先关着（`OPENING_AUTOPLAY_LIVE`），P2 与按普通入口进院子的浏览器套件一起打开，测试页用 `?test=1&opening=auto` 启用。动画不读写存档。
+维护者要求开实现 PR（#56）。从 #41 的 `456d96f` 建 `feat/opening-cutscene`，按[制作方案](docs/OPENING-CUTSCENE-PLAN.md)推进，已合入 main `773dcdf`（含 #58 种子修复）。
 
-A08、A11～A14、C04 先用 Sol 定调第一批图。维护者看过认为和其他画面差距大、不够精细；对比确认主要是导出流程里的中值和众数清理把细节磨平，返修时改成主菜单的做法。字体子集按固定上游重新生成，新增 70 字；构建校验 `assets/opening/manifest.json`。`title-review` 按新菜单顺序更新 Tab 断言；`scripts/yard-entry.mjs` 加 `skipOpening`，自动播放打开后普通入口的套件照常进院子。
+- `src/opening/`：时间轴（28 镜、139 秒，字幕与[分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md)逐字一致，单测核对）；独立 Canvas 2D 播放器（640×360 整数倍放大、HTML 字幕、跳过/暂停、失焦自动暂停、减少动态效果）；临时合成音；新存档第一次「进入水产站」自动播放，主菜单「序幕」重看，只记页面内存，不读写存档。
+- 正式画面走索引色合成器（`pixel.ts`、`scenes.ts`）：手电光在暗、半明、亮和中心暖光四档之间按点阵逐级变化；闪电按色板提亮并画分叉闪电；两层雨、水花、进光圈的雨点变亮；水面闪光、光束里的盐尘、城市薄雾、横移视差。减少动态时不横移、不闪电、雨静止。
+- 素材：Sol 定调三镜 r2（A08、A14、C04，16 张索引色 PNG，341,558 字节），维护者已确认画风；第一批因导出时的中值、众数清理过粗而被替换。A11～A13、A15 远处的人影暂用近景图缩小代替，其余镜头仍是色块占位，等 Sol 第二批（任务书已备）。
+- 测试：`tests/opening.test.ts`、`tests/opening-pixel.test.ts`；`title-review` 按新菜单顺序更新 Tab 断言；按普通入口用新存档进入的套件（asset-load、portable、station-tier1/tier2 普通路径，以及 `scripts/yard-entry.mjs` 的公共函数）用 `skipOpening` 按 Esc 跳过开场。字体子集新增 70 字；构建校验 `assets/opening/manifest.json`。
 
 ## 2026-10-15 · 开场动画定稿（#41）
 
