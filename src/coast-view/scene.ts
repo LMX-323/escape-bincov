@@ -75,8 +75,10 @@ export interface ViewOptions {
   collapseTall: boolean;
   /** Decoded Sol samples; null keeps the procedural placeholders. */
   art: SolArt | null;
-  /** Decoded mall samples (?sample=mall); null draws mall floors with the generic placeholder pipeline. */
+  /** Decoded mall samples (mall raids); null draws mall floors with the generic placeholder pipeline. */
   mallArt: MallArt | null;
+  /** Playtest entries (?sample=): shade and label the areas the samples have not dressed yet. */
+  sampleMarks: boolean;
   /** Drizzle on the coast map (default) or a dry overcast; reduced motion keeps only a still mist. */
   weather: WeatherKind;
   /** Device px per world px (view-scale.ts): default 'whole'; ?crisp=1 'near' (closer whole number); ?crisp=0 'fit' (the old fractional picture). */
@@ -290,7 +292,7 @@ export class CoastView {
       if (this.tex.atlas.has(key) || intersects(r, near)) this.placeChunk(r, key, paint(r));
       else this.pendingChunks.push({ r, key, paint: paint(r) });
     }
-    if (m.key.mapId === 'coast') this.markSampleArea(b);
+    if (m.key.mapId === 'coast' && this.opts.sampleMarks) this.markSampleArea(b);
     for (const e of m.entries) {
       if (!mall?.flights.has(e.id)) {
         const s = new Sprite(this.tex.ensure(`stairs:${e.kind}`, () => paintStairs(e.kind === 'up' ? 'up' : 'down')));
@@ -968,15 +970,16 @@ export class CoastView {
   /** Test probe: particles and decals currently withheld because their region is not revealed. */
   get hiddenFx() { return this.fx.hidden; }
   actorShown(uid: string): boolean { const g = this.actors.get(uid); return !!g && (g.body.visible || !!g.corpse?.visible); }
-  /** Player is on the coast map but outside the dressed village corner (generic placeholder rendering). */
-  /** HUD note for where the player is: outside the dressed sample (the coast's corner, or a mall room not yet dressed). */
+  /** Playtest HUD note for where the player is: outside the dressed sample (the coast's corner, or a mall room not yet dressed). */
   sampleNote(): string | null {
+    if (!this.opts.sampleMarks) return null;
     if (this.outsideSample()) return '样板外（通用占位画面）';
     const p = this.last?.player, m = this.map;
     if (!p || !m || !this.mall) return null;
     const id = regionAtClosed(m, this.last!.revealed, p);
     return id && !(MALL_V2_REGIONS as readonly string[]).includes(id) ? '样板外' : null;
   }
+  /** Player is on the coast map but outside the dressed village corner (generic placeholder rendering). */
   outsideSample(): boolean {
     const p = this.last?.player, m = this.map, a = SAMPLE_AREA;
     return !!p && !!m && m.key.mapId === 'coast' && !(p.x >= a.x && p.x < a.x + a.w && p.y >= a.y && p.y < a.y + a.h);

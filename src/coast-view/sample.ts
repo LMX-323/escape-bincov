@@ -1,8 +1,11 @@
 /**
- * 2.5D sample entries (opt-in): ?sample=village deploys or resumes a coast-buildings raid, ?sample=mall deploys a mall
- * raid on layout revision 3 (and resumes one on revision 2 or 3), on the Pixi host over the real Runtime instead of the
- * Phaser RaidScene; without the flag nothing changes. Only one of the two may own the SaveSession: the RaidScene is never
- * started while this host is alive.
+ * The 2.5D raid view: coast-buildings raids and mall raids on layout revision 2 or 3 run on the Pixi host over the real
+ * Runtime instead of the Phaser RaidScene, and a new mall raid deploys revision 3. Only classic coast and mall layout 1
+ * raids, which can only be ones started before the switch, finish on the Phaser RaidScene. Only one of the two may own
+ * the SaveSession: the RaidScene is never started while this host is alive.
+ *
+ * ?sample=village and ?sample=mall remain playtest entries: they preselect the area, pick a village seed in the dressed
+ * corner, and mark the areas the samples have not dressed yet.
  */
 import { app, audio, saveSession } from '../app';
 import { createCoastRaidHost } from '../raid-runtime';
@@ -13,21 +16,37 @@ import { CoastView, type ViewOptions } from './scene';
 import { lifecycle } from './scope';
 import { SAMPLE_AREA } from './appearance';
 import { generateRunBase } from '../world';
+import { isMallWorld } from '../mall-world';
+import type { RunWorld } from '../hideout-runtime/contract';
 
-const params = () => new URLSearchParams(location.search);
+// Node tests render the UI without a location: no flags there.
+const params = () => new URLSearchParams(globalThis.location?.search ?? '');
 export type SampleMode = 'village' | 'mall';
 export const sampleMode = (): SampleMode | null => { const s = params().get('sample'); return s === 'village' || s === 'mall' ? s : null; };
 export const sampleEnabled = () => sampleMode() !== null;
 /**
- * The raid in the save is one this sample draws: coast-buildings for the village, mall layout 2 or 3 for the mall (a raid
- * deployed on layout 2 keeps it until it ends).
+ * Test fixture only (`?test=1` without `sample`): the legacy browser suites keep the Phaser raid view, the classic coast
+ * area (still the default there) and mall layout 1, as the yard keeps the tab page for `entry=tabs`.
+ */
+export const legacyRaid = () => params().get('test') === '1' && !sampleEnabled();
+/**
+ * Areas a player can deploy to. The classic coast area is closed: it repeated the street's coast map and will be
+ * redone as a new map. Raids already started there still resume and settle. Under `?test=1` it stays deployable, so a
+ * suite can start a Phaser raid on the same page after a 2.5D one (test:hud-release).
+ */
+export const raidWorlds = (): RunWorld[] => params().get('test') === '1' ? ['coast', 'buildings', 'mall'] : ['buildings', 'mall'];
+/** Area selected when the page opens. */
+export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : legacyRaid() ? 'coast' : 'buildings';
+/**
+ * The raid in the save is one the 2.5D view draws: coast-buildings, or mall layout 2 or 3 (a raid deployed on layout 2
+ * keeps it until it ends).
  */
 export const sampleSupports = () => {
   const world = app.expansion?.raid?.worldVersion;
-  return sampleMode() === 'mall' ? world === 'mall-v2' || world === 'mall-v3' : world === 'coast-buildings-v1';
+  return !legacyRaid() && (world === 'coast-buildings-v1' || world === 'mall-v2' || world === 'mall-v3');
 };
-/** Layout revision for a new mall raid: the mall sample deploys revision 3; everything else keeps the default. */
-export const sampleMallLayout = (world: string): 3 | undefined => sampleMode() === 'mall' && world === 'mall' ? 3 : undefined;
+/** Layout revision for a new mall raid: revision 3, the one the 2.5D view furnishes; the legacy fixture keeps the default. */
+export const sampleMallLayout = (world: string): 3 | undefined => !legacyRaid() && world === 'mall' ? 3 : undefined;
 
 /**
  * Playtest deploy with an empty seed field: take the first seed from the clock whose spawn lies in the dressed village
@@ -62,13 +81,13 @@ export async function startCoastSample(paused = false): Promise<boolean> {
       viewTiles: p.get('view') === '28' ? 28 : 24, collapseTall: p.get('collapse') !== '0',
       weather: p.get('weather') === 'clear' ? 'clear' : 'rain',
       scale: p.get('crisp') === '1' ? 'near' : p.get('crisp') === '0' ? 'fit' : 'whole',
-      art: null, mallArt: null,
+      art: null, mallArt: null, sampleMarks: sampleEnabled(),
     };
     // Loaded on demand: esbuild still inlines the modules, but the app's module graph (and Node tests) never import PNGs.
     // The mall samples are optional: without them the mall floors keep the generic placeholder pipeline.
     if (p.get('art') !== 'placeholder') [opts.art, opts.mallArt] = await Promise.all([
       import('./assets').then(m => m.loadCoastAssets()),
-      sampleMode() === 'mall' ? import('./mall-art-load').then(m => m.loadMallAssets()).catch(error => { console.error(error); return null; }) : null,
+      isMallWorld(app.expansion?.raid?.worldVersion) ? import('./mall-art-load').then(m => m.loadMallAssets()).catch(error => { console.error(error); return null; }) : null,
     ]);
     created = test ? createTestCoastHost(app, saveSession, location.search) : createCoastRaidHost(app, saveSession);
     const host: CoastSampleHost = new CoastSampleHost(created as unknown as CoastHandle, app, saveSession, opts, () => finish(host), exportSave);

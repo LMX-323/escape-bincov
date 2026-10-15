@@ -138,7 +138,7 @@ const WORLDS: { id: RunWorld; name: string; note: string }[] = [
   { id: 'buildings', name: '沿海街区', note: '居民楼 · 可进入建筑' },
   { id: 'mall', name: '滨湾商场', note: '两层与露台' },
 ];
-export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string) {
+export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string, worlds: readonly RunWorld[]) {
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const meds = D.count(p.bag, 'bandage') + D.count(p.bag, 'medkit');
   const checks = [
@@ -148,7 +148,7 @@ export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight
     { ok: dep.weight <= dep.carry, label: `携行重量 · ${dep.weight.toFixed(1)} / ${dep.carry.toFixed(1)} kg` },
     { ok: s.body.hp >= s.body.hpMax, label: `生命 · ${Math.floor(s.body.hp)} / ${s.body.hpMax}` },
   ];
-  return `<div class="deploy"><h3>行动区域</h3><div class="worlds">${WORLDS.map(x => `<label class="world ${x.id === world ? 'on' : ''}"><input type="radio" name="world" value="${x.id}" ${x.id === world ? 'checked' : ''}><b>${x.name}</b><small>${x.note}</small></label>`).join('')}</div>
+  return `<div class="deploy"><h3>行动区域</h3><div class="worlds">${WORLDS.filter(x => worlds.includes(x.id)).map(x => `<label class="world ${x.id === world ? 'on' : ''}"><input type="radio" name="world" value="${x.id}" ${x.id === world ? 'checked' : ''}><b>${x.name}</b><small>${x.note}</small></label>`).join('')}</div>
   <label class="seedrow">行动种子 <input id="seed" maxlength="16" placeholder="留空随机" value="${esc(seed)}" aria-label="行动种子"><small>输入相同的数字或文字，可重现本局初始配置。</small></label>
   <h3>出发前检查</h3><ul class="checks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'bad'}"><i></i>${esc(c.label)}</li>`).join('')}</ul>
   <p class="rule">撤离失败会丢失背包物资和主武器，安全箱保留。出击即写入存档，院门打开后不能撤回。</p>

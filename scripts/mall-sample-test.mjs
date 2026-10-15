@@ -519,7 +519,7 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
 }
 {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
-  await step('M12 the village sample is unchanged: buildings preselected, the mall is not drawn by it', async () => {
+  await step('M12 the village sample still preselects 沿海街区', async () => {
     await action(page, 'enter').click();
     const world = await page.locator('#run-world').inputValue();
     assert.equal(world, 'buildings');

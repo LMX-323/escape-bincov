@@ -65,7 +65,7 @@ export class UI {
   private paneB: 'stash' | 'safe' = 'stash';
   private shopMode: 'buy' | 'sell' = 'buy';
   private shop: ShopSession | null = null;
-  private world: RunWorld = 'coast'; private seed = '';
+  private world: RunWorld = 'buildings'; private seed = ''; private worlds: readonly RunWorld[];
   private dialog: Dialog | null = null;
   summary: D.RunSummary | null = null;
   private drag: GridDrag;
@@ -75,8 +75,8 @@ export class UI {
   private tagEls = new Map<StationId, HTMLElement>();
   private timers = new Set<number>();
 
-  constructor(parent: HTMLElement, shadow: ShadowRoot, private rt: HideoutRuntime, private host: UIHost, scope: Scope, opts: { world: RunWorld; seed: string }) {
-    this.world = opts.world; this.seed = opts.seed;
+  constructor(parent: HTMLElement, shadow: ShadowRoot, private rt: HideoutRuntime, private host: UIHost, scope: Scope, opts: { world: RunWorld; seed: string; worlds: readonly RunWorld[] }) {
+    this.worlds = opts.worlds; this.world = opts.worlds.includes(opts.world) ? opts.world : opts.worlds[0]; this.seed = opts.seed;
     this.root = document.createElement('div'); this.root.className = 'ui'; parent.appendChild(this.root);
     this.root.innerHTML = `<div class="tags"></div><div class="bubbles"></div>
       <header class="hud"><div class="id"><i class="sig"></i><div><b>滨科夫水产站</b><span id="hud-sub"></span></div></div><div class="cash"><span>可用现金</span><b id="hud-cash"></b><small id="hud-prod"></small></div></header>
@@ -186,7 +186,7 @@ export class UI {
       }
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
-      case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed); break;
+      case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed, this.worlds); break;
       case 'facility': body = `<nav class="seg facs">${FACILITY_ORDER.map(f => P.btn(`${FACILITY_LABEL[f]}${s.base.facilities[f] ? ` <small>${s.base.facilities[f]} 级</small>` : ''}`, `fac:${f}`, f === this.facility ? 'on' : '')).join('')}</nav>` + P.facilityHtml(this.rt.facility(this.facility), s, this.rt.trainingProgress()); break;
       case 'body': body = P.bodyHtml(s); break;
       case 'board': body = P.boardHtml(); break;
