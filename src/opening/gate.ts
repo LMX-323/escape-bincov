@@ -28,5 +28,10 @@ export async function playOpening(mode: 'first' | 'replay'): Promise<void> {
   finally { playing = false; }
 }
 
+/** Review aid on test pages only: render the opening's whole sound offline as a WAV (base64). */
+if (new URLSearchParams(globalThis.location?.search ?? '').get('test') === '1') {
+  (globalThis as { __bincovOpeningAudio?: () => Promise<string> }).__bincovOpeningAudio = () => import('./sound').then(m => m.renderOpeningAudio());
+}
+
 /** Test seam for Node: forget that the opening was seen. */
 export function resetOpeningGate(): void { seen = false; playing = false; }

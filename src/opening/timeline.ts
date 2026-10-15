@@ -18,7 +18,7 @@ export type Scene =
   | 'face' | 'ship-full' | 'flood' | 'street' | 'ship-day' | 'shelter' | 'gap' | 'bottles' | 'roof' | 'roof-sit' | 'lane';
 export type Cue =
   | 'thunder' | 'crack' | 'beep' | 'drop' | 'scrape' | 'drip' | 'heart' | 'shriek' | 'roar' | 'splash' | 'surge'
-  | 'crowd' | 'crush' | 'wade' | 'step';
+  | 'crowd' | 'crush' | 'wade' | 'step' | 'bang';
 export interface Shot {
   id: string;
   ms: number;
@@ -77,7 +77,7 @@ export const SHOTS: readonly Shot[] = [
   { id: 'C01', ms: 9000, scene: 'shelter', fadeIn: true, indoor: true, rain: 0.3,
     captions: [line('你本来只是开车进县装一趟货。'), line('你躲在城中村一栋烂尾楼里，战战兢兢地透过编织袋的缝隙往下看。')] },
   { id: 'C02', ms: 6000, scene: 'gap', indoor: true, rain: 0.3, captions: [line('为了生存与财富，劫掠、杀戮与背叛在滨科夫不断上演。')],
-    cues: [{ at: 400, cue: 'crack' }, { at: 1800, cue: 'crowd' }] },
+    cues: [{ at: 400, cue: 'bang' }, { at: 1100, cue: 'bang' }, { at: 1800, cue: 'crowd' }] },
   { id: 'C03', ms: 4000, scene: 'bottles', indoor: true, captions: [line('十六天过去，你的补给耗尽了。')], cues: [{ at: 2200, cue: 'crush' }] },
   { id: 'C04', ms: 10000, scene: 'roof', wind: 0.8,
     captions: [line('没有月亮的后半夜，水涨上来，你爬上了楼顶的水箱。'), line('西南边旧渔港那头亮着一团黄光，一整夜都没灭。')] },

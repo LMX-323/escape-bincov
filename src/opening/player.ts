@@ -14,12 +14,12 @@ import { prepare, type Prepared } from './scenes';
 const SHOW_SHOT_TAG = true;
 const CUES: { at: number; cue: Cue }[] = TIMELINE.shots.flatMap(s => (s.cues ?? []).map(c => ({ at: s.start + c.at, cue: c.cue }))).sort((a, b) => a.at - b.at);
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
+/** A01 is a black title card: the art and the sound get ready behind it, and the clock waits on its last frame until they are. */
+const HOLD = TIMELINE.shots[0].end - 1;
 
-export async function play(mode: 'first' | 'replay'): Promise<void> {
-  const art = await loadOpeningArt();
-  let plates: Prepared | null = null;
-  try { plates = art ? prepare(art) : null; } catch (error) { console.error('Opening plates could not be prepared; showing the placeholder frames.', error); }
-  return new Promise(resolve => new Session(mode, plates, resolve).mount());
+/** Shows the player at once (still inside the click), then loads behind the title card. */
+export function play(mode: 'first' | 'replay'): Promise<void> {
+  return new Promise(resolve => new Session(mode, resolve).mount());
 }
 
 class Session {
@@ -29,10 +29,12 @@ class Session {
   private paused = false;
   private done = false;
   private nextCue = 0;
+  private ready = false;
+  private plates: Prepared | null = null;
   private shot: TimedShot | null = null;
   private caption: TimedCaption | null = null;
   private readonly calm = !app.menuMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
-  private readonly sound = new OpeningSound(audio);
+  private readonly sound = new OpeningSound(() => audio.bus(), () => audio.start());
   private readonly root = document.createElement('div');
   private readonly shadow = this.root.attachShadow({ mode: 'open' });
   private readonly frame = document.getElementById('frame');
@@ -40,7 +42,7 @@ class Session {
   private g!: CanvasRenderingContext2D;
   private els!: { stage: HTMLElement; caption: HTMLElement; pause: HTMLButtonElement; skip: HTMLButtonElement; tag: HTMLElement };
 
-  constructor(private readonly mode: 'first' | 'replay', private readonly plates: Prepared | null, private readonly resolve: () => void) {}
+  constructor(private readonly mode: 'first' | 'replay', private readonly resolve: () => void) {}
 
   mount(): void {
     this.root.id = 'opening';
@@ -66,12 +68,24 @@ class Session {
     addEventListener('resize', this.layout);
     visualViewport?.addEventListener('resize', this.layout);
     this.layout();
-    this.sound.start();
+    try { audio.start(); this.sound.start(); } catch (error) { console.warn('Opening sound unavailable; playing silently.', error); this.sound.stop(); }
     this.els.pause.focus();
-    if (new URLSearchParams(location.search).get('test') === '1') this.expose();
     this.last = performance.now();
     this.draw();
     this.raf = requestAnimationFrame(this.tick);
+    void this.load();
+  }
+
+  /** Behind A01: bake the sound (the card's thunder first) while the plates decode, then index them. A failure keeps the placeholder frames. */
+  private async load(): Promise<void> {
+    const sound = this.sound.bake(() => this.done).catch(error => console.warn('Opening sound could not be prepared; playing silently.', error));
+    const art = await loadOpeningArt();
+    if (this.done) return;
+    try { this.plates = art ? prepare(art) : null; } catch (error) { console.error('Opening plates could not be prepared; showing the placeholder frames.', error); }
+    await sound;
+    if (this.done) return;
+    this.ready = true;
+    if (new URLSearchParams(location.search).get('test') === '1') this.expose();
   }
 
   private readonly tick = (now: number) => {
@@ -79,7 +93,7 @@ class Session {
     const dt = Math.min(100, Math.max(0, now - this.last));
     this.last = now;
     if (!this.paused) {
-      this.t += dt;
+      this.t += this.ready ? dt : Math.max(0, Math.min(dt, HOLD - this.t));
       while (this.nextCue < CUES.length && CUES[this.nextCue].at <= this.t) this.sound.play(CUES[this.nextCue++].cue);
     }
     if (this.t >= TIMELINE.total) { this.finish(); return; }
@@ -91,7 +105,7 @@ class Session {
     const shot = shotAt(this.t);
     if (shot !== this.shot) {
       this.shot = shot;
-      this.sound.setBeds(shot.rain ?? 0, shot.wind ?? 0);
+      this.sound.setShot(shot);
       audio.setRoomTone(shot.indoor ? 1 : 0);
     }
     paint(this.g, shot, this.t - shot.start, { calm: this.calm, plates: this.plates });
@@ -160,7 +174,7 @@ class Session {
     this.resolve();
   }
 
-  /** Test hook (?test=1 only): read the state, jump to a time without playing the skipped cues, skip. */
+  /** Test hook (?test=1 only, once loaded): read the state, jump to a time without playing the skipped cues, skip. */
   private expose(): void {
     (globalThis as { __bincovOpening?: unknown }).__bincovOpening = {
       mode: this.mode,
