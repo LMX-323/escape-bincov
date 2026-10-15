@@ -19,7 +19,8 @@ import glow1 from '../../assets/opening/v1/op-bg13-glow-f1-v1.png';
 import youSit from '../../assets/opening/v1/op-ch04-sit-f0-v1.png';
 
 const SOURCES = { harborSky, harborMid, harborNear, shipDark, shipFlash, hatchDark, hatchLit, crewNear0, crewNear1, roofSky, roofMid, roofNear, glow0, glow1, youSit };
-export type OpeningArt = Record<keyof typeof SOURCES, HTMLImageElement>;
+/** The r2 delivery adds a breakwater layer drawn over the ship; v1 has none. */
+export type OpeningArt = Record<keyof typeof SOURCES, HTMLImageElement> & { harborBreakwater?: HTMLImageElement };
 
 /** Decode every plate; null when any fails, and the animatic keeps its placeholder painters. */
 export async function loadOpeningArt(): Promise<OpeningArt | null> {

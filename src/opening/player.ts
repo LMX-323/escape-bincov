@@ -7,7 +7,8 @@ import css from './opening.css';
 import { TIMELINE, captionAt, shotAt, type Cue, type TimedCaption, type TimedShot } from './timeline';
 import { H, W, paint } from './render';
 import { OpeningSound } from './sound';
-import { loadOpeningArt, type OpeningArt } from './assets';
+import { loadOpeningArt } from './assets';
+import { prepare, type Prepared } from './scenes';
 
 /** P0 review aid: the shot id and running time in the corner. P2 removes it. */
 const SHOW_SHOT_TAG = true;
@@ -16,7 +17,9 @@ const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms 
 
 export async function play(mode: 'first' | 'replay'): Promise<void> {
   const art = await loadOpeningArt();
-  return new Promise(resolve => new Session(mode, art, resolve).mount());
+  let plates: Prepared | null = null;
+  try { plates = art ? prepare(art) : null; } catch (error) { console.error('Opening plates could not be prepared; showing the placeholder frames.', error); }
+  return new Promise(resolve => new Session(mode, plates, resolve).mount());
 }
 
 class Session {
@@ -37,7 +40,7 @@ class Session {
   private g!: CanvasRenderingContext2D;
   private els!: { stage: HTMLElement; caption: HTMLElement; pause: HTMLButtonElement; skip: HTMLButtonElement; tag: HTMLElement };
 
-  constructor(private readonly mode: 'first' | 'replay', private readonly art: OpeningArt | null, private readonly resolve: () => void) {}
+  constructor(private readonly mode: 'first' | 'replay', private readonly plates: Prepared | null, private readonly resolve: () => void) {}
 
   mount(): void {
     this.root.id = 'opening';
@@ -91,7 +94,7 @@ class Session {
       this.sound.setBeds(shot.rain ?? 0, shot.wind ?? 0);
       audio.setRoomTone(shot.indoor ? 1 : 0);
     }
-    paint(this.g, shot, this.t - shot.start, { calm: this.calm, art: this.art });
+    paint(this.g, shot, this.t - shot.start, { calm: this.calm, plates: this.plates });
     const caption = captionAt(this.t);
     if (caption !== this.caption) {
       this.caption = caption;

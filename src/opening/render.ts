@@ -4,11 +4,11 @@
  * contract stays the same: paint(ctx, shot, t, options) fills the whole canvas for shot-local time t.
  */
 import type { TimedShot } from './timeline';
-import type { OpeningArt } from './assets';
+import { paintPlates, type Prepared } from './scenes';
 
 export const W = 640, H = 360;
 type G = CanvasRenderingContext2D;
-export interface PaintOptions { calm: boolean; art?: OpeningArt | null }
+export interface PaintOptions { calm: boolean; plates?: Prepared | null }
 
 const K = {
   black: '#000000', sky0: '#05090b', sky1: '#0a1317', sky2: '#111e24', sea0: '#08121a', sea1: '#0d1b22', foam: '#28404a',
@@ -410,65 +410,15 @@ function lane(g: G, t: number, ms: number, o: PaintOptions) {
   rect(g, K.water, 300, y - h * 0.18, 40, h * 0.18 + 2);
 }
 
-// --- Sol's look-dev plates (A08, A11-A15, C04) ----------------------------------------------------------------------
-
-/** A08 on Sol's plates: the ship drifts from [720,88] to [220,88] while the camera goes from x=320 to 0. */
-function harborArt(g: G, a: OpeningArt, t: number, ms: number, o: PaintOptions, flash: number) {
-  const p = t / ms, shipX = 720 - ease(p / 0.85) * 500, cam = o.calm ? 0 : R(0.64 * (shipX - 220));
-  const settle = R(ease((p - 0.85) / 0.15) * 2);
-  g.drawImage(a.harborSky, -cam, 0);
-  g.drawImage(a.harborMid, -cam, 0);
-  g.drawImage(flash > 0.5 ? a.shipFlash : a.shipDark, R(shipX) - cam, 88 + settle);
-  g.drawImage(a.harborNear, -cam, 0);
-  rain(g, t, 0.8, o.calm);
-}
-/** Draw an image darkened, for whatever the torch has not reached. */
-function shaded(g: G, image: HTMLImageElement, x: number, y: number, w = image.width, h = image.height, level = 0.3) {
-  g.filter = `brightness(${level})`; g.drawImage(image, R(x), R(y), R(w), R(h)); g.filter = 'none';
-}
-/**
- * A11-A15 on Sol's hatch plates. Only A14 has its own figure frames; the farther figure in A11-A13 scales the near
- * frame down as a stand-in until Sol's far version arrives (P0 only: final art never scales).
- */
-function hatchArt(g: G, a: OpeningArt, t: number, ms: number, beat: string, o: PaintOptions) {
-  const p = t / ms, jitter = o.calm ? 0 : R(Math.sin(t / 110) * 3), crew = Math.floor(t / 450) % 2 ? a.crewNear1 : a.crewNear0;
-  g.drawImage(a.hatchDark, 0, 0);
-  const near = beat === 'near', far = beat === 'shout' || beat === 'bow';
-  const scale = near ? 1 : far ? 0.3 : 0.3 + ease((p - 0.25) / 0.75) * 0.4;
-  const w = crew.width * scale, h = crew.height * scale, x = 352 - w / 2, y = near ? 4 : 250 - h + (1 - scale) * 30;
-  if (near) shaded(g, crew, x, y, w, h);
-  const r = near ? 150 + ease(p / 0.4) * 80 : beat === 'bow' ? 60 + ease(p / 0.6) * 120 : 170;
-  const cx = (beat === 'bow' ? 120 + ease(p / 0.6) * 220 : 340) + jitter;
-  torchlit(g, cx, 170, r * 1.15, r, () => {
-    g.drawImage(a.hatchLit, 0, 0);
-    if (beat === 'bow') text(g, '#d6d0bf', '远汐', 70, 120, 32);
-    if (beat !== 'bow' || p > 0.6) { if (far) shaded(g, crew, x, y, w, h, 0.45); else g.drawImage(crew, R(x), R(y), R(w), R(h)); }
-  });
-  if (beat === 'shout') person(g, 140, 400, 150, K.zhang, K.zhangL, 'arms-up', 0, 1);
-  if (beat === 'shout' || beat === 'turn') { if (beat === 'turn') person(g, 140, 400, 150, K.zhang, K.zhangL, 'back', 0, 1); person(g, 520, 410, 160, K.wang, K.wangL, 'back', 0, -1); }
-  rain(g, t, near ? 0.3 : 0.4, o.calm);
-}
-/** C04 on Sol's plates: pan from the tank to the light; reduced motion cuts halfway instead of panning. */
-function roofArt(g: G, a: OpeningArt, t: number, ms: number, o: PaintOptions) {
-  const p = t / ms, cam = o.calm ? (p < 0.5 ? 0 : 320) : R(ease((p - 0.25) / 0.75) * 320);
-  g.drawImage(a.roofSky, -cam, 0);
-  g.drawImage(!o.calm && Math.floor(t / 420) % 2 ? a.glow1 : a.glow0, 869 - cam, 202);
-  g.drawImage(a.roofMid, -cam, 0);
-  g.drawImage(a.roofNear, -cam, 0);
-  g.drawImage(a.youSit, 215 - cam, 108);
-}
-
 /** Paint one frame of a shot at shot-local time t. */
 export function paint(g: G, shot: TimedShot, t: number, o: PaintOptions) {
   g.imageSmoothingEnabled = false;
   g.globalAlpha = 1;
+  const flash = flashLevel(shot, t, o.calm), ms = shot.ms;
+  if (o.plates && paintPlates(g, o.plates, shot, t, o.calm, flash)) return;
   // Painters may leave areas untouched; never let the previous shot show through.
   rect(g, K.black, 0, 0, W, H);
-  const flash = flashLevel(shot, t, o.calm), ms = shot.ms, art = o.art;
-  if (art && shot.scene === 'harbor') harborArt(g, art, t, ms, o, flash);
-  else if (art && (shot.scene === 'bow' || shot.scene === 'hatch' || shot.scene === 'hatch-near')) hatchArt(g, art, t, ms, shot.scene === 'bow' ? 'bow' : shot.scene === 'hatch-near' ? 'near' : shot.beat ?? 'shout', o);
-  else if (art && shot.scene === 'roof') roofArt(g, art, t, ms, o);
-  else switch (shot.scene) {
+  switch (shot.scene) {
     case 'black': rect(g, K.black, 0, 0, W, H); break;
     case 'phone-news': phone(g, t, 'news', o); break;
     case 'phone-videos': phone(g, t, 'videos', o); break;
