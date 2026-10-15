@@ -179,6 +179,9 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-hitpop.kill.on b { animation: cs-hitkill .42s steps(6) forwards; }
 @keyframes cs-hitpop { 0% { opacity: 1; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: scale(1.25); } }
 @keyframes cs-hitkill { 0% { opacity: 1; transform: scale(.7); } 30% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0; transform: scale(1.6); } }
+/* Stair destinations: HUD text in the pixel face, placed by the view under the stair marker. */
+.cs-stairs { position: absolute; inset: 0; pointer-events: none; }
+.cs-stair { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 16px; padding: 2px 6px; color: #e6dcb8; background: #191815a6; border: 1px solid #c9a65e55; }
 .cs-exitptr { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .cs-exitptr i { position: absolute; left: -10px; top: -6px; width: 20px; height: 12px; transform: rotate(var(--dir, 90deg)); filter: drop-shadow(0 0 1px #000) drop-shadow(0 1px 0 #000); }
 .cs-exitptr i::before { content: ""; position: absolute; left: 0; top: 5px; width: 11px; height: 2px; background: #d6ec9a; }
@@ -192,9 +195,9 @@ html[data-coast-sample] #toast { z-index: 120; }
 .coast-sample[data-outro="extract"] .cs-curtain b { color: #e2f0b4; }
 .coast-sample.outro .cs-status, .coast-sample.outro .cs-arms, .coast-sample.outro .cs-clock, .coast-sample.outro .cs-keys, .coast-sample.outro .cs-info,
 .coast-sample.outro .cs-prompt, .coast-sample.outro .cs-choices, .coast-sample.outro .cs-touch, .coast-sample.outro .cs-exitptr, .coast-sample.outro .cs-cross,
-.coast-sample.outro .cs-hits, .coast-sample.outro .cs-radio, .coast-sample.outro .cs-toast, .coast-sample.outro .cs-hitpop { visibility: hidden; }
+.coast-sample.outro .cs-hits, .coast-sample.outro .cs-radio, .coast-sample.outro .cs-toast, .coast-sample.outro .cs-hitpop, .coast-sample.outro .cs-stairs { visibility: hidden; }
 /* The pixel face is drawn for 16 px and its integer multiples; short screens use the small system face instead. */
-@media (max-height: 480px) { .cs-exitptr span { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 14px; } }
+@media (max-height: 480px) { .cs-exitptr span, .cs-stair { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 14px; } }
 @media (prefers-reduced-motion: reduce) { .cs-hitpop.on b, .cs-hitpop.kill.on b { animation-duration: .01s; } }
 /* Off-screen shooters: an orange chevron on the screen edge pointing out toward them, fading in under a second. */
 .cs-threats i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; opacity: 0; pointer-events: none;

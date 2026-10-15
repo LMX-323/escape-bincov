@@ -9,6 +9,12 @@ export class Atlas {
   private frames = new Map<string, { page: Page; rect: Rectangle; texture: Texture | null }>();
   private large = new Map<string, Texture>();
   stats = { frames: 0, pages: 0, largeTextures: 0, bytes: 0 };
+  /**
+   * Upload changed pages once in `flush` (called right before rendering) instead of on every `get`: in Pixi 8 each
+   * CanvasSource update re-uploads the whole 2048 px page at once, so a rebuild that adds many frames would upload it
+   * once per frame added.
+   */
+  defer = false;
 
   has(key: string) { return this.frames.has(key) || this.large.has(key); }
 
@@ -45,12 +51,13 @@ export class Atlas {
   get(key: string): Texture {
     const big = this.large.get(key); if (big) return big;
     const f = this.frames.get(key); if (!f) throw new Error(`Missing asset: ${key}`);
-    if (!f.page.source) f.page.source = new CanvasSource({ resource: f.page.canvas, scaleMode: 'nearest' });
-    else if (f.page.dirty) f.page.source.update();
-    f.page.dirty = false;
+    if (!f.page.source) { f.page.source = new CanvasSource({ resource: f.page.canvas, scaleMode: 'nearest' }); f.page.dirty = false; }
+    else if (f.page.dirty && !this.defer) { f.page.source.update(); f.page.dirty = false; }
     if (!f.texture) f.texture = new Texture({ source: f.page.source, frame: f.rect });
     return f.texture;
   }
+
+  flush() { for (const p of this.pages) if (p.dirty && p.source) { p.source.update(); p.dirty = false; } }
 
   drop(key: string) {
     const t = this.large.get(key); if (!t) return;

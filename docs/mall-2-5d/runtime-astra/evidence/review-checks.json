@@ -1,0 +1,114 @@
+{
+  "checkedAt": "2026-10-13T15:08:18.048Z",
+  "base": "846954f5195a2036aa73b23432e1173787ae0861",
+  "branch": "agent/mall-runtime",
+  "localLinks": 29,
+  "restrictedUnchanged": [
+    "src/coast-view",
+    "src/station-view",
+    "assets",
+    "src/mall-layout-v2.ts",
+    "tests/raid-runtime.test.ts"
+  ],
+  "releaseArtifactsVerified": {
+    "dist/index.html": {
+      "bytes": 3630276,
+      "sha256": "d14cc1360a433657240888de95de48f22970f683aeca167cc7f095855c7ebab6"
+    },
+    "start the game.html": {
+      "bytes": 3630276,
+      "sha256": "d14cc1360a433657240888de95de48f22970f683aeca167cc7f095855c7ebab6"
+    },
+    "release/Escape-Bincov-portable.zip": {
+      "bytes": 1293676,
+      "sha256": "c27b3107853634937ebcfaecacc5f050bdff1d8e93290e5b4aaad08160503105"
+    },
+    "release/Escape-Bincov-web.zip": {
+      "bytes": 1289901,
+      "sha256": "70e74f57a47151389bcb2a0daff0bd499d8a53d5b8946344f440a199f51fb790"
+    }
+  },
+  "cases": {
+    "PASS": 19,
+    "PARTIAL": 9,
+    "未运行": 6
+  },
+  "evidence": [
+    {
+      "file": "building-browser-report.json",
+      "sha256": "310544fd4b2c4bc95c7ed983a2ee3fc9f2dbfd7d6de43a805228ef53fa0a65f9"
+    },
+    {
+      "file": "compat-02-report.json",
+      "sha256": "1eab1cf422feb3741e44e1f94885679b07a0075bd7529a0f14434555819aeac2"
+    },
+    {
+      "file": "compat-first-report.json",
+      "sha256": "349b6247cf78357a2f955c05f110e91f8ebe2344fc7209badeb6673d0fed44e3"
+    },
+    {
+      "file": "compat-report.json",
+      "sha256": "4b35b8b5b1f6f4fa19e41fc1d5735d7991b815270adc36a874331b5ce2630edb"
+    },
+    {
+      "file": "expansion-browser-report.json",
+      "sha256": "5d1ab33cf49cd7dd1828b13f2669058898fddb4a7afb7a6691581e90f2af0670"
+    },
+    {
+      "file": "first-unit.txt",
+      "sha256": "b0a5b09b9ab82172f23638de31b63f28c7352acad5958ace388e76dac3dd9487"
+    },
+    {
+      "file": "mall-landing-report.json",
+      "sha256": "eb62cf6d601059e4276c021c312c766e0dc7d1909ef773249f818ac4e267a34f"
+    },
+    {
+      "file": "mall-passages-report.json",
+      "sha256": "74cd6dd56b1eb802b664bace6b8bfe9271db25ca931cd47992df692a3dee8e78"
+    },
+    {
+      "file": "old-main-rejects-v2.png",
+      "sha256": "f48b8190ed8a50e4e208a77862088143f2dcc2a2829607d04c6d45a44dc7bc8a"
+    },
+    {
+      "file": "package.txt",
+      "sha256": "e6977a3858b35bc865298717270245ab5d40177e6319def32d8cae32d09e15b6"
+    },
+    {
+      "file": "portable-report.json",
+      "sha256": "7f65ed18bc4c438f5961c997f2663d6516e46a5fec660b1627e8bb3148c2cc69"
+    },
+    {
+      "file": "regression-results.json",
+      "sha256": "51af3a912432aae83470b2a23b8b42b81dadb251ac1dccb802a17eca1ac1a6bc"
+    },
+    {
+      "file": "runtime-differential.json",
+      "sha256": "6ce77d31e077b3a8e1476660f5cf84342b0d547160fedc33118333197a264978"
+    },
+    {
+      "file": "runtime-module.json",
+      "sha256": "3583425546e332c04b5a2e22802fce4808d88ef774175a846abfa7d244cd6882"
+    },
+    {
+      "file": "save-browser-report.json",
+      "sha256": "d999c8dbf980385c53a6bf882865f8ae81a598e95c7dfb279c83726528f77d94"
+    },
+    {
+      "file": "unit-02.txt",
+      "sha256": "57088834291a27d22f70525e3b7038e395955c678dd150ebabadb18e1d981fcb"
+    },
+    {
+      "file": "unit-03.txt",
+      "sha256": "890d283dd2dda1b42c80bbcffe0134d45432a6c46aa0ebd079287d8289b978fd"
+    },
+    {
+      "file": "unit-05.txt",
+      "sha256": "235d5349df087fbcf6fd93a6592787346ef4af7c97ce848a25941e909b0c70c7"
+    },
+    {
+      "file": "unit-final.txt",
+      "sha256": "b6034aa17a638ed0a6685ef50946bf164a7d0ad6a8883a33bb033297d0cc9f01"
+    }
+  ]
+}

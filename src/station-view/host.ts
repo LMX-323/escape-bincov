@@ -38,6 +38,8 @@ export interface StationHooks {
   departed(runId: string): void;
   /** Seed the Runtime should use for an empty seed field (village corner for the sample), or '' for the clock. */
   seedFor(world: RunWorld): string;
+  /** Layout revision for a new mall raid (3 for the mall sample); undefined keeps the Runtime default. */
+  mallLayout?(world: RunWorld): 1 | 2 | 3 | undefined;
   tabs(): void;
   title(): void;
   exportSave(): void;
@@ -259,7 +261,8 @@ export class StationHost {
   // ---------------- departure and return ----------------
   private deploy(world: RunWorld, seed: string) {
     if (this.seq) return;
-    const r = this.rt.deploy({ world, seed: seed.trim() || this.hooks.seedFor(world) });
+    const mallLayout = this.hooks.mallLayout?.(world);
+    const r = this.rt.deploy({ world, seed: seed.trim() || this.hooks.seedFor(world), ...mallLayout ? { mallLayout } : {} });
     if (!r.ok || !r.runId) { this.ui.toast(r.ok ? '出击没有准备好。' : r.message, 'error'); this.audio.cue('error'); if (!r.ok && (r.reason === 'storage' || r.reason === 'conflict')) this.ui.showStorage(); return; }
     // The run is saved now: the gate animation plays, then the raid starts from that checkpoint.
     this.ui.discard(); this.ui.setQuickVisible(false);

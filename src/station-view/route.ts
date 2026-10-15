@@ -9,7 +9,7 @@
  */
 import { app, audio, hideoutRuntime } from '../app';
 import { changeState, hideoutExternal, render, startPreparedHideoutRaid, toast } from '../ui';
-import { sampleEnabled, villageSeed } from '../coast-view/sample';
+import { sampleMallLayout, sampleMode, villageSeed } from '../coast-view/sample';
 import { gpuTextures, managedSlots, parkApp, takeApp } from '../coast-view/host';
 import { lifecycle } from '../coast-view/scope';
 import type { HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
@@ -74,7 +74,8 @@ async function openStation(arrival: Arrival): Promise<boolean> {
       touch: document.documentElement.classList.contains('mobile'), volume: app.save.settings.volume,
       arrival, world: app.runWorld, seed: app.seed, hooks: {
         departed: runId => { closeStation(); void startPreparedHideoutRaid(runId).then(ok => { if (!ok) { toast('行动已保存，但没能启动。请在标题页继续行动。'); changeState('menu'); } }); },
-        seedFor: (world: RunWorld) => sampleEnabled() && world === 'buildings' ? String(villageSeed()) : '',
+        seedFor: (world: RunWorld) => sampleMode() === 'village' && world === 'buildings' ? String(villageSeed()) : '',
+        mallLayout: (world: RunWorld) => sampleMallLayout(world),
         tabs: () => leave(() => changeState('hideout', false)),
         title: () => { const r = hideoutRuntime.backToMenu(); if (!r.ok) { failed(r.message); return; } closeStation(); changeState('menu'); },
         exportSave: () => download(hideoutRuntime.exportBackup()),

@@ -21,7 +21,7 @@ import { criticalChance, useRpgItem } from './rpg';
 import type { ExpansionDraft } from './session';
 import { PIXEL_FONT } from './font';
 import { inventoryArtSize } from './art/inventory';
-import { sampleEnabled, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
+import { sampleEnabled, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
 import { enterStation, returnToStation, stationDefault } from './station-view/route';
 type InventoryDrag = { uid: string; source: string; token: number; runId: string | null; containerId: string | null; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
@@ -248,8 +248,8 @@ export async function startPreparedHideoutRaid(runId: string): Promise<boolean> 
     changeState('run'); return true;
 }
 function deploy() {
-    const cfg = app.runWorld === 'mall' ? mallRunConfig(app.seed || Date.now()) : generateRun(app.seed || (sampleEnabled() && app.runWorld === 'buildings' ? villageSeed() : Date.now()));
-    if (!saved(saveSession.beginRun(cfg.seed, app.runWorld === 'mall' ? 'mall' : app.runWorld === 'buildings'))) return;
+    const cfg = app.runWorld === 'mall' ? mallRunConfig(app.seed || Date.now()) : generateRun(app.seed || (sampleMode() === 'village' && app.runWorld === 'buildings' ? villageSeed() : Date.now()));
+    if (!saved(saveSession.beginRun(cfg.seed, app.runWorld === 'mall' ? 'mall' : app.runWorld === 'buildings', { mallLayout: sampleMallLayout(app.runWorld) }))) return;
     if (sampleEnabled() && sampleSupports()) { app.shop = null; void startCoastSample(); return; }
     app.shop = null; app.game!.registry.set('runConfig', cfg); changeState('run');
 }
@@ -755,7 +755,7 @@ function bind() {
                 if (app.checkpoint || app.expansion?.raid) {
                     if (saveSession.resumeRun()) {
                         if (sampleEnabled() && sampleSupports()) { void startCoastSample(true); break; }
-                        app.game!.registry.set('runConfig', app.expansion?.raid?.worldVersion === 'mall-v1' ? mallRunConfig(app.expansion.raid.seed) : generateRun(app.expansion?.raid?.seed ?? app.checkpoint!.seed));
+                        app.game!.registry.set('runConfig', app.expansion?.raid?.worldVersion.startsWith('mall') ? mallRunConfig(app.expansion.raid.seed) : generateRun(app.expansion?.raid?.seed ?? app.checkpoint!.seed));
                         changeState('run'); app.overlay = 'pause'; render();
                     }
                     break;

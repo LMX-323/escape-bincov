@@ -30,6 +30,15 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Station asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Station asset size mismatch: ${a.file}`);
   }
+  // Mall art (Sol, issue #47): same rule as the station yard.
+  const mall = JSON.parse(await readFile('assets/mall/manifest.json','utf8'));
+  const mallImports = [...(await readFile('src/coast-view/mall-assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/mall\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  if (JSON.stringify(mallImports) !== JSON.stringify(mall.assets.map(a => a.file).sort())) throw new Error('Mall asset imports do not match assets/mall/manifest.json. Run node scripts/mall-assets.mjs.');
+  for (const a of mall.assets) {
+    const bytes = await readFile(a.file);
+    if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Mall asset hash mismatch: ${a.file}`);
+    if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Mall asset size mismatch: ${a.file}`);
+  }
   const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl','.css':'text'},define:{'process.env.NODE_ENV':'"production"'}});
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
