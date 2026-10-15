@@ -2,13 +2,13 @@ import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { app, saveSession } from '../src/app';
-import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
+import { RecoveryStore, SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { initialCheckpoint } from '../src/checkpoint';
 import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
 import { finish, retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
-import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from '../src/save-backup';
+import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
 
 let stored: string | null;
 let failWrites: boolean;
@@ -139,4 +139,25 @@ test('backup reader rejects unrelated, unsupported, truncated, oversized, overla
   const valid = D.newSave();
   assert.deepEqual(decodeBackup(encodeBackup(valid)), valid);
   assert.deepEqual(decodeBackup(JSON.stringify(valid)), valid, 'Version-one raw saves may be migrated from older HTML files');
+});
+
+// Clock seeds are Date.now() >>> 0: above 1e9 for about 38 of every 49.7 days (2026-10-14 18:09 UTC to
+// 2026-11-21 17:25 UTC, then again). The settled summary must keep the full 32-bit seed like the active run does.
+for (const seed of [1_039_041_854, 0xffffffff]) test(`a run seeded ${seed} settles, reloads and exports`, () => {
+  saveSession.beginRun(seed);
+  assert.equal(app.save.activeRun?.seed, seed);
+  saveSession.persist(app.save, initialCheckpoint(generateRun(seed), app.loadout!));
+  app.state = 'run';
+  app.raid = { syncMagazine() {}, releaseInput() {}, checkpoint() {}, lock() {}, kills: 0 } as any;
+  finish('extract');
+  assert.equal(app.pendingSettlement, null, 'the settlement was written');
+  assert.equal(app.state, 'result');
+  const record = JSON.parse(stored!);
+  assert.equal(record.profile.lastResult.seed, seed);
+  assert.equal(record.profile.activeRun, null);
+  assert.equal(decodeSession(stored!).profile.lastResult?.seed, seed, 'the stored record passes the strict reader');
+  assert.equal(read().lastResult?.seed, seed);
+  assert.equal(decodeBackup(encodeBackup(app.save)).lastResult?.seed, seed);
+  assert.doesNotThrow(() => encodeRecoveryBackup(saveSession.backupRecord()!));
+  assert.equal(D.migrateSave({ ...D.newSave(), lastResult: { outcome: 'extract', kills: 0, keptValue: 0, lostValue: 0, seed, recovered: false, message: '' } }).lastResult?.seed, seed);
 });
