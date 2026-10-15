@@ -19,7 +19,7 @@ export interface Prepared {
   image: ImageData;
   lut: { flash: Uint8Array; flashSoft: Uint8Array; glint: Uint8Array; fade: Uint8Array };
   ink: { rainFar: number; rainNear: number; rainLit: number; splash: number; mote: number; boltCore: number; boltGlow: number; mistSea: number; mistCity: number; drip: number };
-  harbor: { sky: Indexed; mid: Indexed; breakwater: Indexed | null; near: Indexed; shipDark: Indexed; shipFlash: Indexed; glints: Int32Array; tops: Int16Array };
+  harbor: { sky: Indexed; mid: Indexed; breakwater: Indexed; near: Indexed; shipDark: Indexed; shipFlash: Indexed; glints: Int32Array; tops: Int16Array };
   hatch: { plate: Indexed[]; crew: Indexed[][]; far: Indexed[][] };
   roof: { sky: Indexed; mid: Indexed; near: Indexed; glow: Indexed[]; you: Indexed; glints: Int32Array };
 }
@@ -62,7 +62,7 @@ export function prepare(art: OpeningArt): Prepared {
   const ix = (image: HTMLImageElement) => toIndexed(image, pal);
   const harborSky = ix(art.harborSky), harborMid = ix(art.harborMid), harborNear = ix(art.harborNear);
   const shipDark = ix(art.shipDark), shipFlash = ix(art.shipFlash);
-  const breakwater = art.harborBreakwater ? ix(art.harborBreakwater) : null;
+  const breakwater = ix(art.harborBreakwater);
   const hatchDark = ix(art.hatchDark), hatchLit = ix(art.hatchLit);
   const crew = [ix(art.crewNear0), ix(art.crewNear1)];
   const roofSky = ix(art.roofSky), roofMid = ix(art.roofMid), roofNear = ix(art.roofNear);
@@ -92,7 +92,7 @@ export function prepare(art: OpeningArt): Prepared {
 
 interface Look { calm: boolean; flash: number }
 
-/** A08: the unlit freighter drifts in from the right; the camera follows from x=320 to 0 (Sol's registration). */
+/** A08: the unlit freighter drifts in from the right behind the breakwater; ship [720,108] to [220,108], camera x=320 to 0 (Sol r2). */
 function harbor(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): void {
   const h = a.harbor, p = t / shot.ms;
   const drift = ease(p / 0.85), shipX = 720 - drift * 500, cam = o.calm ? 0 : Math.round(0.64 * (shipX - 220));
@@ -101,8 +101,8 @@ function harbor(f: Frame, a: Prepared, shot: TimedShot, t: number, o: Look): voi
   f.copy(h.sky, -Math.round(cam * 0.6), 0);
   f.blit(h.mid, -cam, 0);
   shimmer(f, t, h.glints, -cam, 0, a.lut.glint, 0.07, o.calm);
-  f.blit(o.flash > 0 ? h.shipFlash : h.shipDark, Math.round(shipX) - cam, 88 + bob + settle);
-  if (h.breakwater) f.blit(h.breakwater, -cam, 0);
+  f.blit(o.flash > 0 ? h.shipFlash : h.shipDark, Math.round(shipX) - cam, 108 + bob + settle);
+  f.blit(h.breakwater, -cam, 0);
   f.blit(h.near, -cam, 0);
   rain(f, t, { far: 190, near: 70, farColour: a.ink.rainFar, nearColour: a.ink.rainNear, wind: 16, seed: 3 }, o.calm);
   // Splashes on the dock: the near layer's top edge under the current camera.
