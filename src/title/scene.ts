@@ -265,6 +265,9 @@ export function mountTitle(parent: HTMLElement, motion: boolean) {
         waterSurface?.destroy();
         // Scene objects go; the layer textures stay cached for the next visit to the menu.
         for (const child of stage.removeChildren()) child.destroy({ children: true });
+        // One empty frame hands the batcher's last batches back to Pixi's pool, so a raid or yard renderer that empties
+        // the global pools before it ever draws (a failed mount) cannot leave this renderer holding destroyed batches.
+        try { app.render(); } catch { /* a lost context has nothing to hand back */ }
         app.canvas.remove();
         gate.active = false;
     }
