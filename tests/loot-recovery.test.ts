@@ -6,6 +6,7 @@ import { generateRun, generateRunBase } from '../src/world';
 import { createSessionState, SaveSession } from '../src/session';
 import { RecoveryStore, SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { placementError } from '../src/loot';
+import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime';
 
 function fixture() {
     const data = new Map<string, string>();
@@ -27,6 +28,29 @@ test('legacy coast-v1 checkpoints keep their original loose loot without adding 
     assert.deepEqual(restored.raid!.containers, []);
     assert.deepEqual(restored.raid!.loot, old.loot);
     assert.equal(restored.raid!.loot.length, 60);
+});
+
+test('a reloaded coast-v1 raid resumes on the Runtime (the only raid executor) with its loose loot and settles once', () => {
+    const f = fixture(), old: any = structuredClone(f.state.checkpoint!);
+    old.worldVersion = 'coast-v1'; delete old.containers;
+    old.loot = generateRunBase(42).loot.map((item, i) => ({ ...item, uid: `loot-${i}`, relief: false }));
+    const record = JSON.parse(f.data.get(SESSION_KEY)!); record.raid = old;
+    f.data.set(SESSION_KEY, JSON.stringify(record));
+    // A fresh page: the session reads the old record, the title resumes it, and the 2.5D host builds its Runtime on it.
+    const state = createSessionState(), session = new SaveSession(state, () => f.storage);
+    assert.ok(session.initialize()); assert.equal(state.checkpoint!.worldVersion, WORLD_VERSION);
+    // resumeRun hands the carried kit over; the raid host enters the run state before it builds the Runtime.
+    assert.ok(session.resumeRun()); state.state = 'run';
+    const runtime = new CoastRaidRuntime(state, session);
+    let at = 0; for (let i = 0; i < 4; i++) runtime.advance(at += 16, emptyIntent());
+    const frame = runtime.current().frame;
+    assert.equal(frame.loot.length, 60, 'every loose item of the old world is on the ground');
+    assert.equal(frame.containers.filter(c => c.kind === 'crate').length, 0, 'no crates are added to an old world');
+    assert.equal(runtime.current().map.name, '沿海封锁区');
+    runtime.finish('abandon');
+    assert.equal(state.pendingSettlement, null); assert.equal(state.save.activeRun, null);
+    assert.equal(state.save.stats.runs, 1); assert.equal(runtime.settlement.committed, true);
+    runtime.dispose();
 });
 
 test('container world format rejects missing, duplicate, mismatched or corrupt inventories', () => {
