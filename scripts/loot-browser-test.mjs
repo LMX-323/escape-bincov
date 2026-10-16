@@ -36,6 +36,30 @@ const snapshotOf = page => page.evaluate(key => {
     elapsed: b?.stamp.simulationTime, hp: b?.frame.hud.hp, mag: b?.frame.hud.weapon.mag, x: b?.frame.player.x, y: b?.frame.player.y, kills: raid?.kills,
     groundLoot: map?.loot.length, storage: localStorage.getItem(key) };
 }, SAVE_KEY);
+/**
+ * On a slow runner (CI's software GL) the first frames after a mount, or after the camera jumps to a new spot, can be more
+ * than 2 s apart, and the Runtime then stall-pauses the raid ("画面暂时停顿…"), as it would for a player; keys and the
+ * action button then do nothing. Where a step needs the raid running, resume it through the pause panel (tap on a phone),
+ * as a player would, and wait until it has stayed running for a few frames.
+ */
+async function running(page, touch = false) {
+  for (let i = 0; i < 5; i++) {
+    const now = await page.evaluate(() => ({ panel: window.__bincovSample.host.panel, phase: window.__bincovSample.host.lastBatch.frame.phase }));
+    if (now.phase === 'running' && now.panel === null) {
+      await frames(page, 3);
+      if (await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.phase === 'running')) return;
+      continue;
+    }
+    assert.equal(now.panel, 'pause', `the raid waits on ${now.panel}`);
+    // Only the Runtime's own stall pause is resumed here; any other pause is a failure of the step.
+    assert.ok(await page.evaluate(() => { const h = window.__bincovSample.host, seen = h.__stallSeen ?? 0, stalls = h.eventLog.filter(e => e.type === 'notice' && /^画面暂时停顿/.test(e.detail?.text ?? '') && e.seq > seen); if (!stalls.length) return false; h.__stallSeen = Math.max(...stalls.map(e => e.seq)); return true; }), 'the raid paused without the Runtime\'s stall notice');
+    report.stallResumes = (report.stallResumes ?? 0) + 1; console.log('STALL: resumed a stall pause');
+    const resume = page.locator('.coast-sample [data-do="resume"]');
+    if (touch) await resume.tap(); else await resume.click();
+    await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 30000 });
+  }
+  throw new Error('the raid did not stay running');
+}
 /** Ghost-corner drag between two displayed grids of the raid panel. */
 async function dragOn(page, source, uid, target, x, y) {
   const from = await page.locator(`.coast-sample [data-source="${source}"][data-uid="${uid}"]`).boundingBox(); assert.ok(from, `${uid} is on screen`);
@@ -75,7 +99,15 @@ async function suite(viewport) {
     try {
       const detail = await work(); assert.deepEqual(record.errors, []); assert.deepEqual(record.externalRequests, []);
       result.status = 'passed'; if (detail !== undefined) result.detail = detail; console.log(`PASS ${label} · ${name}`);
-    } catch (error) { result.status = 'failed'; result.error = error.stack; throw error; }
+    } catch (error) {
+      result.status = 'failed'; result.error = error.stack;
+      // Where the page stood when the step failed (a slow runner's timeouts otherwise say little).
+      result.failureState = await page.evaluate(() => ({ state: window.__bincov.app.state, overlay: window.__bincov.app.overlay, storageError: window.__bincov.app.storageError,
+        panel: window.__bincovSample?.host?.panel ?? null, phase: window.__bincovSample?.host?.lastBatch?.frame.phase ?? null,
+        dialog: document.querySelector('.overlay h2, .coast-sample [data-panel] h2')?.textContent ?? null,
+        events: window.__bincovSample?.host?.eventLog?.slice(-8).map(e => e.type + (e.detail?.text ? ':' + e.detail.text : e.detail?.reason ? ':' + e.detail.action + ':' + e.detail.reason : '')) ?? [] })).catch(() => null);
+      console.log(JSON.stringify(result.failureState)); throw error;
+    }
     finally { result.durationMs = Math.round(performance.now() - start); await writeReport(); }
   }
   /** Enemies frozen and parked far down the quay road; the player whole again. */
@@ -87,9 +119,24 @@ async function suite(viewport) {
     });
     await frames(page, 2);
   }
+  /**
+   * Fixture: a rested body before a deployment. After a death the 2.5D body keeps 1 health (the base heals it over real
+   * minutes); on a slow runner the AI acts for a moment before quiet() can freeze it, so one blow would end the run before
+   * the step starts. One validated session transaction, as the base's own recovery would write it.
+   */
+  async function rest() {
+    const ok = await page.evaluate(() => {
+      const s = window.__bincov.saveSession;
+      if (!window.__bincov.app.expansion) return true;
+      const ticket = s.prepareExpansionMutation(d => { Object.assign(d.expansion.body, { hp: 100, stamina: 100, pollution: 0, bleeding: false }); });
+      return !!ticket && s.commitExpansionMutation(ticket) === 'committed';
+    });
+    assert.ok(ok, 'rested body fixture committed');
+  }
   async function deploy(seed = 42) {
+    await rest();
     await page.locator('#seed').fill(String(seed)); await action('deploy').click(); await waitState('run');
-    await raidReady(page); await quiet();
+    await raidReady(page); await quiet(); await running(page);
     const s = await snapshot(), runId = s.loadout.runId;
     const all = await page.evaluate(() => Object.values(window.__bincov.saveSession.captureExpansion().raid.maps).flatMap(m => m.containers));
     assert.ok(!record.runIds.includes(runId), 'Each new deployment has a distinct run identity'); record.runIds.push(runId);
@@ -121,7 +168,7 @@ async function suite(viewport) {
       if (!ticket || saves.commitExpansionMutation(ticket) !== 'committed') throw new Error(`Fixture does not satisfy strict checkpoint validation: ${a.storageError}`);
       return { id: box.id, runId: a.loadout.runId };
     }, { items, bag, safe, x, y, index });
-    await frames(page, 3); return crate;
+    await frames(page, 3); await running(page); return crate;
   }
   async function open(id) {
     await page.keyboard.press('e', { delay: 90 }); await waitPanel(page, 'loot');
@@ -146,7 +193,20 @@ async function suite(viewport) {
       window.__lootFaultListener = arm; document.addEventListener('pointerup', arm, true);
     }, { on, key: SAVE_KEY });
   }
-  async function aim(x, y) { const p = await screenOf(page, { x, y }); await page.mouse.move(p.x, p.y); await frames(page, 3); }
+  /**
+   * Point at a world spot once the camera has settled: it follows the player over about a second, which on a slow runner
+   * is only a few frames, and a pointer placed earlier would aim where the target was on screen.
+   */
+  async function aim(x, y) {
+    let p = await screenOf(page, { x, y });
+    for (let i = 0; i < 40; i++) {
+      await frames(page, 2);
+      const now = await screenOf(page, { x, y });
+      if (Math.hypot(now.x - p.x, now.y - p.y) < .5) break;
+      p = now;
+    }
+    await page.mouse.move(p.x, p.y); await frames(page, 3);
+  }
   /** Session candidate for state the driver does not set (a container's place or contents, ground loot). */
   const candidate = (fn, arg) => page.evaluate(({ fn, arg }) => {
     const saves = window.__bincov.saveSession, ticket = saves.prepareExpansionMutation(draft => new Function('draft', 'arg', fn)(draft, arg));
@@ -254,7 +314,13 @@ async function suite(viewport) {
       await drive(page, 'vitals', { hp: 70 }); await drive(page, 'magazine', 3); await drive(page, 'freezeAI', false); await frames(page, 2);
       const timer = () => page.evaluate(uid => { const r = window.__bincov.saveSession.captureExpansion().raid; return r.maps[r.currentMap].enemies.find(e => e.uid === uid).timer; }, scav);
       const before = await snapshot(), enemyBefore = await timer();
-      await page.keyboard.down('d'); await page.keyboard.press('r'); await page.keyboard.press('q'); await page.mouse.down(); await page.waitForTimeout(700);
+      await page.keyboard.down('d'); await page.keyboard.press('r'); await page.keyboard.press('q'); await page.mouse.down();
+      // At least 0.35 s of world time and 0.3 s off the enemy's patrol timer with D and the button held. The two were read
+      // in separate round trips, and on a slow runner a whole frame can fall between them, so wait on both.
+      await page.waitForFunction(([t, uid, timer]) => {
+        const r = window.__bincov.saveSession.captureExpansion().raid;
+        return window.__bincovSample.host.lastBatch.stamp.simulationTime > t && r.maps[r.currentMap].enemies.find(e => e.uid === uid).timer < timer - .3;
+      }, [before.elapsed + .35, scav, enemyBefore], { timeout: 15000, polling: 100 }).catch(() => {});
       const after = await snapshot(); assert.equal(after.x, before.x); assert.equal(after.y, before.y); assert.equal(after.mag, before.mag); assert.equal(after.hp, before.hp);
       assert.equal(after.panel, 'loot'); assert.deepEqual(after.loadout, before.loadout); assert.ok(after.elapsed > before.elapsed + .3);
       assert.ok(await timer() < enemyBefore - .3, 'enemy AI keeps running while the player loots');
@@ -337,7 +403,7 @@ async function suite(viewport) {
       await drive(page, 'placeEnemy', scav, { x: 820, y: 784 }, 1);
       const before = await page.evaluate(() => { const r = window.__bincov.saveSession.captureExpansion().raid, m = r.maps[r.currentMap];
         return { corpses: m.containers.filter(c => c.kind === 'corpse').length, ground: m.loot.length, kills: r.kills }; });
-      await page.waitForTimeout(1200); await aim(820, 784); await page.mouse.down(); await page.waitForTimeout(70); await page.mouse.up();
+      await page.waitForTimeout(1200); await running(page); await aim(820, 784); await page.mouse.down(); await page.waitForTimeout(70); await page.mouse.up();
       await page.waitForFunction(expected => window.__bincov.saveSession.captureExpansion().raid.kills === expected, before.kills + 1);
       const corpse = await page.evaluate(uid => {
         const { driver } = window.__bincovSample; driver.kill(uid);
@@ -375,7 +441,7 @@ async function suite(viewport) {
         const all = [...recovered.loadout.bag.items, ...recovered.loadout.safe.items, ...recovered.containers.flatMap(c => c.inventory.items)];
         for (const uid of ['reload-bag', 'reload-safe', 'reload-remaining', 'corpse-taken', 'corpse-remaining']) assert.equal(all.filter(i => i.uid === uid).length, 1, `${uid} exists exactly once after refresh ${i + 1}`);
         assert.equal(recovered.containers.filter(c => c.id === corpseId).length, 1);
-        await close(); await open(c.id);
+        await close(); await running(page); await open(c.id);
         assert.equal(await page.locator('.coast-sample [data-source="container"][data-uid]').count(), 1);
       }
       await screenshot('restored-crate');
@@ -423,7 +489,7 @@ async function suite(viewport) {
     await step('real three-second extraction keeps dragged container loot', async () => {
       await action('return').click(); await waitState('hideout'); await deploy(44); const c = await fixture({ items: [item('extract-loot', 'ledger')] }); await open(c.id); await drag('container', 'extract-loot', 'bag', 0, 0); await close();
       const exit = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.exits[0].at);
-      await drive(page, 'placePlayer', exit, 0, 'coast'); await page.waitForTimeout(600);
+      await drive(page, 'placePlayer', exit, 0, 'coast'); await page.waitForTimeout(600); await running(page);
       const started = performance.now(); await page.keyboard.down('e'); try { await waitState('result'); } finally { await page.keyboard.up('e'); }
       await page.waitForFunction(() => !document.querySelector('.coast-sample'), null, { timeout: 30000 });
       assert.ok(performance.now() - started >= 2500); const s = await snapshot(); assert.equal(s.context, null); assert.equal(s.save.lastResult.outcome, 'extract'); assert.ok(s.save.bag.items.some(i => i.uid === 'extract-loot'));
@@ -479,7 +545,7 @@ async function mobileSuite() {
       if (!ticket || saves.commitExpansionMutation(ticket) !== 'committed') throw new Error(a.storageError);
       return box.id;
     });
-    await frames(page, 3);
+    await frames(page, 3); await running(page, true);
     await check('trusted touch interaction opens the same live source and character grids', async () => {
       await page.locator('.coast-sample [data-act]').tap(); await waitPanel(page, 'loot');
       assert.equal((await state()).lootContext.containerId, id);
