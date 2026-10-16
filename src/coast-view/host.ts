@@ -849,6 +849,7 @@ export class CoastSampleHost {
   }
   /** Lower-rate HUD: status, carried weight, exit bearing and quests (the original refreshes these every 0.1 s). */
   private slowHud(b: PublishedView) {
+    this.placeRadio(); // the task card may have opened or the screen turned since the line came up
     const h = b.frame.hud, l = this.session.loadout, body = this.session.expansion?.body;
     const status = [h.bleeding ? '流血' : '', h.pollution > 10 ? `污染 ${Math.round(h.pollution)}%` : '',
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
@@ -934,7 +935,19 @@ export class CoastSampleHost {
     else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
-  private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); }
+  private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); this.placeRadio(); }
+  /**
+   * The radio line sits between the status card and the task card, centred on the screen when there is room: on a short
+   * phone an open task list reaches toward the middle. With no room between them it drops below both cards.
+   */
+  private placeRadio() {
+    const radio = this.q('[data-radio]'); if (radio.hidden) return;
+    const hud = this.q('.cs-hud').getBoundingClientRect(), status = this.q('.cs-status').getBoundingClientRect(), info = this.q('.cs-info').getBoundingClientRect();
+    const cx = (hud.left + hud.right) / 2, l = Math.max(status.right + 8, cx - 280), r = Math.min(info.left - 8, cx + 280), below = r - l < 140;
+    radio.style.setProperty('--radio-l', `${Math.round(below ? 12 : l - hud.left)}px`);
+    radio.style.setProperty('--radio-r', `${Math.round(below ? 12 : hud.right - r)}px`);
+    if (below) radio.style.setProperty('--radio-t', `${Math.round(Math.max(status.bottom, info.bottom) + 6 - hud.top)}px`); else radio.style.removeProperty('--radio-t');
+  }
   /** One line at a time; the same good news again while it shows counts up (获得 密封绷带 ×1 × 2), as the original toasts did. */
   toast(text: string, bad = false) {
     const t = this.q('[data-toast]'); if (!t) return;
