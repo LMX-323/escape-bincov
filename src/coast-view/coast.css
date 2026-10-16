@@ -5,7 +5,10 @@ html[data-coast-sample] #toast { z-index: 120; }
 html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0px)); }
 .coast-sample { --cs-ink: #242321; --cs-panel: #1b1a17f0; --cs-line: #4b4842; --cs-text: #ddd5c3; --cs-muted: #a49b88; --cs-accent: #c9a65e; --cs-bad: #d07a5a;
   position: fixed; inset: 0; z-index: 60; color: var(--cs-text); font-family: "Bincov Text", "Microsoft YaHei", "PingFang SC", sans-serif; user-select: none; -webkit-user-select: none; touch-action: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* The HUD sits inside the safe area; markers the host moves to viewport points (world positions, the pointer) start from
+     the viewport's corner instead, so a notch does not shift them twice. */
+  --cs-ox: calc(0px - env(safe-area-inset-left)); --cs-oy: calc(0px - env(safe-area-inset-top)); }
 .coast-sample .cs-canvas { position: absolute; inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 /* Pixi's event system used to write touch-action none and cursor inherit on the canvas; it is detached now (host.ts),
    so the same two values live here: no browser panning or zooming on the play area, and the ordinary pointer. */
@@ -44,7 +47,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-clock small { font-size: 12px; color: #e0a070; font-family: "Microsoft YaHei", sans-serif; }
 .cs-hits { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .cs-hits i { position: absolute; left: -60px; top: -3px; width: 120px; height: 6px; background: linear-gradient(90deg, transparent 80%, #d0573f 80%); transform-origin: 60px 3px; }
-.cs-prompt, .cs-choices { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 16px; padding: 4px 8px; background: #191815b3; border: 1px solid #c9a65e88; color: #f0e3bd; margin: 0; }
+.cs-prompt, .cs-choices { position: absolute; left: var(--cs-ox); top: var(--cs-oy); white-space: nowrap; font-size: 16px; line-height: 16px; padding: 4px 8px; background: #191815b3; border: 1px solid #c9a65e88; color: #f0e3bd; margin: 0; }
 .cs-prompt kbd { display: inline-block; min-width: 18px; margin-right: 6px; padding: 0 4px; background: var(--cs-accent); color: #1b1a17; font: inherit; text-align: center; }
 /* A crowded spot can list many sources: the list scrolls and keeps the selected row in view (host.prompt). */
 .cs-choices { list-style: none; pointer-events: auto; max-height: min(40vh, 220px); overflow-y: auto; scrollbar-width: thin; }
@@ -53,7 +56,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-choices .cs-hint { color: var(--cs-muted); cursor: default; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; }
 .cs-toast { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); padding: 6px 14px; background: #1b1a17e6; border: 1px solid var(--cs-line); font-size: 16px; line-height: 16px; opacity: 0; transition: opacity .2s; max-width: 90vw; text-align: center; }
 .cs-toast.on { opacity: 1; } .cs-toast.bad { border-color: var(--cs-bad); color: #f1c4b4; }
-.cs-cross { position: absolute; left: -12px; top: -12px; width: 25px; height: 25px; pointer-events: none;
+.cs-cross { position: absolute; left: calc(var(--cs-ox) - 12px); top: calc(var(--cs-oy) - 12px); width: 25px; height: 25px; pointer-events: none;
   background: linear-gradient(#f0e3bd, #f0e3bd) 12px 0/1px 8px no-repeat, linear-gradient(#f0e3bd, #f0e3bd) 12px 17px/1px 8px no-repeat,
     linear-gradient(#f0e3bd, #f0e3bd) 0 12px/8px 1px no-repeat, linear-gradient(#f0e3bd, #f0e3bd) 17px 12px/8px 1px no-repeat;
   filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
@@ -187,7 +190,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
   background: conic-gradient(#e7c873 var(--reload, 0deg), #3a352b66 0); -webkit-mask: radial-gradient(circle, transparent 9.5px, #000 10px, #000 12.5px, transparent 13px); mask: radial-gradient(circle, transparent 9.5px, #000 10px, #000 12.5px, transparent 13px); }
 .cs-cross.reloading .cs-ring { display: block; }
 /* The host moves .cs-hitpop with a translate; the pop itself scales on the inner wrapper, around the hit point. */
-.cs-hitpop { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.cs-hitpop { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-hitpop b { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; }
 .cs-hitpop i { position: absolute; width: 6px; height: 2px; background: #f4ead2; box-shadow: 0 0 0 1px #0009; }
 .cs-hitpop i:nth-child(1) { left: -11px; top: -9px; transform: rotate(45deg); }
@@ -200,9 +203,9 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 @keyframes cs-hitpop { 0% { opacity: 1; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: scale(1.25); } }
 @keyframes cs-hitkill { 0% { opacity: 1; transform: scale(.7); } 30% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0; transform: scale(1.6); } }
 /* Stair destinations: HUD text in the pixel face, placed by the view under the stair marker. */
-.cs-stairs { position: absolute; inset: 0; pointer-events: none; }
+.cs-stairs { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-stair { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 16px; padding: 2px 6px; color: #e6dcb8; background: #191815a6; border: 1px solid #c9a65e55; }
-.cs-exitptr { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.cs-exitptr { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-exitptr i { position: absolute; left: -10px; top: -6px; width: 20px; height: 12px; transform: rotate(var(--dir, 90deg)); filter: drop-shadow(0 0 1px #000) drop-shadow(0 1px 0 #000); }
 .cs-exitptr i::before { content: ""; position: absolute; left: 0; top: 5px; width: 11px; height: 2px; background: #d6ec9a; }
 .cs-exitptr i::after { content: ""; position: absolute; left: 10px; top: 0; border: 6px solid transparent; border-left: 10px solid #d6ec9a; border-right: 0; }
@@ -220,6 +223,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 @media (max-height: 480px) { .cs-exitptr span, .cs-stair { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 14px; } }
 @media (prefers-reduced-motion: reduce) { .cs-hitpop.on b, .cs-hitpop.kill.on b { animation-duration: .01s; } }
 /* Off-screen shooters: an orange chevron on the screen edge pointing out toward them, fading in under a second. */
+.cs-threats { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; }
 .cs-threats i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; opacity: 0; pointer-events: none;
   background: linear-gradient(45deg, transparent 46%, #e8774f 46%, #e8774f 60%, transparent 60%) 0 0/9px 9px no-repeat,
     linear-gradient(-45deg, transparent 46%, #e8774f 46%, #e8774f 60%, transparent 60%) 0 9px/9px 9px no-repeat;

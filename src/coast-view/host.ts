@@ -280,7 +280,7 @@ export class CoastSampleHost {
       this.app.ticker.add(tick); lifecycle.tickers++;
       this.scope.add(() => { this.app.ticker.remove(tick); lifecycle.tickers--; });
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
-      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.orientation(); });
+      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
@@ -563,8 +563,9 @@ export class CoastSampleHost {
     this.runtime.pause(reason);
     this.showPause(reason);
   }
-  /** The phone is held upright (or the view is too short to play): the raid waits for landscape. */
-  private upright() { return this.input.touch && (innerWidth < innerHeight || innerHeight < 280); }
+  /** A phone held upright (or a view too short to play): the raid waits for landscape. Phone layout only, as the original:
+   *  a touchscreen laptop in a tall window plays on. */
+  private upright() { return document.documentElement.classList.contains('mobile') && (innerWidth < innerHeight || innerHeight < 280); }
   private guideOpen = false;
   private showPause(reason?: string) {
     this.guideOpen = false;
@@ -591,6 +592,8 @@ export class CoastSampleHost {
   /** Turning a phone upright pauses with the rotate notice; turning it back offers 继续 again. */
   private orientation() {
     if (!this.mounted || this.exiting || this.panel === 'ending') return;
+    // Typing (the split count) brings up an on-screen keyboard that shrinks the view; that is not a turn, as the original.
+    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return;
     // Held upright the raid waits for landscape: the touch buttons (too wide to fit, unusable while paused) step aside.
     this.root.classList.toggle('upright', this.upright());
     if (this.upright()) { if (this.panel !== 'pause') this.pause(); else if (!this.pausedUpright) this.showPause(); }
@@ -617,7 +620,7 @@ export class CoastSampleHost {
   }
   private openLoot() {
     this.input.suppressHeld(); this.sticks.clear();
-    this.panel = 'loot';
+    this.panel = 'loot'; this.lootHitT = 0; // a blow from an earlier loot window is over
     const p = this.q('[data-panel]'); p.className = 'cs-panel cs-inv-panel'; p.hidden = false; p.setAttribute('aria-label', '搜刮物资');
     const ref = this.lootRef(); this.inv.containerLabel = this.last?.frame.containers.find(c => c.id === ref?.id)?.name ?? '物资箱';
     this.inv.open('loot');
@@ -664,7 +667,8 @@ export class CoastSampleHost {
       case 'pause-back': this.showPause(); break;
       case 'abandon': this.setPanel('pause', '<h2>放弃行动？</h2><p>放弃按撤离失败结算：背包物资和主武器丢失，安全箱保留。</p><div class="cs-row"><button type="button" data-do="abandon-yes">确认放弃</button><button type="button" data-do="resume">继续行动</button></div>', '放弃行动'); break;
       case 'abandon-yes': this.services.abandon(); break;
-      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); this.resume(); } else this.toast('仍然无法保存。', true); break;
+      // Saved while held upright: the panel turns into the rotate notice, and 继续 comes back once the phone is landscape.
+      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); if (this.upright()) this.showPause(); else this.resume(); } else this.toast('仍然无法保存。', true); break;
       case 'backup': this.exportBackup(); break;
       case 'retry-settlement': this.services.retrySettlement(); this.refreshEnding(); break;
       case 'close': this.closePanel(true); break;
@@ -795,13 +799,19 @@ export class CoastSampleHost {
     this.threats.forEach((t, i) => {
       const el = marks[i] as HTMLElement; t.left = Math.max(0, t.left - dt);
       if (t.left <= 0 || this.panel) { el.style.opacity = '0'; return; }
-      const W = innerWidth, H = innerHeight, c = this.view.worldToClient({ x: f.player.x, y: f.player.y - AIM_H }), at = this.view.worldToClient(t);
-      const dx = at.x - c.x, dy = at.y - c.y, k = Math.min(dx ? ((dx > 0 ? W - 34 : 34) - c.x) / dx : Infinity, dy ? ((dy > 0 ? H - 34 : 34) - c.y) / dy : Infinity);
+      const W = innerWidth, H = innerHeight, s = this.safe, c = this.view.worldToClient({ x: f.player.x, y: f.player.y - AIM_H }), at = this.view.worldToClient(t);
+      const dx = at.x - c.x, dy = at.y - c.y, k = Math.min(dx ? ((dx > 0 ? W - s.r - 34 : s.l + 34) - c.x) / dx : Infinity, dy ? ((dy > 0 ? H - s.b - 34 : s.t + 34) - c.y) / dy : Infinity);
       el.style.opacity = Math.min(1, t.left / .5).toFixed(2);
       el.style.transform = `translate(${Math.round(c.x + dx * k)}px, ${Math.round(c.y + dy * k)}px) rotate(${Math.atan2(dy, dx)}rad)`;
     });
   }
   private ptrInset: { l: number; r: number; t: number; b: number } | null = null;
+  /** The phone's safe-area insets (the HUD box inside the viewport), so edge arrows stay clear of a notch. */
+  private safe = { l: 0, t: 0, r: 0, b: 0 };
+  private measureSafe() {
+    const r = this.q('.cs-hud').getBoundingClientRect();
+    this.safe = { l: r.left, t: r.top, r: Math.max(0, innerWidth - r.right), b: Math.max(0, innerHeight - r.bottom) };
+  }
   /**
    * The exit chosen on the map: a marker over it when it is on screen, otherwise an arrow on the screen edge pointing
    * at it with its straight-line distance in tiles. Exits are the Runtime's visible exits; nothing else is pointed at.
@@ -817,7 +827,7 @@ export class CoastSampleHost {
       const top = Math.max(...['.cs-status', '.cs-info', '.cs-clock'].map(c => this.q(c).getBoundingClientRect().bottom));
       const low = Math.min(...['.cs-arms', this.input.touch ? '.cs-touch' : '.cs-keys'].map(c => { const r = this.q(c).getBoundingClientRect(); return r.height ? r.top : H; }));
       // Room for the label: above the marker on screen (32 px), below the arrow on the edge (about 34 px).
-      this.ptrInset = { l: 28, r: 28, t: Math.min(H / 2 - 40, top + 40), b: Math.min(H / 2 - 40, H - low + 44) };
+      this.ptrInset = { l: this.safe.l + 28, r: this.safe.r + 28, t: Math.min(H / 2 - 40, top + 40), b: Math.min(H / 2 - 40, H - low + 44) };
     }
     const inset = this.ptrInset;
     // The exit's ring in view: a marker over it when the marker fits between the HUD cards, otherwise nothing (the ring
@@ -843,7 +853,8 @@ export class CoastSampleHost {
     const status = [h.bleeding ? '流血' : '', h.pollution > 10 ? `污染 ${Math.round(h.pollution)}%` : '',
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
     let weight = '';
-    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)} kg`; }
+    // A no-break space keeps the number and its unit together when the line wraps, as the original weight readout did.
+    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)}\u00a0kg`; }
     this.q('[data-state]').textContent = `${status}　${weight}`;
     // Short screens hide the routine body line; a bleed or pollution warning keeps it.
     this.q('[data-state]').classList.toggle('calm', !h.bleeding && h.pollution <= 10);
