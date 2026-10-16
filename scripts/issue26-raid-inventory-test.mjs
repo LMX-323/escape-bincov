@@ -262,8 +262,8 @@ const cases = [
       await t.page.bringToFront();
       const before = t.participants(await t.snapshot());
       assert.equal(await t.drag('container', 'conflict-source', 'bag', 0, 0, { release: false }), 'true');
-      // A paused Phaser scene fails canLootContainer's isActive guard. Sleep only its render loop,
-      // after establishing the real drag, so simulation cannot change the snapshot during this storage event.
+      // Stop only the view's ticker (not a pause), after establishing the real drag,
+      // so the simulation cannot change the snapshot during this storage event.
       // Open the other page first: focus changes must not cancel the gesture before the conflict does.
       await t.page.evaluate(() => window.__bincovSample.host.app.ticker.stop());
       assert.equal(await t.page.locator('.drop-preview').count(), 1, 'swap is still held immediately before the competing write');

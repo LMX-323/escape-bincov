@@ -183,9 +183,8 @@ try {
   report.checks.push(`2.5D captures: ${report.worldViews.length} views including the high tide`);
   // Retired with the Phaser view (its sprites and static world texture no longer exist): world.png, the corpse/loose-loot
   // sprite state after a checkpoint restore, the empty-crate sprite after restore, the actor-heading lineup and the
-  // layered sprite resynchronisation. 2.5D coverage: corpses after a kill in test:coast-animation V03/V04 (CI), revealed
-  // rooms after a restore in test:issue26-spatial S05 (CI); reload and the crate look after reload only in the manual
-  // coast-sample W10/V08 steps.
+  // layered sprite resynchronisation. 2.5D coverage (all in CI): corpses after a kill in test:coast-sample V03/V04, revealed
+  // rooms after a restore in test:issue26-spatial S05, reload and the crate look after reload in test:coast-sample W10/V08.
   await context.close();
   assert.deepEqual(report.errors, []); assert.deepEqual(report.externalRequests, []);
   report.status = 'passed'; console.log(JSON.stringify({ checks: report.checks, textures: report.textures.length, errors: report.errors, externalRequests: report.externalRequests }));
