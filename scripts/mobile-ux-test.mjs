@@ -7,7 +7,7 @@ import { browserOptions } from './browser-options.mjs';
 import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
 
 const out=resolve('test-results/mobile-ux'); await mkdir(out,{recursive:true});
-const report={startedAt:new Date().toISOString(),method:'Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures on the 2.5D raid host. Includes failure injection; not physical phone validation. Phone safe-area insets come from env(), which Chromium cannot emulate, so the inset cases of the old view are not repeated.',steps:[],errors:[],requests:[]};
+const report={startedAt:new Date().toISOString(),method:'Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures on the 2.5D raid host. Includes failure injection; not physical phone validation. Notch insets are emulated with the DevTools safe-area override (env(safe-area-inset-*)).',steps:[],errors:[],requests:[]};
 const browser=await chromium.launch(browserOptions);report.browser=browser.version();
 const context=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1,offline:true});
 const page=await context.newPage();page.setDefaultTimeout(20000);
@@ -18,6 +18,9 @@ const inPanel=selector=>page.locator(`.coast-sample [data-panel] ${selector}`);
 const shot=name=>page.screenshot({path:resolve(out,`${name}.png`)});
 const host=(fn,arg)=>page.evaluate(fn,arg);
 const drive=(name,...args)=>page.evaluate(([n,a])=>window.__bincovSample.driver[n](...a),[name,args]);
+/** Notch insets as a phone reports them to env(safe-area-inset-*); zeros clear them. */
+const cdp=await context.newCDPSession(page);
+const insets=(left=0,right=0,bottom=0,top=0)=>cdp.send('Emulation.setSafeAreaInsetsOverride',{insets:{top,left,right,bottom}});
 const panelIs=v=>page.waitForFunction(v=>window.__bincovSample?.host?.panel===v,v,{timeout:20000});
 const ready=()=>page.waitForFunction(()=>!!window.__bincovSample?.host?.lastBatch&&!!document.querySelector('.coast-sample canvas'),null,{timeout:30000});
 async function step(name,fn){const e={name,status:'running'};report.steps.push(e);try{await fn();assert.deepEqual(report.errors,[]);assert.deepEqual(report.requests,[]);e.status='passed';console.log('PASS',name)}catch(error){e.status='failed';e.error=error.stack;throw error}}
@@ -129,6 +132,31 @@ try {
   assert.equal(await left(),0);
   assert.equal(await page.locator('.coast-sample [data-toast]').textContent(),'获得 密封绷带 ×1 × 2');
   await toastOff();
+ });
+ await step('notch insets keep the HUD and touch buttons in the safe area and world markers on their targets',async()=>{
+  report.safeArea=[];
+  for(const [width,height,left,right,bottom] of [[932,430,44,12,20],[844,390,47,47,21],[667,375,0,44,0]]){
+   await resize(width,height);await insets(left,right,bottom);await page.waitForTimeout(150);await fixture();await toastOff();await carry({bag:[]});
+   const uid=await drive('spawnLoot','water',1,{x:712,y:784});
+   await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('净水瓶'));
+   const g=await page.evaluate(()=>{
+    const h=window.__bincovSample.host,t=h.lastBatch.frame.interaction,want=h.view.worldToClient(t.at),pr=document.querySelector('.coast-sample [data-prompt]').getBoundingClientRect();
+    const safe=document.querySelector('.coast-sample .cs-hud').getBoundingClientRect().toJSON();
+    const cards=['.cs-status','.cs-clock','.cs-arms','.cs-info','.cs-touch button'].flatMap(s=>[...document.querySelectorAll('.coast-sample '+s)]).filter(el=>el.getBoundingClientRect().width>0)
+     .map(el=>{const r=el.getBoundingClientRect();return {text:el.textContent.trim().slice(0,12),out:r.left<safe.left-.5||r.right>safe.right+.5||r.top<safe.top-.5||r.bottom>safe.bottom+.5};});
+    return {safe,prompt:Math.round(pr.left+pr.width/2),want:Math.round(want.x),outside:cards.filter(c=>c.out).map(c=>c.text)};
+   });
+   const label=`${width}x${height} insets ${left}/${right}/${bottom}`;report.safeArea.push({label,...g});
+   assert.deepEqual(g.outside,[],`${label}: HUD cards and touch buttons stay inside the safe area`);
+   assert.ok(Math.abs(g.prompt-g.want)<=1,`${label}: the prompt sits over its item (${g.prompt} vs ${g.want})`);
+   // The pickup toast still covers no HUD element with the insets in place.
+   await page.locator('.coast-sample [data-act]').tap();
+   await page.waitForFunction(uid=>!window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid),uid);await toastOn();
+   assert.deepEqual(await overlaps('.coast-sample [data-toast]',feedbackTargets),[],`${label}: toast`);
+   if(width===932)await shot('safe-area-932');
+   await toastOff();
+  }
+  await insets();
  });
  await step('short phone reading remains visible with reachable exit and a live clock',async()=>{
   for(const height of [300,340,341]){
