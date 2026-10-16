@@ -52,18 +52,17 @@ try {
    // Bag and safe share one panel (no container tabs on the 2.5D view).
    assert.equal(await inPanel('[data-grid="safe"]').count(),1);assert.equal(await inPanel('[data-grid="bag"]').count(),1);
    await inPanel('[data-source="bag"][aria-label^="密封绷带"]').tap();await raid('inv-use').waitFor();
-   // Details are part of the panel: its close stays immediately reachable. Front-end gap (Opus): at 667x375 the item
-   // actions start below the panel's fold and need a scroll of the panel; they are checked after scrolling into view.
+   // Details sit beside the bag and safe on phones: the close and the item's first action show without scrolling the panel.
    assert.ok(await reachable('.coast-sample [data-panel] [data-do="close"]'),`${width}x${height}: close with details`);
-   await raid('inv-use').scrollIntoViewIfNeeded();assert.ok(await reachable('.coast-sample [data-do="inv-use"]'),`${width}x${height}: use`);
+   assert.ok(await reachable('.coast-sample [data-do="inv-use"]'),`${width}x${height}: use`);
    if(width===740&&height===300)await shot('details-740');await raid('close').tap();await panelIs(null);
   }
  });
  await step('placement cancel and close/reopen keep inventory selectable and unchanged',async()=>{
   await resize(844,390);await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');const before=await host(()=>__bincov.app.loadout.bag);
   await inPanel('[data-source="bag"][aria-label^="密封绷带"]').tap();await raid('inv-place').tap();
-  // Front-end gap (Opus): on short phones the placement bar sits below the panel's fold; checked after scrolling.
-  await raid('inv-place-cancel').scrollIntoViewIfNeeded();assert.ok(await reachable('.coast-sample [data-do="inv-place-cancel"]'),'取消移动 is reachable');assert.ok(await inPanel('.placement-cell').count());
+  // The placement bar sits under the panel header, so 取消移动 shows without scrolling.
+  assert.ok(await reachable('.coast-sample [data-do="inv-place-cancel"]'),'取消移动 is reachable');assert.ok(await inPanel('.placement-cell').count());
   await raid('inv-place-cancel').tap();assert.equal(await inPanel('.placement-cell').count(),0,'cancel leaves placement');
   await raid('inv-place').tap();assert.ok(await inPanel('.placement-cell').count());
   await raid('close').tap();await panelIs(null);await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');await inPanel('[data-source="bag"][aria-label^="密封绷带"]').tap();
@@ -79,10 +78,9 @@ try {
    await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('陶瓷保险管'));await page.locator('.coast-sample [data-act]').tap();
    await page.waitForFunction(uid=>!window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid)&&(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('净水瓶'),fuse);
    await toastOn();
-   // Front-end gap (Opus): the toast (centred, top 52 px) overlaps the status card on narrow phones; every overlap is
-   // recorded, and all other HUD elements must stay clear. Restore the status card to the check once it is fixed.
-   const all=await overlaps('.coast-sample [data-toast]',feedbackTargets),overlap=await overlaps('.coast-sample [data-toast]',feedbackTargets.filter(t=>!t.endsWith('.cs-status')));
-   (report.toastOverlaps??=[]).push({size:`${width}x${height}`,step:'pickup',all});
+   // On short phones the toast sits above the touch buttons, so it covers neither the status card nor anything else.
+   const overlap=await overlaps('.coast-sample [data-toast]',feedbackTargets);
+   (report.toastOverlaps??=[]).push({size:`${width}x${height}`,step:'pickup',overlap});
    assert.deepEqual(overlap,[],`${width}x${height}`);
    // Phones have no keys: the medical shortcut shows no Q.
    assert.doesNotMatch(await page.locator('.coast-sample .cs-heal').innerText(),/Q/);
@@ -102,9 +100,10 @@ try {
    await page.waitForFunction(()=>document.querySelector('.coast-sample [data-drain]').innerText.includes('流血'));
    const label=`${width}x${height}: after pickup`;
    const geometry=await page.evaluate(()=>{const t=document.querySelector('.coast-sample [data-toast]').getBoundingClientRect();return {toast:t.toJSON(),width:innerWidth,height:innerHeight,drain:document.querySelector('.coast-sample [data-drain]').innerText};});
-   const all=await overlaps('.coast-sample [data-toast]',feedbackTargets),overlap=await overlaps('.coast-sample [data-toast]',feedbackTargets.filter(t=>!t.endsWith('.cs-status'))),drainOverlap=await overlaps('.coast-sample [data-drain]',feedbackTargets.filter(s=>!s.endsWith('.cs-status')));
-   report.threeItemFeedback.push({label,...geometry,all,overlap,drainOverlap});
-   (report.toastOverlaps??=[]).push({size:`${width}x${height}`,step:'three items',all});
+   // The bleeding readout lives in the status card, so the card itself is left out of its own check.
+   const overlap=await overlaps('.coast-sample [data-toast]',feedbackTargets),drainOverlap=await overlaps('.coast-sample [data-drain]',feedbackTargets.filter(s=>!s.endsWith('.cs-status')));
+   report.threeItemFeedback.push({label,...geometry,overlap,drainOverlap});
+   (report.toastOverlaps??=[]).push({size:`${width}x${height}`,step:'three items',overlap});
    assert.deepEqual(overlap,[],label);
    assert.deepEqual(drainOverlap,[],`${label}: bleeding readout and controls`);
    assert.ok(geometry.toast.x>=0&&geometry.toast.right<=geometry.width&&geometry.toast.y>=0&&geometry.toast.bottom<=geometry.height,label);
@@ -112,11 +111,24 @@ try {
    assert.match(geometry.drain,/流血/,`${label}: bleeding readout`);
    assert.doesNotMatch(await page.locator('.coast-sample .cs-heal').innerText(),/Q/);
    if(width===640&&height===300)await shot('feedback-640');
-   // 2.5D gap (Runtime, Astra): no 附近 list for loose items beside each other (the action button takes the nearest),
-   // and the host does not merge repeated pickups into one "× 2" toast; restore those checks once they exist.
+   // 2.5D gap (Runtime, Astra): no 附近 list for loose items beside each other (the action button takes the nearest);
+   // restore that check once it exists.
    await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('净水瓶'));
    await toastOff();
   }
+ });
+ await step('two quick pickups of the same supply count up in one toast',async()=>{
+  await resize(844,390);await fixture();await toastOff();await carry({bag:[]});
+  const uids=[await drive('spawnLoot','bandage',1,{x:700,y:784}),await drive('spawnLoot','bandage',1,{x:712,y:784})];
+  const left=()=>host(uids=>uids.filter(uid=>window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid)).length,uids);
+  for(const n of [1,0]){
+   await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('密封绷带'));
+   await page.locator('.coast-sample [data-act]').tap();
+   await page.waitForFunction(([uids,n])=>uids.filter(uid=>window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid)).length===n,[uids,n]);
+  }
+  assert.equal(await left(),0);
+  assert.equal(await page.locator('.coast-sample [data-toast]').textContent(),'获得 密封绷带 ×1 × 2');
+  await toastOff();
  });
  await step('short phone reading remains visible with reachable exit and a live clock',async()=>{
   for(const height of [300,340,341]){
