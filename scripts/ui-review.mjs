@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import { batch, drive, frames, gap, raidReady, stand, waitPanel } from './raid-view.mjs';
+import { openPause, resumeStalls, running } from './stall-resume.mjs';
 
 const out = resolve('test-results/ui');
 await mkdir(out, { recursive: true });
@@ -16,6 +17,7 @@ try {
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     const size = `${viewport.width}x${viewport.height}`;
     const context = await browser.newContext({ viewport, offline: true });
+    await resumeStalls(context);
     try {
       context.on('request', r => { if (/^https?:/.test(r.url())) report.externalRequests.push(r.url()); });
       const page = await context.newPage();
@@ -39,7 +41,7 @@ try {
         console.log(`PASS ${size} ${name}`);
       };
       await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
-      await action('enter').waitFor(); await page.waitForTimeout(200);
+      await action('enter').waitFor({ timeout: 60000 }); await page.waitForTimeout(200);
       await shot('menu');
       await action('help').click(); await shot('help'); await action('close').click();
       await action('enter').click(); await shot('gear');
@@ -95,14 +97,21 @@ try {
       const before = (await batch(page)).frame.hud;
       await drive(page, 'vitals', { bleeding: true, pollution: 0 }); await frames(page, 10);
       const bleeding = await status();
-      await drive(page, 'vitals', { pollution: 50 }); await frames(page, 10);
-      const combined = await status();
+      await drive(page, 'vitals', { pollution: 50 });
+      // The line shows the Runtime's own value: pollution recovers 0.2 %/s while dry, and ten frames are seconds of raid
+      // time on a slow runner. Read it on a frame where the line and the published value agree (it refreshes every 8).
+      const combined = await (await page.waitForFunction(() => {
+        const t = document.querySelector('.coast-sample [data-state]').textContent, p = window.__bincovSample.host.lastBatch.frame.hud.pollution;
+        return p > 45 && t.includes(`污染 ${Math.round(p)}%`) ? t : false;
+      }, null, { timeout: 20000 })).jsonValue();
       await drive(page, 'vitals', { bleeding: before.bleeding, pollution: before.pollution, hp: before.maxHp }); await frames(page, 10);
       assert.match(bleeding, /流血/);
       assert.doesNotMatch(bleeding, /正常|稳定/);
-      assert.match(combined, /流血.*污染 50%/);
+      assert.match(combined, /流血.*污染 (4[6-9]|50)%/);
       // The camera eases onto the placed player and every rebuild fades in from black (0.45 s).
       await page.waitForTimeout(1500); await shot('raid');
+      // Tab opens the bag only while the raid runs (a stall pause resumed after the deploy would swallow it).
+      await running(page);
       await page.keyboard.press('Tab'); await waitPanel(page, 'inventory'); await shot('inventory');
       const raidBandage = page.locator('.coast-sample [data-panel] [data-source="bag"][aria-label^="密封绷带"]');
       await raidBandage.click(); await page.locator('.coast-sample [data-do="inv-use"]').waitFor(); await shot('inventory-item');
@@ -119,11 +128,12 @@ try {
       assert.equal(toast, '操作未完成，请检查空间与条件。'); assert.doesNotMatch(toast, /生命已满/);
       assert.equal(await bandages(), bandagesBefore, 'Unnecessary treatment consumed a bandage');
       await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
+      await running(page);
       await page.keyboard.press('m'); await waitPanel(page, 'map'); await page.locator('.coast-sample [data-map]').waitFor(); await frames(page, 3); await shot('map');
       await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
-      await page.keyboard.press('Escape'); await waitPanel(page, 'pause'); await shot('pause');
+      await openPause(page); await shot('pause');
       const timer = await page.locator('.coast-sample [data-time]').textContent();
-      await page.waitForTimeout(200);
+      await frames(page, 4);
       assert.equal(await page.locator('.coast-sample [data-time]').textContent(), timer, 'Pause changes the displayed clock');
       await page.locator('.coast-sample [data-do="abandon"]').click(); await page.locator('.coast-sample [data-do="abandon-yes"]').waitFor(); await shot('abandon');
       await page.locator('.coast-sample [data-do="abandon-yes"]').click(); await action('return').waitFor({ timeout: 30000 }); await shot('result');
