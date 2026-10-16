@@ -16,7 +16,24 @@ const report = { sha256: createHash('sha256').update(html).digest('hex'), browse
 let context, page, size;
 const frames = (n = 3) => page.evaluate(n => new Promise(resolve => { let count = 0; const tick = () => ++count >= n ? resolve() : requestAnimationFrame(tick); requestAnimationFrame(tick); }), n);
 const place = (x, y, map = 'coast') => page.evaluate(([x, y, map]) => window.__bincovSample.driver.placePlayer({ x, y }, -Math.PI / 2, map), [x, y, map]);
-const settle = async () => { await page.waitForTimeout(300); await frames(4); };
+/**
+ * Captures stop the ticker. On a slow runner a stop over 2 s makes the Runtime stall-pause the raid when it restarts (its
+ * rule for a frozen tab); resume such a pause, and only one that a new stall caused, before the next real input.
+ */
+let seenStall = null;
+async function resumeStall() {
+  // The Runtime announces a stall pause with its own notice (画面暂时停顿…); the newest one's sequence number marks it.
+  const stall = await page.evaluate(() => [...(window.__bincovSample?.host?.eventLog ?? [])].reverse()
+    .find(e => e.type === 'notice' && String(e.detail?.text ?? '').startsWith('画面暂时停顿'))?.seq ?? null);
+  if (stall === null || stall === seenStall) return;
+  seenStall = stall;
+  if (await page.evaluate(() => window.__bincovSample.host.panel === 'pause')) {
+    console.log(`${size.join('x')} resumed a stall pause after a capture`);
+    await page.locator('.coast-sample [data-do="resume"]').click();
+    await page.waitForFunction(() => window.__bincovSample.host.panel === null); await frames(2);
+  }
+}
+const settle = async () => { await page.waitForTimeout(300); await frames(4); await resumeStall(); };
 async function check(name, task) {
   const row = { name: `${size.join('x')} ${name}` }; report.checks.push(row);
   try { row.detail = await task(); assert.deepEqual(report.errors, []); row.status = 'passed'; }
@@ -157,7 +174,7 @@ try {
             return result;
           } finally { v.render(); h.app.render(); h.app.ticker.start(); }
         }, staged.uid);
-        await frames(3);
+        await frames(3); await resumeStall();
         const clip = await page.evaluate(() => { const v = window.__bincovSample.host.view, a = v.worldToClient({ x: 400, y: 280 }), b = v.worldToClient({ x: 464, y: 360 });
           return { x: Math.round(a.x), y: Math.round(a.y), width: Math.round(b.x - a.x), height: Math.round(b.y - a.y) }; });
         await page.screenshot({ path: resolve(out, `${size.join('x')}-S03b-doorway-crop.png`), clip });
