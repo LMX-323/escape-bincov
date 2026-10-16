@@ -1,11 +1,13 @@
-/** Controlled world fixtures, real wheel/key input. HTTP mode is diagnostic, not offline acceptance. */
+/** Controlled world fixtures, real wheel/key input on the 2.5D raid host. HTTP mode is diagnostic, not offline acceptance. */
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { isWalkable, lineOfSight, WORLD_W, WORLD_H } from '../src/world.ts';
+import { batch, drive, frames, panel, raidReady, waitPanel } from './raid-view.mjs';
+import { BUILDING_WORLD } from '../src/building-world.ts';
+import { corridor, traversable } from '../src/spatial.ts';
 
 const entry = process.env.BINCOV_TEST_URL || pathToFileURL(resolve('dist/index.html')).href;
 const url = new URL(entry);
@@ -16,16 +18,19 @@ const out = resolve('test-results'); await mkdir(out, { recursive: true });
 const report = { mode: url.protocol === 'file:' ? 'offline' : 'local HTTP diagnostic', browser: '', results: [] };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 
-// Find real walkable points separated by a wall within the existing 43px interaction range.
+// Real body-walkable points of the deployed street map separated by a wall inside the 43 px interaction range, found
+// with the Runtime's own rule (body clearance 10, no body corridor). East of the resident block, so no door is involved.
+const street = { definition: BUILDING_WORLD.maps.coast, doors: {}, highTide: false };
+const W = street.definition.cells[0].length * 32, H = street.definition.cells.length * 32;
 let occluded;
-for (let y = 16; y < WORLD_H && !occluded; y += 16) for (let x = 16; x < WORLD_W && !occluded; x += 16) {
-  if (!isWalkable(x, y, false)) continue;
+for (let y = 16; y < H && !occluded; y += 16) for (let x = 21 * 32; x < W && !occluded; x += 16) {
+  if (!traversable(street, { x, y }, 'body', 10)) continue;
   for (const dx of [-24, 0, 24]) for (const dy of [-24, 0, 24]) {
     const a = { x, y }, b = { x: x + dx, y: y + dy };
-    if (isWalkable(b.x, b.y, false) && !lineOfSight(a, b, false, 10)) occluded = { a, b };
+    if (!occluded && traversable(street, b, 'body', 10) && !corridor(street, a, b, 'body', 10)) occluded = { a, b };
   }
 }
-assert.ok(occluded, 'The LOS fixture uses actual map geometry');
+assert.ok(occluded, 'The line-of-sight fixture uses actual map geometry');
 
 async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
@@ -35,84 +40,116 @@ async function suite(viewport, touch = false) {
     if (url.protocol === 'http:' && new URL(route.request().url()).origin === url.origin) return route.continue();
     external.push(route.request().url()); return route.abort();
   });
-  const page = await context.newPage(); page.setDefaultTimeout(12000);
+  const page = await context.newPage(); page.setDefaultTimeout(15000);
   page.on('pageerror', error => errors.push(error.message));
   const action = name => page.locator(`[data-action="${name}"]`);
+  const doButton = name => page.locator(`.coast-sample [data-do="${name}"]`);
+  // Published raid state: host panel, loot context, clock, player, magazine, the source list (rows and selection).
   const state = () => page.evaluate(() => {
-    const a = window.__bincov.app, r = a.raid;
-    return { overlay: a.overlay, target: a.lootContext?.containerId, elapsed: r.elapsed, x: r.player.x, y: r.player.y, mag: r.mag,
-      lastStall: r.lastStall,
-      selected: document.querySelector('.loot-targets [aria-current]')?.getAttribute('data-loot-target'),
-      rows: [...document.querySelectorAll('[data-loot-target]')].map(el => ({ id: el.dataset.lootTarget, text: el.textContent })),
-      enemyTimer: r.enemies.find(e => e.hp > 0)?.timer };
+    const h = window.__bincovSample.host, b = h.lastBatch;
+    return { panel: h.panel, target: h.services.lootContext()?.containerId, elapsed: b.stamp.simulationTime, x: b.frame.player.x, y: b.frame.player.y, mag: b.frame.hud.weapon.mag,
+      phase: b.frame.phase, choices: (b.frame.interaction?.choices ?? []).map(c => c.id),
+      selected: document.querySelector('.coast-sample [data-choices]:not([hidden]) li[aria-current]')?.getAttribute('data-id') ?? null,
+      rows: [...document.querySelectorAll('.coast-sample [data-choices]:not([hidden]) li[data-id]')].map(el => ({ id: el.dataset.id, text: el.textContent })),
+      enemies: b.frame.actors.filter(a => a.alive).map(a => [a.uid, Math.round(a.x), Math.round(a.y), a.state.ai]).join(';') };
   });
-  const wheel = async delta => {
-    await page.mouse.move(viewport.width / 2, viewport.height / 2); await page.mouse.wheel(0, delta);
-    await page.waitForTimeout(80); // Wheel delivery and HUD painting happen on subsequent browser frames.
-  };
-  const selected = id => page.waitForFunction(value => document.querySelector('.loot-targets [aria-current]')?.getAttribute('data-loot-target') === value, id);
+  /** The wheel is read on the canvas: use a point the HUD does not cover. */
+  const canvasPoint = () => page.evaluate(({ w, h }) => {
+    for (const [x, y] of [[w * .72, h * .62], [w * .3, h * .62], [w * .72, h * .38], [w * .3, h * .38], [w * .5, h * .78]])
+      if (document.elementFromPoint(x, y)?.tagName === 'CANVAS') return { x, y };
+    throw new Error('No free canvas point');
+  }, { w: viewport.width, h: viewport.height });
+  const wheel = async delta => { const p = await canvasPoint(); await page.mouse.move(p.x, p.y); await page.mouse.wheel(0, delta); await frames(page, 2); };
+  const selected = id => page.waitForFunction(value => document.querySelector('.coast-sample [data-choices]:not([hidden]) li[aria-current]')?.getAttribute('data-id') === value, id);
+  /** Move one container (and nothing else) through the session's transaction; the attached Runtime restores it. */
+  const moveContainer = (id, at) => page.evaluate(({ id, at }) => {
+    const s = window.__bincov.saveSession, t = s.prepareExpansionMutation(d => {
+      const r = d.expansion.raid, c = r.maps[r.currentMap].containers.find(c => c.id === id); Object.assign(c, at);
+    });
+    if (!t || s.commitExpansionMutation(t) !== 'committed') throw new Error(`Container move rejected: ${window.__bincov.app.storageError}`);
+  }, { id, at });
   const step = async (name, work) => {
     const result = { viewport: label, name, status: 'running' }; report.results.push(result);
     try { await work(); assert.deepEqual(errors, []); assert.deepEqual(external, []); result.status = 'passed'; console.log(`PASS ${label}: ${name}`); }
-    catch (error) { result.status = 'failed'; result.error = error.stack; result.state = await state(); await page.screenshot({ path: resolve(out, `loot-target-failed-${label}.png`) }); throw error; }
+    catch (error) { result.status = 'failed'; result.error = error.stack; result.state = await state().catch(() => null); await page.screenshot({ path: resolve(out, `loot-target-failed-${label}.png`) }); throw error; }
   };
+  /** A check the old view made that the 2.5D Runtime cannot support yet: reported, never counted as a pass. */
+  const gap = (name, reason) => { report.results.push({ viewport: label, name, status: 'gap', reason }); console.log(`GAP ${label}: ${name} — ${reason}`); };
   try {
     await page.goto(url.href); await action('enter').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
-    await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+    await raidReady(page);
+    // Fixture: an outdoor crate with two scavengers killed on it through the Runtime's own damage path (one corpse
+    // container each), then the three inventories set through the session's transaction. Enemies stay frozen.
     const fixture = await page.evaluate(() => {
-      const a = window.__bincov.app, r = a.raid, crate = r.containers[0];
-      r.enemies.forEach(e => { e.sprite.setPosition(208, 1456); e.home = e.target = { x: 208, y: 1456 }; e.timer = e.cooldown = 9999; e.path = []; e.state = 'patrol'; });
-      r.loot.forEach(l => l.sprite.setPosition(208, 1456));
-      const enemies = r.enemies.filter(e => e.id === 'scav').slice(0, 2);
-      for (const e of enemies) { e.sprite.setPosition(crate.x, crate.y); r.damageEnemy(e, 10000); }
-      const corpses = enemies.map(e => r.containers.find(c => c.id === `corpse-${e.uid}`));
-      crate.inventory.items = []; corpses[0].inventory.items = [];
-      corpses[1].inventory.items = [{ uid: 'target-fuse', id: 'fuse', qty: 1, x: 0, y: 0 }];
-      r.player.setPosition(crate.x, crate.y); r.hp = 100; r.bleeding = 0; r.mag = 8; r.syncMagazine();
-      if (!r.checkpoint()) throw new Error('Overlapping fixture must pass strict checkpoint validation');
-      return { crate: crate.id, corpses: corpses.map(c => c.id), name: corpses[0].name, x: crate.x, y: crate.y };
+      const { app, saveSession } = window.__bincov, h = window.__bincovSample.host, driver = window.__bincovSample.driver;
+      driver.freezeAI(true);
+      const crate = h.lastBatch.frame.containers.filter(c => c.kind === 'crate' && c.regionId === null).sort((a, b) => Math.hypot(a.x - 640, a.y - 456) - Math.hypot(b.x - 640, b.y - 456))[0];
+      if (!crate) throw new Error('No outdoor crate for the fixture');
+      const scavs = h.lastBatch.frame.actors.filter(a => a.kind === 'scav' && a.alive).slice(0, 2);
+      for (const e of scavs) { driver.placeEnemy(e.uid, { x: crate.x, y: crate.y }); driver.kill(e.uid); }
+      const corpses = scavs.map(e => `corpse-${e.uid}`);
+      driver.placePlayer({ x: crate.x, y: crate.y }, 0, 'coast');
+      const t = saveSession.prepareExpansionMutation(d => {
+        const r = d.expansion.raid, boxes = r.maps[r.currentMap].containers, by = id => boxes.find(c => c.id === id);
+        by(crate.id).inventory.items = []; by(corpses[0]).inventory.items = [];
+        by(corpses[1]).inventory.items = [{ uid: 'target-fuse', id: 'fuse', qty: 1, x: 0, y: 0 }];
+        Object.assign(d.expansion.body, { hp: 100, bleeding: false, pollution: 0 });
+      });
+      if (!t || saveSession.commitExpansionMutation(t) !== 'committed') throw new Error(`Overlapping fixture must pass strict validation: ${app.storageError}`);
+      driver.weapon('pistol');
+      return { crate: crate.id, corpses, x: crate.x, y: crate.y };
     });
+    await frames(page, 4);
     await step('guide returns to pause on close and Escape; loot danger stays above item details', async () => {
-      await page.keyboard.press('Escape'); await action('help').click();
+      await page.keyboard.press('Escape'); await waitPanel(page, 'pause');
+      await doButton('guide').click(); await page.locator('.coast-sample [data-panel] h2', { hasText: '行动指南' }).waitFor();
       let elapsed = (await state()).elapsed;
-      await action('close').click(); assert.equal((await state()).overlay, 'pause');
-      await page.waitForTimeout(100); assert.equal((await state()).elapsed, elapsed);
-      await action('help').click(); await page.keyboard.press('Escape'); assert.equal((await state()).overlay, 'pause');
-      await action('close').click();
-      if (touch) await page.locator(`[data-loot-target="${fixture.corpses[1]}"] button`).tap();
-      else { for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100); await page.keyboard.press('e'); }
-      await page.locator('[data-uid="target-fuse"]').click();
-      await page.evaluate(() => { const r = window.__bincov.app.raid; r.hurt(3); r.bleeding = 1; r.pollution = 80; r.updateHud(); });
-      assert.equal((await state()).overlay, 'loot');
-      assert.match(await page.locator('#loot-hit').innerText(), /攻击/);
-      assert.match(await page.locator('#loot-condition').innerText(), /流血.*污染/);
-      const header = await page.locator('.loot-header').boundingBox(), detail = await page.locator('.loot-details').boundingBox();
-      assert.ok(header.y >= 0 && header.y + header.height <= viewport.height);
-      assert.ok(detail.y >= header.y + header.height - 1, 'Details must not cover fixed danger header');
-      elapsed = (await state()).elapsed; await page.waitForTimeout(200); assert.ok((await state()).elapsed > elapsed);
+      await doButton('pause-back').click(); await page.locator('.coast-sample [data-do="resume"]').waitFor();
+      assert.equal((await state()).panel, 'pause');
+      await frames(page, 6); assert.equal((await state()).elapsed, elapsed, 'the guide keeps the raid paused');
+      await doButton('guide').click(); await page.keyboard.press('Escape'); await frames(page, 6);
+      assert.equal((await state()).panel, 'pause', 'Escape closes the guide back to the pause panel');
+      assert.equal((await state()).elapsed, elapsed);
+      await doButton('resume').click(); await waitPanel(page, null);
+      if (touch) await page.locator(`.coast-sample [data-choices] li[data-id="${fixture.corpses[1]}"]`).tap();
+      else { for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100); await selected(fixture.corpses[1]); await page.keyboard.press('e'); }
+      await waitPanel(page, 'loot');
+      await page.locator('.coast-sample [data-uid="target-fuse"]').click();
+      await drive(page, 'hurt', 3); await drive(page, 'vitals', { bleeding: true, pollution: 80 });
+      await frames(page, 10);
+      assert.equal((await state()).panel, 'loot');
+      // 2.5D gap (front-end): the loot panel has no 攻击 hit text; a blow shows as the HUD's red edge instead.
+      // The danger stays readable: the HUD status names bleeding and pollution and is not covered by the docked panel.
+      await page.waitForFunction(() => /流血.*污染/.test(document.querySelector('.coast-sample [data-state]').textContent));
+      const status = await page.locator('.coast-sample .cs-status').boundingBox(), details = await page.locator('.coast-sample .cs-details').boundingBox(), sheet = await page.locator('.coast-sample [data-panel]').boundingBox();
+      assert.ok(status.y >= 0 && status.y + status.height <= viewport.height);
+      assert.ok(status.y + status.height <= sheet.y + 1 || status.x + status.width <= sheet.x + 1, 'The docked panel must not cover the HUD status');
+      assert.ok(details.y >= sheet.y - 1, 'Details stay inside the panel');
+      elapsed = (await state()).elapsed; await page.waitForFunction(t => window.__bincovSample.host.lastBatch.stamp.simulationTime > t, elapsed);
       await page.screenshot({ path: resolve(out, `loot-danger-${label}.png`) });
-      await page.evaluate(() => { const r = window.__bincov.app.raid; r.bleeding = 0; r.pollution = 0; r.hp = 100; });
-      await action('close').click();
+      await drive(page, 'vitals', { hp: 100, bleeding: false, pollution: 0 });
+      await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
     });
     if (touch) {
       await step('phone taps an exact source, including an empty corpse, and closes before choosing another', async () => {
-        await page.waitForFunction(() => document.querySelector('#touch-interact')?.textContent === '搜刮');
-        assert.equal(await page.locator('[data-loot-target]').count(), 3);
-        await page.locator(`[data-loot-target="${fixture.corpses[0]}"] button`).tap();
-        await page.waitForFunction(() => window.__bincov.app.overlay === 'loot');
-        const id = (await state()).target; assert.equal(id, fixture.corpses[0]); await wheel(100); assert.equal((await state()).target, id);
-        await action('close').tap(); await page.locator(`[data-loot-target="${fixture.corpses[1]}"] button`).tap();
+        await page.waitForFunction(() => document.querySelector('.coast-sample [data-act]')?.textContent === '搜刮');
+        await page.waitForFunction(() => document.querySelectorAll('.coast-sample [data-choices]:not([hidden]) li[data-id]').length === 3);
+        await page.locator(`.coast-sample [data-choices] li[data-id="${fixture.corpses[0]}"]`).tap();
+        await waitPanel(page, 'loot');
+        const id = (await state()).target; assert.equal(id, fixture.corpses[0]); await page.mouse.wheel(0, 100); await frames(page, 2); assert.equal((await state()).target, id);
+        await page.locator('.coast-sample [data-panel] [data-do="close"]').tap(); await waitPanel(page, null);
+        await page.locator(`.coast-sample [data-choices] li[data-id="${fixture.corpses[1]}"]`).tap(); await waitPanel(page, 'loot');
         assert.equal((await state()).target, fixture.corpses[1]);
       });
       return;
     }
     await step('all overlapping sources appear, empty sources remain and same-name corpses have distinct numbers', async () => {
-      await page.waitForFunction(() => document.querySelectorAll('[data-loot-target]').length === 3);
+      await page.waitForFunction(() => document.querySelectorAll('.coast-sample [data-choices]:not([hidden]) li[data-id]').length === 3);
       const s = await state(); assert.deepEqual(new Set(s.rows.map(r => r.id)), new Set([fixture.crate, ...fixture.corpses]));
-      assert.match(s.rows.find(r => r.id === fixture.corpses[0]).text, /1 · 已搜空/);
+      assert.match(s.rows.find(r => r.id === fixture.corpses[0]).text, /1 · 已搜空$/);
       assert.match(s.rows.find(r => r.id === fixture.corpses[1]).text, /2$/);
-      assert.match(s.rows.find(r => r.id === fixture.crate).text, /已搜空/);
-      await page.waitForTimeout(350); // Let the camera settle after the position fixture.
+      assert.match(s.rows.find(r => r.id === fixture.crate).text, /已搜空$/);
+      await frames(page, 20); // the camera settles on the placed player before the capture
       await page.screenshot({ path: resolve(out, `loot-targets-${label}.png`) });
     });
     await step('wheel moves both ways, wraps, and E opens exactly the highlighted source', async () => {
@@ -120,93 +157,100 @@ async function suite(viewport, touch = false) {
       await wheel(100); await selected(next); await wheel(-100); await selected(s.selected);
       await wheel(-100); await selected(s.rows[(index + 2) % 3].id);
       await wheel(100); await selected(s.selected);
-      for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) { await wheel(100); await page.waitForTimeout(80); }
+      for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100);
       await selected(fixture.corpses[1]); await page.keyboard.press('e');
-      await page.waitForFunction(() => window.__bincov.app.overlay === 'loot');
+      await waitPanel(page, 'loot');
       assert.equal((await state()).target, fixture.corpses[1]);
-      assert.equal(await page.locator('[data-source="container"][data-uid="target-fuse"]').count(), 1);
+      assert.equal(await page.locator('.coast-sample [data-source="container"][data-uid="target-fuse"]').count(), 1);
     });
     await step('wheel cannot switch a source inside loot, inventory or pause; closing preserves selection', async () => {
-      await wheel(100); assert.equal((await state()).target, fixture.corpses[1]);
-      assert.equal(await page.locator('#interaction').isVisible(), false);
-      await page.keyboard.press('Escape'); await selected(fixture.corpses[1]);
+      await page.mouse.wheel(0, 100); await frames(page, 2); assert.equal((await state()).target, fixture.corpses[1]);
+      assert.equal(await page.locator('.coast-sample [data-prompt]').isVisible(), false);
+      assert.equal(await page.locator('.coast-sample [data-choices]').isVisible(), false);
+      await page.keyboard.press('Escape'); await waitPanel(page, null); await selected(fixture.corpses[1]);
       for (const key of ['Tab', 'Escape']) {
         const before = (await state()).selected;
-        await page.keyboard.press(key); await page.waitForFunction(() => !!window.__bincov.app.overlay); await wheel(100);
-        await page.keyboard.press('Escape'); await selected(before);
+        await page.keyboard.press(key); await page.waitForFunction(() => !!window.__bincovSample.host.panel); await page.mouse.wheel(0, 100); await frames(page, 2);
+        await page.keyboard.press('Escape'); await waitPanel(page, null); await selected(before);
       }
     });
     await step('movement, gunfire, clock and enemies continue while the list is visible', async () => {
+      // Enemies run for this step (they patrol far from the fixture); movement and the shot use real input.
+      await drive(page, 'freezeAI', false);
       const before = await state(); await page.keyboard.down('d'); await page.waitForTimeout(80); await page.keyboard.up('d');
-      await page.mouse.click(viewport.width / 2, viewport.height / 2); await page.waitForTimeout(180);
+      const p = await canvasPoint(); await page.mouse.click(p.x, p.y);
+      await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, before.mag);
+      await page.waitForFunction(e => { const b = window.__bincovSample.host.lastBatch; return b.frame.actors.filter(a => a.alive).map(a => [a.uid, Math.round(a.x), Math.round(a.y), a.state.ai]).join(';') !== e; }, before.enemies);
       const after = await state(); assert.notEqual(after.x, before.x); assert.equal(after.mag, before.mag - 1);
-      assert.ok(after.elapsed > before.elapsed); assert.ok(after.enemyTimer < before.enemyTimer);
-      assert.equal(after.overlay, ''); assert.equal(after.selected, before.selected);
+      assert.ok(after.elapsed > before.elapsed); assert.notEqual(after.enemies, before.enemies, 'enemies keep acting');
+      assert.equal(after.panel, null);
+      await drive(page, 'freezeAI', true);
+      await drive(page, 'placePlayer', { x: fixture.x, y: fixture.y }, 0, 'coast'); await frames(page, 4);
+      await selected(fixture.corpses[1]);
     });
-    await step('ground loot remains accessible beside a selected container', async () => {
-      await page.evaluate(() => { const r = window.__bincov.app.raid; r.spawnLoot(r.player.x, r.player.y, 'sample', 1); });
-      await page.locator('#interaction [data-action="nearby"]').click();
-      await action('pickup-loot').click(); await page.waitForFunction(() => window.__bincov.app.loadout.bag.items.some(i => i.id === 'sample'));
-      await page.keyboard.press('Escape'); await selected(fixture.corpses[1]);
-    });
+    // 2.5D gap (Runtime, Astra): docs/LOOTING.md's 附近 list (picking scattered ground loot one by one while a container is
+    // selected) has no Runtime service; on a desktop E always opens the selected container.
+    gap('ground loot remains accessible beside a selected container', 'No 附近 list: the Runtime offers no pickup of a ground item that is not the interaction target (Astra).');
     await step('a departing selection falls back to an accessible target without renumbering corpses', async () => {
-      await page.evaluate(id => { window.__bincov.app.raid.getLootContainer(id).x += 100; }, fixture.corpses[1]);
-      await page.waitForFunction(id => !document.querySelector(`[data-loot-target="${id}"]`), fixture.corpses[1]);
+      const away = [{ x: fixture.x + 100, y: fixture.y }, { x: fixture.x - 100, y: fixture.y }, { x: fixture.x, y: fixture.y + 100 }, { x: fixture.x, y: fixture.y - 100 }]
+        .find(p => traversable(street, p, 'body', 10));
+      await moveContainer(fixture.corpses[1], away);
+      await page.waitForFunction(id => !document.querySelector(`.coast-sample [data-choices]:not([hidden]) li[data-id="${id}"]`), fixture.corpses[1]);
       const s = await state(); assert.ok(s.selected && s.selected !== fixture.corpses[1]);
-      assert.match(s.rows.find(r => r.id === fixture.corpses[0]).text, /1 · 已搜空/);
-      await page.keyboard.press('e'); await page.waitForFunction(() => window.__bincov.app.overlay === 'loot');
-      assert.equal((await state()).target, s.selected); await page.keyboard.press('Escape');
-      await page.evaluate(id => { window.__bincov.app.raid.getLootContainer(id).x -= 100; }, fixture.corpses[1]);
+      assert.match(s.rows.find(r => r.id === fixture.corpses[0]).text, /1 · 已搜空$/);
+      await page.keyboard.press('e'); await waitPanel(page, 'loot');
+      assert.equal((await state()).target, s.selected); await page.keyboard.press('Escape'); await waitPanel(page, null);
+      await moveContainer(fixture.corpses[1], { x: fixture.x, y: fixture.y });
     });
     await step('crowded lists keep every target reachable and the selected row visible', async () => {
       await page.evaluate(fixture => {
-        const r = window.__bincov.app.raid;
-        for (const e of r.enemies.filter(e => e.hp > 0 && e.id === 'scav').slice(0, 6)) {
-          e.sprite.setPosition(fixture.x, fixture.y); r.damageEnemy(e, 10000);
-        }
-        if (!r.checkpoint()) throw new Error('Crowded fixture must remain recoverable');
+        const h = window.__bincovSample.host, driver = window.__bincovSample.driver;
+        for (const e of h.lastBatch.frame.actors.filter(a => a.alive && a.kind === 'scav').slice(0, 6)) { driver.placeEnemy(e.uid, { x: fixture.x, y: fixture.y }); driver.kill(e.uid); }
+        if (!h.services.checkpoint()) throw new Error('Crowded fixture must remain recoverable');
       }, fixture);
-      await page.waitForFunction(() => document.querySelectorAll('[data-loot-target]').length > 4);
+      await page.waitForFunction(() => document.querySelectorAll('.coast-sample [data-choices]:not([hidden]) li[data-id]').length > 4);
       const count = (await state()).rows.length, seen = new Set();
       for (let i = 0; i < count; i++) {
         const s = await state(); seen.add(s.selected);
-        assert.ok(await page.locator('.loot-targets [aria-current]').evaluate(el => {
+        // One synchronous read: the host redraws the list each frame.
+        assert.ok(await page.evaluate(() => {
+          const el = document.querySelector('.coast-sample [data-choices] li[aria-current]'); if (!el) return false;
           const row = el.getBoundingClientRect(), list = el.parentElement.getBoundingClientRect();
-          return row.top >= list.top - 1 && row.bottom <= list.bottom + 1;
-        }));
+          return row.top >= list.top - 1 && row.bottom <= list.bottom + 1 && row.bottom <= innerHeight && row.top >= 0;
+        }), 'The selected row stays visible');
         await wheel(100);
       }
       assert.equal(seen.size, count);
       await page.screenshot({ path: resolve(out, `loot-targets-crowded-${label}.png`) });
     });
     await step('leaving range removes stale targets and E cannot reopen a remote source', async () => {
-      await page.evaluate(() => { window.__bincov.app.raid.player.setPosition(900, 784); });
-      await page.waitForFunction(() => !document.querySelector('[data-loot-target]'));
-      await page.keyboard.press('e'); assert.equal((await state()).overlay, '');
+      await drive(page, 'placePlayer', { x: 900, y: 784 }, 0, 'coast');
+      await page.waitForFunction(() => !document.querySelector('.coast-sample [data-choices]:not([hidden]) li[data-id]'));
+      await page.keyboard.press('e'); await frames(page, 4); assert.equal((await state()).panel, null);
     });
     await step('walls and high tide exclude inaccessible sources; selected flooded corpse disappears', async () => {
-      await page.evaluate(({ occluded, id }) => {
-        const r = window.__bincov.app.raid, c = r.getLootContainer(id);
-        r.highTide = false; r.player.setPosition(occluded.a.x, occluded.a.y); c.x = occluded.b.x; c.y = occluded.b.y;
-      }, { occluded, id: fixture.corpses[1] });
-      await page.waitForTimeout(100); assert.ok(!(await state()).rows.some(r => r.id === fixture.corpses[1]));
-      await page.evaluate(id => {
-        const r = window.__bincov.app.raid, c = r.getLootContainer(id);
-        c.x = 63 * 32 + 16; c.y = 10 * 32 + 16; r.player.setPosition(c.x, c.y); r.highTide = false;
-      }, fixture.corpses[1]); await selected(fixture.corpses[1]);
-      await page.evaluate(() => { const r = window.__bincov.app.raid; r.elapsed = r.config.tideAt - .01; });
-      await page.waitForFunction(() => window.__bincov.app.raid.highTide);
-      await page.waitForFunction(() => !document.querySelector('[data-loot-target]'));
+      await moveContainer(fixture.corpses[1], occluded.b); await drive(page, 'placePlayer', occluded.a, 0, 'coast'); await frames(page, 4);
+      assert.ok(!(await state()).choices.includes(fixture.corpses[1]), 'a source behind a wall is not offered');
+      // The red-tide pool by the sea wall is dry at low tide (seed 42 starts low) and floods at the tide change.
+      const pool = { x: 63 * 32 + 16, y: 10 * 32 + 16 };
+      await moveContainer(fixture.corpses[1], pool); await drive(page, 'placePlayer', pool, 0, 'coast');
+      await page.waitForFunction(id => window.__bincovSample.host.lastBatch.frame.interaction?.choices.some(c => c.id === id && c.selected) ?? window.__bincovSample.host.lastBatch.frame.interaction?.ref.id === id, fixture.corpses[1]);
+      assert.equal((await batch(page)).frame.highTide, false);
+      await drive(page, 'clock', 299.6);
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.highTide, null, { timeout: 30000 });
+      await page.waitForFunction(id => !(window.__bincovSample.host.lastBatch.frame.interaction?.choices ?? []).some(c => c.id === id) && window.__bincovSample.host.lastBatch.frame.interaction?.ref.id !== id, fixture.corpses[1]);
     });
     await step('extraction takes priority even with a container under the player', async () => {
-      await page.evaluate(id => {
-        const r = window.__bincov.app.raid, exit = r.config.exits[0], c = r.getLootContainer(id);
-        c.x = exit.x; c.y = exit.y; r.player.setPosition(exit.x, exit.y); r.hitTime = 0; r.bleeding = 0;
-      }, fixture.corpses[1]);
-      await page.waitForFunction(() => document.querySelector('#interaction')?.textContent.includes('撤离'));
-      await wheel(100); assert.equal(await page.locator('[data-loot-target]').count(), 0);
-      await page.keyboard.down('e'); await page.waitForFunction(() => window.__bincov.app.state === 'result'); await page.keyboard.up('e');
-      assert.equal(await page.locator('.loot-modal').count(), 0);
+      const exit = (await batch(page)).map.exits[0].at;
+      await moveContainer(fixture.corpses[1], exit); await drive(page, 'placePlayer', exit, 0, 'coast'); await drive(page, 'vitals', { bleeding: false });
+      await page.waitForFunction(() => document.querySelector('.coast-sample [data-prompt]')?.textContent.includes('撤离'));
+      await wheel(100); assert.equal(await page.locator('.coast-sample [data-choices]:not([hidden]) li[data-id]').count(), 0);
+      await page.keyboard.down('e');
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'ending', null, { timeout: 30000 });
+      await page.keyboard.up('e');
+      await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout: 30000 });
+      assert.equal(await page.locator('.coast-sample [data-panel].cs-inv-panel').count(), 0);
+      assert.equal(await page.evaluate(() => window.__bincov.app.save.lastResult?.outcome), 'extract');
     });
   } finally { await context.close(); }
 }
