@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 import { throughYard } from './yard-entry.mjs';
 import { browserOptions } from './browser-options.mjs';
 import { raidReady, frames, drive, panel, waitPanel, stand } from './raid-view.mjs';
+import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
 
 const out = resolve('test-results');
 await mkdir(out, { recursive: true });
@@ -28,6 +29,28 @@ async function failStorage(on, terminalOnly = false) {
       return window.__realStorageWrite.call(this, key, value);
     } : window.__realStorageWrite;
   }, {on, terminalOnly});
+}
+/**
+ * On a slow runner (CI's software GL) the first frames after a mount can be more than 2 s apart, and the Runtime then
+ * stall-pauses the raid ("画面暂时停顿…"), as it would for a player; keys then do nothing. Where a step needs the raid
+ * running, resume it through the pause panel, as a player would, and wait until it has stayed running for a few frames.
+ */
+async function running(p) {
+  for (let i = 0; i < 5; i++) {
+    const now = await p.evaluate(() => ({ panel: window.__bincovSample.host.panel, phase: window.__bincovSample.host.lastBatch.frame.phase }));
+    if (now.phase === 'running' && now.panel === null) {
+      await frames(p, 3);
+      if (await p.evaluate(() => window.__bincovSample.host.lastBatch.frame.phase === 'running')) return;
+      continue;
+    }
+    assert.equal(now.panel, 'pause', `the raid waits on ${now.panel}`);
+    // Only the Runtime's own stall pause is resumed here; any other pause is a failure of the step.
+    assert.ok(await p.evaluate(() => { const h = window.__bincovSample.host, seen = h.__stallSeen ?? 0, stalls = h.eventLog.filter(e => e.type === 'notice' && /^画面暂时停顿/.test(e.detail?.text ?? '') && e.seq > seen); if (!stalls.length) return false; h.__stallSeen = Math.max(...stalls.map(e => e.seq)); return true; }), 'the raid paused without the Runtime\'s stall notice');
+    report.stallResumes = (report.stallResumes ?? 0) + 1; console.log('STALL: resumed a stall pause');
+    await p.locator('.coast-sample [data-do="resume"]').click();
+    await p.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 30000 });
+  }
+  throw new Error('the raid did not stay running');
 }
 async function step(name, work) {
   const item = { name, status: 'running' }; report.steps.push(item);
@@ -95,26 +118,36 @@ try {
   });
   await step('failed safe transfer rolls back live containers', async () => {
     await action('tab', 'gear').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
-    await raidReady(page); await drive(page, 'freezeAI', true);
-    await page.keyboard.press('Tab'); await waitPanel(page, 'inventory');
+    await raidReady(page); await drive(page, 'freezeAI', true); await running(page);
     const item = page.locator('.coast-sample [data-panel] [data-source="bag"][aria-label^="密封绷带"]');
-    await item.click();
-    const before = await page.evaluate(() => window.__bincov.app.loadout);
-    // Bag to safe through the panel's quick transfer; a failed write restores both containers and shows the save dialog.
-    await failStorage(true); await page.locator('.coast-sample [data-do="inv-quick"]').click();
+    let before;
+    for (let attempt = 0; ; attempt++) {
+      await page.keyboard.press('Tab'); await waitPanel(page, 'inventory');
+      await item.click();
+      before = await page.evaluate(() => window.__bincov.app.loadout);
+      // Bag to safe through the panel's quick transfer; a failed write restores both containers and shows the save dialog.
+      // The fault arms on the click itself, so a periodic checkpoint just before it cannot take the failure instead.
+      await failSessionWritesOnClick(page, '.coast-sample [data-do="inv-quick"]');
+      try { await page.locator('.coast-sample [data-do="inv-quick"]').click({ timeout: 10000 }); break; }
+      catch (error) {
+        // A stall pause on a slow runner closed the panel before the tap (nothing was written): resume and open it again.
+        if (attempt >= 2 || await panel(page) !== 'pause' || await page.evaluate(() => window.__failedSessionWrites) > 0) throw error;
+        await running(page);
+      }
+    }
     await waitPanel(page, 'pause'); await page.locator('.coast-sample [data-do="retry-save"]').waitFor();
     assert.deepEqual(await page.evaluate(() => window.__bincov.app.loadout), before);
-    await failStorage(false); await page.locator('.coast-sample [data-do="retry-save"]').click(); await waitPanel(page, null);
+    await restoreSessionWrites(page); await page.locator('.coast-sample [data-do="retry-save"]').click(); await waitPanel(page, null);
   });
   await step('real extraction freezes on failed save; backup contains the collected sample', async () => {
     // The guaranteed sample lies on the street, with no container in reach to take the E press instead.
     const sample = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.loot.find(l => l.item === 'sample'));
     assert.ok(sample, 'the run placed its sample on the street');
-    await stand(page, { x: sample.x, y: sample.y });
+    await stand(page, { x: sample.x, y: sample.y }); await running(page);
     await page.keyboard.press('e', { delay: 100 });
     await page.waitForFunction(() => window.__bincov.app.loadout.bag.items.some(i => i.id === 'sample'));
     const exit = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.exits[0].at);
-    await stand(page, exit); await failStorage(true, true);
+    await stand(page, exit); await running(page); await failStorage(true, true);
     await page.keyboard.down('e');
     try {
       await page.waitForFunction(() => document.querySelector('.coast-sample [data-ending-title]')?.textContent === '撤离成功 · 正在保存结算'
@@ -176,7 +209,7 @@ try {
       await p.goto('https://bincov.test/game?test=1&entry=tabs');
       await p.locator('[data-action="enter"]').click();
       await p.locator('[data-action="deploy"]').click();
-      await raidReady(p);
+      await raidReady(p); await running(p);
       await p.keyboard.press('Escape'); await waitPanel(p, 'pause');
       await p.evaluate(() => {
         window.__realStorageWrite = Storage.prototype.setItem;
