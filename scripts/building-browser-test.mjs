@@ -124,6 +124,12 @@ try {
         });
         assert.ok(readout.overflow <= 1 && readout.right <= readout.cardRight + 1, 'Body status and weight stay inside the status card');
         assert.ok(readout.height <= readout.lineHeight * 2 + 1, 'The status and weight fit the HUD line');
+        // The weight follows the line's ideographic space; it and its unit render as one rect, on one line.
+        const weightRects = await page.evaluate(() => {
+            const t = document.querySelector('.coast-sample [data-state]').firstChild, r = document.createRange();
+            r.setStart(t, t.textContent.lastIndexOf('\u3000') + 1); r.setEnd(t, t.textContent.length); return r.getClientRects().length;
+        });
+        assert.equal(weightRects, 1, 'The weight and its unit fit on one line');
         await page.screenshot({ path: resolve(out, 'building-pursuit-door-closed-1280x720.png') });
         await page.reload(); await action('enter').click();
         await raidReady(page); await waitPanel(page, 'pause');
