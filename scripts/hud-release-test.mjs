@@ -1,4 +1,5 @@
-// Targeted SOL-F20-HUD-01 check. Weak DOM probes and actual input-manager references, not a total-heap claim.
+// Targeted SOL-F20-HUD-01 check: a settled raid's HUD can be collected, and the next raid still takes real input. Weak DOM
+// probes, not a total-heap claim. (The Phaser input-manager checks went with the Phaser view.)
 import assert from 'node:assert/strict';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -30,31 +31,30 @@ try {
         window.__positiveHud = document.querySelector('.cs-hud');
       });
       for (let i = 0; i < 20; i++) await page.keyboard.press('z');
-      row.sleepingKeyboardQueue = await page.evaluate(() => window.__bincov.app.game.input.keyboard.queue.length);
       await page.keyboard.press('Escape'); await page.locator('[data-do="abandon"]').click(); await page.locator('[data-do="abandon-yes"]').click();
       await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'));
       await cdp.send('HeapProfiler.collectGarbage');
       assert.equal(await page.evaluate(() => !!window.__hudWeak.deref()), true, 'positive control detects a deliberately retained detached HUD');
       await page.evaluate(() => { delete window.__positiveHud; });
       await cdp.send('HeapProfiler.collectGarbage');
-      row.result = await page.evaluate(() => {
-        const input = window.__bincov.app.game.input;
-        return { inputEnabled: input.enabled, keyboardEnabled: input.keyboard.enabled, oldHudAlive: !!window.__hudWeak.deref(),
-          pointers: input.pointers.map(p => ({ eventInHud: !!p.event?.target?.closest?.('.cs-hud'), downInHud: !!p.downElement?.closest?.('.cs-hud'), upInHud: !!p.upElement?.closest?.('.cs-hud') })) };
-      });
-      assert.equal(row.result.inputEnabled, true, 'Phaser input is available again on results');
-      assert.equal(row.result.keyboardEnabled, true, 'Phaser keyboard is available again on results');
-      assert.ok(row.result.pointers.every(p => !p.eventInHud && !p.downInHud && !p.upInHud), 'Phaser must release every old HUD pointer edge');
+      row.result = await page.evaluate(() => ({ oldHudAlive: !!window.__hudWeak.deref(), hosts: document.querySelectorAll('.coast-sample').length }));
       assert.equal(row.result.oldHudAlive, false, 'old HUD can be collected before clicking away from results');
-      assert.equal(row.sleepingKeyboardQueue, 0, 'external input must not accumulate in the sleeping Phaser keyboard queue');
+      assert.equal(row.result.hosts, 0, 'no raid view is left on the result page');
+      // The next raid gets a fresh host on the same page: a classic coast checkpoint raid (still deployable under ?test=1)
+      // must move with the keyboard and fire with the mouse.
       await page.locator('[data-action="return"]').click();
       await page.locator('#run-world').selectOption('coast'); await page.locator('[data-action="deploy"]').click();
-      await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-      const before = await page.evaluate(() => window.__bincov.app.raid.player.x);
-      await page.keyboard.down('d'); await page.waitForTimeout(250); await page.keyboard.up('d');
-      assert.notEqual(await page.evaluate(() => window.__bincov.app.raid.player.x), before, 'classic movement remains usable after returning from the sample');
-      const canvas = page.locator('#game canvas'); await canvas.click({ position: { x: 600, y: 280 } });
-      assert.equal(await page.evaluate(() => window.__bincov.app.game.input.mousePointer.event?.target === window.__bincov.app.game.canvas), true);
+      await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch && window.__bincovSample.host.lastBatch.map.name === '沿海封锁区');
+      await page.evaluate(() => { window.__bincovSample.driver.freezeAI(true); window.__bincovSample.driver.weapon('pistol'); });
+      const before = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.player.x);
+      await page.keyboard.down('d');
+      try { await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x > x + 4, before, { timeout: 15000 }); }
+      finally { await page.keyboard.up('d'); }
+      row.moved = await page.evaluate(x => window.__bincovSample.host.lastBatch.frame.player.x - x, before);
+      const mag = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag);
+      await page.locator('.coast-sample canvas').click({ position: { x: 600, y: 280 } });
+      await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, mag, { timeout: 15000 });
+      row.fired = { before: mag, after: mag - 1 };
       assert.deepEqual(errors, []);
       row.status = 'passed';
     } catch (e) { row.status = 'failed'; row.error = String(e.stack); process.exitCode = 1; }
