@@ -586,6 +586,8 @@ export class CoastSampleHost {
   /** Turning a phone upright pauses with the rotate notice; turning it back offers 继续 again. */
   private orientation() {
     if (!this.mounted || this.exiting || this.panel === 'ending') return;
+    // Held upright the raid waits for landscape: the touch buttons (too wide to fit, unusable while paused) step aside.
+    this.root.classList.toggle('upright', this.upright());
     if (this.upright()) { if (this.panel !== 'pause') this.pause(); else if (!this.pausedUpright) this.showPause(); }
     else if (this.panel === 'pause' && this.pausedUpright) this.showPause();
   }

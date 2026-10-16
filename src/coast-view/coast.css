@@ -66,6 +66,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .coast-sample.touch .cs-keys { display: none; }
 .coast-sample.touch .cs-arms { bottom: 76px; }
 .coast-sample.touch .cs-touch { display: flex; }
+.coast-sample.touch.upright .cs-touch { display: none; }
 .cs-touch button { min-width: 60px; min-height: 48px; background: #1b1a17cc; color: #f0e3bd; border-color: #c9a65e99; }
 /* Phones have no keys: the medical shortcut shows no Q. */
 .coast-sample.touch .cs-heal kbd { display: none; }
