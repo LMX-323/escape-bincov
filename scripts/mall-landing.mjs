@@ -1,7 +1,9 @@
 /**
  * Crowded stair landing on the 2.5D mall (layout 3, the layout a new mall raid deploys): with every legal landing slot
  * on F2 occupied, E keeps the player on F1 with no population transfer and says why; with one slot cleared, exactly one
- * transition happens, to the specified landing, and five seconds of held E / W / left button do nothing on F2.
+ * transition happens, to the specified landing, and five seconds of held E / W do nothing on F2. (A held mouse button
+ * fires only on its press, so it cannot fire again on F2; held touch fire after a landing is checked in
+ * tests/mall-runtime.test.ts G-07/S-04.)
  */
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
@@ -31,13 +33,12 @@ try{
  await frames(page,3);const blocked=await snapshot();assert.equal(blocked.map,'mall-f1');assert.equal(blocked.shown,'mall-f1');assert.deepEqual(blocked.enemies,before.enemies);assert.equal(blocked.pursuits.length,0);
  report.steps.push({name:'all legal landing slots occupied: stays on F1 without population transfer',status:'passed',slots:slots.length,toast:await page.locator('.coast-sample [data-toast]').innerText()});await page.screenshot({path:resolve(out,'mall-landing-blocked-1280x720.png')});
  await page.evaluate(at=>{const s=window.__bincov.saveSession,t=s.prepareExpansionMutation(d=>{const r=d.expansion.raid,target=r.maps['mall-f2'],enemy=target.enemies.find(e=>Math.hypot(e.x-at.x,e.y-at.y)<1);Object.assign(enemy,{x:1136,y:752,home:{x:1136,y:752},target:{x:1136,y:752}});});if(!t||s.commitExpansionMutation(t)!=='committed')throw new Error('Clear-one fixture rejected');},at);
- // Hold fire on the canvas (away from the HUD cards), walk north and press E: one transition, then nothing for five seconds.
- await page.mouse.move(900,420);await page.keyboard.down('w');await page.mouse.down();await page.keyboard.down('e');
- await mapShown('mall-f2');const arrived=await snapshot();await page.waitForTimeout(5000);const landed=await snapshot();
+ // Walk north and press E: one transition, then nothing for five seconds.
+ await page.keyboard.down('w');await page.keyboard.down('e');
+ await mapShown('mall-f2');await page.waitForTimeout(5000);const landed=await snapshot();
  assert.equal(landed.map,'mall-f2');assert.deepEqual({x:landed.player.x,y:landed.player.y},{x:at.x,y:at.y},'held W never moves the player off the landing');assert.deepEqual(landed.enemies,before.enemies);assert.equal(landed.pursuits.length,0);
- assert.equal(landed.mag,arrived.mag,'held fire never fires on the new floor');
  assert.equal(await page.evaluate(()=>window.__bincovSample.host.eventLog.filter(e=>e.type==='layer').length),1,'exactly one floor change');
- await page.keyboard.up('w');await page.mouse.up();await page.keyboard.up('e');report.steps.push({name:'one slot cleared: specified landing accepted once; five-second held E/move/fire stays suppressed',status:'passed'});await page.screenshot({path:resolve(out,'mall-landing-clear-1280x720.png')});
+ await page.keyboard.up('w');await page.keyboard.up('e');report.steps.push({name:'one slot cleared: specified landing accepted once; five-second held E/move stays suppressed',status:'passed'});await page.screenshot({path:resolve(out,'mall-landing-clear-1280x720.png')});
  assert.deepEqual(report.errors,[]);assert.deepEqual(report.requests,[]);report.status='passed';console.log('PASS mall blocked landing, one-slot retry and five-second held input');
 }catch(e){report.status='failed';report.failure=e.stack;console.error(e);process.exitCode=1;}
 finally{report.finishedAt=new Date().toISOString();await writeFile(resolve(out,'mall-landing-report.json'),JSON.stringify(report,null,2));await ctx.close();await browser.close();}
