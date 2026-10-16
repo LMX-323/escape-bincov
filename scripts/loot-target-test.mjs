@@ -115,15 +115,24 @@ async function suite(viewport, touch = false) {
       else { for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100); await selected(fixture.corpses[1]); await page.keyboard.press('e'); }
       await waitPanel(page, 'loot');
       await page.locator('.coast-sample [data-uid="target-fuse"]').click();
-      await drive(page, 'hurt', 3); await drive(page, 'vitals', { bleeding: true, pollution: 80 });
+      // The loot window's own danger line names a blow at once (the world keeps running while looting).
+      await drive(page, 'hurt', 3);
+      await page.waitForFunction(() => /正在遭受攻击/.test(document.querySelector('.coast-sample [data-panel] [data-risk]')?.textContent ?? ''), null, { timeout: 15000 });
+      await drive(page, 'vitals', { bleeding: true, pollution: 80 });
       await frames(page, 10);
       assert.equal((await state()).panel, 'loot');
-      // 2.5D gap (front-end): the loot panel has no 攻击 hit text; a blow shows as the HUD's red edge instead.
-      // The danger stays readable: the HUD status names bleeding and pollution and is not covered by the docked panel.
-      await page.waitForFunction(() => /流血.*污染/.test(document.querySelector('.coast-sample [data-state]').textContent));
-      const status = await page.locator('.coast-sample .cs-status').boundingBox(), details = await page.locator('.coast-sample .cs-details').boundingBox(), sheet = await page.locator('.coast-sample [data-panel]').boundingBox();
-      assert.ok(status.y >= 0 && status.y + status.height <= viewport.height);
-      assert.ok(status.y + status.height <= sheet.y + 1 || status.x + status.width <= sheet.x + 1, 'The docked panel must not cover the HUD status');
+      // Health, time left, bleeding and pollution stay readable above the item details: in the loot window's danger
+      // line everywhere, and in the HUD status where the docked panel leaves it uncovered (not on a short phone).
+      await page.waitForFunction(() => /生命\s*\d+.*封锁倒计时.*流血.*污染/.test(document.querySelector('.coast-sample [data-panel] [data-risk]').textContent));
+      const risk = await page.locator('.coast-sample [data-panel] [data-risk]').boundingBox(), details = await page.locator('.coast-sample .cs-details').boundingBox(), sheet = await page.locator('.coast-sample [data-panel]').boundingBox();
+      assert.ok(risk && risk.y >= 0 && risk.y + risk.height <= viewport.height && risk.x >= 0 && risk.x + risk.width <= viewport.width + 1, 'The danger line is on screen');
+      assert.ok(risk.y + risk.height <= details.y + 1, 'The danger line stays above the item details');
+      if (!touch) {
+        await page.waitForFunction(() => /流血.*污染/.test(document.querySelector('.coast-sample [data-state]').textContent));
+        const status = await page.locator('.coast-sample .cs-status').boundingBox();
+        assert.ok(status.y >= 0 && status.y + status.height <= viewport.height);
+        assert.ok(status.y + status.height <= sheet.y + 1 || status.x + status.width <= sheet.x + 1, 'The docked panel must not cover the HUD status');
+      }
       assert.ok(details.y >= sheet.y - 1, 'Details stay inside the panel');
       elapsed = (await state()).elapsed; await page.waitForFunction(t => window.__bincovSample.host.lastBatch.stamp.simulationTime > t, elapsed);
       await page.screenshot({ path: resolve(out, `loot-danger-${label}.png`) });

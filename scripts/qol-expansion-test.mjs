@@ -119,10 +119,10 @@ try {
         });
         // Capture the one-second feedback in one browser turn, before the HUD naturally expires it.
         const hit = await page.waitForFunction(() => document.querySelectorAll('.coast-sample [data-hits] i').length > 0
-            ? { panel: window.__bincovSample.host.panel } : false, null, { timeout: 15000 });
+            ? { panel: window.__bincovSample.host.panel, risk: document.querySelector('.coast-sample [data-panel] [data-risk]')?.textContent ?? '' } : false, null, { timeout: 15000 });
         const feedback = await hit.jsonValue();
         assert.equal(feedback.panel, 'loot');
-        // 2.5D gap (front-end): the loot panel shows no 攻击 hit text; the blow shows as the HUD's direction mark and red edge.
+        assert.match(feedback.risk, /正在遭受攻击/, 'the loot window names the blow without closing');
         await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
         await page.keyboard.press('m'); await waitPanel(page, 'map');
         assert.equal(await page.locator('.coast-sample [data-do="map-floor"]').count(), 2); assert.equal(await page.locator('.coast-sample [data-panel] [data-exit] option').count(), 3);
