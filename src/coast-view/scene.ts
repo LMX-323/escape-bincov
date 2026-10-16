@@ -787,6 +787,18 @@ export class CoastView {
   private openingGuides: { s: Sprite; at: Point }[] = [];
   private updateStructureGuides(f: ViewFrame) {
     const map = this.map!, occupied = occupiedStructure(map, f.player);
+    // The original drew door guides under enemies and bullets. Here a guide is drawn above the actors (xray, so it shows
+    // through walls), so it steps aside for the frames an enemy (body, held weapon, shadow) or a bullet's trail is on it.
+    const threats: Rect[] = [];
+    for (const a of f.actors) {
+      const g = this.actors.get(a.uid), t = g?.body.texture;
+      if (!g?.body.visible || !t) continue;
+      threats.push({ x: g.body.x - t.width / 2 - 12, y: g.body.y - t.height, w: t.width + 24, h: t.height + 8 });
+    }
+    for (const b of f.bullets) if (shownAt(map, f.revealed, b)) {
+      const v = Math.hypot(b.vx, b.vy) || 1, tx = b.x - b.vx / v * 14, ty = b.y - AIM_H - b.vy / v * 14;
+      threats.push({ x: Math.min(b.x, tx) - 2, y: Math.min(b.y - AIM_H, ty) - 2, w: Math.abs(b.x - tx) + 5, h: Math.abs(b.y - AIM_H - ty) + 5 });
+    }
     for (const o of this.openingGuides) {
       const d = Math.hypot(o.at.x - f.player.x, o.at.y - f.player.y);
       o.s.visible = d < 9 * 32; o.s.alpha = d < 2.5 * 32 ? .95 : .7;
@@ -798,6 +810,8 @@ export class CoastView {
       const open = !!f.doors[door.id];
       guide.texture = this.tex.ensure(`door-guide:${door.wall}:${open}`, () => paintDoorGuide(door.wall, open));
       guide.alpha = f.interaction?.ref.id === door.id ? 1 : .82;
+      const box = { x: guide.x, y: guide.y, w: guide.texture.width, h: guide.texture.height };
+      if (threats.some(t => intersects(t, box))) guide.visible = false;
     }
     for (const entry of map.entries) {
       const label = this.stairLabels.get(entry.id)!;
