@@ -52,8 +52,7 @@
     "test:title-water": "node --import tsx scripts/title-water-review.mjs",
     "test:issue26-station": "node --import tsx scripts/issue26-station-test.mjs",
     "test:issue26-inventory": "node scripts/issue26-raid-inventory-test.mjs",
-    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs",
-    "test:issue26-phaser-spatial": "node scripts/issue26-phaser-spatial.mjs"
+    "test:issue26-spatial": "node scripts/issue26-spatial-test.mjs"
   },
   "dependencies": {
     "pixi.js": "8.22.0"
