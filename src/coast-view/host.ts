@@ -924,7 +924,14 @@ export class CoastSampleHost {
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
   private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); }
-  toast(text: string, bad = false) { const t = this.q('[data-toast]'); if (!t) return; t.textContent = text; t.classList.add('on'); t.classList.toggle('bad', bad); this.toastLeft = 2.8; }
+  /** One line at a time; the same line again while it shows counts up (获得 绷带 ×1 × 2), as the original toasts did. */
+  toast(text: string, bad = false) {
+    const t = this.q('[data-toast]'); if (!t) return;
+    this.toastCount = text === this.toastText && this.toastLeft > 0 ? this.toastCount + 1 : 1; this.toastText = text;
+    t.textContent = this.toastCount > 1 ? `${text} × ${this.toastCount}` : text; t.classList.add('on'); t.classList.toggle('bad', bad); this.toastLeft = 2.8;
+  }
+  private toastText = '';
+  private toastCount = 1;
   private fade() { const f = this.q('[data-fade]'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
 
   /** Write a checkpoint now (beforeunload); the Runtime ignores it when locked or ending. */

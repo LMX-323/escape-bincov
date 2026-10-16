@@ -80,9 +80,9 @@ export class InventoryPanel {
         <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>`;
     // The loot window keeps a danger line (health, time, condition, a blow), filled by the host each frame.
     this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">世界仍在运行，请留意周围</span></div>${this.mode === 'loot' ? '<div class="cs-risk" data-risk></div>' : ''}<button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
-      <div class="cs-inv">${this.host.touch() ? container + own : own + container}
+      ${this.placementBar()}<div class="cs-inv">${this.host.touch() ? container + own : own + container}
         <aside class="cs-details">${this.details()}</aside>
-      </div>${this.placementBar()}
+      </div>
       <footer class="cs-inv-foot" role="status">${esc(this.status || this.hint())}</footer>`;
   }
   /** While placing: rotate the preview and cancel as buttons too (a phone has no R or Esc), as the original panel did. */
