@@ -15,6 +15,7 @@ import { build } from 'esbuild';
 import { chromium } from 'playwright';
 import { ITEMS } from '../src/domain.ts';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls, running } from './stall-resume.mjs';
 
 const out = resolve('test-results/art-review');
 await mkdir(out, { recursive: true });
@@ -33,11 +34,12 @@ const STATS = `window.__stats = c => {
 };`;
 try {
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true, reducedMotion: 'reduce' });
+  await resumeStalls(context);
   context.on('page', page => page.on('pageerror', e => report.errors.push(String(e))));
   context.on('request', req => { if (/^https?:/.test(req.url())) report.externalRequests.push(req.url()); });
   const page = await context.newPage(); page.setDefaultTimeout(20000);
   await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
-  await page.locator('[data-action="enter"]').waitFor();
+  await page.locator('[data-action="enter"]').waitFor({ timeout: 60000 });
 
   // ---- Item art: every item at its runtime sizes, from the game's painters ----
   const sheet = await context.newPage();
@@ -158,7 +160,8 @@ try {
     }
     throw new Error(`No walkable point near (${x}, ${y})`);
   }, [x, y]);
-  const settle = async () => { await page.evaluate(() => new Promise(r => { let i = 0; const f = () => ++i >= 20 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); })); await page.waitForTimeout(800); };
+  const frames = n => page.evaluate(n => new Promise(r => { let i = 0; const f = () => ++i >= n ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), n);
+  const settle = async () => { await frames(20); await page.waitForTimeout(800); };
 
   // ---- An emptied crate keeps its empty look in the save and after a reload ----
   // Real input: E opens an outdoor crate and each stack goes to the bag by its 拿到背包 button (the Runtime's loot
@@ -177,20 +180,27 @@ try {
   const full = await crateLook();
   let target = null;
   for (const [dx, dy] of [[0, 26], [0, -26], [26, 0], [-26, 0]]) {
-    await standNear(crate.x + dx, crate.y + dy); await page.waitForTimeout(250);
+    await standNear(crate.x + dx, crate.y + dy); await frames(3);
     target = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.interaction?.ref.id ?? null);
     if (target === crate.id) break;
   }
   assert.equal(target, crate.id, 'the crate is the interaction target');
-  await page.keyboard.press('e');
-  await page.waitForFunction(id => window.__bincovSample.host.panel === 'loot' && window.__bincovSample.host.services.lootContext()?.containerId === id, crate.id);
+  // E opens the crate (again, if a stall pause on a slow runner closed its panel: the Runtime pauses, the panel closes).
+  const openCrate = async () => {
+    await running(page); await page.keyboard.press('e');
+    await page.waitForFunction(id => window.__bincovSample.host.panel === 'loot' && window.__bincovSample.host.services.lootContext()?.containerId === id, crate.id);
+    // The view lifts the lid on the next frames it draws with the panel up.
+    await frames(3);
+  };
+  await openCrate();
   const open = await crateLook();
   // A stack can go in two steps: the first tops up the bag's own stack of that item (获得 …（部分）), the next takes the rest.
   const units = () => page.evaluate(id => window.__bincovSample.host.lastBatch.frame.containers.find(c => c.id === id).totalQty, crate.id);
   for (let left = await units(), tries = 0; left > 0; left = await units()) {
     assert.ok(++tries <= crate.stacks * 2, 'each stack leaves the crate within two transfers');
+    if (await page.evaluate(() => window.__bincovSample.host.panel) !== 'loot') await openCrate();
     await page.locator('.coast-sample [data-source="container"][data-uid]').first().click(); await page.locator('.coast-sample [data-do="inv-quick"]').click();
-    await page.waitForFunction(([id, left]) => window.__bincovSample.host.lastBatch.frame.containers.find(c => c.id === id).totalQty < left, [crate.id, left], { timeout: 5000 })
+    await page.waitForFunction(([id, left]) => window.__bincovSample.host.lastBatch.frame.containers.find(c => c.id === id).totalQty < left, [crate.id, left], { timeout: 20000 })
       .catch(async () => {
         const why = await page.evaluate(() => ({ toast: document.querySelector('.coast-sample [data-toast]')?.textContent, status: document.querySelector('.coast-sample .cs-inv-foot')?.textContent,
           bag: window.__bincov.app.loadout.bag.items.map(i => `${i.id}x${i.qty}`) }));
@@ -201,7 +211,7 @@ try {
   const emptied = await crateLook();
   await page.keyboard.press('Escape'); await page.waitForFunction(() => window.__bincovSample.host.panel === null); await settle();
   const closed = await crateLook();
-  await page.reload(); await page.locator('[data-action="enter"]').click();
+  await page.reload(); await page.locator('[data-action="enter"]').click({ timeout: 60000 });
   await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch); await settle();
   const restored = await crateLook();
   assert.equal(await page.evaluate(() => window.__bincovSample.host.panel), 'pause', 'the reloaded raid resumes paused');
