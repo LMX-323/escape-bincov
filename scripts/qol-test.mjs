@@ -158,9 +158,8 @@ async function suite(viewport, touch = false) {
         const source = await page.locator('.coast-sample [data-uid="qol-water"]').boundingBox(), grid = await page.locator('.coast-sample [data-grid="bag"]').boundingBox(), cell = grid.width/6;
         await page.mouse.move(source.x+10,source.y+10); await page.mouse.down(); await page.mouse.move(source.x+25,source.y+20,{steps:4});
         await page.mouse.move(grid.x+3.4*cell,grid.y+4.4*cell,{steps:8});
+        // R redraws the preview at once, with the pointer still.
         await page.locator('.coast-sample .drop-preview.invalid').waitFor(); await page.keyboard.press('r');
-        // The panel redraws the preview on the next pointer move after R.
-        await page.mouse.move(grid.x+3.4*cell+1,grid.y+4.4*cell,{steps:1});
         await page.locator('.coast-sample .drop-preview:not(.invalid)').waitFor();
         const box = await page.locator('.coast-sample .drop-preview').boundingBox(); assert.ok(Math.abs(box.width/box.height-2)<.05);
       }
@@ -213,7 +212,12 @@ async function suite(viewport, touch = false) {
       await page.waitForFunction(()=>/泵机零件：仓库 2 · 携带 1 \/ 需 3/.test(document.querySelector('.coast-sample [data-quest-list]').innerText),null,{timeout:15000});
       assert.equal(await page.locator('.coast-sample [data-quest-list] section').count(),3);
       if (touch) assert.ok(await page.locator('.coast-sample [data-quests]').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('.coast-sample .cs-touch button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
-      if (touch) assert.ok(await page.locator('.coast-sample [data-radio]').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.coast-sample .cs-info').getBoundingClientRect(); return el.hidden || r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom; }), 'Radio and navigation must remain readable without overlap');
+      if (touch) {
+        // A radio line is on screen for the check: the tide warning at 270 s.
+        await drive(page, 'clock', 269.9);
+        await page.waitForFunction(()=>!document.querySelector('.coast-sample [data-radio]').hidden,null,{timeout:15000});
+        assert.ok(await page.locator('.coast-sample [data-radio]').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.coast-sample .cs-info').getBoundingClientRect(); return r.width>0 && (r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom); }), 'Radio and navigation must remain readable without overlap');
+      }
       assert.match(await page.locator('.coast-sample [data-quest-list]').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
       assert.match(await page.locator('.coast-sample [data-quests] small').innerText(),/携带含带入物资/);
       const p = (await batch(page)).frame.player;
