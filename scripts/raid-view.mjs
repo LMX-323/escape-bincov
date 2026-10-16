@@ -47,5 +47,11 @@ export async function abandon(page) {
   await page.locator('.coast-sample [data-do="abandon-yes"]').click();
   await settled(page);
 }
+/**
+ * A behaviour the old view had that the 2.5D Runtime does not give yet (a known gap with an owner). It is recorded in
+ * report.gaps and printed as GAP; the caller then asserts today's behaviour, so the suite turns red once the gap is
+ * fixed and the original check has to come back.
+ */
+export function gap(report, name, detail) { (report.gaps ??= []).push({ name, detail }); console.log(`GAP ${name}: ${detail}`); }
 /** The settlement is saved and the host has handed the page to the result screen. */
 export const settled = (page, timeout = 30000) => page.waitForFunction(() => !document.querySelector('.coast-sample') && window.__bincov?.app.state === 'result', null, { timeout });

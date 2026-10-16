@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { gap } from './raid-view.mjs';
 
 const { values } = parseArgs({ options: { entry: { type: 'string', default: 'dist/index.html' }, filter: { type: 'string', default: '' }, report: { type: 'string', default: 'desktop-input' } } });
 const out = resolve('test-results', values.report);
@@ -155,14 +156,15 @@ try {
     await page.keyboard.press('q', { delay: 60 });
     // The rejected heal is reported through the host's toast.
     await page.waitForFunction(() => document.querySelector('.coast-sample [data-toast]')?.classList.contains('on'));
-    const rejected = await state(page);
+    const toast = await page.locator('.coast-sample [data-toast]').innerText(), rejected = await state(page);
     let after;
     try {
       await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x > x + 15, rejected.x, { timeout: 20000 });
       after = await state(page);
     } finally { await page.keyboard.up('d'); }
-    // 2.5D gap (Runtime, Astra): a rejected transaction drops the Runtime's own explanation (生命已满…), so the toast is
-    // the generic one; restore the /生命已满/ check on [data-toast] once the Runtime keeps that message.
+    // Known gap: today's generic toast is asserted, so a fix turns this red and the /生命已满/ check comes back.
+    gap(report, 'rejected heal says why', 'The Runtime drops its own 生命已满… line with the rolled-back heal transaction, so the toast is generic (Runtime, Astra).');
+    assert.equal(toast, '操作未完成，请检查空间与条件。'); assert.doesNotMatch(toast, /生命已满/);
     assert.deepEqual(after.bag, before.bag); assert.equal(after.hp, before.maxHp); assert.equal(after.bleeding, false);
     assert.equal(after.panel, null);
     assert.ok(after.x > rejected.x + 15, `Held D stopped after Q: ${rejected.x} -> ${after.x}`);
