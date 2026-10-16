@@ -1,8 +1,8 @@
 /**
- * The 2.5D raid view: coast-buildings raids and mall raids on layout revision 2 or 3 run on the Pixi host over the real
- * Runtime instead of the Phaser RaidScene, and a new mall raid deploys revision 3. Only classic coast and mall layout 1
- * raids, which can only be ones started before the switch, finish on the Phaser RaidScene. Only one of the two may own
- * the SaveSession: the RaidScene is never started while this host is alive.
+ * The 2.5D raid view: every raid runs on the Pixi host over the real Runtime, and a new mall raid deploys layout
+ * revision 3. Raids started before the switch (classic coast checkpoints, mall layout 1) resume and settle here too.
+ * Only one host may own the SaveSession: the legacy Phaser RaidScene (test fixture only) never starts while this one is
+ * alive.
  *
  * ?sample=village and ?sample=mall remain playtest entries: they preselect the area, pick a village seed in the dressed
  * corner, and mark the areas the samples have not dressed yet.
@@ -38,13 +38,10 @@ export const raidWorlds = (): RunWorld[] => params().get('test') === '1' ? ['coa
 /** Area selected when the page opens. */
 export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : legacyRaid() ? 'coast' : 'buildings';
 /**
- * The raid in the save is one the 2.5D view draws: coast-buildings, or mall layout 2 or 3 (a raid deployed on layout 2
- * keeps it until it ends).
+ * The 2.5D view draws every raid in the save: coast-buildings, mall layouts 1-3 (a raid keeps the layout it deployed on
+ * until it ends) and the classic coast's checkpoint raids started before that area closed.
  */
-export const sampleSupports = () => {
-  const world = app.expansion?.raid?.worldVersion;
-  return !legacyRaid() && (world === 'coast-buildings-v1' || world === 'mall-v2' || world === 'mall-v3');
-};
+export const sampleSupports = () => !legacyRaid() && (!!app.expansion?.raid || !!app.checkpoint);
 /** Layout revision for a new mall raid: revision 3, the one the 2.5D view furnishes; the legacy fixture keeps the default. */
 export const sampleMallLayout = (world: string): 3 | undefined => !legacyRaid() && world === 'mall' ? 3 : undefined;
 
