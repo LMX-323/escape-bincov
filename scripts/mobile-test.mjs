@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { browserOptions } from './browser-options.mjs';
 import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
+import { gap } from './raid-view.mjs';
 
 const out=resolve('test-results/mobile'); await mkdir(out,{recursive:true});
 const report={startedAt:new Date().toISOString(),method:'Chromium touch emulation with real CDP multi-touch, fault injection, complete checkpoint comparisons and offline requests blocked. Not physical iPhone/Android or Safari validation.',steps:[],errors:[],requests:[]};
@@ -90,13 +91,15 @@ try{
   await touch('touchMove',[held]);await page.waitForTimeout(150);
   await touch('touchStart',[held,{id:5,...heal}]);
   await page.waitForFunction(()=>document.querySelector('.coast-sample [data-toast]')?.classList.contains('on'),null,{timeout:20000});
+  const toast=await page.locator('.coast-sample [data-toast]').innerText();
   // CDP touchMove carries the remaining active points; touchEnd would release every finger.
   await touch('touchMove',[held]);const rejected=(await runtime()).raid;
   let after;
   try{await page.waitForFunction(x=>window.__bincovSample.host.lastBatch.frame.player.x>x+15,rejected.x,{timeout:20000});after=(await runtime()).raid;}
   finally{await touch('touchEnd',[]);}
-  // 2.5D gap (Runtime, Astra): a rejected heal loses the Runtime's own explanation (生命已满…) and shows the generic
-  // toast; restore the /生命已满/ check on [data-toast] once the Runtime keeps that message.
+  // Known gap: today's generic toast is asserted, so a fix turns this red and the /生命已满/ check comes back.
+  gap(report,'rejected heal says why','The Runtime drops its own 生命已满… line with the rolled-back heal transaction, so the toast is generic (Runtime, Astra).');
+  assert.equal(toast,'操作未完成，请检查空间与条件。');assert.doesNotMatch(toast,/生命已满/);
   assert.equal(after.hp,max);assert.ok(after.x>rejected.x+15,JSON.stringify({rejected,after}));
   assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),before);
  });
@@ -120,19 +123,33 @@ try{
   await page.waitForFunction(()=>document.querySelector('.coast-sample [data-act]')?.textContent==='拾取',null,{timeout:20000});
   await page.locator('.coast-sample [data-act]').tap();
   await page.waitForFunction(()=>__bincov.app.loadout.bag.items.some(i=>i.id==='sample'),null,{timeout:20000});
-  await page.locator('.coast-sample [data-pause]').tap();await panelIs('pause');
-  await drive('vitals',{hp:72});
-  assert.equal(await page.evaluate(()=>window.__bincovSample.host.services.checkpoint()),true,'checkpoint written while paused');
-  const expected=await page.evaluate(()=>{const r=JSON.parse(localStorage.getItem('escape-bincov.session.v2'));return {body:r.expansion.body.hp,bag:r.expansion.raid.loadout.bag,loot:r.expansion.raid.maps.coast.loot};});
-  assert.equal(expected.body,72);assert.ok(!expected.loot.some(l=>l.uid===uid),'the picked-up loot left the saved world');
+  // Fire with the aim stick and pause with the touch pause button while the shots are still in flight, so the
+  // checkpoint holds live bullets and the random state after them. The stick is held still before it lifts: a fast
+  // release starts a fling, and Chromium spends the next tap on ending it.
+  const aim=await canvasPoint(.62,.45);let expected;
+  for(let attempt=0;attempt<6&&!expected;attempt++){
+   if(attempt){await raid('resume').tap();await panelIs(null);}
+   await drive('magazine',8);
+   await touch('touchStart',[{id:9,...aim}]);await touch('touchMove',[{id:9,x:aim.x+40,y:aim.y}]);
+   await page.waitForFunction(()=>window.__bincovSample.host.lastBatch.frame.bullets.length>0,null,{timeout:20000});
+   await touch('touchMove',[{id:9,x:aim.x+40,y:aim.y}]);await page.waitForTimeout(120);await touch('touchEnd',[]);
+   const pause=await center('.coast-sample [data-pause]');await page.touchscreen.tap(pause.x,pause.y);await panelIs('pause');
+   await drive('vitals',{hp:72});
+   assert.equal(await page.evaluate(()=>window.__bincovSample.host.services.checkpoint()),true,'checkpoint written while paused');
+   const saved=await page.evaluate(()=>{const r=JSON.parse(localStorage.getItem('escape-bincov.session.v2'));return {body:r.expansion.body.hp,raid:r.expansion.raid};});
+   if(saved.raid.maps[saved.raid.currentMap].bullets.length){expected=saved;report.bulletCheckpoint={attempts:attempt+1,bullets:saved.raid.maps[saved.raid.currentMap].bullets.length,rng:saved.raid.rng};}
+  }
+  assert.ok(expected,'a checkpoint caught bullets in flight');
+  assert.equal(expected.body,72);assert.ok(!expected.raid.maps.coast.loot.some(l=>l.uid===uid),'the picked-up loot left the saved world');
   await page.reload();await action('enter').waitFor();assert.equal(await page.evaluate(()=>__bincov.app.save.stats.runs),1);
   // A resumed raid is a new Runtime: enemies are frozen again for the fixture.
   await action('enter').tap();await ready();await drive('freezeAI',true);
   await panelIs('pause');const restored=await runtime();assert.equal(restored.raid.hp,72);
-  assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),expected.bag);
+  assert.deepEqual(await page.evaluate(()=>__bincov.app.loadout.bag),expected.raid.loadout.bag);
   assert.equal(await page.evaluate(uid=>window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid),uid),false,'the picked-up loot stays gone after the reload');
-  // Bullet and RNG state across a checkpoint: tests/recovery.test.ts (gameplay random state resumes the exact next
-  // draws) and tests/raid-runtime-r6.test.ts (R6-L3 hits after restored bullets) in pnpm test.
+  // The resumed Runtime holds exactly the saved raid: bullets in flight, random state, enemies, loot and the clock.
+  const live=await page.evaluate(()=>JSON.parse(JSON.stringify(window.__bincov.saveSession.captureExpansion().raid)));
+  assert.deepEqual(live,expected.raid);
   await shot('restored-844');
  });
  await step('live backup round trip and failed medical transaction preserve consistent state',async()=>{
