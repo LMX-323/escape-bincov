@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { raidReady, waitPanel } from './raid-view.mjs';
 
 const root = resolve('test-results'); await mkdir(root, { recursive: true });
 const oldPath = resolve(process.argv[2] ?? 'test-results/pre-m0.html');
@@ -27,7 +28,7 @@ const raw = page => page.evaluate(() => localStorage.getItem('escape-bincov.sess
 const action = (page, name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
 const ready = async page => {
     await page.waitForFunction(() => !!window.__bincov?.saveSession);
-    // Persistence fixture only: leave Phaser's browser clock and real input scheduling intact.
+    // Persistence fixture only: leave the raid view's browser clock and real input scheduling intact.
     if (new URL(page.url()).pathname.startsWith('/current')) await page.evaluate(() => { window.__bincov.saveSession.now = () => 1800000000000; });
 };
 async function failStorage(page, on, terminalOnly = false) {
@@ -100,18 +101,21 @@ try {
         assert.equal(await page.evaluate(() => window.__bincov.app.save.cash), 2842);
     });
     await step('legacy coast still deploys/resumes; failed abandon exports pending body/growth and retries only once', async () => {
-        await action(page, 'tab', 'gear').click(); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-        await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-        await page.keyboard.press('Escape');
-        await page.evaluate(() => { const { app } = window.__bincov; app.raid.hp = 37; app.raid.stamina = 15; app.raid.pollution = 63; app.raid.checkpoint(); });
+        // The classic coast is closed to players but test pages still deploy it: the kind of checkpoint raid an old save holds.
+        await action(page, 'tab', 'gear').click(); await page.locator('#run-world').selectOption('coast'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
+        assert.equal((await raidReady(page)).worldVersion, 'coast-v2', 'a classic checkpoint raid on the 2.5D view');
+        await page.keyboard.press('Escape'); await waitPanel(page, 'pause');
+        assert.equal(await page.evaluate(() => { window.__bincovSample.driver.vitals({ hp: 37, stamina: 15, pollution: 63 }); return window.__bincovSample.host.services.checkpoint(); }), true);
         await page.reload(); await ready(page); await action(page, 'enter').click();
-        await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-        assert.equal(await page.evaluate(() => window.__bincov.app.raid.hp), 37);
-        await failStorage(page, true, true); await action(page, 'abandon').click();
-        const bytes = await raw(page); await action(page, 'confirm-abandon').click();
-        await page.getByRole('heading', { name: '结算尚未保存' }).waitFor(); assert.equal(await raw(page), bytes);
+        await raidReady(page); await waitPanel(page, 'pause');
+        assert.equal(await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.hp), 37);
+        await failStorage(page, true, true); await page.locator('.coast-sample [data-do="abandon"]').click();
+        const bytes = await raw(page); await page.locator('.coast-sample [data-do="abandon-yes"]').click();
+        await page.waitForFunction(() => document.querySelector('.coast-sample [data-ending-title]')?.textContent === '已放弃行动 · 正在保存结算'
+            && !!document.querySelector('.coast-sample [data-do="retry-settlement"]'));
+        assert.equal(await raw(page), bytes);
         const pending = await page.evaluate(() => window.__bincov.app.pendingExpansion); assert.equal(pending.body.hp, 37);
-        const [download] = await Promise.all([page.waitForEvent('download'), action(page, 'export-save').click()]);
+        const [download] = await Promise.all([page.waitForEvent('download'), page.locator('.coast-sample [data-do="backup"]').click()]);
         const path = resolve(root, 'expansion-pending.json'); await download.saveAs(path);
         const backup = JSON.parse(await readFile(path, 'utf8'));
         assert.equal(backup.record.expansion.growth.progress.technique, .2); assert.equal(backup.record.expansion.body.hp, 37);
@@ -120,12 +124,13 @@ try {
         await page.screenshot({ path: resolve(root, 'm0-pending-1280x720.png') });
         await page.setViewportSize({ width: 1920, height: 1080 });
         await page.screenshot({ path: resolve(root, 'm0-pending-1920x1080.png') });
-        await failStorage(page, false); await action(page, 'retry-save').click();
-        assert.equal(await page.evaluate(() => window.__bincov.app.state), 'result');
+        await failStorage(page, false); await page.locator('.coast-sample [data-do="retry-settlement"]').click();
+        // The settlement is written at once; the result page follows the short outro.
+        await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout: 30000 });
         assert.equal(await page.evaluate(() => window.__bincov.saveSession.retrySettlement()), false);
         assert.equal(JSON.parse(await raw(page)).profile.stats.runs, 1);
         assert.equal(JSON.parse(await raw(page)).expansion.base.location, 'base');
     });
     report.status = 'passed';
-} catch (error) { report.status = 'failed'; report.failure = error.stack; report.diagnostic = await page.evaluate(() => ({state:window.__bincov?.app.state, overlay:window.__bincov?.app.overlay, error:window.__bincov?.app.storageError})).catch(()=>null); console.error(error); process.exitCode = 1; }
+} catch (error) { report.status = 'failed'; report.failure = error.stack; report.diagnostic = await page.evaluate(() => ({state:window.__bincov?.app.state, panel:window.__bincovSample?.host?.panel ?? null, error:window.__bincov?.app.storageError})).catch(()=>null); console.error(error); process.exitCode = 1; }
 finally { await context.close(); await browser.close(); report.finishedAt = new Date().toISOString(); await writeFile(resolve(root, 'expansion-browser-report.json'), JSON.stringify(report, null, 2)); }
