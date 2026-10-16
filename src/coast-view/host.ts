@@ -51,6 +51,8 @@ const REASONS: Record<string, string> = {
   'stale-target': '目标已失效，请重新靠近。', 'stale-or-blocked': '现在无法交互。', 'out-of-range': '离目标过远。',
   rejected: '操作未完成，请检查空间与条件。', blocked: '现在无法操作。', 'save-failed': '存档保存失败，状态已恢复到操作前。',
 };
+/** A storage error arrives as the browser's own (translated) message; any other unknown code gets a plain sentence. */
+const reasonText = (reason: string) => REASONS[reason] ?? (/[\u4e00-\u9fff]/.test(reason) ? reason : '操作未完成。');
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const name = (id: string) => D.ITEMS[id]?.name ?? id;
 type Outro = 'died' | 'extract' | 'timeout' | 'abandon' | 'failed';
@@ -113,7 +115,7 @@ const HTML = `
   <div data-hitpop class="cs-hitpop" aria-hidden="true"><b><i></i><i></i><i></i><i></i></b></div>
   <div data-fade class="cs-fade"></div>
   <div data-curtain class="cs-curtain" aria-live="assertive"><b data-curtain-text></b></div>
-  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button></div>
+  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button><button type="button" data-pause aria-label="暂停">暂停</button></div>
 </div>
 <section class="cs-panel" data-panel hidden role="dialog" aria-modal="true"></section>`;
 
@@ -278,7 +280,7 @@ export class CoastSampleHost {
       this.app.ticker.add(tick); lifecycle.tickers++;
       this.scope.add(() => { this.app.ticker.remove(tick); lifecycle.tickers--; });
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
-      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; });
+      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
@@ -452,7 +454,7 @@ export class CoastSampleHost {
       if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') this.resume(); else if (!this.panel) this.pause(); return; }
       if (k === 'tab') { if (this.blocking()) this.closePanel(true); else if (!this.panel) this.openInventory(); return; }
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
-      if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel) this.openMap(); return; }
+      if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
       this.input.key(e.key, true);
     });
@@ -462,15 +464,21 @@ export class CoastSampleHost {
       if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.pointer.inside = true; }
       else this.touchMove(e);
     });
+    let pointerType = '';
     s.on(canvas, 'pointerdown', e => {
-      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; if (!this.panel) this.input.mouse(e.button, true); }
+      pointerType = e.pointerType;
+      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; }
       else { this.input.touch = true; this.touchStart(e); }
       try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or released pointer */ }
     });
+    // Mouse buttons come from mouse events: a second button pressed while one is held (right-button aim, then fire)
+    // raises mousedown, while pointer events report it only as a move. Mouse events a touch synthesises are ignored.
+    s.on(canvas, 'mousedown', e => { if (pointerType !== 'mouse' || this.panel) return; this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.mouse(e.button, true); });
+    s.on(window, 'mouseup', e => this.input.mouse(e.button, false));
     s.on(window, 'pointermove', e => { if (this.panel === 'inventory' || this.panel === 'loot') this.inv.pointerMove(e); });
     s.on(window, 'pointerup', e => {
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.pointerUp(e)) this.suppressClick = true;
-      if (e.pointerType === 'mouse') this.input.mouse(e.button, false); else { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); }
+      if (e.pointerType !== 'mouse') { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); }
     });
     s.on(window, 'pointercancel', e => { if (e.pointerType === 'mouse') this.input.mouse(e.button, false); else { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); } });
     s.on(canvas, 'pointerleave', e => { if (e.pointerType === 'mouse') this.input.pointer.inside = false; });
@@ -496,7 +504,12 @@ export class CoastSampleHost {
     // Touch has no 1 / 2 keys: one button switches between the primary weapon and the knife, labelled with the other one.
     s.on(this.q('[data-swap]'), 'pointerdown', e => { e.preventDefault(); this.input.press(this.weaponShown === 'knife' ? 'primary' : 'knife'); });
     s.on(this.q('[data-bag]'), 'click', () => { if (!this.panel) this.openInventory(); else if (this.panel === 'inventory') this.closePanel(true); });
-    s.on(this.q('[data-choices]'), 'click', e => { const id = (e.target as HTMLElement).closest('[data-id]')?.getAttribute('data-id'); if (id) this.input.select(id); });
+    s.on(this.q('[data-choices]'), 'click', e => {
+      const id = (e.target as HTMLElement).closest('[data-id]')?.getAttribute('data-id'), w = this.last?.stamp.world; if (!id || !w || this.panel) return;
+      // A tap names the exact source to open, as the action button cannot; a click (mouse) selects it for E.
+      if (this.input.touch) this.services.activate({ runId: w.runId, mapId: w.mapId, kind: 'container', id }); else this.input.select(id);
+    });
+    s.on(this.q('[data-pause]'), 'click', () => { if (!this.panel) this.pause(); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
     s.on(this.q('[data-quests]'), 'toggle', () => { this.questsOpen = (this.q<HTMLDetailsElement>('[data-quests]')).open; });
     // A drop that re-renders the grid removes the press target, so the browser may send no trailing click: every new press clears the suppression.
@@ -547,23 +560,43 @@ export class CoastSampleHost {
     this.runtime.pause(reason);
     this.showPause(reason);
   }
+  /** The phone is held upright (or the view is too short to play): the raid waits for landscape. */
+  private upright() { return this.input.touch && (innerWidth < innerHeight || innerHeight < 280); }
   private showPause(reason?: string) {
     if (this.contextLost) reason = 'context-lost';
     const conflict = this.session.conflict, saveError = !this.session.storageOK || this.lastRejected === 'checkpoint' || this.lastRejected === 'save-failed';
-    const title = conflict ? '存档已被其他窗口更新' : saveError ? '存档保存失败' : reason === 'context-lost' ? '画面中断' : '已暂停';
+    const rotate = !conflict && !saveError && !this.contextLost && this.upright();
+    this.pausedUpright = rotate;
+    const title = conflict ? '存档已被其他窗口更新' : saveError ? '存档保存失败' : reason === 'context-lost' ? '画面中断' : rotate ? '横过来，准备出发。' : '已暂停';
     const text = conflict ? '本页已停止操作。请导出需要保留的进度，再刷新本页。'
       : saveError ? '最近的操作或检查点没有写入，世界已保持在保存前的状态。检查浏览器存储后重试，或先导出备份。'
-      : reason === 'context-lost' ? '图形上下文丢失，行动已暂停。画面恢复后可继续，也可导出备份。' : '行动时间已停止。';
+      : reason === 'context-lost' ? '图形上下文丢失，行动已暂停。画面恢复后可继续，也可导出备份。'
+      : rotate ? '横屏能看清街道，也能同时移动和瞄准。转回横屏后，点「继续」回到行动。' : '行动时间已停止。';
     const buttons = conflict ? `<button type="button" data-do="backup">导出备份</button>`
       : saveError ? `<button type="button" data-do="retry-save">重试保存</button><button type="button" data-do="backup">导出备份</button>`
-      : `<button type="button" data-do="resume" ${this.contextLost ? 'disabled' : ''}>继续</button>${this.contextLost ? '<button type="button" data-do="backup">导出备份</button>' : ''}<button type="button" data-do="abandon">放弃行动</button>`;
+      : `<button type="button" data-do="resume" ${this.contextLost || rotate ? 'disabled' : ''}>继续</button><button type="button" data-do="guide">行动指南</button><button type="button" data-do="backup">导出备份</button><button type="button" data-do="abandon">放弃行动</button>`;
     this.input.suppressHeld(); this.sticks.clear();
     // Same volume setting as the original pause overlay: one saved value for the whole game.
     const volume = conflict || saveError ? '' : `<label class="cs-volume">游戏音量 <span data-volume-label>${Math.round(this.session.save.settings.volume * 100)}%</span><input data-volume aria-label="游戏音量" type="range" min="0" max="1" step="0.05" value="${this.session.save.settings.volume}"></label>`;
     this.setPanel('pause', `<h2>${title}</h2><p>${text}</p>${volume}<div class="cs-row">${buttons}</div>`, title);
   }
   /** Resume only asks the Runtime; syncPanels closes the panel when the published phase is running again. */
-  private resume() { if (this.contextLost) return; this.input.suppressHeld(); this.runtime.resume(); }
+  private resume() { if (this.contextLost || this.upright()) return; this.input.suppressHeld(); this.runtime.resume(); }
+  private pausedUpright = false;
+  /** Turning a phone upright pauses with the rotate notice; turning it back offers 继续 again. */
+  private orientation() {
+    if (!this.mounted || this.exiting || this.panel === 'ending') return;
+    if (this.upright()) { if (this.panel !== 'pause') this.pause(); else if (!this.pausedUpright) this.showPause(); }
+    else if (this.panel === 'pause' && this.pausedUpright) this.showPause();
+  }
+  /** Controls for this device, the guide the original pause offered. */
+  private showGuide() {
+    const keys: [string, string][] = [['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
+    const body = this.input.touch
+      ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
+      : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;
+    this.setPanel('pause', `<h2>行动指南</h2>${body}<p class="cs-sub">每局限时 10 分钟。死亡、超时或放弃都按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。</p><div class="cs-row"><button type="button" data-do="pause-back">返回</button></div>`, '行动指南');
+  }
   private openBlocking(kind: 'inventory' | 'map' | 'reading') {
     this.input.suppressHeld(); this.sticks.clear();
     this.runtime.setBlocked(true); this.blockPending = 3;
@@ -619,6 +652,8 @@ export class CoastSampleHost {
     const d = b.dataset;
     switch (d.do) {
       case 'resume': this.resume(); break;
+      case 'guide': this.showGuide(); break;
+      case 'pause-back': this.showPause(); break;
       case 'abandon': this.setPanel('pause', '<h2>放弃行动？</h2><p>放弃按撤离失败结算：背包物资和主武器丢失，安全箱保留。</p><div class="cs-row"><button type="button" data-do="abandon-yes">确认放弃</button><button type="button" data-do="resume">继续行动</button></div>', '放弃行动'); break;
       case 'abandon-yes': this.services.abandon(); break;
       case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); this.resume(); } else this.toast('仍然无法保存。', true); break;
@@ -660,8 +695,11 @@ export class CoastSampleHost {
       this.scope.timeout(() => this.onExit({ kind: 'settled' }), hold);
       return;
     }
-    text.textContent = s.retryable ? '结算还没有写入存档。结算记录已保留，可以重试或先导出备份。' : '等待结算保存';
-    if (s.retryable && !row.childElementCount) row.innerHTML = '<button type="button" data-do="retry-settlement">重试保存</button><button type="button" data-do="backup">导出备份</button>';
+    text.textContent = s.retryable ? '结算还没有写入存档。结算记录已保留，可以重试或先导出备份。'
+      : this.session.conflict ? '另一个窗口已更新存档，本页不能再写入。结算记录已保留，请先导出备份。' : '等待结算保存';
+    // Another window's newer save must not be overwritten: no retry then, but the pending result stays exportable.
+    const want = `${s.retryable ? '<button type="button" data-do="retry-settlement">重试保存</button>' : ''}${s.retryable || this.session.conflict ? '<button type="button" data-do="backup">导出备份</button>' : ''}`;
+    if (row.dataset.buttons !== want) { row.dataset.buttons = want; row.innerHTML = want; }
   }
 
   // --- HUD ---
@@ -814,7 +852,7 @@ export class CoastSampleHost {
   }
   private prompt(t: Interaction | null, py: number) {
     const el = this.q('[data-prompt]'), list = this.q('[data-choices]'), act = this.q('[data-act]');
-    if (!t) { el.hidden = true; list.hidden = true; act.textContent = '交互'; return; }
+    if (!t) { el.hidden = true; list.hidden = true; act.textContent = '交互'; act.setAttribute('aria-label', '交互'); return; }
     const hold = t.hold && t.hold.progress > 0 ? `　${Math.min(t.hold.progress, t.hold.required).toFixed(1)} / ${t.hold.required.toFixed(1)} 秒` : '';
     el.innerHTML = (this.input.touch ? '' : '<kbd>E</kbd>') + esc(t.kind === 'exit' ? `${t.label} · 站稳按住 3 秒撤离` : t.label) + hold;
     el.hidden = false;
@@ -825,16 +863,19 @@ export class CoastSampleHost {
     let px = Math.min(innerWidth - half - 8, Math.max(half + 8, p.x));
     if (!above && hitsStatus(px, p.y)) px = Math.min(innerWidth - half - 8, status.right + half + 8);
     el.style.transform = `translate(${Math.round(px)}px, ${Math.round(p.y)}px) translate(-50%, ${above ? -100 : 0}%)`;
-    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' ? t.label : t.kind === 'entry' ? '进入' : t.kind === 'note' ? '阅读' : '交互';
+    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' || t.kind === 'entry' ? t.label.split(' · ')[0] : t.kind === 'note' ? '阅读' : '交互';
+    act.setAttribute('aria-label', t.kind === 'exit' ? `${t.label} · 按住撤离` : t.label);
     if (t.choices.length > 1) {
       list.hidden = false;
-      list.innerHTML = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称选择' : '滚轮切换'}</li>`;
+      list.innerHTML = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称打开' : '滚轮切换'}</li>`;
+      list.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' });
       const side = this.view.worldToClient({ x: t.at.x + 26, y: t.at.y - AIM_H }), w = list.offsetWidth || 160;
       const lx = side.x + w + 8 > innerWidth ? this.view.worldToClient({ x: t.at.x - 26, y: 0 }).x - w : side.x;
       list.style.transform = `translate(${Math.round(Math.max(8, lx))}px, ${Math.round(side.y)}px) translate(0, -50%)`;
     } else list.hidden = true;
   }
   private onEvent(e: StampedEvent) {
+    if (e.type === 'layer') { this.input.suppressHeld(); this.sticks.clear(); return; }
     if (e.type === 'notice') {
       // A note's text arrives as "title：text" after the player reads it: show it in the reading panel.
       const title = this.readingFor && this.noteTitles.has(this.readingFor) && e.text.startsWith(`${this.readingFor}：`) ? this.readingFor : null;
@@ -843,8 +884,15 @@ export class CoastSampleHost {
     }
     else if (e.type === 'rejected') {
       this.lastRejected = e.action === 'checkpoint' ? 'checkpoint' : e.reason === 'save-failed' ? 'save-failed' : e.action;
-      if (e.action !== 'select-target') this.toast(e.action === 'equip' && e.reason === 'rejected'
-        ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : REASONS[e.reason] ?? e.reason, true);
+      if (e.action === 'select-target') return;
+      if (e.reason === 'unreachable-or-rejected') {
+        // A floor change or door toggle the Runtime refused: a crowded landing, or someone standing in an open doorway.
+        const t = this.last?.frame.interaction;
+        if (e.action.startsWith('entry:')) this.toast('入口被挡住，暂时无法进入。', true);
+        else if (e.action === 'door' && t?.kind === 'door' && this.last?.frame.doors[t.ref.id]) this.toast('门口有人，暂时不能关门。', true);
+        return;
+      }
+      this.toast(e.action === 'equip' && e.reason === 'rejected' ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : reasonText(e.reason), true);
     }
     else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }

@@ -88,7 +88,6 @@ export class PlayerInput {
     return frame;
   }
 }
-export const playerInput = new PlayerInput();
 
 /** Wall-clock foreground time; simulation uses bounded substeps, never a clamped clock. */
 export class ActiveClock {

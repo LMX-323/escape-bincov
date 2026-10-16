@@ -80,11 +80,17 @@ export class InventoryPanel {
         <section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
         <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>
         <aside class="cs-details">${this.details()}</aside>
-      </div>
+      </div>${this.placementBar()}
       <footer class="cs-inv-foot" role="status">${esc(this.status || this.hint())}</footer>`;
   }
+  /** While placing: rotate the preview and cancel as buttons too (a phone has no R or Esc), as the original panel did. */
+  private placementBar() {
+    if (!this.placement || !this.selected) return '';
+    const i = this.item(), d = i && D.ITEMS[i.id];
+    return `<div class="cs-row cs-place-bar">${d && d.w !== d.h ? '<button type="button" data-do="inv-place-rotate">旋转预览</button>' : ''}<button type="button" data-do="inv-place-cancel">取消移动</button></div>`;
+  }
   private hint() {
-    if (this.placement) return `${this.placement.quantity ? `拆分 ${this.placement.quantity} 件：` : ''}点目标格放置 · R 旋转 · Esc 取消`;
+    if (this.placement) return `${this.placement.quantity ? `拆分 ${this.placement.quantity} 件：` : ''}点目标格放置${this.host.touch() ? '' : ' · R 旋转 · Esc 取消'}`;
     return this.host.touch() ? '选中物品 → 移动格位 → 点目标格' : '单击查看 · 双击快捷转移 · 拖放可交换物品（R 旋转）';
   }
   /** Display name of the open container, taken from the latest frame by the host. */
@@ -158,6 +164,8 @@ export class InventoryPanel {
     const sel = this.selected, i = this.item(); if (!sel || !i) return;
     const loadout = this.host.session.loadout!;
     switch (a) {
+      case 'inv-place-rotate': if (this.placement) { this.placement.rotated = !(this.placement.rotated ?? i.rotated); this.render(); } break;
+      case 'inv-place-cancel': this.placement = null; this.status = ''; this.render(); break;
       case 'inv-use': { const r = this.host.services.useSupply(i.id, sel.source as 'bag' | 'safe', i.uid); if (r === 'committed') this.host.used?.(); this.result(r); break; }
       case 'inv-equip': {
         const r = this.host.services.equipItem(i.uid);

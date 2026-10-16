@@ -7,7 +7,7 @@ import { fontCharacters } from './font-characters.mjs';
 async function compile() {
   const titleManifest = JSON.parse(await readFile('assets/title/manifest.json','utf8'));
   if (titleManifest.schema !== 2) throw new Error('Prepare the imported title art manifest with pnpm title:art.');
-  const titleImports = [...(await readFile('src/title/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/title\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  const titleImports = [...(await readFile('src/title/art.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/title\/[^']+\.png)'/g)].map(m => m[1]).sort();
   const titleFiles = Object.values(titleManifest.layers).map(layer => layer.file).sort();
   if (JSON.stringify(titleImports) !== JSON.stringify(titleFiles)) throw new Error('Title manifest does not cover the runtime imports.');
   for (const layer of Object.values(titleManifest.layers)) {
@@ -58,7 +58,7 @@ async function compile() {
   const css = fontCss + (await Promise.all(['src/style.css', 'src/title.css', 'src/tactical.css', 'src/coast-view/coast.css'].map(path => readFile(path, 'utf8')))).join('\n');
   const notices = (await readFile('THIRD_PARTY_NOTICES.md','utf8')).replace(/-->/g,'--&gt;');
   const js = result.outputFiles[0].text.replace(/<\/script/gi,'<\\/script');
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><!--\n${notices}\n--><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10272b"><title>逃离滨科夫 · Escape Bincov</title><style>${css}</style></head><body><main id="frame"><div id="game"></div><div id="ui"></div><div id="touch-controls"></div><div id="world-labels" aria-hidden="true"></div></main><div id="toast" role="status"></div><script>${js}</script></body></html>`;
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><!--\n${notices}\n--><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10272b"><title>逃离滨科夫 · Escape Bincov</title><style>${css}</style></head><body><main id="frame"><div id="game"></div><div id="ui"></div></main><div id="toast" role="status"></div><script>${js}</script></body></html>`;
   await mkdir('dist',{recursive:true});
   await writeFile('dist/index.html',html);
   await writeFile('start the game.html',html);

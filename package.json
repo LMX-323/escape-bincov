@@ -56,7 +56,6 @@
     "test:issue26-phaser-spatial": "node scripts/issue26-phaser-spatial.mjs"
   },
   "dependencies": {
-    "phaser": "3.90.0",
     "pixi.js": "8.22.0"
   },
   "devDependencies": {

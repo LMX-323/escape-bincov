@@ -1,8 +1,7 @@
 /**
- * The 2.5D raid view: every raid runs on the Pixi host over the real Runtime, and a new mall raid deploys layout
- * revision 3. Raids started before the switch (classic coast checkpoints, mall layout 1) resume and settle here too.
- * Only one host may own the SaveSession: the legacy Phaser RaidScene (test fixture only) never starts while this one is
- * alive.
+ * The raid view: every raid runs on this Pixi host over the real Runtime, and a new mall raid deploys layout revision 3.
+ * Raids started before the switch (classic coast checkpoints, mall layout 1) resume and settle here too. Only one host
+ * may own the SaveSession at a time.
  *
  * ?sample=village and ?sample=mall remain playtest entries: they preselect the area, pick a village seed in the dressed
  * corner, and mark the areas the samples have not dressed yet.
@@ -25,25 +24,20 @@ export type SampleMode = 'village' | 'mall';
 export const sampleMode = (): SampleMode | null => { const s = params().get('sample'); return s === 'village' || s === 'mall' ? s : null; };
 export const sampleEnabled = () => sampleMode() !== null;
 /**
- * Test fixture only (`?test=1` without `sample`): the legacy browser suites keep the Phaser raid view, the classic coast
- * area (still the default there) and mall layout 1, as the yard keeps the tab page for `entry=tabs`.
- */
-export const legacyRaid = () => params().get('test') === '1' && !sampleEnabled();
-/**
  * Areas a player can deploy to. The classic coast area is closed: it repeated the street's coast map and will be
- * redone as a new map. Raids already started there still resume and settle. Under `?test=1` it stays deployable, so a
- * suite can start a Phaser raid on the same page after a 2.5D one (test:hud-release).
+ * redone as a new map. Raids already started there still resume and settle. Under `?test=1` it stays deployable, so
+ * suites can still start a classic checkpoint raid (the kind an old save may hold).
  */
 export const raidWorlds = (): RunWorld[] => params().get('test') === '1' ? ['coast', 'buildings', 'mall'] : ['buildings', 'mall'];
 /** Area selected when the page opens. */
-export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : legacyRaid() ? 'coast' : 'buildings';
+export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : 'buildings';
 /**
- * The 2.5D view draws every raid in the save: coast-buildings, mall layouts 1-3 (a raid keeps the layout it deployed on
+ * The view draws every raid in the save: coast-buildings, mall layouts 1-3 (a raid keeps the layout it deployed on
  * until it ends) and the classic coast's checkpoint raids started before that area closed.
  */
-export const sampleSupports = () => !legacyRaid() && (!!app.expansion?.raid || !!app.checkpoint);
-/** Layout revision for a new mall raid: revision 3, the one the 2.5D view furnishes; the legacy fixture keeps the default. */
-export const sampleMallLayout = (world: string): 3 | undefined => !legacyRaid() && world === 'mall' ? 3 : undefined;
+export const sampleSupports = () => !!app.expansion?.raid || !!app.checkpoint;
+/** Layout revision for a new mall raid: revision 3, the one the view furnishes (older raids keep theirs). */
+export const sampleMallLayout = (world: string): 3 | undefined => world === 'mall' ? 3 : undefined;
 
 /**
  * Playtest deploy with an empty seed field: take the first seed from the clock whose spawn lies in the dressed village
@@ -68,8 +62,6 @@ export async function startCoastSample(paused = false): Promise<boolean> {
   let created: ReturnType<typeof createCoastRaidHost> | null = null;
   try {
     enterExternalRun();
-    // Only one renderer runs: the Phaser loop sleeps while the sample host owns the raid.
-    app.game?.loop.sleep();
     const test = params().get('test') === '1';
     const p = params();
     const opts: ViewOptions = {
@@ -101,7 +93,6 @@ export async function startCoastSample(paused = false): Promise<boolean> {
     testDriver = null;
     app.coastSample = null;
     delete document.documentElement.dataset.coastSample;
-    app.game?.loop.wake();
     toast('新画面启动失败，行动已保存。刷新后可继续。');
     changeState('menu');
     return false;
@@ -115,7 +106,6 @@ function finish(host: CoastSampleHost) {
   testDriver = null;
   if (app.coastSample === host) app.coastSample = null;
   delete document.documentElement.dataset.coastSample;
-  app.game?.loop.wake();
   // The result screen plays the extract/death cue; a run settled from the pause menu still has audio suspended.
   audio.start();
   changeState('result');
