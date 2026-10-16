@@ -7,7 +7,7 @@ const schedule = {
   'batch-4': ['issue26-station', 'issue26-spatial', 'tactical', 'art'],
   'batch-5': ['buildings', 'station-tier1', 'shop-feedback', 'mobile-ux'],
   'batch-6': ['loot-target', 'mall-sample', 'qol', 'coast-render-targets'],
-  'batch-7': ['raid-default', 'ui', 'mall-landing', 'coast-animation', 'station-relief', 'station-reset'],
+  'batch-7': ['raid-default', 'ui', 'mall-landing', 'coast-sample', 'station-relief', 'station-reset'],
   'batch-8': ['expansion', 'mobile', 'loot', 'mall-passages', 'systems'],
 };
 
