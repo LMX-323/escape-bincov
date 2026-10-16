@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { batch, drive, frames, panel, raidReady, waitPanel } from './raid-view.mjs';
+import { batch, drive, frames, gap, panel, raidReady, waitPanel } from './raid-view.mjs';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
 
@@ -73,8 +73,6 @@ async function suite(viewport, touch = false) {
     try { await work(); assert.deepEqual(errors, []); assert.deepEqual(external, []); result.status = 'passed'; console.log(`PASS ${label}: ${name}`); }
     catch (error) { result.status = 'failed'; result.error = error.stack; result.state = await state().catch(() => null); await page.screenshot({ path: resolve(out, `loot-target-failed-${label}.png`) }); throw error; }
   };
-  /** A check the old view made that the 2.5D Runtime cannot support yet: reported, never counted as a pass. */
-  const gap = (name, reason) => { report.results.push({ viewport: label, name, status: 'gap', reason }); console.log(`GAP ${label}: ${name} — ${reason}`); };
   try {
     await page.goto(url.href); await action('enter').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
     await raidReady(page);
@@ -186,7 +184,8 @@ async function suite(viewport, touch = false) {
     await step('movement, gunfire, clock and enemies continue while the list is visible', async () => {
       // Enemies run for this step (they patrol far from the fixture); movement and the shot use real input.
       await drive(page, 'freezeAI', false);
-      const before = await state(); await page.keyboard.down('d'); await page.waitForTimeout(80); await page.keyboard.up('d');
+      const before = await state(); await page.keyboard.down('d');
+      try { await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x !== x, before.x, { timeout: 15000 }); } finally { await page.keyboard.up('d'); }
       const p = await canvasPoint(); await page.mouse.click(p.x, p.y);
       await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, before.mag);
       await page.waitForFunction(e => { const b = window.__bincovSample.host.lastBatch; return b.frame.actors.filter(a => a.alive).map(a => [a.uid, Math.round(a.x), Math.round(a.y), a.state.ai]).join(';') !== e; }, before.enemies);
@@ -197,9 +196,25 @@ async function suite(viewport, touch = false) {
       await drive(page, 'placePlayer', { x: fixture.x, y: fixture.y }, 0, 'coast'); await frames(page, 4);
       await selected(fixture.corpses[1]);
     });
-    // 2.5D gap (Runtime, Astra): docs/LOOTING.md's 附近 list (picking scattered ground loot one by one while a container is
-    // selected) has no Runtime service; on a desktop E always opens the selected container.
-    gap('ground loot remains accessible beside a selected container', 'No 附近 list: the Runtime offers no pickup of a ground item that is not the interaction target (Astra).');
+    // Known gap: docs/LOOTING.md's 附近 list (ground loot picked one by one while a container is selected) has no
+    // Runtime service. Today's behaviour is asserted, so a fix turns this red and the original check comes back.
+    gap(report, `${label}: ground loot remains accessible beside a selected container`, 'No 附近 list: the Runtime offers no pickup of a ground item that is not the interaction target, so E opens the selected container (Runtime, Astra).');
+    await step('known gap: ground loot beside a selected container is not offered, and E opens the container', async () => {
+      const uid = await drive(page, 'spawnLoot', 'bandage', 1, { x: fixture.x + 8, y: fixture.y }); await frames(page, 4);
+      const s = await state();
+      assert.ok(s.selected, 'a container stays selected');
+      assert.ok(!s.choices.includes(uid) && !s.rows.some(r => r.id === uid), 'the ground item is not offered beside the containers');
+      await page.keyboard.press('e'); await waitPanel(page, 'loot');
+      assert.equal((await state()).target, s.selected, 'E opens the selected container');
+      assert.ok((await batch(page)).frame.loot.some(l => l.uid === uid), 'the ground item stays where it lies');
+      await page.keyboard.press('Escape'); await waitPanel(page, null);
+      // The item leaves again through the session's transaction, so the next steps see the fixture unchanged.
+      await page.evaluate(uid => {
+        const s = window.__bincov.saveSession, t = s.prepareExpansionMutation(d => { const r = d.expansion.raid, m = r.maps[r.currentMap]; m.loot = m.loot.filter(l => l.uid !== uid); });
+        if (!t || s.commitExpansionMutation(t) !== 'committed') throw new Error(`Ground item removal rejected: ${window.__bincov.app.storageError}`);
+      }, uid);
+      await page.waitForFunction(uid => !window.__bincovSample.host.lastBatch.frame.loot.some(l => l.uid === uid), uid);
+    });
     await step('a departing selection falls back to an accessible target without renumbering corpses', async () => {
       const away = [{ x: fixture.x + 100, y: fixture.y }, { x: fixture.x - 100, y: fixture.y }, { x: fixture.x, y: fixture.y + 100 }, { x: fixture.x, y: fixture.y - 100 }]
         .find(p => traversable(street, p, 'body', 10));
@@ -254,11 +269,18 @@ async function suite(viewport, touch = false) {
       await moveContainer(fixture.corpses[1], exit); await drive(page, 'placePlayer', exit, 0, 'coast'); await drive(page, 'vitals', { bleeding: false });
       await page.waitForFunction(() => document.querySelector('.coast-sample [data-prompt]')?.textContent.includes('撤离'));
       await wheel(100); assert.equal(await page.locator('.coast-sample [data-choices]:not([hidden]) li[data-id]').count(), 0);
+      // The host's panel on every frame while E is held, until the ending: the extraction wins over the container.
+      await page.evaluate(() => {
+        const seen = window.__panelsWhileE = [], h = window.__bincovSample.host;
+        const f = () => { seen.push(h.panel); if (h.lastBatch.frame.phase !== 'ending') requestAnimationFrame(f); }; requestAnimationFrame(f);
+      });
       await page.keyboard.down('e');
       await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'ending', null, { timeout: 30000 });
       await page.keyboard.up('e');
+      const panels = await page.evaluate(() => window.__panelsWhileE);
+      assert.ok(panels.length > 10, `frames seen while E is held: ${panels.length}`);
+      assert.deepEqual([...new Set(panels.filter(p => p !== 'ending'))], [null], 'E held for extraction never opens a panel');
       await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout: 30000 });
-      assert.equal(await page.locator('.coast-sample [data-panel].cs-inv-panel').count(), 0);
       assert.equal(await page.evaluate(() => window.__bincov.app.save.lastResult?.outcome), 'extract');
     });
   } finally { await context.close(); }
