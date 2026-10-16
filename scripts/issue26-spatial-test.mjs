@@ -59,12 +59,13 @@ const OCCLUSION = `window.__occlusion = ({ A, B, C, D }) => {
 const decode = b64 => `new Promise(done => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height;
   const g = c.getContext('2d'); g.drawImage(i, 0, 0); done(g.getImageData(0, 0, i.width, i.height).data); }; i.src = 'data:image/png;base64,' + ${JSON.stringify(b64)}; })`;
 /**
- * Front-end gaps the occlusion checks found on the 2.5D view (2026-10-17, reported): door guides draw above actors
- * (view.xray over view.sorted) and stair destinations are page text above the canvas, so both cover an enemy under them.
+ * Front-end gaps the occlusion checks found on the 2.5D view (2026-10-17, reported). Stair names are page text above the
+ * canvas, so one covers part of an enemy standing right under it (hiding the name while an enemy is near the stairs would
+ * take the destination away in a fight). Door guides step aside for enemies and bullets, so they are not listed.
  * While a gap is listed, its check asserts that the cover is still measured and prints a GAP line; once the view is fixed
  * the guard fails, and removing the entry restores the original assertion (0 covered pixels).
  */
-const KNOWN_GAPS = new Set(['door-guide-over-actors', 'stair-label-over-actors']);
+const KNOWN_GAPS = new Set(['stair-label-over-actors']);
 function uncovered(gap, covered, what) {
   if (!KNOWN_GAPS.has(gap)) return assert.equal(covered, 0, `${what}: ${covered} covered pixels`);
   (report.gaps ??= []).push({ size: size.join('x'), gap, covered });
@@ -161,16 +162,31 @@ try {
           return { x: Math.round(a.x), y: Math.round(a.y), width: Math.round(b.x - a.x), height: Math.round(b.y - a.y) }; });
         await page.screenshot({ path: resolve(out, `${size.join('x')}-S03b-doorway-crop.png`), clip });
         (report.occlusion ??= []).push({ size: size.join('x'), check: 'S03b', ...result }); // kept on failure too
-        assert.equal(result.door, true, 'the west door is open'); assert.equal(result.guideShown, true, 'its guide is shown');
+        assert.equal(result.door, true, 'the west door is open');
         assert.ok(result.enemyShown && result.bulletShown, 'the enemy and the probe bullet are drawn');
         for (const [name, r, min] of [['enemy', result.enemy, 100], ['bullet', result.bullet, 4]]) {
           assert.ok(r.body > min, `positive control: the ${name} is drawn (${r.body} px)`);
-          assert.ok(r.guide > 50, `positive control: the guide is drawn in the doorway (${r.guide} px)`);
+          assert.ok(r.guide > 50, `positive control: the guide, when drawn, is in the doorway (${r.guide} px)`);
           // Without this the check could pass because nothing sits on the guide.
           assert.ok(r.overlap > Math.min(20, min), `positive control: the ${name} sits on the guide (${r.overlap} px)`);
-          uncovered('door-guide-over-actors', r.covered, `the door guide over the ${name} in a visible open doorway`);
         }
-        return result;
+        // The original drew the guide under them. The 2.5D guide is drawn above the actors (it shows through walls), so it
+        // steps aside instead: no enemy or bullet pixel is covered because the guide is not drawn while they are on it.
+        uncovered('door-guide-over-actors', result.guideShown ? Math.max(result.enemy.covered, result.bullet.covered) : 0, 'the door guide over the enemy and the bullet in a visible open doorway');
+        assert.equal(result.guideShown, false, 'the door guide steps aside while the enemy and the bullet are on it');
+        // The bullet alone: the guide hides only for the frames its trail is on the guide, and is back once nothing is.
+        await page.evaluate(({ uid, home }) => window.__bincovSample.driver.placeEnemy(uid, home), staged); await settle();
+        const alone = await page.evaluate(owner => {
+          const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, guide = v.doorGuides.get('resident-west');
+          h.app.ticker.stop();
+          try {
+            const before = guide.visible, probe = x => ({ ...b, events: [], frame: { ...b.frame, bullets: [...b.frame.bullets, { uid: 'probe-alone', x, y: 348, vx: -300, vy: 0, enemy: true, owner }] } });
+            v.present(probe(442), 0); v.present(probe(432), 0); const during = guide.visible;
+            v.present({ ...b, events: [] }, 0); return { before, during, after: guide.visible };
+          } finally { v.render(); h.app.render(); h.app.ticker.start(); }
+        }, staged.uid);
+        assert.deepEqual(alone, { before: true, during: false, after: true }, 'the guide hides only while the bullet is on it');
+        return { ...result, alone };
       } finally {
         await page.evaluate(({ uid, home }) => { const d = window.__bincovSample.driver; d.placeEnemy(uid, home); d.door('resident-west', false); }, staged);
         await settle();
