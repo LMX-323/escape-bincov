@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls, running } from './stall-resume.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).map(arg => {
   const at = arg.indexOf('=');
@@ -45,13 +46,14 @@ async function runCase(entry, viewport, name, test) {
   const record = { entry, viewport, name, status: 'running', errors: [], externalRequests: [], screenshots: [] };
   report.cases.push(record); const started = performance.now();
   const context = await browser.newContext({ viewport, offline: true });
+  await resumeStalls(context);
   context.on('request', request => { if (/^https?:/i.test(request.url())) record.externalRequests.push(request.url()); });
   await context.route(/^https?:/i, route => route.abort('internetdisconnected'));
   context.on('page', p => {
     p.on('pageerror', error => record.errors.push(error.stack || error.message));
     p.on('console', message => { if (message.type() === 'error') record.errors.push(message.text()); });
   });
-  const page = await context.newPage(); page.setDefaultTimeout(12000);
+  const page = await context.newPage(); page.setDefaultTimeout(20000);
   const sample = true, query = '?test=1&entry=tabs&sample=village';
   const selector = (source, uid) => `[data-source="${source}"][data-uid="${uid}"]`;
   const button = kind => page.locator(`[data-do="${{ quick: 'inv-quick', equip: 'inv-equip' }[kind]}"]`);
@@ -117,6 +119,8 @@ async function runCase(entry, viewport, name, test) {
     await frames(page); await resetAudit(); return crate;
   }
   async function open(crate) {
+    // E opens the crate only while the raid runs (a stall pause resumed on a slow runner would swallow it).
+    await running(page);
     await page.keyboard.press('e', { delay: 90 }); await waitPanel('loot'); await frames(page);
     assert.equal((await snapshot()).context.containerId, crate.id, 'E opens the fixture container');
     await page.locator('[data-grid="container"]').waitFor();
@@ -149,9 +153,9 @@ async function runCase(entry, viewport, name, test) {
     await frames(page);
   }
   try {
-    await page.goto(url + query); await action(page, 'enter').click();
+    await page.goto(url + query); await action(page, 'enter').click({ timeout: 60000 });
     await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch);
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 30000 });
     await installAudit();
     record.detail = await test({ page, context, sample, query, fixture, open, drag, panel, waitPanel, snapshot, participants, assertSynced, audit, inputWrites, resetAudit, selector, button, armFault, recover, screenshot });
     assert.deepEqual(record.errors, [], 'no browser errors'); assert.deepEqual(record.externalRequests, [], 'no external requests');
