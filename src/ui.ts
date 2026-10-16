@@ -325,7 +325,7 @@ function overlayHtml() {
         return '';
     if (app.overlay === 'shop-leave') return `<div class="overlay"><section class="panel modal"><h2>放弃未结算的清单？</h2><p>待买、待卖和仓库位置会恢复。现金与物资尚未改变。</p><div class="actions">${btn('继续挑选', 'close')}${btn('放弃清单并离开', 'shop-leave-confirm', 'danger')}</div></section></div>`;
     if (app.overlay === 'shop-quest') return `<div class="overlay"><section class="panel modal"><h2>这些任务物资会不够交付</h2><ul>${Shop.saleWarnings(app.save, cart()).map(w => `<li>「${w.quest}」需要 ${D.ITEMS[w.id].name} ${w.needed} 件；本次卖出 ${w.sold} 件，整笔交易后剩 ${w.remaining} 件。</li>`).join('')}</ul><div class="actions">${btn('取消，继续挑选', 'close')}${btn('仍要结算', 'checkout-confirm', 'danger')}</div></section></div>`;
-    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">${touchLayout() ? '手机触控操作' : '键盘与鼠标操作'}</div><h2>行动指南</h2>${touchLayout() ? '<p class="touch-guide">左盘移动，外圈冲刺；右盘内圈瞄准、外圈持续开火，松开即停。靠近物资点击「拾取」，在撤离区停稳并按住「撤离」3 秒。地图和背包不暂停。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '拾取 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>每局限时 10 分钟。备用弹药放在背包中，${touchLayout() ? '靠近物资点击拾取，打开地图查看本局撤离点。在绿色圈内站稳，按住撤离按钮满 3 秒。' : '靠近箱子或尸体后，用滚轮切换高亮目标，按 E 打开双栏；关闭后可再选其他目标。散落物按 E 拾取，与箱子或尸体重叠时点「附近」拾取。物品可拖入背包、安全箱或放回。搜刮不暂停。按 M 查看本局撤离点，在绿色圈内站稳，按住 E 满 3 秒撤离。'}</p><p>出击 4 分 30 秒后电台预警，5 分钟时潮位变化。涉水会积累污染；在背包中使用除藻药剂可降低污染。${touchLayout() ? '治疗按钮' : 'Q'}使用背包中的绷带或急救包。</p><p>行动中死亡、超时或放弃均按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。刷新可恢复最近成功保存的进度。</p>${btn('关闭指南', 'close', 'primary')}</div></div>`;
+    return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">${touchLayout() ? '手机触控操作' : '键盘与鼠标操作'}</div><h2>行动指南</h2>${touchLayout() ? '<p class="touch-guide">左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>每局限时 10 分钟。备用弹药放在背包中，${touchLayout() ? '靠近物资点击拾取，打开地图查看本局撤离点。在绿色圈内站稳，按住撤离按钮满 3 秒。' : '靠近箱子或尸体后，用滚轮切换高亮目标，按 E 打开双栏；关闭后可再选其他目标。散落物按 E 拾取。物品可拖入背包、安全箱或放回。搜刮不暂停。按 M 查看本局撤离点，在绿色圈内站稳，按住 E 满 3 秒撤离。'}</p><p>出击 4 分 30 秒后电台预警，5 分钟时潮位变化。涉水会积累污染；在背包中使用除藻药剂可降低污染。${touchLayout() ? '治疗按钮' : 'Q'}使用背包中的绷带或急救包。</p><p>行动中死亡、超时或放弃均按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。刷新可恢复最近成功保存的进度。</p>${btn('关闭指南', 'close', 'primary')}</div></div>`;
 }
 export function closeOverlay() {
     setOverlay(app.overlay === 'help' ? app.helpReturn : '');
@@ -347,19 +347,13 @@ export function retrySettlement(): boolean {
 export function exportSave() {
     try {
         let text: string;
-        if (app.expansion) {
-            const record = app.expansion.raid ? saveSession.backupRecord() : saveSession.backupRecord(app.checkpoint);
+        // A raid in progress exports the Runtime's live capture (registered with the session), not the last checkpoint written.
+        if (app.expansion || app.save.activeRun && !app.pendingSettlement) {
+            const record = saveSession.backupRecord();
             if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
             text = encodeRecoveryBackup(record);
         } else if (app.pendingSettlement) text = encodeBackup(app.pendingSettlement);
-        else if (app.save.activeRun) {
-            const record = saveSession.currentRecord();
-            if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
-            const raid = app.checkpoint;
-            record.profile = structuredClone(app.save); record.raid = raid;
-            if (raid) D.checkpointSafe(record.profile, raid.loadout.safe, raid.runId);
-            text = encodeRecoveryBackup(record);
-        } else text = encodeBackup(app.save);
+        else text = encodeBackup(app.save);
         const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
