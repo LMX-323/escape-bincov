@@ -205,7 +205,7 @@ async function suite(viewport) {
         assert.equal(await page.locator('.coast-sample [data-do="inv-quick"]').count(), 1); await el.dblclick(); await frames(page, 2);
         const after = await snapshot(), saved = JSON.parse(after.storage).expansion.raid;
         assert.equal(after.containers.find(box => box.id === c.id).inventory.items.some(i => i.uid === uid), false);
-        assert.deepEqual(after.loadout.bag.items.filter(i => i.id === sourceItem.id).map(i => ({ id: i.id, qty: i.qty })), [{ id: sourceItem.id, qty: sourceItem.qty }]);
+        assert.deepEqual(after.loadout.bag.items.filter(i => i.uid === uid).map(i => ({ id: i.id, qty: i.qty })), [{ id: sourceItem.id, qty: sourceItem.qty }]);
         assert.equal(after.loadout.weapon, before.loadout.weapon, 'Picking up a gun does not equip it');
         assert.equal(after.hp, before.hp, 'Picking up medical loot does not consume it');
         assert.equal(after.mag, before.mag); assert.deepEqual(after.loadout.safe, before.loadout.safe);
@@ -258,7 +258,8 @@ async function suite(viewport) {
       const after = await snapshot(); assert.equal(after.x, before.x); assert.equal(after.y, before.y); assert.equal(after.mag, before.mag); assert.equal(after.hp, before.hp);
       assert.equal(after.panel, 'loot'); assert.deepEqual(after.loadout, before.loadout); assert.ok(after.elapsed > before.elapsed + .3);
       assert.ok(await timer() < enemyBefore - .3, 'enemy AI keeps running while the player loots');
-      await page.keyboard.press('Escape'); await waitPanel(page, null); await page.waitForTimeout(180);
+      // Six published frames with D and the left button still held: closing the panel does not hand them to the raid.
+      await page.keyboard.press('Escape'); await waitPanel(page, null); await frames(page, 6);
       const held = await snapshot(); assert.equal(held.x, before.x); assert.equal(held.mag, before.mag);
       await page.mouse.up(); await page.keyboard.up('d'); await quiet();
     });
