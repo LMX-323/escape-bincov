@@ -149,8 +149,8 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-info section p { margin: 0; color: var(--cs-muted); }
 .coast-sample.touch .cs-info summary { display: flex; align-items: center; min-height: 40px; }
 @media (max-height: 480px) { .coast-sample.touch .cs-toast { top: auto; bottom: 80px; } }
-/* On short phones an opened task list scrolls instead of running into the touch buttons. */
-@media (max-height: 480px) { .coast-sample.touch .cs-info [data-quest-list] { max-height: calc(100vh - 170px); overflow-y: auto; } }
+/* On short phones an opened task list scrolls instead of running into the touch buttons (the 40 px toggle above it included). */
+@media (max-height: 480px) { .coast-sample.touch .cs-info [data-quest-list] { max-height: calc(100vh - 192px); overflow-y: auto; } }
 .cs-info small { color: var(--cs-muted); }
 @media (max-height: 480px) {
   .cs-radio { top: 30px; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; }

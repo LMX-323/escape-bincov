@@ -924,10 +924,10 @@ export class CoastSampleHost {
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
   private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); }
-  /** One line at a time; the same line again while it shows counts up (获得 绷带 ×1 × 2), as the original toasts did. */
+  /** One line at a time; the same good news again while it shows counts up (获得 密封绷带 ×1 × 2), as the original toasts did. */
   toast(text: string, bad = false) {
     const t = this.q('[data-toast]'); if (!t) return;
-    this.toastCount = text === this.toastText && this.toastLeft > 0 ? this.toastCount + 1 : 1; this.toastText = text;
+    this.toastCount = !bad && text === this.toastText && this.toastLeft > 0 ? this.toastCount + 1 : 1; this.toastText = bad ? '' : text;
     t.textContent = this.toastCount > 1 ? `${text} × ${this.toastCount}` : text; t.classList.add('on'); t.classList.toggle('bad', bad); this.toastLeft = 2.8;
   }
   private toastText = '';
