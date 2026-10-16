@@ -93,6 +93,13 @@ try {
   const start = Date.now(), deadline = start + minutes * 60000;
   while (Date.now() < deadline || (await snapshot()).state === 'run') {
     const s = await snapshot(), now = Date.now();
+    if (s.pending && s.state === 'run') {
+      // Say why the terminal write failed: the session's storage error and the Runtime's last rejections.
+      const why = await page.evaluate(() => { const a = window.__bincov.app, h = window.__bincovSample?.host;
+        return { storageOK: a.storageOK, storageError: a.storageError, conflict: a.conflict, rejected: h?.eventLog?.filter(e => e.type === 'rejected').slice(-6) }; });
+      report.storageFailure = why;
+      assert.fail(`Storage must stay available: ${JSON.stringify(why)}`);
+    }
     assert.equal(s.pending, s.state === 'run' ? false : undefined, 'Storage must stay available');
     if (s.state === 'result') {
       await keys(new Set()); report.outcomes.push(s.result);
