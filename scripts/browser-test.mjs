@@ -65,7 +65,6 @@ async function suite(viewport) {
   page.on('console', message => { if (message.type() === 'error') record.errors.push({ type: 'console', message: message.text() }); });
   const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
   const waitState = (state, timeout = 30000) => page.waitForFunction(expected => window.__bincov?.app.state === expected, state, { timeout });
-  const hold = async (key, milliseconds) => { await page.keyboard.down(key); try { await page.waitForTimeout(milliseconds); } finally { await page.keyboard.up(key); } };
   const screenshot = async name => {
     const path = join(out, `${label}-${name}.png`);
     await page.screenshot({ path });
@@ -104,12 +103,62 @@ async function suite(viewport) {
       throw error;
     } finally { item.durationMs = rounded(performance.now() - start); await saveReport(); }
   }
+  /**
+   * On a slow runner (CI's software GL) the first frames after a mount can be more than 2 s apart, and the Runtime then
+   * stall-pauses the raid ("画面暂时停顿…"), as it would for a player. Resume it through the pause panel, as a player
+   * would, and wait until it has stayed running for a few frames.
+   */
+  async function running() {
+    for (let i = 0; i < 5; i++) {
+      const now = await page.evaluate(() => ({ panel: window.__bincovSample.host.panel, phase: window.__bincovSample.host.lastBatch.frame.phase }));
+      if (now.phase === 'running' && now.panel === null) {
+        await frames(page, 3);
+        if (await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.phase === 'running')) return;
+        continue;
+      }
+      assert.equal(now.panel, 'pause', `the raid waits on ${now.panel}`);
+      // Only the Runtime's own stall pause is resumed here; any other pause is a failure of the step.
+      assert.ok(await page.evaluate(() => { const h = window.__bincovSample.host, seen = h.__stallSeen ?? 0, stalls = h.eventLog.filter(e => e.type === 'notice' && /^画面暂时停顿/.test(e.detail?.text ?? '') && e.seq > seen); if (!stalls.length) return false; h.__stallSeen = Math.max(...stalls.map(e => e.seq)); return true; }), 'the raid paused without the Runtime\'s stall notice');
+      record.stallResumes = (record.stallResumes ?? 0) + 1; console.log(`STALL ${label}: resumed a stall pause`);
+      await page.locator('.coast-sample [data-do="resume"]').click();
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 30000 });
+    }
+    throw new Error('the raid did not stay running');
+  }
+  /**
+   * Fixture: a rested body before a deployment. After a death the 2.5D body keeps 1 health (the base heals it over real
+   * minutes); on a slow runner the AI acts for a second or two before the test can freeze it, so one blow would end the
+   * run. One validated session transaction, as the base's own recovery would write it.
+   */
+  async function rest() {
+    const ok = await page.evaluate(() => {
+      const s = window.__bincov.saveSession;
+      if (!window.__bincov.app.expansion) return true;
+      const ticket = s.prepareExpansionMutation(d => { Object.assign(d.expansion.body, { hp: 100, stamina: 100, pollution: 0, bleeding: false }); });
+      return !!ticket && s.commitExpansionMutation(ticket) === 'committed';
+    });
+    assert.ok(ok, 'rested body fixture committed');
+  }
+  /**
+   * Hold a movement key until the published player position passes `bound` on `axis` (direction 1: above, -1: below).
+   * Movement keys are read once per frame, so a fixed-length hold can miss every frame on a slow runner. On a timeout
+   * the caller's own assertion reports the failure.
+   */
+  async function holdUntil(key, axis, bound, direction) {
+    await page.keyboard.down(key);
+    try {
+      await page.waitForFunction(([axis, bound, direction]) => { const v = window.__bincovSample.host.lastBatch.frame.player[axis]; return direction > 0 ? v > bound : v < bound; },
+        [axis, bound, direction], { timeout: 20000 }).catch(() => {});
+    } finally { await page.keyboard.up(key); }
+  }
   async function deploy(seed) {
+    await rest();
     await page.locator('#seed').fill(String(seed));
     await action('deploy').click();
     await waitState('run');
     await raidReady(page);
     await drive(page, 'freezeAI', true);
+    await running();
     const current = await run();
     assert.equal(current.seed, seed);
     // One raid view owns the page: the Pixi raid canvas fills the window and no title or station canvas remains.
@@ -118,8 +167,22 @@ async function suite(viewport) {
     const owners = await page.evaluate(() => ({ views: window.__bincovSample.counts().liveViews, roots: window.__bincovSample.counts().sampleRoots, pageCanvases: document.querySelectorAll('#game canvas').length }));
     assert.deepEqual(owners, { views: 1, roots: 1, pageCanvases: 0 }, 'Only the raid view may continue running');
   }
+  /**
+   * The client point of a world point once the camera has settled: it follows the player over about a second, which on a
+   * slow runner is only a few frames, and a pointer placed earlier would aim where the target was on screen.
+   */
+  async function settledScreen(point) {
+    let last = await screenOf(page, point);
+    for (let i = 0; i < 40; i++) {
+      await frames(page, 2);
+      const now = await screenOf(page, point);
+      if (Math.hypot(now.x - last.x, now.y - last.y) < .5) return now;
+      last = now;
+    }
+    return last;
+  }
   async function aimAt(point) {
-    const screen = await screenOf(page, point);
+    const screen = await settledScreen(point);
     assert.ok(screen.x >= 0 && screen.x < viewport.width && screen.y >= 0 && screen.y < viewport.height, 'Fixture target must be visible');
     await page.mouse.move(screen.x, screen.y);
     await frames(page, 4);
@@ -130,6 +193,7 @@ async function suite(viewport) {
     await drive(page, 'placePlayer', point, 0, 'coast');
     await page.waitForFunction(p => { const f = window.__bincovSample.host.lastBatch.frame.player; return Math.hypot(f.x - p.x, f.y - p.y) < 1; }, point);
     await page.waitForTimeout(1200);
+    await running();
   }
   /** Pick up the run's street sample with E from a spot where no container is in reach (E would open it instead). */
   async function collectSample() {
@@ -221,9 +285,9 @@ async function suite(viewport) {
     await step('real WASD movement and pointer mapping', async () => {
       await standAt({ x: 208, y: 784 });
       const before = await run();
-      await hold('d', 450); const right = await run();
+      await holdUntil('d', 'x', before.x + 15, 1); const right = await run();
       assert.ok(right.x > before.x + 15, 'D moves the actor right');
-      await hold('w', 450); const up = await run();
+      await holdUntil('w', 'y', right.y - 15, -1); const up = await run();
       assert.ok(up.y < right.y - 15, 'W moves the actor up');
       await page.waitForTimeout(1200);
       const target = { x: up.x + 140, y: up.y + 20 };
@@ -245,25 +309,35 @@ async function suite(viewport) {
         return rifle.uid;
       });
       assert.ok(salt, 'a rifle enemy on the street');
+      // The world check first: seedLoot runs a tsx child process, which takes seconds on a slow runner, and the duel
+      // (AI unfrozen) must last only the sampled five seconds.
+      const before = await run(), stocked = seedLoot(42).amounts;
+      assert.equal(before.alive, 25); assert.deepEqual(sorted(before.amounts), sorted(stocked), 'the world is still fully stocked');
       await drive(page, 'freezeAI', false);
-      const before = await run();
-      assert.equal(before.alive, 25); assert.deepEqual(sorted(before.amounts), sorted(seedLoot(42).amounts), 'the world is still fully stocked');
       record.fps = await page.evaluate(() => new Promise(resolveSample => {
         const start = performance.now(), values = [], intervals = [];
-        let previous = start, frames = 0, stayedInRun = true;
+        let previous = start, frames = 0, stayedInRun = true, sampledAt = start;
+        let done = false;
+        function finish(now) {
+          if (done) return; done = true;
+          values.sort((a, b) => a - b); intervals.sort((a, b) => a - b);
+          const average = values.reduce((a, b) => a + b, 0) / values.length;
+          resolveSample({ measuredMs: now - start, frames, samples: values.length, average, minimum: values[0], median: values[Math.floor(values.length / 2)], frameIntervalP95Ms: intervals[Math.floor(intervals.length * .95)], stayedInRun, target60ApproxMet: average >= 55 });
+        }
         function sample(now) {
+          if (done) return;
           const { app } = window.__bincov;
           stayedInRun &&= app.state === 'run';
           if (frames++) intervals.push(now - previous);
           previous = now;
           const fps = window.__bincovSample.host.app.ticker.FPS;
-          if (frames % 10 === 0 && Number.isFinite(fps) && fps > 0) values.push(fps);
+          if ((frames % 10 === 0 || now - sampledAt >= 500) && Number.isFinite(fps) && fps > 0) { values.push(fps); sampledAt = now; }
           if (now - start < 5000) { requestAnimationFrame(sample); return; }
-          values.sort((a, b) => a - b); intervals.sort((a, b) => a - b);
-          const average = values.reduce((a, b) => a + b, 0) / values.length;
-          resolveSample({ measuredMs: now - start, frames, samples: values.length, average, minimum: values[0], median: values[Math.floor(values.length / 2)], frameIntervalP95Ms: intervals[Math.floor(intervals.length * .95)], stayedInRun, target60ApproxMet: average >= 55 });
+          finish(now);
         }
         requestAnimationFrame(sample);
+        // If frames stop altogether the sample ends anyway, and the check below reports it instead of hanging the suite.
+        setTimeout(() => finish(performance.now()), 20000);
       }));
       await drive(page, 'freezeAI', true);
       assert.ok(record.fps.samples >= 2 && record.fps.average > 0, 'FPS sampler produced measurements');
@@ -311,7 +385,8 @@ async function suite(viewport) {
       await page.keyboard.press('m');
       await page.locator('.coast-sample [data-panel].map [data-map]').waitFor();
       const mapTime = (await run()).elapsed;
-      await page.waitForTimeout(250);
+      // The world keeps running behind the map: the published clock moves on (frames may be far apart on a slow runner).
+      await page.waitForFunction(t => window.__bincovSample.host.lastBatch.stamp.simulationTime > t, mapTime, { timeout: 15000 }).catch(() => {});
       assert.ok((await run()).elapsed > mapTime, 'Map is not a pause');
       await screenshot('map');
       await page.keyboard.press('m'); await waitPanel(page, null);
@@ -326,12 +401,12 @@ async function suite(viewport) {
       await drive(page, 'clock', 299.9);
       await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.highTide === true);
       const afterFlip = await run();
-      await hold('a', 600);
+      await holdUntil('a', 'x', 63 * 32 - 10, -1);
       const escaped = await run();
       assert.ok(escaped.x < 63 * 32 - 10, 'Player can leave the high-tide strip');
       // Regression: actor center is dry but the collision radius still overlaps water.
-      await drive(page, 'placePlayer', { x: 63 * 32 - 1, y: 10 * 32 + 16 }, 0, 'coast'); await frames(page, 2);
-      await hold('a', 450);
+      await drive(page, 'placePlayer', { x: 63 * 32 - 1, y: 10 * 32 + 16 }, 0, 'coast'); await frames(page, 2); await running();
+      await holdUntil('a', 'x', 63 * 32 - 20, -1);
       assert.ok((await run()).x < 63 * 32 - 20, 'Half-overlapping flood boundary must not trap the actor');
       await screenshot('high-tide');
       return { warningAt: 270, tideAt: 300, xAfterFlip: rounded(afterFlip.x), xAfterMovement: rounded(escaped.x) };
