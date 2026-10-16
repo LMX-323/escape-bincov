@@ -793,7 +793,9 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
             environment = { bleed: dt * this.bleeding * B.bleedDamage, pollution: dt * (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0) };
-            this.hp -= dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0));
+            // The drain stops at 0, as a blow does (applyDamage): a classic raid settles its health into the body, which
+            // accepts 0 to the limit, so a bleed-out past zero would fail the terminal write.
+            this.hp = Math.max(0, this.hp - dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0)));
         }
         this.environmentHurt(beforeEnvironment - this.hp, environment);
         if (this.hp <= 0) {

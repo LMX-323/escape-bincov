@@ -53,6 +53,25 @@ test('a reloaded coast-v1 raid resumes on the Runtime (the only raid executor) w
     runtime.dispose();
 });
 
+test('a classic raid that bleeds out settles once: the drain stops at 0 health, which the body accepts', () => {
+    const data = new Map<string, string>();
+    const storage: D.StorageLike = { getItem: key => data.get(key) ?? null, setItem: (key, value) => { data.set(key, value); } };
+    const state = createSessionState(), session = new SaveSession(state, () => storage);
+    assert.ok(session.initialize()); state.state = 'hideout';
+    // A player who has played the street (or the yard) carries a body; a classic raid settles into it.
+    assert.ok(session.enableExpansion(1000)); assert.ok(session.beginRun(42)); state.state = 'run';
+    const runtime = new CoastRaidRuntime(state, session);
+    let at = 0; runtime.advance(at += 16, emptyIntent());
+    // The last sliver of health bleeds away in one step, past zero.
+    const bleeding = runtime.snapshot(); bleeding.hp = .001; bleeding.bleeding = 1; runtime.restore(bleeding);
+    for (let i = 0; i < 5 && !runtime.settlement.reason; i++) runtime.advance(at += 50, emptyIntent());
+    assert.equal(runtime.settlement.reason, 'death');
+    assert.equal(runtime.settlement.committed, true, state.storageError);
+    assert.equal(state.pendingSettlement, null); assert.equal(state.save.activeRun, null);
+    assert.equal(state.expansion!.body.hp, 0);
+    runtime.dispose();
+});
+
 test('container world format rejects missing, duplicate, mismatched or corrupt inventories', () => {
     const f = fixture(), checkpoint = f.state.checkpoint!;
     assert.notEqual(WORLD_VERSION, 'coast-v1', 'Older clients must reject this world rather than drop unknown container fields');
