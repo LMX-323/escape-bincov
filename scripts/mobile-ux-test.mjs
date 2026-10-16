@@ -5,11 +5,13 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { browserOptions } from './browser-options.mjs';
 import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
+import { openPause, resumeStalls, running, stallResumes } from './stall-resume.mjs';
 
 const out=resolve('test-results/mobile-ux'); await mkdir(out,{recursive:true});
 const report={startedAt:new Date().toISOString(),method:'Offline Chromium touch emulation, trusted taps and explicit ?test=1 fixtures on the 2.5D raid host. Includes failure injection; not physical phone validation. Notch insets are emulated with the DevTools safe-area override (env(safe-area-inset-*)).',steps:[],errors:[],requests:[]};
 const browser=await chromium.launch(browserOptions);report.browser=browser.version();
 const context=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1,offline:true});
+await resumeStalls(context);
 const page=await context.newPage();page.setDefaultTimeout(20000);
 page.on('pageerror',e=>report.errors.push(e.message));context.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url())});
 const action=(name,id)=>page.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
@@ -25,13 +27,23 @@ const panelIs=v=>page.waitForFunction(v=>window.__bincovSample?.host?.panel===v,
 const ready=()=>page.waitForFunction(()=>!!window.__bincovSample?.host?.lastBatch&&!!document.querySelector('.coast-sample canvas'),null,{timeout:30000});
 async function step(name,fn){const e={name,status:'running'};report.steps.push(e);try{await fn();assert.deepEqual(report.errors,[]);assert.deepEqual(report.requests,[]);e.status='passed';console.log('PASS',name)}catch(error){e.status='failed';e.error=error.stack;throw error}}
 async function reachable(selector){return page.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.width>=48&&r.height>=48&&r.y>=0&&r.bottom<=innerHeight&&r.x>=0&&r.right<=innerWidth&&!!hit&&(hit===el||el.contains(hit));})}
-/** Landscape sizes never pause the raid; a pause left open by an earlier step is resumed. */
-async function resize(width,height){await page.setViewportSize({width,height});await page.waitForTimeout(150);if(await host(()=>window.__bincovSample.host.panel==='pause')){await raid('resume').tap();await panelIs(null);}}
+/**
+ * Landscape sizes never pause the raid; a pause left open by an earlier step is resumed. Two published frames at the
+ * new size come first: on a slow software-GL runner the first frame after a resize can stall past 2 s and pause.
+ */
+async function settle(){
+ const r=await host(()=>window.__bincovSample.host.lastBatch.stamp.revision);
+ await page.waitForFunction(r=>window.__bincovSample.host.lastBatch.stamp.revision>=r+2,r,{timeout:20000});
+ if(await host(()=>window.__bincovSample.host.panel==='pause')){await raid('resume').tap();await panelIs(null);}
+ await running(page);
+}
+async function resize(width,height){await page.setViewportSize({width,height});await settle();}
 /** Enemies frozen, the player on the road at (700, 784), healthy. */
 async function fixture(){
  await drive('freezeAI',true);await drive('placePlayer',{x:700,y:784},0,'coast');
  const max=await host(()=>window.__bincovSample.host.lastBatch.frame.hud.maxHp);await drive('vitals',{hp:max,bleeding:false,pollution:0});
  await page.waitForFunction(()=>Math.abs(window.__bincovSample.host.lastBatch.frame.player.x-700)<1);
+ await running(page);
 }
 /** Carried bag and safe through one validated session write (the same commit path a transfer uses). */
 async function carry({bag,safe}){
@@ -48,7 +60,7 @@ const overlaps=(toastSel,targets)=>page.evaluate(([toastSel,targets])=>{const a=
 const toastOn=()=>page.waitForFunction(()=>document.querySelector('.coast-sample [data-toast]')?.classList.contains('on'),null,{timeout:20000});
 const toastOff=()=>page.waitForFunction(()=>!document.querySelector('.coast-sample [data-toast]')?.classList.contains('on'),null,{timeout:20000});
 try {
- await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await action('enter').tap();await page.locator('#seed').fill('42');await action('deploy').tap();await ready();await fixture();
+ await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await action('enter').tap({timeout:60000});await page.locator('#seed').fill('42');await action('deploy').tap();await ready();await fixture();
  await step('seven phone sizes have immediately reachable inventory and detail exits',async()=>{
   for(const [width,height] of [[667,375],[740,300],[740,340],[740,341],[844,390],[915,412],[932,430]]){
    await resize(width,height);await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');assert.ok(await reachable('.coast-sample [data-panel] [data-do="close"]'),`${width}x${height}: close`);
@@ -124,9 +136,12 @@ try {
   await resize(844,390);await fixture();await toastOff();await carry({bag:[]});
   const uids=[await drive('spawnLoot','bandage',1,{x:700,y:784}),await drive('spawnLoot','bandage',1,{x:712,y:784})];
   const left=()=>host(uids=>uids.filter(uid=>window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid)).length,uids);
+  // Both pickups must land inside the toast's 2.8 s: the action button stays put, so it is tapped directly rather than
+  // through a locator that first waits for it to hold still across frames (seconds on a slow software-GL runner).
+  const act=await page.locator('.coast-sample [data-act]').boundingBox(),at={x:act.x+act.width/2,y:act.y+act.height/2};
   for(const n of [1,0]){
    await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('密封绷带'));
-   await page.locator('.coast-sample [data-act]').tap();
+   await page.touchscreen.tap(at.x,at.y);
    await page.waitForFunction(([uids,n])=>uids.filter(uid=>window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid)).length===n,[uids,n]);
   }
   assert.equal(await left(),0);
@@ -136,7 +151,7 @@ try {
  await step('notch insets keep the HUD and touch buttons in the safe area and world markers on their targets',async()=>{
   report.safeArea=[];
   for(const [width,height,left,right,bottom] of [[932,430,44,12,20],[844,390,47,47,21],[667,375,0,44,0]]){
-   await resize(width,height);await insets(left,right,bottom);await page.waitForTimeout(150);await fixture();await toastOff();await carry({bag:[]});
+   await resize(width,height);await insets(left,right,bottom);await settle();await fixture();await toastOff();await carry({bag:[]});
    const uid=await drive('spawnLoot','water',1,{x:712,y:784});
    await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-prompt]')?.textContent??'').includes('净水瓶'));
    const g=await page.evaluate(()=>{
@@ -192,7 +207,7 @@ try {
   assert.ok(await host(()=>window.__bincovSample.host.eventLog.some(e=>e.type==='rejected'&&e.detail.action==='pickup'&&e.detail.reason==='save-failed')),'the pickup itself was the failed write');
   assert.deepEqual(await snapshot(),before,'a failed pickup restores both the world and the bag');
   await page.evaluate(()=>{Storage.prototype.setItem=window.__write;});assert.ok(await host(()=>window.__failedSessionWrites)>0);
-  await raid('retry-save').tap();await panelIs(null);
+  await raid('retry-save').tap();await panelIs(null);await running(page);
   await page.locator('.coast-sample [data-act]').tap();
   await page.waitForFunction(()=>__bincov.app.loadout.bag.items.reduce((n,i)=>n+i.qty,0)===120);
   const after=await snapshot();
@@ -218,8 +233,9 @@ try {
  await step('rotated safe restores from the durable checkpoint after refresh',async()=>{
   await carry({safe:[{uid:'ux-med',id:'medkit',qty:1,x:0,y:0},{uid:'ux-water',id:'water',qty:1,x:0,y:1,rotated:true}]});
   assert.equal(await host(()=>window.__bincovSample.host.services.checkpoint()),true);
-  const safe=await host(()=>__bincov.app.loadout.safe);await page.locator('.coast-sample [data-pause]').tap();await panelIs('pause');
-  await page.reload();await action('enter').tap();await ready();await drive('freezeAI',true);
+  const safe=await host(()=>__bincov.app.loadout.safe);await openPause(page,()=>page.locator('.coast-sample [data-pause]').tap());
+  report.stallResumes=await stallResumes(page);
+  await page.reload();await action('enter').tap({timeout:60000});await ready();await drive('freezeAI',true);
   assert.deepEqual(await host(()=>__bincov.app.loadout.safe),safe);await panelIs('pause');
   await raid('resume').tap();await panelIs(null);await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');await shot('rotated-safe-844');
  });
@@ -238,7 +254,7 @@ try {
   await inPanel('[data-grid="bag"]').tap({position:await cellAt(0,1)});
   await page.waitForFunction(()=>window.__bincovSample.host.panel==='pause'&&!!document.querySelector('.coast-sample [data-do="retry-save"]'));
   assert.deepEqual(await host(()=>__bincov.app.loadout.bag),before);assert.equal(await placement(),null);
-  await restoreSessionWrites(page);await raid('retry-save').tap();await panelIs(null);
+  await restoreSessionWrites(page);await raid('retry-save').tap();await panelIs(null);await running(page);
   await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');await inPanel('[data-uid="ux-rotate-water"]').tap();await raid('inv-rotate').tap();
   await inPanel('[data-grid="bag"]').tap({position:await cellAt(0,1)});
   await page.waitForFunction(()=>{const i=__bincov.app.loadout.bag.items.find(i=>i.uid==='ux-rotate-water');return i.x===0&&i.y===1&&i.rotated===true;});
@@ -246,11 +262,11 @@ try {
  });
  await step('desktop rotation preview can cancel, leave its tab and commit in both required sizes',async()=>{
   for(const viewport of [{width:1280,height:720},{width:1920,height:1080}]){
-   const desktop=await browser.newContext({viewport,offline:true});
+   const desktop=await browser.newContext({viewport,offline:true});await resumeStalls(desktop);
    desktop.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url())});
    try{
     const p=await desktop.newPage();p.on('pageerror',e=>report.errors.push(e.message));
-    await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await p.locator('[data-action="enter"]').click();
+    await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await p.locator('[data-action="enter"]').click({timeout:60000});
     await p.evaluate(()=>{__bincov.app.save.bag.items=[{uid:'desktop-water',id:'water',qty:1,x:0,y:0},{uid:'desktop-block',id:'bandage',qty:1,x:1,y:0}];});
     await p.locator('[data-action="tab"][data-id="gear"]').click();const before=await p.evaluate(()=>__bincov.app.save.bag);
     await p.locator('[data-uid="desktop-water"]').click();await p.locator('[data-action="rotate-item"]').click();await p.locator('[data-action="clear-selection"]').click();assert.deepEqual(await p.evaluate(()=>__bincov.app.save.bag),before);
