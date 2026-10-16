@@ -159,6 +159,62 @@ try {
     throw new Error(`No walkable point near (${x}, ${y})`);
   }, [x, y]);
   const settle = async () => { await page.evaluate(() => new Promise(r => { let i = 0; const f = () => ++i >= 20 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); })); await page.waitForTimeout(800); };
+
+  // ---- An emptied crate keeps its empty look in the save and after a reload ----
+  // Real input: E opens an outdoor crate and each stack goes to the bag by its 拿到背包 button (the Runtime's loot
+  // transaction, committed with the world snapshot); then the page reloads and the raid resumes from what was stored.
+  const crate = await page.evaluate(() => {
+    const b = window.__bincovSample.host.lastBatch, p = b.frame.player;
+    return b.frame.containers.filter(c => c.kind === 'crate' && c.stacks > 0 && c.regionId === null)
+      .sort((a, c) => a.stacks - c.stacks || Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(c.x - p.x, c.y - p.y))[0] ?? null;
+  });
+  assert.ok(crate, 'an outdoor crate with supplies');
+  const crateLook = () => page.evaluate(id => {
+    const h = window.__bincovSample.host, v = h.view, e = v.crates.get(id), c = h.lastBatch.frame.containers.find(c => c.id === id);
+    const saved = JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion?.raid, stored = saved?.maps[saved.currentMap]?.containers.find(c => c.id === id);
+    return { look: e?.look ?? null, texture: !!e && e.s.texture === v.tex.crate(e.look), drawn: !!e?.s.visible, stacks: c?.stacks ?? null, stored: stored?.inventory.items.length ?? null };
+  }, crate.id);
+  const full = await crateLook();
+  let target = null;
+  for (const [dx, dy] of [[0, 26], [0, -26], [26, 0], [-26, 0]]) {
+    await standNear(crate.x + dx, crate.y + dy); await page.waitForTimeout(250);
+    target = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.interaction?.ref.id ?? null);
+    if (target === crate.id) break;
+  }
+  assert.equal(target, crate.id, 'the crate is the interaction target');
+  await page.keyboard.press('e');
+  await page.waitForFunction(id => window.__bincovSample.host.panel === 'loot' && window.__bincovSample.host.services.lootContext()?.containerId === id, crate.id);
+  const open = await crateLook();
+  // A stack can go in two steps: the first tops up the bag's own stack of that item (获得 …（部分）), the next takes the rest.
+  const units = () => page.evaluate(id => window.__bincovSample.host.lastBatch.frame.containers.find(c => c.id === id).totalQty, crate.id);
+  for (let left = await units(), tries = 0; left > 0; left = await units()) {
+    assert.ok(++tries <= crate.stacks * 2, 'each stack leaves the crate within two transfers');
+    await page.locator('.coast-sample [data-source="container"][data-uid]').first().click(); await page.locator('.coast-sample [data-do="inv-quick"]').click();
+    await page.waitForFunction(([id, left]) => window.__bincovSample.host.lastBatch.frame.containers.find(c => c.id === id).totalQty < left, [crate.id, left], { timeout: 5000 })
+      .catch(async () => {
+        const why = await page.evaluate(() => ({ toast: document.querySelector('.coast-sample [data-toast]')?.textContent, status: document.querySelector('.coast-sample .cs-inv-foot')?.textContent,
+          bag: window.__bincov.app.loadout.bag.items.map(i => `${i.id}x${i.qty}`) }));
+        await page.screenshot({ path: resolve(out, 'empty-crate-failure.png') });
+        throw new Error(`拿到背包 moved nothing out of the crate: ${JSON.stringify(why)}`);
+      });
+  }
+  const emptied = await crateLook();
+  await page.keyboard.press('Escape'); await page.waitForFunction(() => window.__bincovSample.host.panel === null); await settle();
+  const closed = await crateLook();
+  await page.reload(); await page.locator('[data-action="enter"]').click();
+  await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch); await settle();
+  const restored = await crateLook();
+  assert.equal(await page.evaluate(() => window.__bincovSample.host.panel), 'pause', 'the reloaded raid resumes paused');
+  await page.locator('.coast-sample [data-do="resume"]').click(); await page.evaluate(() => window.__bincovSample.driver.freezeAI(true));
+  const saved = await page.evaluate(() => window.__bincovSample.host.services.checkpoint());
+  report.crate = { id: crate.id, stacks: crate.stacks, full, open, emptied, closed, restored, saved };
+  assert.deepEqual([full.look, full.texture, full.drawn], ['full', true, true], 'the crate shows full before looting');
+  assert.equal(open.look, 'open', 'the crate shows open while its panel is up');
+  assert.deepEqual(emptied, { look: 'empty', texture: true, drawn: true, stacks: 0, stored: 0 }, 'the last transfer shows the crate empty and stores it empty');
+  assert.deepEqual(closed, emptied, 'closing the panel keeps it empty');
+  assert.deepEqual(restored, emptied, 'after a reload the restored crate looks empty and the save holds it empty');
+  assert.equal(saved, true, 'the restored raid passes a validated checkpoint write');
+  report.checks.push('Empty crate: emptied through the loot panel, stored empty, and restored with the empty look after a reload');
   const views = [['village', 650, 464], ['market', 650, 1072], ['observatory', 1700, 600], ['harbor', 1990, 944], ['pump', 1750, 1520], ['station', 500, 1520]];
   report.worldViews = [];
   for (const [width, height] of [[1280, 720], [1920, 1080]]) {
@@ -181,10 +237,18 @@ try {
     report.worldViews.push({ viewport: { width, height }, name: 'high-tide', fixture: at });
   }
   report.checks.push(`2.5D captures: ${report.worldViews.length} views including the high tide`);
-  // Retired with the Phaser view (its sprites and static world texture no longer exist): world.png, the corpse/loose-loot
-  // sprite state after a checkpoint restore, the empty-crate sprite after restore, the actor-heading lineup and the
-  // layered sprite resynchronisation. 2.5D coverage (all in CI): corpses after a kill in test:coast-sample V03/V04, revealed
-  // rooms after a restore in test:issue26-spatial S05, reload and the crate look after reload in test:coast-sample W10/V08.
+  // Retired with the Phaser view (its sprites and static world texture no longer exist), and where the 2.5D view is checked:
+  // - world.png: the view has no single world texture; the six place captures and the high tide above are its frames.
+  // - corpse art after a checkpoint restore: test:coast-animation V03/V04 (CI batch-7: a kill in view, and corpses rebuilt
+  //   by an epoch, the stairs or a reload).
+  // - untinted loose loot after a restore: no counterpart; the view tints ground supplies by design (light, glint, tide).
+  // - the empty-crate sprite after a restore: the empty crate step above (this suite, CI batch-4).
+  // - the actor-heading lineup (a screenshot without assertions): facings in test:coast-animation F08 (CI) and
+  //   test:coast-sample V02 (manual run only).
+  // - layered sprite resynchronisation: the view rebuilds from the frame; revealed rooms after a restore are checked in
+  //   test:issue26-spatial S05 (CI batch-4).
+  // test:coast-sample W10 (refresh restores the checkpoint) and V08 (the open lid) are manual runs only: CI batch-7 runs
+  // the animation group alone.
   await context.close();
   assert.deepEqual(report.errors, []); assert.deepEqual(report.externalRequests, []);
   report.status = 'passed'; console.log(JSON.stringify({ checks: report.checks, textures: report.textures.length, errors: report.errors, externalRequests: report.externalRequests }));
