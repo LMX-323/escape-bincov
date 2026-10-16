@@ -106,6 +106,11 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-panel.cs-inv-panel { width: min(1180px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 12px 14px; top: auto; bottom: 10px; transform: translateX(-50%); box-shadow: 0 -2px 0 #0008; }
 .cs-inv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
 .cs-inv-head h2 { margin: 0; }
+/* Loot danger line: health, time left, condition and a blow, beside the title (the HUD may be under the panel). */
+.cs-risk { flex: 1; display: flex; flex-wrap: wrap; gap: 2px 14px; align-items: baseline; justify-content: flex-end; font-family: "Microsoft YaHei", sans-serif; font-size: 13px; line-height: 18px; color: var(--cs-muted); }
+.cs-risk b { color: #f0e3bd; font-weight: 400; }
+.cs-risk small { font-size: 12px; }
+.cs-risk strong { color: #e8846a; font-weight: 400; }
 .cs-inv { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
 .cs-inv > section { display: grid; gap: 6px; }
 .cs-inv h3 { margin: 0; display: flex; gap: 8px; align-items: baseline; }
@@ -140,6 +145,8 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-info details { background: linear-gradient(#17160fe0, #17160fc4); border: 1px solid #3f3b33; padding: 4px 10px; font-family: "Microsoft YaHei", sans-serif; font-size: 13px; line-height: 18px; color: #e6dcc0; }
 .cs-info summary { cursor: pointer; }
 .cs-info section p { margin: 0; color: var(--cs-muted); }
+/* On short phones an opened task list scrolls instead of running into the touch buttons. */
+@media (max-height: 480px) { .coast-sample.touch .cs-info [data-quest-list] { max-height: calc(100vh - 170px); overflow-y: auto; } }
 .cs-info small { color: var(--cs-muted); }
 @media (max-height: 480px) {
   .cs-radio { top: 30px; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; }

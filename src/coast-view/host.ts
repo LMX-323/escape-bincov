@@ -364,7 +364,7 @@ export class CoastSampleHost {
       if (at !== undefined && performance.now() - at < 500 && a && shown(a)) this.mark(e.uid, { x: a.x, y: a.y - AIM_H }, true);
     } else if (e.type === 'hurt' && e.uid === 'player') {
       // A blow of any size pulses the red edge; continuous causes add up into the drain readout instead (R6-L2).
-      if (e.cause === 'blow') this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40);
+      if (e.cause === 'blow') { this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40); if (this.panel === 'loot') this.lootHitT = 1.2; }
       else this.drains[e.cause].acc += e.damage;
     }
     else if (e.type === 'shot' && e.shooter !== 'player') {
@@ -451,7 +451,7 @@ export class CoastSampleHost {
       if (['tab', ' ', 'escape'].includes(k)) e.preventDefault();
       if (e.repeat) return;
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.key(k)) return;
-      if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') this.resume(); else if (!this.panel) this.pause(); return; }
+      if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') { if (this.guideOpen) this.showPause(); else this.resume(); } else if (!this.panel) this.pause(); return; }
       if (k === 'tab') { if (this.blocking()) this.closePanel(true); else if (!this.panel) this.openInventory(); return; }
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
       if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
@@ -460,14 +460,17 @@ export class CoastSampleHost {
     });
     s.on(window, 'keyup', e => this.input.key(e.key, false));
     s.on(canvas, 'contextmenu', e => e.preventDefault());
+    // A touch screen with a mouse (or a tablet): a finger switches to the touch controls, the mouse or wheel back, except
+    // in the phone layout, which always plays by touch.
+    const mouseMode = () => { if (this.input.touch && !document.documentElement.classList.contains('mobile')) this.input.touch = false; };
     s.on(canvas, 'pointermove', e => {
-      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.pointer.inside = true; }
+      if (e.pointerType === 'mouse') { mouseMode(); this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.pointer.inside = true; }
       else this.touchMove(e);
     });
     let pointerType = '';
     s.on(canvas, 'pointerdown', e => {
       pointerType = e.pointerType;
-      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; }
+      if (e.pointerType === 'mouse') { mouseMode(); this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; }
       else { this.input.touch = true; this.touchStart(e); }
       try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or released pointer */ }
     });
@@ -482,7 +485,7 @@ export class CoastSampleHost {
     });
     s.on(window, 'pointercancel', e => { if (e.pointerType === 'mouse') this.input.mouse(e.button, false); else { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); } });
     s.on(canvas, 'pointerleave', e => { if (e.pointerType === 'mouse') this.input.pointer.inside = false; });
-    s.on(canvas, 'wheel', e => { e.preventDefault(); this.cycleChoice(Math.sign(e.deltaY)); }, { passive: false });
+    s.on(canvas, 'wheel', e => { e.preventDefault(); mouseMode(); this.cycleChoice(Math.sign(e.deltaY)); }, { passive: false });
     s.on(window, 'blur', () => this.pause('blur'));
     s.on(window, 'pagehide', () => this.pause('blur'));
     s.on(document, 'visibilitychange', () => { if (document.hidden) this.pause('blur'); });
@@ -562,7 +565,9 @@ export class CoastSampleHost {
   }
   /** The phone is held upright (or the view is too short to play): the raid waits for landscape. */
   private upright() { return this.input.touch && (innerWidth < innerHeight || innerHeight < 280); }
+  private guideOpen = false;
   private showPause(reason?: string) {
+    this.guideOpen = false;
     if (this.contextLost) reason = 'context-lost';
     const conflict = this.session.conflict, saveError = !this.session.storageOK || this.lastRejected === 'checkpoint' || this.lastRejected === 'save-failed';
     const rotate = !conflict && !saveError && !this.contextLost && this.upright();
@@ -597,6 +602,7 @@ export class CoastSampleHost {
     const body = this.input.touch
       ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
       : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;
+    this.guideOpen = true;
     this.setPanel('pause', `<h2>行动指南</h2>${body}<p class="cs-sub">每局限时 10 分钟。死亡、超时或放弃都按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。</p><div class="cs-row"><button type="button" data-do="pause-back">返回</button></div>`, '行动指南');
   }
   private openBlocking(kind: 'inventory' | 'map' | 'reading') {
@@ -751,7 +757,23 @@ export class CoastSampleHost {
     if (this.toastLeft > 0) { this.toastLeft -= dt; if (this.toastLeft <= 0) q('[data-toast]').classList.remove('on'); }
     if (this.radioLeft > 0) { this.radioLeft -= dt; if (this.radioLeft <= 0) q('[data-radio]').hidden = true; }
     if (this.panel === 'loot' && lootChanged) this.inv.render();
+    if (this.panel === 'loot') this.lootRisk(f.hud, dt);
     this.feedbackFrame(b, dt);
+  }
+  /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
+  private lootHitT = 0;
+  /**
+   * The loot panel's danger line, as the original loot window had: health, time left, bleeding or pollution, and a
+   * moment's notice of a blow. On a phone the docked panel covers the HUD, so the line is the only place to see them.
+   */
+  private lootRisk(h: PublishedView['frame']['hud'], dt: number) {
+    const el = this.q('[data-panel] [data-risk]'); if (!el) return;
+    this.lootHitT = Math.max(0, this.lootHitT - dt);
+    const t = Math.ceil(h.timeLeft), state = [h.bleeding ? '流血：持续失去生命' : '', h.pollution > 0 ? `污染 ${Math.round(h.pollution)}%` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行';
+    const text = `${Math.ceil(h.hp)}|${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}|${state}|${this.lootHitT > 0 ? '正在遭受攻击！' : ''}`;
+    if (el.dataset.text === text) return;
+    el.dataset.text = text; const [hp, time, cond, hit] = text.split('|');
+    el.innerHTML = `<span>生命 <b>${hp}</b></span><span>封锁倒计时 <b>${time}</b></span><small>${esc(cond)}</small><strong role="status" aria-live="polite">${hit}</strong>`;
   }
   /** Per-frame feedback: hurt edge (a pulse per blow, a slow throb at low health), hit marker, reticle kick, exit pointer. */
   private feedbackFrame(b: PublishedView, dt: number) {
@@ -854,7 +876,7 @@ export class CoastSampleHost {
   }
   private prompt(t: Interaction | null, py: number) {
     const el = this.q('[data-prompt]'), list = this.q('[data-choices]'), act = this.q('[data-act]');
-    if (!t) { el.hidden = true; list.hidden = true; act.textContent = '交互'; act.setAttribute('aria-label', '交互'); return; }
+    if (!t) { el.hidden = true; list.hidden = true; this.choicesHtml = ''; act.textContent = '交互'; act.setAttribute('aria-label', '交互'); return; }
     const hold = t.hold && t.hold.progress > 0 ? `　${Math.min(t.hold.progress, t.hold.required).toFixed(1)} / ${t.hold.required.toFixed(1)} 秒` : '';
     el.innerHTML = (this.input.touch ? '' : '<kbd>E</kbd>') + esc(t.kind === 'exit' ? `${t.label} · 站稳按住 3 秒撤离` : t.label) + hold;
     el.hidden = false;
@@ -869,13 +891,15 @@ export class CoastSampleHost {
     act.setAttribute('aria-label', t.kind === 'exit' ? `${t.label} · 按住撤离` : t.label);
     if (t.choices.length > 1) {
       list.hidden = false;
-      list.innerHTML = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称打开' : '滚轮切换'}</li>`;
-      list.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' });
+      const html = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称打开' : '滚轮切换'}</li>`;
+      // Rewritten only when it changes: a row replaced between a finger's press and release loses the tap.
+      if (html !== this.choicesHtml) { this.choicesHtml = html; list.innerHTML = html; list.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' }); }
       const side = this.view.worldToClient({ x: t.at.x + 26, y: t.at.y - AIM_H }), w = list.offsetWidth || 160;
       const lx = side.x + w + 8 > innerWidth ? this.view.worldToClient({ x: t.at.x - 26, y: 0 }).x - w : side.x;
       list.style.transform = `translate(${Math.round(Math.max(8, lx))}px, ${Math.round(side.y)}px) translate(0, -50%)`;
-    } else list.hidden = true;
+    } else { list.hidden = true; this.choicesHtml = ''; }
   }
+  private choicesHtml = '';
   private onEvent(e: StampedEvent) {
     if (e.type === 'layer') { this.input.suppressHeld(); this.sticks.clear(); return; }
     if (e.type === 'notice') {
