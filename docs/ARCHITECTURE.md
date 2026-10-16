@@ -4,20 +4,20 @@
 
 ## 当前结构
 
-技术栈为 TypeScript、Phaser 与 PixiJS，保持单文件离线。普通据点入口为水产站院子，旧页签保留；普通玩家新行动仅可选择街区和商场，默认街区，均由 Pixi 宿主运行真实 `CoastRaidRuntime`；新商场行动使用布局三版。`?sample=village` / `?sample=mall` 继续用于预选区域和样板试玩，并非开启 Pixi 的必要开关。
+技术栈为 TypeScript 与 PixiJS，保持单文件离线；游戏不再使用 Phaser。标题页由 [title/scene.ts](../src/title/scene.ts) 在自己的 Pixi 渲染器上绘制，旧页签与结算页是 HTML 界面，背景为 [title-art.ts](../src/title-art.ts) 的静态站外画，由 [screen.ts](../src/screen.ts) 按状态挂到 `#game`。普通据点入口为水产站院子，旧页签保留；普通玩家新行动仅可选择街区和商场，默认街区；所有行动都由 Pixi 宿主运行真实 `CoastRaidRuntime`，新商场行动使用布局三版。`?sample=village` / `?sample=mall` 继续用于预选区域和样板试玩。
 
-入口判断以 [station-view/route.ts](../src/station-view/route.ts) 与 [coast-view/sample.ts](../src/coast-view/sample.ts) 为准：`raidWorlds` / `defaultWorld` 选择可出击区域和默认值，`sampleSupports` 将已保存的街区及商场二/三版行动交给 Pixi。旧沿海检查点（含 `coast-v1/v2`）及 `mall-v1` 行动仍由 Phaser `RaidScene` 恢复并结算；`legacyRaid` 为 `?test=1` 且无 `sample` 的旧测试夹具保留 Phaser、沿海默认区域及商场一版。测试例外不等于普通入口可新开沿海行动。
+入口判断以 [station-view/route.ts](../src/station-view/route.ts) 与 [coast-view/sample.ts](../src/coast-view/sample.ts) 为准：`raidWorlds` / `defaultWorld` 选择可出击区域和默认值，`sampleSupports` 把存档里的任何行动交给 Pixi 宿主，包括切换前开始的旧沿海检查点行动（`coast-v2`）和商场一版。`?test=1` 页面仍可出击已关闭的沿海封锁区，用来制造这类旧行动；这不等于普通入口可新开沿海行动。
 
 | 边界 | 当前责任 | 调用约束 |
 | --- | --- | --- |
-| 纯规则与世界定义 | 库存/交易、生存/成长、空间、追击、生产及世界解析 | 不导入 DOM、Phaser、Pixi 或全局 `app`；不负责显示或写浏览器存储 |
+| 纯规则与世界定义 | 库存/交易、生存/成长、空间、追击、生产及世界解析 | 不导入 DOM、Pixi 等渲染库或全局 `app`；不负责显示或写浏览器存储 |
 | `SaveSession` / `RecoveryStore` | 会话、候选与回滚、完整记录校验、所有权和原子写入 | 通过注入的存储/时钟/世界解析器运行；不负责场景切换 |
 | `RealHideoutRuntime` | 在同一会话上提供据点动作、购物车、训练、导入确认及只读快照 | `snapshot()` 不成为第二份存档；观察者不能参与提交决定 |
-| `CoastRaidRuntime` / `RaidScene` | 两个仍存在的行动执行器，负责模拟、捕获/恢复和调用持久化 | 同一次行动只挂一个所有者；旧执行器并非单纯渲染适配层 |
-| `station-view` / `coast-view` / 旧 `ui` | 画面、设备输入、反馈与生命周期接线 | 成功反馈在实际提交之后；普通入口不得依赖测试驱动 |
+| `CoastRaidRuntime` | 唯一的行动执行器，负责模拟、捕获/恢复和调用持久化 | 同一次行动只挂一个所有者；视图只读它发布的帧 |
+| `station-view` / `coast-view` / `title` / 旧 `ui` | 画面、设备输入、反馈与生命周期接线 | 成功反馈在实际提交之后；普通入口不得依赖测试驱动 |
 | `app` / `main` / 路由 | 组装实例，注入浏览器能力，协调输入、宿主和窗口事件 | 使用唯一会话；不新增另一份 profile 或玩法结算 |
 
-[app.ts](../src/app.ts) 组装 `saveSession`、`hideoutRuntime`、音效和展示引用；对旧场景的引用仅为类型依赖。`SessionState` 是共享数据，调用者应在事务后重新读取 `save` / `loadout`，不要长期缓存可能被回滚或恢复替换的对象。
+[app.ts](../src/app.ts) 组装 `saveSession`、`hideoutRuntime`、音效和宿主引用（`coastSample`、`station`）。`SessionState` 是共享数据，调用者应在事务后重新读取 `save` / `loadout`，不要长期缓存可能被回滚或恢复替换的对象。
 
 新行动的公开端口在 [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)，[host.ts](../src/raid-runtime/host.ts) 绑定 Runtime 和事务服务；据点端口在 [hideout-runtime/contract.ts](../src/hideout-runtime/contract.ts)。这是现有边界，尚非完全隔离：旧 UI 仍负责部分路由，coast 库存仍接收会话，站内路由复用 coast 的 Pixi 生命周期。后续收敛应逐步缩窄这些依赖，不能据此假设视图已完全只读。
 
@@ -43,13 +43,13 @@
 
 ## 捕获、恢复与表现
 
-`SaveSession.attachRaid` / `attachExpansion` 接收捕获与恢复端口。旧海岸使用 `RaidCheckpoint`；多层行动使用包含完整世界的 `ExpansionState`。`RaidScene` 与 `CoastRaidRuntime` 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion` 是两端持久状态接线。
+`SaveSession.attachRaid` / `attachExpansion` 接收捕获与恢复端口。旧海岸使用 `RaidCheckpoint`；多层行动使用包含完整世界的 `ExpansionState`。`CoastRaidRuntime` 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion` 是持久状态接线。
 
-当前层与完整记录的字段关系集中在 [raid-state-projection.ts](../src/raid-state-projection.ts)：`applyActiveRaidSnapshot` 写入调用者已克隆的候选；`activeRaidCheckpoint` 构造供恢复使用的检查点，其嵌套数据引用传入状态。两者不克隆、不推进时钟/RNG、不校验或提交，调用端仍承担隔离与实体所有权。新增字段先核对这份共享映射，再检查两端接线。
+当前层与完整记录的字段关系集中在 [raid-state-projection.ts](../src/raid-state-projection.ts)：`applyActiveRaidSnapshot` 写入调用者已克隆的候选；`activeRaidCheckpoint` 构造供恢复使用的检查点，其嵌套数据引用传入状态。两者不克隆、不推进时钟/RNG、不校验或提交，调用端仍承担隔离与实体所有权。新增字段先核对这份共享映射，再检查执行器接线。
 
-捕获之前的弹匣同步、世界克隆，以及恢复时的对象、碰撞和资源重建属于各执行器的接线责任。`raid-runtime/presentation.ts` 的 `mapView` / `frameView` 是供视图消费的展示投影，不是存档格式；展示事件的序号、epoch 和纹理状态不应直接加入存档。
+捕获之前的弹匣同步、世界克隆，以及恢复时的对象和碰撞重建属于执行器的接线责任。`raid-runtime/presentation.ts` 的 `mapView` / `frameView` 是供视图消费的展示投影，不是存档格式；展示事件的序号、epoch 和纹理状态不应直接加入存档。
 
-宿主切换先完成相应检查点/flush，失败则保留当前宿主及重试/备份入口。Phaser 循环在 Pixi 宿主持有行动或院子时休眠，不能同时推进同一会话。失焦、屏蔽、暂停和释放输入是不同操作，调用语义以端口注释和输入测试为准。
+宿主切换先完成相应检查点/flush，失败则保留当前宿主及重试/备份入口。院子和行动轮用一个 Pixi 应用（`takeApp` / `parkApp`）；标题页的渲染器另起一个，离开标题页即停止并移出页面，不会同时推进同一会话。失焦、屏蔽、暂停和释放输入是不同操作，调用语义以端口注释和输入测试为准。
 
 ## 格式与恢复兼容
 

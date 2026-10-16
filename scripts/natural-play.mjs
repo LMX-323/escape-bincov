@@ -12,7 +12,7 @@ import { buyAffordable } from './inventory-actions.mjs';
 
 const minutes = Number(process.env.BINCOV_PLAY_MINUTES || 10);
 assert.ok(minutes >= 1 && minutes <= 60);
-const report = { htmlSha256: createHash('sha256').update(await readFile('dist/index.html')).digest('hex'), startedAt: new Date().toISOString(), minutes, methodology: 'Automated real-time session. Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.', containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
+const report = { htmlSha256: createHash('sha256').update(await readFile('dist/index.html')).digest('hex'), startedAt: new Date().toISOString(), minutes, methodology: 'Automated real-time session on the classic coast map (2.5D view). Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.', containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
 const out = resolve('test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });
@@ -28,21 +28,28 @@ async function keys(next) {
   for (const key of next) if (!held.has(key)) await page.keyboard.down(key);
   held = next;
 }
+/** Read-only view of the published frame (the raid host's last batch); nothing here changes the world. */
 async function snapshot() {
   return page.evaluate(() => {
-    const a = window.__bincov.app, r = a.raid;
-    if (a.state !== 'run' || !r?.player?.active) return { state: a.state, result: a.save.lastResult, stats: a.save.stats };
-    const box = a.game.canvas.getBoundingClientRect(), c = r.cameras.main;
-    return { state: a.state, hp: r.hp, bleeding: r.bleeding, elapsed: r.elapsed, high: r.highTide, kills: r.kills, mag: r.mag, reload: r.reloadLeft, cooldown: r.fireCooldown, x: r.player.x, y: r.player.y,
-      exits: r.config.exits, loot: r.loot.map(l => ({ x: l.sprite.x, y: l.sprite.y, id: l.id })),
-      overlay: a.overlay, lootContext: a.lootContext, bag: a.loadout.bag,
-      containers: r.containers.map(c => ({ id: c.id, kind: c.kind, x: c.x, y: c.y, inventory: c.inventory, available: r.canLootContainer(c.id, c.runId) })),
-      enemies: r.enemies.filter(e => e.hp > 0).map(e => ({ x: e.sprite.x, y: e.sprite.y, id: e.id })),
+    const a = window.__bincov.app, h = window.__bincovSample?.host;
+    if (a.state !== 'run' || !h?.lastBatch) return { state: a.state, result: a.save.lastResult, stats: a.save.stats };
+    const b = h.lastBatch, f = b.frame, hud = f.hud, w = b.stamp.world, context = h.services.lootContext();
+    const inventory = c => c.id === context?.containerId ? h.services.lootInventory({ runId: w.runId, mapId: w.mapId, kind: 'container', id: c.id }) : null;
+    return { state: a.state, hp: hud.hp, bleeding: hud.bleeding, elapsed: b.stamp.simulationTime, high: hud.highTide,
+      kills: h.eventLog.filter(e => e.type === 'death' && e.detail.uid !== 'player').length,
+      mag: hud.weapon.mag, reload: hud.weapon.reloading, cooldown: f.player.state.attackCooldown, x: f.player.x, y: f.player.y,
+      exits: b.map.exits.map(e => ({ ...e.at, id: e.id, name: e.name })), loot: f.loot.map(l => ({ x: l.x, y: l.y, id: l.item })),
+      overlay: h.panel, saveError: !!document.querySelector('.coast-sample [data-do="retry-save"], .coast-sample [data-do="retry-settlement"]'),
+      lootContext: context, bag: a.loadout.bag,
+      containers: f.containers.map(c => ({ id: c.id, kind: c.kind, x: c.x, y: c.y, items: c.totalQty, inventory: inventory(c) })),
+      enemies: f.actors.filter(e => e.alive).map(e => ({ x: e.x, y: e.y, id: e.kind })),
       ammo: a.loadout.bag.items.filter(i => i.id === 'ammo9').reduce((sum, i) => sum + i.qty, 0),
       medical: a.loadout.bag.items.filter(i => ['medkit', 'bandage'].includes(i.id)).reduce((sum, i) => sum + i.qty, 0),
-      camera: { x: box.x, y: box.y, scale: box.width / 960, scrollX: c.scrollX, scrollY: c.scrollY }, pending: !!a.pendingSettlement };
+      pending: !!a.pendingSettlement };
   });
 }
+/** Client point of a world point on the chest plane, where shots are aimed. */
+const screenOf = point => page.evaluate(p => window.__bincovSample.host.view.worldToClient({ x: p.x, y: p.y - 22 }), point);
 function destination(inv, item) {
   const stack = inv.items.find(other => other.id === item.id && !!other.relief === !!item.relief && other.qty + item.qty <= ITEMS[item.id].stack);
   if (stack) return { x: stack.x, y: stack.y };
@@ -52,7 +59,7 @@ function destination(inv, item) {
 async function lootOpenContainer(s) {
   await keys(new Set());
   const container = s.containers.find(c => c.id === s.lootContext?.containerId);
-  if (!container) { await page.keyboard.press('Escape'); return; }
+  if (!container?.inventory) { await page.keyboard.press('Escape'); return; }
   if (!report.containerLoot.opened.some(c => c.run === runNumber && c.id === container.id)) {
     report.containerLoot.opened.push({ run: runNumber, id: container.id, kind: container.kind, elapsed: s.elapsed });
     await page.screenshot({ path: resolve(out, `natural-play-container-${runNumber}-${report.containerLoot.opened.length}.png`) });
@@ -65,9 +72,16 @@ async function lootOpenContainer(s) {
   const candidate = container.inventory.items.map(item => ({ item, cell: destination(s.bag, item) })).find(candidate => candidate.cell);
   if (!candidate) { visited.add(`${container.x},${container.y}`); goal = null; await page.keyboard.press('Escape'); return; }
   const { item, cell } = candidate;
-  const source = page.locator(`[data-source="container"][data-uid="${item.uid}"]`), grid = page.locator('[data-grid="bag"]');
-  const geometry = await grid.evaluate(el => ({ cell: Number(el.dataset.cell), scale: el.getBoundingClientRect().width / el.offsetWidth }));
-  await source.dragTo(grid, { targetPosition: { x: (cell.x + .4) * geometry.cell * geometry.scale, y: (cell.y + .4) * geometry.cell * geometry.scale } });
+  // The panel places an item by the ghost's top-left corner: grab just inside the item, release just inside the cell.
+  const from = await page.locator(`.coast-sample [data-source="container"][data-uid="${item.uid}"]`).boundingBox();
+  const to = await page.locator('.coast-sample [data-grid="bag"]').evaluate((el, at) => {
+    const r = el.getBoundingClientRect(), size = Number(el.dataset.cell) * r.width / el.offsetWidth;
+    return { x: r.left + at.x * size + 6, y: r.top + at.y * size + 6 };
+  }, cell);
+  if (!from) { await page.keyboard.press('Escape'); return; }
+  await page.mouse.move(from.x + 6, from.y + 6); await page.mouse.down();
+  await page.mouse.move(from.x + 22, from.y + 22, { steps: 3 }); await page.mouse.move(to.x, to.y, { steps: 6 }); await page.mouse.up();
+  await page.waitForTimeout(80);
   const after = await snapshot();
   const remaining = after.containers?.find(c => c.id === container.id)?.inventory.items.find(i => i.uid === item.uid);
   if (!remaining) report.containerLoot.transfers.push({ run: runNumber, containerId: container.id, kind: container.kind, item: item.id, qty: item.qty, elapsed: s.elapsed });
@@ -97,8 +111,10 @@ try {
         if (!count) break;
         await items.first().dblclick(); if (await items.count() >= count) break;
       }
+      // The classic coast map: findPath and lineOfSight below navigate its collision.
+      await page.locator('#run-world').selectOption('coast');
       await page.locator('#seed').fill(String(42 + runNumber++)); await action('deploy').click();
-      await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
+      await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 30000 });
       goal = null; path = []; visited = new Set(); lastPosition = null; stuckAt = now;
       continue;
     }
@@ -106,8 +122,8 @@ try {
     // A loot overlay keeps the world running. Finish or close it before combat input.
     if (s.overlay === 'loot') { await lootOpenContainer(s); continue; }
     if (s.overlay) {
-      assert.notEqual(s.overlay, 'checkpoint-error', 'Automatic world checkpoints must remain writable during natural play');
-      assert.notEqual(s.overlay, 'save-error', 'Settlement must remain writable during natural play');
+      assert.equal(s.saveError, false, 'World checkpoints and the settlement must remain writable during natural play');
+      if (s.overlay === 'ending') { await keys(new Set()); await page.waitForTimeout(200); continue; }
       await keys(new Set()); await page.keyboard.press('Escape'); continue;
     }
     if (now - lastSample > 30000) {
@@ -119,7 +135,7 @@ try {
     if (s.mag === 0 && s.ammo && !s.reload) await page.keyboard.press('r');
     const target = s.enemies.filter(e => dist(e, s) < 430 && lineOfSight(s, e)).sort((a, b) => dist(a, s) - dist(b, s))[0];
     if (target && s.mag && !s.reload && s.cooldown <= 0) {
-      const x = s.camera.x + (target.x - s.camera.scrollX) * s.camera.scale, y = s.camera.y + (target.y - s.camera.scrollY) * s.camera.scale;
+      const { x, y } = await screenOf(target);
       if (x > 0 && x < 1280 && y > 0 && y < 720) await page.mouse.click(x, y, { delay: 40 });
     }
     const evacuate = now >= deadline || s.elapsed >= 550 || (s.hp < 35 && !s.medical) || (!s.mag && !s.ammo);
@@ -134,7 +150,7 @@ try {
         if ((await snapshot()).overlay === 'loot') continue;
         visited.add(`${goal.x},${goal.y}`);
       }
-      const choices = [...s.containers.filter(c => c.inventory.items.length && (!s.high || findPath(s, c, s.high).length)).map(c => ({ ...c, container: true })), ...s.loot]
+      const choices = [...s.containers.filter(c => c.items && (!s.high || findPath(s, c, s.high).length)).map(c => ({ ...c, container: true })), ...s.loot]
         .filter(l => !visited.has(`${l.x},${l.y}`) && !s.enemies.some(e => dist(e, l) < 100));
       goal = choices.sort((a, b) => dist(a, s) * (a.container ? .55 : 1) - dist(b, s) * (b.container ? .55 : 1))[0] ?? s.exits[0];
     }

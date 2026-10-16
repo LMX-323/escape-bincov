@@ -9,7 +9,6 @@
 [![CI & Pages](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml)
 ![Version](https://img.shields.io/badge/package-0.2.0-c9d58c?style=flat-square&labelColor=142323)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-77a79d?style=flat-square&labelColor=142323)
-![Phaser](https://img.shields.io/badge/Phaser-3.90.0-cb906b?style=flat-square&labelColor=142323)
 ![PixiJS](https://img.shields.io/badge/PixiJS-8.22.0-cb906b?style=flat-square&labelColor=142323)
 
 ### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)
@@ -48,9 +47,9 @@
 | 沿海街区 | 沿海街区，以及可进入的居民楼一楼、二楼和地下 | 街口一带已精修；其余地方暂用通用画面 |
 | 滨湾商场 | 两层与露台（布局三版） | 正门广场到露台一段已布置；其余区域陆续补齐（[#47](https://github.com/xuys2025/escape-bincov/issues/47)） |
 
-原「沿海封锁区」和沿海街区是同一张地图，已经关闭，之后作为新地图重做。此前开始、还没结束的封锁区行动和商场旧布局行动，仍可从标题页「继续」，在原来的画面上打完。
+原「沿海封锁区」和沿海街区是同一张地图，已经关闭，之后作为新地图重做。此前开始、还没结束的封锁区行动和商场旧布局行动，仍可从标题页「继续」，同样在 2.5D 画面上打完。
 
-院子与行动使用 PixiJS；标题页、结算页和上面那些旧行动仍由 Phaser 绘制。二者共用正式的会话、存档和交易服务。院子画面启动失败时会回到旧页签界面；玩家也可以主动切换。
+标题页、院子和所有行动都由 PixiJS 绘制；旧页签界面和结算页是 HTML 界面，背景为固定的站外画。各画面共用正式的会话、存档和交易服务。院子画面启动失败时会回到旧页签界面；玩家也可以主动切换。
 
 ![训练区与设施面板：真实训练进度、修建材料与功能页签](docs/station-tier2-20261011/evidence/final/training-panel-1280x720.png)
 
@@ -189,7 +188,7 @@ PR 经 CI 验证、维护者确认合并后，`main` 的 CI 成功才会更新 G
 
 画面混合使用程序绘制和已内嵌的 PNG 素材，包含 AI 生成并经整理、校验的角色、道具与场景图片；声音通过 Web Audio 合成。游戏运行不依赖外部素材或 CDN，地名、组织、人物与故事均为虚构。
 
-Phaser、PixiJS 及其依赖的许可，以及内嵌字体的 OFL 声明，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，声明也随 HTML 保留。**公开仓库不等于已授予开源许可证**；原创源码目前未另行附加许可证。
+PixiJS 及其依赖的许可，以及内嵌字体的 OFL 声明，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，声明也随 HTML 保留。**公开仓库不等于已授予开源许可证**；原创源码目前未另行附加许可证。
 
 <div align="center">
 

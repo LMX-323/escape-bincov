@@ -136,7 +136,7 @@ PR #7 候选版仍使用原存档键，读取旧版进度时保留迁移前原�
 
 在线试玩使用 GitHub Pages，离线包和网页包来自同一份源码。构建、测试和贡献方法见 [README](../README.md) 与 [开发手册](AGENT-HANDBOOK.md)；历史完整流程验收见 [验收记录](ACCEPTANCE.md)，最新检查以对应提交的 GitHub Actions 为准。大陆网络下的访问与备用托管说明见 [在线游玩指南](ONLINE-CHINA.md)。
 
-人物、建筑、物品和声音由游戏代码生成，不依赖外部素材或 CDN。地名、组织和人物均为虚构。Phaser 与 EventEmitter3 的许可声明已内嵌在 HTML 中，另见 [第三方声明](../THIRD_PARTY_NOTICES.md)；原创源码的许可状态未改变。
+人物、建筑、物品和声音由游戏代码生成，不依赖外部素材或 CDN。地名、组织和人物均为虚构。PixiJS 等组件的许可声明已内嵌在 HTML 中，另见 [第三方声明](../THIRD_PARTY_NOTICES.md)；原创源码的许可状态未改变。
 
 ## PR16 新玩法候选
 

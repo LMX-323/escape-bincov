@@ -1,6 +1,8 @@
-/* Village sample host (?sample=village): full-viewport Pixi view; the Phaser frame is hidden while it runs. */
+/* Raid host: full-viewport Pixi view; the page frame is hidden while it runs. */
 html[data-coast-sample] #frame { visibility: hidden; }
 html[data-coast-sample] #toast { z-index: 120; }
+/* A page toast during a phone raid (a storage conflict) sits above the touch buttons. */
+html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0px)); }
 .coast-sample { --cs-ink: #242321; --cs-panel: #1b1a17f0; --cs-line: #4b4842; --cs-text: #ddd5c3; --cs-muted: #a49b88; --cs-accent: #c9a65e; --cs-bad: #d07a5a;
   position: fixed; inset: 0; z-index: 60; color: var(--cs-text); font-family: "Bincov Text", "Microsoft YaHei", "PingFang SC", sans-serif; user-select: none; -webkit-user-select: none; touch-action: none;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }

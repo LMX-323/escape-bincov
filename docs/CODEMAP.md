@@ -44,15 +44,15 @@
 
 ## 行动输入
 
-**职责与所有者。** 输入适配器产生意图，行动执行器消费意图。普通街区/商场行动默认走 Pixi + `CoastRaidRuntime`；`RaidScene` 保留旧沿海/商场一版恢复及 `?test=1` 无 `sample` 的旧测试夹具。同一次行动只交给一个执行器和宿主。
+**职责与所有者。** 输入适配器产生意图，行动执行器消费意图。所有行动都走 Pixi 宿主 + `CoastRaidRuntime`（含切换前开始的旧沿海检查点和商场一版行动）；同一次行动只交给一个执行器和宿主。
 
 **首读路径：增加一种命令或修改按下/按住语义。**
 
 1. [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)：`RaidIntent`、`RaidRuntime`，先区分边沿、持续输入、暂停与屏蔽。
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
-3. [input.ts](../src/input.ts)：`InputAction`、`actionKeys`、`PlayerInput.read` / `suppressHeld`，这是旧宿主仍使用的映射。
+3. [input.ts](../src/input.ts)：`PlayerInput.read` / `suppressHeld` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`。
-5. [game.ts](../src/game.ts)：`RaidScene.update` / `step` 中对应动作；规则已位于纯模块时沿调用进入，不在两端各补一份规则。
+5. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
 
 **调用契约的维护位置。** `RaidIntent` 旁说明坐标/时间单位和边沿消费；输入类说明释放及面板抑制；`RaidRuntime` 旁说明暂停、屏蔽和销毁。不在每个按钮复制这些规定。
 
@@ -61,17 +61,17 @@
 - [input.test.ts](../tests/input.test.ts)：单次按下、取消、held-input 释放和面板切换。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands and fireHeld only reach first substep`、`blocked panels advance the world`。
-- [runtime-differential.mjs](../scripts/runtime-differential.mjs)：现有两执行器差分入口；覆盖有限，新增命令还需对应断言。
+- [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
 
 **按需继续。**
 
-- 新触屏按钮：[mobile.ts](../src/mobile.ts) 的 `data-command` 绑定与 [coast-view/host.ts](../src/coast-view/host.ts) 的按钮绑定。
+- 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
-- 选择执行器/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `legacyRaid`、`raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
+- 选择区域/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
-**结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放和旧宿主兼容的断言。资源生命周期只有在本次改变宿主归属时才展开。
+**结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放的断言。资源生命周期只有在本次改变宿主归属时才展开。
 
 ## 存档
 
@@ -85,7 +85,7 @@
 4. [recovery-store.ts](../src/recovery-store.ts)：`SessionRecord`、`decodeSession`、`RecoveryStore.commit`；[save-backup.ts](../src/save-backup.ts)：`encodeRecoveryBackup` / `decodePortableBackup`。
 5. [hideout-runtime/runtime.ts](../src/hideout-runtime/runtime.ts)：`previewImport` / `importBackup` 的确认与升级；[fresh-start.ts](../src/fresh-start.ts)：`freshStartRecord` / `startOver` 的完整新档路径。
 6. 当前层与完整记录的共享映射：[raid-state-projection.ts](../src/raid-state-projection.ts) 的 `applyActiveRaidSnapshot` / `activeRaidCheckpoint`；这里不克隆、不提交。
-7. 两个调用端仍需核对：[game.ts](../src/game.ts) 与 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion`；旧检查点还读 [checkpoint.ts](../src/checkpoint.ts) 的 `RaidCheckpoint` / `initialCheckpoint` / `validateCheckpoint`。
+7. 执行器端核对 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion`；旧检查点还读 [checkpoint.ts](../src/checkpoint.ts) 的 `RaidCheckpoint` / `initialCheckpoint` / `validateCheckpoint`。
 
 **调用契约的维护位置。** 字段单位和合法范围归类型/校验器；`persist` 写入时的捕获与发布归会话入口；兼容策略归 [ARCHITECTURE](ARCHITECTURE.md#格式与恢复兼容)。卡片只维护路径，不再复制 schema。
 
