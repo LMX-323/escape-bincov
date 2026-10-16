@@ -25,7 +25,7 @@ const report = {
   methodology: [
     'Each independent case starts a fresh offline file:// browser context and deploys through ordinary menu controls.',
     'Fixtures only arrange inventory, player position, equipment and enemy readiness through the explicit ?test=1 hooks. Gameplay operations use trusted Playwright mouse/keyboard input.',
-    'Both Phaser and ?sample=village are tested. Inventory assertions compare live carried/world state, profile safe contents and every persisted container.',
+    'Raids run on the 2.5D view (the Phaser view and its classic-coast entry were removed). Inventory assertions compare live carried/world state, profile safe contents and every persisted container.',
     'Storage.prototype.setItem is observed, not replaced with a fake save service. Successful transaction writes are counted inside their trusted browser input event; unrelated periodic checkpoints do not inflate this count.',
     'Quota faults arm at capture of the trusted action, retain the exact pre-action bytes, and exercise the ordinary retry flow. The second window writes a newer real record and triggers the native storage event.',
     '1280×720 runs all cases; 1920×1080 repeats pickup, equipment and swap with actual screenshots. No claimed touch-device or human balance acceptance.',
@@ -52,24 +52,24 @@ async function runCase(entry, viewport, name, test) {
     p.on('console', message => { if (message.type() === 'error') record.errors.push(message.text()); });
   });
   const page = await context.newPage(); page.setDefaultTimeout(12000);
-  const sample = entry === 'village', query = `?test=1&entry=tabs${sample ? '&sample=village' : ''}`;
+  const sample = true, query = '?test=1&entry=tabs&sample=village';
   const selector = (source, uid) => `[data-source="${source}"][data-uid="${uid}"]`;
-  const button = kind => page.locator(sample ? `[data-do="${{ quick: 'inv-quick', equip: 'inv-equip' }[kind]}"]` : `[data-action="${{ quick: 'loot-quick', equip: 'equip-run' }[kind]}"]`);
-  const panel = () => page.evaluate(sample => sample ? window.__bincovSample.host.panel : window.__bincov.app.overlay, sample);
-  const waitPanel = value => page.waitForFunction(({ sample, value }) => (sample ? window.__bincovSample.host.panel : window.__bincov.app.overlay) === value, { sample, value: value || (sample ? null : '') });
+  const button = kind => page.locator(`[data-do="${{ quick: 'inv-quick', equip: 'inv-equip' }[kind]}"]`);
+  const panel = () => page.evaluate(() => window.__bincovSample.host.panel);
+  const waitPanel = value => page.waitForFunction(value => window.__bincovSample.host.panel === value, value || null);
   const screenshot = async suffix => {
     const path = resolve(out, `${label}-${suffix}.png`); await page.screenshot({ path }); record.screenshots.push(path);
   };
   const snapshot = () => page.evaluate(({ sample, key }) => {
     const a = window.__bincov.app, saves = window.__bincov.saveSession, bytes = localStorage.getItem(key), saved = JSON.parse(bytes);
-    const live = sample ? saves.captureExpansion().raid : null, durable = saved.expansion?.raid ?? saved.raid;
+    const live = saves.captureExpansion().raid, durable = saved.expansion?.raid ?? saved.raid;
     const containers = raid => raid.maps ? Object.values(raid.maps).flatMap(map => map.containers) : raid.containers;
     return {
-      live: { loadout: a.loadout, containers: sample ? containers(live) : a.raid.containers.map(c => ({ ...c })), profile: a.save },
+      live: { loadout: a.loadout, containers: containers(live), profile: a.save },
       persisted: { loadout: durable.loadout, containers: containers(durable), profile: saved.profile },
       bytes, revision: saved.revision, conflict: a.conflict, storageOK: a.storageOK,
-      context: sample ? window.__bincovSample.host.services.lootContext() : a.lootContext,
-      toast: document.querySelector(sample ? '[data-toast]' : '#toast')?.textContent || '',
+      context: window.__bincovSample.host.services.lootContext(),
+      toast: document.querySelector('.coast-sample [data-toast]')?.textContent || '',
     };
   }, { sample, key: SAVE_KEY });
   const participants = s => ({ live: s.live, persisted: s.persisted });
@@ -96,9 +96,9 @@ async function runCase(entry, viewport, name, test) {
   const resetAudit = () => page.evaluate(() => { window.__issue26Writes = []; });
   async function fixture({ items = [item('incoming', 'sample')], bag = [], safe = [], weapon = 'pistol', ammo = 0 } = {}) {
     if (await panel()) { await page.keyboard.press('Escape'); await waitPanel(''); }
-    const crate = await page.evaluate(({ sample, items, bag, safe, weapon, ammo }) => {
+    const crate = await page.evaluate(({ items, bag, safe, weapon, ammo }) => {
       const a = window.__bincov.app, saves = window.__bincov.saveSession;
-      if (sample) {
+      {
         const h = window.__bincovSample.host, driver = window.__bincovSample.driver;
         driver.freezeAI(true);
         const box = h.lastBatch.frame.containers.filter(c => c.kind === 'crate' && c.regionId === null).sort((x, y) => Math.hypot(x.x - 640, x.y - 456) - Math.hypot(y.x - 640, y.y - 456))[0];
@@ -113,16 +113,7 @@ async function runCase(entry, viewport, name, test) {
         if (!ticket || saves.commitExpansionMutation(ticket) !== 'committed') throw new Error(`Sample fixture failed strict validation: ${a.storageError}`);
         h.eventLog.length = 0; return { id: box.id, runId: a.loadout.runId };
       }
-      const r = a.raid, c = r.containers.find(c => c.kind === 'crate');
-      r.enemies.forEach(e => { e.sprite.setPosition(208, 1456); e.home = { x: 208, y: 1456 }; e.target = { x: 208, y: 1456 }; e.cooldown = 9999; e.timer = 9999; e.alert = 0; e.state = 'patrol'; e.path = []; });
-      r.loot.forEach(l => l.sprite.setPosition(208, 1456)); r.bullets.forEach(b => b.sprite.destroy()); r.bullets = [];
-      r.hp = 100; r.pollution = 0; r.bleeding = 0; r.player.setPosition(c.x, c.y);
-      c.inventory = { w: 6, h: 5, items }; a.loadout.bag.items = bag; a.loadout.safe.items = safe; a.save.safe.items = structuredClone(safe);
-      Object.assign(a.loadout, { weapon, ammo, ammoRelief: 0, relief: false }); r.mag = ammo; r.magRelief = 0; r.knife = false; r.reloadLeft = 0;
-      r.highTide = r.config.initialHigh; r.drawFlood();
-      if (!r.checkpoint()) throw new Error(`Classic fixture failed strict validation: ${a.storageError}`);
-      return { id: c.id, runId: c.runId };
-    }, { sample, items, bag, safe, weapon, ammo });
+    }, { items, bag, safe, weapon, ammo });
     await frames(page); await resetAudit(); return crate;
   }
   async function open(crate) {
@@ -154,14 +145,13 @@ async function runCase(entry, viewport, name, test) {
   }
   async function recover() {
     await page.evaluate(() => { window.__issue26Fault = false; });
-    if (sample) { await page.locator('[data-do="retry-save"]').click(); await waitPanel(''); }
-    else { await action(page, 'retry-checkpoint').click(); await waitPanel('pause'); await page.keyboard.press('Escape'); await waitPanel(''); }
+    await page.locator('[data-do="retry-save"]').click(); await waitPanel('');
     await frames(page);
   }
   try {
     await page.goto(url + query); await action(page, 'enter').click();
-    await page.locator('#run-world').selectOption(sample ? 'buildings' : 'coast'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-    await page.waitForFunction(sample => sample ? !!window.__bincovSample?.host?.lastBatch : !!window.__bincov.app.raid?.player?.active, sample);
+    await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch);
     await installAudit();
     record.detail = await test({ page, context, sample, query, fixture, open, drag, panel, waitPanel, snapshot, participants, assertSynced, audit, inputWrites, resetAudit, selector, button, armFault, recover, screenshot });
     assert.deepEqual(record.errors, [], 'no browser errors'); assert.deepEqual(record.externalRequests, [], 'no external requests');
@@ -185,13 +175,13 @@ const cases = [
     assert.equal((await t.inputWrites()).length, 1, 'one trusted double click persists exactly once'); t.assertSynced(s);
     await t.page.locator(t.selector('container', 'button-pickup')).click();
     assert.equal(await t.button('equip').count(), 0, 'external gun cannot be equipped directly');
-    assert.equal(await t.page.locator(t.sample ? '[data-do="inv-use"]' : '[data-action="use"]').count(), 0);
+    assert.equal(await t.page.locator('[data-do="inv-use"]').count(), 0);
     assert.match(await t.button('quick').textContent(), /拿到背包/); await t.resetAudit(); await t.button('quick').click(); await frames(t.page);
     s = await t.snapshot(); assert.equal(s.live.loadout.bag.items.filter(i => i.uid === 'button-pickup').length, 1);
     assert.equal((await t.inputWrites()).length, 1, 'explicit pickup button persists exactly once'); t.assertSynced(s);
     await t.screenshot('picked-up'); const before = t.participants(s);
     await t.page.reload(); await action(t.page, 'enter').click();
-    await t.page.waitForFunction(sample => sample ? !!window.__bincovSample?.host?.lastBatch : !!window.__bincov.app.raid?.player?.active, t.sample);
+    await t.page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch);
     await t.waitPanel('pause'); const restored = await t.snapshot();
     assert.deepEqual(t.participants(restored), before, 'refresh restores both sides without duplicating either pickup');
     return { doubleClickWrites: 1, buttonWrites: 1, restoredBag: restored.live.loadout.bag.items };
@@ -246,9 +236,9 @@ const cases = [
     const crate = await t.fixture({ items: [item('rollback-source', 'sample')], bag: operation === 'swap' ? [item('rollback-target', 'wire')] : [], safe: [item('safe-sentinel', 'pearl')] }); await t.open(crate);
     if (operation === 'quick') await t.page.locator(t.selector('container', 'rollback-source')).click();
     const before = t.participants(await t.snapshot()); await t.resetAudit();
-    await t.armFault(operation === 'quick' ? 'click' : 'pointerup', operation === 'quick' ? (t.sample ? '[data-do="inv-quick"]' : '[data-action="loot-quick"]') : '[data-grid]');
+    await t.armFault(operation === 'quick' ? 'click' : 'pointerup', operation === 'quick' ? '[data-do="inv-quick"]' : '[data-grid]');
     if (operation === 'quick') await t.button('quick').click(); else await t.drag('container', 'rollback-source', 'bag', 0, 0);
-    await t.waitPanel(t.sample ? 'pause' : 'checkpoint-error'); const failed = await t.snapshot();
+    await t.waitPanel('pause'); const failed = await t.snapshot();
     assert.deepEqual(t.participants(failed), before, 'failed write rolls back profile, carried inventory and every world container');
     assert.equal(failed.bytes, await t.page.evaluate(() => window.__issue26BytesAtFault), 'exact pre-action saved bytes survive quota failure');
     assert.ok((await t.audit()).some(w => !w.ok), 'the real storage write failed'); assert.equal(failed.context, null);
@@ -275,14 +265,14 @@ const cases = [
       // A paused Phaser scene fails canLootContainer's isActive guard. Sleep only its render loop,
       // after establishing the real drag, so simulation cannot change the snapshot during this storage event.
       // Open the other page first: focus changes must not cancel the gesture before the conflict does.
-      await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.stop(); else window.__bincov.app.game.loop.sleep(); }, t.sample);
+      await t.page.evaluate(() => window.__bincovSample.host.app.ticker.stop());
       assert.equal(await t.page.locator('.drop-preview').count(), 1, 'swap is still held immediately before the competing write');
       const winner = await other.evaluate(key => {
         const saved = JSON.parse(localStorage.getItem(key)); saved.revision++;
         const bytes = JSON.stringify(saved); localStorage.setItem(key, bytes); return bytes;
       }, SAVE_KEY);
       await t.page.waitForFunction(() => window.__bincov.app.conflict); await t.page.mouse.up();
-      await t.page.evaluate(sample => { if (sample) window.__bincovSample.host.app.ticker.start(); else window.__bincov.app.game.loop.wake(); }, t.sample);
+      await t.page.evaluate(() => window.__bincovSample.host.app.ticker.start());
       await frames(t.page); const s = await t.snapshot(); assert.equal(s.context, null); assert.equal(s.bytes, winner);
       assert.deepEqual(t.participants(s), before, 'held swap cannot mutate either participant after a real window conflict');
       assert.equal(await t.page.locator('[data-grid="container"]').count(), 0); return { conflict: s.conflict, newerRecordPreserved: true };
@@ -291,7 +281,7 @@ const cases = [
 ];
 
 try {
-  for (const entry of ['classic', 'village']) for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
+  for (const entry of ['village']) for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     for (const [name, test] of cases) {
       if (viewport.width === 1920 && !['pickup-once', 'equip-gun-and-specific-rejection', 'drag-swaps-and-invalid-overlap'].includes(name)) continue;
       if (only && !only.test(`${entry}-${viewport.width}x${viewport.height}-${name}`)) continue;
