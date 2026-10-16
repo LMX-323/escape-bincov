@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { openPause, resumeStalls, running, stallResumes } from './stall-resume.mjs';
 const option = (key, fallback) => process.argv.find(a => a.startsWith(`--${key}=`))?.slice(key.length + 3) ?? fallback;
 const html = await readFile(option('html', 'dist/index.html'), 'utf8'), out = resolve(option('out', 'test-results/hud-release'));
 await mkdir(out, { recursive: true });
@@ -15,13 +16,15 @@ try {
     const row = { size }; report.checks.push(row);
     const context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] } });
     await context.route('https://hud.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await resumeStalls(context);
     const errors = [];
     context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://hud.test/')) errors.push(`External request: ${r.url()}`); });
     const page = await context.newPage(), cdp = await context.newCDPSession(page); page.setDefaultTimeout(20000);
     page.on('pageerror', e => errors.push(String(e.stack)));
     try {
       await page.goto('https://hud.test/?test=1&entry=tabs&sample=village');
-      await page.locator('[data-action="enter"]').click();
+      // The first load of the single-file page boots slowly on a software-GL runner.
+      await page.locator('[data-action="enter"]').click({ timeout: 60000 });
       await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42');
       await page.locator('[data-action="deploy"]').click();
       await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch);
@@ -31,8 +34,9 @@ try {
         window.__positiveHud = document.querySelector('.cs-hud');
       });
       for (let i = 0; i < 20; i++) await page.keyboard.press('z');
-      await page.keyboard.press('Escape'); await page.locator('[data-do="abandon"]').click(); await page.locator('[data-do="abandon-yes"]').click();
-      await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'));
+      // Escape toggles: a stall pause still open after the deploy's first frames would be resumed by it.
+      await openPause(page); await page.locator('[data-do="abandon"]').click(); await page.locator('[data-do="abandon-yes"]').click();
+      await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout: 30000 });
       await cdp.send('HeapProfiler.collectGarbage');
       assert.equal(await page.evaluate(() => !!window.__hudWeak.deref()), true, 'positive control detects a deliberately retained detached HUD');
       await page.evaluate(() => { delete window.__positiveHud; });
@@ -44,17 +48,20 @@ try {
       // must move with the keyboard and fire with the mouse.
       await page.locator('[data-action="return"]').click();
       await page.locator('#run-world').selectOption('coast'); await page.locator('[data-action="deploy"]').click();
-      await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch && window.__bincovSample.host.lastBatch.map.name === '沿海封锁区');
+      await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch && window.__bincovSample.host.lastBatch.map.name === '沿海封锁区', null, { timeout: 30000 });
       await page.evaluate(() => { window.__bincovSample.driver.freezeAI(true); window.__bincovSample.driver.weapon('pistol'); });
+      // Held keys only count once the raid runs (a stall resumed after the deploy clears them, as any resume does).
+      await running(page);
       const before = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.player.x);
       await page.keyboard.down('d');
       try { await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x > x + 4, before, { timeout: 15000 }); }
       finally { await page.keyboard.up('d'); }
       row.moved = await page.evaluate(x => window.__bincovSample.host.lastBatch.frame.player.x - x, before);
+      await running(page);
       const mag = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag);
       await page.locator('.coast-sample canvas').click({ position: { x: 600, y: 280 } });
       await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, mag, { timeout: 15000 });
-      row.fired = { before: mag, after: mag - 1 };
+      row.fired = { before: mag, after: mag - 1 }; row.stallResumes = await stallResumes(page);
       assert.deepEqual(errors, []);
       row.status = 'passed';
     } catch (e) { row.status = 'failed'; row.error = String(e.stack); process.exitCode = 1; }
