@@ -2,12 +2,26 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-16 · [PR #64 2.5D 收尾](https://github.com/xuys2025/escape-bincov/pull/64)：旧行动在 2.5D 上打完，Phaser 删除，旧局内测试迁到 2.5D；剩余美术与 Runtime 缺口见 [收尾说明](docs/2-5d-closeout/README.md)。
 - 2026-10-15 · [#60 质量与减熵实施摘要](docs/tasks/quality-entropy.md)：代码导航、局部契约与共享投影。实际测试状态随该摘要及 PR 更新。
 - 2026-10-15 · [#61 / PR #62 CI 改造](https://github.com/xuys2025/escape-bincov/pull/62)：完整 36 套件八组重排、存档前置与计时门禁；维护者已授权合并，最新基线与已验/未验结果以 PR 为准。
 - 下方保留以往交接全文；其中“当前”“未合并”“已通过”等仅对各自日期/提交有效。按任务索引、标题或符号检索相关段落，需要首败/兼容依据时再展开。
 
 <details>
 <summary>历史交接全文（按需查证，保留原文）</summary>
+
+## 2026-10-16 · 2.5D 收尾：旧行动在 2.5D 上打完，去掉 Phaser（`feat/2-5d-closeout`）
+
+起点 main `1764874`。玩家可见变化、逐套测试迁移和剩余工作见 [收尾说明](docs/2-5d-closeout/README.md)；这里只记接手要点。
+
+- 路由：`src/coast-view/sample.ts` 的 `sampleSupports()` 对存档里的任何行动都为真（经典封锁区 `coast-v2` 检查点、`coast-v1`、商场一版也走 Runtime）。`?test=1` 页面的出击下拉仍有已关闭的封锁区，用来制造旧行动；不带 `sample` 的 Phaser 旧夹具已删除。
+- 标题：`src/title/scene.ts` 在自己的 Pixi 渲染器上搭分层场景，`mountTitle()` 返回控制器（snapshot、counts、renderInfo、setRain、setMotion、setOverlay、sleep、onFrame）；PNG 只在 `src/title/art.ts` 导入，`scripts/build.mjs` 和 `tests/title.test.ts` 读它。`src/screen.ts` 按状态挂标题或站外画（`stationBackdrop()`）。
+- 2.5D 宿主（`src/coast-view/host.ts`、`inventory.ts`、`coast.css`）补的行为：换层松开按键、`entry:*`/门口拒绝的中文提示、触屏点来源名直接打开、搜刮时 M 开地图、手机暂停/竖屏暂停（`.upright` 隐藏触屏按钮）、暂停面板的指南（指南里 Esc 回暂停）与备份、放置条（在面板顶部）、鼠标组合开火、冲突结算只留备份、选择列表只在内容变化时重写（`choicesHtml`）、触屏模式下动鼠标或滚轮回键鼠（非手机布局）、搜刮窗口危险行 `[data-risk]`（`lootRisk`）、同样的好消息提示合并「× n」（坏消息不合并，与旧版一致）、HUD 用 `env(safe-area-inset-*)`、矮屏提示移到触屏按钮上方。
+- 测试夹具（只在 `?test=1`）：`src/raid-runtime/test-support.ts` 新增 `magazine`、`vitals`、`clock`、`spawnLoot`、`container`、`hurt`；共用的浏览器辅助在 `scripts/raid-view.mjs`。陷阱：分层存档校验拒绝任一地图 `localTime` 或 `training.motion.windowStarted` 晚于 `elapsed` 的候选（`expansion-state.ts`），倒拨时钟的夹具要同时夹住这两个字段（loot 套件已这样做）。
+- CI：`issue26-phaser-spatial` 退役，仍是 36 条。完整 `test:coast-sample`（本地约 1.5 分钟）只在本地跑：CI 软件渲染下 V-CAM 之后再开页会超时，进 CI 前要把 V-CAM 挪到最后并验证 V07、W12 的计时检查。expansion 本地运行需要 `git show 07b1414:dist/index.html > test-results/pre-m0.html`。
+- 评审后补的：Runtime 旧封锁区的流血/污染掉血在 0 截止（否则流血致死的结算被身体校验拒绝，`tests/loot-recovery.test.ts`）；行动中备份走 `saveSession.backupRecord()`（Runtime 的实时快照）；竖屏暂停看 `html.mobile`，输入框聚焦时不算转屏；门口引导在敌人或子弹压上时隐藏（`scene.ts` `updateStructureGuides`）；HUD 在安全区内而按视口坐标定位的标记用 `--cs-ox/--cs-oy` 抵消；电台台词由 `placeRadio()` 放在状态卡与任务卡之间。
+- 已知仍是缺口、留在测试里作回归守卫的（`scripts/raid-view.mjs` 的 `gap()` 打印 `GAP` 并断言现状，修好后测试变红、恢复原断言）：治疗被拒时 Runtime 丢掉自己的原因说明（ui、desktop-input、mobile，Astra）；「附近」逐件拾取（loot-target、mobile-ux，Astra）；楼梯名盖住正下方的敌人（issue26-spatial S03c 的 `KNOWN_GAPS`，前端）。
+- 刘海安全区可以在 Chromium 里模拟：CDP `Emulation.setSafeAreaInsetsOverride`（mobile-ux 的 `insets()`）。`test:play` 失败时会打印存储错误和最近的拒绝事件。
 
 ## 2026-10-15 · CI 第二阶段：八组均衡与执行耗时（#61）
 
