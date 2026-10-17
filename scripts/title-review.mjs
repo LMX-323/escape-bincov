@@ -294,8 +294,9 @@ try {
     assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false');
     await page.locator('[data-action="title-motion"]').click();
     assert.equal((await snap()).allowed, true);
+    // The media-query change event lands asynchronously (later on a loaded runner): wait for it, then assert.
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.waitForTimeout(150);
+    await page.waitForFunction(() => window.__bincov.title.snapshot().allowed === false, null, { timeout: 5000 }).catch(() => {});
     assert.equal((await snap()).allowed, false, 'System reduced motion is ignored');
     assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
