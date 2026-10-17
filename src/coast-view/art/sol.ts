@@ -59,7 +59,7 @@ export function solActorFrame(art: SolArt, kind: string, dir: number, frame: num
 const HELD: Record<string, { grip: [number, number]; tip: number; forward: number; support?: number; oneHanded?: boolean }> = {
   carbine: { grip: [8, 4], tip: 28, forward: 0, support: 12 },
   pistol: { grip: [6, 6], tip: 16, forward: 8, support: 0 },
-  club: { grip: [6, 5], tip: 29, forward: 4, oneHanded: true },
+  club: { grip: [6, 5], tip: 22, forward: 4, oneHanded: true },
 };
 export function solWeapon(art: SolArt, weapon: string) {
   const held = HELD[weapon], src = held ? get(art, `weapon-${weapon}-held`) : null;
