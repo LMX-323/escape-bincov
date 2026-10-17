@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 import { placeAt } from './inventory-actions.mjs';
 import { dragItem, frames, raidReady, waitPanel } from './raid-view.mjs';
 import * as D from '../src/domain.ts';
@@ -17,6 +18,7 @@ report.browser = browser.version();
 try {
   for (const [width,height] of [[1280,720],[1920,1080]]) {
     const context = await browser.newContext({viewport:{width,height},offline:true});
+    await resumeStalls(context);
     context.on('request',r=>{if(/^https?:/.test(r.url()))report.externalRequests.push(r.url());});
     const page = await context.newPage();
     page.on('pageerror',e=>report.errors.push(e.message));

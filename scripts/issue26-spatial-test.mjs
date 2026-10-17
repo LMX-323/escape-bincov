@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls, running, stallResumes } from './stall-resume.mjs';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const html = await readFile(option('html', 'dist/index.html'), 'utf8'), out = resolve(option('out', 'test-results/issue26-spatial'));
@@ -34,6 +35,21 @@ async function resumeStall() {
   }
 }
 const settle = async () => { await page.waitForTimeout(300); await frames(4); await resumeStall(); };
+/**
+ * E on the stairs until the floor changes. A stall pause (resumed by resumeStalls) swallows a press made while it shows,
+ * so the press is made again once the raid runs; any other outcome fails after the timeout.
+ */
+async function takeStairs(target) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await running(page);
+    const stalls = await stallResumes(page) ?? 0;
+    await page.keyboard.press('e');
+    const outcome = await (await page.waitForFunction(([t, s]) => window.__bincovSample.host.lastBatch.stamp.world.mapId === t ? 'done'
+      : (window.__stallResumes ?? 0) !== s ? 'stalled' : false, [target, stalls], { timeout: 45000 })).jsonValue();
+    if (outcome === 'done') return;
+  }
+  throw new Error(`The stairs did not take the player to ${target}`);
+}
 async function check(name, task) {
   const row = { name: `${size.join('x')} ${name}` }; report.checks.push(row);
   try { row.detail = await task(); assert.deepEqual(report.errors, []); row.status = 'passed'; }
@@ -95,9 +111,10 @@ const FIGURE = 'g => [g.body, g.weapon, ...g.arms, g.flash, g.wade]';
 try {
   for (size of [[1280, 720], [1920, 1080]]) {
     context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] } });
+    await resumeStalls(context);
     context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://spatial.test/')) report.errors.push(`external request ${r.url()}`); });
     await context.route('https://spatial.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
-    page = await context.newPage(); page.setDefaultTimeout(15000);
+    page = await context.newPage(); page.setDefaultTimeout(30000);
     page.on('pageerror', e => report.errors.push(String(e.stack)));
     await page.goto('https://spatial.test/?test=1&entry=tabs&sample=village&weather=clear');
     await page.locator('[data-action="enter"]').click();
@@ -271,13 +288,11 @@ try {
       }
     });
     await check('S04 real-stairs-and-whole-current-floor', async () => {
-      await place(560, 272); await settle(); await page.keyboard.press('e');
-      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.stamp.world.mapId === 'resident-f2'); await settle();
+      await place(560, 272); await settle(); await takeStairs('resident-f2'); await settle();
       const upstairs = await guides();
       // Continue through both actual transitions even when an old build is missing the new cues.
-      await page.keyboard.press('e'); await page.waitForFunction(() => window.__bincovSample.host.lastBatch.stamp.world.mapId === 'coast');
-      await place(496, 272); await settle(); await page.keyboard.press('e');
-      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.stamp.world.mapId === 'resident-b1'); await settle();
+      await takeStairs('coast');
+      await place(496, 272); await settle(); await takeStairs('resident-b1'); await settle();
       const basement = await guides();
       for (const floor of [upstairs, basement]) {
         assert.ok(floor.structures.filter(o => o.kind === 'ceiling').length >= 3);

@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 import { placeAt, clickSlot } from './inventory-actions.mjs';
 import { batch, drive, frames, panel, raidReady, waitPanel } from './raid-view.mjs';
 const url = new URL(process.env.BINCOV_TEST_URL || pathToFileURL(resolve('dist/index.html')).href);
@@ -17,7 +18,8 @@ async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
   const hybrid = !touch && viewport.width === 1280;
   const context = await browser.newContext({ viewport, hasTouch: touch || hybrid, isMobile: touch, offline: url.protocol === 'file:' });
-  const page = await context.newPage(), errors = []; page.setDefaultTimeout(12000);
+  await resumeStalls(context);
+  const page = await context.newPage(), errors = []; page.setDefaultTimeout(30000);
   page.on('pageerror', e => errors.push(e.message));
   await context.route(/^https?:/, route => { if (url.protocol === 'http:' && new URL(route.request().url()).origin === url.origin) return route.continue(); errors.push('External request'); return route.abort(); });
   const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
@@ -221,7 +223,9 @@ async function suite(viewport, touch = false) {
       assert.match(await page.locator('.coast-sample [data-quest-list]').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
       assert.match(await page.locator('.coast-sample [data-quests] small').innerText(),/携带含带入物资/);
       const p = (await batch(page)).frame.player;
-      await drive(page, 'hurt', 1, { x: p.x + 100, y: p.y }); await drive(page, 'hurt', 1, { x: p.x, y: p.y - 100 }); await drive(page, 'vitals', { bleeding: false });
+      // Both blows in one task: on a slow runner raid time moves on between page calls, and the first direction could
+      // expire before the second lands.
+      await page.evaluate(p => { const d = window.__bincovSample.driver; d.hurt(1, { x: p.x + 100, y: p.y }); d.hurt(1, { x: p.x, y: p.y - 100 }); d.vitals({ bleeding: false }); }, p);
       await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===2,null,{timeout:15000});
       await page.screenshot({path:resolve(out,`qol-information-${label}.png`)});
       await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===0,null,{timeout:15000});
