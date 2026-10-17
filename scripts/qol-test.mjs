@@ -223,7 +223,9 @@ async function suite(viewport, touch = false) {
       assert.match(await page.locator('.coast-sample [data-quest-list]').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
       assert.match(await page.locator('.coast-sample [data-quests] small').innerText(),/携带含带入物资/);
       const p = (await batch(page)).frame.player;
-      await drive(page, 'hurt', 1, { x: p.x + 100, y: p.y }); await drive(page, 'hurt', 1, { x: p.x, y: p.y - 100 }); await drive(page, 'vitals', { bleeding: false });
+      // Both blows in one task: on a slow runner raid time moves on between page calls, and the first direction could
+      // expire before the second lands.
+      await page.evaluate(p => { const d = window.__bincovSample.driver; d.hurt(1, { x: p.x + 100, y: p.y }); d.hurt(1, { x: p.x, y: p.y - 100 }); d.vitals({ bleeding: false }); }, p);
       await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===2,null,{timeout:15000});
       await page.screenshot({path:resolve(out,`qol-information-${label}.png`)});
       await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===0,null,{timeout:15000});
