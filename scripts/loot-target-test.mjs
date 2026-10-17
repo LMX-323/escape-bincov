@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 import { batch, drive, frames, gap, panel, raidReady, waitPanel } from './raid-view.mjs';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
@@ -35,12 +36,13 @@ assert.ok(occluded, 'The line-of-sight fixture uses actual map geometry');
 async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
   const context = await browser.newContext({ viewport, hasTouch: touch, isMobile: touch, offline: url.protocol === 'file:' });
+  await resumeStalls(context);
   const errors = [], external = [];
   await context.route(/^https?:/, route => {
     if (url.protocol === 'http:' && new URL(route.request().url()).origin === url.origin) return route.continue();
     external.push(route.request().url()); return route.abort();
   });
-  const page = await context.newPage(); page.setDefaultTimeout(15000);
+  const page = await context.newPage(); page.setDefaultTimeout(30000);
   page.on('pageerror', error => errors.push(error.message));
   const action = name => page.locator(`[data-action="${name}"]`);
   const doButton = name => page.locator(`.coast-sample [data-do="${name}"]`);
@@ -182,18 +184,61 @@ async function suite(viewport, touch = false) {
       }
     });
     await step('movement, gunfire, clock and enemies continue while the list is visible', async () => {
-      // Enemies run for this step (they patrol far from the fixture); movement and the shot use real input.
+      // Enemies run for this step; movement and the shot use real input. The walk starts 40 px out (reach is 43 px) and
+      // heads across the sources while aiming precisely (right button, 0.7 of the walking speed), so the first walking
+      // frame keeps them in reach unless that frame lasts over a second (CI draws this scene at a few frames per second).
+      // Every frame is recorded in the page, and the list and its selection are read on the first frame the player moved.
+      const edge = [[-40, 0, 'd'], [40, 0, 'a'], [0, -40, 's'], [0, 40, 'w']].map(([dx, dy, key]) => ({ x: fixture.x + dx, y: fixture.y + dy, key }))
+        .find(p => traversable(street, p, 'body', 10) && corridor(street, p, fixture, 'body', 10));
+      assert.ok(edge, 'a walkable start at the edge of reach with a clear walk across the sources');
+      await drive(page, 'placePlayer', { x: edge.x, y: edge.y }, 0, 'coast'); await selected(fixture.corpses[1]);
+      // Enemies near the fixture are parked far away first (the far ones keep acting): a slow machine lets the AI run for
+      // several seconds here, long enough for a neighbour to walk over and kill the player.
+      const parking = [];
+      for (let r = 640; r < 3000 && parking.length < 24; r += 48) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const p = { x: fixture.x + dx * r, y: fixture.y + dy * r };
+        if (traversable(street, p, 'body', 10)) parking.push(p);
+      }
+      const parked = await page.evaluate(({ fixture, parking }) => {
+        const h = window.__bincovSample.host, d = window.__bincovSample.driver, near = h.lastBatch.frame.actors.filter(a => a.kind !== 'player' && a.alive && Math.hypot(a.x - fixture.x, a.y - fixture.y) < 600);
+        near.forEach((a, i) => d.placeEnemy(a.uid, parking[i]));
+        return near.length;
+      }, { fixture, parking });
+      assert.ok(parked <= parking.length, 'every enemy near the fixture has a parking spot');
       await drive(page, 'freezeAI', false);
-      const before = await state(); await page.keyboard.down('d');
-      try { await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x !== x, before.x, { timeout: 15000 }); } finally { await page.keyboard.up('d'); }
-      const p = await canvasPoint(); await page.mouse.click(p.x, p.y);
-      await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, before.mag);
+      const before = await state();
+      await page.evaluate(() => {
+        const h = window.__bincovSample.host, seen = window.__walk = { frames: [], done: false };
+        const f = () => {
+          const b = h.lastBatch, list = document.querySelector('.coast-sample [data-choices]:not([hidden])');
+          seen.frames.push({ x: b.frame.player.x, y: b.frame.player.y, selected: (b.frame.interaction?.choices ?? []).find(c => c.selected)?.id ?? null,
+            shown: list?.querySelector('li[aria-current]')?.getAttribute('data-id') ?? null });
+          if (!seen.done && seen.frames.length < 2000) requestAnimationFrame(f);
+        };
+        requestAnimationFrame(f);
+      });
+      const p = await canvasPoint(); await page.mouse.move(p.x, p.y); await page.mouse.down({ button: 'right' });
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.player.state.precise);
+      await page.keyboard.down(edge.key);
+      try { await page.waitForFunction(p => { const q = window.__bincovSample.host.lastBatch.frame.player; return q.x !== p.x || q.y !== p.y; }, before, { timeout: 15000 }); }
+      finally { await page.keyboard.up(edge.key); }
+      const walk = await page.evaluate(() => { window.__walk.done = true; return window.__walk.frames; });
+      const moved = walk.find(r => r.x !== before.x || r.y !== before.y);
+      assert.ok(moved, 'a frame with the player moved was recorded');
+      assert.equal(moved.selected, fixture.corpses[1], 'walking keeps the selected source');
+      assert.equal(moved.shown, fixture.corpses[1], 'the list shows the selected source while walking');
+      // The shot: a left press while the right button is held (precise aim), the same chord the HUD offers.
+      try { await page.mouse.down(); await page.mouse.up(); await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, before.mag); }
+      finally { await page.mouse.up({ button: 'right' }); }
       await page.waitForFunction(e => { const b = window.__bincovSample.host.lastBatch; return b.frame.actors.filter(a => a.alive).map(a => [a.uid, Math.round(a.x), Math.round(a.y), a.state.ai]).join(';') !== e; }, before.enemies);
-      const after = await state(); assert.notEqual(after.x, before.x); assert.equal(after.mag, before.mag - 1);
+      const after = await state(); assert.ok(after.x !== before.x || after.y !== before.y, 'real movement'); assert.equal(after.mag, before.mag - 1);
       assert.ok(after.elapsed > before.elapsed); assert.notEqual(after.enemies, before.enemies, 'enemies keep acting');
       assert.equal(after.panel, null);
       await drive(page, 'freezeAI', true);
       await drive(page, 'placePlayer', { x: fixture.x, y: fixture.y }, 0, 'coast'); await frames(page, 4);
+      // A long walking frame may have carried the player out of reach after that first frame; the next steps start
+      // with the same selection as before, picked with the wheel.
+      for (let i = 0; i < 3 && (await state()).selected !== fixture.corpses[1]; i++) await wheel(100);
       await selected(fixture.corpses[1]);
     });
     // Known gap: docs/LOOTING.md's 附近 list (ground loot picked one by one while a container is selected) has no
@@ -272,13 +317,15 @@ async function suite(viewport, touch = false) {
       // The host's panel on every frame while E is held, until the ending: the extraction wins over the container.
       await page.evaluate(() => {
         const seen = window.__panelsWhileE = [], h = window.__bincovSample.host;
-        const f = () => { seen.push(h.panel); if (h.lastBatch.frame.phase !== 'ending') requestAnimationFrame(f); }; requestAnimationFrame(f);
+        const f = () => { seen.push({ panel: h.panel, at: h.lastBatch.stamp.simulationTime }); if (h.lastBatch.frame.phase !== 'ending') requestAnimationFrame(f); }; requestAnimationFrame(f);
       });
       await page.keyboard.down('e');
       await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'ending', null, { timeout: 30000 });
       await page.keyboard.up('e');
-      const panels = await page.evaluate(() => window.__panelsWhileE);
-      assert.ok(panels.length > 10, `frames seen while E is held: ${panels.length}`);
+      const watched = await page.evaluate(() => window.__panelsWhileE), panels = watched.map(w => w.panel);
+      // The watch covers the whole three-second hold, however many frames the machine drew in that time.
+      const span = watched.at(-1).at - watched[0].at;
+      assert.ok(watched.length >= 3 && span >= 2.5, `frames seen while E is held: ${watched.length} over ${span.toFixed(2)} s`);
       assert.deepEqual([...new Set(panels.filter(p => p !== 'ending'))], [null], 'E held for extraction never opens a panel');
       await page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout: 30000 });
       assert.equal(await page.evaluate(() => window.__bincov.app.save.lastResult?.outcome), 'extract');

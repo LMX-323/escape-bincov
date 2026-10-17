@@ -5,7 +5,7 @@
  */
 
 /** Wait until the raid host has mounted and published a frame; returns the world key of that frame. */
-export async function raidReady(page, { timeout = 30000 } = {}) {
+export async function raidReady(page, { timeout = 60000 } = {}) {
   await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch && !!document.querySelector('.coast-sample canvas'), null, { timeout });
   return page.evaluate(() => window.__bincovSample.host.lastBatch.stamp.world);
 }
@@ -17,7 +17,7 @@ export const drive = (page, name, ...args) => page.evaluate(([name, args]) => wi
 export const batch = page => page.evaluate(() => { const b = window.__bincovSample.host.lastBatch; return { stamp: b.stamp, map: { key: b.map.key, name: b.map.name, floor: b.map.floor, exits: b.map.exits, entries: b.map.entries, notes: b.map.notes }, frame: b.frame }; });
 /** The host's open panel: null, 'pause', 'inventory', 'loot', 'map', 'reading' or 'ending'. */
 export const panel = page => page.evaluate(() => window.__bincovSample.host.panel);
-export const waitPanel = (page, value, timeout = 15000) => page.waitForFunction(v => window.__bincovSample?.host?.panel === v, value, { timeout });
+export const waitPanel = (page, value, timeout = 30000) => page.waitForFunction(v => window.__bincovSample?.host?.panel === v, value, { timeout });
 /** Client point of a world point on the chest plane (where aim and bullets are drawn) or, with lift 0, the ground. */
 export const screenOf = (page, point, lift = 22) => page.evaluate(([p, lift]) => window.__bincovSample.host.view.worldToClient({ x: p.x, y: p.y - lift }), [point, lift]);
 /** Stand at a point (validated body fit) with enemies frozen, then let the camera settle on it. */

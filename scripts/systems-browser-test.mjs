@@ -10,11 +10,13 @@ import * as D from '../src/domain.ts';
 import { spacePath, traversable } from '../src/spatial.ts';
 import { MALL_ANCHORS, mallWorldV3 } from '../src/mall-world.ts';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 const out = resolve('test-results'); await mkdir(out, {recursive:true});
 const report = {startedAt:new Date().toISOString(), htmlSha256:createHash('sha256').update(await readFile(resolve('dist/index.html'))).digest('hex'), methodology:'Offline built HTML; native buttons, keyboard, touch and reload. Raids run on the 2.5D host (mall layout 3), the walking base is the station yard. Explicit fixtures fund ordinary materials, restore damaged body, position at registered mall anchors through the ?test=1 driver, freeze enemy AI for transaction/connector checks, trigger terminal conditions and rewind the saved base cursor to verify offline recovery. Scoped write failures target the intended bag, floor or terminal transaction while allowing unrelated periodic checkpoints. These fixtures do not prove natural balance or reference-image fidelity. Ordinary entry has a separate context without test hooks.', steps:[],errors:[],requests:[]};
 const browser = await chromium.launch(browserOptions); report.browser=browser.version();
 const ctx = await browser.newContext({viewport:{width:1280,height:720},offline:true});
-const page = await ctx.newPage(); page.setDefaultTimeout(15000); page.on('pageerror',e=>report.errors.push(e.stack ?? e.message)); ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
+await resumeStalls(ctx);
+const page = await ctx.newPage(); page.setDefaultTimeout(30000); page.on('pageerror',e=>report.errors.push(e.stack ?? e.message)); ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
 const action=(name,id)=>page.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
 const doButton=(name,p=page)=>p.locator(`.coast-sample [data-do="${name}"]`);
 const MALL=mallWorldV3();
@@ -24,9 +26,19 @@ async function step(name,task){const row={name,status:'running'};report.steps.pu
 const fault=(scope='any')=>page.evaluate(scope=>{window.__systemSet=Storage.prototype.setItem;const baseline=JSON.stringify(window.__bincov.app.loadout?.bag),map=window.__bincovSample?.host?.lastBatch?.stamp.world.mapId;Storage.prototype.setItem=function(k,v){if(k==='escape-bincov.session.v2'){const record=JSON.parse(v),blocked=scope==='any'||scope==='bag'&&JSON.stringify(record.expansion?.raid?.loadout.bag)!==baseline||scope==='layer'&&record.expansion?.raid?.currentMap!==map||scope==='terminal'&&!!record.terminal;if(blocked){window.__systemPreFailureRaw=localStorage.getItem(k);throw new DOMException('System fixture failure','QuotaExceededError');}}return window.__systemSet.call(this,k,v);};},scope);
 const recover=()=>page.evaluate(()=>{Storage.prototype.setItem=window.__systemSet;});
 const mapId=(p=page)=>p.evaluate(()=>window.__bincovSample.host.lastBatch.stamp.world.mapId);
-const onMap=(id,p=page)=>p.waitForFunction(id=>window.__bincovSample?.host?.lastBatch?.stamp.world.mapId===id,id,{timeout:20000});
-/** Stand at a point of the current floor (validated body fit) and write the checkpoint. */
-async function stand(pt,p=page){await p.evaluate(pt=>{const h=window.__bincovSample.host;window.__bincovSample.driver.placePlayer({x:pt.x,y:pt.y},-Math.PI/2,h.lastBatch.stamp.world.mapId);if(!h.services.checkpoint())throw new Error('Anchor checkpoint failed');},pt);await frames(p,3);}
+/**
+ * On a slow machine (CI draws these floors a few times a second) the first frames after a placement or a floor change can
+ * take over two seconds, which stall-pauses the raid, and the next real input would meet the pause panel. Draw frames
+ * until two in a row take under a second (at most 20), then resume if the latest Runtime notice is the stall pause.
+ */
+const settled=async(p=page)=>{
+ await p.evaluate(()=>new Promise(r=>{let last=performance.now(),quiet=0,n=0;const f=now=>{quiet=now-last<1000?quiet+1:0;last=now;if(++n>=20||quiet>=2)r();else requestAnimationFrame(f);};requestAnimationFrame(f);}));
+ const stalled=await p.evaluate(()=>{const h=window.__bincovSample.host,n=h.eventLog.filter(e=>e.type==='notice').at(-1);return h.panel==='pause'&&/画面暂时停顿/.test(n?.detail?.text??'')&&!!document.querySelector('.coast-sample [data-panel] [data-do="resume"]:not([disabled])');});
+ if(stalled){await doButton('resume',p).click();await waitPanel(p,null);}
+};
+const onMap=async(id,p=page)=>{await p.waitForFunction(id=>window.__bincovSample?.host?.lastBatch?.stamp.world.mapId===id,id,{timeout:45000});await settled(p);};
+/** Stand at a point of the current floor (validated body fit), let the view settle, and write the checkpoint. */
+async function stand(pt,p=page){await p.evaluate(pt=>{const h=window.__bincovSample.host;window.__bincovSample.driver.placePlayer({x:pt.x,y:pt.y},-Math.PI/2,h.lastBatch.stamp.world.mapId);},pt);await settled(p);await p.evaluate(()=>{if(!window.__bincovSample.host.services.checkpoint())throw new Error('Anchor checkpoint failed');});}
 /** A crate's own point can sit beside furniture: stand on it, or on the nearest free point in reach of it. */
 async function standAt(pt,floor){const def=MALL.maps[floor],ctxS={definition:def,doors:{},highTide:false};const spot=[[0,0],[0,16],[0,-16],[16,0],[-16,0],[16,16],[-16,16],[16,-16],[-16,-16],[0,28],[28,0],[-28,0],[0,-28]].map(([dx,dy])=>({x:pt.x+dx,y:pt.y+dy})).find(p=>traversable(ctxS,p,'body',10));assert.ok(spot,`no standing point near ${JSON.stringify(pt)}`);await stand(spot);}
 /** The crate standing at a registered anchor of the given floor, from the live capture. */
@@ -49,8 +61,9 @@ try {
  await step('station yard movement is real; a failed write on leaving keeps the yard and its storage dialog until retried',async()=>{
   await action('base-enter').first().click();await page.waitForFunction(()=>!!window.__station?.host&&document.documentElement.dataset.station==='yard',null,{timeout:30000});
   const yard=()=>page.evaluate(()=>({...window.__station.host.debug,mounted:window.__station.mounted}));
-  const before=(await yard()).player.x;await page.keyboard.down('d');await page.waitForTimeout(250);await page.keyboard.up('d');
-  await page.waitForFunction(x=>window.__station.host.debug.player.x>x,before);
+  // D is held until the yard has moved the player (a fixed 250 ms can pass between two frames on a slow machine).
+  const before=(await yard()).player.x;await page.keyboard.down('d');
+  try{await page.waitForFunction(x=>window.__station.host.debug.player.x>x,before,{timeout:30000});}finally{await page.keyboard.up('d');}
   const original=(await state()).raw;await fault();await page.keyboard.press('0');
   await page.waitForFunction(()=>window.__station.host.debug.dialog==='storage');
   assert.equal((await state()).raw,original);assert.equal((await yard()).mounted,true);assert.equal(await page.evaluate(()=>window.__bincov.app.state),'hideout');
@@ -156,9 +169,10 @@ try {
   await page.waitForFunction(()=>window.__bincov.saveSession.captureExpansion().raid.elapsed>300.1,null,{timeout:30000});const s=(await state()).expansion.raid;assert.equal(s.highTide,true);assert.equal(s.tideChanged,true);assert.equal(s.currentMap,'mall-f2');assert.ok(s.pursuits.length===0||s.pursuits[0].registeredAt>=300,'The Runtime forwards the tide boundary to the pursuit engine');assert.equal(MALL.maps['mall-f2'].cells.flat().includes('tide'),false);
  });
  for(const viewport of [{width:844,height:390},{width:640,height:300}])await step(`station yard and mall native touch at ${viewport.width}x${viewport.height}`,async()=>{
-  const mobile=await browser.newContext({viewport,isMobile:true,hasTouch:true,offline:true}),p=await mobile.newPage();p.setDefaultTimeout(15000);p.on('pageerror',e=>report.errors.push(e.stack??e.message));mobile.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
+  const mobile=await browser.newContext({viewport,isMobile:true,hasTouch:true,offline:true}),p=await mobile.newPage();p.setDefaultTimeout(30000);await resumeStalls(mobile);p.on('pageerror',e=>report.errors.push(e.stack??e.message));mobile.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
   const a=(name,id)=>p.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
-  try{await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await a('enter').tap();await p.locator('#ui .panel.hideout').waitFor();
+  // A fresh page boots the game and its title renderer first: allow a slow machine its time before the first tap.
+  try{await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await a('enter').tap({timeout:60000});await p.locator('#ui .panel.hideout').waitFor();
    // The yard: stand at the rest area and open it with the touch action button.
    await a('base-enter').first().tap();await p.waitForFunction(()=>!!window.__station?.host,null,{timeout:30000});
    await p.evaluate(()=>window.__station.host.place(19.5,5.2,2));await p.waitForFunction(()=>window.__station.host.debug.focus==='rest');
@@ -168,10 +182,11 @@ try {
    await p.locator('#run-world').selectOption('mall');await p.locator('#seed').fill('41');await a('deploy').tap();await raidReady(p);await freeze(p);
    const up=MALL.maps['mall-f1'].entries.find(e=>e.id==='S-N-up');await stand(up.at,p);
    await p.waitForFunction(label=>document.querySelector('.coast-sample [data-act]')?.getAttribute('aria-label')===label,up.label);
-   await p.locator('.coast-sample [data-act]').tap();await onMap('mall-f2',p);
+   // A floor-changing tap is acknowledged only once the page has drawn the new floor: several seconds on a slow machine.
+   await p.locator('.coast-sample [data-act]').tap({timeout:45000});await onMap('mall-f2',p);
    await p.locator('.coast-sample .cs-touch [data-do="map"]').tap();await waitPanel(p,'map');await p.locator('.coast-sample [data-do="map-floor"][data-id="mall-f1"]').tap();assert.equal(await mapId(p),'mall-f2');
    await p.locator('.coast-sample [data-panel] [data-do="close"]').tap();await waitPanel(p,null);await p.screenshot({path:resolve(out,`mall-touch-${viewport.width}x${viewport.height}.png`)});
-   await p.locator('.coast-sample [data-act]').tap();await onMap('mall-f1',p);
+   await p.locator('.coast-sample [data-act]').tap({timeout:45000});await onMap('mall-f1',p);
   }finally{await mobile.close();}
  });
  await step('native terminal scenes commit death, timeout, abandonment and extraction once; failed settlement retains its candidate',async()=>{
@@ -189,8 +204,9 @@ try {
   }
  });
  await step('ordinary offline mall entry (2.5D view, layout 3) exposes no test hook and saves native movement, map view and refresh recovery',async()=>{
-  const ordinary=await browser.newContext({viewport:{width:1280,height:720},offline:true}),p=await ordinary.newPage();p.setDefaultTimeout(12000);p.on('pageerror',e=>report.errors.push(e.stack??e.message));ordinary.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});const a=name=>p.locator(`[data-action="${name}"]`);
-  try{await p.goto(pathToFileURL(resolve('dist/index.html')).href);assert.equal(await p.evaluate(()=>typeof window.__bincov),'undefined');await a('enter').click();await deployFromYard(p,{world:'mall',seed:41});await p.waitForSelector('.coast-sample [data-where]');const saved=()=>p.evaluate(()=>JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion.raid);const before=await saved();await p.keyboard.down('w');await p.waitForTimeout(300);await p.keyboard.up('w');await p.waitForTimeout(2300);const after=await saved();assert.equal(after.worldVersion,'mall-v3');assert.ok(after.player.y<before.player.y);assert.ok(after.elapsed>before.elapsed);await p.keyboard.press('m');await p.locator('[data-do="map-floor"][data-id="mall-f2"]').click();assert.equal((await saved()).currentMap,'mall-f1');await p.keyboard.press('m');await p.waitForSelector('.coast-sample [data-panel]',{state:'hidden'});await p.screenshot({path:resolve(out,'mall-ordinary-1280x720.png')});await p.reload();await a('enter').click();await p.waitForSelector('.coast-sample [data-where]');assert.equal((await saved()).currentMap,'mall-f1');assert.equal(await p.evaluate(()=>typeof window.__bincov),'undefined');}
+  // A fresh page boots the game, the yard and the raid view on a slow machine (CI): waits get 30 s, the first tap 60 s.
+  const ordinary=await browser.newContext({viewport:{width:1280,height:720},offline:true}),p=await ordinary.newPage();p.setDefaultTimeout(30000);p.on('pageerror',e=>report.errors.push(e.stack??e.message));ordinary.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});const a=name=>p.locator(`[data-action="${name}"]`);
+  try{await p.goto(pathToFileURL(resolve('dist/index.html')).href);assert.equal(await p.evaluate(()=>typeof window.__bincov),'undefined');await a('enter').click({timeout:60000});await deployFromYard(p,{world:'mall',seed:41});await p.waitForSelector('.coast-sample [data-where]');const saved=()=>p.evaluate(()=>JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion.raid);const before=await saved();await p.keyboard.down('w');await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(r)))));await p.keyboard.up('w');/* W stays down across drawn frames; the walk then reaches the record with the next two-second checkpoint, however long a frame is. */await p.waitForFunction(([key,y])=>JSON.parse(localStorage.getItem(key)).expansion.raid.player.y<y,['escape-bincov.session.v2',before.player.y],{timeout:30000});const after=await saved();assert.equal(after.worldVersion,'mall-v3');assert.ok(after.player.y<before.player.y);assert.ok(after.elapsed>before.elapsed);await p.keyboard.press('m');await p.locator('[data-do="map-floor"][data-id="mall-f2"]').click();assert.equal((await saved()).currentMap,'mall-f1');await p.keyboard.press('m');await p.waitForSelector('.coast-sample [data-panel]',{state:'hidden'});await p.screenshot({path:resolve(out,'mall-ordinary-1280x720.png')});await p.reload();await a('enter').click();await p.waitForSelector('.coast-sample [data-where]');assert.equal((await saved()).currentMap,'mall-f1');assert.equal(await p.evaluate(()=>typeof window.__bincov),'undefined');}
   finally{await ordinary.close();}
  });
  report.status='passed';
