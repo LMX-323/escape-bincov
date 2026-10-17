@@ -52,9 +52,9 @@ export class Textures {
 
   weapon(id: string, kind: ActorKind): WeaponArt & { texture: Texture; rim: Texture } {
     const glove = kind === 'player' ? '#4a463c' : kind === 'salt' ? '#7f7a6b' : '#3e3a33';
-    const key = `weapon:${id}:${glove}`;
+    const key = `weapon:${id}:${kind === 'salt' || kind === 'elite' ? kind : glove}`;
     let art = this.weapons.get(key);
-    if (!art) { art = (this.art && solWeapon(this.art, id)) || paintWeapon(id, glove); this.weapons.set(key, art); this.canvases.set(key, art.canvas); this.atlas.add(key, art.canvas); }
+    if (!art) { art = (this.art && solWeapon(this.art, id, kind)) || paintWeapon(id, glove); this.weapons.set(key, art); this.canvases.set(key, art.canvas); this.atlas.add(key, art.canvas); }
     const rimKey = `${key}|rim`;
     if (!this.atlas.has(rimKey)) { const r = rim(art.canvas); this.canvases.set(rimKey, r); this.atlas.add(rimKey, r); }
     return { ...art, texture: this.atlas.get(key), rim: this.atlas.get(rimKey) };

@@ -56,13 +56,18 @@ export function solActorFrame(art: SolArt, kind: string, dir: number, frame: num
  * Held weapons, drawn pointing east. The manifest's grip is the rotation pivot and its muzzle (a melee weapon's tip) sets
  * the reach along the aim; `forward` and the support hand follow the procedural weapon of the same id (art/actors.ts).
  */
-const HELD: Record<string, { grip: [number, number]; tip: number; forward: number; support?: number; oneHanded?: boolean }> = {
-  carbine: { grip: [8, 4], tip: 28, forward: 0, support: 12 },
-  pistol: { grip: [6, 6], tip: 16, forward: 8, support: 0 },
-  club: { grip: [6, 5], tip: 22, forward: 4, oneHanded: true },
+const HELD: Record<string, { art: string; grip: [number, number]; tip: number; forward: number; support?: number; oneHanded?: boolean }> = {
+  carbine: { art: 'weapon-carbine-held', grip: [8, 4], tip: 28, forward: 0, support: 12 },
+  pistol: { art: 'weapon-pistol-held', grip: [6, 6], tip: 16, forward: 8, support: 0 },
+  shotgun: { art: 'weapon-shotgun-held', grip: [11, 6], tip: 31, forward: 0, support: 10 },
+  knife: { art: 'weapon-knife-held', grip: [5, 4], tip: 16, forward: 6, oneHanded: true },
+  club: { art: 'weapon-club-held', grip: [6, 5], tip: 22, forward: 4, oneHanded: true },
+  // Salt smugglers and tide wardens both carry the Runtime's 'rifle'; each has its own drawing.
+  'salt:rifle': { art: 'weapon-salt-rifle-held', grip: [10, 7], tip: 29, forward: 0, support: 12 },
+  'elite:rifle': { art: 'weapon-elite-rifle-held', grip: [10, 8], tip: 33, forward: 0, support: 12 },
 };
-export function solWeapon(art: SolArt, weapon: string) {
-  const held = HELD[weapon], src = held ? get(art, `weapon-${weapon}-held`) : null;
+export function solWeapon(art: SolArt, weapon: string, kind?: string) {
+  const held = HELD[`${kind}:${weapon}`] ?? HELD[weapon], src = held ? get(art, held.art) : null;
   if (!held || !src) return null;
   const { c, g } = canvas(src.width, src.height); g.drawImage(src, 0, 0);
   const [pivotX, pivotY] = held.grip;
