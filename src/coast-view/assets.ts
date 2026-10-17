@@ -1,5 +1,5 @@
 /**
- * Sol first-batch samples (43 x 1x PNG), inlined by esbuild as data URLs and decoded once per page into canvases.
+ * Sol samples (71 x 1x PNG), inlined by esbuild as data URLs and decoded once per page into canvases.
  * Generated from assets/coast/manifest.json; build.mjs verifies every file hash against that manifest.
  */
 import acoast_player_body_e_f0_v1 from '../../assets/coast/v1/coast-player-body-e-f0-v1.png';
@@ -45,6 +45,34 @@ import acoast_ground_yard_b_v1 from '../../assets/coast/v1/coast-ground-yard-b-v
 import acoast_ground_tile_a_v1 from '../../assets/coast/v1/coast-ground-tile-a-v1.png';
 import acoast_ground_tile_b_v1 from '../../assets/coast/v1/coast-ground-tile-b-v1.png';
 import acoast_weapon_carbine_held_v1 from '../../assets/coast/v1/coast-weapon-carbine-held-v1.png';
+import acoast_scav_body_s_f0_v1 from '../../assets/coast/v1/coast-scav-body-s-f0-v1.png';
+import acoast_scav_body_s_f1_v1 from '../../assets/coast/v1/coast-scav-body-s-f1-v1.png';
+import acoast_scav_body_s_f2_v1 from '../../assets/coast/v1/coast-scav-body-s-f2-v1.png';
+import acoast_scav_body_s_f3_v1 from '../../assets/coast/v1/coast-scav-body-s-f3-v1.png';
+import acoast_scav_body_s_f4_v1 from '../../assets/coast/v1/coast-scav-body-s-f4-v1.png';
+import acoast_scav_body_se_f0_v1 from '../../assets/coast/v1/coast-scav-body-se-f0-v1.png';
+import acoast_scav_body_se_f1_v1 from '../../assets/coast/v1/coast-scav-body-se-f1-v1.png';
+import acoast_scav_body_se_f2_v1 from '../../assets/coast/v1/coast-scav-body-se-f2-v1.png';
+import acoast_scav_body_se_f3_v1 from '../../assets/coast/v1/coast-scav-body-se-f3-v1.png';
+import acoast_scav_body_se_f4_v1 from '../../assets/coast/v1/coast-scav-body-se-f4-v1.png';
+import acoast_scav_body_e_f0_v1 from '../../assets/coast/v1/coast-scav-body-e-f0-v1.png';
+import acoast_scav_body_e_f1_v1 from '../../assets/coast/v1/coast-scav-body-e-f1-v1.png';
+import acoast_scav_body_e_f2_v1 from '../../assets/coast/v1/coast-scav-body-e-f2-v1.png';
+import acoast_scav_body_e_f3_v1 from '../../assets/coast/v1/coast-scav-body-e-f3-v1.png';
+import acoast_scav_body_e_f4_v1 from '../../assets/coast/v1/coast-scav-body-e-f4-v1.png';
+import acoast_scav_body_ne_f0_v1 from '../../assets/coast/v1/coast-scav-body-ne-f0-v1.png';
+import acoast_scav_body_ne_f1_v1 from '../../assets/coast/v1/coast-scav-body-ne-f1-v1.png';
+import acoast_scav_body_ne_f2_v1 from '../../assets/coast/v1/coast-scav-body-ne-f2-v1.png';
+import acoast_scav_body_ne_f3_v1 from '../../assets/coast/v1/coast-scav-body-ne-f3-v1.png';
+import acoast_scav_body_ne_f4_v1 from '../../assets/coast/v1/coast-scav-body-ne-f4-v1.png';
+import acoast_scav_body_n_f0_v1 from '../../assets/coast/v1/coast-scav-body-n-f0-v1.png';
+import acoast_scav_body_n_f1_v1 from '../../assets/coast/v1/coast-scav-body-n-f1-v1.png';
+import acoast_scav_body_n_f2_v1 from '../../assets/coast/v1/coast-scav-body-n-f2-v1.png';
+import acoast_scav_body_n_f3_v1 from '../../assets/coast/v1/coast-scav-body-n-f3-v1.png';
+import acoast_scav_body_n_f4_v1 from '../../assets/coast/v1/coast-scav-body-n-f4-v1.png';
+import acoast_weapon_pistol_held_v1 from '../../assets/coast/v1/coast-weapon-pistol-held-v1.png';
+import acoast_weapon_club_held_v1 from '../../assets/coast/v1/coast-weapon-club-held-v1.png';
+import acoast_scav_corpse_e_v1 from '../../assets/coast/v1/coast-scav-corpse-e-v1.png';
 
 export const COAST_ASSET_URLS: Record<string, string> = {
   'coast-player-body-e-f0-v1': acoast_player_body_e_f0_v1,
@@ -90,6 +118,34 @@ export const COAST_ASSET_URLS: Record<string, string> = {
   'coast-ground-tile-a-v1': acoast_ground_tile_a_v1,
   'coast-ground-tile-b-v1': acoast_ground_tile_b_v1,
   'coast-weapon-carbine-held-v1': acoast_weapon_carbine_held_v1,
+  'coast-scav-body-s-f0-v1': acoast_scav_body_s_f0_v1,
+  'coast-scav-body-s-f1-v1': acoast_scav_body_s_f1_v1,
+  'coast-scav-body-s-f2-v1': acoast_scav_body_s_f2_v1,
+  'coast-scav-body-s-f3-v1': acoast_scav_body_s_f3_v1,
+  'coast-scav-body-s-f4-v1': acoast_scav_body_s_f4_v1,
+  'coast-scav-body-se-f0-v1': acoast_scav_body_se_f0_v1,
+  'coast-scav-body-se-f1-v1': acoast_scav_body_se_f1_v1,
+  'coast-scav-body-se-f2-v1': acoast_scav_body_se_f2_v1,
+  'coast-scav-body-se-f3-v1': acoast_scav_body_se_f3_v1,
+  'coast-scav-body-se-f4-v1': acoast_scav_body_se_f4_v1,
+  'coast-scav-body-e-f0-v1': acoast_scav_body_e_f0_v1,
+  'coast-scav-body-e-f1-v1': acoast_scav_body_e_f1_v1,
+  'coast-scav-body-e-f2-v1': acoast_scav_body_e_f2_v1,
+  'coast-scav-body-e-f3-v1': acoast_scav_body_e_f3_v1,
+  'coast-scav-body-e-f4-v1': acoast_scav_body_e_f4_v1,
+  'coast-scav-body-ne-f0-v1': acoast_scav_body_ne_f0_v1,
+  'coast-scav-body-ne-f1-v1': acoast_scav_body_ne_f1_v1,
+  'coast-scav-body-ne-f2-v1': acoast_scav_body_ne_f2_v1,
+  'coast-scav-body-ne-f3-v1': acoast_scav_body_ne_f3_v1,
+  'coast-scav-body-ne-f4-v1': acoast_scav_body_ne_f4_v1,
+  'coast-scav-body-n-f0-v1': acoast_scav_body_n_f0_v1,
+  'coast-scav-body-n-f1-v1': acoast_scav_body_n_f1_v1,
+  'coast-scav-body-n-f2-v1': acoast_scav_body_n_f2_v1,
+  'coast-scav-body-n-f3-v1': acoast_scav_body_n_f3_v1,
+  'coast-scav-body-n-f4-v1': acoast_scav_body_n_f4_v1,
+  'coast-weapon-pistol-held-v1': acoast_weapon_pistol_held_v1,
+  'coast-weapon-club-held-v1': acoast_weapon_club_held_v1,
+  'coast-scav-corpse-e-v1': acoast_scav_corpse_e_v1,
 };
 
 let loaded: Promise<Map<string, HTMLCanvasElement>> | null = null;
