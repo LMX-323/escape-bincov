@@ -26,6 +26,10 @@ const drive=(name,...args)=>page.evaluate(([n,a])=>window.__bincovSample.driver[
 const ready=()=>page.waitForFunction(()=>!!window.__bincovSample?.host?.lastBatch&&!!document.querySelector('.coast-sample canvas'),null,{timeout:30000});
 /** n display frames: "nothing happens" checks wait on frames, not milliseconds (a slow runner draws a few per second). */
 const frames=(n=3)=>page.evaluate(n=>new Promise(r=>{let i=0;const f=()=>++i>=n?r():requestAnimationFrame(f);requestAnimationFrame(f);}),n);
+/** The host's last event number, and the player's shots published after one: a held stick may empty the magazine on a
+ * slow runner and the automatic reload then refills it, so shots are counted from the Runtime's events, not the magazine. */
+const lastSeq=()=>page.evaluate(()=>window.__bincovSample.host.eventLog.at(-1)?.seq??0);
+const shotsSince=seq=>page.evaluate(s=>window.__bincovSample.host.eventLog.filter(e=>e.seq>s&&e.type==='shot'&&e.detail.shooter==='player').length,seq);
 /** A point on the raid canvas itself (not on a HUD card or button), as a fraction of the window. */
 const canvasPoint=(fx,fy)=>page.evaluate(([fx,fy])=>{
   for(let d=0;d<200;d+=8)for(const [dx,dy] of [[0,0],[d,0],[-d,0],[0,d],[0,-d]]){const x=Math.round(innerWidth*fx+dx),y=Math.round(innerHeight*fy+dy);if(document.elementFromPoint(x,y)?.tagName==='CANVAS')return {x,y};}
@@ -38,7 +42,7 @@ const touch=async(type,points)=>cdp.send('Input.dispatchTouchEvent',{type,touchP
 try{
  await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await action('enter').waitFor({timeout:60000});cdp=await context.newCDPSession(page);
  await step('portrait hideout matrix keeps controls readable and reachable',async()=>{
-  await shot('menu-390');await action('enter').tap();
+  await shot('menu-390');await action('enter').tap({timeout:60000});
   for(const [width,height] of [[360,800],[390,844],[412,915],[430,932],[375,667]]){
    await page.setViewportSize({width,height});await action('tab','gear').tap();
    const result=await page.evaluate(()=>{const panel=document.querySelector('.hideout').getBoundingClientRect(), button=document.querySelector('[data-action="deploy"]').getBoundingClientRect();return {panel:{x:panel.x,y:panel.y,right:panel.right,bottom:panel.bottom},button:{width:button.width,height:button.height,bottom:button.bottom},overflow:document.documentElement.scrollWidth>innerWidth}});
@@ -68,8 +72,8 @@ try{
   await touch('touchMove',[{id:1,x:left.x+32,y:left.y},{id:2,x:right.x+40,y:right.y}]);
   await page.waitForFunction(([x,m])=>{const f=window.__bincovSample.host.lastBatch.frame;return f.player.x>x+30&&f.hud.weapon.mag<=m-2;},[before.raid.x,before.raid.mag],{timeout:20000});
   const after=await runtime();assert.ok(after.raid.x>before.raid.x+30,JSON.stringify(after));assert.ok(after.raid.mag<=before.raid.mag-2,JSON.stringify(after));
-  await touch('touchEnd',[]);const stopped=(await runtime()).raid;await frames(4);
-  const later=(await runtime()).raid;assert.equal(later.mag,stopped.mag);assert.ok(Math.abs(later.x-stopped.x)<1);await shot('combat-844');
+  await touch('touchEnd',[]);const stopped=(await runtime()).raid,released=await lastSeq();await frames(4);
+  const later=(await runtime()).raid;assert.equal(await shotsSince(released),0,'release stops fire');assert.ok(later.mag>=stopped.mag);assert.ok(Math.abs(later.x-stopped.x)<1);await shot('combat-844');
  });
  await step('move stick alone turns the player toward the walk direction (aim stick idle, issue #26 F08) and never fires',async()=>{
   await drive('placePlayer',{x:700,y:784},0,'coast');await page.waitForFunction(()=>Math.abs(window.__bincovSample.host.lastBatch.frame.player.x-700)<1);await running(page);
@@ -111,7 +115,7 @@ try{
  });
  await step('pointer cancellation and rotation never leave movement, fire or extraction held',async()=>{
   const right=await canvasPoint(.62,.45);await touch('touchStart',[{id:3,...right}]);await touch('touchMove',[{id:3,x:right.x+40,y:right.y}]);await page.waitForTimeout(100);await touch('touchCancel',[]);
-  const mag=(await runtime()).raid.mag;await frames(4);assert.equal((await runtime()).raid.mag,mag);
+  const mag=(await runtime()).raid.mag,cancelled=await lastSeq();await frames(4);assert.equal(await shotsSince(cancelled),0,'a cancelled touch leaves no fire held');assert.ok((await runtime()).raid.mag>=mag);
   // Held upright, the raid pauses with the rotate notice and 继续 waits for landscape.
   await page.setViewportSize({width:390,height:844});
   await page.waitForFunction(()=>window.__bincovSample.host.panel==='pause'&&document.querySelector('.coast-sample [data-panel] h2')?.textContent==='横过来，准备出发。',null,{timeout:20000});

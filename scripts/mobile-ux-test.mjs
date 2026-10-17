@@ -82,7 +82,9 @@ try {
   await raid('inv-place').tap();assert.ok(await inPanel('.placement-cell').count());
   await raid('close').tap();await panelIs(null);await page.locator('.coast-sample [data-bag]').tap();await panelIs('inventory');await inPanel('[data-source="bag"][aria-label^="密封绷带"]').tap();
   assert.equal(await host(()=>window.__bincovSample.host.inv.placement),null);assert.equal(await raid('inv-use').count(),1);
-  assert.deepEqual(await host(()=>__bincov.app.loadout.bag),before);await shot('inventory-844');await raid('close').tap();await panelIs(null);
+  assert.deepEqual(await host(()=>__bincov.app.loadout.bag),before);await shot('inventory-844');
+  // A stall pause on a slow runner may have closed the panel already (resumeStalls resumed it).
+  if(await host(()=>window.__bincovSample.host.panel==='inventory'))await raid('close').tap();await panelIs(null);
  });
  const feedbackTargets=['.coast-sample [data-prompt]','.coast-sample .cs-status','.coast-sample [data-radio]','.coast-sample .cs-arms','.coast-sample .cs-clock','.coast-sample .cs-info','.coast-sample .cs-touch button'];
  await step('success toast does not cover nearby text, warning or combat buttons',async()=>{

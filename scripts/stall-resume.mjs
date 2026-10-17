@@ -44,6 +44,25 @@ export async function running(page, timeout = 30000) {
 }
 
 /**
+ * Hold `key` until `until(arg)` holds in the page, then release it. A stall pause resumed meanwhile clears held keys (as
+ * any resume does), so the key is pressed again on a running raid; nothing else re-presses it.
+ */
+export async function holdKey(page, key, until, arg, timeout = 20000) {
+  const end = Date.now() + timeout;
+  for (;;) {
+    const stalls = await stallResumes(page) ?? 0;
+    await page.keyboard.down(key);
+    let outcome;
+    try {
+      outcome = await (await page.waitForFunction(([src, arg, s]) => new Function(`return ${src}`)()(arg) ? 'done'
+        : (window.__stallResumes ?? 0) !== s ? 'stalled' : false, [until.toString(), arg, stalls], { timeout: Math.max(1000, end - Date.now()) })).jsonValue();
+    } finally { await page.keyboard.up(key); }
+    if (outcome === 'done') return;
+    await running(page);
+  }
+}
+
+/**
  * Open the raid's pause panel on purpose and make sure it is this pause that stays open: a stall pause shown in the
  * same moment is resumed by `resumeStalls` within a frame, and Escape toggles a pause that is already open.
  */

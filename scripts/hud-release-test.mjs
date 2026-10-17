@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { openPause, resumeStalls, running, stallResumes } from './stall-resume.mjs';
+import { holdKey, openPause, resumeStalls, running, stallResumes } from './stall-resume.mjs';
 const option = (key, fallback) => process.argv.find(a => a.startsWith(`--${key}=`))?.slice(key.length + 3) ?? fallback;
 const html = await readFile(option('html', 'dist/index.html'), 'utf8'), out = resolve(option('out', 'test-results/hud-release'));
 await mkdir(out, { recursive: true });
@@ -53,14 +53,18 @@ try {
       // Held keys only count once the raid runs (a stall resumed after the deploy clears them, as any resume does).
       await running(page);
       const before = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.player.x);
-      await page.keyboard.down('d');
-      try { await page.waitForFunction(x => window.__bincovSample.host.lastBatch.frame.player.x > x + 4, before, { timeout: 15000 }); }
-      finally { await page.keyboard.up('d'); }
+      await holdKey(page, 'd', x => window.__bincovSample.host.lastBatch.frame.player.x > x + 4, before, 30000);
       row.moved = await page.evaluate(x => window.__bincovSample.host.lastBatch.frame.player.x - x, before);
       await running(page);
       const mag = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag);
-      await page.locator('.coast-sample canvas').click({ position: { x: 600, y: 280 } });
-      await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1, mag, { timeout: 15000 });
+      // One real click fires one round; a click that landed on a stall pause (resumed by resumeStalls) is made again.
+      for (let shot = null; shot !== 'shot';) {
+        const stalls = await stallResumes(page) ?? 0;
+        await page.locator('.coast-sample canvas').click({ position: { x: 600, y: 280 } });
+        shot = await (await page.waitForFunction(([m, s]) => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag === m - 1 ? 'shot'
+          : (window.__stallResumes ?? 0) !== s ? 'stalled' : false, [mag, stalls], { timeout: 30000 })).jsonValue();
+        if (shot !== 'shot') await running(page);
+      }
       row.fired = { before: mag, after: mag - 1 }; row.stallResumes = await stallResumes(page);
       assert.deepEqual(errors, []);
       row.status = 'passed';

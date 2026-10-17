@@ -264,6 +264,8 @@ const cases = [
       await other.goto(url + t.query); await other.waitForFunction(() => window.__bincov);
       assert.equal(await other.evaluate(() => window.__bincov.app.storageOK), false, 'second page cannot claim the existing writer lock');
       await t.page.bringToFront();
+      // Loading the other page can starve this one past 2 s on a slow runner: the stall pause closes the loot panel.
+      if (await t.panel() !== 'loot') await t.open(crate);
       const before = t.participants(await t.snapshot());
       assert.equal(await t.drag('container', 'conflict-source', 'bag', 0, 0, { release: false }), 'true');
       // Stop only the view's ticker (not a pause), after establishing the real drag,
