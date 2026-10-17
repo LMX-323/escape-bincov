@@ -1209,7 +1209,8 @@ export class CoastRaidRuntime implements RaidRuntime {
             return null;
         return { kind: t.kind, ref: { runId: this.worldKey().runId, mapId: this.worldKey().mapId, kind: t.kind, id: t.id },
             at: { x: t.at.x, y: t.at.y }, label: t.label, hold: t.kind === 'exit' ? { required: B.extractionSeconds, progress: this.extractTime } : null,
-            choices: t.kind === 'exit' || this.space && !['container', 'ground'].includes(t.kind) ? [] : this.lootTargets().map(c => ({ id: c.id, name: this.lootTargetName(c), empty: !c.inventory.items.length, selected: c.id === this.lootTargetId })) };
+            choices: t.kind === 'exit' || this.space && !['container', 'ground'].includes(t.kind) ? [] : this.lootTargets().map(c => ({ id: c.id, name: this.lootTargetName(c), empty: !c.inventory.items.length, selected: c.id === this.lootTargetId })),
+            nearby: t.kind === 'container' || t.kind === 'ground' ? this.nearbyLoot().map(l => ({ id: l.uid, item: l.id, qty: l.qty })) : [] };
     }
     /** Explicit ground refs use nearbyLoot's range/tide/occlusion rules, independent of E's
      * preferred target. Inventory and remaining ground loot commit together or both roll back.

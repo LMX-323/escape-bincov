@@ -180,6 +180,13 @@ export type Interaction = Readonly<{
         empty: boolean;
         selected: boolean;
     }>[];
+    /** Ground items in pickup reach (the Runtime's nearbyLoot rule), nearest first, while E names a container or a ground
+     * item: docs/LOOTING.md「附近」. Each is picked up on its own through activate({ kind: 'ground', id }); empty otherwise. */
+    nearby: readonly Readonly<{
+        id: string;
+        item: string;
+        qty: number;
+    }>[];
 }>;
 export type HudView = Readonly<{
     hp: number;
