@@ -39,15 +39,17 @@ PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略
 | 组 | 顺序执行的完整命令 |
 | --- | --- |
 | batch-1 | `test:browser`、`test:qol-expansion`、`test:station-tier2` |
-| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory` |
+| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages` |
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
-| batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art` |
+| batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
 | batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux` |
 | batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets` |
 | batch-7 | `test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
-| batch-8 | `test:expansion`、`test:mobile`、`test:loot`、`test:mall-passages`、`test:systems` |
+| batch-8 | `test:expansion`、`test:loot` |
 
-本轮按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 36 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
+2.5D 收尾（#64）后，CI 没有显卡、2.5D 用软件渲染，迁移到 2.5D 的行动套件变慢：loot 一套约 30 分钟，原 batch-8 超过 45 分钟的 job 上限。因此把 mall-passages 移到 batch-2 末尾、systems 和 mobile 移到 batch-4 末尾，batch-8 只留 expansion（带旧客户端）和 loot。
+
+#61 当时按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 36 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 
