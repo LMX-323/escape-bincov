@@ -32,22 +32,24 @@ PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略
 
 ## 八组分配
 
-各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **37** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查与 #56 的开场动画验收（约 20 秒，排在 batch-3）。没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **36** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查与 #56 的开场动画验收（约 20 秒，排在 batch-3）。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
 
-[scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数（例如动画组过滤）仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
+[scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
 
 | 组 | 顺序执行的完整命令 |
 | --- | --- |
 | batch-1 | `test:browser`、`test:qol-expansion`、`test:station-tier2` |
-| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory` |
+| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages` |
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
-| batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:issue26-phaser-spatial`、`test:tactical`、`test:art` |
+| batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
 | batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux` |
 | batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets` |
 | batch-7 | `test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
-| batch-8 | `test:expansion`、`test:mobile`、`test:loot`、`test:mall-passages`、`test:systems` |
+| batch-8 | `test:expansion`、`test:loot` |
 
-本轮按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 36 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
+2.5D 收尾（#64）后，CI 没有显卡、2.5D 用软件渲染，迁移到 2.5D 的行动套件变慢：loot 一套约 30 分钟，原 batch-8 超过 45 分钟的 job 上限。因此把 mall-passages 移到 batch-2 末尾、systems 和 mobile 移到 batch-4 末尾，batch-8 只留 expansion（带旧客户端）和 loot。
+
+#61 当时按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 36 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 

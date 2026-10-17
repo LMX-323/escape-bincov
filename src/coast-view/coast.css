@@ -1,14 +1,19 @@
-/* Village sample host (?sample=village): full-viewport Pixi view; the Phaser frame is hidden while it runs. */
+/* Raid host: full-viewport Pixi view; the page frame is hidden while it runs. */
 html[data-coast-sample] #frame { visibility: hidden; }
 html[data-coast-sample] #toast { z-index: 120; }
+/* A page toast during a phone raid (a storage conflict) sits above the touch buttons. */
+html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0px)); }
 .coast-sample { --cs-ink: #242321; --cs-panel: #1b1a17f0; --cs-line: #4b4842; --cs-text: #ddd5c3; --cs-muted: #a49b88; --cs-accent: #c9a65e; --cs-bad: #d07a5a;
   position: fixed; inset: 0; z-index: 60; color: var(--cs-text); font-family: "Bincov Text", "Microsoft YaHei", "PingFang SC", sans-serif; user-select: none; -webkit-user-select: none; touch-action: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* The HUD sits inside the safe area; markers the host moves to viewport points (world positions, the pointer) start from
+     the viewport's corner instead, so a notch does not shift them twice. */
+  --cs-ox: calc(0px - env(safe-area-inset-left)); --cs-oy: calc(0px - env(safe-area-inset-top)); }
 .coast-sample .cs-canvas { position: absolute; inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 /* Pixi's event system used to write touch-action none and cursor inherit on the canvas; it is detached now (host.ts),
    so the same two values live here: no browser panning or zooming on the play area, and the ordinary pointer. */
 .coast-sample .cs-canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: inherit; touch-action: none; }
-.coast-sample .cs-hud { position: absolute; inset: 0; pointer-events: none; }
+.coast-sample .cs-hud { position: absolute; inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); pointer-events: none; }
 .coast-sample button { font: inherit; font-size: 16px; pointer-events: auto; cursor: pointer; padding: 4px 12px; background: #2b2a26; color: var(--cs-text); border: 1px solid var(--cs-line); }
 .coast-sample button:hover, .coast-sample button:focus-visible { border-color: var(--cs-accent); outline: none; }
 .coast-sample button:disabled { opacity: .45; cursor: default; }
@@ -42,15 +47,16 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-clock small { font-size: 12px; color: #e0a070; font-family: "Microsoft YaHei", sans-serif; }
 .cs-hits { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .cs-hits i { position: absolute; left: -60px; top: -3px; width: 120px; height: 6px; background: linear-gradient(90deg, transparent 80%, #d0573f 80%); transform-origin: 60px 3px; }
-.cs-prompt, .cs-choices { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 16px; padding: 4px 8px; background: #191815b3; border: 1px solid #c9a65e88; color: #f0e3bd; margin: 0; }
+.cs-prompt, .cs-choices { position: absolute; left: var(--cs-ox); top: var(--cs-oy); white-space: nowrap; font-size: 16px; line-height: 16px; padding: 4px 8px; background: #191815b3; border: 1px solid #c9a65e88; color: #f0e3bd; margin: 0; }
 .cs-prompt kbd { display: inline-block; min-width: 18px; margin-right: 6px; padding: 0 4px; background: var(--cs-accent); color: #1b1a17; font: inherit; text-align: center; }
-.cs-choices { list-style: none; pointer-events: auto; }
+/* A crowded spot can list many sources: the list scrolls and keeps the selected row in view (host.prompt). */
+.cs-choices { list-style: none; pointer-events: auto; max-height: min(40vh, 220px); overflow-y: auto; scrollbar-width: thin; }
 .cs-choices li { padding: 2px 0; cursor: pointer; }
 .cs-choices li[aria-current] { color: #fff3cf; }
 .cs-choices .cs-hint { color: var(--cs-muted); cursor: default; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; }
 .cs-toast { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); padding: 6px 14px; background: #1b1a17e6; border: 1px solid var(--cs-line); font-size: 16px; line-height: 16px; opacity: 0; transition: opacity .2s; max-width: 90vw; text-align: center; }
 .cs-toast.on { opacity: 1; } .cs-toast.bad { border-color: var(--cs-bad); color: #f1c4b4; }
-.cs-cross { position: absolute; left: -12px; top: -12px; width: 25px; height: 25px; pointer-events: none;
+.cs-cross { position: absolute; left: calc(var(--cs-ox) - 12px); top: calc(var(--cs-oy) - 12px); width: 25px; height: 25px; pointer-events: none;
   background: linear-gradient(#f0e3bd, #f0e3bd) 12px 0/1px 8px no-repeat, linear-gradient(#f0e3bd, #f0e3bd) 12px 17px/1px 8px no-repeat,
     linear-gradient(#f0e3bd, #f0e3bd) 0 12px/8px 1px no-repeat, linear-gradient(#f0e3bd, #f0e3bd) 17px 12px/8px 1px no-repeat;
   filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
@@ -63,7 +69,10 @@ html[data-coast-sample] #toast { z-index: 120; }
 .coast-sample.touch .cs-keys { display: none; }
 .coast-sample.touch .cs-arms { bottom: 76px; }
 .coast-sample.touch .cs-touch { display: flex; }
+.coast-sample.touch.upright .cs-touch { display: none; }
 .cs-touch button { min-width: 60px; min-height: 48px; background: #1b1a17cc; color: #f0e3bd; border-color: #c9a65e99; }
+/* Phones have no keys: the medical shortcut shows no Q. */
+.coast-sample.touch .cs-heal kbd { display: none; }
 .coast-sample.touch .cs-cross { display: none; }
 .cs-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 16px 18px; background: var(--cs-panel); border: 1px solid var(--cs-line); font-size: 16px; line-height: 24px; pointer-events: auto; }
 .cs-panel h2 { margin: 0 0 8px; font-size: 16px; font-weight: 400; color: #f0e3bd; }
@@ -87,7 +96,7 @@ html[data-coast-sample] #toast { z-index: 120; }
   .cs-meter span { width: 2.4em; } .cs-bar { height: 6px; } .cs-bar.thin { height: 4px; }
   .cs-clock { font-size: 14px; }
   .cs-prompt, .cs-choices { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 12px; line-height: 14px; padding: 3px 6px; }
-  .cs-touch button { min-width: 52px; min-height: 44px; font-size: 14px; }
+  .cs-touch button { min-width: 52px; min-height: 48px; font-size: 14px; }
 }
 @media (max-width: 900px), (max-height: 480px) {
   .cs-status { top: 6px; left: 8px; } .cs-bar { width: 84px; }
@@ -100,6 +109,11 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-panel.cs-inv-panel { width: min(1180px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 12px 14px; top: auto; bottom: 10px; transform: translateX(-50%); box-shadow: 0 -2px 0 #0008; }
 .cs-inv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
 .cs-inv-head h2 { margin: 0; }
+/* Loot danger line: health, time left, condition and a blow, beside the title (the HUD may be under the panel). */
+.cs-risk { flex: 1; display: flex; flex-wrap: wrap; gap: 2px 14px; align-items: baseline; justify-content: flex-end; font-family: "Microsoft YaHei", sans-serif; font-size: 13px; line-height: 18px; color: var(--cs-muted); }
+.cs-risk b { color: #f0e3bd; font-weight: 400; }
+.cs-risk small { font-size: 12px; }
+.cs-risk strong { color: #e8846a; font-weight: 400; }
 .cs-inv { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
 .cs-inv > section { display: grid; gap: 6px; }
 .cs-inv h3 { margin: 0; display: flex; gap: 8px; align-items: baseline; }
@@ -107,6 +121,8 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-help { margin: 0; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 18px; color: var(--cs-muted); }
 .cs-help b { color: var(--cs-text); font-weight: 400; }
 .cs-details { flex: 1 1 220px; min-width: 200px; max-width: 320px; display: grid; gap: 6px; align-content: start; }
+/* Phones: details sit beside the bag and safe, so the item's actions show without scrolling the panel. */
+.coast-sample.touch .cs-details { flex: 1 1 160px; min-width: 150px; }
 .cs-details h3 { color: #f0e3bd; }
 .cs-desc { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 18px; margin: 0; }
 .cs-actions button { padding: 2px 10px; }
@@ -114,6 +130,9 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-split { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; }
 .cs-split input { width: 3.5em; font: inherit; background: #2b2a26; color: var(--cs-text); border: 1px solid var(--cs-line); padding: 2px 4px; }
 .cs-inv-foot { margin-top: 8px; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; color: var(--cs-muted); }
+.cs-place-bar { margin-bottom: 8px; }
+.cs-guide { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin: 0 0 10px; }
+.cs-guide kbd { display: inline-block; min-width: 7em; margin-right: 8px; padding: 0 4px; background: #3a372f; color: #f0e3bd; border: 1px solid #5a554a; font: inherit; font-size: 13px; line-height: 18px; }
 .cs-ghost { box-shadow: 0 4px 12px #0008; }
 /* Labels too long for a compact cell (touch, very short screens) use the small system face rather than being cut. */
 .cs-inv-panel .item .item-label.tight { font: 11px/18px "Microsoft YaHei", "PingFang SC", sans-serif; padding: 0; text-align: center; }
@@ -125,15 +144,20 @@ html[data-coast-sample] #toast { z-index: 120; }
 .cs-exit select { font: inherit; background: #2b2a26; color: var(--cs-text); border: 1px solid var(--cs-line); padding: 2px 6px; }
 .cs-reading { white-space: pre-wrap; margin: 0; max-width: 60ch; }
 .cs-state { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; color: #c9c0ac; }
-.cs-radio { position: absolute; left: 50%; top: 36px; transform: translateX(-50%); max-width: min(560px, 70vw); padding: 6px 12px; background: #1b1a17d9; border-left: 3px solid #9aa07a; font-size: 16px; line-height: 20px; color: #e6dcc0; }
+/* The host keeps the radio between the status card and the task card (--radio-l/-r/-t); centred when there is room. */
+.cs-radio { position: absolute; left: var(--radio-l, 0px); right: var(--radio-r, 0px); top: var(--radio-t, 36px); margin: 0 auto; width: fit-content; max-width: min(560px, 70vw); padding: 6px 12px; background: #1b1a17d9; border-left: 3px solid #9aa07a; font-size: 16px; line-height: 20px; color: #e6dcc0; }
 .cs-info { position: absolute; right: 12px; top: 10px; display: grid; gap: 4px; justify-items: end; max-width: 280px; pointer-events: auto; }
 .coast-sample .cs-info button { font-size: 14px; font-family: "Microsoft YaHei", sans-serif; padding: 4px 10px; background: linear-gradient(#17160fe0, #17160fc4); border-color: #6b5f45; color: #f0e3bd; }
 .cs-info details { background: linear-gradient(#17160fe0, #17160fc4); border: 1px solid #3f3b33; padding: 4px 10px; font-family: "Microsoft YaHei", sans-serif; font-size: 13px; line-height: 18px; color: #e6dcc0; }
 .cs-info summary { cursor: pointer; }
 .cs-info section p { margin: 0; color: var(--cs-muted); }
+.coast-sample.touch .cs-info summary { display: flex; align-items: center; min-height: 40px; }
+@media (max-height: 480px) { .coast-sample.touch .cs-toast { top: auto; bottom: 80px; } }
+/* On short phones an opened task list scrolls instead of running into the touch buttons (the 40 px toggle above it included). */
+@media (max-height: 480px) { .coast-sample.touch .cs-info [data-quest-list] { max-height: calc(100vh - 192px); overflow-y: auto; } }
 .cs-info small { color: var(--cs-muted); }
 @media (max-height: 480px) {
-  .cs-radio { top: 30px; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; }
+  .cs-radio { top: var(--radio-t, 30px); font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; }
   .cs-info { top: 6px; right: 8px; } .cs-info details:not([open]) { padding: 2px 6px; }
   .cs-panel.cs-inv-panel { padding: 8px; }
 }
@@ -167,7 +191,7 @@ html[data-coast-sample] #toast { z-index: 120; }
   background: conic-gradient(#e7c873 var(--reload, 0deg), #3a352b66 0); -webkit-mask: radial-gradient(circle, transparent 9.5px, #000 10px, #000 12.5px, transparent 13px); mask: radial-gradient(circle, transparent 9.5px, #000 10px, #000 12.5px, transparent 13px); }
 .cs-cross.reloading .cs-ring { display: block; }
 /* The host moves .cs-hitpop with a translate; the pop itself scales on the inner wrapper, around the hit point. */
-.cs-hitpop { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.cs-hitpop { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-hitpop b { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; }
 .cs-hitpop i { position: absolute; width: 6px; height: 2px; background: #f4ead2; box-shadow: 0 0 0 1px #0009; }
 .cs-hitpop i:nth-child(1) { left: -11px; top: -9px; transform: rotate(45deg); }
@@ -180,9 +204,9 @@ html[data-coast-sample] #toast { z-index: 120; }
 @keyframes cs-hitpop { 0% { opacity: 1; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: scale(1.25); } }
 @keyframes cs-hitkill { 0% { opacity: 1; transform: scale(.7); } 30% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0; transform: scale(1.6); } }
 /* Stair destinations: HUD text in the pixel face, placed by the view under the stair marker. */
-.cs-stairs { position: absolute; inset: 0; pointer-events: none; }
+.cs-stairs { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-stair { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 16px; line-height: 16px; padding: 2px 6px; color: #e6dcb8; background: #191815a6; border: 1px solid #c9a65e55; }
-.cs-exitptr { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.cs-exitptr { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
 .cs-exitptr i { position: absolute; left: -10px; top: -6px; width: 20px; height: 12px; transform: rotate(var(--dir, 90deg)); filter: drop-shadow(0 0 1px #000) drop-shadow(0 1px 0 #000); }
 .cs-exitptr i::before { content: ""; position: absolute; left: 0; top: 5px; width: 11px; height: 2px; background: #d6ec9a; }
 .cs-exitptr i::after { content: ""; position: absolute; left: 10px; top: 0; border: 6px solid transparent; border-left: 10px solid #d6ec9a; border-right: 0; }
@@ -200,6 +224,7 @@ html[data-coast-sample] #toast { z-index: 120; }
 @media (max-height: 480px) { .cs-exitptr span, .cs-stair { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 14px; } }
 @media (prefers-reduced-motion: reduce) { .cs-hitpop.on b, .cs-hitpop.kill.on b { animation-duration: .01s; } }
 /* Off-screen shooters: an orange chevron on the screen edge pointing out toward them, fading in under a second. */
+.cs-threats { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; }
 .cs-threats i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; opacity: 0; pointer-events: none;
   background: linear-gradient(45deg, transparent 46%, #e8774f 46%, #e8774f 60%, transparent 60%) 0 0/9px 9px no-repeat,
     linear-gradient(-45deg, transparent 46%, #e8774f 46%, #e8774f 60%, transparent 60%) 0 9px/9px 9px no-repeat;

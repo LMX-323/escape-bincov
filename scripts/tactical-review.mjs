@@ -6,7 +6,9 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 import { placeAt } from './inventory-actions.mjs';
+import { dragItem, frames, raidReady, waitPanel } from './raid-view.mjs';
 import * as D from '../src/domain.ts';
 const out = resolve('test-results/tactical');
 await mkdir(out, {recursive:true});
@@ -16,11 +18,13 @@ report.browser = browser.version();
 try {
   for (const [width,height] of [[1280,720],[1920,1080]]) {
     const context = await browser.newContext({viewport:{width,height},offline:true});
+    await resumeStalls(context);
     context.on('request',r=>{if(/^https?:/.test(r.url()))report.externalRequests.push(r.url());});
     const page = await context.newPage();
     page.on('pageerror',e=>report.errors.push(e.message));
     const action=(name,id)=>page.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
-    const shot=async name=>{await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0');await page.screenshot({path:resolve(out,`${width}x${height}-${name}.png`)});};
+    // The page toast and, in a raid, the raid host's own toast must have faded before a capture.
+    const shot=async name=>{await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>getComputedStyle(document.getElementById('toast')).opacity==='0'&&!document.querySelector('.coast-sample [data-toast].on'),null,{timeout:15000});await page.screenshot({path:resolve(out,`${width}x${height}-${name}.png`)});};
     const check=name=>{report.checks.push(`${width}x${height}: ${name}`);console.log(`PASS ${width}x${height}: ${name}`);};
     await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');
     await action('enter').click();
@@ -76,26 +80,39 @@ try {
     assert.equal(await page.locator('[data-source="stash"][aria-label^="半自动卡宾枪"]').count(),0);
     check('merchant / buy-sell buffer / warehouse order, artwork, inspection and atomic checkout');
     await action('tab','gear').click();await page.locator('#seed').fill('42');await action('deploy').click();
-    await page.waitForFunction(()=>window.__bincov.app.raid?.player?.active);
+    await raidReady(page);
     const source={w:6,h:5,items:[]};for(const id of ['carbine','medkit','water','wire','sample'])D.addItem(source,id,1);
+    // Declared fixture through the session's own transaction: an outdoor crate holds the five items, the bag is empty,
+    // enemies are frozen and the player stands at the crate.
     await page.evaluate(inventory=>{
-      const {app}=window.__bincov,r=app.raid,c=r.containers.find(c=>c.kind==='crate');
-      r.enemies.forEach(e=>{e.sprite.setPosition(208,1456);e.home={x:208,y:1456};e.target=e.home;e.timer=9999;e.cooldown=9999;e.state='patrol';e.path=[];});
-      r.loot.forEach(l=>l.sprite.setPosition(208,1456));r.player.setPosition(c.x,c.y);c.inventory=inventory;
-      app.loadout.bag.items=[];r.checkpoint();
+      const {app,saveSession}=window.__bincov,h=window.__bincovSample.host,driver=window.__bincovSample.driver;
+      driver.freezeAI(true);
+      const box=h.lastBatch.frame.containers.filter(c=>c.kind==='crate'&&c.regionId===null).sort((a,b)=>Math.hypot(a.x-640,a.y-456)-Math.hypot(b.x-640,b.y-456))[0];
+      if(!box)throw new Error('No outdoor crate for the loot fixture');
+      driver.placePlayer({x:box.x,y:box.y+12},-Math.PI/2,'coast');
+      const ticket=saveSession.prepareExpansionMutation(draft=>{
+        const r=draft.expansion.raid,c=r.maps[r.currentMap].containers.find(c=>c.id===box.id);
+        c.inventory=inventory;r.loadout.bag.items=[];
+      });
+      if(!ticket||saveSession.commitExpansionMutation(ticket)!=='committed')throw new Error(`Loot fixture rejected: ${app.storageError}`);
     },source);
-    await page.keyboard.press('e',{delay:90});await page.locator('.loot-modal').waitFor();
-    const own=await box('[data-grid="bag"]'),other=await box('[data-grid="container"]');
-    assert.ok(own.x+own.width<other.x,'Carried items must be left of the search source');
+    await frames(page,4);
+    await page.keyboard.press('e',{delay:90});await waitPanel(page,'loot');await page.locator('.coast-sample [data-grid="container"]').waitFor();
+    const own=await box('.coast-sample [data-grid="bag"]'),safeBox=await box('.coast-sample [data-grid="safe"]'),other=await box('.coast-sample [data-grid="container"]');
+    // docs/LOOTING.md: on a desktop the carried bag and safe are left of the search source.
+    assert.ok(own.x+own.width<other.x&&safeBox.x+safeBox.width<other.x,'Carried items must be left of the search source');
     assert.ok(other.x+other.width<=width && other.y+other.height<=height);
-    const timer=await page.evaluate(()=>window.__bincov.app.raid.elapsed);await page.waitForTimeout(150);
-    assert.ok(await page.evaluate(t=>window.__bincov.app.raid.elapsed>t,timer),'Loot must not pause the raid');
+    const timer=await page.evaluate(()=>window.__bincovSample.host.lastBatch.stamp.simulationTime);
+    await page.waitForFunction(t=>window.__bincovSample.host.lastBatch.stamp.simulationTime>t,timer,{timeout:15000});
+    assert.equal(await page.evaluate(()=>window.__bincovSample.host.panel),'loot','Loot must not pause the raid');
     await shot('loot');
     const uid=source.items.find(i=>i.id==='medkit').uid;
-    await page.locator(`[data-uid="${uid}"]`).dragTo(page.locator('[data-grid="bag"]'),{targetPosition:{x:cell*.4,y:cell*.4}});
-    assert.equal(await page.locator(`[data-source="bag"][data-uid="${uid}"]`).count(),1);
-    await page.locator(`[data-uid="${uid}"]`).dragTo(page.locator('[data-grid="container"]'),{targetPosition:{x:cell*3.4,y:cell*.4}});
-    assert.equal(await page.locator(`[data-source="container"][data-uid="${uid}"]`).count(),1);
+    await dragItem(page,page.locator(`.coast-sample [data-source="container"][data-uid="${uid}"]`),'bag',0,0);
+    await page.locator(`.coast-sample [data-source="bag"][data-uid="${uid}"]`).waitFor();
+    assert.equal(await page.locator(`.coast-sample [data-source="bag"][data-uid="${uid}"]`).count(),1);
+    await dragItem(page,page.locator(`.coast-sample [data-source="bag"][data-uid="${uid}"]`),'container',3,0);
+    await page.locator(`.coast-sample [data-source="container"][data-uid="${uid}"]`).waitFor();
+    assert.equal(await page.locator(`.coast-sample [data-source="container"][data-uid="${uid}"]`).count(),1);
     check('full viewport loot, own inventory on left, live clock, pointer drag and return at both scales');
     await context.close();
   }

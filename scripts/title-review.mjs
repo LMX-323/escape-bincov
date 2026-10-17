@@ -129,17 +129,14 @@ try {
     const page = await context.newPage();
     await page.goto(url + '?test=1&entry=tabs');
     await page.locator('.title-enter').waitFor();
-    const snap = () => page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+    const snap = () => page.evaluate(() => window.__bincov.title.snapshot());
     const settledPointer = x => page.waitForFunction(px => {
-      const s = window.__bincov.app.game.scene.getScene('Menu').title.snapshot();
+      const s = window.__bincov.title.snapshot();
       return s.camera[0] === Math.max(-1, Math.min(1, px / innerWidth * 2 - 1));
     }, x, { timeout: 20000 });
-    const sceneCounts = () => page.evaluate(() => {
-      const scene = window.__bincov.app.game.scene.getScene('Menu');
-      return { children: scene.children.length, textures: scene.textures.getTextureKeys().filter(k => k.startsWith('title-')).length,
-        motion: scene.events.listenerCount('title-motion'), overlay: scene.events.listenerCount('title-overlay'),
-        destroy: scene.events.listenerCount('destroy'), shutdown: scene.events.listenerCount('shutdown') };
-    });
+    // Scene ownership: top-level groups, every display object, Graphics, cached layer textures, water canvases and
+    // live controllers (the motion and dialog switches are calls on the one controller, not listeners).
+    const sceneCounts = () => page.evaluate(() => window.__bincov.title.counts());
     const cdp = await context.newCDPSession(page);
     const domListeners = async () => {
       const count = async expression => {
@@ -153,16 +150,11 @@ try {
     await page.waitForTimeout(300);
     const initial = await snap(), counts = await sceneCounts(), listeners = await domListeners();
     assert.equal(initial.art, true); assert.equal(initial.allowed, true); assert.equal(initial.live, 1);
-    assert.equal(counts.motion, 1); assert.equal(counts.overlay, 1);
+    assert.equal(counts.live, 1); assert.equal(counts.stage, 7, 'seven depth groups');
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#game canvas')].length), 1, 'one title canvas');
     record('layered scene mounted with one controller', { counts, listeners });
-    const waterRender = await page.evaluate(() => {
-      const game = window.__bincov.app.game, scene = game.scene.getScene('Menu');
-      let graphicsCommands = 0;
-      const visit = o => { graphicsCommands += o.commandBuffer?.length || 0; if (o.list) o.list.forEach(visit); };
-      scene.children.list.forEach(visit);
-      return { graphicsCommands, waterTextures: game.textures.getTextureKeys().filter(k => k.startsWith('title-water-')).length };
-    });
-    assert.ok(waterRender.graphicsCommands < 100, 'Water replays thousands of graphics commands on every display frame');
+    const waterRender = { graphics: counts.graphics, waterTextures: counts.water };
+    assert.equal(waterRender.graphics, 0, 'Water draws vector commands on every display frame');
     assert.equal(waterRender.waterTextures, 2);
     record('water renders cached pixels instead of per-frame vector commands', waterRender);
 
@@ -206,9 +198,9 @@ try {
     assert.ok(roomStep > .09 && roomStep < .11, 'Subpixel camera step was rounded');
     assert.notDeepEqual(patchA, patchB, 'Subpixel input changed state but not actual rendered pixels');
     const localMotion = await page.evaluate(() => new Promise((done, reject) => {
-      const scene = window.__bincov.app.game.scene.getScene('Menu'), title = scene.title;
-      const boats = [], lamps = []; let previousClock = -1;
-      const finish = () => { clearTimeout(timer); scene.events.off('postupdate', tick); };
+      const title = window.__bincov.title;
+      const boats = [], lamps = []; let previousClock = -1, off = () => {};
+      const finish = () => { clearTimeout(timer); off(); };
       const changes = a => a.slice(1).filter((v, i) => Math.abs(v - a[i]) > 1e-9).length;
       const tick = () => {
         const s = title.snapshot();
@@ -218,11 +210,11 @@ try {
         if (boats.length === 90) {
           finish();
           done({ samples: boats.length, boatPoses: new Set(boats).size, lampPoses: new Set(lamps).size,
-            boatChanges: changes(boats), lampChanges: changes(lamps), roundPixels: scene.cameras.main.roundPixels });
+            boatChanges: changes(boats), lampChanges: changes(lamps), roundPixels: title.renderInfo().roundPixels });
         }
       };
       const timer = setTimeout(() => { finish(); reject(new Error('Fewer than 90 active scene updates in 30 seconds')); }, 30000);
-      scene.events.on('postupdate', tick);
+      off = title.onFrame(tick);
     }));
     // A sine legitimately revisits earlier poses on its return swing. Count
     // consecutive changes in real scene updates, not global uniqueness or RAFs.
@@ -241,15 +233,15 @@ try {
     };
     const ambient = await categories(5);
     assert.deepEqual(ambient, { light: true, object: true, water: true, air: true, rain: true }, 'Ambient motion category missing');
-    await page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.setRain(false));
+    await page.evaluate(() => window.__bincov.title.setRain(false));
     const dry = await categories(5);
     assert.deepEqual(dry, { light: true, object: true, water: true, air: true, rain: false }, 'Scene relies on rain for motion');
-    await page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.setRain(true));
+    await page.evaluate(() => window.__bincov.title.setRain(true));
     record('at least four ambient motion kinds, with and without rain', { ambient, dry });
 
     // Rain is a continuous pool: drops only ever fall; a new life starts hidden above the openings.
     const rain = await page.evaluate(() => new Promise(done => {
-      const title = window.__bincov.app.game.scene.getScene('Menu').title, frames = [];
+      const title = window.__bincov.title, frames = [];
       let fogLast = -1, fogBack = 0;
       const tick = () => {
         const s = title.snapshot(); frames.push(s.rain);
@@ -289,7 +281,7 @@ try {
 
     // The toggle stops everything at once and the composition is stable.
     const stoppedPose = await page.evaluate(() => {
-      const title = window.__bincov.app.game.scene.getScene('Menu').title;
+      const title = window.__bincov.title;
       const before = title.snapshot(); document.querySelector('[data-action="title-motion"]').click();
       const after = title.snapshot();
       return { before: [before.groups,before.boatY,before.lamp,before.waterFrame], after: [after.groups,after.boatY,after.lamp,after.waterFrame] };
@@ -302,8 +294,9 @@ try {
     assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false');
     await page.locator('[data-action="title-motion"]').click();
     assert.equal((await snap()).allowed, true);
+    // The media-query change event lands asynchronously (later on a loaded runner): wait for it, then assert.
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.waitForTimeout(150);
+    await page.waitForFunction(() => window.__bincov.title.snapshot().allowed === false, null, { timeout: 5000 }).catch(() => {});
     assert.equal((await snap()).allowed, false, 'System reduced motion is ignored');
     assert.equal(await page.locator('[data-action="title-motion"]').getAttribute('aria-pressed'), 'false');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -338,10 +331,8 @@ try {
     const roundTrip = async () => {
       await page.locator('.title-enter').click();
       await page.locator('.hideout').waitFor();
-      assert.deepEqual(await page.evaluate(() => {
-        const g = window.__bincov.app.game, c = g.scene.getScene('Hideout').cameras.main;
-        return [g.canvas.width, g.canvas.height, c.width, c.height, c.zoom, c.scrollX, c.scrollY];
-      }), [960, 540, 960, 540, 1, 0, 0], 'Title camera or surface leaked into station');
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#game canvas')].map(c => [c.className, c.width, c.height])),
+        [['backdrop', 960, 540]], 'Title canvas or surface leaked into the station page');
       await page.locator('[data-action="tab"][data-id="home"]').click();
       await page.locator('[data-action="menu"]').click();
       await page.locator('.title-enter').waitFor();
@@ -367,7 +358,7 @@ try {
         else {
           times.sort((a, b) => a - b);
           const q = p => +times[Math.min(times.length - 1, Math.floor(times.length * p))].toFixed(2);
-          resolveSample({ frames: times.length, p50Ms: q(.5), p95Ms: q(.95), p99Ms: q(.99), maxMs: q(1), over33ms: times.filter(t => t > 33.4).length, actualFps: window.__bincov.app.game.loop.actualFps });
+          resolveSample({ frames: times.length, p50Ms: q(.5), p95Ms: q(.95), p99Ms: q(.99), maxMs: q(1), over33ms: times.filter(t => t > 33.4).length, actualFps: window.__bincov.title.renderInfo().fps });
         }
       }
       requestAnimationFrame(frame);
@@ -390,7 +381,7 @@ try {
     const page = await touch.newPage();
     await page.goto(url + '?test=1&entry=tabs');
     await page.locator('.title-enter').waitFor();
-    const snap = () => page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+    const snap = () => page.evaluate(() => window.__bincov.title.snapshot());
     for (const [x, y] of [[830, 380], [10, 10], [830, 10]]) { await page.touchscreen.tap(x, y); await page.waitForTimeout(300); }
     const after = await snap();
     assert.ok(Math.abs(after.camera[0]) < .2 && Math.abs(after.camera[1]) < .2, 'Touch moved the camera');

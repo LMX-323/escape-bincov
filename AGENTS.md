@@ -26,7 +26,7 @@
 
 ## 3. 实现约束
 
-- 保持 TypeScript 严格检查；领域规则在 `src/domain.ts`、`src/balance.ts`、`src/world.ts` 中，不要引入 Phaser 依赖。
+- 保持 TypeScript 严格检查；领域规则在 `src/domain.ts`、`src/balance.ts`、`src/world.ts` 中，不要引入 DOM 或渲染库（PixiJS）依赖。
 - `src/` 是游戏事实来源。`dist/index.html`、`start the game.html` 和 `release/*.zip` 是生成物，必须由 `pnpm package` 更新，禁止直接手改压缩产物。
 - 保持单文件离线能力：游玩时不得增加 CDN、远程字体、登录、分析上报或必需的网络请求。确有此类需求须由维护者明确提出。
 - 不擅自改变产品范围、许可证、发布域名、部署权限或引入多人后端；不为本次任务以外的设想进行大规模重构。

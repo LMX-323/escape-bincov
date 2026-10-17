@@ -158,13 +158,13 @@ try {
   });
 
   await step('A4 院子画面启动失败（WebGL 不可用）：自动退回旧页签界面并提示，存档不受影响', async () => {
-    // Only contexts asked for after the title (Phaser already has its own) fail; WebGPU is hidden as well.
+    // Only contexts asked for after the title (the title's renderer already has its own) fail; WebGPU is hidden as well.
     await newPage({ init: { fn: () => { const get = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (type, ...rest) { if (window.__blockGL && /webgl|webgpu/.test(type)) return null; return get.call(this, type, ...rest); }; Object.defineProperty(navigator, 'gpu', { get: () => undefined }); }, arg: null } });
     await page.goto('https://station.test/?test=1'); await page.locator('[data-action="enter"]').waitFor();
     await page.evaluate(() => { window.__blockGL = true; }); await page.locator('[data-action="enter"]').click();
     await page.locator('#ui .panel.hideout').waitFor({ timeout: 20000 });
-    const g = await page.evaluate(() => ({ station: !!window.__bincov.app.station, roots: document.querySelectorAll('#station-yard').length, state: window.__bincov.app.state, toast: document.querySelector('#toast')?.textContent ?? '', running: window.__bincov.app.game.loop.running }));
-    assert.deepEqual({ ...g, toast: undefined }, { station: false, roots: 0, state: 'hideout', toast: undefined, running: true });
+    const g = await page.evaluate(() => ({ station: !!window.__bincov.app.station, roots: document.querySelectorAll('#station-yard').length, state: window.__bincov.app.state, toast: document.querySelector('#toast')?.textContent ?? '', backdrop: [...document.querySelectorAll('#game canvas')].map(c => c.className) }));
+    assert.deepEqual({ ...g, toast: undefined }, { station: false, roots: 0, state: 'hideout', toast: undefined, backdrop: ['backdrop'] });
     assert.match(g.toast, /院子画面启动失败/);
     const r = await record(); assert.equal(r.expansion.version, 2);
     await shot('A4-webgl-fallback-tabs');
@@ -448,12 +448,12 @@ try {
     assert.deepEqual(values,[String(last.kills),'¥ '+last.keptValue,s.profile.stats.extracts+' / '+s.profile.stats.runs]);
     (report.coverage.actionReports??=[]).push({label,last,stats:s.profile.stats,displayed:values});
   };
-  await step('G1 旧页签备用入口：按 0 回到页签界面（Phaser 宿主），“回到院子”再进院子', async () => {
+  await step('G1 旧页签备用入口：按 0 回到页签界面，“回到院子”再进院子', async () => {
     await open({ fixture: preset('repaired') });
     await page.keyboard.press('0');
     await until(() => !window.__station.mounted && !!document.querySelector('#ui .panel.hideout'), 5000, 'tab page');
-    const g = await page.evaluate(() => ({ state: window.__bincov.app.state, scenes: window.__bincov.app.game.scene.getScenes(true).map(s => s.scene.key), asleep: !window.__bincov.app.game.loop.running, frame: getComputedStyle(document.querySelector('#frame')).visibility }));
-    assert.deepEqual(g, { state: 'hideout', scenes: ['Hideout'], asleep: false, frame: 'visible' });
+    const g = await page.evaluate(() => ({ state: window.__bincov.app.state, backdrop: [...document.querySelectorAll('#game canvas')].map(c => c.className), frame: getComputedStyle(document.querySelector('#frame')).visibility }));
+    assert.deepEqual(g, { state: 'hideout', backdrop: ['backdrop'], frame: 'visible' });
     await shot('G1-old-tabs');
     await page.locator('[data-action="tab"][data-id="arms"]').click(); await page.waitForTimeout(150);
     const shared0=await snap();
@@ -465,8 +465,8 @@ try {
     assert.equal(D.count(shared1.profile.stash,'ammo9'),D.count(shared0.profile.stash,'ammo9')+12);
     await page.locator('[data-action="base-enter"]').first().click(); await yardReady();
     assert.deepEqual((await snap()).profile,shared1.profile); report.coverage.sharedState={cashBefore:shared0.profile.cash,cashAfter:shared1.profile.cash};
-    assert.equal(await page.evaluate(() => window.__bincov.app.game.loop.running), false);
-    return '页签界面运行 Hideout 场景，院子已卸载；“回到院子”按钮重新挂载院子，Phaser 循环休眠';
+    assert.equal(await page.evaluate(() => document.querySelectorAll('#game canvas').length), 0, 'the yard leaves no backdrop behind it');
+    return '页签界面显示站外背景，院子已卸载；“回到院子”按钮重新挂载院子';
   });
   await step('G2 菜单返回主菜单（backToMenu），再进入仍是院子', async () => {
     await page.keyboard.press('Escape'); await until(() => window.__station.host.ui.kind === 'menu', 2000, 'menu');
@@ -475,18 +475,19 @@ try {
     await page.locator('[data-action="enter"]').click(); await yardReady();
     return '标题 ⇄ 院子';
   });
-  await step('G3 真实出击（沿海封锁区，Phaser）：开门动画 → 局内 → 撤离 → 返回走进院门并显示行动报告', async () => {
+  await step('G3 真实出击（沿海街区，2.5D）：开门动画 → 局内 → 撤离 → 返回走进院门并显示行动报告', async () => {
     const runs0 = (await snap()).profile.stats.runs;
     await place(27.5, 19.8); await page.keyboard.press('7'); await until(() => window.__station.host.ui.kind === 'deploy', 2000, 'deploy');
     await page.locator('#station-yard >> #seed').fill('42'); await shot('G3-deploy');
     await page.locator('[data-act="deploy"]').click();
     await page.waitForTimeout(1200); assert.equal((await st()).seq, 'leave'); assert.equal((await snap()).phase, 'departing'); await shot('G3-leaving');
-    await page.waitForFunction(() => window.__bincov.app.raid?.player?.active && !window.__station.mounted, null, { timeout: 15000 });
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch && !window.__station.mounted, null, { timeout: 30000 });
     const during = await page.evaluate(() => ({ state: window.__bincov.app.state, roots: document.querySelectorAll('#station-yard').length, seed: window.__bincov.app.save.activeRun?.seed }));
     assert.deepEqual(during, { state: 'run', roots: 0, seed: 42 });
-    await page.evaluate(() => { const r = window.__bincov.app.raid; r.enemies.forEach(e => e.cooldown = 9999); r.player.setPosition(r.config.exits[0].x, r.config.exits[0].y); });
+    await page.evaluate(() => { const b = window.__bincovSample.host.lastBatch, d = window.__bincovSample.driver; d.freezeAI(true); d.placePlayer(b.map.exits[0].at, 0); });
     await page.waitForTimeout(600); await shot('G3-raid');
-    await page.keyboard.down('e'); try { await page.waitForFunction(() => window.__bincov.app.state === 'result', null, { timeout: 15000 }); } finally { await page.keyboard.up('e'); }
+    // Hold E through the three-second extraction; the result page follows the outro.
+    await page.keyboard.down('e'); try { await page.waitForFunction(() => window.__bincov.app.state === 'result', null, { timeout: 20000 }); } finally { await page.keyboard.up('e'); }
     await shot('G3-result'); await page.locator('[data-action="return"]').click(); await yardReady();
     await page.waitForTimeout(500); await shot('G3-walk-in');
     await until(() => window.__station.host.ui.kind === 'report', 8000, 'report');
@@ -504,13 +505,15 @@ try {
     const runId = (await snap()).profile.activeRun.runId;
     await page.reload(); await page.waitForTimeout(400);
     await page.locator('[data-action="enter"]').click();
-    await page.waitForFunction(() => window.__bincov.app.raid?.player?.active, null, { timeout: 15000 });
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 30000 });
     const g = await page.evaluate(() => ({ runId: window.__bincov.app.save.activeRun?.runId, station: !!window.__station?.mounted }));
     assert.deepEqual(g, { runId, station: false });
-    await page.keyboard.press('Escape'); await page.waitForTimeout(200);
-    await page.evaluate(() => { const r = window.__bincov.app.raid; r.enemies.forEach(e => e.cooldown = 9999); r.player.setPosition(r.config.exits[0].x, r.config.exits[0].y); });
+    // The resumed raid opens paused: Esc resumes it.
+    await page.waitForFunction(() => window.__bincovSample.host.panel === 'pause'); await page.keyboard.press('Escape');
+    await page.waitForFunction(() => window.__bincovSample.host.panel === null);
+    await page.evaluate(() => { const b = window.__bincovSample.host.lastBatch, d = window.__bincovSample.driver; d.freezeAI(true); d.placePlayer(b.map.exits[0].at, 0); });
     await page.waitForTimeout(600);
-    await page.keyboard.down('e'); try { await page.waitForFunction(() => window.__bincov.app.state === 'result', null, { timeout: 15000 }); } finally { await page.keyboard.up('e'); }
+    await page.keyboard.down('e'); try { await page.waitForFunction(() => window.__bincov.app.state === 'result', null, { timeout: 20000 }); } finally { await page.keyboard.up('e'); }
     await page.locator('[data-action="return"]').click(); await yardReady(); await until(() => window.__station.host.ui.kind === 'report', 8000, 'report');
     return `恢复的行动 ${runId} 与动画前写入的一致`;
   });

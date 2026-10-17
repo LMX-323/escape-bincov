@@ -71,7 +71,7 @@ try {
   assert.equal(await page.evaluate(()=>window.__bincov.app.save.activeRun.runId),start.runId);
   assert.equal(await page.evaluate(()=>window.__bincov.app.save.stats.runs),before+1);
   await action('enter').click(); await page.waitForFunction(()=>window.__bincovSample?.host?.runtime);
-  assert.equal(await page.evaluate(()=>window.__bincov.app.game.scene.isActive('Raid')),false);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('.coast-sample').length),1,'one raid host');
   return {runId:start.runId};
  });
  await step('real city settlement disposes host; return marker is nonpersistent and single-use', async () => {
@@ -87,7 +87,7 @@ try {
   const start=await page.evaluate(()=>window.__bincov.hideoutRuntime.deploy({world:'buildings',seed:'42'})); assert.equal(start.ok,true);
   assert.equal(await page.evaluate(id=>window.__bincov.startPreparedHideoutRaid(id),start.runId),true);
   assert.equal(await page.evaluate(id=>window.__bincov.startPreparedHideoutRaid(id),start.runId),false);
-  assert.equal(await page.evaluate(()=>window.__bincov.app.game.scene.isActive('Raid')),false);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('.coast-sample').length),1,'one raid host');
   // Leave the active raid durable and reload into menu, keeping its checkpoint for the conflict assertion.
   await page.reload(); await page.waitForFunction(()=>window.__bincov);
  });

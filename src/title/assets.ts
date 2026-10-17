@@ -1,56 +1,52 @@
-import Phaser from 'phaser';
+import { CanvasSource, ImageSource, Rectangle, Texture, type TextureSource } from 'pixi.js';
 import { LAYERS, type LayerName } from './layout';
-import sky from '../../assets/title/title-sky-ready.png';
-import fogHigh from '../../assets/title/title-fog-high-new.png';
-import fogLow from '../../assets/title/title-fog-low-new.png';
-import harbor from '../../assets/title/title-harbor-ready.png';
-import pierFront from '../../assets/title/title-pier-master-v3.png';
-import boat from '../../assets/title/title-boat-master-v3.png';
-import mooring from '../../assets/title/title-mooring-master-v3.png';
-import room from '../../assets/title/title-room-ready.png';
-import lamp from '../../assets/title/title-lamp-master-v3.png';
-import desk from '../../assets/title/title-desk-master-v3.png';
-import light from '../../assets/title/title-light-new.png';
-import radioFx from '../../assets/title/title-radio-fx-new.png';
-import chair from '../../assets/title/title-chair-master-v3.png';
-import fore from '../../assets/title/title-fore-master-v3.png';
-import sparks from '../../assets/title/title-sparks-new.png';
-import rain from '../../assets/title/title-rain-new.png';
-import wordmark from '../../assets/title/title-wordmark-industrial-v5.png';
 
-/** Inline data URLs; the build checks each file against assets/title/manifest.json. */
-export const TITLE_ART: Record<LayerName, string> = { sky, fogHigh, fogLow, harbor, boat, mooring, pierFront, room, lamp, desk, light, radioFx, chair, fore, sparks, rain, wordmark };
-
+/** Decoded title layers (filled by ./art's loadTitleArt at boot) and the first decode failure. */
 const decoded = new Map<LayerName, HTMLImageElement>();
 let failure = '';
-
-/** Decode every title layer before Phaser starts, so the first menu frame is complete. */
-export async function loadTitleArt(): Promise<void> {
-    // The HTML wordmark is drawn from a CSS variable so menu markup never imports binary assets.
-    document.documentElement.style.setProperty('--title-wordmark', `url("${TITLE_ART.wordmark}")`);
-    const started = performance.now();
-    await Promise.all((Object.keys(TITLE_ART) as LayerName[]).map(async name => {
-        if (LAYERS[name].html) return;
-        const image = new Image();
-        image.src = TITLE_ART[name];
-        try { await image.decode(); decoded.set(name, image); }
-        catch (error) { failure ||= `${name}: ${error instanceof Error ? error.message : String(error)}`; }
-    }));
-    performance.measure('title-art-decode', { start: started, end: performance.now() });
-    if (failure) console.error('Title artwork failed to decode; showing the plain menu backdrop.', failure);
+export const decodedTitleLayer = (name: LayerName, image: HTMLImageElement) => { decoded.set(name, image); };
+export function failTitleArt(reason: string) {
+    if (!failure) console.error('Title artwork failed to decode; showing the plain menu backdrop.', reason);
+    failure ||= reason;
 }
 
-/** Register decoded layers as nearest-filtered textures (idempotent). */
-export function registerTitleTextures(scene: Phaser.Scene) {
-    for (const [name, image] of decoded) {
-        const spec = LAYERS[name];
-        if (scene.textures.exists(spec.key)) continue;
-        const texture = (spec.frames ?? 1) > 1
-            ? scene.textures.addSpriteSheet(spec.key, image, { frameWidth: spec.w * (spec.res ?? 1), frameHeight: spec.h * (spec.res ?? 1) })
-            : scene.textures.addImage(spec.key, image);
-        texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    }
+/** Layers that move by subpixels (parallax, sway, bob): sampled linearly, everything else nearest. */
+const MOVING = new Set<LayerName>(['room', 'lamp', 'desk', 'chair', 'fore', 'boat', 'light', 'radioFx']);
+const TEXEL_SCALE = 2;
+const frames = new Map<LayerName, Texture[]>();
+
+/**
+ * The frames of one decoded layer, created once and kept for the page's life (menu re-entries reuse them).
+ *
+ * Moving layers expand each painted pixel without mixing it with its neighbours before linear sampling, so filtering
+ * spans half a painted pixel rather than smearing two enlarged ones: grid layers already hold 2 texels per art pixel and
+ * are sampled as they are; one-texel layers get a nearest 2x copy. Still layers keep nearest sampling.
+ */
+export function titleFrames(name: LayerName): Texture[] {
+    let list = frames.get(name);
+    if (list) return list;
+    const image = decoded.get(name);
+    if (!image) throw new Error(`Title layer not decoded: ${name}`);
+    const spec = LAYERS[name], moving = MOVING.has(name);
+    let source: TextureSource, texel = spec.res ?? 1;
+    if (moving && texel === 1) {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width * TEXEL_SCALE; canvas.height = image.height * TEXEL_SCALE;
+        const context = canvas.getContext('2d')!;
+        context.imageSmoothingEnabled = false;
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        source = new CanvasSource({ resource: canvas, scaleMode: 'linear' });
+        texel = TEXEL_SCALE;
+    } else source = new ImageSource({ resource: image, scaleMode: moving ? 'linear' : 'nearest' });
+    const count = spec.frames ?? 1, fw = spec.w * texel, fh = spec.h * texel;
+    list = count > 1 ? Array.from({ length: count }, (_, i) => new Texture({ source, frame: new Rectangle(i * fw, 0, fw, fh) })) : [new Texture({ source })];
+    frames.set(name, list);
+    return list;
 }
+/** A decoded layer's pixels (the water samples the boat's hull from it). */
+export const titleImage = (name: LayerName) => decoded.get(name) ?? null;
+/** Title textures created so far (checks assert re-entering the menu never adds more). */
+export const titleTextureCount = () => [...frames.values()].reduce((n, list) => n + list.length, 0);
 
 export const titleArtReady = () => !failure && decoded.size === Object.values(LAYERS).filter(layer => !layer.html).length;
 export const titleArtFailure = () => failure;

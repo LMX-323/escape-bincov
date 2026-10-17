@@ -63,10 +63,10 @@ async function deployTabs(page) {
     assert.deepEqual(spawn, [48.5 * 32, 3.5 * 32], 'layout 3 (like layout 2) starts on the entrance plaza');
     const s = await page.evaluate(() => {
       const h = window.__bincovSample.host, c = window.__bincovSample.counts();
-      return { state: window.__bincov.app.state, phaser: !!window.__bincov.app.raid, worldVersion: h.session.expansion.raid.worldVersion, map: h.lastBatch.stamp.world.mapId,
+      return { state: window.__bincov.app.state, worldVersion: h.session.expansion.raid.worldVersion, map: h.lastBatch.stamp.world.mapId,
         art: c.art, mallArt: c.mallArt, occluders: h.view.stats.occluders, flights: [...h.view.mall.flights], roots: c.sampleRoots };
     });
-    assert.equal(s.state, 'run'); assert.equal(s.phaser, false); assert.equal(s.worldVersion, 'mall-v3'); assert.equal(s.map, 'mall-f1');
+    assert.equal(s.state, 'run'); assert.equal(s.worldVersion, 'mall-v3'); assert.equal(s.map, 'mall-f1');
     assert.equal(s.art, 'sol'); assert.equal(s.mallArt, 'sol'); assert.equal(s.roots, 1);
     assert.ok(s.occluders > 800, `dressed walls and furniture: ${s.occluders}`);
     assert.deepEqual(s.flights, ['S-N-up'], 'the S-N flight replaces its generic stair marker; other stairs keep theirs');
@@ -438,7 +438,7 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
   await step('M18 a layout-2 raid continues on layout 2 in the 2.5D view with the old table; the next deploy is layout 3 with the table centred on the sofa', async () => {
     const living = () => page.evaluate(() => {
       const h = window.__bincovSample.host, d = h.view.mall, key = h.lastBatch.stamp.world, pieces = n => d.props.filter(p => p.asset.includes(n));
-      return { world: [key.worldVersion, key.layoutRevision, key.mapId], saved: h.session.expansion.raid.worldVersion, phaser: !!window.__bincov.app.raid,
+      return { world: [key.worldVersion, key.layoutRevision, key.mapId], saved: h.session.expansion.raid.worldVersion,
         mallArt: window.__bincovSample.counts().mallArt, sofas: pieces('sofa').map(p => ({ x: p.x, z: p.z })),
         tables: pieces('coffee-table').map(p => ({ x: p.x, z: p.z, shadow: d.ground.feet.find(f => f.x === p.foot.x && f.y === p.foot.y) ?? null })) };
     });
@@ -453,7 +453,7 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
     await page.locator('[data-do="resume"]').click(); await frames(page, 3);
     const old = await onFloorTwo(); await shot(page, 'm18-f2-layout2-continued-1280.png');
     assert.deepEqual(old.world, ['mall-v2', 'mall-layout-2', 'mall-f2']); assert.equal(old.saved, 'mall-v2');
-    assert.equal(old.phaser, false, 'the 2.5D view, not the Phaser RaidScene'); assert.equal(old.mallArt, 'sol');
+    assert.equal(old.mallArt, 'sol');
     assert.deepEqual(old.tables.map(t => [t.x, t.z]), [[58 * 32, 21 * 32], [58 * 32, 35 * 32]], 'the layout-2 table, one row clear of the sofa');
     // Abandon it and deploy again from the same tab page: the new raid is layout 3.
     await page.keyboard.press('Escape'); await frames(page, 2);
@@ -464,7 +464,7 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
     await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
     await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 60000 });
     const next = await onFloorTwo(); await shot(page, 'm18-f2-layout3-deployed-1280.png');
-    assert.deepEqual(next.world, ['mall-v3', 'mall-layout-3', 'mall-f2']); assert.equal(next.saved, 'mall-v3'); assert.equal(next.phaser, false);
+    assert.deepEqual(next.world, ['mall-v3', 'mall-layout-3', 'mall-f2']); assert.equal(next.saved, 'mall-v3');
     assert.deepEqual(next.tables.map(t => [t.x, t.z]), [[1872, 20 * 32], [1872, 34 * 32]], 'the layout-3 table, right in front of the sofa');
     for (const t of next.tables) {
       const sofa = next.sofas.find(s => s.z === t.z - 32);
@@ -488,12 +488,15 @@ const savedWorld = page => page.evaluate(() => /"worldVersion":"([^"]+)"/.exec(l
 }
 {
   const { context, page } = await open('?test=1&entry=tabs');
-  await step('M10 the ordinary entry is unchanged: a mall raid is layout 1 on the Phaser RaidScene', async () => {
+  await step('M10 a test page without sample= deploys like the ordinary entry: layout 3 on the 2.5D view, no playtest marks', async () => {
     await action(page, 'enter').click(); await page.locator('#run-world').selectOption('mall'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-    await page.waitForFunction(() => !!window.__bincov.app.raid?.player?.active, null, { timeout: 60000 });
-    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample }));
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 60000 });
+    await page.waitForFunction(() => (document.querySelector('.coast-sample [data-where]')?.textContent ?? '').length > 0);
+    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample,
+      marks: window.__bincovSample.host.view.opts.sampleMarks, where: document.querySelector('.coast-sample [data-where]').textContent }));
     s.worldVersion = await savedWorld(page);
-    assert.deepEqual(s, { sample: 0, coastSample: false, worldVersion: 'mall-v1' });
+    assert.ok(s.where.startsWith('滨湾商场') && !s.where.includes('样板外'), s.where);
+    assert.deepEqual({ ...s, where: undefined }, { sample: 1, coastSample: true, marks: false, worldVersion: 'mall-v3', where: undefined });
     return s;
   });
   await context.close();

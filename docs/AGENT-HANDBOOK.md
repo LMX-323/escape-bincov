@@ -56,8 +56,8 @@ git rev-parse HEAD
 
 按任务补足实际入口，避免只凭命令名判断覆盖：
 
-- 行动输入先区分 Phaser 与 Pixi。`test:desktop-input`、移动输入旧套件主要走Phaser；`test:coast-animation`只跑样板动画子集，不能替Pixi输入签收。改样板宿主时验证实际入口及对应反例。
-- 交易/库存先区分院子、普通行动和样板。现有 `test:issue26-station` 对应院子库存，`test:issue26-inventory` 覆盖classic/village；新增规则还要验证正式服务，不能只测旧helper。
+- 行动只有 Pixi 宿主一种画面。`test:desktop-input`、`test:mobile`、`test:mobile-ux` 在 2.5D 宿主上用真实键鼠/触屏；`test:coast-animation` 只跑样板动画子集，不能替输入签收。改宿主时验证实际入口及对应反例。
+- 交易/库存先区分院子、旧页签和行动。现有 `test:issue26-station` 对应院子库存，`test:issue26-inventory` 覆盖行动内搜刮；新增规则还要验证正式服务，不能只测旧helper。
 - 持久字段需验证初始化、严格解码、capture/restore和备份的完整往返；涉及扩展、容器或商场时覆盖对应历史格式与布局，保留未知/损坏数据拒绝和原始备份字节。
 
 `test:play` 默认约10分钟真实计时；训练检查保留真实120秒要求，不能缩短后冒充原验收。长行动、F20堆、性能与历史诊断按对应风险执行，不因整理入口放宽条件。部分诊断的 `exit 0` 只表示采样完成，仍须读其签收结论；带固定基线/归档附件的工具不能当通用回归自动执行。

@@ -1,9 +1,9 @@
 /**
  * The 2.5D raid view is the default (no ?sample): the deploy panels offer 沿海街区 and 滨湾商场 only (the classic coast
  * area is closed), both run on the Pixi view without the playtest marks, a new mall raid uses layout 3, raids started
- * before the switch (classic coast, mall layout 1) still resume on the Phaser view, and a browser without WebGL gets a
+ * before the switch (classic coast, mall layout 1) resume on the same 2.5D view, and a browser without WebGL gets a
  * notice instead of the game while its save stays byte for byte. The ordinary entry has no test interface: checks read
- * the page and the stored session. `?test=1` (no sample) is the legacy fixture that still deploys the old raids.
+ * the page and the stored session.
  */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -74,25 +74,37 @@ async function yardWorlds() {
 }
 const pixiRunning = () => page.waitForFunction(() => document.documentElement.dataset.coastSample === 'run' && !!document.querySelector('.coast-sample canvas'));
 const where = async () => { await page.waitForFunction(() => (document.querySelector('.coast-sample [data-where]')?.textContent ?? '').length > 0); return page.locator('.coast-sample [data-where]').textContent(); };
+/** Abandon from the pause panel (a resumed raid opens on it; a running one opens it with Esc). */
 async function abandonPixi() {
-  await page.keyboard.press('Escape');
+  if (!await page.locator('.coast-sample [data-do="abandon"]').isVisible()) await page.keyboard.press('Escape');
   await page.locator('[data-do="abandon"]').click(); await page.locator('[data-do="abandon-yes"]').click();
   await page.waitForFunction(() => !document.querySelector('.coast-sample') && !!document.querySelector('#ui [data-action="return"]'), null, { timeout: 30000 });
 }
-/** A resumed Phaser raid opens on its pause overlay; abandon it from there. */
-async function abandonPhaser() {
-  await page.locator('#ui [data-action="abandon"]').click(); await page.locator('#ui [data-action="confirm-abandon"]').click();
-  await page.locator('#ui [data-action="return"]').waitFor({ timeout: 30000 });
+/**
+ * A raid started before the switch, left mid-raid: a classic coast checkpoint raid (test pages still deploy the closed
+ * area) or a mall layout 1 raid (no panel deploys layout 1 any more, so it is begun through the session's own call).
+ */
+async function startedBefore(world) {
+  if (world === 'coast') {
+    await yard('?test=1&sample=village');
+    const choice = await yardWorlds();
+    assert.deepEqual(choice.worlds, ['coast', 'buildings', 'mall'], 'test pages still offer the classic area');
+    await page.locator('#station-yard label.world:has(input[value="coast"])').click();
+    await page.locator('#station-yard #seed').fill('7');
+    await page.locator('#station-yard [data-act="deploy"]').click();
+    await pixiRunning();
+  } else {
+    await title('?test=1&entry=tabs'); await page.locator('[data-action="enter"]').click();
+    await page.waitForFunction(() => window.__bincov?.app.state === 'hideout');
+    assert.equal(await page.evaluate(() => window.__bincov.saveSession.beginRun(7, 'mall')), true, 'mall layout 1 raid begun');
+  }
 }
-/** Legacy fixture (?test=1 without sample): deploy an old-style raid on the Phaser view, then leave the page mid-raid. */
-async function legacyRaid(world) {
-  await yard('?test=1');
-  const choice = await yardWorlds();
-  assert.deepEqual(choice.worlds, ['coast', 'buildings', 'mall'], 'the legacy fixture still offers the classic area');
-  await page.locator(`#station-yard label.world:has(input[value="${world}"])`).click();
-  await page.locator('#station-yard #seed').fill('7');
-  await page.locator('#station-yard [data-act="deploy"]').click();
-  await page.waitForFunction(() => window.__bincov?.app.state === 'run' && !!window.__bincov.app.raid && !document.documentElement.dataset.coastSample, null, { timeout: 30000 });
+/** Continue from the ordinary title: the raid comes back on the 2.5D view, paused, with no test interface. */
+async function resumeOrdinary() {
+  await title(); await page.locator('[data-action="enter"]').click();
+  await pixiRunning();
+  await page.locator('.coast-sample [data-do="abandon"]').waitFor();
+  return { where: await where(), testInterface: await page.evaluate(() => !!window.__bincov || !!window.__bincovSample) };
 }
 
 await check('R1 yard: the deploy panel offers 沿海街区 (selected) and 滨湾商场; 沿海封锁区 is closed', async () => {
@@ -137,26 +149,27 @@ await check('R4 滨湾商场 deploys layout 3 on the 2.5D view', async () => {
   return { where: text };
 });
 
-await check('R5 a classic coast raid started before the switch resumes on the Phaser view and settles', async () => {
-  await legacyRaid('coast');
-  assert.ok((await stored()).includes('coast-v2'), 'legacy fixture deployed a classic raid');
-  await title(); await page.locator('[data-action="enter"]').click();
-  await page.locator('#ui [data-action="abandon"]').waitFor();
-  const r = await page.evaluate(() => ({ pixi: !!document.documentElement.dataset.coastSample || !!document.querySelector('.coast-sample'), phaser: !!document.querySelector('#game canvas') }));
-  assert.deepEqual(r, { pixi: false, phaser: true });
-  await shot('R5-classic-resume-phaser');
-  await abandonPhaser();
+await check('R5 a classic coast raid started before the area closed resumes on the 2.5D view and settles', async () => {
+  await startedBefore('coast');
+  assert.ok((await stored()).includes('coast-v2'), 'a classic checkpoint raid was deployed');
+  const r = await resumeOrdinary();
+  assert.deepEqual(r, { where: '沿海封锁区 · 室外 / 一楼', testInterface: false });
+  await page.waitForTimeout(1200); await shot('R5-classic-resume-2.5d');
+  await abandonPixi();
+  assert.ok((await page.locator('#ui').innerText()).includes('行动报告'), 'the result page follows');
+  assert.deepEqual(await stored(), [], 'the settled raid left no world in the save');
   return r;
 });
 
-await check('R6 a mall layout 1 raid started before the switch resumes on the Phaser view and settles', async () => {
-  await legacyRaid('mall');
+await check('R6 a mall layout 1 raid started before the switch resumes on the 2.5D view and settles', async () => {
+  await startedBefore('mall');
   assert.deepEqual(await stored(), ['mall-v1']);
-  await title(); await page.locator('[data-action="enter"]').click();
-  await page.locator('#ui [data-action="abandon"]').waitFor();
-  const r = await page.evaluate(() => ({ pixi: !!document.documentElement.dataset.coastSample || !!document.querySelector('.coast-sample'), phaser: !!document.querySelector('#game canvas') }));
-  assert.deepEqual(r, { pixi: false, phaser: true });
-  await abandonPhaser();
+  const r = await resumeOrdinary();
+  assert.ok(r.where.startsWith('滨湾商场 · 一层'), r.where);
+  assert.equal(r.testInterface, false);
+  await page.waitForTimeout(1200); await shot('R6-mall-v1-resume-2.5d');
+  await abandonPixi();
+  assert.deepEqual(await stored(), []);
   return r;
 });
 

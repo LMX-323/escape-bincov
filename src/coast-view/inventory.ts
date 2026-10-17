@@ -39,7 +39,7 @@ export interface InventoryHost {
   used?(): void;
 }
 
-interface Drag { uid: string; source: Source; startX: number; startY: number; grabX: number; grabY: number; rotated: boolean; active: boolean; ghost: HTMLElement | null; pointerId: number }
+interface Drag { uid: string; source: Source; startX: number; startY: number; x: number; y: number; grabX: number; grabY: number; rotated: boolean; active: boolean; ghost: HTMLElement | null; pointerId: number }
 
 export class InventoryPanel {
   mode: 'inventory' | 'loot' = 'inventory';
@@ -75,16 +75,24 @@ export class InventoryPanel {
     if (this.selected && !this.item()) { this.selected = null; this.placement = null; }
     const weight = this.weight(), limit = this.host.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
     const container = this.mode === 'loot' && box ? `<section class="cs-inv-src"><h3>${esc(this.containerName())} <span>${box.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${this.grid(box, 'container')}<p class="cs-help">留在这里的物资仅保留至本局结束。</p></section>` : '';
-    this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">世界仍在运行，请留意周围</span></div><button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
-      <div class="cs-inv">${container}
-        <section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
-        <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>
+    // docs/LOOTING.md: on a desktop your own gear is on the left and the source on the right; a phone keeps the source first.
+    const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
+        <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>`;
+    // The loot window keeps a danger line (health, time, condition, a blow), filled by the host each frame.
+    this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">世界仍在运行，请留意周围</span></div>${this.mode === 'loot' ? '<div class="cs-risk" data-risk></div>' : ''}<button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
+      ${this.placementBar()}<div class="cs-inv">${this.host.touch() ? container + own : own + container}
         <aside class="cs-details">${this.details()}</aside>
       </div>
       <footer class="cs-inv-foot" role="status">${esc(this.status || this.hint())}</footer>`;
   }
+  /** While placing: rotate the preview and cancel as buttons too (a phone has no R or Esc), as the original panel did. */
+  private placementBar() {
+    if (!this.placement || !this.selected) return '';
+    const i = this.item(), d = i && D.ITEMS[i.id];
+    return `<div class="cs-row cs-place-bar">${d && d.w !== d.h ? '<button type="button" data-do="inv-place-rotate">旋转预览</button>' : ''}<button type="button" data-do="inv-place-cancel">取消移动</button></div>`;
+  }
   private hint() {
-    if (this.placement) return `${this.placement.quantity ? `拆分 ${this.placement.quantity} 件：` : ''}点目标格放置 · R 旋转 · Esc 取消`;
+    if (this.placement) return `${this.placement.quantity ? `拆分 ${this.placement.quantity} 件：` : ''}点目标格放置${this.host.touch() ? '' : ' · R 旋转 · Esc 取消'}`;
     return this.host.touch() ? '选中物品 → 移动格位 → 点目标格' : '单击查看 · 双击快捷转移 · 拖放可交换物品（R 旋转）';
   }
   /** Display name of the open container, taken from the latest frame by the host. */
@@ -158,6 +166,8 @@ export class InventoryPanel {
     const sel = this.selected, i = this.item(); if (!sel || !i) return;
     const loadout = this.host.session.loadout!;
     switch (a) {
+      case 'inv-place-rotate': if (this.placement) { this.placement.rotated = !(this.placement.rotated ?? i.rotated); this.render(); } break;
+      case 'inv-place-cancel': this.placement = null; this.status = ''; this.render(); break;
       case 'inv-use': { const r = this.host.services.useSupply(i.id, sel.source as 'bag' | 'safe', i.uid); if (r === 'committed') this.host.used?.(); this.result(r); break; }
       case 'inv-equip': {
         const r = this.host.services.equipItem(i.uid);
@@ -226,10 +236,11 @@ export class InventoryPanel {
     if (!it) return;
     // A drag whose release never arrived must not leave its ghost behind on the sample root.
     this.cancelDrag();
-    this.drag = { uid: it.uid, source: src, startX: e.clientX, startY: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, rotated: !!it.rotated, active: false, ghost: null, pointerId: e.pointerId };
+    this.drag = { uid: it.uid, source: src, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, rotated: !!it.rotated, active: false, ghost: null, pointerId: e.pointerId };
   }
   pointerMove(e: PointerEvent) {
     const d = this.drag; if (!d || e.pointerId !== d.pointerId) return;
+    d.x = e.clientX; d.y = e.clientY;
     if (!d.active && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 5) return;
     if (!d.active) { d.active = true; this.lastClick = null; this.selected = { uid: d.uid, source: d.source }; this.ghost(); }
     this.moveGhost(e.clientX, e.clientY);
@@ -246,7 +257,8 @@ export class InventoryPanel {
   }
   /** R while dragging or placing toggles rotation; Esc cancels. Returns true when consumed. */
   key(k: string): boolean {
-    if (k === 'r' && this.drag?.active) { this.drag.rotated = !this.drag.rotated; [this.drag.grabX, this.drag.grabY] = [this.drag.grabY, this.drag.grabX]; this.ghost(); return true; }
+    // The new ghost and its drop preview follow the pointer at once, without waiting for the next move.
+    if (k === 'r' && this.drag?.active) { const d = this.drag; d.rotated = !d.rotated; [d.grabX, d.grabY] = [d.grabY, d.grabX]; this.ghost(); this.moveGhost(d.x, d.y); return true; }
     if (k === 'r' && this.placement && this.selected) { const i = this.item(); this.placement.rotated = !(this.placement.rotated ?? i?.rotated); this.render(); return true; }
     if (k === 'escape' && (this.drag || this.placement)) { this.cancelDrag(); this.placement = null; this.status = ''; this.render(); return true; }
     return false;

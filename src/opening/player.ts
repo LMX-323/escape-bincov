@@ -3,6 +3,7 @@
  * shadow root, its own clock. No WebGL, no Phaser scene, no save access. Everything it creates is released on exit.
  */
 import { app, audio } from '../app';
+import { titleScene } from '../screen';
 import css from './opening.css';
 import { TIMELINE, captionAt, shotAt, type Cue, type TimedCaption, type TimedShot } from './timeline';
 import { H, W, paint } from './render';
@@ -68,7 +69,7 @@ class Session {
     this.g = ctx;
     document.body.appendChild(this.root);
     this.frame?.setAttribute('inert', '');
-    app.game?.loop.sleep();
+    titleScene()?.sleep(true);
     this.els.pause.addEventListener('click', this.togglePause);
     this.els.skip.addEventListener('click', this.skip);
     addEventListener('keydown', this.key, true);
@@ -183,7 +184,7 @@ class Session {
     audio.setRoomTone(0);
     this.root.remove();
     if (!this.frameWasInert) this.frame?.removeAttribute('inert');
-    app.game?.loop.wake();
+    titleScene()?.sleep(false);
     delete (globalThis as { __bincovOpening?: unknown }).__bincovOpening;
     this.resolve();
   }

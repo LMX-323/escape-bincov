@@ -84,10 +84,10 @@ const roomPixels = (page, compare, leak = false) => page.evaluate(([r, compare, 
 
 if (!group) { // Desktop flow: one run through every wiring point, ending in a settlement
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
-  await step('W00 sample deploy mounts the Pixi host on the real Runtime; RaidScene never starts', async () => {
+  await step('W00 sample deploy mounts the Pixi host on the real Runtime', async () => {
     await deploy(page);
-    const s = await page.evaluate(() => ({ state: window.__bincov.app.state, raid: !!window.__bincov.app.raid, world: window.__bincovSample.host.lastBatch.stamp.world, roots: document.querySelectorAll('.coast-sample').length }));
-    assert.equal(s.state, 'run'); assert.equal(s.raid, false); assert.equal(s.world.worldVersion, 'coast-buildings-v1'); assert.equal(s.roots, 1);
+    const s = await page.evaluate(() => ({ state: window.__bincov.app.state, world: window.__bincovSample.host.lastBatch.stamp.world, roots: document.querySelectorAll('.coast-sample').length }));
+    assert.equal(s.state, 'run'); assert.equal(s.world.worldVersion, 'coast-buildings-v1'); assert.equal(s.roots, 1);
     return s;
   });
   await step('W01 holding the left mouse button fires once (press edge)', async () => {
@@ -1337,12 +1337,17 @@ if (!group) { // Entries without the test flag
   });
   await context.close();
   const plain = await open('?test=1&entry=tabs');
-  await step('W16 the ordinary entry is unchanged: residential raids still use the Phaser RaidScene', async () => {
+  await step('W16 a test page without sample= runs residential raids on the 2.5D view without the playtest marks', async () => {
     const page = plain.page;
     await action(page, 'enter').click(); await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-    await page.waitForFunction(() => !!window.__bincov.app.raid?.player?.active);
-    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample, canvases: document.querySelectorAll('canvas').length }));
-    assert.equal(s.sample, 0); assert.equal(s.coastSample, false);
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 60000 });
+    await page.waitForFunction(() => (document.querySelector('.coast-sample [data-where]')?.textContent ?? '').length > 0);
+    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample,
+      marks: window.__bincovSample.host.view.opts.sampleMarks, where: document.querySelector('.coast-sample [data-where]').textContent,
+      // The title's renderer stays parked off the page; the raid draws on the one shared renderer.
+      canvases: document.querySelectorAll('canvas').length }));
+    assert.equal(s.sample, 1); assert.equal(s.coastSample, true); assert.equal(s.marks, false); assert.equal(s.canvases, 1);
+    assert.ok(s.where.startsWith('沿海街区') && !s.where.includes('样板外'), s.where);
     return s;
   });
   await plain.context.close();

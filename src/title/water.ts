@@ -1,17 +1,25 @@
-import Phaser from 'phaser';
+import { CanvasSource, Container, Sprite, Texture } from 'pixi.js';
 import { LAYERS, ANCHORS } from './layout';
 import { decorRandom, wave } from './motion';
+import { titleImage } from './assets';
+
+/** Live water canvases (checks assert re-entering the menu leaves none behind). */
+let planes = 0;
+export const liveWaterPlanes = () => planes;
+
 /** Pixel water is rendered between the harbour painting and its near-pier occluders. */
-export function mountWater(scene: Phaser.Scene, group: Phaser.GameObjects.Container) {
-    // Graphics replays every rectangle command on EVERY display frame, even when
-    // draw() hasn't changed the water. Rasterize only the two small water regions
-    // at their animation cadence; normal rendering then submits two image quads.
-    const plane = (key: string, x: number, y: number, w: number, h: number) => {
-        const texture = scene.textures.createCanvas(key, w, h)!;
-        texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-        const context = texture.getContext();
+export function mountWater(group: Container) {
+    // Rasterize only the two small water regions at their animation cadence into canvases; normal rendering then
+    // submits two image quads, and a canvas uploads only when a new water frame was drawn.
+    const plane = (x: number, y: number, w: number, h: number) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const context = canvas.getContext('2d')!;
         context.imageSmoothingEnabled = false;
-        const image = scene.add.image(x, y, key).setOrigin(0);
+        const source = new CanvasSource({ resource: canvas, scaleMode: 'linear' }), texture = new Texture({ source });
+        const image = new Sprite(texture);
+        image.position.set(x, y);
+        planes++;
         return {
             image,
             clear() { context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, w, h); context.translate(-x, -y); },
@@ -25,15 +33,16 @@ export function mountWater(scene: Phaser.Scene, group: Phaser.GameObjects.Contai
                 context.globalAlpha = alpha;
                 context.drawImage(source, 0, row, source.width, 2, px, py, source.width, 2);
             },
-            refresh() { texture.refresh(); },
-            destroy() { image.destroy(); scene.textures.remove(key); },
+            refresh() { source.update(); },
+            destroy() { image.destroy(); texture.destroy(true); planes--; },
         };
     };
-    const back = plane('title-water-back-live', 280, 180, 664, 230);
-    const front = plane('title-water-front-live', LAYERS.boat.x - 8, LAYERS.boat.y + 80, LAYERS.boat.w + 16, LAYERS.boat.h - 60);
-    const shade = scene.add.rectangle(-4, ANCHORS.horizon, 968, 250, 0x102a39, .15).setOrigin(0);
-    group.add([shade, back.image]);
-    const source = scene.textures.get(LAYERS.boat.key).getSourceImage() as HTMLImageElement;
+    const back = plane(280, 180, 664, 230);
+    const front = plane(LAYERS.boat.x - 8, LAYERS.boat.y + 80, LAYERS.boat.w + 16, LAYERS.boat.h - 60);
+    const shade = new Sprite(Texture.WHITE);
+    shade.tint = 0x102a39; shade.alpha = .15; shade.position.set(-4, ANCHORS.horizon); shade.width = 968; shade.height = 250;
+    group.addChild(shade, back.image);
+    const source = titleImage('boat')!;
     // Hull sampling works in logical scene pixels; grid layers store 2 texels per pixel.
     const canvas = document.createElement('canvas');
     canvas.width = LAYERS.boat.w;
@@ -127,5 +136,5 @@ export function mountWater(scene: Phaser.Scene, group: Phaser.GameObjects.Contai
         front.refresh();
     }
     draw(0, 0);
-    return { front: front.image, draw, get frame() { return last; }, destroy() { back.destroy(); front.destroy(); } };
+    return { front: front.image, draw, get frame() { return last; }, destroy() { shade.destroy(); back.destroy(); front.destroy(); } };
 }

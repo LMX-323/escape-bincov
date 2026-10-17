@@ -51,6 +51,8 @@ const REASONS: Record<string, string> = {
   'stale-target': '目标已失效，请重新靠近。', 'stale-or-blocked': '现在无法交互。', 'out-of-range': '离目标过远。',
   rejected: '操作未完成，请检查空间与条件。', blocked: '现在无法操作。', 'save-failed': '存档保存失败，状态已恢复到操作前。',
 };
+/** A storage error arrives as the browser's own (translated) message; any other unknown code gets a plain sentence. */
+const reasonText = (reason: string) => REASONS[reason] ?? (/[\u4e00-\u9fff]/.test(reason) ? reason : '操作未完成。');
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const name = (id: string) => D.ITEMS[id]?.name ?? id;
 type Outro = 'died' | 'extract' | 'timeout' | 'abandon' | 'failed';
@@ -113,7 +115,7 @@ const HTML = `
   <div data-hitpop class="cs-hitpop" aria-hidden="true"><b><i></i><i></i><i></i><i></i></b></div>
   <div data-fade class="cs-fade"></div>
   <div data-curtain class="cs-curtain" aria-live="assertive"><b data-curtain-text></b></div>
-  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button></div>
+  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button><button type="button" data-pause aria-label="暂停">暂停</button></div>
 </div>
 <section class="cs-panel" data-panel hidden role="dialog" aria-modal="true"></section>`;
 
@@ -278,7 +280,7 @@ export class CoastSampleHost {
       this.app.ticker.add(tick); lifecycle.tickers++;
       this.scope.add(() => { this.app.ticker.remove(tick); lifecycle.tickers--; });
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
-      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; });
+      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
@@ -362,7 +364,7 @@ export class CoastSampleHost {
       if (at !== undefined && performance.now() - at < 500 && a && shown(a)) this.mark(e.uid, { x: a.x, y: a.y - AIM_H }, true);
     } else if (e.type === 'hurt' && e.uid === 'player') {
       // A blow of any size pulses the red edge; continuous causes add up into the drain readout instead (R6-L2).
-      if (e.cause === 'blow') this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40);
+      if (e.cause === 'blow') { this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40); if (this.panel === 'loot') this.lootHitT = 1.2; }
       else this.drains[e.cause].acc += e.damage;
     }
     else if (e.type === 'shot' && e.shooter !== 'player') {
@@ -449,32 +451,41 @@ export class CoastSampleHost {
       if (['tab', ' ', 'escape'].includes(k)) e.preventDefault();
       if (e.repeat) return;
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.key(k)) return;
-      if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') this.resume(); else if (!this.panel) this.pause(); return; }
+      if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') { if (this.guideOpen) this.showPause(); else this.resume(); } else if (!this.panel) this.pause(); return; }
       if (k === 'tab') { if (this.blocking()) this.closePanel(true); else if (!this.panel) this.openInventory(); return; }
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
-      if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel) this.openMap(); return; }
+      if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
       this.input.key(e.key, true);
     });
     s.on(window, 'keyup', e => this.input.key(e.key, false));
     s.on(canvas, 'contextmenu', e => e.preventDefault());
+    // A touch screen with a mouse (or a tablet): a finger switches to the touch controls, the mouse or wheel back, except
+    // in the phone layout, which always plays by touch.
+    const mouseMode = () => { if (this.input.touch && !document.documentElement.classList.contains('mobile')) this.input.touch = false; };
     s.on(canvas, 'pointermove', e => {
-      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.pointer.inside = true; }
+      if (e.pointerType === 'mouse') { mouseMode(); this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.pointer.inside = true; }
       else this.touchMove(e);
     });
+    let pointerType = '';
     s.on(canvas, 'pointerdown', e => {
-      if (e.pointerType === 'mouse') { this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; if (!this.panel) this.input.mouse(e.button, true); }
+      pointerType = e.pointerType;
+      if (e.pointerType === 'mouse') { mouseMode(); this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; }
       else { this.input.touch = true; this.touchStart(e); }
       try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or released pointer */ }
     });
+    // Mouse buttons come from mouse events: a second button pressed while one is held (right-button aim, then fire)
+    // raises mousedown, while pointer events report it only as a move. Mouse events a touch synthesises are ignored.
+    s.on(canvas, 'mousedown', e => { if (pointerType !== 'mouse' || this.panel) return; this.input.pointer.x = e.clientX; this.input.pointer.y = e.clientY; this.input.mouse(e.button, true); });
+    s.on(window, 'mouseup', e => this.input.mouse(e.button, false));
     s.on(window, 'pointermove', e => { if (this.panel === 'inventory' || this.panel === 'loot') this.inv.pointerMove(e); });
     s.on(window, 'pointerup', e => {
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.pointerUp(e)) this.suppressClick = true;
-      if (e.pointerType === 'mouse') this.input.mouse(e.button, false); else { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); }
+      if (e.pointerType !== 'mouse') { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); }
     });
     s.on(window, 'pointercancel', e => { if (e.pointerType === 'mouse') this.input.mouse(e.button, false); else { this.input.release(e.pointerId); this.sticks.delete(e.pointerId); } });
     s.on(canvas, 'pointerleave', e => { if (e.pointerType === 'mouse') this.input.pointer.inside = false; });
-    s.on(canvas, 'wheel', e => { e.preventDefault(); this.cycleChoice(Math.sign(e.deltaY)); }, { passive: false });
+    s.on(canvas, 'wheel', e => { e.preventDefault(); mouseMode(); this.cycleChoice(Math.sign(e.deltaY)); }, { passive: false });
     s.on(window, 'blur', () => this.pause('blur'));
     s.on(window, 'pagehide', () => this.pause('blur'));
     s.on(document, 'visibilitychange', () => { if (document.hidden) this.pause('blur'); });
@@ -496,7 +507,12 @@ export class CoastSampleHost {
     // Touch has no 1 / 2 keys: one button switches between the primary weapon and the knife, labelled with the other one.
     s.on(this.q('[data-swap]'), 'pointerdown', e => { e.preventDefault(); this.input.press(this.weaponShown === 'knife' ? 'primary' : 'knife'); });
     s.on(this.q('[data-bag]'), 'click', () => { if (!this.panel) this.openInventory(); else if (this.panel === 'inventory') this.closePanel(true); });
-    s.on(this.q('[data-choices]'), 'click', e => { const id = (e.target as HTMLElement).closest('[data-id]')?.getAttribute('data-id'); if (id) this.input.select(id); });
+    s.on(this.q('[data-choices]'), 'click', e => {
+      const id = (e.target as HTMLElement).closest('[data-id]')?.getAttribute('data-id'), w = this.last?.stamp.world; if (!id || !w || this.panel) return;
+      // A tap names the exact source to open, as the action button cannot; a click (mouse) selects it for E.
+      if (this.input.touch) this.services.activate({ runId: w.runId, mapId: w.mapId, kind: 'container', id }); else this.input.select(id);
+    });
+    s.on(this.q('[data-pause]'), 'click', () => { if (!this.panel) this.pause(); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
     s.on(this.q('[data-quests]'), 'toggle', () => { this.questsOpen = (this.q<HTMLDetailsElement>('[data-quests]')).open; });
     // A drop that re-renders the grid removes the press target, so the browser may send no trailing click: every new press clears the suppression.
@@ -547,23 +563,51 @@ export class CoastSampleHost {
     this.runtime.pause(reason);
     this.showPause(reason);
   }
+  /** A phone held upright (or a view too short to play): the raid waits for landscape. Phone layout only, as the original:
+   *  a touchscreen laptop in a tall window plays on. */
+  private upright() { return document.documentElement.classList.contains('mobile') && (innerWidth < innerHeight || innerHeight < 280); }
+  private guideOpen = false;
   private showPause(reason?: string) {
+    this.guideOpen = false;
     if (this.contextLost) reason = 'context-lost';
     const conflict = this.session.conflict, saveError = !this.session.storageOK || this.lastRejected === 'checkpoint' || this.lastRejected === 'save-failed';
-    const title = conflict ? '存档已被其他窗口更新' : saveError ? '存档保存失败' : reason === 'context-lost' ? '画面中断' : '已暂停';
+    const rotate = !conflict && !saveError && !this.contextLost && this.upright();
+    this.pausedUpright = rotate;
+    const title = conflict ? '存档已被其他窗口更新' : saveError ? '存档保存失败' : reason === 'context-lost' ? '画面中断' : rotate ? '横过来，准备出发。' : '已暂停';
     const text = conflict ? '本页已停止操作。请导出需要保留的进度，再刷新本页。'
       : saveError ? '最近的操作或检查点没有写入，世界已保持在保存前的状态。检查浏览器存储后重试，或先导出备份。'
-      : reason === 'context-lost' ? '图形上下文丢失，行动已暂停。画面恢复后可继续，也可导出备份。' : '行动时间已停止。';
+      : reason === 'context-lost' ? '图形上下文丢失，行动已暂停。画面恢复后可继续，也可导出备份。'
+      : rotate ? '横屏能看清街道，也能同时移动和瞄准。转回横屏后，点「继续」回到行动。' : '行动时间已停止。';
     const buttons = conflict ? `<button type="button" data-do="backup">导出备份</button>`
       : saveError ? `<button type="button" data-do="retry-save">重试保存</button><button type="button" data-do="backup">导出备份</button>`
-      : `<button type="button" data-do="resume" ${this.contextLost ? 'disabled' : ''}>继续</button>${this.contextLost ? '<button type="button" data-do="backup">导出备份</button>' : ''}<button type="button" data-do="abandon">放弃行动</button>`;
+      : `<button type="button" data-do="resume" ${this.contextLost || rotate ? 'disabled' : ''}>继续</button><button type="button" data-do="guide">行动指南</button><button type="button" data-do="backup">导出备份</button><button type="button" data-do="abandon">放弃行动</button>`;
     this.input.suppressHeld(); this.sticks.clear();
     // Same volume setting as the original pause overlay: one saved value for the whole game.
     const volume = conflict || saveError ? '' : `<label class="cs-volume">游戏音量 <span data-volume-label>${Math.round(this.session.save.settings.volume * 100)}%</span><input data-volume aria-label="游戏音量" type="range" min="0" max="1" step="0.05" value="${this.session.save.settings.volume}"></label>`;
     this.setPanel('pause', `<h2>${title}</h2><p>${text}</p>${volume}<div class="cs-row">${buttons}</div>`, title);
   }
   /** Resume only asks the Runtime; syncPanels closes the panel when the published phase is running again. */
-  private resume() { if (this.contextLost) return; this.input.suppressHeld(); this.runtime.resume(); }
+  private resume() { if (this.contextLost || this.upright()) return; this.input.suppressHeld(); this.runtime.resume(); }
+  private pausedUpright = false;
+  /** Turning a phone upright pauses with the rotate notice; turning it back offers 继续 again. */
+  private orientation() {
+    if (!this.mounted || this.exiting || this.panel === 'ending') return;
+    // Typing (the split count) brings up an on-screen keyboard that shrinks the view; that is not a turn, as the original.
+    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return;
+    // Held upright the raid waits for landscape: the touch buttons (too wide to fit, unusable while paused) step aside.
+    this.root.classList.toggle('upright', this.upright());
+    if (this.upright()) { if (this.panel !== 'pause') this.pause(); else if (!this.pausedUpright) this.showPause(); }
+    else if (this.panel === 'pause' && this.pausedUpright) this.showPause();
+  }
+  /** Controls for this device, the guide the original pause offered. */
+  private showGuide() {
+    const keys: [string, string][] = [['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
+    const body = this.input.touch
+      ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
+      : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;
+    this.guideOpen = true;
+    this.setPanel('pause', `<h2>行动指南</h2>${body}<p class="cs-sub">每局限时 10 分钟。死亡、超时或放弃都按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。</p><div class="cs-row"><button type="button" data-do="pause-back">返回</button></div>`, '行动指南');
+  }
   private openBlocking(kind: 'inventory' | 'map' | 'reading') {
     this.input.suppressHeld(); this.sticks.clear();
     this.runtime.setBlocked(true); this.blockPending = 3;
@@ -576,7 +620,7 @@ export class CoastSampleHost {
   }
   private openLoot() {
     this.input.suppressHeld(); this.sticks.clear();
-    this.panel = 'loot';
+    this.panel = 'loot'; this.lootHitT = 0; // a blow from an earlier loot window is over
     const p = this.q('[data-panel]'); p.className = 'cs-panel cs-inv-panel'; p.hidden = false; p.setAttribute('aria-label', '搜刮物资');
     const ref = this.lootRef(); this.inv.containerLabel = this.last?.frame.containers.find(c => c.id === ref?.id)?.name ?? '物资箱';
     this.inv.open('loot');
@@ -619,9 +663,12 @@ export class CoastSampleHost {
     const d = b.dataset;
     switch (d.do) {
       case 'resume': this.resume(); break;
+      case 'guide': this.showGuide(); break;
+      case 'pause-back': this.showPause(); break;
       case 'abandon': this.setPanel('pause', '<h2>放弃行动？</h2><p>放弃按撤离失败结算：背包物资和主武器丢失，安全箱保留。</p><div class="cs-row"><button type="button" data-do="abandon-yes">确认放弃</button><button type="button" data-do="resume">继续行动</button></div>', '放弃行动'); break;
       case 'abandon-yes': this.services.abandon(); break;
-      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); this.resume(); } else this.toast('仍然无法保存。', true); break;
+      // Saved while held upright: the panel turns into the rotate notice, and 继续 comes back once the phone is landscape.
+      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); if (this.upright()) this.showPause(); else this.resume(); } else this.toast('仍然无法保存。', true); break;
       case 'backup': this.exportBackup(); break;
       case 'retry-settlement': this.services.retrySettlement(); this.refreshEnding(); break;
       case 'close': this.closePanel(true); break;
@@ -660,8 +707,11 @@ export class CoastSampleHost {
       this.scope.timeout(() => this.onExit({ kind: 'settled' }), hold);
       return;
     }
-    text.textContent = s.retryable ? '结算还没有写入存档。结算记录已保留，可以重试或先导出备份。' : '等待结算保存';
-    if (s.retryable && !row.childElementCount) row.innerHTML = '<button type="button" data-do="retry-settlement">重试保存</button><button type="button" data-do="backup">导出备份</button>';
+    text.textContent = s.retryable ? '结算还没有写入存档。结算记录已保留，可以重试或先导出备份。'
+      : this.session.conflict ? '另一个窗口已更新存档，本页不能再写入。结算记录已保留，请先导出备份。' : '等待结算保存';
+    // Another window's newer save must not be overwritten: no retry then, but the pending result stays exportable.
+    const want = `${s.retryable ? '<button type="button" data-do="retry-settlement">重试保存</button>' : ''}${s.retryable || this.session.conflict ? '<button type="button" data-do="backup">导出备份</button>' : ''}`;
+    if (row.dataset.buttons !== want) { row.dataset.buttons = want; row.innerHTML = want; }
   }
 
   // --- HUD ---
@@ -711,7 +761,23 @@ export class CoastSampleHost {
     if (this.toastLeft > 0) { this.toastLeft -= dt; if (this.toastLeft <= 0) q('[data-toast]').classList.remove('on'); }
     if (this.radioLeft > 0) { this.radioLeft -= dt; if (this.radioLeft <= 0) q('[data-radio]').hidden = true; }
     if (this.panel === 'loot' && lootChanged) this.inv.render();
+    if (this.panel === 'loot') this.lootRisk(f.hud, dt);
     this.feedbackFrame(b, dt);
+  }
+  /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
+  private lootHitT = 0;
+  /**
+   * The loot panel's danger line, as the original loot window had: health, time left, bleeding or pollution, and a
+   * moment's notice of a blow. On a phone the docked panel covers the HUD, so the line is the only place to see them.
+   */
+  private lootRisk(h: PublishedView['frame']['hud'], dt: number) {
+    const el = this.q('[data-panel] [data-risk]'); if (!el) return;
+    this.lootHitT = Math.max(0, this.lootHitT - dt);
+    const t = Math.ceil(h.timeLeft), state = [h.bleeding ? '流血：持续失去生命' : '', h.pollution > 0 ? `污染 ${Math.round(h.pollution)}%` : ''].filter(Boolean).join(' · ') || '状态正常 · 世界仍在运行';
+    const text = `${Math.ceil(h.hp)}|${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}|${state}|${this.lootHitT > 0 ? '正在遭受攻击！' : ''}`;
+    if (el.dataset.text === text) return;
+    el.dataset.text = text; const [hp, time, cond, hit] = text.split('|');
+    el.innerHTML = `<span>生命 <b>${hp}</b></span><span>封锁倒计时 <b>${time}</b></span><small>${esc(cond)}</small><strong role="status" aria-live="polite">${hit}</strong>`;
   }
   /** Per-frame feedback: hurt edge (a pulse per blow, a slow throb at low health), hit marker, reticle kick, exit pointer. */
   private feedbackFrame(b: PublishedView, dt: number) {
@@ -733,13 +799,19 @@ export class CoastSampleHost {
     this.threats.forEach((t, i) => {
       const el = marks[i] as HTMLElement; t.left = Math.max(0, t.left - dt);
       if (t.left <= 0 || this.panel) { el.style.opacity = '0'; return; }
-      const W = innerWidth, H = innerHeight, c = this.view.worldToClient({ x: f.player.x, y: f.player.y - AIM_H }), at = this.view.worldToClient(t);
-      const dx = at.x - c.x, dy = at.y - c.y, k = Math.min(dx ? ((dx > 0 ? W - 34 : 34) - c.x) / dx : Infinity, dy ? ((dy > 0 ? H - 34 : 34) - c.y) / dy : Infinity);
+      const W = innerWidth, H = innerHeight, s = this.safe, c = this.view.worldToClient({ x: f.player.x, y: f.player.y - AIM_H }), at = this.view.worldToClient(t);
+      const dx = at.x - c.x, dy = at.y - c.y, k = Math.min(dx ? ((dx > 0 ? W - s.r - 34 : s.l + 34) - c.x) / dx : Infinity, dy ? ((dy > 0 ? H - s.b - 34 : s.t + 34) - c.y) / dy : Infinity);
       el.style.opacity = Math.min(1, t.left / .5).toFixed(2);
       el.style.transform = `translate(${Math.round(c.x + dx * k)}px, ${Math.round(c.y + dy * k)}px) rotate(${Math.atan2(dy, dx)}rad)`;
     });
   }
   private ptrInset: { l: number; r: number; t: number; b: number } | null = null;
+  /** The phone's safe-area insets (the HUD box inside the viewport), so edge arrows stay clear of a notch. */
+  private safe = { l: 0, t: 0, r: 0, b: 0 };
+  private measureSafe() {
+    const r = this.q('.cs-hud').getBoundingClientRect();
+    this.safe = { l: r.left, t: r.top, r: Math.max(0, innerWidth - r.right), b: Math.max(0, innerHeight - r.bottom) };
+  }
   /**
    * The exit chosen on the map: a marker over it when it is on screen, otherwise an arrow on the screen edge pointing
    * at it with its straight-line distance in tiles. Exits are the Runtime's visible exits; nothing else is pointed at.
@@ -755,7 +827,7 @@ export class CoastSampleHost {
       const top = Math.max(...['.cs-status', '.cs-info', '.cs-clock'].map(c => this.q(c).getBoundingClientRect().bottom));
       const low = Math.min(...['.cs-arms', this.input.touch ? '.cs-touch' : '.cs-keys'].map(c => { const r = this.q(c).getBoundingClientRect(); return r.height ? r.top : H; }));
       // Room for the label: above the marker on screen (32 px), below the arrow on the edge (about 34 px).
-      this.ptrInset = { l: 28, r: 28, t: Math.min(H / 2 - 40, top + 40), b: Math.min(H / 2 - 40, H - low + 44) };
+      this.ptrInset = { l: this.safe.l + 28, r: this.safe.r + 28, t: Math.min(H / 2 - 40, top + 40), b: Math.min(H / 2 - 40, H - low + 44) };
     }
     const inset = this.ptrInset;
     // The exit's ring in view: a marker over it when the marker fits between the HUD cards, otherwise nothing (the ring
@@ -777,11 +849,13 @@ export class CoastSampleHost {
   }
   /** Lower-rate HUD: status, carried weight, exit bearing and quests (the original refreshes these every 0.1 s). */
   private slowHud(b: PublishedView) {
+    this.placeRadio(); // the task card may have opened or the screen turned since the line came up
     const h = b.frame.hud, l = this.session.loadout, body = this.session.expansion?.body;
     const status = [h.bleeding ? '流血' : '', h.pollution > 10 ? `污染 ${Math.round(h.pollution)}%` : '',
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
     let weight = '';
-    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)} kg`; }
+    // A no-break space keeps the number and its unit together when the line wraps, as the original weight readout did.
+    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)}\u00a0kg`; }
     this.q('[data-state]').textContent = `${status}　${weight}`;
     // Short screens hide the routine body line; a bleed or pollution warning keeps it.
     this.q('[data-state]').classList.toggle('calm', !h.bleeding && h.pollution <= 10);
@@ -814,7 +888,7 @@ export class CoastSampleHost {
   }
   private prompt(t: Interaction | null, py: number) {
     const el = this.q('[data-prompt]'), list = this.q('[data-choices]'), act = this.q('[data-act]');
-    if (!t) { el.hidden = true; list.hidden = true; act.textContent = '交互'; return; }
+    if (!t) { el.hidden = true; list.hidden = true; this.choicesHtml = ''; act.textContent = '交互'; act.setAttribute('aria-label', '交互'); return; }
     const hold = t.hold && t.hold.progress > 0 ? `　${Math.min(t.hold.progress, t.hold.required).toFixed(1)} / ${t.hold.required.toFixed(1)} 秒` : '';
     el.innerHTML = (this.input.touch ? '' : '<kbd>E</kbd>') + esc(t.kind === 'exit' ? `${t.label} · 站稳按住 3 秒撤离` : t.label) + hold;
     el.hidden = false;
@@ -825,16 +899,21 @@ export class CoastSampleHost {
     let px = Math.min(innerWidth - half - 8, Math.max(half + 8, p.x));
     if (!above && hitsStatus(px, p.y)) px = Math.min(innerWidth - half - 8, status.right + half + 8);
     el.style.transform = `translate(${Math.round(px)}px, ${Math.round(p.y)}px) translate(-50%, ${above ? -100 : 0}%)`;
-    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' ? t.label : t.kind === 'entry' ? '进入' : t.kind === 'note' ? '阅读' : '交互';
+    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' || t.kind === 'entry' ? t.label.split(' · ')[0] : t.kind === 'note' ? '阅读' : '交互';
+    act.setAttribute('aria-label', t.kind === 'exit' ? `${t.label} · 按住撤离` : t.label);
     if (t.choices.length > 1) {
       list.hidden = false;
-      list.innerHTML = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称选择' : '滚轮切换'}</li>`;
+      const html = t.choices.map(c => `<li data-id="${c.id}"${c.selected ? ' aria-current="true"' : ''}>${c.selected ? '▶ ' : ''}${esc(c.name)}${c.empty ? ' · 已搜空' : ''}</li>`).join('') + `<li class="cs-hint">${this.input.touch ? '点名称打开' : '滚轮切换'}</li>`;
+      // Rewritten only when it changes: a row replaced between a finger's press and release loses the tap.
+      if (html !== this.choicesHtml) { this.choicesHtml = html; list.innerHTML = html; list.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' }); }
       const side = this.view.worldToClient({ x: t.at.x + 26, y: t.at.y - AIM_H }), w = list.offsetWidth || 160;
       const lx = side.x + w + 8 > innerWidth ? this.view.worldToClient({ x: t.at.x - 26, y: 0 }).x - w : side.x;
       list.style.transform = `translate(${Math.round(Math.max(8, lx))}px, ${Math.round(side.y)}px) translate(0, -50%)`;
-    } else list.hidden = true;
+    } else { list.hidden = true; this.choicesHtml = ''; }
   }
+  private choicesHtml = '';
   private onEvent(e: StampedEvent) {
+    if (e.type === 'layer') { this.input.suppressHeld(); this.sticks.clear(); return; }
     if (e.type === 'notice') {
       // A note's text arrives as "title：text" after the player reads it: show it in the reading panel.
       const title = this.readingFor && this.noteTitles.has(this.readingFor) && e.text.startsWith(`${this.readingFor}：`) ? this.readingFor : null;
@@ -843,14 +922,40 @@ export class CoastSampleHost {
     }
     else if (e.type === 'rejected') {
       this.lastRejected = e.action === 'checkpoint' ? 'checkpoint' : e.reason === 'save-failed' ? 'save-failed' : e.action;
-      if (e.action !== 'select-target') this.toast(e.action === 'equip' && e.reason === 'rejected'
-        ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : REASONS[e.reason] ?? e.reason, true);
+      if (e.action === 'select-target') return;
+      if (e.reason === 'unreachable-or-rejected') {
+        // A floor change or door toggle the Runtime refused: a crowded landing, or someone standing in an open doorway.
+        const t = this.last?.frame.interaction;
+        if (e.action.startsWith('entry:')) this.toast('入口被挡住，暂时无法进入。', true);
+        else if (e.action === 'door' && t?.kind === 'door' && this.last?.frame.doors[t.ref.id]) this.toast('门口有人，暂时不能关门。', true);
+        return;
+      }
+      this.toast(e.action === 'equip' && e.reason === 'rejected' ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : reasonText(e.reason), true);
     }
     else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
-  private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); }
-  toast(text: string, bad = false) { const t = this.q('[data-toast]'); if (!t) return; t.textContent = text; t.classList.add('on'); t.classList.toggle('bad', bad); this.toastLeft = 2.8; }
+  private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); this.placeRadio(); }
+  /**
+   * The radio line sits between the status card and the task card, centred on the screen when there is room: on a short
+   * phone an open task list reaches toward the middle. With no room between them it drops below both cards.
+   */
+  private placeRadio() {
+    const radio = this.q('[data-radio]'); if (radio.hidden) return;
+    const hud = this.q('.cs-hud').getBoundingClientRect(), status = this.q('.cs-status').getBoundingClientRect(), info = this.q('.cs-info').getBoundingClientRect();
+    const cx = (hud.left + hud.right) / 2, l = Math.max(status.right + 8, cx - 280), r = Math.min(info.left - 8, cx + 280), below = r - l < 140;
+    radio.style.setProperty('--radio-l', `${Math.round(below ? 12 : l - hud.left)}px`);
+    radio.style.setProperty('--radio-r', `${Math.round(below ? 12 : hud.right - r)}px`);
+    if (below) radio.style.setProperty('--radio-t', `${Math.round(Math.max(status.bottom, info.bottom) + 6 - hud.top)}px`); else radio.style.removeProperty('--radio-t');
+  }
+  /** One line at a time; the same good news again while it shows counts up (获得 密封绷带 ×1 × 2), as the original toasts did. */
+  toast(text: string, bad = false) {
+    const t = this.q('[data-toast]'); if (!t) return;
+    this.toastCount = !bad && text === this.toastText && this.toastLeft > 0 ? this.toastCount + 1 : 1; this.toastText = bad ? '' : text;
+    t.textContent = this.toastCount > 1 ? `${text} × ${this.toastCount}` : text; t.classList.add('on'); t.classList.toggle('bad', bad); this.toastLeft = 2.8;
+  }
+  private toastText = '';
+  private toastCount = 1;
   private fade() { const f = this.q('[data-fade]'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
 
   /** Write a checkpoint now (beforeunload); the Runtime ignores it when locked or ending. */

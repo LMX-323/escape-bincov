@@ -1,11 +1,12 @@
 # 当前任务入口
 
-最近核对：2026-10-15，已接受 main `eb512ea`（已合入 #63）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-16，main `1764874`（已合入 #56）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
 | CI 八组均衡与执行证据 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) · [PR #62](https://github.com/xuys2025/escape-bincov/pull/62) | 已授权合并；同步 eb512ea 后以准确 head 全量 CI 为准，后续性能验收与自然运行观察仍归 #61 |
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [当前实施摘要](tasks/quality-entropy.md) | `agent/quality-entropy`；导航/契约与共享投影，后续阶段继续原总单 |
+| 2.5D 收尾：去掉 Phaser | [PR #64](https://github.com/xuys2025/escape-bincov/pull/64) · [收尾说明](2-5d-closeout/README.md) | `feat/2-5d-closeout`；存档里的旧行动也在 2.5D 上打完，标题改 Pixi，旧测试迁到 2.5D；剩余美术（Sol）和 Runtime 缺口（Astra）见说明的“剩余工作” |
 | 行动默认 2.5D | [PR #57](https://github.com/xuys2025/escape-bincov/pull/57) | 已合入 a2d716d；后续输入/旧行动问题继续相关任务，保留该版本依据 |
 | 开场制作与分镜 | [PR #56](https://github.com/xuys2025/escape-bincov/pull/56) · [PR #41](https://github.com/xuys2025/escape-bincov/pull/41) | 实现、素材与原方案继续原 PR |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | 行动规则收敛前核对在途设计 |
@@ -16,6 +17,18 @@
 
 <details>
 <summary>历史交接与旧任务快照（按需查证，保留原文）</summary>
+
+## 2026-10-16 · 2.5D 收尾：旧行动在 2.5D 上打完，去掉 Phaser（`feat/2-5d-closeout`）
+
+维护者要求对 2.5D 化收尾：能做的做完，需要 Astra（逻辑）和 Sol（美术）的列出来。起点 main `1764874`。
+
+- 存档里的旧行动（已关闭的沿海封锁区、更早的 `coast-v1`、商场一版）从标题页继续后也在 2.5D 上打完。
+- 去掉 Phaser：标题页改由 PixiJS 绘制（画面与旧版逐像素对比几乎一致），页签和结算背景改为普通画布；旧局内画面、旧触屏按钮、旧走动据点和只服务它们的界面、样式删除。单文件 6.87 → 5.35 MB。
+- 2.5D 画面补上旧画面有、新画面缺的提示和按钮（楼梯被堵、门口有人、手机暂停、竖屏暂停、行动指南、导出备份、取消移动、搜刮窗口的危险提示、提示合并等），手机矮屏和刘海屏布局修正，门口引导给敌人和子弹让开。
+- 自动游玩查出旧封锁区流血致死时结算写不进去（生命略低于 0 被存档校验拒绝），Runtime 掉血改为在 0 截止。
+- 约 20 个旧局内浏览器测试迁到 2.5D，检查的行为不变；`test:issue26-phaser-spatial` 退役，仍是 36 条；新增本地的完整 `test:coast-sample`。逐套说明见 [收尾说明](2-5d-closeout/README.md)。
+
+剩余工作（同见收尾说明）：Astra——治疗被拒的原因说明、「附近」逐件拾取、本 PR 的独立复验（含 Runtime 掉血截止）、商场布局四版（#47）、新封锁区地图数据；前端——楼梯名盖住正下方敌人的做法待定；Sol——敌人和尸体的 2.5D 角色图与主角持枪图、沿海街区其余约四分之三、商场其余区域、新封锁区美术。新封锁区方向和美术先后由维护者决定。本记录不表示已经合并或上线。
 
 ## 2026-10-15 · CI 第二阶段：八组均衡与执行耗时（#61）
 
