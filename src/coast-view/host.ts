@@ -35,6 +35,11 @@ export interface CoastServices {
   useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
   equipItem(uid: string): MutationResult;
   dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
+  /**
+   * Carried kg, live, as the Runtime uses it for movement, overload and stamina (worn charm and loaded rounds
+   * included). The HUD and the inventory only format this value; they never re-derive it.
+   */
+  carriedWeight(): number;
   retrySave(): boolean;
   retrySettlement(): boolean;
   settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
@@ -863,7 +868,7 @@ export class CoastSampleHost {
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
     let weight = '';
     // A no-break space keeps the number and its unit together when the line wraps, as the original weight readout did.
-    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)}\u00a0kg`; }
+    if (l) weight = `${this.services.carriedWeight().toFixed(1)}\u00a0kg`;
     this.q('[data-state]').textContent = `${status}　${weight}`;
     // Short screens hide the routine body line; a bleed or pollution warning keeps it.
     this.q('[data-state]').classList.toggle('calm', !h.bleeding && h.pollution <= 10);
