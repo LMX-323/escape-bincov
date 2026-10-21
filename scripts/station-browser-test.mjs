@@ -686,6 +686,22 @@ try {
     assert.equal(await page.locator('#station-yard >> .panel h2').textContent(), '工作台'); assert.ok((await page.evaluate(() => window.__station.host.scene.lastHidden)).includes('work'));
     return `修理铺现金 ${cash0} → ${cash0 - 84}；卫生所看进 clinic；设施切到工作台`;
   });
+  await step('H7b 按住开关键（系统连发）：Tab、数字、Esc 每按一次只开关一次；移动键照常接受连发', async () => {
+    await open({ fixture: preset('parts'), at: [17.5, 17.2] });
+    // What the OS sends while a key stays down: more keydowns with repeat set.
+    const repeat = key => page.evaluate(key => { for (let i = 0; i < 3; i++) dispatchEvent(new KeyboardEvent('keydown', { key, repeat: true, bubbles: true, cancelable: true })); }, key);
+    const held = [];
+    for (const [key, kind] of [['Tab', 'gear'], ['2', 'arms'], ['Escape', null], ['Escape', 'menu']]) {
+      await page.keyboard.down(key); await repeat(key); held.push(await panel()); await page.keyboard.up(key);
+      assert.equal(held.at(-1), kind, `按住 ${key} 后面板应为 ${kind}`);
+    }
+    await page.keyboard.press('Escape'); await until(() => window.__station.host.ui.kind === null, 2000, 'menu closed');
+    const a = (await st()).player;
+    await page.evaluate(() => dispatchEvent(new KeyboardEvent('keydown', { key: 'd', repeat: true, bubbles: true })));
+    await page.waitForTimeout(500); await page.evaluate(() => dispatchEvent(new KeyboardEvent('keyup', { key: 'd', bubbles: true })));
+    const b = (await st()).player; assert.ok(b.x - a.x > 20, `连发的 D 只移动了 ${(b.x - a.x).toFixed(1)} px`);
+    return `按住后面板 ${held.map(k => k ?? 'null').join(' → ')}；连发 D 右移 ${(b.x - a.x).toFixed(0)} px`;
+  });
   await step('H8 手机竖屏：收起的“功能”菜单 → 卫生所；面板标题菜单 → 整备；页签按钮', async () => {
     await open({ fixture: preset('repaired'), at: [15.6, 16.4], size: [390, 844], mobile: true });
     const hidden = await page.evaluate(() => getComputedStyle(document.querySelector('#station-yard').shadowRoot.querySelector('[data-quick="med"]')).display === 'none');
@@ -708,6 +724,22 @@ try {
     await page.locator('#station-yard .touch-act').tap(); await until(() => window.__station.host.ui.kind === 'arms', 3000, 'arms');
     await shot('H8b-touch-shop-844x390');
     return `摇杆左移 ${(a.x - b.x).toFixed(0)} px；交互按钮打开修理铺`;
+  });
+  await step('H8c 手机触屏：按住摇杆时失焦或页面隐藏，圆环收起；之后摇杆照常走路', async () => {
+    await open({ fixture: preset('repaired'), at: [6.5, 19.5], size: [844, 390], mobile: true });
+    const cdp = await ctx.newCDPSession(page), touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 7 }] });
+    const ring = () => page.evaluate(() => getComputedStyle(document.querySelector('#station-yard').shadowRoot.querySelector('.ui .joy')).display !== 'none');
+    for (const [name, lose] of [['blur', () => page.evaluate(() => dispatchEvent(new Event('blur')))], ['visibilitychange', () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))]]) {
+      await touch('touchStart', 150, 300); await touch('touchMove', 130, 300); await page.waitForTimeout(50);
+      assert.equal(await ring(), true, `${name}: 按住时显示圆环`);
+      await lose(); await page.waitForTimeout(50); assert.equal(await ring(), false, `${name}: 失焦后圆环仍在`);
+      await touch('touchEnd'); await page.waitForTimeout(50); assert.equal(await ring(), false);
+    }
+    const a = (await st()).player;
+    await touch('touchStart', 150, 300); for (let i = 1; i <= 6; i++) { await touch('touchMove', 150 - i * 8, 300); await page.waitForTimeout(16); }
+    await page.waitForTimeout(450); const shown = await ring(); await touch('touchEnd');
+    const b = (await st()).player; assert.ok(shown); assert.ok(a.x - b.x > 20, `摇杆向左只走了 ${(a.x - b.x).toFixed(1)} px`);
+    return `失焦/隐藏后圆环收起；再用摇杆左移 ${(a.x - b.x).toFixed(0)} px`;
   });
   const labelsCut = () => page.evaluate(() => [...document.querySelector('#station-yard').shadowRoot.querySelectorAll('.grid .item .lbl')].filter(l => l.scrollWidth > l.clientWidth + .5).map(l => l.textContent));
   const minCell = () => page.evaluate(() => Math.min(...[...document.querySelector('#station-yard').shadowRoot.querySelectorAll('.grid')].map(g => Number(g.dataset.cell))));
