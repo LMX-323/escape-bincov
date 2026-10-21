@@ -17,7 +17,7 @@
 
 ## 改动在哪里
 
-[src/game.ts](../src/game.ts) 保存本局界面的选中 ID、复用原有访问检查并绘制目标列表；[src/main.ts](../src/main.ts) 只在行动画面的游戏区域接收滚轮；[src/style.css](../src/style.css) 增加高亮和有高度限制的列表。[行动指南](../src/ui.ts) 与游玩说明同步更新。
+[src/game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts) 保存本局界面的选中 ID、复用原有访问检查并绘制目标列表；[src/main.ts](../src/main.ts) 只在行动画面的游戏区域接收滚轮；[src/style.css](../src/style.css) 增加高亮和有高度限制的列表。[行动指南](../src/ui.ts) 与游玩说明同步更新。
 
 选中 ID 不进入存档。没有改变容器库存、物品转移事务、失败回滚、救济来源、安全箱、世界生成或存档版本；两份独立 HTML 和两种 ZIP 由 `pnpm package` 生成，仍可离线运行。
 

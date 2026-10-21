@@ -10,17 +10,17 @@
 
 | 决定 | 现在的行为 | 主要代码 |
 | --- | --- | --- |
-| 手机选来源 | 点名称打开指定箱子/尸体，空来源、稳定编号、距离/视线/潮位和撤离优先仍保留 | [game.ts](../src/game.ts)：`interact`、`canLootContainer`；[ui.ts](../src/ui.ts)：`openLoot` |
-| 搜刮危险信息 | 固定顶部生命、流血/污染、倒计时、关闭；敌人命中提示但不关闭；物品详情在下方滚动 | [ui.ts](../src/ui.ts)：`lootHtml`；[game.ts](../src/game.ts)：`hurt`、`updateHud`；[style.css](../src/style.css)：`.loot-header` |
-| 无收益补给 | 按定稿维持现状，未新增零收益保护；绷带和急救包的原规则未改 | [game.ts](../src/game.ts)：`useItem` |
+| 手机选来源 | 点名称打开指定箱子/尸体，空来源、稳定编号、距离/视线/潮位和撤离优先仍保留 | [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：`interact`、`canLootContainer`；[ui.ts](../src/ui.ts)：`openLoot` |
+| 搜刮危险信息 | 固定顶部生命、流血/污染、倒计时、关闭；敌人命中提示但不关闭；物品详情在下方滚动 | [ui.ts](../src/ui.ts)：`lootHtml`；[game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：`hurt`、`updateHud`；[style.css](../src/style.css)：`.loot-header` |
+| 无收益补给 | 按定稿维持现状，未新增零收益保护；绷带和急救包的原规则未改 | [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：`useItem` |
 | 指南返回 | 记住入口，从暂停进入时关闭/Esc 返回暂停 | [ui.ts](../src/ui.ts)：`closeOverlay`、`setOverlay`；[main.ts](../src/main.ts)：Esc 分发 |
 | 出击提醒 | 出击旁显示缺项，匹配当前武器且位于背包的备用弹药；区分没带止血品和只在安全箱，仍能轻装出击 | [qol.ts](../src/qol.ts)：`departureWarnings` |
 | 任务物品出售 | 仅本次卖出且整笔交易后不足交付时确认；计入买回、仓库、背包和安全箱，列任务/需要/出售/剩余 | [shop.ts](../src/shop.ts)：`saleWarnings`、`questUses` |
 | 旋转 | 四类局内物品栏均可旋转；桌面拖动时 R 改预览、Esc 取消，手机移动格位有旋转按钮 | [ui.ts](../src/ui.ts)：`installInventoryDrag`、`placementControls`；[loot.ts](../src/loot.ts)：`moveQuantity` |
 | 商店 | 左商人、中间上买下卖、右仓库；按包买、整组卖、净额一次结算；放回取消、离开确认；整备入口引导到商店 | [shop.ts](../src/shop.ts)：`createCart`、`moveShopItem`、`settleCart`；[ui.ts](../src/ui.ts)：`checkout` |
 | 部分合并/拆分 | 只补足兼容堆叠的容量，余量留在来源；手选数量后摆格，拆出新 UID，取消不写档 | [loot.ts](../src/loot.ts)：`placementError`、`moveQuantity`；[session.ts](../src/session.ts)：`transferLoot` |
-| 受击/撤离指引 | 敌人命中触发约一秒边缘方向，多方向并存；流血/污染不触发；地图选择有效出口后显示方位和直线格距 | [game.ts](../src/game.ts)：近战/弹丸命中、`hitDirections`；[qol.ts](../src/qol.ts)：`exitBearing` |
-| 任务追踪 | 默认收起，展开可滚动查看全部未完成任务，仓库与携带分列，仍需回水产站交付 | [qol.ts](../src/qol.ts)：`questProgress`；[game.ts](../src/game.ts)：`updateHud` |
+| 受击/撤离指引 | 敌人命中触发约一秒边缘方向，多方向并存；流血/污染不触发；地图选择有效出口后显示方位和直线格距 | [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：近战/弹丸命中、`hitDirections`；[qol.ts](../src/qol.ts)：`exitBearing` |
+| 任务追踪 | 默认收起，展开可滚动查看全部未完成任务，仓库与携带分列，仍需回水产站交付 | [qol.ts](../src/qol.ts)：`questProgress`；[game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：`updateHud` |
 
 任务栏的“仓库”是仓库数量，“携带”是本次背包与安全箱数量（包含带入的物资），不把安全箱检查点再算一遍。导航距离按现有地图格计算，1 格 = 32 世界像素；不新增现实距离比例或路线规划。
 
