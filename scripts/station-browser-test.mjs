@@ -11,6 +11,7 @@ import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import * as D from '../src/domain.ts';
 import { assertFrames, assertFallback, assertSupplyRefused, assertSupplyUsed, assertTraining } from './station-acceptance-gates.mjs';
+import { skipOpening } from './yard-entry.mjs';
 import { readManagedTables, readPixiEvents } from './pixi-managed-gate.mjs';
 
 const out = resolve(process.argv.find(a => a.startsWith('--out='))?.slice(6) ?? 'test-results/station'); await mkdir(out, { recursive: true });
@@ -125,7 +126,7 @@ try {
   // ================= A. entry and saves =================
   await step('A1 普通入口（无 ?test=1）：标题“进入”直接进院子，无测试接口，存档升级到成长 v2', async () => {
     await newPage();
-    await page.goto('https://station.test/'); await page.locator('[data-action="enter"]').click();
+    await page.goto('https://station.test/'); await page.locator('[data-action="enter"]').click(); await skipOpening(page);
     await page.waitForFunction(() => !!document.querySelector('#station-yard')?.shadowRoot?.querySelector('canvas'));
     await page.waitForTimeout(1200);
     const g = await page.evaluate(() => ({ bincov: '__bincov' in window, station: '__station' in window, frame: getComputedStyle(document.querySelector('#frame')).visibility, quick: !!document.querySelector('#station-yard').shadowRoot.querySelector('[data-quick="gear"]') }));
