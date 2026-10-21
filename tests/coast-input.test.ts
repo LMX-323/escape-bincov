@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { InputState } from '../src/coast-view/input';
+import { InputState, inputKey } from '../src/coast-view/input';
 
 // InputState reads innerWidth/innerHeight in a field initializer; Node has no window.
 Object.assign(globalThis, { innerWidth: 1280, innerHeight: 720 });
@@ -48,4 +48,24 @@ test('desktop aim still follows the pointer; a disabled read clears the touch fa
   touch.beginStick('move', 1); touch.moveStick('move', 1, 0, 1);
   const off = touch.read(false, pointerAim);
   assert.equal(off.aim, null); assert.deepEqual(off.move, { x: 0, y: 0, sprint: false }); assert.equal(off.fireHeld, false);
+});
+
+test('keys go by physical key: Shift+2 picks the knife, a 1 released under Shift is released, AZERTY digits work', () => {
+  const input = new InputState(), key = (k: string, code: string, down: boolean) => input.key(inputKey({ key: k, code }), down);
+  // US layout, sprinting: Shift+2 reports "@".
+  key('Shift', 'ShiftLeft', true); key('@', 'Digit2', true);
+  let r = input.read(true, pointerAim);
+  assert.deepEqual(r.commands, ['knife']); assert.equal(r.move.sprint, true);
+  key('@', 'Digit2', false); key('Shift', 'ShiftLeft', false);
+  // 1 pressed, Shift pressed, 1 released as "!": the next 1 is a fresh press again.
+  key('1', 'Digit1', true); assert.deepEqual(input.read(true, pointerAim).commands, ['primary']);
+  key('Shift', 'ShiftRight', true); key('!', 'Digit1', false); key('Shift', 'ShiftRight', false);
+  key('1', 'Digit1', true); assert.deepEqual(input.read(true, pointerAim).commands, ['primary']);
+  key('1', 'Digit1', false);
+  // AZERTY: the digit row sends "&" and "é" without Shift; ZQSD sits where WASD is.
+  key('é', 'Digit2', true); key('z', 'KeyW', true);
+  r = input.read(true, pointerAim);
+  assert.deepEqual(r.commands, ['knife']); assert.equal(r.move.y, -1);
+  // Keys outside letters, digits and Shift (or events without a code) keep their key value.
+  assert.equal(inputKey({ key: 'Escape', code: 'Escape' }), 'Escape'); assert.equal(inputKey({ key: 'd', code: '' }), 'd');
 });

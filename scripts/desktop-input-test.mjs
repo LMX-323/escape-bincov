@@ -147,6 +147,17 @@ try {
     await running(page);
     await page.keyboard.press('m'); await waitPanel(page, 'map'); await page.keyboard.press('Escape'); await waitPanel(page, null);
     assert.deepEqual((await state(page)).audio, ['running']);
+    // A focused form control keeps no panel key: M and Esc still close the map after an exit is chosen, Esc still
+    // resumes from the volume slider.
+    const exit = page.locator('.coast-sample [data-exit]');
+    await page.keyboard.press('m'); await waitPanel(page, 'map'); await exit.focus(); await exit.selectOption({ index: 1 });
+    assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'SELECT');
+    await page.keyboard.press('m'); await waitPanel(page, null);
+    await page.keyboard.press('m'); await waitPanel(page, 'map'); await exit.focus(); await page.keyboard.press('Escape'); await waitPanel(page, null);
+    await openPause(page); await frames(page, 2);
+    await page.locator('.coast-sample [data-volume]').focus(); await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !window.__bincovSample.host.panel && window.__audioContexts.every(c => c.state === 'running'));
+    await running(page);
     await openPause(page); await raidDo(page, 'resume').click();
     await page.waitForFunction(() => window.__audioContexts.every(c => c.state === 'running') && !window.__bincovSample.host.panel);
   });
