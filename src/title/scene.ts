@@ -10,9 +10,8 @@ type Glint = { img: Img; period: number; phase: number; still: number };
 type Drop = { img: Img; x: number; y: number; speed: number; floor: number };
 type Mote = { img: Img; x: number; y: number; vx: number; vy: number; phase: number };
 
-/** Live controllers; tests assert re-entering the menu never leaves an extra one behind. */
+/** Live controllers, reported by the test snapshot; re-entering the menu must never leave an extra one behind. */
 let live = 0;
-export const liveTitleControllers = () => live;
 
 const SPARK = { warm: 0, warm2: 1, cool: 2, coolLong: 3, warmGlint: 4, warmLong: 5, red: 6, mote: 7 } as const;
 const PIER = { top: 292, bottom: 424 };

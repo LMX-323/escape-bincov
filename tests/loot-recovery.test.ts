@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { initialCheckpoint, validateCheckpoint, WORLD_VERSION } from '../src/checkpoint';
-import { generateRun, generateRunBase } from '../src/world';
+import { validateCheckpoint, WORLD_VERSION } from '../src/checkpoint';
+import { generateRunBase } from '../src/world';
 import { createSessionState, SaveSession } from '../src/session';
 import { RecoveryStore, SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { placementError } from '../src/loot';

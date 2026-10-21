@@ -1,8 +1,8 @@
 import * as D from '../domain';
 import { itemArt, itemArtSize } from './items';
 import type { Scope } from '../coast-view/scope';
+import { esc } from '../html';
 
-export const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 /** Grid markup: items are absolutely placed children; the grid carries its source id and cell size. */
 export function gridHtml(inv: D.Inventory, source: string, cell: number, selected: string | null, opts: { empty?: string } = {}) {

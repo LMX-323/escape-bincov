@@ -53,7 +53,7 @@ export interface ExpansionDraft { profile: D.SaveDataV1; legacyRaid: RaidCheckpo
 export interface ExpansionTransaction { readonly kind: 'expansion-transaction' }
 
 /**
- * Coordinates domain rules and durable writes without DOM, Phaser or audio.
+ * Coordinates domain rules and durable writes without DOM, rendering or audio.
  * Storage is resolved lazily: even accessing browser localStorage can throw.
  * Callers own rendering, scene transitions and effects after a successful commit.
  */

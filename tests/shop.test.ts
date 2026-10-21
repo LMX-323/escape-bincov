@@ -25,14 +25,14 @@ test('cart conserves goods before checkout; pack return and sale return cancel w
 test('net settlement allows sale to finance the purchase and free its storage space', () => {
     const save = fixture(); save.cash = 0; save.stash = D.createInventory(1, 1); D.addItem(save.stash, 'watch');
     const c = S.createCart(save, 'arms'); sell(c, 'watch'); buy(c, 'ammo9');
-    assert.equal(S.settleCart(save, c), true); assert.equal(save.cash, 156); assert.equal(D.count(save.stash, 'ammo9'), 12);
-    assert.equal(S.settleCart(save, c), false, 'A stale cart cannot be settled twice');
+    assert.equal(S.settleCartResult(save, c).ok, true); assert.equal(save.cash, 156); assert.equal(D.count(save.stash, 'ammo9'), 12);
+    assert.equal(S.settleCartResult(save, c).ok, false, 'A stale cart cannot be settled twice');
 });
 test('insufficient cash or space rejects every purchase and sale', () => {
     for (const cash of [0, 5000]) {
         const save = fixture(); save.cash = cash; save.stash = D.createInventory(1, 1); D.addItem(save.stash, 'scrap');
         const c = S.createCart(save, 'arms'); sell(c, 'scrap'); buy(c, 'shotgun'); const before = structuredClone(save);
-        assert.equal(S.settleCart(save, c), false); assert.deepEqual(save, before);
+        assert.equal(S.settleCartResult(save, c).ok, false); assert.deepEqual(save, before);
     }
 });
 test('quest warning uses whole transaction totals, includes carried supplies and excludes finished quests', () => {
@@ -45,8 +45,8 @@ test('relief, malformed pack and changed stash cannot be sold or settled', () =>
     const save = fixture(); D.addItem(save.stash, 'ammo9', 12, true); const c = S.createCart(save, 'arms');
     assert.match(S.shopPlacementError(c, 'stash', 'sell', c.stash.items[0].uid, 0, 0)!, /不可出售/);
     buy(c, 'ammo9'); c.buy.items[0].qty = 13; const before = structuredClone(save);
-    assert.equal(S.settleCart(save, c), false); assert.deepEqual(save, before);
-    c.buy.items[0].qty = 12; D.addItem(save.stash, 'water'); assert.equal(S.settleCart(save, c), false);
+    assert.equal(S.settleCartResult(save, c).ok, false); assert.deepEqual(save, before);
+    c.buy.items[0].qty = 12; D.addItem(save.stash, 'water'); assert.equal(S.settleCartResult(save, c).ok, false);
 });
 test('shopQuote prices the trading side by whole pack or stack and agrees with cart totals', () => {
     const save = fixture(); D.addItem(save.stash, 'watch'); D.addItem(save.stash, 'pistol'); D.addItem(save.stash, 'ammo9', 12, true); D.addItem(save.stash, 'knife');
@@ -86,8 +86,8 @@ test('save failure rolls back entire net transaction, retry writes exactly once 
     assert.ok(session.initialize()); state.state = 'hideout'; state.save = fixture(); D.addItem(state.save.stash, 'watch');
     assert.ok(session.persist()); const c = S.createCart(state.save, 'arms'); sell(c, 'watch'); buy(c, 'ammo9');
     const before = structuredClone(state.save), oldRaw = raw, oldWrites = writes; fail = true;
-    assert.equal(session.mutate(() => S.settleCart(state.save, c)), 'save-failed'); assert.deepEqual(state.save, before); assert.equal(raw, oldRaw);
-    fail = false; assert.equal(session.mutate(() => S.settleCart(state.save, c)), 'committed'); assert.equal(writes, oldWrites + 1);
+    assert.equal(session.mutate(() => S.settleCartResult(state.save, c).ok), 'save-failed'); assert.deepEqual(state.save, before); assert.equal(raw, oldRaw);
+    fail = false; assert.equal(session.mutate(() => S.settleCartResult(state.save, c).ok), 'committed'); assert.equal(writes, oldWrites + 1);
     assert.deepEqual(JSON.parse(raw!).profile, state.save);
-    assert.equal(session.mutate(() => S.settleCart(state.save, c)), 'rejected'); assert.equal(writes, oldWrites + 1);
+    assert.equal(session.mutate(() => S.settleCartResult(state.save, c).ok), 'rejected'); assert.equal(writes, oldWrites + 1);
 });

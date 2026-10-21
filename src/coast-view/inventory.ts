@@ -13,10 +13,10 @@ import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } f
 import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { TargetRef } from '../raid-runtime/contract';
 import type { CoastServices } from './host';
-import { itemArtwork } from '../ui';
+import { itemArtwork } from '../art/item-images';
+import { esc } from '../html';
+import { SUPPLY_IDS } from '../rpg';
 
-const SUPPLIES = new Set(['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet']);
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 type Source = 'container' | 'bag' | 'safe';
 /**
  * Whether a label fits on one line in the pixel face (16 px per CJK character, 8 per ASCII) inside an item box of
@@ -122,7 +122,7 @@ export class InventoryPanel {
     const d = D.ITEMS[i.id], size = D.itemSize(i), carried = sel.source !== 'container';
     const btn = (label: string, action: string, extra = '') => `<button type="button" data-do="${action}" ${extra}>${label}</button>`;
     const actions = [
-      carried && SUPPLIES.has(i.id) ? btn('使用', 'inv-use') : '',
+      carried && SUPPLY_IDS.includes(i.id) ? btn('使用', 'inv-use') : '',
       sel.source === 'bag' && D.WEAPONS[i.id] && i.id !== 'knife' ? btn('装备主武器', 'inv-equip') : '',
       sel.source === 'container' ? btn('拿到背包', 'inv-quick') : btn(sel.source === 'safe' ? '放入背包' : '放入安全箱', 'inv-quick'),
       d.w !== d.h ? btn('旋转', 'inv-rotate') : '',
@@ -297,6 +297,3 @@ export class InventoryPanel {
     return { grid, cell, source: grid.dataset.grid as Source, x: Math.round((ghostLeft - r.left) / cell), y: Math.round((ghostTop - r.top) / cell) };
   }
 }
-
-/** First free top-left slot in `to`, merging into a compatible stack first, then trying rotation. */
-export const slot = firstAvailableSlot;

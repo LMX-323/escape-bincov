@@ -276,15 +276,6 @@ export function migrateSave(raw: unknown): SaveDataV1 {
   }
   return save;
 }
-/** Storage failures are reported to the caller so a run cannot start without its commit. */
-export function writeSave(storage: StorageLike, save: SaveDataV1): void { storage.setItem(SAVE_KEY, JSON.stringify(save)); }
-export function readSave(storage: StorageLike): SaveDataV1 {
-  const raw = storage.getItem(SAVE_KEY);
-  if (!raw) return newSave();
-  let parsed: unknown;
-  try { parsed = JSON.parse(raw); } catch { return newSave(); }
-  return migrateSave(parsed);
-}
 export function beginRun(save: SaveDataV1, seed: number): RunLoadout {
   if (save.activeRun) throw new Error('上次行动尚未结算，暂时不能出击。');
   const runId = uid();

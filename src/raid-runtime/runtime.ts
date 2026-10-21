@@ -12,7 +12,7 @@ import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem 
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
 import { advancePursuits } from '../pursuit';
-import { ActiveClock, PlayerInput, type InputFrame } from '../input';
+import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
 import type { RaidRuntime, RaidIntent, PublishedView, WorldKey, MapDef, StampedEvent, ViewEventBody, Durability, WeaponLook, TargetRef, Interaction, HurtCause } from './contract';
@@ -72,7 +72,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private checkpointAt = 0;
     private clock = new ActiveClock();
     private lastNow: number | null = null;
-    inputFrame: InputFrame = new PlayerInput().read(false);
+    inputFrame: InputFrame = idleFrame();
     intent: RaidIntent = emptyIntent();
     inputSuppressed = false;
     overlay = '';
@@ -152,7 +152,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.suppressFire ||= this.intent.fireHeld;
         this.suppressInteract ||= this.intent.interactHeld;
         this.intent = emptyIntent();
-        this.inputFrame = new PlayerInput().read(false);
+        this.inputFrame = idleFrame();
         this.clock.reset();
         this.extractTime = 0;
         this.sprinting = false;
