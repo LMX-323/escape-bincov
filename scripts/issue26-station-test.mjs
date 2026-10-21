@@ -5,11 +5,12 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { reportFilter, stepFilter } from './step-filter.mjs';
 import * as D from '../src/domain.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
-const out = resolve(option('out', 'test-results/issue26/station')), only = option('only', '').split(',').filter(Boolean);
+const out = resolve(option('out', 'test-results/issue26/station')), filter = stepFilter();
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
@@ -144,7 +145,7 @@ async function recover() {
   await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().storage.ok && !window.__station.host.ui.dialogKind);
 }
 async function step(name, fn) {
-  if (only.length && !only.some(id => name.startsWith(id))) return;
+  if (!filter.selects(name)) return;
   const row = { name }, errorStart = report.errors.length; report.steps.push(row);
   try { row.detail = await fn(); assert.deepEqual(report.errors.slice(errorStart), []); assert.deepEqual(report.external, []);
     assert.deepEqual(await page.evaluate(() => window.__station?.host?.errors ?? []), []); row.status = 'passed'; console.log('PASS', name);
@@ -252,6 +253,7 @@ try {
 } finally {
   await context?.close(); await browser.close(); report.finishedAt = new Date().toISOString();
   report.summary = { passed: report.steps.filter(s => s.status === 'passed').length, total: report.steps.length };
+  const filterProblems = reportFilter(filter, report.steps.length); if (filterProblems.length) report.summary.filterProblems = filterProblems;
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify(report.summary));
   if (report.summary.passed !== report.summary.total || report.errors.length || report.external.length) process.exitCode = 1;
 }

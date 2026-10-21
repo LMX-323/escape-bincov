@@ -12,12 +12,13 @@ import { browserOptions } from './browser-options.mjs';
 import * as D from '../src/domain.ts';
 import { assertFrames, assertFallback, assertSupplyRefused, assertSupplyUsed, assertTraining } from './station-acceptance-gates.mjs';
 import { readManagedTables, readPixiEvents } from './pixi-managed-gate.mjs';
+import { reportFilter, stepFilter } from './step-filter.mjs';
 
 const out = resolve(process.argv.find(a => a.startsWith('--out='))?.slice(6) ?? 'test-results/station'); await mkdir(out, { recursive: true });
 // --html=<file> runs the same checks against another build (the saved pre-fix build for failure controls).
 const htmlPath = process.argv.find(a => a.startsWith('--html='))?.slice(7) ?? 'dist/index.html';
 const html = await readFile(htmlPath, 'utf8');
-const only = process.argv.find(a => a.startsWith('--only='))?.slice(7).split(',');
+const filter = stepFilter();
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, browser: browser.version(), startedAt: new Date().toISOString(), methodology: 'Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.', steps: [], errors: [], external: [] };
 let ctx = null, page = null;
@@ -83,7 +84,7 @@ async function open({ q = '', fixture = null, at = null, size, mobile } = {}) {
   await page.waitForTimeout(250);
 }
 async function step(name, fn) {
-  if (only && !only.some(o => name.startsWith(o))) return;
+  if (!filter.selects(name)) return;
   const row = { name, status: 'running' }, t0 = Date.now(); report.steps.push(row);
   const errors0 = report.errors.length, frames0 = report.frameAudit.length;
   try {
@@ -1066,7 +1067,9 @@ try {
 } finally {
   await ctx?.close().catch(() => {}); await browser.close();
   const pass = report.steps.filter(s => s.status === 'passed').length;
+  const filterProblems = reportFilter(filter, report.steps.length);
   report.finishedAt = new Date().toISOString(); report.summary = { passed: pass, total: report.steps.length };
+  if (filterProblems.length) report.summary.filterProblems = filterProblems;
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2));
   console.log(`\n${pass} / ${report.steps.length} passed; page errors ${report.errors.length}; external ${report.external.length}`);
   if (pass !== report.steps.length || report.errors.length || report.external.length || report.frameAudit.some(e => !e.expected)) process.exitCode = 1;
