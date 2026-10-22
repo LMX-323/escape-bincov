@@ -77,7 +77,7 @@ export const held = (from: number, to: number) => (t: number) => t >= from - 1e-
 export interface Shot { t: number; aim: number; angles: number[]; origins: Point[] }
 export interface RunLog {
     shots: Shot[];
-    impacts: { t: number; reason: string; target: string | null }[];
+    impacts: { t: number; reason: string; target: string | null; contact: Point | null }[];
     hurt: { t: number; uid: string; damage: number }[];
     /** The published aim after every frame. */
     aims: (AimView & { t: number })[];
@@ -102,7 +102,7 @@ export function replay(b: Bench, script: Script, seconds: number, fps: number | 
         for (const e of batch.events) {
             if (e.type === 'shot' && e.shooter === 'player') log.shots.push({ t: e.stamp.simulationTime, aim: b.runtime.player.rotation,
                 angles: e.pellets.map(p => p.angle), origins: e.pellets.map(p => ({ ...p.origin })) });
-            else if (e.type === 'impact' && e.owner === 'player') log.impacts.push({ t: e.stamp.simulationTime, reason: e.reason, target: e.target });
+            else if (e.type === 'impact' && e.owner === 'player') log.impacts.push({ t: e.stamp.simulationTime, reason: e.reason, target: e.target, contact: e.contact && { ...e.contact } });
             else if (e.type === 'hurt' && e.uid !== 'player') log.hurt.push({ t: e.stamp.simulationTime, uid: e.uid, damage: e.damage });
         }
         log.aims.push({ ...batch.frame.hud.aim, t: batch.stamp.simulationTime });

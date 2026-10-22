@@ -33,6 +33,20 @@ const MALL_LABEL_RANGE = 8 * 32;
  * silhouette instead of poking above the head (ART-R08); simulation and muzzle distance are untouched.
  */
 const heldLength = (angle: number) => 1 - .5 * Math.abs(Math.sin(angle));
+/**
+ * The end of a held weapon's barrel in its canvas: the right edge of the farthest opaque column, at the middle of that
+ * column's opaque rows (the art points right; outlines included). Read from the pixels, so new art needs no metadata.
+ */
+function barrelTip(canvas: HTMLCanvasElement): Point {
+  const g = canvas.getContext('2d', { willReadFrequently: true }), w = canvas.width, h = canvas.height;
+  const data = g?.getImageData(0, 0, w, h).data;
+  for (let x = w - 1; data && x >= 0; x--) {
+    const rows: number[] = [];
+    for (let y = 0; y < h; y++) if (data[(y * w + x) * 4 + 3] > 0) rows.push(y);
+    if (rows.length) return { x: x + 1, y: (rows[0] + rows[rows.length - 1] + 1) / 2 };
+  }
+  return { x: w, y: h / 2 };
+}
 /** Seconds of the fall before the corpse sprite replaces the body. */
 const FALL_T = .16;
 /** The feet slide back this far (world px, plus a little down) while the body tips, so the fallen body lies where the corpse is drawn. */
@@ -115,7 +129,11 @@ export class CoastView {
   private doorGuides = new Map<string, Sprite>();
   private stairLabels = new Map<string, Sprite>();
   private actors = new Map<string, ActorGfx>();
-  private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number }>();
+  /** `from`: the drawn muzzle (chest plane) the tracer starts at; `seen`: where the head was first shown (its tail never
+   *  reaches back past it, so a tracer leaving a hidden room does not point into it). */
+  private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number; from: Point | null; seen: Point | null }>();
+  /** The followed camera without recoil kick or shake: the pointer aims through this one (see aimFromClient). */
+  private camAim = { x: 0, y: 0 };
   private crates = new Map<string, { s: Sprite; shadow: Sprite; empty: boolean; look: 'full' | 'empty' | 'open' }>();
   private loot = new Map<string, Sprite>();
   private muzzles: { s: Sprite; t: number }[] = [];
@@ -513,12 +531,18 @@ export class CoastView {
     const shown = (p: Point) => shownAt(this.map!, f.revealed, p);
     switch (e.type) {
       case 'shot': {
-        const a = actor(e.shooter); if (!a || !shown(a)) break;
-        const angle = e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
+        const a = actor(e.shooter); if (!a) break;
+        const tip = this.muzzleOf(a);
+        // The tracers of this shot leave the drawn muzzle; a shooter in view also shows them from there on.
+        for (const p of e.pellets) { const b = this.bullets.get(p.bullet); if (b) { b.from = tip?.at ?? null; if (tip && shown(a)) b.seen = tip.at; } }
+        if (!shown(a)) break;
+        const angle = tip?.angle ?? e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
         const art = this.tex.weapon(a.weapon, a.kind), c = Math.cos(angle), s = Math.sin(angle);
         const sp = new Sprite(this.tex.muzzle(0)); sp.anchor.set(.5); sp.blendMode = 'add';
         const reach = art.muzzle * heldLength(angle);
-        sp.position.set(Math.round(a.x + c * reach), Math.round(a.y - AIM_H + s * reach)); sp.rotation = angle; sp.zIndex = a.y + .2 + (s < -.2 ? -.4 : 0);
+        if (tip) sp.position.set(Math.round(tip.at.x + c * 1.5), Math.round(tip.at.y + s * 1.5));
+        else sp.position.set(Math.round(a.x + c * reach), Math.round(a.y - AIM_H + s * reach));
+        sp.rotation = angle; sp.zIndex = a.y + .2 + (s < -.2 ? -.4 : 0);
         if (e.weapon === 'shotgun') sp.scale.set(1.4);
         this.sorted.addChild(sp); this.muzzles.push({ s: sp, t: 0 });
         this.light.lights.push({ x: a.x + c * 20, y: a.y + s * 20, r: e.weapon === 'shotgun' ? 100 : 80, color: 0xe0b878, k: .9, ttl: .07, region: a.regionId });
@@ -708,15 +732,22 @@ export class CoastView {
     for (const b of f.bullets) {
       seen.add(b.uid);
       let e = this.bullets.get(b.uid);
-      if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
+      if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy, from: null, seen: null }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
       e.vx = b.vx; e.vy = b.vy;
       const show = shownAt(this.map!, f.revealed, b);
       const v = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / v, uy = b.vy / v;
-      const travelled = Math.hypot(b.x - e.born.x, b.y - e.born.y), len = Math.min(b.enemy ? 8 : 14, travelled - 3);
       const hx = Math.round(b.x), hy = Math.round(b.y - AIM_H);
+      if (show && !e.seen) e.seen = { x: b.x, y: b.y - AIM_H };
+      // A tracer leaves the drawn muzzle: inside the barrel nothing shows, and the tail never reaches back past the muzzle
+      // or past where the head was first shown. Without a known muzzle (a bullet already flying at load) it starts where
+      // it was first published.
+      const start = e.from ?? { x: e.born.x, y: e.born.y - AIM_H };
+      const out = (b.x - start.x) * ux + (b.y - AIM_H - start.y) * uy - (e.from ? 0 : 3);
+      const back = e.seen ? (b.x - e.seen.x) * ux + (b.y - AIM_H - e.seen.y) * uy : 0;
+      const len = Math.min(b.enemy ? 8 : 14, out, back);
       e.g.clear();
       if (len > 0) e.g.moveTo(hx - ux * len, hy - uy * len).lineTo(hx, hy).stroke({ width: 1, color: b.enemy ? 0xe48c64 : 0xffe6a8, alpha: .55 });
-      if (travelled > 3) e.g.rect(hx, hy, 1, 1).fill(b.enemy ? 0xffc29a : 0xfff6d8);
+      if (out > 0) e.g.rect(hx, hy, 1, 1).fill(b.enemy ? 0xffc29a : 0xfff6d8);
       e.g.zIndex = b.y + .1; e.g.visible = show;
     }
     for (const [uid, e] of this.bullets) if (!seen.has(uid)) { e.g.visible = false; queueMicrotask(() => { if (this.bullets.get(uid) === e) { e.g.destroy(); this.bullets.delete(uid); } }); }
@@ -894,6 +925,7 @@ export class CoastView {
     const settle = Math.exp(-dt * 16); this.recoil.x *= settle; this.recoil.y *= settle;
     const sx = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0, sy = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0;
     this.cam = { x: X.at + Math.round(this.recoil.x) + sx, y: Y.at + Math.round(this.recoil.y) + sy };
+    this.camAim = { x: X.at, y: Y.at };
   }
 
   private tintUpright(f: ViewFrame) {
@@ -951,11 +983,30 @@ export class CoastView {
     const rect = this.app.canvas.getBoundingClientRect();
     return { x: rect.left + (p.x - this.cam.x) * this.view.s * rect.width / Math.max(1, this.view.W), y: rect.top + (p.y - this.cam.y) * this.view.s * rect.height / Math.max(1, this.view.H) };
   }
+  /**
+   * The aim of a pointer: from the player's chest to the world point under it, as last drawn but without the recoil
+   * kick and shake, which are drawing only (PR #39: a kick moved the aim up to 2.6 px). The camera that drew the frame
+   * the player saw is the one aimed through.
+   */
   aimFromClient(clientX: number, clientY: number): number | null {
     const p = this.last?.player; if (!p) return null;
-    const w = this.clientToWorld(clientX, clientY);
-    return Math.atan2(w.y + AIM_H - p.y, w.x - p.x);
+    const w = this.clientToWorld(clientX, clientY), kx = this.cam.x - this.camAim.x, ky = this.cam.y - this.camAim.y;
+    return Math.atan2(w.y - ky + AIM_H - p.y, w.x - kx - p.x);
   }
+  /**
+   * The tip of an actor's drawn gun (chest plane, world px) and the direction it points: the weapon art's barrel tip put
+   * through the weapon sprite's own transform, so the flash and the tracers leave the barrel the player sees.
+   */
+  private muzzleOf(a: ActorView): { at: Point; angle: number } | null {
+    const g = this.actors.get(a.uid); if (!g || !g.weapon.texture || a.weapon === 'claw') return null;
+    const key = `${a.weapon}:${a.kind}`, art = this.tex.weapon(a.weapon, a.kind);
+    let tip = this.barrelTips.get(key);
+    if (!tip) { tip = barrelTip(art.canvas); this.barrelTips.set(key, tip); }
+    const w = g.weapon, c = Math.cos(w.rotation), s = Math.sin(w.rotation);
+    const lx = (tip.x - art.pivotX) * w.scale.x, ly = (tip.y - art.pivotY) * w.scale.y;
+    return { at: { x: w.x + lx * c - ly * s, y: w.y + lx * s + ly * c }, angle: w.rotation };
+  }
+  private barrelTips = new Map<string, Point>();
 
   setMood(i: number) { this.opts.mood = i; if (this.map) this.light.setMood(i, this.map.bounds); }
   setViewTiles(n: 24 | 28) { this.opts.viewTiles = n; this.resize(); }

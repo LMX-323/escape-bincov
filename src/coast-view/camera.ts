@@ -3,12 +3,14 @@
  * so Node tests can replay the follow loop. Display only: the Runtime, input and saves never see these values.
  */
 
-/** Aim look-ahead along the aim, world px (an x-by-y ellipse). Half the old 48 x 34 by default (playtest F-04: the view
- *  slid with every mouse flick); the right button (precise aim) keeps the old reach, 1.7 x 48 x 34. */
+/** Aim look-ahead along the aim, world px: as far as an x-by-y ellipse reaches in that direction. Half the old 48 x 34
+ *  by default (playtest F-04: the view slid with every mouse flick); the right button (precise aim) keeps the old reach,
+ *  1.7 x 48 x 34. The lead points exactly along the aim (PR #39): the pointer then stays on the aim's ray while the
+ *  camera eases, so the easing never turns the aim. A lead off the ray did, by up to 29 degrees near the player. */
 export const AIM_LEAD = { x: 24, y: 17 } as const, PRECISE_LEAD = { x: 81.6, y: 57.8 } as const;
 export const aimLead = (aim: number, precise: boolean) => {
-  const l = precise ? PRECISE_LEAD : AIM_LEAD;
-  return { x: Math.cos(aim) * l.x, y: Math.sin(aim) * l.y };
+  const l = precise ? PRECISE_LEAD : AIM_LEAD, c = Math.cos(aim), s = Math.sin(aim), r = l.x * l.y / Math.hypot(l.y * c, l.x * s);
+  return { x: c * r, y: s * r };
 };
 
 /** How far the smoothed offset may stray from the held whole-pixel offset before the camera moves. It absorbs the

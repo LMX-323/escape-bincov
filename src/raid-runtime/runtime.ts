@@ -28,6 +28,11 @@ const owners = new WeakMap<SaveSession, CoastRaidRuntime>();
 const CLICK_WINDOW = .15;
 /** Rounding allowance (seconds) for a shot or reload due exactly at a substep's end. */
 const DUE = 1e-9;
+/**
+ * A player's bullet starts at the body's centre, never at a muzzle that may stand in or beyond a wall, and its range
+ * counts from this old muzzle distance (px), so walls, doors and corners stop it by the same collision as in flight.
+ */
+const MUZZLE = 17;
 type PendingEvent = {
     body: ViewEventBody;
     world: WorldKey;
@@ -1139,8 +1144,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const pellets: BulletState[] = [], angles: number[] = [];
         for (let i = 0; i < w.pellets; i++) {
             const angle = centre + (this.random() - .5) * cone;
-            const b = { uid: this.allocateEntityUid(), x: at.x + Math.cos(angle) * 17, y: at.y + Math.sin(angle) * 17,
-                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range, damage: w.damage, enemy: false };
+            const b = { uid: this.allocateEntityUid(), x: at.x, y: at.y,
+                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false };
             this.bullets.push(b);
             pellets.push(b);
             angles.push(angle);

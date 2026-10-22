@@ -176,3 +176,15 @@ test('aim look-ahead: half the old 48 x 34 by default; the right button keeps th
   assert.equal(aimLead(Math.PI / 2, true).y, 57.8);
   assert.ok(Math.abs(PRECISE_LEAD.x - 1.7 * 48) < 1e-9 && Math.abs(PRECISE_LEAD.y - 1.7 * 34) < 1e-9, 'precise reach unchanged');
 });
+
+test('aim look-ahead points along the aim, so easing toward it never turns the aim under a still pointer (PR #39)', () => {
+  for (const precise of [false, true]) for (let k = 0; k < 64; k++) {
+    const aim = -Math.PI + k * Math.PI / 32, l = aimLead(aim, precise), e = precise ? PRECISE_LEAD : AIM_LEAD;
+    // Parallel to the aim, and as long as the ellipse reaches in that direction.
+    assert.ok(Math.abs(l.x * Math.sin(aim) - l.y * Math.cos(aim)) < 1e-9, `${aim} ${precise}`);
+    assert.ok(Math.abs((l.x / e.x) ** 2 + (l.y / e.y) ** 2 - 1) < 1e-9, `${aim} ${precise}`);
+    // A pointer anywhere on the aim's ray stays on it when the camera moves by the lead: the angle is unchanged.
+    const p = { x: Math.cos(aim) * 90, y: Math.sin(aim) * 90 }, moved = { x: p.x + l.x, y: p.y + l.y };
+    assert.ok(Math.abs(Math.atan2(Math.sin(Math.atan2(moved.y, moved.x) - aim), Math.cos(Math.atan2(moved.y, moved.x) - aim))) < 1e-9);
+  }
+});
