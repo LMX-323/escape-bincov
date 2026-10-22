@@ -7,7 +7,8 @@ import { initialCheckpoint } from '../src/checkpoint';
 import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
-import { retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
+import { retrySettlement, mutate, importSave, setOverlay } from '../src/ui';
+import { toast } from '../src/toast';
 import { decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
 import { PROFILE_MAX_BYTES } from '../src/profile-codec';
 

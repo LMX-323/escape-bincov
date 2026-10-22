@@ -9,49 +9,23 @@
 import { app, audio, saveSession } from '../app';
 import { createCoastRaidHost } from '../raid-runtime';
 import { createTestCoastHost } from '../raid-runtime/test-support';
-import { changeState, enterExternalRun, exportSave, toast } from '../ui';
-import { CoastSampleHost, gpuTextures, managedSlots, type CoastHandle } from './host';
+import { navigation } from '../navigation';
+import { gpuTextures, managedSlots } from '../pixi-app';
+import { sampleEnabled } from '../raid-areas';
+import { exportSave } from '../save-export';
+import { toast } from '../toast';
+import { CoastSampleHost, type CoastHandle } from './host';
 import { CoastView, type ViewOptions } from './scene';
 import { lifecycle } from './scope';
-import { SAMPLE_AREA } from './appearance';
-import { generateRunBase } from '../world';
 import { isMallWorld } from '../mall-world';
-import type { RunWorld } from '../hideout-runtime/contract';
 
 // Node tests render the UI without a location: no flags there.
 const params = () => new URLSearchParams(globalThis.location?.search ?? '');
-export type SampleMode = 'village' | 'mall';
-export const sampleMode = (): SampleMode | null => { const s = params().get('sample'); return s === 'village' || s === 'mall' ? s : null; };
-export const sampleEnabled = () => sampleMode() !== null;
-/**
- * Areas a player can deploy to. The classic coast area is closed: it repeated the street's coast map and will be
- * redone as a new map. Raids already started there still resume and settle. Under `?test=1` it stays deployable, so
- * suites can still start a classic checkpoint raid (the kind an old save may hold).
- */
-export const raidWorlds = (): RunWorld[] => params().get('test') === '1' ? ['coast', 'buildings', 'mall'] : ['buildings', 'mall'];
-/** Area selected when the page opens. */
-export const defaultWorld = (): RunWorld => sampleMode() === 'mall' ? 'mall' : 'buildings';
 /**
  * The view draws every raid in the save: coast-buildings, mall layouts 1-3 (a raid keeps the layout it deployed on
  * until it ends) and the classic coast's checkpoint raids started before that area closed.
  */
 export const sampleSupports = () => !!app.expansion?.raid || !!app.checkpoint;
-/** Layout revision for a new mall raid: revision 3, the one the view furnishes (older raids keep theirs). */
-export const sampleMallLayout = (world: string): 3 | undefined => world === 'mall' ? 3 : undefined;
-
-/**
- * Playtest deploy with an empty seed field: take the first seed from the clock whose spawn lies in the dressed village
- * corner and whose two exits include the north checkpoint there, so the run starts in the finished area. This is the
- * same choice as typing that seed; spawn and exit rules are untouched. A typed seed is always used as typed.
- */
-export function villageSeed(from = Date.now()): number {
-  const inside = (p: { x: number; y: number }) => p.x >= SAMPLE_AREA.x && p.x < SAMPLE_AREA.x + SAMPLE_AREA.w && p.y >= SAMPLE_AREA.y && p.y < SAMPLE_AREA.y + SAMPLE_AREA.h;
-  for (let seed = from; seed < from + 400; seed++) {
-    const run = generateRunBase(seed);
-    if (inside(run.spawn) && run.exits.some(e => e.id === 'north')) return seed;
-  }
-  return from;
-}
 
 let starting = false;
 let testDriver: unknown = null;
@@ -61,7 +35,7 @@ export async function startCoastSample(paused = false): Promise<boolean> {
   starting = true;
   let created: ReturnType<typeof createCoastRaidHost> | null = null;
   try {
-    enterExternalRun();
+    navigation().enterExternalRun();
     const test = params().get('test') === '1';
     const p = params();
     const opts: ViewOptions = {
@@ -94,7 +68,7 @@ export async function startCoastSample(paused = false): Promise<boolean> {
     app.coastSample = null;
     delete document.documentElement.dataset.coastSample;
     toast('新画面启动失败，行动已保存。刷新后可继续。');
-    changeState('menu');
+    navigation().changeState('menu');
     return false;
   } finally { starting = false; }
 }
@@ -108,7 +82,7 @@ function finish(host: CoastSampleHost) {
   delete document.documentElement.dataset.coastSample;
   // The result screen plays the extract/death cue; a run settled from the pause menu still has audio suspended.
   audio.start();
-  changeState('result');
+  navigation().changeState('result');
 }
 
 function expose(driver: unknown) {
