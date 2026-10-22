@@ -101,6 +101,8 @@ test('runtime metadata reads installed versions without exposing environment sec
   const result = runtimeMetadata({ GITHUB_RUN_ID: '42', GITHUB_RUN_ATTEMPT: '3', GITHUB_SHA: 'b'.repeat(40), TOKEN: 'do-not-record' });
   assert.equal(result.runId, '42'); assert.equal(result.runAttempt, '3'); assert.equal(result.node, process.version);
   assert.match(result.playwright, /^\d+\.\d+\./); assert.match(result.chromium.browserVersion, /^\d+\./);
+  assert.ok(result.cpu.count >= 1); assert.equal(typeof result.cpu.model, 'string'); assert.equal(result.renderer, null);
+  assert.equal(runtimeMetadata({ BINCOV_RENDERER: 'ANGLE (Mesa, Vulkan 1.4 (llvmpipe))' }).renderer, 'ANGLE (Mesa, Vulkan 1.4 (llvmpipe))');
   assert.equal(JSON.stringify(result).includes('do-not-record'), false);
 });
 
