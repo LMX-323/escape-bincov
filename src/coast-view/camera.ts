@@ -13,6 +13,34 @@ export const aimLead = (aim: number, precise: boolean) => {
   return { x: c * r, y: s * r };
 };
 
+/** Share of the pointer's distance from the screen's centring point the precise mouse look-ahead takes before the cap. */
+export const POINTER_LEAD = .35;
+/** A look-ahead as a length along a unit direction. */
+export interface Lead { m: number; ux: number; uy: number }
+/**
+ * Mouse look-ahead (PR #39). Only a precise aim (the right button) looks ahead: along the pointer's offset (qx, qy) from
+ * the point the camera centres on, world px, a share of that distance capped by the PRECISE_LEAD ellipse in that
+ * direction. Without the button the camera stays on the player, so moving the mouse never slides the world under it.
+ * It depends on where the pointer is on screen, never on the aim: a lead that followed the aim fed back into the aim
+ * read through the moving camera and kept turning it after the mouse stopped (up to 29 degrees, or 78 with the right
+ * button). With the player drawn behind the centre along the pointer's own line, a still pointer keeps its aim however
+ * the lead's length eases. Touch keeps aimLead: its aim comes from the stick, not through the camera.
+ */
+export function pointerLead(qx: number, qy: number, precise: boolean): Lead {
+  const d = Math.hypot(qx, qy); if (d < 1e-9) return { m: 0, ux: 1, uy: 0 };
+  const ux = qx / d, uy = qy / d, l = PRECISE_LEAD;
+  return { m: precise ? Math.min(l.x * l.y / Math.hypot(l.y * ux, l.x * uy), POINTER_LEAD * d) : 0, ux, uy };
+}
+/**
+ * One frame of the mouse look-ahead with easing share k: the direction follows the pointer at once and only the length
+ * eases. Turning keeps just the part of the old length along the new direction, so no sideways swing is left to run
+ * after the pointer stops; easing the length moves the camera along the pointer's line and never turns the aim.
+ */
+export function stepLead(prev: Lead, want: Lead, k: number): Lead {
+  const along = Math.max(0, prev.ux * want.ux + prev.uy * want.uy) * prev.m;
+  return { m: along + (want.m - along) * k, ux: want.ux, uy: want.uy };
+}
+
 /** How far the smoothed offset may stray from the held whole-pixel offset before the camera moves. It absorbs the
  *  frame-to-frame wobble of the follow; that wobble stays far below it only while the smoothing runs on the clock the
  *  Runtime moved the player on (host.ts passes those deltas as `follow`). */

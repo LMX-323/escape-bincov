@@ -20,7 +20,7 @@ import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { MALL_V2_REGIONS } from '../mall-layout-v2';
 import { releaseManagedSlots } from './renderer-lifetime';
-import { aimLead, snapAxis, type AxisHold } from './camera';
+import { aimLead, pointerLead, snapAxis, stepLead, type AxisHold, type Lead } from './camera';
 import { viewScale, type ViewScaleMode } from './view-scale';
 
 export const AIM_H = 22;
@@ -131,9 +131,7 @@ export class CoastView {
   private actors = new Map<string, ActorGfx>();
   /** `from`: the drawn muzzle (chest plane) the tracer starts at; `seen`: where the head was first shown (its tail never
    *  reaches back past it, so a tracer leaving a hidden room does not point into it). */
-  private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number; from: Point | null; seen: Point | null }>();
-  /** The followed camera without recoil kick or shake: the pointer aims through this one (see aimFromClient). */
-  private camAim = { x: 0, y: 0 };
+  private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number; from: Point | null; seen: Point | null; off: Point }>();
   private crates = new Map<string, { s: Sprite; shadow: Sprite; empty: boolean; look: 'full' | 'empty' | 'open' }>();
   private loot = new Map<string, Sprite>();
   private muzzles: { s: Sprite; t: number }[] = [];
@@ -145,9 +143,12 @@ export class CoastView {
   private destroyed = false;
 
   cam = { x: 0, y: 0 };
-  /** Smoothed camera; hx/hy are what snapAxis carries per axis (never mutated, only replaced), kept on camF so a probe
-   *  that copies and restores camF reproduces the camera exactly (a rebuild's fresh camF drops them). */
-  private camF: { x: number; y: number; hx?: AxisHold; hy?: AxisHold } = { x: 0, y: 0 };
+  /** Smoothed follow camera (without look-ahead); hx/hy are what snapAxis carries per axis and `lead` the look-ahead (both
+   *  never mutated, only replaced), kept on camF so a probe that copies and restores camF reproduces the camera exactly
+   *  (a rebuild's fresh camF drops them). */
+  private camF: { x: number; y: number; hx?: AxisHold; hy?: AxisHold; lead?: Lead } = { x: 0, y: 0 };
+  /** The mouse pointer (client px) the host aims with this frame, or null while touch aims: picks the look-ahead. */
+  pointer: Point | null = null;
   /** Camera kick opposite the player's shot, settling back within a few frames. */
   private recoil = { x: 0, y: 0 };
   /** Crate whose loot panel is open (set by the host): drawn with its lid up. */
@@ -534,7 +535,14 @@ export class CoastView {
         const a = actor(e.shooter); if (!a) break;
         const tip = this.muzzleOf(a);
         // The tracers of this shot leave the drawn muzzle; a shooter in view also shows them from there on.
-        for (const p of e.pellets) { const b = this.bullets.get(p.bullet); if (b) { b.from = tip?.at ?? null; if (tip && shown(a)) b.seen = tip.at; } }
+        for (const p of e.pellets) {
+          const b = this.bullets.get(p.bullet); if (!b) continue;
+          b.from = tip?.at ?? null;
+          if (!tip) continue;
+          const ux = Math.cos(p.angle), uy = Math.sin(p.angle), vx = tip.at.x - p.origin.x, vy = tip.at.y - (p.origin.y - AIM_H), t = vx * ux + vy * uy;
+          b.off = { x: vx - t * ux, y: vy - t * uy };
+          if (shown(a)) b.seen = tip.at;
+        }
         if (!shown(a)) break;
         const angle = tip?.angle ?? e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
         const art = this.tex.weapon(a.weapon, a.kind), c = Math.cos(angle), s = Math.sin(angle);
@@ -662,8 +670,11 @@ export class CoastView {
     const drift = a.uid === 'player' ? this.last?.hud.aim.drift ?? 0 : 0;
     const angle = a.aim + reload + swing + drift, c = Math.cos(angle), s = Math.sin(angle);
     g.weapon.texture = art.texture; g.weapon.anchor.set(art.pivotX / art.canvas.width, art.pivotY / art.canvas.height);
+    // The barrel lies on the line from the chest along the gun, where the shots fly: an art's barrel row may sit off its
+    // grip pivot (Sol's guns by 3-4 px), so the gun moves across by that much (`off`, in the sprite's flipped frame).
+    const off = a.weapon === 'claw' ? 0 : (this.barrelTip(a.weapon, a.kind).y - art.pivotY) * (Math.cos(a.aim) < 0 ? -1 : 1);
     // Weapon and arms round their offsets, not their positions: on the body's whole pixel they never shimmer against it.
-    g.weapon.position.set(x + Math.round(c * art.forward), y - AIM_H + Math.round(s * art.forward));
+    g.weapon.position.set(x + Math.round(c * art.forward + s * off), y - AIM_H + Math.round(s * art.forward - c * off));
     g.weapon.rotation = angle; g.weapon.scale.set(heldLength(angle), Math.cos(a.aim) < 0 ? -1 : 1);
     g.weapon.zIndex = a.y + (Math.sin(a.aim) < -.35 ? -.05 : .05);
     g.weapon.visible = shown && a.weapon !== 'claw' && !dying;
@@ -732,18 +743,20 @@ export class CoastView {
     for (const b of f.bullets) {
       seen.add(b.uid);
       let e = this.bullets.get(b.uid);
-      if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy, from: null, seen: null }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
+      if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy, from: null, seen: null, off: { x: 0, y: 0 } }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
       e.vx = b.vx; e.vy = b.vy;
       const show = shownAt(this.map!, f.revealed, b);
       const v = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / v, uy = b.vy / v;
-      const hx = Math.round(b.x), hy = Math.round(b.y - AIM_H);
-      if (show && !e.seen) e.seen = { x: b.x, y: b.y - AIM_H };
+      // The tracer runs parallel to the bullet's own path, shifted by `off` so it leaves the drawn muzzle (a pellet's spread
+      // carries it at most a few px from the gun's line there); hits and impacts stay on the bullet itself.
+      const headX = b.x + e.off.x, headY = b.y - AIM_H + e.off.y, hx = Math.round(headX), hy = Math.round(headY);
+      if (show && !e.seen) e.seen = { x: headX, y: headY };
       // A tracer leaves the drawn muzzle: inside the barrel nothing shows, and the tail never reaches back past the muzzle
       // or past where the head was first shown. Without a known muzzle (a bullet already flying at load) it starts where
       // it was first published.
       const start = e.from ?? { x: e.born.x, y: e.born.y - AIM_H };
-      const out = (b.x - start.x) * ux + (b.y - AIM_H - start.y) * uy - (e.from ? 0 : 3);
-      const back = e.seen ? (b.x - e.seen.x) * ux + (b.y - AIM_H - e.seen.y) * uy : 0;
+      const out = (headX - start.x) * ux + (headY - start.y) * uy - (e.from ? 0 : 3);
+      const back = e.seen ? (headX - e.seen.x) * ux + (headY - e.seen.y) * uy : 0;
       const len = Math.min(b.enemy ? 8 : 14, out, back);
       e.g.clear();
       if (len > 0) e.g.moveTo(hx - ux * len, hy - uy * len).lineTo(hx, hy).stroke({ width: 1, color: b.enemy ? 0xe48c64 : 0xffe6a8, alpha: .55 });
@@ -909,23 +922,46 @@ export class CoastView {
     h.visible = true; h.tint = 0xf2deaa; h.alpha = .75 + Math.sin(this.time * 6) * .25;
   }
 
+  /** Half the docked panel's height, world px: the camera centres the player that much higher. */
+  private inset() { return this.panelInset * this.view.dpr / this.view.s / 2; }
+  /** The camera's allowed top-left range. Mall floors end in hoarding or the drop at the map edge: no margin beyond it. */
+  private camBounds() {
+    const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' || isMall(this.map!) ? 0 : 96, top = this.hudTop * this.view.dpr / this.view.s;
+    return { x0: b.x - pad, x1: b.x + b.w + pad - this.view.w, y0: b.y - pad - (pad ? 40 : 0) - top, y1: b.y + b.h + pad - this.view.h };
+  }
+  /** A client point in world px from the canvas's top-left corner. */
+  private canvasPoint(clientX: number, clientY: number): Point {
+    const rect = this.app.canvas.getBoundingClientRect();
+    return { x: (clientX - rect.left) * (this.view.W / Math.max(1, rect.width)) / this.view.s, y: (clientY - rect.top) * (this.view.H / Math.max(1, rect.height)) / this.view.s };
+  }
+  /** The mouse look-ahead a pointer asks for: its offset from the point the camera centres the player's chest on. */
+  private pointerWant(client: Point, precise: boolean): Lead {
+    const c = this.canvasPoint(client.x, client.y);
+    return pointerLead(c.x - this.view.w / 2, c.y - (this.view.h / 2 - this.inset()), precise);
+  }
   private camera(f: ViewFrame, dt: number, follow = dt) {
-    const p = f.player, { x: ax, y: ay } = aimLead(p.aim, p.state.precise);
-    const tx = p.x + ax - this.view.w / 2, ty = p.y - AIM_H + ay - this.view.h / 2 + this.panelInset * this.view.dpr / this.view.s / 2;
-    const k = 1 - Math.exp(-follow * 8), mx = (tx - this.camF.x) * k, my = (ty - this.camF.y) * k;
-    this.camF.x += mx; this.camF.y += my;
-    // Mall floors end in hoarding or the drop at the map edge: no margin beyond it.
-    const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' || isMall(this.map!) ? 0 : 96;
-    const top = this.hudTop * this.view.dpr / this.view.s;
+    const p = f.player, k = 1 - Math.exp(-follow * 8);
+    // The follow eases toward the player's chest; the look-ahead goes on top. With a mouse it comes from the pointer's
+    // place on screen (pointerLead / stepLead: no feedback from the aim); on touch it eases toward the aim's lead.
+    const mx = (p.x - this.view.w / 2 - this.camF.x) * k, my = (p.y - AIM_H - this.view.h / 2 + this.inset() - this.camF.y) * k;
+    const old = this.camF.lead ?? { m: 0, ux: 1, uy: 0 }, ox = old.m * old.ux, oy = old.m * old.uy;
+    let lead: Lead;
+    if (this.pointer) lead = stepLead(old, this.pointerWant(this.pointer, p.state.precise), k);
+    else {
+      const t = aimLead(p.aim, p.state.precise), lx = ox + (t.x - ox) * k, ly = oy + (t.y - oy) * k, m = Math.hypot(lx, ly);
+      lead = m > 1e-9 ? { m, ux: lx / m, uy: ly / m } : { m: 0, ux: 1, uy: 0 };
+    }
+    const lx = lead.m * lead.ux, ly = lead.m * lead.uy;
+    this.camF = { ...this.camF, x: this.camF.x + mx, y: this.camF.y + my, lead };
+    const bd = this.camBounds();
     // Whole-pixel camera on the player's own rounding: a steady walk keeps the player still on screen (playtest F-04).
-    const X = snapAxis(this.camF.x, p.x, b.x - pad, b.x + b.w + pad - this.view.w, this.camF.hx, mx);
-    const Y = snapAxis(this.camF.y, p.y, b.y - pad - (pad ? 40 : 0) - top, b.y + b.h + pad - this.view.h, this.camF.hy, my);
+    const X = snapAxis(this.camF.x + lx, p.x, bd.x0, bd.x1, this.camF.hx, mx + lx - ox);
+    const Y = snapAxis(this.camF.y + ly, p.y, bd.y0, bd.y1, this.camF.hy, my + ly - oy);
     this.camF.hx = { held: X.held, raw: X.raw }; this.camF.hy = { held: Y.held, raw: Y.raw };
     this.shake = Math.max(0, this.shake - dt * 30);
     const settle = Math.exp(-dt * 16); this.recoil.x *= settle; this.recoil.y *= settle;
     const sx = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0, sy = this.shake > .3 ? Math.round((this.rnd() - .5) * this.shake) : 0;
     this.cam = { x: X.at + Math.round(this.recoil.x) + sx, y: Y.at + Math.round(this.recoil.y) + sy };
-    this.camAim = { x: X.at, y: Y.at };
   }
 
   private tintUpright(f: ViewFrame) {
@@ -984,24 +1020,33 @@ export class CoastView {
     return { x: rect.left + (p.x - this.cam.x) * this.view.s * rect.width / Math.max(1, this.view.W), y: rect.top + (p.y - this.cam.y) * this.view.s * rect.height / Math.max(1, this.view.H) };
   }
   /**
-   * The aim of a pointer: from the player's chest to the world point under it, as last drawn but without the recoil
-   * kick and shake, which are drawing only (PR #39: a kick moved the aim up to 2.6 px). The camera that drew the frame
-   * the player saw is the one aimed through.
+   * The aim of a pointer: from the player's chest to the world point under it. It reads through the smoothed camera
+   * (follow plus the look-ahead this pointer is about to ask for), without the whole-pixel rounding, the recoil kick and
+   * the shake, which are drawing only (a kick moved the aim up to 2.6 px; the rounding moves the drawn world under 1 px).
+   * Easing the look-ahead's length then slides the camera along the pointer's line and leaves the aim as it is (PR #39).
+   * Touch never aims through here.
    */
   aimFromClient(clientX: number, clientY: number): number | null {
     const p = this.last?.player; if (!p) return null;
-    const w = this.clientToWorld(clientX, clientY), kx = this.cam.x - this.camAim.x, ky = this.cam.y - this.camAim.y;
-    return Math.atan2(w.y - ky + AIM_H - p.y, w.x - kx - p.x);
+    const at = this.canvasPoint(clientX, clientY), old = this.camF.lead ?? { m: 0, ux: 1, uy: 0 }, bd = this.camBounds();
+    const next = this.pointer ? stepLead(old, this.pointerWant({ x: clientX, y: clientY }, p.state.precise), 0) : old;
+    const clamp = (v: number, lo: number, hi: number) => lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v));
+    const cx = clamp(this.camF.x + next.m * next.ux, bd.x0, bd.x1), cy = clamp(this.camF.y + next.m * next.uy, bd.y0, bd.y1);
+    return Math.atan2(at.y + cy + AIM_H - p.y, at.x + cx - p.x);
   }
   /**
    * The tip of an actor's drawn gun (chest plane, world px) and the direction it points: the weapon art's barrel tip put
    * through the weapon sprite's own transform, so the flash and the tracers leave the barrel the player sees.
    */
+  private barrelTip(weapon: string, kind: ActorKind): Point {
+    const key = `${weapon}:${kind}`;
+    let tip = this.barrelTips.get(key);
+    if (!tip) { tip = barrelTip(this.tex.weapon(weapon, kind).canvas); this.barrelTips.set(key, tip); }
+    return tip;
+  }
   private muzzleOf(a: ActorView): { at: Point; angle: number } | null {
     const g = this.actors.get(a.uid); if (!g || !g.weapon.texture || a.weapon === 'claw') return null;
-    const key = `${a.weapon}:${a.kind}`, art = this.tex.weapon(a.weapon, a.kind);
-    let tip = this.barrelTips.get(key);
-    if (!tip) { tip = barrelTip(art.canvas); this.barrelTips.set(key, tip); }
+    const art = this.tex.weapon(a.weapon, a.kind), tip = this.barrelTip(a.weapon, a.kind);
     const w = g.weapon, c = Math.cos(w.rotation), s = Math.sin(w.rotation);
     const lx = (tip.x - art.pivotX) * w.scale.x, ly = (tip.y - art.pivotY) * w.scale.y;
     return { at: { x: w.x + lx * c - ly * s, y: w.y + lx * s + ly * c }, angle: w.rotation };

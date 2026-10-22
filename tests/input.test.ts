@@ -118,3 +118,15 @@ test('opening loot cancels active touch sticks and does not resume them on point
   assert.ok(input.beginStick('move', 1)); input.moveStick('move', 1, 1, 0);
   assert.equal(read(input).move.x, 1);
 });
+
+test('the touch aim stick reports aimHeld in either ring; a mouse and a released stick never do (PR #39)', () => {
+  const input = new InputState(); input.touch = true;
+  assert.ok(input.beginStick('aim', 7));
+  input.moveStick('aim', 7, .35, 0); let intent = read(input);
+  assert.equal(intent.aimHeld, true); assert.equal(intent.fireHeld, false); assert.equal(intent.precise, false);
+  input.moveStick('aim', 7, .8, 0); intent = read(input);
+  assert.equal(intent.aimHeld, true); assert.equal(intent.fireHeld, true);
+  input.release(7); assert.equal(read(input).aimHeld, false);
+  const mouse = new InputState(); mouse.mouse(2, true); mouse.mouse(0, true);
+  assert.equal(read(mouse).aimHeld, false);
+});

@@ -74,3 +74,12 @@ test('the sample rifle is automatic and kept out of the item and weapon tables a
     assert.equal(Object.hasOwn(D.ITEMS, SAMPLE_GUNS.m4a1.id), false);
     assert.equal(Object.hasOwn(D.WEAPONS, SAMPLE_GUNS.m4a1.id), false);
 });
+
+test('touch: standing with the aim stick inside the fire ring raises the aim, firing past it holds, walking lowers it', () => {
+    const h = handlingOf('pistol', 'brisk'), rules = swayRules('brisk'), a = aim();
+    advanceAim(a, h, rules, h.raise / 2, { pace: 0, sprint: false, precise: false, hold: 'aim' }); assert.ok(near(a.raise, .5));
+    advanceAim(a, h, rules, h.raise, { pace: 0, sprint: false, precise: false, hold: 'fire' }); assert.ok(near(a.raise, .5), 'firing holds the raise');
+    advanceAim(a, h, rules, h.raise / 8, { pace: .8, sprint: false, precise: false, hold: 'aim' }); assert.ok(near(a.raise, .25), 'walking lowers it');
+    advanceAim(a, h, rules, h.raise, { pace: 0, sprint: false, precise: false, hold: 'aim' }); assert.equal(a.raise, 1);
+    advanceAim(a, h, rules, h.raise / 4, { pace: .8, sprint: false, precise: false, hold: 'fire' }); assert.ok(near(a.raise, .5), 'firing on the move does not hold it');
+});

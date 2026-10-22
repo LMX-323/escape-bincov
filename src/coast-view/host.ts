@@ -314,6 +314,8 @@ export class CoastSampleHost {
     const follow = this.frameAt === null ? this.app.ticker.deltaMS / 1000 : Math.min(.1, Math.max(0, (t0 - this.frameAt) / 1000));
     this.frameAt = t0;
     const playing = this.panel === null;
+    // The mouse look-ahead follows the pointer's place on screen (none while touch aims); the aim reads through it.
+    this.view.pointer = this.input.touch ? null : { x: this.input.pointer.x, y: this.input.pointer.y };
     const intent = this.input.read(playing, (x, y) => this.view.aimFromClient(x, y));
     if (intent.firePressed) this.sound.trigger(this.last?.frame.hud.weapon);
     const note = playing && intent.interactPressed && this.last?.frame.interaction?.kind === 'note' ? this.last.frame.interaction.ref.id : null;

@@ -19,7 +19,7 @@ import type { LootContainer, LootTransfer } from '../loot';
 import type { RaidRuntime, RaidIntent, PublishedView, WorldKey, MapDef, StampedEvent, ViewEventBody, Durability, WeaponLook, TargetRef, Interaction, HurtCause } from './contract';
 import { mapView, frameView, freeze, Revelation, bulletOwner } from './presentation';
 export const emptyIntent = (): RaidIntent => ({ move: { x: 0, y: 0, sprint: false }, aim: null, precise: false,
-    firePressed: false, fireHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null, source: 'mouse-keyboard' });
+    firePressed: false, fireHeld: false, aimHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null, source: 'mouse-keyboard' });
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const wrap = (angle: number) => ((angle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
@@ -852,7 +852,9 @@ export class CoastRaidRuntime implements RaidRuntime {
             turned = Math.abs(wrap(this.player.rotation - before));
         }
         const walked = Math.hypot(this.player.x - beforeMove.x, this.player.y - beforeMove.y);
-        this.runTrigger(dt, beforeMove, { pace: dt > 0 ? walked / (B.walkSpeed * dt) : 0, sprint, precise: input && frame.precise && !this.inputSuppressed }, turned);
+        const steady = input && !this.inputSuppressed, stick = steady && this.intent.source === 'touch' && this.intent.aimHeld;
+        this.runTrigger(dt, beforeMove, { pace: dt > 0 ? walked / (B.walkSpeed * dt) : 0, sprint, precise: steady && frame.precise,
+            hold: stick ? this.intent.fireHeld ? 'fire' : 'aim' : undefined }, turned);
         const flooded = this.mapData.tiles[Math.floor(this.player.y / TILE)]?.[Math.floor(this.player.x / TILE)] === 4;
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);

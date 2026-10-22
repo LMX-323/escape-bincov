@@ -340,6 +340,11 @@ export type RaidIntent = Readonly<{
     firePressed: boolean;
     /** The trigger is held: the touch aim stick past its fire ring, or the left button outside the phone layout. */
     fireHeld: boolean;
+    /**
+     * The touch aim stick is in use (either ring). Standing with it inside the fire ring raises a precise aim, and past
+     * the ring the raise holds; unlike `precise` it neither slows the walk nor widens the view (maintainer, 2026-10-22).
+     */
+    aimHeld: boolean;
     interactPressed: boolean;
     interactHeld: boolean;
     commands: readonly ('reload' | 'heal' | 'primary' | 'knife')[];

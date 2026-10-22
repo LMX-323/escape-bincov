@@ -178,3 +178,17 @@ test('shooting bench: chance that one pellet crosses a 14 px dummy, from the pub
     }
     assert.ok(LANE.aim === 0);
 });
+
+test('shooting bench: touch aim stick held inside the ring raises the aim like the right button; past it the shots keep it', () => {
+    const inner: Script = () => ({ aimHeld: true, source: 'touch' });
+    const raised = replay(arm(benchRaid(), 'carbine'), inner, .5, 60).aims.at(-1)!;
+    assert.equal(raised.raise, 1);
+    const precise = replay(arm(benchRaid(), 'carbine'), () => ({ precise: true }), .5, 60).aims.at(-1)!;
+    assert.ok(Math.abs(raised.cone - precise.cone) < 1e-12, 'the same cone as a raised right-button aim');
+    // Inside the ring for .4 s, then past it: the shots go out with the aim still raised.
+    const log = replay(arm(benchRaid(), 'carbine'), t => ({ aimHeld: true, fireHeld: t >= .4, source: 'touch' }), 1.2, 60);
+    assert.ok(log.shots.length >= 3 && log.aims.filter(a => a.t >= .4).every(a => a.raise === 1));
+    // Walking with the stick held lowers it.
+    const walk = replay(arm(benchRaid(), 'carbine'), t => ({ aimHeld: true, source: 'touch', move: { x: 0, y: t >= .5 ? 1 : 0, sprint: false } }), .8, 60);
+    assert.ok(walk.aims.at(-1)!.raise < .1);
+});

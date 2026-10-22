@@ -45,8 +45,13 @@ export interface AimState {
 }
 export const unsteadyAim = (): AimState => ({ raise: 0, sway: 1, bloom: 1, drift: 0, settle: 0 });
 
-/** What the shooter did over an interval: distance walked as a share of walk speed, sprint, and the precise button. */
-export interface Motion { pace: number; sprint: boolean; precise: boolean }
+/**
+ * What the shooter did over an interval: distance walked as a share of walk speed, sprint, the precise button, and the
+ * touch aim stick (`hold`: inside the fire ring 'aim', past it 'fire').
+ */
+export interface Motion { pace: number; sprint: boolean; precise: boolean; hold?: 'aim' | 'fire' }
+/** Below this pace the shooter counts as standing still (a share of walk speed). */
+const STILL = .05;
 
 const SWAY: Record<Feel, SwayRules> = {
     brisk: { walk: .5, sprint: 1, up: 10, down: 5, turn: .35, draw: .6 },
@@ -97,8 +102,11 @@ export function playtestMarks(search: string): { feel: Feel | null; gun: 'm4a1' 
 /** Advance an aim over `seconds` of unchanged motion. Mutates and returns `aim`. */
 export function advanceAim(aim: AimState, h: Handling, rules: SwayRules, seconds: number, motion: Motion): AimState {
     if (seconds <= 0) return aim;
-    // A precise aim rises over `raise` seconds and drops twice as fast; sprinting lowers it.
-    aim.raise = motion.precise && !motion.sprint ? Math.min(1, aim.raise + seconds / h.raise) : Math.max(0, aim.raise - 2 * seconds / h.raise);
+    // A precise aim rises over `raise` seconds and drops twice as fast; sprinting lowers it. On touch, standing with the
+    // aim stick inside the fire ring raises it and firing past the ring holds it; walking lowers it (maintainer, 2026-10-22).
+    const standing = motion.pace < STILL && !motion.sprint;
+    const up = !motion.sprint && (motion.precise || standing && motion.hold === 'aim'), keep = standing && motion.hold === 'fire';
+    aim.raise = up ? Math.min(1, aim.raise + seconds / h.raise) : keep ? aim.raise : Math.max(0, aim.raise - 2 * seconds / h.raise);
     const target = Math.min(1, Math.min(1, motion.pace) * rules.walk + (motion.sprint ? rules.sprint : 0));
     aim.sway = target + (aim.sway - target) * Math.exp(-(aim.sway < target ? rules.up : rules.down) * seconds);
     const quiet = Math.max(0, seconds - aim.settle);
