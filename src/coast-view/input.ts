@@ -4,6 +4,16 @@ type Action = 'reload' | 'heal' | 'primary' | 'knife' | 'interact';
 type Stick = { id: number; x: number; y: number; distance: number };
 const ACTION_KEYS: Record<string, Action> = { r: 'reload', q: 'heal', '1': 'primary', '2': 'knife', e: 'interact' };
 
+/** The InputState name of a key event, the same for its press and release. Letters, digits and Shift go by the physical
+ *  key (e.code): with Shift held a US layout reports 2 as "@" and a 1 released as "!", and AZERTY digits are symbols
+ *  without it. Other keys keep e.key. */
+export function inputKey(e: Pick<KeyboardEvent, 'key' | 'code'>): string {
+  if (/^Key[A-Z]$/.test(e.code)) return e.code.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(e.code)) return e.code.slice(5);
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return 'shift';
+  return e.key;
+}
+
 export class InputState {
   touch = false;
   pointer = { x: innerWidth / 2, y: innerHeight / 2, inside: false };
@@ -69,7 +79,9 @@ export class InputState {
         y: movingStick ? movingStick.y : Number(this.keys.has('s')) - Number(this.keys.has('w')),
         sprint: movingStick ? movingStick.distance >= .9 : this.keys.has('shift'),
       },
-      aim: this.touch ? (aimingStick ? Math.atan2(aimingStick.y, aimingStick.x) : null) : aimFromPointer(this.pointer.x, this.pointer.y),
+      // Touch follows the twin-stick convention: with the aim stick idle the body faces where the move stick walks
+      // (issue #26 F08). Firing below still needs the aim stick.
+      aim: this.touch ? (aimingStick ? Math.atan2(aimingStick.y, aimingStick.x) : movingStick ? Math.atan2(movingStick.y, movingStick.x) : null) : aimFromPointer(this.pointer.x, this.pointer.y),
       precise: !aimingStick && this.precise,
       firePressed: this.pressed,
       fireHeld: !!aimingStick && aimingStick.distance >= .62,

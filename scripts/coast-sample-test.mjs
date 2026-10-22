@@ -3,7 +3,8 @@
 // action goes through real input, the v1 port and the Runtime transaction services. Storage faults patch the real
 // localStorage write for the session key.
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -14,8 +15,13 @@ const managed = page => page.evaluate(readManagedTablesSource => (0,eval)('('+re
 const pixiEvents = page => page.evaluate(source => (0,eval)('('+source+')')(window.__bincovSample.host.app.renderer), readPixiEvents.toString());
 
 const out = resolve(process.env.BINCOV_SAMPLE_OUT || 'test-results/coast-sample'); await mkdir(out, { recursive: true });
-const url = pathToFileURL(resolve(process.env.BINCOV_SAMPLE_HTML || 'dist/index.html')).href;
-const report = { startedAt: new Date().toISOString(), seed: '42', steps: [], errors: [], requests: [] };
+const htmlPath = resolve(process.env.BINCOV_SAMPLE_HTML || 'dist/index.html'), url = pathToFileURL(htmlPath).href;
+const buildSHA256 = createHash('sha256').update(await readFile(htmlPath)).digest('hex');
+// --group=animation keeps the complete V03/V04 death flow, the F08 gait check, the V-CAM camera check and V10/V11
+// feedback/tide flow (eight checks).
+const group = process.argv.find(a => a.startsWith('--group='))?.slice(8);
+assert.ok(group === undefined || group === 'animation', 'unknown test group');
+const report = { startedAt: new Date().toISOString(), build: url, buildSHA256, seed: '42', group: group ?? 'all', steps: [], errors: [], requests: [] };
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function step(name, task) {
@@ -76,12 +82,12 @@ const roomPixels = (page, compare, leak = false) => page.evaluate(([r, compare, 
   return { size: [x1 - x0, y1 - y0], changed };
 }, [ROOM, compare, leak]);
 
-{ // Desktop flow: one run through every wiring point, ending in a settlement
+if (!group) { // Desktop flow: one run through every wiring point, ending in a settlement
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
-  await step('W00 sample deploy mounts the Pixi host on the real Runtime; RaidScene never starts', async () => {
+  await step('W00 sample deploy mounts the Pixi host on the real Runtime', async () => {
     await deploy(page);
-    const s = await page.evaluate(() => ({ state: window.__bincov.app.state, raid: !!window.__bincov.app.raid, world: window.__bincovSample.host.lastBatch.stamp.world, roots: document.querySelectorAll('.coast-sample').length }));
-    assert.equal(s.state, 'run'); assert.equal(s.raid, false); assert.equal(s.world.worldVersion, 'coast-buildings-v1'); assert.equal(s.roots, 1);
+    const s = await page.evaluate(() => ({ state: window.__bincov.app.state, world: window.__bincovSample.host.lastBatch.stamp.world, roots: document.querySelectorAll('.coast-sample').length }));
+    assert.equal(s.state, 'run'); assert.equal(s.world.worldVersion, 'coast-buildings-v1'); assert.equal(s.roots, 1);
     return s;
   });
   await step('W01 holding the left mouse button fires once (press edge)', async () => {
@@ -469,7 +475,8 @@ const roomPixels = (page, compare, leak = false) => page.evaluate(([r, compare, 
 // Real Runtime deaths (driver.kill -> damageEnemy, so hurt/death events, kills and the corpse container are the game's own)
 // watched from inside the view: the real present runs unchanged and each watched actor's graphics are read after it.
 // Nothing primes deathT, injects or reorders events, or removes corpses. `strip` also crops the composited target through
-// one actor's fall, and holds the ticker once mid-fall so the page itself can be screenshotted.
+// one actor's fall. Pixel readbacks stall software renderers, so V03 records natural frames separately and advances its
+// pixel contract at an explicit 1/60s view delta with the automatic ticker stopped. Runtime kills and events remain real.
 const watchDeaths = (page, uids, strip = null) => page.evaluate(([uids, strip]) => {
   const h = window.__bincovSample.host, v = h.view, present = Object.getPrototypeOf(v).present, log = window.__deaths = { rows: [], crops: [], hold: false };
   v.present = function (batch, dt) {
@@ -488,7 +495,6 @@ const watchDeaths = (page, uids, strip = null) => page.evaluate(([uids, strip]) 
     }
   };
 }, [uids, strip]);
-const releaseHold = page => page.evaluate(() => { window.__deaths.hold = false; window.__bincovSample.host.app.ticker.start(); });
 const endWatch = page => page.evaluate(() => {
   const v = window.__bincovSample.host.view, log = window.__deaths; delete v.present; delete window.__deaths;
   const data = c => c.getContext('2d').getImageData(0, 0, 216, 216).data, base = log.crops[0] && data(log.crops[0].canvas);
@@ -510,7 +516,7 @@ const deadGraphics = page => page.evaluate(() => {
 const noFall = (rows, label) => { for (const r of rows) assert.ok(r.deathT === 0 && r.rotation === 0 && !r.body && !r.weapon, `${label}: ${JSON.stringify(r)}`); };
 
 // Playtest readability (round 5): held-weapon arms, recognisable ground loot, the exit hold ring and the docked panels.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   await step('V05 readability: arms end on the weapon grip, ground loot uses the item icon, the exit ring draws no stray line, docked loot keeps the player in view', async () => {
@@ -524,7 +530,7 @@ const noFall = (rows, label) => { for (const r of rows) assert.ok(r.deathT === 0
       arms.push(await page.evaluate(() => { const v = window.__bincovSample.host.view, g = v.actors.get('player'), a = g.arms[0];
         return { gap: Math.hypot(a.x + Math.cos(a.rotation) * a.scale.x - g.weapon.x, a.y + Math.sin(a.rotation) * a.scale.x - g.weapon.y), visible: a.visible, weapon: g.weapon.visible, len: a.scale.x }; }));
     }
-    for (const a of arms) { assert.ok(a.gap < 1.5, `arm reaches the grip: ${JSON.stringify(a)}`); assert.equal(a.visible, a.weapon); }
+    for (const a of arms) { assert.ok(a.gap < .01, `arm reaches the grip: ${JSON.stringify(a)}`); assert.equal(a.visible, a.weapon); }
     const loot = await page.evaluate(() => { const v = window.__bincovSample.host.view; return [...v.loot.values()].slice(0, 20).map(s => [s.texture.width, s.texture.height]); });
     assert.ok(loot.length > 0 && loot.every(([w, h]) => w === 28 && h === 27), `ground loot uses the 24 px item icon plate: ${JSON.stringify(loot.slice(0, 3))}`);
     // Exit hold: the progress ring must stay inside its own circle (no line from the world origin).
@@ -561,18 +567,37 @@ for (const art of ['sol', 'placeholder']) {
     assert.equal((await page.evaluate(() => window.__bincovSample.counts())).art, art);
     const uid = 'enemy-3'; // a rifleman: the held weapon must leave with the fall
     // Inside the village sample, so the Sol mode draws its own ground around the fall (enemy bodies are procedural in both modes).
-    await place(page, 640, 456, 0, 'coast'); await putEnemy(uid, 704, 456); await frames(page, 8); await savable();
+    await place(page, 640, 456, 0, 'coast'); await putEnemy('enemy-6', 768, 456); await frames(page, 8); await savable();
+    // Observe a separate real kill without GPU readbacks, a stopped ticker or a substituted delta. This observation
+    // cannot certify hardware performance; retain its natural fall-frame count even when the pixel contract passes.
+    assert.equal(await shownNow('enemy-6'), true, 'the natural observation starts with an enemy in view');
+    await watchDeaths(page, ['enemy-6']); await kill('enemy-6'); await frames(page, 20);
+    const naturalRows = (await endWatch(page)).rows.filter(r => !r.alive);
+    const naturalFallFrames = naturalRows.filter(r => !r.hasCorpse).length;
+    const natural = { frames: naturalRows.length, fallFrames: naturalFallFrames, originalMinimumFallFrames: 3, meetsOriginalMinimum: naturalFallFrames >= 3, deltas: naturalRows.map(r => r.dt) };
+    await putEnemy(uid, 704, 456); await frames(page, 8); await savable();
     assert.equal(await shownNow(uid), true, 'the enemy stands in view before the kill');
-    await watchDeaths(page, [uid], uid); await kill(uid);
-    // Without a fall (the OPUS-DEATH-01 defect) the hold never comes: stop waiting once the corpse is up and let the asserts say why.
-    await page.waitForFunction(() => { const d = window.__deaths; return d.hold || d.rows.some(r => !r.alive && r.hasCorpse && r.deathT === 0); });
-    if (await page.evaluate(() => window.__deaths.hold)) {
-      await page.evaluate(() => window.__bincovSample.host.app.render());
-      await page.screenshot({ path: resolve(out, `death-midfall-${art}.png`) }); await releaseHold(page);
+    const previousDelta = await page.evaluate(() => { const t = window.__bincovSample.host.app.ticker; t.stop(); return t.deltaMS; });
+    let w;
+    try {
+      await watchDeaths(page, [uid], uid); await kill(uid);
+      for (let i = 0; i < 60; i++) {
+        const probe = await page.evaluate(() => {
+          const h = window.__bincovSample.host; h.app.ticker.deltaMS = 1000 / 60; h.frame(); h.app.render();
+          const d = window.__deaths; return { hold: d.hold, done: d.crops.length === 6 || d.rows.some(r => !r.alive && r.hasCorpse && r.deathT === 0) };
+        });
+        if (probe.hold) {
+          await page.screenshot({ path: resolve(out, `death-midfall-${art}.png`) });
+          await page.evaluate(() => { window.__deaths.hold = false; });
+        }
+        if (probe.done) break;
+      }
+      await page.screenshot({ path: resolve(out, `death-corpse-${art}.png`) });
+      w = await endWatch(page);
+    } finally {
+      await page.evaluate(delta => { const h = window.__bincovSample.host; delete h.view.present; delete window.__deaths; h.app.ticker.deltaMS = delta; h.app.ticker.start(); }, previousDelta);
     }
-    await page.waitForFunction(() => { const d = window.__deaths; return d.crops.length === 6 || d.rows.filter(r => !r.alive).length >= 60; });
-    await page.screenshot({ path: resolve(out, `death-corpse-${art}.png`) });
-    const w = await endWatch(page); await saveStrip(w, `death-fall-${art}.png`);
+    await saveStrip(w, `death-fall-${art}.png`);
     const dead = w.rows.filter(r => !r.alive), first = dead[0], dying = dead.filter(r => !r.hasCorpse), lying = dead.filter(r => r.hasCorpse);
     assert.equal(first.death, true, 'the first dead frame carries the real death event');
     assert.ok(first.deathT > 0 && first.body && !first.weapon && !first.hasCorpse, `the death frame starts the fall, not the corpse: ${JSON.stringify(first)}`);
@@ -585,7 +610,7 @@ for (const art of ['sol', 'placeholder']) {
     assert.ok(lying[0].deathT >= .16 && lying.every(r => r.corpse && !r.body && !r.weapon && r.shown), 'then only the corpse shows');
     assert.equal(w.crops.length, 6); assert.ok(w.crops[3].changedFromDeathFrame > 0 && !w.crops[3].corpse, 'the tipped body renders differently from the death frame');
     await savable();
-    return { art, deathFrame: first, fallFrames: dying.length, rotations: dying.map(r => +r.rotation.toFixed(3)), handoffDeathT: lying[0].deathT, facing, crops: w.crops };
+    return { art, sampling: { controlledViewDelta: 1 / 60, natural }, deathFrame: first, fallFrames: dying.length, rotations: dying.map(r => +r.rotation.toFixed(3)), handoffDeathT: lying[0].deathT, facing, crops: w.crops };
   });
   await step(`V04 ${art}: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload`, async () => {
     const hidden = 'enemy-12', indoor = 'enemy-21';
@@ -633,9 +658,107 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
+// Issue #26 F08 gait, aiming east. The view is driven with copies of the live batch whose player carries the aim and
+// velocity under test (the V02 pattern: ticker stopped, explicit 0.05 s view delta), so the Runtime, input and save never
+// see the fixture. The negative control is this same step run against the pre-F08 build (BINCOV_SAMPLE_HTML pointing
+// at the e9cbaa5 dist/index.html), where it must fail; nothing in this step re-derives the old rule from the new build.
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=village');
+  await deploy(page);
+  await step('F08 gait: backpedalling plays short reversed steps 3,0,1,0 on the aim\'s body; strafing turns the body 45 deg toward the movement (S: SE, N: NE); forward, standing and a fall are unchanged', async () => {
+    await page.evaluate(() => window.__bincovSample.driver.weapon('carbine'));
+    await place(page, 640, 456, 0, 'coast'); await page.mouse.move(640 + 220, 360); await frames(page, 12);
+    const NAMES = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+    const CASES = { forward: [112, 0], backpedal: [-112, 0], strafeS: [0, 112], strafeN: [0, -112] };
+    const result = {};
+    await page.evaluate(() => { window.__gaitCrops = []; });
+    for (const [name, [vx, vy]] of Object.entries(CASES)) {
+      result[name] = await page.evaluate(([name, vx, vy]) => {
+        const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
+        const textures = []; for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) textures.push([d, f, v.tex.actor('player', d, f)]);
+        const read = () => { const t = textures.find(e => e[2] === g.body.texture); return t ? [t[0], t[1]] : [-1, -1]; };
+        const batch = (vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, vx, vy } } });
+        const cam = { ...v.camF }, rows = [], k = v.view.k;
+        // A walk starting from a standstill, as the view meets it after any stop (sense is the new field; harmless before).
+        v.camF = { ...cam }; v.shake = 0; v.present(batch(0, 0), 0); g.walk = 0; g.sense = 1;
+        for (let i = 0; i < 16; i++) {
+          v.camF = { ...cam }; v.shake = 0; v.present(batch(vx, vy), .05); h.app.render();
+          const [dir, frame] = read(), walk = g.walk, phase = Math.floor(walk);
+          rows.push({ walk: +walk.toFixed(3), dir, frame });
+          if (rows.length === 1 || phase !== Math.floor(rows.at(-2).walk)) {
+            if (window.__gaitCrops.filter(c => c.name === name).length < 4) {
+              const c = document.createElement('canvas'); c.width = c.height = 216; const cg = c.getContext('2d'); cg.imageSmoothingEnabled = false;
+              cg.drawImage(h.app.renderer.extract.canvas(v.upRT), Math.round((p.x - 36 - v.cam.x) * k), Math.round((p.y - 60 - v.cam.y) * k), 72 * k, 72 * k, 0, 0, 216, 216);
+              window.__gaitCrops.push({ name, dir, frame, canvas: c });
+            }
+          }
+        }
+        return rows;
+      }, [name, vx, vy]);
+      // The last frame is still on the canvas (ticker stopped): a full 1280x720 view of the gait.
+      if (name === 'backpedal' || name === 'strafeS') await page.screenshot({ path: resolve(out, `gait-${name}-1280x720.png`) });
+      // Standing again: the body returns to the aim with the idle frame.
+      result[name + 'Stop'] = await page.evaluate(() => {
+        const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid);
+        v.present({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, vx: 0, vy: 0 } } }, .05);
+        let found = [-1, -1]; for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) if (v.tex.actor('player', d, f) === g.body.texture) found = [d, f];
+        h.app.ticker.start();
+        return { dir: found[0], frame: found[1], sense: g.sense ?? null };
+      });
+    }
+    // Killed mid-strafe: the death batch still carries the velocity of the step the player died in. The fall must start
+    // on the aim's body (E), as before F08, not on the hip-turned SE body for one frame and then jump to E.
+    const killed = await page.evaluate(() => {
+      const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get(p.uid); h.app.ticker.stop();
+      const read = () => { for (let d = 0; d < 8; d++) for (let f = 0; f <= 4; f++) if (v.tex.actor('player', d, f) === g.body.texture) return [d, f]; return [-1, -1]; };
+      const batch = (alive, vx, vy) => ({ ...b, events: [], frame: { ...b.frame, player: { ...p, aim: 0, alive, vx, vy } } });
+      const cam = { ...v.camF }, rows = [];
+      const show = (alive, vx, vy) => { v.camF = { ...cam }; v.shake = 0; v.present(batch(alive, vx, vy), .05); rows.push({ alive, dir: read()[0], frame: read()[1], deathT: +g.deathT.toFixed(3) }); };
+      v.camF = { ...cam }; v.present(batch(true, 0, 0), 0); g.walk = 0; g.sense = 1;
+      for (let i = 0; i < 4; i++) show(true, 0, 112);
+      // The fall starts as the death event starts it in present() (deathT just above 0), still inside FALL_T for both frames.
+      g.deathT = .0001; show(false, 0, 112); show(false, 0, 0);
+      // Back to the live fixture: no fall, standing on the aim.
+      g.deathT = 0; v.camF = { ...cam }; v.present(batch(true, 0, 0), .05); h.app.ticker.start();
+      return rows;
+    });
+    const strip = await page.evaluate(([names]) => {
+      const crops = window.__gaitCrops, order = ['forward', 'backpedal', 'strafeS', 'strafeN'];
+      const label = { forward: 'forward (move E)', backpedal: 'backpedal (move W)', strafeS: 'strafe (move S)', strafeN: 'strafe (move N)' };
+      const s = document.createElement('canvas'); s.width = 170 + 4 * 216; s.height = 28 + order.length * 240; const g = s.getContext('2d'); g.imageSmoothingEnabled = false;
+      g.fillStyle = '#111'; g.fillRect(0, 0, s.width, s.height); g.fillStyle = '#fff'; g.font = '13px monospace';
+      g.fillText('aim E (0 rad); one crop per walk phase, 0.05 s view steps at 112 px/s', 6, 18);
+      order.forEach((n, r) => {
+        g.fillText(label[n], 6, 28 + r * 240 + 120);
+        crops.filter(c => c.name === n).forEach((c, i) => { g.drawImage(c.canvas, 170 + i * 216, 28 + r * 240 + 20); g.fillText(`body ${names[c.dir] ?? '?'} f${c.frame}`, 176 + i * 216, 28 + r * 240 + 14); });
+      });
+      delete window.__gaitCrops;
+      return s.toDataURL();
+    }, [NAMES]);
+    await writeFile(resolve(out, 'gait-strip.png'), Buffer.from(strip.split(',')[1], 'base64'));
+    const runs = rows => rows.map(r => r.frame).filter((f, i, a) => i === 0 || f !== a[i - 1]);
+    const back = [3, 0, 1, 0], phase = r => Math.floor(r.walk);
+    const summary = Object.fromEntries(Object.keys(CASES).map(n => [n, { dirs: [...new Set(result[n].map(r => NAMES[r.dir] ?? r.dir))], frames: runs(result[n]) }]));
+    // Forward: the body stays E and plays the 1-4 cycle, unchanged from before F08.
+    assert.ok(result.forward.every(r => r.dir === 0 && r.frame === 1 + phase(r)), `forward ${JSON.stringify(result.forward)}`);
+    assert.deepEqual(runs(result.forward), [1, 2, 3, 4, 1]);
+    // Backpedal: the body stays on the aim (E) and plays the short reversed steps.
+    assert.ok(result.backpedal.every(r => r.dir === 0 && r.frame === back[phase(r)]), `backpedal ${JSON.stringify(result.backpedal)}`);
+    assert.deepEqual(runs(result.backpedal), [3, 0, 1, 0, 3]);
+    // Strafes: the hips turn one sector toward the movement, with a forward cycle.
+    assert.ok(result.strafeS.every(r => r.dir === 1 && r.frame === 1 + phase(r)), `strafe S ${JSON.stringify(result.strafeS)}`);
+    assert.ok(result.strafeN.every(r => r.dir === 7 && r.frame === 1 + phase(r)), `strafe N ${JSON.stringify(result.strafeN)}`);
+    for (const n of Object.keys(CASES)) assert.deepEqual(result[n + 'Stop'], { dir: 0, frame: 0, sense: 1 }, `${n}: standing again`);
+    assert.ok(killed.slice(0, 4).every(r => r.alive && r.dir === 1), `strafing before the death: SE body ${JSON.stringify(killed)}`);
+    assert.deepEqual(killed.slice(4).map(r => [r.alive, r.dir, r.frame, r.deathT > 0 && r.deathT < .16]), [[false, 0, 0, true], [false, 0, 0, true]], `killed mid-strafe: the fall stays on the aim's body ${JSON.stringify(killed)}`);
+    summary.killedMidStrafe = killed.map(r => `${r.alive ? 'alive' : 'falling'} ${NAMES[r.dir] ?? r.dir} f${r.frame}`);
+    return summary;
+  });
+  await context.close();
+}
 // Round 6 (experience pass): combat feedback, the exit pointer, the stateless atmosphere and the end-of-run outro.
 // Fixtures only place actors, doors and the player; shots, keys and panels are real input.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   const screenOf = (x, y) => page.evaluate(([x, y]) => { const v = window.__bincovSample.host.view, r = document.querySelector('.coast-sample canvas').getBoundingClientRect(); return { x: r.left + (x - v.cam.x) * v.view.s / v.view.dpr, y: r.top + (y - v.cam.y) * v.view.s / v.view.dpr }; }, [x, y]);
@@ -797,7 +920,7 @@ for (const art of ['sol', 'placeholder']) {
 }
 // The outro after a saved settlement: the player's own fall plays to the corpse under the curtain (OPUS-DEATH-02), with
 // no further simulation; the canvas grading is cleared for the next mount.
-{
+if (!group) {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
   await step('V11b low tide (seed 42): the Runtime floods nothing and nothing is drawn as tidal water by the tide strip', async () => {
@@ -857,18 +980,34 @@ for (const art of ['sol', 'placeholder']) {
       const ev = (cause, damage, angle = null) => ({ type: 'hurt', cause, uid: 'player', at: { x: b().frame.player.x, y: b().frame.player.y }, damage, critical: false, angle, seq: 0, stamp: b().stamp, durability: 'accepted' });
       const read = () => ({ chips: [...document.querySelectorAll('[data-drain] i')].map(i => i.textContent), ail: +document.querySelector('[data-ail]').style.opacity || 0, tint: document.querySelector('[data-ail]').style.getPropertyValue('--ail'), edge: +document.querySelector('[data-hurt]').style.opacity || 0 });
       const flashOf = e => { const g = v.actors.get('player'); g.flashT = 0; v.present({ ...b(), events: [e] }, 0); return g.flashT; };
-      const out = { start: read() };
-      let feeding = null; const feed = () => { if (feeding) for (const [c, perSecond] of feeding) h.feedback(ev(c, perSecond * h.app.ticker.deltaMS / 1000), b()); };
+      const out = { start: read(), sampling: { blowPresentationDelta: 0, clock: 'delivered Pixi ticker delta; wall time reported separately', stages: {} } };
+      let feeding = null, presented = 0, ticks = 0;
+      const feed = () => {
+        const dt = h.app.ticker.deltaMS / 1000; presented += dt; ticks++;
+        if (feeding) for (const [c, perSecond] of feeding) h.feedback(ev(c, perSecond * dt), b());
+      };
       h.app.ticker.add(feed);
-      // Waits are in time, not frames: the page may run at 60 or 165 Hz.
-      const forMs = async ms => { const t0 = performance.now(); while (performance.now() - t0 < ms) await frame(); };
-      feeding = [['bleed', 1.2], ['pollution', .5]]; await forMs(2000); out.during = read();
+      // Feedback ages by ticker delta, which Pixi caps on slow software renderers. Waiting 1.5 wall seconds
+      // can deliver less than the .8-second hold. Measure the actual presentation clock, keep the original
+      // expiry assertions and report wall time separately; this is not a natural-frame performance pass.
+      const forSeconds = async (name, seconds) => {
+        const p0 = presented, t0 = performance.now(), f0 = ticks;
+        while (presented - p0 < seconds) {
+          if (performance.now() - t0 > 30000) throw Error(`No bounded presentation progress for ${name}`);
+          await frame();
+        }
+        out.sampling.stages[name] = { presentationSeconds: presented - p0, wallMs: performance.now() - t0, ticks: ticks - f0 };
+      };
+      feeding = [['bleed', 1.2], ['pollution', .5]]; await forSeconds('during', 2); out.during = read();
       // Hold the feed while the test takes a screenshot of the readout.
       window.__drainShot = 'ready'; while (window.__drainShot !== 'taken') await frame();
-      feeding = null; await forMs(1500); out.after = read();
+      feeding = null; await forSeconds('after', 1.5); out.after = read();
       h.feedback(ev('limit-change', 3), b()); await frame(); await frame(); out.limit = read();
-      await forMs(3400); out.limitAfter = read();
-      h.feedback(ev('blow', .4, 1), b()); await frame(); out.blow = read();
+      await forSeconds('limitAfter', 3.4); out.limitAfter = read();
+      // Sample the event's own presentation before any arbitrary rAF delay decays the pulse. This is the same real
+      // feedback path as above; a zero elapsed interval does not advance simulation or age an effect before reading it.
+      h.feedback(ev('blow', .4, 1), b()); h.feedbackFrame(b(), 0); out.blow = read();
+      await forSeconds('blowAfter', 1.2); out.blowAfter = read();
       h.app.ticker.remove(feed);
       out.flash = Object.fromEntries(['bleed', 'pollution', 'dehydration', 'starvation', 'limit-change', 'blow'].map(c => [c, flashOf(ev(c, c === 'blow' ? .4 : 2, c === 'blow' ? 1 : null))]));
       return out;
@@ -889,6 +1028,7 @@ for (const art of ['sol', 'placeholder']) {
     assert.deepEqual(r.after.chips, []); assert.equal(r.after.ail, 0);
     assert.deepEqual(r.limit.chips, ['生命上限下降 -3.0']); assert.deepEqual(r.limitAfter.chips, []);
     assert.ok(r.blow.edge > .3, `a 0.4-point blow still pulses: ${r.blow.edge}`); assert.deepEqual(r.blow.chips, []);
+    assert.ok(r.blowAfter.edge < .05, `the single blow pulse fades without another hit: ${r.blowAfter.edge}`);
     for (const [c, t] of Object.entries(r.flash)) assert.equal(t > 0, c === 'blow', `${c} flash ${t}`);
     return r;
   });
@@ -956,7 +1096,95 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
-{ // Touch
+// Playtest F-04 camera (src/coast-view/camera.ts; the village, the mall and the yard's mall entry share it). Real keys,
+// pointer, Runtime and present; only the clock is fixed, so the check does not depend on the runner's frame rate (CI
+// draws this scene below 10 fps): the ticker is stopped and each h.frame() starts at a 60 Hz vsync plus 0-3 ms of
+// seeded frame-start jitter (performance.now is stubbed for the Runtime's t0; ticker.deltaMS is the vsync delta).
+// `old` is Math.round(camF), the camera before F-04, on the same frames. The negative control is this step against
+// the pre-F-04 build (BINCOV_SAMPLE_HTML), where the player trembles, the arms and pistol shimmer and a flick slides 96;
+// with only host.ts's `follow` reverted, the `loaded` run fails. It is the last step of the animation group: its
+// hundreds of scripted frames are the heaviest GPU burst in the file, and on CI's software GL the page opened right
+// after it timed out loading (run 38579899496, twice), so nothing in the group follows it.
+{
+  const { context, page } = await open('?test=1&entry=tabs&sample=village');
+  await deploy(page);
+  await step('V-CAM camera: a walk keeps the player on one screen pixel (walk, sprint, diagonal aim, late frames) with one weapon and arm offset; the ground never steps back and settles within 1.2 s; the aim look-ahead is 24 px, 81.6 with the right button', async () => {
+    await page.evaluate(() => {
+      const h = window.__bincovSample.host, v = h.view; h.app.ticker.stop();
+      let seed = 26, vsync = performance.now();
+      const rnd = () => { let t = (seed += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), 1 | t); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      window.__camFrames = (n, jitter = 3) => {
+        const rows = [];
+        for (let i = 0; i < n; i++) {
+          vsync += 1000 / 60; const t0 = vsync + rnd() * jitter;
+          performance.now = () => t0; h.app.ticker.deltaMS = 1000 / 60; h.frame(); delete performance.now;
+          const p = h.lastBatch.frame.player, g = v.actors.get(p.uid), a = g.arms[0];
+          rows.push({ px: p.x, x: g.body.x - v.cam.x, y: g.body.y - v.cam.y, cx: v.cam.x, old: g.body.x - Math.round(v.camF.x), precise: p.state.precise,
+            weapon: `${g.weapon.x - g.body.x},${g.weapon.y - g.body.y}`, arms: g.arms.map(s => `${s.x - g.body.x},${s.y - g.body.y}`).join(' '),
+            gap: Math.hypot(a.x + Math.cos(a.rotation) * a.scale.x - g.weapon.x, a.y + Math.sin(a.rotation) * a.scale.x - g.weapon.y) });
+        }
+        // Finish the batch's GPU work before returning: these frames run back to back without yielding, and on a
+        // software-GL runner the queued work would outlive the step and hold up the next page's WebGL start.
+        h.app.renderer.gl?.finish();
+        return rows;
+      };
+    });
+    const frames = (n, jitter) => page.evaluate(([n, jitter]) => window.__camFrames(n, jitter), [n, jitter]);
+    // Pointer at the drawn player's chest plus (dx, dy) world px.
+    const pointTo = async (dx, dy) => { const c = await page.evaluate(([dx, dy]) => { const v = window.__bincovSample.host.view, p = v.last.player; return v.worldToClient({ x: p.x + dx, y: p.y - 22 + dy }); }, [dx, dy]); await page.mouse.move(c.x, c.y); };
+    const changes = xs => xs.filter((x, i) => i && x !== xs[i - 1]).length;
+    // A change against the previous change: the tremble's signature (a lag still settling only steps one way).
+    const reversals = xs => { const d = xs.slice(1).map((x, i) => x - xs[i]).filter(Boolean); return d.filter((x, i) => i && Math.sign(x) !== Math.sign(d[i - 1])).length; };
+    const steps = rows => rows.slice(1).map((r, i) => r.cx - rows[i].cx);
+    await page.evaluate(() => window.__bincovSample.driver.weapon('pistol'));
+    const walks = {}; let oldChanges = 0;
+    // `loaded`: frames start up to 12 ms late. Only a camera that follows on the Runtime's clock (host.ts `follow`) keeps
+    // the player still there; following on ticker.deltaMS moves it for any offset (tests/coast-camera.test.ts replay).
+    for (const [name, keys, aim, jitter] of [['walk', ['d'], [250, 0]], ['sprint', ['Shift', 'd'], [250, 0]], ['diagonal', ['d'], [180, -180]], ['loaded', ['Shift', 'd'], [250, 0], 12]]) {
+      await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(...aim); await frames(60);
+      for (const k of keys) await page.keyboard.down(k);
+      const rows = await frames(90, jitter);
+      for (const k of [...keys].reverse()) await page.keyboard.up(k);
+      const after = name === 'walk' ? await frames(75) : [];
+      // 0.7-1.5 s into the walk the follow lag has settled (0.4% of it left).
+      const steady = rows.slice(42), moved = rows.at(-1).px - rows[0].px, back = steps([...rows, ...after]).filter(d => d < 0).length;
+      const w = walks[name] = { moved: +moved.toFixed(1), screen: changes(steady.map(r => r.x)) + changes(steady.map(r => r.y)),
+        reversals: reversals(steady.map(r => r.x)) + reversals(steady.map(r => r.y)), old: changes(steady.map(r => r.old)),
+        weapon: [...new Set(steady.map(r => r.weapon))], arms: [...new Set(steady.map(r => r.arms))], gap: Math.max(...steady.map(r => r.gap)), back };
+      oldChanges += w.old;
+      assert.ok(moved >= 120, `${name}: moved ${moved}`);
+      assert.ok(w.screen <= 2 && w.reversals === 0, `${name}: the player moved ${w.screen} times on screen while walking steadily ${JSON.stringify(w)}`);
+      assert.equal(w.weapon.length, 1, `${name}: weapon offsets from the body ${w.weapon}`);
+      assert.equal(w.arms.length, 1, `${name}: arm offsets from the body ${w.arms}`);
+      assert.ok(w.gap < .01, `${name}: the trigger arm ends ${w.gap} px from the grip`);
+      assert.equal(back, 0, `${name}: the camera stepped back against the walk`);
+      if (after.length) {
+        // Released: the player stands, the camera takes up its lag forward only, and its last step comes within 1.2 s.
+        const last = steps(after).findLastIndex(d => d !== 0) + 1;
+        w.release = { creep: after.at(-1).cx - rows.at(-1).cx, lastStepFrame: last };
+        assert.ok(after.every(r => r.px === after[0].px), 'standing after the release');
+        assert.ok(w.release.creep >= 8 && last <= 72, `release ${JSON.stringify(w.release)}`);
+      }
+    }
+    // In-run control: the old rounding on the same smoothed camera would have trembled.
+    assert.ok(oldChanges >= 10, `Math.round(camF) changes on the same frames: ${oldChanges}`);
+    // Aim look-ahead: pointer 150 px right, then left of the drawn player (the view slides 2 x 24 px); with the right button
+    // held, left then right (2 x 81.6 px, as before F-04).
+    await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(150, 0); await frames(60);
+    const cam = async () => (await frames(1))[0];
+    const right = await cam(); await pointTo(-150, 0); await frames(60); const left = await cam();
+    await page.mouse.down({ button: 'right' }); await frames(60); const preciseLeft = await cam();
+    await pointTo(150, 0); await frames(60); const preciseRight = await cam();
+    await page.mouse.up({ button: 'right' }); await frames(2);
+    const flick = { slide: right.cx - left.cx, preciseSlide: preciseRight.cx - preciseLeft.cx, precise: [right.precise, left.precise, preciseLeft.precise, preciseRight.precise] };
+    assert.deepEqual(flick.precise, [false, false, true, true], 'the right button holds precise aim');
+    assert.ok(Math.abs(flick.slide - 48) <= 2, `default look-ahead slide ${flick.slide}`);
+    assert.ok(Math.abs(flick.preciseSlide - 163.2) <= 3, `right-button look-ahead slide ${flick.preciseSlide}`);
+    return { walks, oldChanges, flick };
+  });
+  await context.close();
+}
+if (!group) { // Touch
   const { context, page } = await open('?test=1&entry=tabs&sample=village', { hasTouch: true });
   await step('W14 touch aim stick past 0.62 keeps firing', async () => {
     await deploy(page); await place(page, 640, 456, 0); await frames(page, 3); await clearEvents(page);
@@ -971,7 +1199,7 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
 }
-{ // Item names in the grid panels: three-character labels (保险管 and the like) show in full at every size.
+if (!group) { // Item names in the grid panels: three-character labels (保险管 and the like) show in full at every size.
   for (const size of [{ w: 1280, h: 720, touch: false }, { w: 1920, h: 1080, touch: false }, { w: 844, h: 390, dpr: 3, touch: true }, { w: 640, h: 300, dpr: 3, touch: true }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', size.touch ? { viewport: { width: 844, height: 390 }, deviceScaleFactor: size.dpr, hasTouch: true, isMobile: true } : { viewport: { width: size.w, height: size.h } });
     await step(`U11 item labels at ${size.w}x${size.h}: three-character names are not cut (pixel face on desktop, compact face on touch)`, async () => {
@@ -1005,7 +1233,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Dragging in the docked panels: the ghost stays under the cursor, above the panel, and the panel never grows a scrollbar.
+if (!group) { // Dragging in the docked panels: the ghost stays under the cursor, above the panel, and the panel never grows a scrollbar.
   for (const size of [{ w: 1280, h: 720 }, { w: 1920, h: 1080 }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', { viewport: { width: size.w, height: size.h } });
     await step(`U12 drag at ${size.w}x${size.h}: the ghost follows the cursor above the panel, the docked panel never scrolls, closing mid-drag clears it`, async () => {
@@ -1070,7 +1298,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Short and small screens: map labels never overlap, every exit stays labelled, the map uses the panel height
+if (!group) { // Short and small screens: map labels never overlap, every exit stays labelled, the map uses the panel height
   for (const size of [{ w: 640, h: 300, dpr: 3, touch: true }, { w: 844, h: 390, dpr: 3, touch: true }, { w: 1280, h: 720, dpr: 1, touch: false }]) {
     const { context, page } = await open('?test=1&entry=tabs&sample=village', size.touch ? { viewport: { width: 844, height: 390 }, deviceScaleFactor: size.dpr, hasTouch: true, isMobile: true } : {});
     await step(`U10 map labels at ${size.w}x${size.h}: no overlap, every exit named, map fills the short panel`, async () => {
@@ -1098,7 +1326,7 @@ for (const art of ['sol', 'placeholder']) {
     await context.close();
   }
 }
-{ // Entries without the test flag
+if (!group) { // Entries without the test flag
   const { context, page } = await open('?sample=village');
   await step('W15 ?sample=village without ?test=1 exposes no test interface and still plays on the real Runtime', async () => {
     await action(page, 'enter').click(); await deployFromYard(page, { world: 'buildings', seed: 42 });
@@ -1109,12 +1337,17 @@ for (const art of ['sol', 'placeholder']) {
   });
   await context.close();
   const plain = await open('?test=1&entry=tabs');
-  await step('W16 the ordinary entry is unchanged: residential raids still use the Phaser RaidScene', async () => {
+  await step('W16 a test page without sample= runs residential raids on the 2.5D view without the playtest marks', async () => {
     const page = plain.page;
     await action(page, 'enter').click(); await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42'); await action(page, 'deploy').click();
-    await page.waitForFunction(() => !!window.__bincov.app.raid?.player?.active);
-    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample, canvases: document.querySelectorAll('canvas').length }));
-    assert.equal(s.sample, 0); assert.equal(s.coastSample, false);
+    await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 60000 });
+    await page.waitForFunction(() => (document.querySelector('.coast-sample [data-where]')?.textContent ?? '').length > 0);
+    const s = await page.evaluate(() => ({ sample: document.querySelectorAll('.coast-sample').length, coastSample: !!window.__bincov.app.coastSample,
+      marks: window.__bincovSample.host.view.opts.sampleMarks, where: document.querySelector('.coast-sample [data-where]').textContent,
+      // The title's renderer stays parked off the page; the raid draws on the one shared renderer.
+      canvases: document.querySelectorAll('canvas').length }));
+    assert.equal(s.sample, 1); assert.equal(s.coastSample, true); assert.equal(s.marks, false); assert.equal(s.canvases, 1);
+    assert.ok(s.where.startsWith('沿海街区') && !s.where.includes('样板外'), s.where);
     return s;
   });
   await plain.context.close();

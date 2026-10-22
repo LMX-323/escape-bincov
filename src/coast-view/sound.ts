@@ -11,6 +11,7 @@
  */
 import type { Spot, SynthAudio } from '../audio';
 import type { PublishedView, StampedEvent } from '../raid-runtime/contract';
+import { insideFootprint } from './mall-dressing';
 
 export type SoundOut = Pick<SynthAudio, 'start' | 'stop' | 'shot' | 'step' | 'hit' | 'pickup' | 'click' | 'radio' | 'extract' | 'death'
   | 'whiz' | 'impact' | 'dry' | 'heartbeat' | 'setRoomTone' | 'stow'>;
@@ -54,8 +55,10 @@ export class SampleSound {
     this.where.clear();
     for (const a of f.actors ?? []) this.where.set(a.uid, { x: a.x, y: a.y });
     if (!live || f.phase === 'ending') { this.stepLeft = 0; this.reloading = w.reloading; this.heals = f.hud.heals; return; }
-    // Room tone: indoors (a revealed room or a layered floor) the sea closes in.
-    const indoor = b.stamp.world.mapId !== 'coast' || p.regionId != null, key = indoor ? 'in' : 'out';
+    // Room tone: indoors (a revealed room or a layered floor) the sea closes in. A mall floor is indoors inside the
+    // building's footprint only: its plaza and terrace are open air.
+    const mall = b.stamp.world.mapId.startsWith('mall-');
+    const indoor = mall ? insideFootprint(Math.floor(p.x / 32), Math.floor(p.y / 32)) : b.stamp.world.mapId !== 'coast' || p.regionId != null, key = indoor ? 'in' : 'out';
     if (key !== this.ambience) { this.ambience = key; this.out.setRoomTone(indoor ? 1 : 0); }
     // Footsteps at the original cadence: 0.42 s walking, 0.25 s sprinting, first step on the first moving frame.
     if (p.alive && p.state.moving) {
@@ -87,7 +90,7 @@ export class SampleSound {
    * outdoors or in a revealed room: a blow landing or a round striking a wall in an unrevealed room makes no sound, as
    * it shows no marker or spark. Gunfire itself carries through walls and stays audible.
    */
-  event(e: StampedEvent, mapId: string, shown: (p: { x: number; y: number }) => boolean = () => true) {
+  event(e: StampedEvent, mapId: string, shown: (p: { x: number; y: number }) => boolean = () => true, actorShown: (uid: string) => boolean = () => true) {
     if (e.stamp.world.mapId !== mapId) return;
     const at = (uid: string) => { const p = this.where.get(uid); return p ? this.spot(p.x, p.y) : undefined; };
     switch (e.type) {
@@ -103,7 +106,8 @@ export class SampleSound {
       case 'hurt': {
         if (e.cause !== 'blow') break;
         if (e.uid === 'player') this.out.hit();
-        else if (shown(e.at)) this.out.hit(this.spot(e.at.x, e.at.y));
+        // The blow lands on an actor: both the actor (as the Runtime shows it) and the hit point must be visible.
+        else if (shown(e.at) && actorShown(e.uid)) this.out.hit(this.spot(e.at.x, e.at.y));
         break;
       }
       case 'impact': if (e.reason === 'blocked' && (e.surface === 'wall' || e.surface === 'door') && shown(e.lastFree)) { const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s); } break;

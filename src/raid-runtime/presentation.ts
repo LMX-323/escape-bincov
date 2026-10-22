@@ -3,6 +3,7 @@ import { SURVIVAL as B } from '../balance';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
+import { isMallWorld } from '../mall-world';
 import type { CoastRaidRuntime } from './runtime';
 import type { ActorView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
 
@@ -25,17 +26,22 @@ export const contains = (r: RegionDef, p: Point) => p.x >= r.x && p.x < r.x + r.
 export function mapView(r: CoastRaidRuntime, key: WorldKey): MapDef {
     const space = r.space?.definition, data = r.mapData;
     const prefix = `${key.worldVersion}/${key.layoutRevision ?? '-'}/${key.mapId}`;
-    const residentId = `${prefix}/building/resident`;
+    const mall = isMallWorld(key.worldVersion);
+    const buildingId = `${prefix}/building/${mall ? 'mall' : 'resident'}`;
     const regions: RegionDef[] = (space?.regions ?? []).map(region => {
         const definitionKey = region.id ?? regionKeys[`${key.mapId}:${region.name}`];
         if (!definitionKey) throw new Error(`Unmapped region: ${key.mapId}/${region.name}`);
         return { ...region, id: region.id ?? `${prefix}/region/${definitionKey}`, inside: region.inside !== false,
-            sealed: !!region.sealed, buildingId: residentId };
+            sealed: !!region.sealed, buildingId: mall && region.inside === false ? null : buildingId };
     });
     const buildings = data.buildings.map(b => ({ ...b, id: `${prefix}/building/${b.kind}/${b.x},${b.y}`, regionIds: [] as string[] }));
-    if (space && regions.length) {
+    if (mall) {
+        // Inclusive tile bounds x=8..64, y=6..48 include the east/south facade cells.
+        buildings.push({ id: buildingId, name: '滨湾商场', kind: 'mall', x: 8 * 32, y: 6 * 32, w: 57 * 32, h: 43 * 32,
+            regionIds: regions.filter(a => a.inside).map(a => a.id) });
+    } else if (space && regions.length) {
         const x = Math.min(...regions.map(a => a.x)), y = Math.min(...regions.map(a => a.y));
-        buildings.push({ id: residentId, name: '褪色居民楼', kind: WORLD.buildings.find(b => b.name === '褪色居民楼')!.kind,
+        buildings.push({ id: buildingId, name: '褪色居民楼', kind: WORLD.buildings.find(b => b.name === '褪色居民楼')!.kind,
             x, y, w: Math.max(...regions.map(a => a.x + a.w)) - x, h: Math.max(...regions.map(a => a.y + a.h)) - y,
             regionIds: regions.filter(a => a.inside).map(a => a.id) });
     }

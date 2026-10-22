@@ -1,97 +1,76 @@
-# 应用状态与存档会话
+# 应用状态、执行器与存档边界
 
-PR #3 把存档流程从界面中拆出；PR #2 在合并后的 `a4de242` 基线上接入完整检查点与手机输入。技术栈保持 TypeScript + Phaser，领域规则和单文件离线发布方式继续沿用；恢复协议见 [移动实现说明](MOBILE-IMPLEMENTATION.md)。
+本页说明当前责任与兼容约束；任务到符号/测试的路径见 [CODEMAP](CODEMAP.md)，实际任务状态见 [WORK-QUEUE](WORK-QUEUE.md)及对应 PR。阶段交付文档中的“尚未接线”“待审”须按其日期和提交理解，不能替代当前实现。
 
-## 模块职责
+## 当前结构
 
-| 模块 | 负责什么 | 不应承担什么 |
+技术栈为 TypeScript 与 PixiJS，保持单文件离线；游戏不再使用 Phaser。标题页由 [title/scene.ts](../src/title/scene.ts) 在自己的 Pixi 渲染器上绘制，旧页签与结算页是 HTML 界面，背景为 [title-art.ts](../src/title-art.ts) 的静态站外画，由 [screen.ts](../src/screen.ts) 按状态挂到 `#game`。普通据点入口为水产站院子，旧页签保留；普通玩家新行动仅可选择街区和商场，默认街区；所有行动都由 Pixi 宿主运行真实 `CoastRaidRuntime`，新商场行动使用布局三版。`?sample=village` / `?sample=mall` 继续用于预选区域和样板试玩。
+
+入口判断以 [station-view/route.ts](../src/station-view/route.ts) 与 [coast-view/sample.ts](../src/coast-view/sample.ts) 为准：`raidWorlds` / `defaultWorld` 选择可出击区域和默认值，`sampleSupports` 把存档里的任何行动交给 Pixi 宿主，包括切换前开始的旧沿海检查点行动（`coast-v2`）和商场一版。`?test=1` 页面仍可出击已关闭的沿海封锁区，用来制造这类旧行动；这不等于普通入口可新开沿海行动。
+
+| 边界 | 当前责任 | 调用约束 |
 | --- | --- | --- |
-| `src/domain.ts` | 物品、库存、交易、任务、迁移、结算规则；`StorageLike` 读写协议 | DOM、Phaser、音效、场景跳转 |
-| `src/shop.ts` / `src/qol.ts` | 商店暂存清单与统一结算、出击提醒、任务数量与直线方位 | 持久化或渲染 |
-| `src/loot.ts` | 容器类型、旋转/拆分/部分合并的精确落格与数量守恒 | 持久化或渲染 |
-| `src/session.ts` | 会话数据类型、出击提交、事务回滚、结算候选与重试、导入、救济和设置保存 | 浏览器全局变量、提示文案、画面 |
-| `src/app.ts` | 组装唯一的 `app`、`saveSession` 和音效实例；注入浏览器存储 | 玩法规则、HTML 模板 |
-| `src/ui.ts` | 模板、按钮与拖放绑定、提示、下载/文件选择、场景切换；调用会话操作 | 独立实现另一套存档提交/回滚流程 |
-| `src/main.ts` | Phaser 启动、窗口缩放、全局按键、页面生命周期和 storage 事件 | 交易或结算规则 |
-| `src/game.ts` | 战斗场景与实时模拟；通过现有 UI 接口显示、结束行动 | 持久化事务实现 |
-| `src/input.ts` / `src/mobile.ts` | 统一输入意图、前台时钟 / 稳定触控节点与指针所有权 | 经济或存档规则 |
-| `src/checkpoint.ts` | 完整世界快照结构、初始记录与严格校验 | Phaser 显示对象和浏览器事件 |
-| `src/recovery-store.ts` | 单记录原子提交、旧档隔离、版本保护和 Web Lock | 游戏场景切换 |
+| 纯规则与世界定义 | 库存/交易、生存/成长、空间、追击、生产及世界解析 | 不导入 DOM、Pixi 等渲染库或全局 `app`；不负责显示或写浏览器存储 |
+| `SaveSession` / `RecoveryStore` | 会话、候选与回滚、完整记录校验、所有权和原子写入 | 通过注入的存储/时钟/世界解析器运行；不负责场景切换 |
+| `RealHideoutRuntime` | 在同一会话上提供据点动作、购物车、训练、导入确认及只读快照 | `snapshot()` 不成为第二份存档；观察者不能参与提交决定 |
+| `CoastRaidRuntime` | 唯一的行动执行器，负责模拟、捕获/恢复和调用持久化 | 同一次行动只挂一个所有者；视图只读它发布的帧 |
+| `station-view` / `coast-view` / `title` / 旧 `ui` | 画面、设备输入、反馈与生命周期接线 | 成功反馈在实际提交之后；普通入口不得依赖测试驱动 |
+| `app` / `main` / 路由 | 组装实例，注入浏览器能力，协调输入、宿主和窗口事件 | 使用唯一会话；不新增另一份 profile 或玩法结算 |
 
-`session.ts` 依赖纯领域、世界配置、检查点与恢复存储模块。它不会导入 `app.ts` 或 `ui.ts`，因此可以在 Node 中创建多个独立会话，注入内存存储进行测试。`app.ts` 对 Phaser 和 RaidScene 仅使用类型导入，不会因状态模块加载而创建游戏。
+[app.ts](../src/app.ts) 组装 `saveSession`、`hideoutRuntime`、音效和宿主引用（`coastSample`、`station`）。`SessionState` 是共享数据，调用者应在事务后重新读取 `save` / `loadout`，不要长期缓存可能被回滚或恢复替换的对象。
 
-`app` 是同一份会话数据加上展示状态和场景引用；没有第二份可漂移的存档镜像。`SaveSession` 持有该对象，提交或回滚时替换其中的 `save`/`loadout`。调用者应在操作后重新读取这些字段，不长期缓存容器引用。
+新行动的公开端口在 [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)，[host.ts](../src/raid-runtime/host.ts) 绑定 Runtime 和事务服务；据点端口在 [hideout-runtime/contract.ts](../src/hideout-runtime/contract.ts)。这是现有边界，尚非完全隔离：旧 UI 仍负责部分路由，coast 库存仍接收会话，站内路由复用 coast 的 Pixi 生命周期。后续收敛应逐步缩窄这些依赖，不能据此假设视图已完全只读。
 
-## 提交边界
+## 写入、回滚与发布
 
-| 操作 | 提交顺序 | 失败时 |
+`SaveSession.persist` 是完整写入流程的一部分：可能捕获当前世界、推进适用的基地时间/训练、同步安全箱，再调用 `RecoveryStore.commit`；成功后更新会话检查点并恢复挂接状态。它不是无副作用的序列化工具，也不能替代上层候选/回滚协议。
+
+| 操作 | 现有提交入口 | 失败后的约束 |
 | --- | --- | --- |
-| 初始化 | 取得 Web Lock → 读取并校验 v2 或迁移旧档 → 写回 | 保留原始数据并阻止写入，允许导出；未知/损坏不能当新档 |
-| 出击 | 克隆存档 → `beginRun` 生成候选、装备与完整初始检查点 → 一次写入 → 发布到会话 → 启动场景 | 原存档、装备、行动次数保持不变 |
-| 物品/购买/任务/医疗 | 快照存档、负载和完整场景 → 同步领域/世界变化 → 完整检查点或救济 → 一次写入 | 操作拒绝、异常或写入失败均回滚参与状态 |
-| 箱子／尸体转移 | 克隆来源 → 验证精确格位 → 将角色与候选容器写入同一完整检查点 → 写入成功后发布容器 | 来源、负载与世界均回滚，错误页暂停，重试不会多领 |
-| 结算 | 同步弹匣 → 生成一次候选 → 锁定场景 → 写入 → 发布结果 → 切换画面 | 保留同一个 `pendingSettlement`，用于重试和备份 |
-| 导入 | `decodePortableBackup` 分流严格校验 → 玩家确认 → 写入 → 替换会话 → 更新画面/音量 | 旧存档和待确认内容保留 |
-| 音量/救济 | 修改候选 → 写入 → 替换会话 | 旧状态不变 |
+| 初始化/升级 | `initialize`、`ensureRpg` / `enableRpg`，经 `persist` 写入 | 未知/损坏数据不覆盖；旧原始字节保留；活动旧行动先恢复 |
+| 据点/扩展动作 | `prepareExpansionMutation` 生成私有票据，`commitExpansionMutation` 校验基线并提交 | 拒绝不发布；写入失败不发成功事件；已保留票据只能按原候选重试 |
+| 旧页签库存/医疗 | `mutate` 捕获参与状态，同步执行规则，再持久化 | 规则拒绝、异常和写入失败恢复库存、身体及参与世界 |
+| 出击 | `beginRun` 生成装备和完整初始世界，一次写入后才启动宿主 | 不先扣账再另存世界；出击动画之后不能重复 `beginRun` |
+| 箱子/尸体转移 | `transferLoot` 将候选容器与角色库存放入同一完整记录 | 来源、负载、世界一并回滚；重新取得恢复后的容器引用 |
+| 结算 | `prepareSettlement` 冻结结果；`retrySettlement` 写入后发布 `result` | 保留 `pendingSettlement` / `pendingExpansion`，重试不重新发奖；未成功不得卸载唯一候选 |
+| 完整导入 | 严格解码和确认后调用 `importRecord`，经 `persist` 原子替换 | 写入失败保留旧记录；活动导入回菜单恢复，不重新出击 |
 
-`markConflict()` 将会话标记为冲突并禁止后续持久化。`main.ts` 继续负责锁定场景及告知玩家刷新/备份；待保存结算不会因此清空。新版同时使用页面生命周期 Web Lock 与写前记录比对。storage 事件还用于检测旧客户端或不遵守锁的写入者；未引入云存档。
+事务回调为同步规则操作；不得在其中发网络请求、换场景或修改未参与回滚的外部对象。`MutationResult` 区分 `committed`、`rejected`、`blocked`、`save-failed`。UI 只在 `committed` 后发成功反馈，冲突与待结算状态不能当一般失败强行重试。
 
-新版主键为 `escape-bincov.session.v2`，旧键 `escape-bincov.save.v1` 只作一次迁移来源并保留。死亡/超时/放弃仍结算失败，新版刷新可恢复最近检查点。默认主档封套为 v3、档案与已结算备份为 v2，兼容旧 v1/v2 格式；扩展系统主档和完整备份使用 v4。
+现有商店有两条适配路径，但共用 `Shop.settleCartResult`：水产站 `RealHideoutRuntime.openShop` → `transaction`，旧页签 `checkout` → `SaveSession.mutate`。购物车 `place` 只改临时清单，`settle` 才提交；新增交易规则应放纯规则层，并检查两个调用端。不能把旧 `D.buy` 的简例当作所有新交易的接线模板。
 
-## PR16 扩展事务（M0 原型）
+`RealHideoutRuntime.retrySave` 对保留的基地检查点重试原票据；普通库存/购物失败已回滚，不会因点击“重试保存”自动重做购买。`backupRecord` 和据点 `exportBackup` 保留完整待保存状态，而非只导出库存。
 
-`ExpansionState` 将身体、永久成长、基地、队列、时间游标和可选 `LayeredRaid` 纳入同一 RecoveryStore 记录。旧海岸快照仍走原校验与场景；内置新地图解析器尚未注册正式布局，普通入口不自动启用扩展。
+## 捕获、恢复与表现
 
-`prepareExpansionMutation` 只修改候选克隆，严格验证后私有保留候选；`commitExpansionMutation` 检查候选基线、写入修订与当前状态，成功后发布。失败可重试同一票据，票据不能编辑；成功即失效，其他窗口或新事务已改变基线时拒绝旧票据。新掉落 UID 使用快照中的分配器，避免候选准备改变进程全局 UID。
+`SaveSession.attachRaid` / `attachExpansion` 接收捕获与恢复端口。旧海岸使用 `RaidCheckpoint`；多层行动使用包含完整世界的 `ExpansionState`。`CoastRaidRuntime` 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion` 是持久状态接线。
 
-`pendingExpansion` 与 `pendingSettlement` 共同保留新身体/成长/队列结果。`backupRecord` 导出活动、已结算或待结算完整候选；升级一次保留 `systemsBackup` 原字节，v4 不接受缺少扩展字段的降级覆盖。时钟、迁移及目前未实现的场景接线详见 [M0 决策](M0-STATE-AND-COMPAT.md)。
+当前层与完整记录的字段关系集中在 [raid-state-projection.ts](../src/raid-state-projection.ts)：`applyActiveRaidSnapshot` 写入调用者已克隆的候选；`activeRaidCheckpoint` 构造供恢复使用的检查点，其嵌套数据引用传入状态。两者不克隆、不推进时钟/RNG、不校验或提交，调用端仍承担隔离与实体所有权。新增字段先核对这份共享映射，再检查执行器接线。
 
-## 容器恢复
+捕获之前的弹匣同步、世界克隆，以及恢复时的对象和碰撞重建属于执行器的接线责任。`raid-runtime/presentation.ts` 的 `mapView` / `frameView` 是供视图消费的展示投影，不是存档格式；展示事件的序号、epoch 和纹理状态不应直接加入存档。
 
-箱子和尸体使用稳定行动 ID 与容器 ID，容器库存纳入 `RaidCheckpoint.containers`，世界标记升级为 `coast-v2`。旧 `coast-v1` 快照仍可加载：保留原地面物资，不重新生成箱子或旧尸体掉落。旧 HTML 会拒绝新世界标记，避免它忽略容器后保存造成丢物；存档键、外层会话版本和备份封套沿用主线。
+宿主切换先完成相应检查点/flush，失败则保留当前宿主及重试/备份入口。院子和行动轮用一个 Pixi 应用（`takeApp` / `parkApp`）；标题页的渲染器另起一个，离开标题页即停止并移出页面，不会同时推进同一会话。失焦、屏蔽、暂停和释放输入是不同操作，调用语义以端口注释和输入测试为准。
 
-`SaveSession.transferLoot` 的调用者必须传入当前场景中的真实容器，UI 每次放下前重新验证本局、来源、距离、潮位和视线。会话层比较容器与当前快照，候选容器同角色库存一次保存，完成后才发布到画面。保存失败后的场景恢复可能替换对象，调用者不得缓存旧引用。
+## 格式与恢复兼容
 
-## 添加后续功能
+主键仍是 `escape-bincov.session.v2`，旧 `escape-bincov.save.v1` 只作首次迁移来源。单条记录包含 profile 与检查点/扩展状态；`legacyBackup`、`migrationBackup`、`systemsBackup` 分别保留相应升级前原字节。它们不能被反复嵌套的新备份替代。
 
-新增交易、任务或库存操作时，先把规则写入领域模块，再从 UI 的 `mutate` 包装器调用。它继续负责显示结果、清空选择和重绘：
+profile/已结算备份版本、session/完整备份封套版本、`ExpansionState.version`、`worldVersion` 与 `layoutRevision` 各自保护不同边界。当前 profile 为 v2；无扩展会话为 v3，有扩展会话为 v4；扩展 v1/v2 均有兼容路径。不能为了统一命名而合并版本或重写活动行动的世界/布局。
 
-```ts
-mutate(() => D.buy(app.save, id, 'arms'), '物资已收入仓库。');
-```
+[expansion-worlds.ts](../src/expansion-worlds.ts) 已登记正式建筑和商场布局，M0 两图原型只在测试夹具中。普通据点边界会通过 `ensureRpg` 启用成长；活动旧行动不会被强转。多层快照保存每图的门、实体、弹丸、噪声与本地时间，RNG、身体、成长和队列随同一候选提交。
 
-会话层的 `SessionMutation` 只接受同步 `boolean | void` 回调：`false` 表示拒绝，`true` 或 `undefined` 表示可以继续保存。异步回调不属于这一事务模型；不要在回调中发网络请求、切场景或修改未参与快照的对象；已附加 RaidScene 捕获/恢复接口时，库存和对应世界变化必须位于同一事务。
+旧 `coast-v1` 检查点继续恢复原地面物资；带容器的 `coast-v2` 保存稳定容器/行动身份，恢复时不重生掉落。没有检查点的历史旧行动仍沿用中断失败规则。新版刷新恢复最近成功检查点，不等于恢复尚未写入的内存进度。
 
-| `SaveSession.mutate` 结果 | UI 处理 |
-| --- | --- |
-| `committed` | 展示成功，播放不改变状态的音效/反馈 |
-| `rejected` | 提示检查现金、空间或物资 |
-| `save-failed` | 提示保存失败与操作撤回 |
-| `blocked` | 冲突或待结算保护，不执行操作 |
+导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
 
-世界掉落纳入完整场景快照，和物品移除一起提交；失败时恢复二者，不能先保存背包再另存地面物品：
+`freshStartRecord` 也是完整 v4 新档构造入口，仅保留音量；`startOver` 通过同一确认导入路径替换主档。重开前的本机恢复副本使用单独的 `escape-bincov.reset-copy.v1` 槽位，不是第二个正在运行的会话。新增持久字段必须同时检查新建、升级、导入、重开、结算候选和两执行器捕获/恢复。
 
-```ts
-mutate(() => {
-    const inv = inventory(app.selectedSource);
-    inv.items = inv.items.filter(entry => entry.uid !== item.uid);
-    raid.drop(item);
-});
-```
+多窗口保护由 `ownSession` 的页面生命周期锁和 `RecoveryStore.commit` 写前记录比对共同承担。`markConflict` 禁止后续持久化；窗口事件负责锁定画面并提示刷新/导出，不得用强制覆盖或改存档键消除冲突。
 
-出击、结算、导入使用专门的会话方法；不要用普通物品事务拼接这些生命周期。`persist()` 是底层写入入口，供初始化及现有显式测试接口使用，不能替代候选提交或回滚。文件解析使用 `decodePortableBackup` / `decodeSession`，不能仅以 TypeScript 类型断言代替运行时校验。
+## 维护与历史
 
-## 验证与后续边界
+调用者必须知道的副作用、单位、提交点、引用失效和兼容条件贴在正式类型/方法旁；本页维护跨模块责任与格式边界，CODEMAP 维护定位路径，验收结果留在对应 PR/报告。价格、字段清单和全部函数签名不在三处重复。
 
-- `tests/session.test.ts`：无需浏览器或 DOM 替身的会话测试，覆盖实例隔离、存储访问被禁、旧档/中断恢复、出击提交时序、异常回滚、检查点、救济/设置及冲突重试。
-- `tests/save-flow.test.ts`：保留 UI 适配层回归，验证待保存弹窗、重试、导入和医疗回滚。
-- `scripts/save-browser-test.mjs`：真实按钮、文件下载/导入、失败出击及同源双窗口 storage 事件；`.test` 页面内容由浏览器路由本地提供，无外部服务器依赖。
-- 既有领域、地图、双分辨率浏览器、界面和 ZIP 检查继续执行。测试入口及 CI 流程沿用现有约定。
+按职责和可验证边界拆分文件；只有代码变短、依赖仍共同写一组状态时，并未降低接手成本。共享模拟内核、路由解耦和更窄的视图端口仍是后续目标，不能把当前两执行器写成已统一。
 
-输入已拆到 `input.ts`，触控绑定在稳定的 `mobile.ts` 根节点，场景保留战斗与 HUD；没有引入事件总线、状态框架或通用插件系统。后续主界面或移动输入改动应复用本会话接口，并从届时最新 `main` 开始。
-
-## PR16 扩展状态与场景
-
-建筑/商场用 `SpaceDefinition` 注册不可变格网和成对入口，session v4 中保存每图独立的门、实体、弹丸、噪声与本地时间。`ExpansionState` 是身体/成长/基地/整局的唯一来源；RaidScene 与 BaseScene 只通过 `attachExpansion` 的完整捕获/恢复端口参与会话。恢复中的旧海岸继续使用原检查点端口。
-
-新规则分在 `spatial`、`rpg`、`reputation-luck`、`base`、`pursuit` 与 `layer-transition` 中，无Phaser/DOM依赖。普通子弹飞行和离层结算共用有限首碰撞/伤害内核；不可见层不执行普通AI，已登记追击事件按全局行动钟推进。候选事务完整校验后单次写入，成功才恢复表现；跨图、物品、身体、训练、RNG与生产游标不能拆开提交。实施/格式/内容边界见 [PR16记录](PR16-IMPLEMENTATION.md)。
+PR #2/#3/M0 的原始叙述见[本轮更新前的固定版本](https://github.com/xuys2025/escape-bincov/blob/773dcdf37c69c9441f7687627b89b582087eb021/docs/ARCHITECTURE.md)。历史验收只证明其受检提交；当前修改的验证从 [CODEMAP](CODEMAP.md) 和[开发手册](AGENT-HANDBOOK.md#4-按风险验证)选择。

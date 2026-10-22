@@ -4,8 +4,10 @@ import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
 import { mapPresentation, buildingRunConfig } from '../building-world';
+import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
 import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
@@ -116,9 +118,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (session.state !== 'run' || !session.loadout || !session.save.activeRun || !session.storageOK || session.conflict || session.pendingSettlement)
             throw new Error('Resume or deploy a valid owned raid before creating Runtime.');
         this.layered = session.expansion?.raid ? structuredClone(session.expansion) : null;
-        if (this.layered?.raid?.worldVersion && this.layered.raid.worldVersion !== 'coast-buildings-v1')
-            throw new Error('Sample Runtime supports coastal raids only.');
-        this.config = this.layered ? buildingRunConfig(this.layered.raid!.seed) : generateRun(session.checkpoint!.seed);
+        const world = this.layered?.raid?.worldVersion;
+        if (world && world !== 'coast-buildings-v1' && !isMallWorld(world))
+            throw new Error('Sample Runtime does not support this world.');
+        this.config = this.layered ? (isMallWorld(world) ? mallRunConfig : buildingRunConfig)(this.layered.raid!.seed)
+            : generateRun(session.checkpoint!.seed);
         this.terminalLoadout = structuredClone(session.loadout);
         if (this.layered)
             this.restoreExpansion(this.layered);
@@ -157,6 +161,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private setOverlay(value: string) {
         if (this.overlay === 'checkpoint-error' && !this.session.storageOK && value !== 'checkpoint-error')
             return;
+        if (value !== 'loot') this.lootContext = null;
         this.releaseInput();
         this.overlay = value;
         this.dirty = true;
@@ -312,7 +317,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         return ok;
     }
-    snapshot(): RaidCheckpoint {
+    snapshot(): ActiveRaidSnapshot {
         this.syncMagazine();
         return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: this.terminalLoadout.runId!,
             loadout: this.session.loadout ?? this.terminalLoadout, player: this.player, hp: this.hp, stamina: this.stamina, pollution: this.pollution,
@@ -542,19 +547,18 @@ export class CoastRaidRuntime implements RaidRuntime {
         points.sort((a, b) => distance(from, a) - distance(from, b) || a.y - b.y || a.x - b.x);
         return points.find(p => spacePath({ ...context, highTide: false }, from, p, true).length) ?? null;
     }
+    /**
+     * Capture live state, not the last committed record; snapshot also synchronizes live ammo.
+     * Clone layered first, then overlay current entities; pursuits retain enemy ownership.
+     * The returned candidate is isolated, but only SaveSession can make it durable.
+     * No clock/RNG advance or publication occurs here; a missing layered raid throws.
+     * @see applyActiveRaidSnapshot
+     */
     snapshotExpansion(): ExpansionState {
         if (!this.layered?.raid)
             throw new Error('没有多层行动。');
-        const state = structuredClone(this.layered), raid = state.raid!, c = this.snapshot(), layer = raid.maps[raid.currentMap];
-        Object.assign(state.body, { hp: this.hp, stamina: this.stamina, pollution: this.pollution, bleeding: !!this.bleeding, exhausted: this.exhausted });
-        Object.assign(raid, { player: c.player, loadout: c.loadout, elapsed: c.elapsed, highTide: c.highTide, warned: c.warned, tideChanged: c.tideChanged,
-            kills: c.kills, rng: c.rng, nextEntity: c.nextEntity, reloadLeft: c.reloadLeft, fireCooldown: c.fireCooldown, knife: c.knife, hitTime: c.hitTime });
-        const projected = raid.pursuits.filter(p => p.sourceMap === raid.currentMap);
-        layer.enemies = c.enemies.filter(e => !projected.some(p => p.enemy.uid === e.uid));
-        projected.forEach(p => { const enemy = c.enemies.find(e => e.uid === p.enemy.uid); if (enemy)
-            p.enemy = enemy; });
-        Object.assign(layer, { loot: c.loot, containers: c.containers!, bullets: c.bullets,
-            noise: c.shotNoise && c.noiseTime > 0 ? { at: c.shotNoise, radius: c.noiseRadius, remaining: c.noiseTime } : null });
+        const state = structuredClone(this.layered), c = this.snapshot();
+        applyActiveRaidSnapshot(state.body, state.raid!, c);
         return state;
     }
     restoreExpansion(state: ExpansionState): void {
@@ -562,13 +566,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         // A durable terminal write restores body/base state before the scene stops.
         if (!this.layered.raid)
             return;
-        const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
-        this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
-            hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
-            kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
-            warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
-            hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
-            enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+        this.restore(activeRaidCheckpoint(state.body, this.layered.raid, this.stepTime));
     }
     getLootContainer(id: string): LootContainer | undefined { return this.containers.find(container => container.id === id); }
     canLootContainer(id: string, runId: string): boolean {
@@ -795,7 +793,9 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
             environment = { bleed: dt * this.bleeding * B.bleedDamage, pollution: dt * (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0) };
-            this.hp -= dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0));
+            // The drain stops at 0, as a blow does (applyDamage): a classic raid settles its health into the body, which
+            // accepts 0 to the limit, so a bleed-out past zero would fail the terminal write.
+            this.hp = Math.max(0, this.hp - dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0)));
         }
         this.environmentHurt(beforeEnvironment - this.hp, environment);
         if (this.hp <= 0) {
@@ -818,11 +818,12 @@ export class CoastRaidRuntime implements RaidRuntime {
                 if (this.layered?.raid?.pursuits.some(p => p.enemy.uid === e.uid))
                     continue;
                 this.updateEnemy(e, dt);
-                if (this.session.state !== 'run' || this.locked)
+                // A failed world commit pauses here; later actors must not move away from its retained baseline.
+                if (this.session.state !== 'run' || this.paused)
                     return;
             }
         this.updateBullets(dt);
-        if (this.session.state !== 'run' || this.locked)
+        if (this.session.state !== 'run' || this.paused)
             return;
         this.interact(dt, input, moving);
         if (this.session.state !== 'run' || this.locked)
@@ -950,6 +951,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                 this.pendingLayer = pending;
                 this.setOverlay('checkpoint-error');
             }
+            // A retained ticket whose baseline moved can never commit; nothing of it was applied or published.
+            else if (result === 'rejected' && this.pendingLayer === pending)
+                this.pendingLayer = null;
             return false;
         }
         this.pendingLayer = null;
@@ -968,7 +972,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.assertLive();
         if (this.ending)
             return this.retrySettlement();
-        const ok = this.pendingLayer ? this.commitLayer(this.pendingLayer) : this.checkpoint();
+        const pending = this.pendingLayer;
+        let ok = pending ? this.commitLayer(pending) : this.checkpoint();
+        // A dropped stale ticket leaves the live world as the state to save.
+        if (!ok && pending && !this.pendingLayer)
+            ok = this.checkpoint();
         if (ok)
             this.setOverlay('');
         return ok;

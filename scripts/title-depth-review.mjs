@@ -19,7 +19,7 @@ try{
   await page.mouse.move(x,y,{steps:12});await page.waitForTimeout(1700);
   await page.screenshot({path:resolve(out,name+'.png')});
   await page.screenshot({path:resolve(out,'threshold-'+name+'.png'),clip:{x:655,y:650,width:470,height:390}});
-  const s=await page.evaluate(()=>window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+  const s=await page.evaluate(()=>window.__bincov.title.snapshot());
   assert.ok(Math.abs(s.groups.fore[0])>Math.abs(s.groups.desk[0])&&Math.abs(s.groups.desk[0])>Math.abs(s.groups.harbor[0]));
   report.views.push({name,camera:s.camera,groups:s.groups});
  }

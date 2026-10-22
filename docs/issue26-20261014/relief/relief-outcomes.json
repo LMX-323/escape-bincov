@@ -1,0 +1,431 @@
+{
+  "item": "issue #26 F12 part B / F04 relief extension",
+  "before": "src/domain.ts at e9cbaa5",
+  "after": "src/domain.ts on wip/i26-relief",
+  "generatedBy": "docs/issue26-20261014/relief/relief-outcomes.mts",
+  "rows": [
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥199, nothing to sell (old rule)",
+      "before": {
+        "cash": 199,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      },
+      "after": {
+        "cash": 199,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥200, nothing to sell (old pinned boundary)",
+      "before": {
+        "cash": 200,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 200,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥250, nothing to sell",
+      "before": {
+        "cash": 250,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 250,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥319, nothing to sell",
+      "before": {
+        "cash": 319,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 319,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥320, nothing to sell (new boundary)",
+      "before": {
+        "cash": 320,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 320,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥250 + pocket watch (sells for ¥240)",
+      "before": {
+        "cash": 250,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 250,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥150 + pocket watch (old cash < ¥200 rule)",
+      "before": {
+        "cash": 150,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      },
+      "after": {
+        "cash": 150,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S1",
+      "state": "no gun, cash ¥250 + red-tide sample needed by an unfinished quest",
+      "before": {
+        "cash": 250,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 250,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol equipped, no 9mm anywhere, cash ¥50",
+      "before": {
+        "cash": 50,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 50,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "12 relief 9mm delivered"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol, no 9mm, cash ¥83",
+      "before": {
+        "cash": 83,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 83,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "12 relief 9mm delivered"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol, no 9mm, cash ¥84 (one 12-round pack)",
+      "before": {
+        "cash": 84,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 84,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "relief pistol with 1 round loaded, cash ¥0",
+      "before": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol + 1 ordinary 9mm round in the stash, cash ¥0",
+      "before": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol + an ordinary shotgun, no ammo, cash ¥0",
+      "before": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "extract (settleRun) after emptying the relief pistol, cash ¥50",
+      "before": {
+        "cash": 50,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 50,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "12 relief 9mm delivered"
+      }
+    },
+    {
+      "scenario": "S2",
+      "state": "empty relief pistol, cash ¥0, bag and stash full; grantRelief called 4 times",
+      "before": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 0,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [
+          {
+            "id": "ammo9",
+            "qty": 12
+          }
+        ],
+        "summary": "pending 12× ammo9"
+      }
+    },
+    {
+      "scenario": "S3",
+      "state": "ordinary pistol, no ammo, cash ¥60 (before selling)",
+      "before": {
+        "cash": 60,
+        "equipment": "pistol",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 60,
+        "equipment": "pistol",
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    },
+    {
+      "scenario": "S3",
+      "state": "same player sells that pistol (cash ¥60 + ¥150 = ¥210), then relief runs",
+      "before": {
+        "cash": 210,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 210,
+        "equipment": "pistol (relief)",
+        "reliefPistolIssued": true,
+        "reliefAmmo9Delivered": 12,
+        "reliefBandageDelivered": 1,
+        "pending": [],
+        "summary": "relief pistol issued; 12 relief 9mm delivered; 1 relief bandage delivered"
+      }
+    },
+    {
+      "scenario": "raid",
+      "state": "no gun, cash ¥0, during an active raid",
+      "before": {
+        "cash": 0,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      },
+      "after": {
+        "cash": 0,
+        "equipment": null,
+        "reliefPistolIssued": false,
+        "reliefAmmo9Delivered": 0,
+        "reliefBandageDelivered": 0,
+        "pending": [],
+        "summary": "nothing"
+      }
+    }
+  ]
+}

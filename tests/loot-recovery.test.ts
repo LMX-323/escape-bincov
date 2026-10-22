@@ -6,6 +6,7 @@ import { generateRun, generateRunBase } from '../src/world';
 import { createSessionState, SaveSession } from '../src/session';
 import { RecoveryStore, SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { placementError } from '../src/loot';
+import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime';
 
 function fixture() {
     const data = new Map<string, string>();
@@ -27,6 +28,48 @@ test('legacy coast-v1 checkpoints keep their original loose loot without adding 
     assert.deepEqual(restored.raid!.containers, []);
     assert.deepEqual(restored.raid!.loot, old.loot);
     assert.equal(restored.raid!.loot.length, 60);
+});
+
+test('a reloaded coast-v1 raid resumes on the Runtime (the only raid executor) with its loose loot and settles once', () => {
+    const f = fixture(), old: any = structuredClone(f.state.checkpoint!);
+    old.worldVersion = 'coast-v1'; delete old.containers;
+    old.loot = generateRunBase(42).loot.map((item, i) => ({ ...item, uid: `loot-${i}`, relief: false }));
+    const record = JSON.parse(f.data.get(SESSION_KEY)!); record.raid = old;
+    f.data.set(SESSION_KEY, JSON.stringify(record));
+    // A fresh page: the session reads the old record, the title resumes it, and the 2.5D host builds its Runtime on it.
+    const state = createSessionState(), session = new SaveSession(state, () => f.storage);
+    assert.ok(session.initialize()); assert.equal(state.checkpoint!.worldVersion, WORLD_VERSION);
+    // resumeRun hands the carried kit over; the raid host enters the run state before it builds the Runtime.
+    assert.ok(session.resumeRun()); state.state = 'run';
+    const runtime = new CoastRaidRuntime(state, session);
+    let at = 0; for (let i = 0; i < 4; i++) runtime.advance(at += 16, emptyIntent());
+    const frame = runtime.current().frame;
+    assert.equal(frame.loot.length, 60, 'every loose item of the old world is on the ground');
+    assert.equal(frame.containers.filter(c => c.kind === 'crate').length, 0, 'no crates are added to an old world');
+    assert.equal(runtime.current().map.name, '沿海封锁区');
+    runtime.finish('abandon');
+    assert.equal(state.pendingSettlement, null); assert.equal(state.save.activeRun, null);
+    assert.equal(state.save.stats.runs, 1); assert.equal(runtime.settlement.committed, true);
+    runtime.dispose();
+});
+
+test('a classic raid that bleeds out settles once: the drain stops at 0 health, which the body accepts', () => {
+    const data = new Map<string, string>();
+    const storage: D.StorageLike = { getItem: key => data.get(key) ?? null, setItem: (key, value) => { data.set(key, value); } };
+    const state = createSessionState(), session = new SaveSession(state, () => storage);
+    assert.ok(session.initialize()); state.state = 'hideout';
+    // A player who has played the street (or the yard) carries a body; a classic raid settles into it.
+    assert.ok(session.enableExpansion(1000)); assert.ok(session.beginRun(42)); state.state = 'run';
+    const runtime = new CoastRaidRuntime(state, session);
+    let at = 0; runtime.advance(at += 16, emptyIntent());
+    // The last sliver of health bleeds away in one step, past zero.
+    const bleeding = runtime.snapshot(); bleeding.hp = .001; bleeding.bleeding = 1; runtime.restore(bleeding);
+    for (let i = 0; i < 5 && !runtime.settlement.reason; i++) runtime.advance(at += 50, emptyIntent());
+    assert.equal(runtime.settlement.reason, 'death');
+    assert.equal(runtime.settlement.committed, true, state.storageError);
+    assert.equal(state.pendingSettlement, null); assert.equal(state.save.activeRun, null);
+    assert.equal(state.expansion!.body.hp, 0);
+    runtime.dispose();
 });
 
 test('container world format rejects missing, duplicate, mismatched or corrupt inventories', () => {
@@ -65,7 +108,9 @@ test('container transfers preserve already rotated footprints through recovery',
 
 test('full containers refuse returned items and keep exact coordinates on both sides', () => {
     const f = fixture(), c = f.state.checkpoint!.containers![0];
-    c.inventory.items = Array.from({ length: 30 }, (_, n) => ({ uid: `full-${n}`, id: 'fuse', qty: 4, x: n % 6, y: Math.floor(n / 6) }));
+    c.inventory.items = Array.from({ length: 27 }, (_, n) => ({ uid: `full-${n}`, id: 'fuse', qty: 4, x: n % 6, y: Math.floor(n / 6) }));
+    // The occupied return slot belongs to a gun that cannot fit back inside the safe in either orientation.
+    c.inventory.items.push({ uid: 'full-shotgun', id: 'shotgun', qty: 1, x: 3, y: 4 });
     f.state.loadout!.safe.items = [{ uid: 'return-watch', id: 'watch', qty: 1, x: 1, y: 1 }];
     const before = structuredClone({ c, loadout: f.state.loadout }), bytes = f.data.get(SESSION_KEY);
     assert.equal(f.session.transferLoot(c, { runId: c.runId, containerId: c.id, from: 'safe', to: 'container', uid: 'return-watch', x: 5, y: 4 }), 'rejected');

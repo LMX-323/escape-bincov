@@ -1,0 +1,44 @@
+{
+  "build": "dist/index.html",
+  "sha256": "d74ebc8f5ce9d111d94b67cb7021d2b8988e4fa2e1b4c6141f3ff47d811a51f8",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:19:32.884Z",
+  "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
+  "steps": [
+    {
+      "name": "F01-queued-double-click-survives-busy-frame",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 2277.89999999851,
+            "handled": 2279.89999999851,
+            "trusted": true,
+            "uid": "bc-mv6pjs45-6",
+            "x": 920,
+            "y": 243.5
+          },
+          {
+            "stamp": 2278,
+            "handled": 2685,
+            "trusted": true,
+            "uid": "bc-mv6pjs45-6",
+            "x": 920,
+            "y": 243.5
+          }
+        ]
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at file:///D:/bincov/pr44-closeout/scripts/issue26-station-test.mjs:181:12\n    at async step (file:///D:/bincov/pr44-closeout/scripts/issue26-station-test.mjs:149:22)\n    at async file:///D:/bincov/pr44-closeout/scripts/issue26-station-test.mjs:167:3"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "failure-1.png"
+  ],
+  "finishedAt": "2026-10-13T13:19:36.005Z",
+  "summary": {
+    "passed": 0,
+    "total": 1
+  }
+}

@@ -271,7 +271,8 @@ export function migrateSave(raw: unknown): SaveDataV1 {
     if (supplies.length) save.reliefSupplies = supplies;
   }
   if (isObject(raw.lastResult) && ['extract', 'death', 'timeout'].includes(raw.lastResult.outcome)) {
-    save.lastResult = { outcome: raw.lastResult.outcome, kills: integer(raw.lastResult.kills), keptValue: integer(raw.lastResult.keptValue), lostValue: integer(raw.lastResult.lostValue), seed: integer(raw.lastResult.seed), recovered: raw.lastResult.recovered === true, message: typeof raw.lastResult.message === 'string' ? raw.lastResult.message.slice(0, 500) : '' };
+    // Run seeds are 32-bit (normalizeSeed: Date.now() >>> 0), the same range activeRun.seed accepts above.
+    save.lastResult = { outcome: raw.lastResult.outcome, kills: integer(raw.lastResult.kills), keptValue: integer(raw.lastResult.keptValue), lostValue: integer(raw.lastResult.lostValue), seed: integer(raw.lastResult.seed, 0, 0xffffffff), recovered: raw.lastResult.recovered === true, message: typeof raw.lastResult.message === 'string' ? raw.lastResult.message.slice(0, 500) : '' };
   }
   return save;
 }
@@ -329,14 +330,57 @@ export function recoverInterrupted(save: SaveDataV1): RunSummary | null {
   grantRelief(save);
   return summary;
 }
+/**
+ * Cash plus what the shop would pay for everything stored in the stash, bag and safe.
+ * Relief goods are unsellable, and the copies an unfinished quest still needs are not counted
+ * (the same quest needs that Shop.questUses / saleWarnings warn about, read from QUESTS here).
+ * The equipped weapon and its magazine are left out: relief only asks this when that weapon is
+ * absent or a relief gun with an empty magazine.
+ * Value held in expansion state is not seen here either (an equipped charm, cash and items paid
+ * into workbench batches, finished batches not yet collected): grantRelief only receives the main
+ * save. This can only make relief more generous, never stricter than the old cash rule.
+ */
+export function liquidValue(save: SaveDataV1): number {
+  const reserved = new Map<string, number>();
+  for (const [key, quest] of Object.entries(QUESTS)) if (!save.quests[key])
+    for (const [id, needed] of Object.entries(quest.needs)) reserved.set(id, (reserved.get(id) ?? 0) + needed);
+  let value = save.cash;
+  for (const inv of [save.stash, save.bag, save.safe]) for (const entry of inv.items) {
+    if (entry.relief) continue;
+    const kept = Math.min(entry.qty, reserved.get(entry.id) ?? 0);
+    if (kept) reserved.set(entry.id, reserved.get(entry.id)! - kept);
+    value += ITEMS[entry.id].sell * (entry.qty - kept);
+  }
+  return value;
+}
+/** Every gun the player owns at the hideout: the equipped one and those in the stash, bag and safe. */
+const ownedGuns = (save: SaveDataV1): { id: string; relief: boolean }[] => [
+  ...(isGun(save.equipment.weapon) ? [{ id: save.equipment.weapon, relief: save.equipment.relief }] : []),
+  ...[save.stash, save.bag, save.safe].flatMap(inv => inv.items.filter(i => isGun(i.id)).map(i => ({ id: i.id, relief: !!i.relief }))),
+];
+/** 9mm rounds anywhere: stored (relief or not), loaded in an equipped 9mm gun, or waiting as relief. */
+const ammo9Anywhere = (save: SaveDataV1): number =>
+  [save.stash, save.bag, save.safe].reduce((sum, inv) => sum + count(inv, 'ammo9'), 0)
+  + (isGun(save.equipment.weapon) && WEAPONS[save.equipment.weapon].ammo === 'ammo9' ? save.equipment.ammo : 0)
+  + (save.reliefSupplies ?? []).reduce((sum, supply) => sum + (supply.id === 'ammo9' ? supply.qty : 0), 0);
 export function grantRelief(save: SaveDataV1): boolean {
   if (save.activeRun) return false;
   let changed = false;
-  const ownsGun = isGun(save.equipment.weapon) || [save.stash, save.bag, save.safe].some(inv => inv.items.some(i => isGun(i.id)));
-  if (save.cash < 200 && !ownsGun) {
+  // Rule A: no gun, and selling everything sellable still cannot buy a pistol. The old
+  // cash < 200 test is kept on purpose so the rule is never stricter than before.
+  if (!ownedGuns(save).length && (save.cash < 200 || liquidValue(save) < ITEMS.pistol.buy)) {
     save.equipment = { weapon: 'pistol', relief: true, ammo: 0, ammoRelief: 0 };
     // A waiting kit is reused after a failed raid instead of issuing a second pending kit.
     if (!save.reliefSupplies?.length) save.reliefSupplies = [{ id: 'ammo9', qty: 12 }, { id: 'bandage', qty: 1 }];
+    changed = true;
+  }
+  // Rule B: only relief guns (rule A may have just issued one), no 9mm anywhere and not enough
+  // to buy one pack. Queue the 12 relief rounds a fresh kit carries. Nothing for ammo9 is pending
+  // here, so the merged entry is exactly 12, the migrateSave cap; delivery below is unchanged.
+  const guns = ownedGuns(save);
+  if (guns.length && guns.every(gun => gun.relief) && guns.some(gun => WEAPONS[gun.id].ammo === 'ammo9')
+    && !ammo9Anywhere(save) && liquidValue(save) < buyQuantity('ammo9') * ITEMS.ammo9.buy) {
+    save.reliefSupplies = [{ id: 'ammo9', qty: 12 }, ...(save.reliefSupplies ?? []).filter(supply => supply.id !== 'ammo9')];
     changed = true;
   }
   for (const supply of save.reliefSupplies ?? []) {

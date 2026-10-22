@@ -1,6 +1,4 @@
-import Phaser from 'phaser';
-
-// Original, deterministic pixel harbour painted once to a cached texture. Used as the
+// Original, deterministic pixel harbour painted once to a cached canvas. Used as the
 // static backdrop of the hideout and result screens; the menu has its own layered scene (src/title/).
 type Context = CanvasRenderingContext2D;
 const random = (n: number, salt = 0) => {
@@ -27,15 +25,6 @@ function disc(c: Context, color: string, x: number, y: number, radius: number) {
         const dx = Math.floor(Math.sqrt(radius * radius - dy * dy) / 2) * 2;
         rect(c, color, x - dx, y + dy, dx * 2, 2);
     }
-}
-function texture(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: Context) => void) {
-    if (scene.textures.exists(key)) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    const c = canvas.getContext('2d')!;
-    c.imageSmoothingEnabled = false;
-    draw(c);
-    scene.textures.addCanvas(key, canvas)?.setFilter(Phaser.Textures.FilterMode.NEAREST);
 }
 function crate(c: Context, x: number, y: number, w = 22, h = 19) {
     rect(c, '#151f20', x + 3, y + 3, w, h);
@@ -233,8 +222,20 @@ function paintHarbor(c: Context) {
     for (let i = 0; i < 1600; i++) rect(c, i % 2 ? '#d4dfb806' : '#06191e0b', random(i, 31) * 960, random(i, 32) * 540, 1, 1);
 }
 
-/** Station and result share the same harbor painting without menu animations. */
-export function drawStationBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Container {
-    texture(scene, 'title-harbor', 960, 540, paintHarbor);
-    return scene.add.container(0, 0, [scene.add.image(0, 0, 'title-harbor').setOrigin(0)]);
+const painted = new Map<boolean, HTMLCanvasElement>();
+/**
+ * Station and result share the same harbor painting without menu animations, painted once at 960x540; the tab page's
+ * copy is dimmed under its panels. The canvases are cached and shown as they are (src/screen.ts).
+ */
+export function stationBackdrop(dim: boolean): HTMLCanvasElement {
+    let canvas = painted.get(dim);
+    if (canvas) return canvas;
+    canvas = document.createElement('canvas');
+    canvas.width = 960; canvas.height = 540;
+    const c = canvas.getContext('2d')!;
+    c.imageSmoothingEnabled = false;
+    if (dim) { c.drawImage(stationBackdrop(false), 0, 0); c.fillStyle = 'rgba(8,18,17,.55)'; c.fillRect(0, 0, 960, 540); }
+    else paintHarbor(c);
+    painted.set(dim, canvas);
+    return canvas;
 }

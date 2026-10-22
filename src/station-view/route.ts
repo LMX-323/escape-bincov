@@ -3,13 +3,12 @@
  * stays as a shortcut fallback). This module is in the app's static graph; the Pixi view, its PNGs and its CSS load on
  * demand, so Node tests that import the UI never touch them.
  *
- * Ownership: the yard and the old tab page share the one HideoutRuntime / SaveSession. The yard never starts a
- * Phaser scene; the Phaser loop sleeps while it is mounted and the Pixi Application is the one the village sample
- * parks between mounts. Every switch away from the yard flushes first; a failed flush keeps the yard and its dialog.
+ * Ownership: the yard and the old tab page share the one HideoutRuntime / SaveSession. The Pixi Application is the one
+ * the raid view parks between mounts. Every switch away from the yard flushes first; a failed flush keeps the yard and its dialog.
  */
 import { app, audio, hideoutRuntime } from '../app';
 import { changeState, hideoutExternal, render, startPreparedHideoutRaid, toast } from '../ui';
-import { sampleEnabled, villageSeed } from '../coast-view/sample';
+import { raidWorlds, sampleMallLayout, sampleMode, villageSeed } from '../coast-view/sample';
 import { gpuTextures, managedSlots, parkApp, takeApp } from '../coast-view/host';
 import { lifecycle } from '../coast-view/scope';
 import type { HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
@@ -51,7 +50,6 @@ async function openStation(arrival: Arrival): Promise<boolean> {
   starting = true;
   let root: HTMLElement | null = null, pixi: import('pixi.js').Application | null = null;
   try {
-    app.game?.loop.sleep();
     document.documentElement.dataset.station = 'yard';
     root = document.createElement('div'); root.id = 'station-yard';
     const shadow = root.attachShadow({ mode: 'open' });
@@ -72,10 +70,11 @@ async function openStation(arrival: Arrival): Promise<boolean> {
       app: pixi, shadow, mount: shadow.querySelector<HTMLElement>('.mount')!, rt: hideoutRuntime, sol, art,
       test, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, frozen: test && p.get('freeze') === '1', mood: 'night',
       touch: document.documentElement.classList.contains('mobile'), volume: app.save.settings.volume,
-      arrival, world: app.runWorld, seed: app.seed, hooks: {
+      arrival, world: app.runWorld, seed: app.seed, worlds: raidWorlds(), hooks: {
         departed: runId => { closeStation(); void startPreparedHideoutRaid(runId).then(ok => { if (!ok) { toast('行动已保存，但没能启动。请在标题页继续行动。'); changeState('menu'); } }); },
-        seedFor: (world: RunWorld) => sampleEnabled() && world === 'buildings' ? String(villageSeed()) : '',
-        tabs: () => leave(() => changeState('hideout', false)),
+        seedFor: (world: RunWorld) => sampleMode() === 'village' && world === 'buildings' ? String(villageSeed()) : '',
+        mallLayout: (world: RunWorld) => sampleMallLayout(world),
+        tabs: () => leave(() => changeState('hideout')),
         title: () => { const r = hideoutRuntime.backToMenu(); if (!r.ok) { failed(r.message); return; } closeStation(); changeState('menu'); },
         exportSave: () => download(hideoutRuntime.exportBackup()),
         imported: () => {
@@ -99,9 +98,8 @@ async function openStation(arrival: Arrival): Promise<boolean> {
     root?.remove();
     delete document.documentElement.dataset.station;
     app.station = null; current = null;
-    app.game?.loop.wake();
     // The old tab page is the fallback entry: the save is untouched, only the view failed.
-    changeState('hideout', false);
+    changeState('hideout');
     toast('院子画面启动失败，已切换到页签界面。');
     return false;
   } finally { starting = false; }
@@ -115,7 +113,6 @@ export function closeStation() {
   resetCanvas(c.pixi); parkApp(c.pixi); lifecycle.apps--;
   c.root.remove();
   delete document.documentElement.dataset.station;
-  app.game?.loop.wake();
 }
 const resetCanvas = (pixi: import('pixi.js').Application) => { for (const k of ['width', 'height', 'cursor'] as const) pixi.canvas.style[k] = ''; };
 

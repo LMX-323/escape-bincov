@@ -5,7 +5,8 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
-import { throughYard } from './yard-entry.mjs';
+import { skipOpening, throughYard } from './yard-entry.mjs';
+import { reportFilter, stepFilter } from './step-filter.mjs';
 import * as D from '../src/domain.ts';
 import { validPractice } from '../src/hideout-runtime/training.ts';
 import { newExpansion, derivedLimits } from '../src/expansion-state.ts';
@@ -13,7 +14,7 @@ import { decodeSession } from '../src/recovery-store.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const out = resolve(option('out', 'test-results/tier2/browser')), htmlPath = option('html', 'dist/index.html');
-const only = option('only', '').split(',').filter(Boolean), html = await readFile(htmlPath, 'utf8');
+const filter = stepFilter(), html = await readFile(htmlPath, 'utf8');
 const cpuRate = Number(option('cpu-rate', '1'));
 assert.ok(Number.isFinite(cpuRate) && cpuRate >= 1 && cpuRate <= 20);
 await mkdir(out, { recursive: true });
@@ -38,7 +39,7 @@ async function open(size = [1280, 720], fixed = false, ordinary = false) {
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   if (fixed) await page.clock.setFixedTime(new Date());
   await page.goto(`https://station.test/${ordinary ? '' : '?test=1'}`); await tap(page.locator('[data-action="enter"]'));
-  if (ordinary) await yard('#hud-sub').waitFor(); else await ready();
+  if (ordinary) { await skipOpening(page); await yard('#hud-sub').waitFor(); } else await ready();
 }
 async function seed({ training = true, seconds = 0, quantity = 0, body = {} } = {}) {
   const p = D.newSave(), e = newExpansion(Date.now()), l = derivedLimits(e);
@@ -109,7 +110,7 @@ async function use(id) {
   assert.ok(item); await tap(yard(`[data-grid="bag"] [data-uid="${item.uid}"]`)); await tap(yard('[data-act="use"]'));
 }
 async function step(name, fn) {
-  if (only.length && !only.some(n => name.startsWith(n))) return;
+  if (!filter.selects(name)) return;
   const row = { name, status: 'running' }, start = Date.now(), errors = report.errors.length; report.steps.push(row);
   try { row.detail = await fn(); assert.deepEqual(report.errors.slice(errors), []); assert.deepEqual(report.external, []);
     if (page.url().includes('test=1')) assert.deepEqual(await page.evaluate(() => window.__station?.host?.errors ?? []), []);
@@ -236,6 +237,7 @@ try {
     await tap(yard('[data-quick="facility"]')); await tap(yard('[data-act="fac:training"]')); assert.match(await yard('.facility').innerText(), /已保存.*待保存/); await shot('ordinary-offline-1280');
   });
 } finally {
-  report.finishedAt = new Date().toISOString(); report.passed = report.steps.every(s => s.status === 'passed') && report.errors.length === 0 && report.external.length === 0;
+  const filterProblems = reportFilter(filter, report.steps.length); if (filterProblems.length) report.filterProblems = filterProblems;
+  report.finishedAt = new Date().toISOString(); report.passed = report.steps.every(s => s.status === 'passed') && report.errors.length === 0 && report.external.length === 0 && !filterProblems.length;
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2)); await browser.close();
 }

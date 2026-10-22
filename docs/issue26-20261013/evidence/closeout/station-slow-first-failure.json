@@ -1,0 +1,42 @@
+{
+  "build": "dist/index.html",
+  "sha256": "292b29967fb18ba3c3ccab95b667ab016ce082b30c03816a2a1779fab1fd3cfa",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:14:06.990Z",
+  "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
+  "steps": [
+    {
+      "name": "F01-double-click-storage-failure-rolls-back",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 5002,
+            "handled": 5002,
+            "uid": "bc-mv6pcsni-6",
+            "x": 920,
+            "y": 243.5
+          },
+          {
+            "stamp": 5484,
+            "handled": 5484,
+            "uid": "bc-mv6pcsni-6",
+            "x": 920,
+            "y": 243.5
+          }
+        ]
+      ],
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#station-yard .dialog [data-act=\"retry-save\"]') to be visible\u001b[22m\n\n    at D:\\bincov\\pr44-closeout\\scripts\\issue26-station-test.mjs:160:51\n    at async step (D:\\bincov\\pr44-closeout\\scripts\\issue26-station-test.mjs:140:22)\n    at async file:///D:/bincov/pr44-closeout/scripts/issue26-station-test.mjs:158:3"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "failure-1.png"
+  ],
+  "finishedAt": "2026-10-13T13:14:25.648Z",
+  "summary": {
+    "passed": 0,
+    "total": 1
+  }
+}

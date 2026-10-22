@@ -160,7 +160,7 @@ test('merging consumes the source UID while keeping target identity and relief r
 });
 
 test('invalid slots, endpoints and unavailable items have no side effects or writes', () => {
-    const f = fixture(save => D.addItem(save.bag, 'sample')), uid = add(f.container.inventory, 'shotgun');
+    const f = fixture(save => D.addItem(save.bag, 'sample', 2)), uid = add(f.container.inventory, 'shotgun');
     const valid = f.request('container', 'bag', uid), before = f.snapshot();
     const invalid: LootTransfer[] = [
         valid,

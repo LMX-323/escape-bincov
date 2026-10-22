@@ -1,0 +1,79 @@
+{
+  "build": "previous branch head 4608cd7 (before the stale-token and wording fixes), built locally; same sha256 as that commit's reported build",
+  "sha256": "46f5dc43757bcb8519918c870c3faf7c64c93f62309045a16b638d5ef355ec07",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-14T05:31:36.730Z",
+  "finishedAt": "2026-10-14T05:32:04.383Z",
+  "purpose": "The fixed script lets six seconds pass while the restore confirmation is open (one real base checkpoint commits) before confirming (S3), and asserts the new first sentence of the reset confirmation (S1). On the previous build the restore is refused with 请重新预览并确认覆盖。 and the old sentence does not match; the other eight steps are unchanged behaviour and pass.",
+  "steps": [
+    {
+      "name": "S1 1280x720 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。/."
+    },
+    {
+      "name": "S2 1280x720 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed"
+    },
+    {
+      "name": "S3 1280x720 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: a checkpoint while the dialog was open must not void the confirmed restore (actual toast: 请重新预览并确认覆盖。)"
+    },
+    {
+      "name": "S1 1920x1080 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。/."
+    },
+    {
+      "name": "S2 1920x1080 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed"
+    },
+    {
+      "name": "S3 1920x1080 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: a checkpoint while the dialog was open must not void the confirmed restore (actual toast: 请重新预览并确认覆盖。)"
+    },
+    {
+      "name": "S1 844x390 yard menu offers 清空存档，重新开始 and asks for confirmation",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。/."
+    },
+    {
+      "name": "S2 844x390 confirm downloads the old save, wipes to a fresh start in place and keeps a local copy",
+      "status": "passed"
+    },
+    {
+      "name": "S3 844x390 恢复清空前的存档 restores through the import confirmation and keeps the copy, also after a base checkpoint",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: a checkpoint while the dialog was open must not void the confirmed restore (actual toast: 请重新预览并确认覆盖。)"
+    },
+    {
+      "name": "S4 1280x720 a second reset of a still pristine save keeps the pre-reset copy",
+      "status": "passed"
+    },
+    {
+      "name": "S5 1280x720 reload shows the title with runs 0 and the copy survives",
+      "status": "passed"
+    },
+    {
+      "name": "S6 1280x720 a second tab without the lock cannot reach the reset; a taken-over yard refuses it with raw bytes unchanged",
+      "status": "passed"
+    },
+    {
+      "name": "S7 never offered on the legacy tab page or for an unreadable save",
+      "status": "passed"
+    },
+    {
+      "name": "S8 1280x720 resetting an untouched new game makes no local copy and says so",
+      "status": "passed"
+    }
+  ],
+  "summary": {
+    "total": 14,
+    "passed": 8,
+    "failed": 6
+  },
+  "errors": [],
+  "external": []
+}

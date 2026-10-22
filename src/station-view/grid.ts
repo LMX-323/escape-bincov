@@ -49,6 +49,9 @@ export class GridDrag {
     scope.on(window, 'pointermove', this.move);
     scope.on(window, 'pointerup', this.up);
     scope.on(window, 'pointercancel', this.cancel);
+    // Focus loss or a hidden page: the release may never reach this page, so the drag ends without a drop.
+    scope.on(window, 'blur', this.cancel);
+    scope.on(document, 'visibilitychange', this.cancel);
     scope.on(window, 'keydown', this.key, { capture: true });
     scope.add(() => { cancelAnimationFrame(this.scrollTick); this.ghost?.remove(); this.ghost = null; this.start = null; });
   }
@@ -65,7 +68,10 @@ export class GridDrag {
   };
   private move = (e: PointerEvent) => {
     const s = this.start, h = this.hooks();
-    if (!s || !h || e.pointerId !== s.pointer) return;
+    if (!s || e.pointerId !== s.pointer) return;
+    // The primary button is up although its release never arrived (let go outside the window): end without a drop.
+    if (!(e.buttons & 1)) { this.cancel(); return; }
+    if (!h) return;
     if (!this.ghost) {
       if (Math.hypot(e.clientX - s.x, e.clientY - s.y) < 5) return;
       const item = h.inv(s.src)?.items.find(i => i.uid === s.uid);
@@ -119,8 +125,11 @@ export class GridDrag {
     if (!s || e.pointerId !== s.pointer) return;
     this.start = null;
     if (!this.ghost || !h) {
-      if (h) {
-        const now = performance.now();
+      // A dialog or another panel took over mid-drag (no hooks): the drag ends and the item stays where it was.
+      if (this.ghost) this.finish();
+      else if (h) {
+        // Compare input times: renderer work between pointerups must not split a quick double tap.
+        const now = e.timeStamp;
         if (this.lastClick.uid === s.uid && now - this.lastClick.t < 320 && h.quick) { h.quick(s.src, s.uid); this.lastClick = { uid: '', t: 0 }; }
         else { this.lastClick = { uid: s.uid, t: now }; h.select(s.src, s.uid); }
       }
@@ -132,7 +141,8 @@ export class GridDrag {
     else if (hit && h.dropSlot) h.dropSlot(hit.dataset.slot!, s.src, s.uid);
     else if (over) h.reject(h.check(s.src, over.grid.dataset.grid!, s.uid, over.x, over.y, this.rotated) ?? '这里放不下。');
   };
-  private cancel = () => { if (this.ghost) this.finish(); this.start = null; };
+  /** End any drag or press without a drop; safe to call at any time and more than once. */
+  cancel = () => { if (this.ghost) this.finish(); this.start = null; };
   private finish() {
     cancelAnimationFrame(this.scrollTick);
     this.ghost?.remove(); this.ghost = null; this.clearPreview();

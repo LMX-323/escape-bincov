@@ -2,32 +2,44 @@ import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { app, saveSession } from '../src/app';
-import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
+import { RecoveryStore, SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { initialCheckpoint } from '../src/checkpoint';
 import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
-import { finish, retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
-import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup } from '../src/save-backup';
+import { retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
+import { BACKUP_MAX_BYTES, decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
 
 let stored: string | null;
 let failWrites: boolean;
 let writes: number;
-const screen = { innerHTML: '', style: {}, querySelectorAll: () => [], querySelector: () => null };
+// Buttons the page binds on render (bind() looks them up with '[data-action]').
+let buttons: { dataset: Record<string, string>; onclick?: () => void }[] = [];
+const screen = { innerHTML: '', style: {}, querySelectorAll: (selector: string) => selector === '[data-action]' ? buttons : [], querySelector: () => null };
 const notification = { textContent: '', style: {} };
 const globals = new Map<string, PropertyDescriptor | undefined>();
+/**
+ * The raid host's end of a run (CoastRaidRuntime.finish): stage the settlement once, then write it. A failed write
+ * leaves it pending for the page's save-error dialog (retrySettlement below).
+ */
+function settle(outcome: 'extract' | 'death' | 'timeout' | 'abandon', kills: number) {
+  if (!saveSession.prepareSettlement(outcome, kills)) return false;
+  return saveSession.retrySettlement();
+}
 
 beforeEach(() => {
-  stored = null; failWrites = false; writes = 0;
+  stored = null; failWrites = false; writes = 0; buttons = [];
   for (const key of ['document', 'localStorage', 'innerWidth', 'innerHeight']) globals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
   Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: 1280 });
   Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 720 });
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { body: { dataset: {} }, documentElement: { dataset: {}, classList: { remove() {}, add() {} }, style: { setProperty() {} } }, dispatchEvent() {}, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null } });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { body: { dataset: {} }, documentElement: { dataset: {}, classList: { remove() {}, add() {} }, style: { setProperty() {} } }, dispatchEvent() {}, getElementById: (id: string) => id === 'ui' ? screen : id === 'toast' ? notification : null,
+    // Item icons paint into a canvas; without a 2D context they are simply left out.
+    createElement: () => ({ getContext: () => null }) } });
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     getItem: (key: string) => key === SESSION_KEY ? stored : null,
     setItem: (_key: string, value: string) => { if (failWrites) throw new Error('quota exceeded'); stored = value; writes++; },
   } });
-  Object.assign(app, { checkpoint: null, pendingRecoveryImport: null, storageError: '', lastSavedAt: 0, game: null, save: D.newSave(), state: 'hideout', raid: null, loadout: null, tab: 'gear', overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
+  Object.assign(app, { checkpoint: null, pendingRecoveryImport: null, storageError: '', lastSavedAt: 0, save: D.newSave(), state: 'hideout', loadout: null, tab: 'gear', overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
   saveSession.initialize(); writes = 0;
 });
 afterEach(() => {
@@ -44,20 +56,16 @@ for (const outcome of ['extract', 'death', 'timeout'] as const) test(`${outcome}
   D.addItem(app.loadout.safe, 'pearl');
   saveSession.persist(app.save, initialCheckpoint(generateRun(42), app.loadout));
   app.state = 'run';
-  let locked = false;
-  app.raid = { syncMagazine() {}, releaseInput() {}, checkpoint() {}, lock() { locked = true; }, kills: 2 } as any;
   failWrites = true;
-  finish(outcome);
-  assert.equal(locked, true);
+  assert.equal(settle(outcome, 2), false);
   assert.equal(app.state, 'run');
   assert.equal(app.result, null);
   assert.equal(app.pendingSettlement?.lastResult?.outcome, outcome);
-  assert.match(screen.innerHTML, /结算尚未保存/);
   assert.ok(JSON.parse(stored!).profile.activeRun);
   assert.equal(app.save.stats.extracts, 0);
   setOverlay('');
   assert.equal(app.overlay, 'save-error', 'Escape cannot hide an unsaved settlement');
-  finish('death');
+  assert.equal(saveSession.prepareSettlement('death', 0), false, 'A staged settlement is never staged again');
   assert.equal(app.pendingSettlement?.lastResult?.outcome, outcome, 'The frozen outcome cannot be overwritten');
   const backup = decodeBackup(encodeBackup(app.pendingSettlement!));
   assert.equal(backup.activeRun, null);
@@ -91,25 +99,24 @@ test('merchant purchases and quest submission roll back cash, items and rewards 
   assert.equal(app.save.cash, original.cash + D.QUESTS.sample.reward);
 });
 
-test('failed safe transfers and medical use restore both inventories and player vitals', () => {
+// In-raid transfers and medical use are Runtime transactions now (raid-runtime.test.ts: ground pickup and medical
+// failures, medical commit failure, drop and equip failure); the tab page's own safe transfers still roll back here.
+test('failed safe transfers on the tab page restore both inventories', () => {
   D.addItem(app.save.safe, 'medkit');
-  app.loadout = begin();
-  app.state = 'run';
-  app.raid = { releaseInput() {}, checkpoint() {}, hp: 10, stamina: 50, pollution: 20, bleeding: 1, carriedWeight: () => 2 } as any;
-  const saveBefore = structuredClone(app.save), loadoutBefore = structuredClone(app.loadout);
+  const saveBefore = structuredClone(app.save);
   failWrites = true;
-  assert.equal(mutate(() => D.transferItem(app.loadout!.safe, app.loadout!.bag, app.loadout!.safe.items[0].uid)), false);
+  assert.equal(mutate(() => D.transferItem(app.save.safe, app.save.bag, app.save.safe.items[0].uid)), false);
   assert.deepEqual(app.save, saveBefore);
-  assert.deepEqual(app.loadout, loadoutBefore);
-  assert.equal(mutate(() => { D.removeItem(app.loadout!.safe, 'medkit', 1); app.raid!.hp = 65; app.raid!.bleeding = 0; }), false);
-  assert.equal(app.raid!.hp, 10);
-  assert.equal(app.raid!.bleeding, 1);
-  assert.deepEqual(app.loadout, loadoutBefore);
+  assert.equal(mutate(() => D.transferItem(app.save.bag, app.save.safe, app.save.bag.items[0].uid)), false);
+  assert.deepEqual(app.save, saveBefore);
+  failWrites = false;
+  assert.equal(mutate(() => D.transferItem(app.save.safe, app.save.bag, app.save.safe.items[0].uid)), true);
+  assert.equal(D.count(read().bag, 'medkit'), 1);
 });
 
 test('another tab cannot be overwritten by a pending retry; backup remains exportable', () => {
   app.loadout = begin(); app.state = 'run'; failWrites = true;
-  finish('extract'); app.conflict = true; failWrites = false;
+  assert.equal(settle('extract', 0), false); app.conflict = true; failWrites = false;
   assert.equal(retrySettlement(), false);
   assert.equal(writes, 1, 'Only the deployment commit succeeded');
   assert.equal(decodeBackup(encodeBackup(app.pendingSettlement!)).stats.extracts, 1);
@@ -128,6 +135,30 @@ test('backup import preserves the old save on failure and commits the full new s
   assert.deepEqual(read(), candidate);
 });
 
+test('a session backup import that cannot be written keeps the dialog and reports the failure', () => {
+  saveSession.persist(app.save);
+  const record = saveSession.backupRecord()!; record.profile.cash = 4321;
+  const candidate = decodePortableBackup(encodeRecoveryBackup(record));
+  assert.equal(candidate.kind, 'session');
+  const confirm: (typeof buttons)[number] = { dataset: { action: 'confirm-import' } };
+  buttons = [confirm]; notification.textContent = '';
+  app.pendingRecoveryImport = candidate.kind === 'session' ? candidate.record : null;
+  setOverlay('import-save');
+  const before = stored, original = structuredClone(app.save);
+  failWrites = true;
+  confirm.onclick!();
+  assert.equal(stored, before);
+  assert.deepEqual(app.save, original);
+  assert.equal(notification.textContent, '存档保存失败。请检查浏览器是否允许保存数据，然后重试。');
+  assert.equal(app.overlay, 'import-save', 'the dialog stays open for another try');
+  assert.ok(app.pendingRecoveryImport);
+  failWrites = false;
+  confirm.onclick!();
+  assert.equal(app.pendingRecoveryImport, null);
+  assert.equal(app.state, 'menu');
+  assert.equal(read().cash, 4321);
+});
+
 test('backup reader rejects unrelated, unsupported, truncated, oversized, overlapping and live-raid data', () => {
   for (const text of ['{}', '{', JSON.stringify({ version: 2 }), ' '.repeat(BACKUP_MAX_BYTES + 1)]) assert.throws(() => decodeBackup(text));
   const save = D.newSave();
@@ -139,4 +170,25 @@ test('backup reader rejects unrelated, unsupported, truncated, oversized, overla
   const valid = D.newSave();
   assert.deepEqual(decodeBackup(encodeBackup(valid)), valid);
   assert.deepEqual(decodeBackup(JSON.stringify(valid)), valid, 'Version-one raw saves may be migrated from older HTML files');
+});
+
+// Clock seeds are Date.now() >>> 0: above 1e9 for about 38 of every 49.7 days (2026-10-14 18:09 UTC to
+// 2026-11-21 17:25 UTC, then again). The settled summary must keep the full 32-bit seed like the active run does.
+for (const seed of [1_039_041_854, 0xffffffff]) test(`a run seeded ${seed} settles, reloads and exports`, () => {
+  saveSession.beginRun(seed);
+  assert.equal(app.save.activeRun?.seed, seed);
+  saveSession.persist(app.save, initialCheckpoint(generateRun(seed), app.loadout!));
+  app.state = 'run';
+  assert.equal(saveSession.prepareSettlement('extract', 0), true);
+  assert.equal(retrySettlement(), true);
+  assert.equal(app.pendingSettlement, null, 'the settlement was written');
+  assert.equal(app.state, 'result');
+  const record = JSON.parse(stored!);
+  assert.equal(record.profile.lastResult.seed, seed);
+  assert.equal(record.profile.activeRun, null);
+  assert.equal(decodeSession(stored!).profile.lastResult?.seed, seed, 'the stored record passes the strict reader');
+  assert.equal(read().lastResult?.seed, seed);
+  assert.equal(decodeBackup(encodeBackup(app.save)).lastResult?.seed, seed);
+  assert.doesNotThrow(() => encodeRecoveryBackup(saveSession.backupRecord()!));
+  assert.equal(D.migrateSave({ ...D.newSave(), lastResult: { outcome: 'extract', kills: 0, keptValue: 0, lostValue: 0, seed, recovered: false, message: '' } }).lastResult?.seed, seed);
 });

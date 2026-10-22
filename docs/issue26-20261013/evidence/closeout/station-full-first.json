@@ -1,0 +1,4477 @@
+{
+  "build": "dist/index.html",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:26:09.510Z",
+  "methodology": "Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.",
+  "steps": [
+    {
+      "name": "A1 普通入口（无 ?test=1）：标题“进入”直接进院子，无测试接口，存档升级到成长 v2",
+      "status": "passed",
+      "detail": "院子挂载，#frame 隐藏；存档 v4，扩展 v2，现金 700",
+      "ms": 3029
+    },
+    {
+      "name": "A2 旧档（v1 键）进入院子：现金、任务、统计、物品保留，成长受控启用，原始字节留在 legacyBackup",
+      "status": "passed",
+      "detail": "现金 1842、修好电源（院子灯亮）、出击 3 次保留；第 4 天；legacyBackup 为原始字节",
+      "ms": 2157
+    },
+    {
+      "name": "A3 刷新恢复：院子里整理的物品刷新后仍在，进入仍是院子",
+      "status": "passed",
+      "detail": "布料在背包 (5, 2)，刷新后相同",
+      "ms": 3347
+    },
+    {
+      "name": "A4 院子画面启动失败（WebGL 不可用）：自动退回旧页签界面并提示，存档不受影响",
+      "status": "passed",
+      "detail": "Pixi 改用 Canvas 时按失败处理；提示「院子画面启动失败，已切换到页签界面。」；页签界面可用，存档已升级",
+      "ms": 1237
+    },
+    {
+      "name": "B1 键盘走动与碰撞（按住 D；向北撞育苗池停住）",
+      "status": "passed",
+      "detail": "右移 113 px；北向停在 y=12.18 格",
+      "ms": 3970
+    },
+    {
+      "name": "B2 点电台屋顶：寻路穿过两道门进电台，打开任务面板",
+      "status": "passed",
+      "detail": "面板 radio，玩家 (30.4, 4.6)",
+      "ms": 3498
+    },
+    {
+      "name": "B3 交付「让灯亮起来」：真实任务事务 → 供电恢复序列（F02 全景）→ 现金 +420",
+      "status": "passed",
+      "detail": "现金 700 → 1120，供电 restored",
+      "ms": 5786
+    },
+    {
+      "name": "C1 整备：Tab 打开，拖动、按 R 旋转、卸下后拖回武器栏、双击回仓库",
+      "status": "passed",
+      "detail": "布料→背包，净水旋转，手枪卸下再拖回武器栏，罐头双击回仓库",
+      "ms": 3464
+    },
+    {
+      "name": "C2 整备：拆分一半、放入安全箱、使用补给（真实 Runtime 接口）",
+      "status": "passed",
+      "detail": "9mm 32 拆成 16 + 16；绷带进安全箱；罐头未使用（Runtime 拒绝，见提示）",
+      "ms": 1008
+    },
+    {
+      "name": "C3 补给成功：低饱食真实使用罐头，消耗一件并按规则恢复35",
+      "status": "passed",
+      "detail": {
+        "before": {
+          "qty": 2,
+          "satiety": 20
+        },
+        "after": {
+          "qty": 1,
+          "satiety": 55.02055
+        }
+      },
+      "ms": 2493
+    },
+    {
+      "name": "D1 修理铺：走到老栓处，买一包 9mm、卖怀表并结算（真实购物车）",
+      "status": "passed",
+      "detail": "现金 6000 → 6156；9mm 自动放入仓库",
+      "ms": 1968
+    },
+    {
+      "name": "D2 卖出任务物资：Runtime 要求确认 → 弹出确认 → 确认后成交",
+      "status": "passed",
+      "detail": "确认文案「让灯亮起来：泵机零件还需3，出售后剩0」；确认后现金 700 → 805",
+      "ms": 2939
+    },
+    {
+      "name": "E1 休息区：走到宿舍修建 1 级（床铺出现）",
+      "status": "passed",
+      "detail": "休息区 1 级",
+      "ms": 3176
+    },
+    {
+      "name": "E2 工作台：修建、排入一批绷带；生产完成事件（缩短剩余时间的夹具）后领取到仓库",
+      "status": "passed",
+      "detail": "绷带 2 → 4（整批领取到仓库）",
+      "ms": 6118
+    },
+    {
+      "name": "E3 训练区：选练习项目，在育苗池之间走动，五秒检查点写入练习时间",
+      "status": "passed",
+      "detail": "已保存练习时间 0.0 → 6.7 秒（属性 技巧）",
+      "ms": 14941
+    },
+    {
+      "name": "E4 训练：真实有效120秒、规则奖励、静止/面板/后台暂停不计时",
+      "status": "passed",
+      "detail": {
+        "wallSeconds": 125.438,
+        "before": {
+          "startedAt": 1791898029576,
+          "quantity": 0,
+          "credited": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0
+          },
+          "activeSeconds": 0,
+          "attribute": "technique",
+          "windowLeft": 591.501
+        },
+        "after": {
+          "startedAt": 1791898029576,
+          "quantity": 0.2875,
+          "credited": {
+            "strength": 0,
+            "constitution": 0,
+            "technique": 0.057499999999999996
+          },
+          "activeSeconds": 4.404899999987264,
+          "attribute": "technique",
+          "windowLeft": 466.065
+        },
+        "beforeProgress": 0,
+        "afterProgress": 0.057499999999999996,
+        "level": 3,
+        "trace": {
+          "acceptedSeconds": 124.40489999998641,
+          "accepted": 20528,
+          "offered": 20674,
+          "events": [
+            {
+              "type": "practice-credited",
+              "attribute": "technique",
+              "amount": 0.057499999999999996
+            }
+          ]
+        },
+        "pauses": [
+          {
+            "name": "静止",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "面板打开且按住移动键",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "失焦门控模拟（实际切窗未测）",
+            "before": 0,
+            "after": 0
+          },
+          {
+            "name": "隐藏门控模拟",
+            "before": 0,
+            "after": 0
+          }
+        ]
+      },
+      "ms": 134945
+    },
+    {
+      "name": "F1 写入失败：修建被回滚、出现存档对话框；重试保存后关闭，再修建成功",
+      "status": "passed",
+      "detail": "失败时状态不变、对话框出现；故障仍在时重试不关闭；恢复后重试成功，修建一次成功",
+      "ms": 3606
+    },
+    {
+      "name": "F2 五秒检查点失败：练习进度保留，导出备份含未写入进度；重试后写入",
+      "status": "passed",
+      "detail": "备份练习 4.4 秒；重试后存档 4.4 秒",
+      "ms": 9167
+    },
+    {
+      "name": "F3 另一窗口接管存档：院子停止写入，只提供导出与刷新",
+      "status": "passed",
+      "detail": "对话框按钮：close、export、reload",
+      "ms": 690
+    },
+    {
+      "name": "F4 菜单导出存档 → 修建花钱 → 菜单导入刚才的备份：预览后确认覆盖，恢复到导出时",
+      "status": "passed",
+      "detail": "导出 6000 → 修建后 5800 → 导入后 6000，休息区回到 0 级",
+      "ms": 3014
+    },
+    {
+      "name": "F5 真实购物存档失败：原字节/身体/队列/rev不变，重试不下单，再结算仅一次",
+      "status": "passed",
+      "detail": {
+        "cashBefore": 6000,
+        "cashAfter": 5916,
+        "revBefore": 4,
+        "revFailed": 4
+      },
+      "ms": 4134
+    },
+    {
+      "name": "G1 旧页签备用入口：按 0 回到页签界面（Phaser 宿主），“回到院子”再进院子",
+      "status": "passed",
+      "detail": "页签界面运行 Hideout 场景，院子已卸载；“回到院子”按钮重新挂载院子，Phaser 循环休眠",
+      "ms": 3140
+    },
+    {
+      "name": "G2 菜单返回主菜单（backToMenu），再进入仍是院子",
+      "status": "passed",
+      "detail": "标题 ⇄ 院子",
+      "ms": 567
+    },
+    {
+      "name": "G3 真实出击（沿海封锁区，Phaser）：开门动画 → 局内 → 撤离 → 返回走进院门并显示行动报告",
+      "status": "passed",
+      "detail": "出击 0 → 1；报告只播放一次",
+      "ms": 10099
+    },
+    {
+      "name": "G4 开门动画中刷新：标题恢复原行动（不重开、不进院子），撤离后回到院子",
+      "status": "passed",
+      "detail": "恢复的行动 bc-mv6px6pt-6 与动画前写入的一致",
+      "ms": 7351
+    },
+    {
+      "name": "G5 城中村样板（?sample=village）：院子与局内轮用一个 Pixi 应用；受跟踪计数对照",
+      "status": "passed",
+      "detail": "院子 apps 1/parked 0 → 局内 apps 1/parked 0 → 结果页 parked 1 → 回院子相同；GPU 纹理 203（院子 336）→ 206（院子 347）",
+      "ms": 15143
+    },
+    {
+      "name": "G6 院子重挂 20 次：监听、ticker、视图、应用计数回到基线，GPU 纹理与托管槽不增长",
+      "status": "passed",
+      "detail": "listeners 24，tickers 1，GPU 纹理 203 → 203，托管 269/0 → 269/0，强制回收后堆 37.5 → 37.2 MB",
+      "ms": 9309
+    },
+    {
+      "name": "G7 WebGL 上下文丢失后暂停绘制，恢复后继续，循环不中断",
+      "status": "passed",
+      "detail": "丢失期间仍推进 51 帧（不绘制），恢复后 51 帧，无帧错误",
+      "ms": 2635
+    },
+    {
+      "name": "H1 F01 侧门：发电机房→电台、食堂→宿舍、院子→加工间",
+      "status": "passed",
+      "detail": "揭开 gen、radio；门牌“电台 →”；揭开 canteen、dorm；门牌“宿舍 →”；揭开 work；门牌“← 加工间”",
+      "ms": 4995
+    },
+    {
+      "name": "H2 F03：点自己脚下的寻路格不卡死；之后键盘与寻路正常",
+      "status": "passed",
+      "detail": "0.5 秒内刷新 84 帧、85 帧、83 帧",
+      "ms": 4691
+    },
+    {
+      "name": "H3 F03：点在杆身、墙上、池里、门柱，走到最近的空地",
+      "status": "passed",
+      "detail": "杆身 0.52 格，南院墙 0.86 格，育苗池里 1.29 格，院门柱 0.60 格",
+      "ms": 5714
+    },
+    {
+      "name": "H4 F03：四杆32候选方向：分别记录执行与障碍跳过（真实鼠标）",
+      "status": "passed",
+      "detail": {
+        "executed": 15,
+        "skipped": 17,
+        "directions": [
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 0,
+            "from": {
+              "x": 11.7,
+              "y": 9.8
+            },
+            "to": {
+              "x": 7.3,
+              "y": 9.8
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": false,
+              "stationTarget": true
+            }
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 1,
+            "from": {
+              "x": 11.055634918610405,
+              "y": 10.931370849898476
+            },
+            "to": {
+              "x": 7.944365081389595,
+              "y": 8.668629150101525
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": true,
+              "stationTarget": true
+            }
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 2,
+            "from": {
+              "x": 9.5,
+              "y": 11.4
+            },
+            "to": {
+              "x": 9.5,
+              "y": 8.200000000000001
+            },
+            "status": "executed",
+            "distancePx": 2.5947422426214524
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 3,
+            "from": {
+              "x": 7.944365081389595,
+              "y": 10.931370849898476
+            },
+            "to": {
+              "x": 11.055634918610405,
+              "y": 8.668629150101525
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 4,
+            "from": {
+              "x": 7.3,
+              "y": 9.8
+            },
+            "to": {
+              "x": 11.7,
+              "y": 9.8
+            },
+            "status": "executed",
+            "distancePx": 2.495747059137984
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 5,
+            "from": {
+              "x": 7.944365081389595,
+              "y": 8.668629150101525
+            },
+            "to": {
+              "x": 11.055634918610405,
+              "y": 10.931370849898476
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 6,
+            "from": {
+              "x": 9.5,
+              "y": 8.200000000000001
+            },
+            "to": {
+              "x": 9.5,
+              "y": 11.4
+            },
+            "status": "executed",
+            "distancePx": 2.8181583165682147
+          },
+          {
+            "pole": [
+              9,
+              9
+            ],
+            "direction": 7,
+            "from": {
+              "x": 11.055634918610405,
+              "y": 8.668629150101525
+            },
+            "to": {
+              "x": 7.944365081389596,
+              "y": 10.931370849898476
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": true
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 0,
+            "from": {
+              "x": 24.7,
+              "y": 9.8
+            },
+            "to": {
+              "x": 20.3,
+              "y": 9.8
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": true
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 1,
+            "from": {
+              "x": 24.055634918610405,
+              "y": 10.931370849898476
+            },
+            "to": {
+              "x": 20.944365081389595,
+              "y": 8.668629150101525
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": true
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 2,
+            "from": {
+              "x": 22.5,
+              "y": 11.4
+            },
+            "to": {
+              "x": 22.5,
+              "y": 8.200000000000001
+            },
+            "status": "executed",
+            "distancePx": 2.3337010219117733
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 3,
+            "from": {
+              "x": 20.944365081389595,
+              "y": 10.931370849898476
+            },
+            "to": {
+              "x": 24.055634918610405,
+              "y": 8.668629150101525
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 4,
+            "from": {
+              "x": 20.3,
+              "y": 9.8
+            },
+            "to": {
+              "x": 24.7,
+              "y": 9.8
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 5,
+            "from": {
+              "x": 20.944365081389595,
+              "y": 8.668629150101525
+            },
+            "to": {
+              "x": 24.055634918610405,
+              "y": 10.931370849898476
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 6,
+            "from": {
+              "x": 22.5,
+              "y": 8.200000000000001
+            },
+            "to": {
+              "x": 22.5,
+              "y": 11.4
+            },
+            "status": "executed",
+            "distancePx": 2.7998387246061616
+          },
+          {
+            "pole": [
+              22,
+              9
+            ],
+            "direction": 7,
+            "from": {
+              "x": 24.055634918610405,
+              "y": 8.668629150101525
+            },
+            "to": {
+              "x": 20.944365081389595,
+              "y": 10.931370849898476
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 0,
+            "from": {
+              "x": 11.7,
+              "y": 19.8
+            },
+            "to": {
+              "x": 7.3,
+              "y": 19.8
+            },
+            "status": "executed",
+            "distancePx": 2.5047292740271736
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 1,
+            "from": {
+              "x": 11.055634918610405,
+              "y": 20.931370849898478
+            },
+            "to": {
+              "x": 7.944365081389595,
+              "y": 18.668629150101523
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 2,
+            "from": {
+              "x": 9.5,
+              "y": 21.400000000000002
+            },
+            "to": {
+              "x": 9.5,
+              "y": 18.2
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 3,
+            "from": {
+              "x": 7.944365081389595,
+              "y": 20.931370849898478
+            },
+            "to": {
+              "x": 11.055634918610405,
+              "y": 18.668629150101523
+            },
+            "status": "executed",
+            "distancePx": 2.518165495560446
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 4,
+            "from": {
+              "x": 7.3,
+              "y": 19.8
+            },
+            "to": {
+              "x": 11.7,
+              "y": 19.8
+            },
+            "status": "executed",
+            "distancePx": 2.4935292740275607
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 5,
+            "from": {
+              "x": 7.944365081389595,
+              "y": 18.668629150101523
+            },
+            "to": {
+              "x": 11.055634918610405,
+              "y": 20.931370849898478
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 6,
+            "from": {
+              "x": 9.5,
+              "y": 18.2
+            },
+            "to": {
+              "x": 9.5,
+              "y": 21.400000000000002
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              9,
+              19
+            ],
+            "direction": 7,
+            "from": {
+              "x": 11.055634918610405,
+              "y": 18.668629150101523
+            },
+            "to": {
+              "x": 7.944365081389596,
+              "y": 20.931370849898478
+            },
+            "status": "executed",
+            "distancePx": 2.98389010729061
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 0,
+            "from": {
+              "x": 26.7,
+              "y": 19.8
+            },
+            "to": {
+              "x": 22.3,
+              "y": 19.8
+            },
+            "status": "executed",
+            "distancePx": 2.5025126946736966
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 1,
+            "from": {
+              "x": 26.055634918610405,
+              "y": 20.931370849898478
+            },
+            "to": {
+              "x": 22.944365081389595,
+              "y": 18.668629150101523
+            },
+            "status": "executed",
+            "distancePx": 2.7389286138454936
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 2,
+            "from": {
+              "x": 24.5,
+              "y": 21.400000000000002
+            },
+            "to": {
+              "x": 24.5,
+              "y": 18.2
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": true,
+              "toBlocked": false,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 3,
+            "from": {
+              "x": 22.944365081389595,
+              "y": 20.931370849898478
+            },
+            "to": {
+              "x": 26.055634918610405,
+              "y": 18.668629150101523
+            },
+            "status": "executed",
+            "distancePx": 2.514009273383509
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 4,
+            "from": {
+              "x": 22.3,
+              "y": 19.8
+            },
+            "to": {
+              "x": 26.7,
+              "y": 19.8
+            },
+            "status": "executed",
+            "distancePx": 2.484547059136239
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 5,
+            "from": {
+              "x": 22.944365081389595,
+              "y": 18.668629150101523
+            },
+            "to": {
+              "x": 26.055634918610405,
+              "y": 20.931370849898478
+            },
+            "status": "executed",
+            "distancePx": 2.83632400650599
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 6,
+            "from": {
+              "x": 24.5,
+              "y": 18.2
+            },
+            "to": {
+              "x": 24.5,
+              "y": 21.400000000000002
+            },
+            "status": "skipped",
+            "reasons": {
+              "fromBlocked": false,
+              "toBlocked": true,
+              "stationTarget": false
+            }
+          },
+          {
+            "pole": [
+              24,
+              19
+            ],
+            "direction": 7,
+            "from": {
+              "x": 26.055634918610405,
+              "y": 18.668629150101523
+            },
+            "to": {
+              "x": 22.944365081389595,
+              "y": 20.931370849898478
+            },
+            "status": "executed",
+            "distancePx": 2.8893740640575656
+          }
+        ]
+      },
+      "ms": 19787
+    },
+    {
+      "name": "H5 F03：斜挤杆与墙角的缝、正对杆子直走不卡住；帧出错不停循环",
+      "status": "passed",
+      "detail": "缝里右移 47 px；绕杆到 y=7.42；注入 3 次帧错误后继续 82 帧",
+      "ms": 2953
+    },
+    {
+      "name": "H6 F02：1280×720 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "passed",
+      "detail": "平时 ×2，序列中 ×0.94，结束后 ×2",
+      "ms": 7655
+    },
+    {
+      "name": "H6 F02：1024×720 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "passed",
+      "detail": "平时 ×2，序列中 ×0.94，结束后 ×2",
+      "ms": 7671
+    },
+    {
+      "name": "H6 F02：844×390 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "passed",
+      "detail": "平时 ×3，序列中 ×1.00，结束后 ×3",
+      "ms": 7813
+    },
+    {
+      "name": "H6 F02：390×844 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "passed",
+      "detail": "平时 ×2，序列中 ×0.73，结束后 ×2",
+      "ms": 7769
+    },
+    {
+      "name": "H7 快捷入口：院子里按 2 修理铺结算、3 卫生所、5 设施切到工作台；页签切换；待买未结算时不让离开",
+      "status": "passed",
+      "detail": "修理铺现金 6000 → 5916；卫生所看进 clinic；设施切到工作台",
+      "ms": 3501
+    },
+    {
+      "name": "H8 手机竖屏：收起的“功能”菜单 → 卫生所；面板标题菜单 → 整备；页签按钮",
+      "status": "passed",
+      "detail": "窄屏收起快捷栏；功能菜单与标题菜单可用",
+      "ms": 2478
+    },
+    {
+      "name": "H8b 手机触屏：左下摇杆拖动走路，靠近修理铺后点“交互”打开面板",
+      "status": "passed",
+      "detail": "摇杆左移 66 px；交互按钮打开修理铺",
+      "ms": 2923
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：844×390 整备与修理铺",
+      "status": "passed",
+      "detail": "整备（紧凑） 42px，修理铺（紧凑） 44px",
+      "ms": 2993
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：390×844 整备与修理铺",
+      "status": "passed",
+      "detail": "整备（紧凑） 36px，修理铺（紧凑） 36px",
+      "ms": 3048
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：1280×720 整备与修理铺",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 整备截断\n+ actual - expected\n\n+ [\n+   '保险管'\n+ ]\n- []\n\n    at file:///D:/bincov/pr44-closeout/scripts/station-browser-test.mjs:713:16\n    at async step (file:///D:/bincov/pr44-closeout/scripts/station-browser-test.mjs:90:18)\n    at async file:///D:/bincov/pr44-closeout/scripts/station-browser-test.mjs:705:5",
+      "ms": 2424
+    },
+    {
+      "name": "H9 物品名完整、格子 ≥ 36 px、无横向溢出：1920×1080 整备与修理铺",
+      "status": "passed",
+      "detail": "整备 56px，修理铺 56px",
+      "ms": 3017
+    },
+    {
+      "name": "H10 手机横屏 844×390：仓库拖进背包、背包拖进安全箱、修理铺买入结算",
+      "status": "passed",
+      "detail": "布料 仓库→背包→安全箱；现金 6000 → 6156",
+      "ms": 4848
+    },
+    {
+      "name": "H11 面板高度：1280×720、1366×768、1920×1080 下整备与修理铺不用滚动",
+      "status": "passed",
+      "detail": "1280×720、1366×768、1920×1080 均无需滚动",
+      "ms": 20576
+    },
+    {
+      "name": "H12 素材实景：33张逐项覆盖，四NPC工作/近身/说话、遮挡与供电",
+      "status": "passed",
+      "detail": {
+        "delivered": 33,
+        "selected": 33,
+        "missing": []
+      },
+      "ms": 30345
+    },
+    {
+      "name": "H13 帧耗时（场景提交，60 帧均值；无头 Chrome，非真机）",
+      "status": "passed",
+      "detail": "均值 2.30 ms，p95 2.90 ms",
+      "ms": 368
+    },
+    {
+      "name": "H14 1920×1080 院子与 1280×720 夜景截图",
+      "status": "passed",
+      "detail": "已截图",
+      "ms": 3636
+    },
+    {
+      "name": "H16 真实交互/交易/刷新 1280x720",
+      "status": "passed",
+      "detail": {
+        "size": [
+          1280,
+          720
+        ],
+        "input": "real mouse",
+        "cashBefore": 6000,
+        "cashAfter": 5916,
+        "refreshPreserved": true
+      },
+      "ms": 4256
+    },
+    {
+      "name": "H16 真实交互/交易/刷新 1920x1080",
+      "status": "passed",
+      "detail": {
+        "size": [
+          1920,
+          1080
+        ],
+        "input": "real mouse",
+        "cashBefore": 6000,
+        "cashAfter": 5916,
+        "refreshPreserved": true
+      },
+      "ms": 4320
+    },
+    {
+      "name": "H16 真实交互/交易/刷新 844x390",
+      "status": "passed",
+      "detail": {
+        "size": [
+          844,
+          390
+        ],
+        "input": "CDP touch sequence, tap controls",
+        "cashBefore": 6000,
+        "cashAfter": 5916,
+        "refreshPreserved": true
+      },
+      "ms": 5036
+    },
+    {
+      "name": "H16 真实交互/交易/刷新 390x844",
+      "status": "passed",
+      "detail": {
+        "size": [
+          390,
+          844
+        ],
+        "input": "CDP touch sequence, tap controls",
+        "cashBefore": 6000,
+        "cashAfter": 5916,
+        "refreshPreserved": true
+      },
+      "ms": 5085
+    },
+    {
+      "name": "H17 390x844 快捷菜单中心点击必须命中整备与修理铺",
+      "status": "passed",
+      "detail": [
+        {
+          "kind": "gear",
+          "box": {
+            "x": 211,
+            "y": 529,
+            "width": 76,
+            "height": 44
+          },
+          "centre": {
+            "x": 249,
+            "y": 551
+          },
+          "hit": {
+            "tag": "SPAN",
+            "class": "",
+            "quick": "gear",
+            "aria": null
+          },
+          "actual": "gear"
+        },
+        {
+          "kind": "arms",
+          "box": {
+            "x": 293,
+            "y": 529,
+            "width": 76,
+            "height": 44
+          },
+          "centre": {
+            "x": 331,
+            "y": 551
+          },
+          "hit": {
+            "tag": "SPAN",
+            "class": "",
+            "quick": "arms",
+            "aria": null
+          },
+          "actual": "arms"
+        }
+      ],
+      "ms": 5383
+    },
+    {
+      "name": "I1 390×844 应急：展开“功能”后每个按钮的中心与四角都命中自己；手指点整备、修理铺打开对应面板，关闭后菜单收起",
+      "status": "passed",
+      "detail": {
+        "power": "emergency",
+        "focus": "deploy",
+        "menuButtons": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ],
+        "opened": [
+          "gear",
+          "arms"
+        ]
+      },
+      "ms": 5046
+    },
+    {
+      "name": "I1 390×844 通电：展开“功能”后每个按钮的中心与四角都命中自己；手指点整备、修理铺打开对应面板，关闭后菜单收起",
+      "status": "passed",
+      "detail": {
+        "power": "restored",
+        "focus": "deploy",
+        "menuButtons": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ],
+        "opened": [
+          "gear",
+          "arms"
+        ]
+      },
+      "ms": 4971
+    },
+    {
+      "name": "I2 横竖屏切换：竖屏展开菜单 → 转横屏 844×390 菜单收起、快捷栏不被挡 → 横屏手指开整备 → 转回竖屏再展开仍命中修理铺",
+      "status": "passed",
+      "detail": {
+        "landscape": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu",
+          "interact"
+        ],
+        "portrait": [
+          "more",
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 5569
+    },
+    {
+      "name": "I2b 只改高度（手机地址栏收起 390×844 → 390×780）：菜单保持展开，按钮仍命中自己",
+      "status": "passed",
+      "detail": {
+        "controls": [
+          "more",
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 3176
+    },
+    {
+      "name": "I3 菜单开关与往返：“功能”开/关；菜单开着点画面只收起不走路；整备→页签菜单切修理铺→关闭；“交互”恢复并打开老栓",
+      "status": "passed",
+      "detail": {
+        "closedByScene": true,
+        "walked": 0,
+        "roundTrip": [
+          "gear",
+          "arms"
+        ],
+        "interact": "arms"
+      },
+      "ms": 6967
+    },
+    {
+      "name": "I4 360×740：菜单收起与展开时所有快捷按钮和“交互”互不遮挡，手指点修理铺命中",
+      "status": "passed",
+      "detail": {
+        "folded": true,
+        "controls": [
+          "more",
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2880
+    },
+    {
+      "name": "I4 412×915：菜单收起与展开时所有快捷按钮和“交互”互不遮挡，手指点修理铺命中",
+      "status": "passed",
+      "detail": {
+        "folded": true,
+        "controls": [
+          "more",
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2763
+    },
+    {
+      "name": "I4 640×360：菜单收起与展开时所有快捷按钮和“交互”互不遮挡，手指点修理铺命中",
+      "status": "passed",
+      "detail": {
+        "folded": true,
+        "controls": [
+          "more",
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2829
+    },
+    {
+      "name": "I4 768×1024：菜单收起与展开时所有快捷按钮和“交互”互不遮挡，手指点修理铺命中",
+      "status": "passed",
+      "detail": {
+        "folded": false,
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu",
+          "interact"
+        ]
+      },
+      "ms": 2560
+    },
+    {
+      "name": "I4 932×430：菜单收起与展开时所有快捷按钮和“交互”互不遮挡，手指点修理铺命中",
+      "status": "passed",
+      "detail": {
+        "folded": false,
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu",
+          "interact"
+        ]
+      },
+      "ms": 2606
+    },
+    {
+      "name": "I5 1280×720 应急：桌面快捷栏用鼠标点整备、修理铺，按钮全部可点",
+      "status": "passed",
+      "detail": {
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2011
+    },
+    {
+      "name": "I5 1280×720 通电：桌面快捷栏用鼠标点整备、修理铺，按钮全部可点",
+      "status": "passed",
+      "detail": {
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2218
+    },
+    {
+      "name": "I5 1920×1080 应急：桌面快捷栏用鼠标点整备、修理铺，按钮全部可点",
+      "status": "passed",
+      "detail": {
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2047
+    },
+    {
+      "name": "I5 1920×1080 通电：桌面快捷栏用鼠标点整备、修理铺，按钮全部可点",
+      "status": "passed",
+      "detail": {
+        "controls": [
+          "gear",
+          "arms",
+          "med",
+          "radio",
+          "facility",
+          "body",
+          "deploy",
+          "tabs",
+          "menu"
+        ]
+      },
+      "ms": 2008
+    },
+    {
+      "name": "L1 clinic-1920x1080 应急：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 30,
+        "kinds": {
+          "face-row": 9,
+          "top-row": 6,
+          "top-column": 15
+        },
+        "median": 0,
+        "p90": 0.011,
+        "max": 0.013,
+        "innerP90": 0.009,
+        "worst": [
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              10
+            ],
+            "step": 0.013419399888111277,
+            "a": 0.254,
+            "b": 0.241
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              11
+            ],
+            "step": 0.012444145485994401,
+            "a": 0.23,
+            "b": 0.217
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.011915629654542848,
+            "a": 0.222,
+            "b": 0.234
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              13
+            ],
+            "step": 0.010854227721697585,
+            "a": 0.286,
+            "b": 0.297
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              26,
+              14
+            ],
+            "step": 0.010854227721697585,
+            "a": 0.263,
+            "b": 0.252
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              8
+            ],
+            "step": 0.009634580331568499,
+            "a": 0.31,
+            "b": 0.32
+          }
+        ]
+      },
+      "ms": 2948
+    },
+    {
+      "name": "L1 radio-1280x720 应急：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 21,
+        "kinds": {
+          "face-row": 8,
+          "top-row": 5,
+          "top-column": 8
+        },
+        "median": 0.005,
+        "p90": 0.028,
+        "max": 0.03,
+        "innerP90": 0.013,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.030109834616841247,
+            "a": 0.509,
+            "b": 0.479
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.028279257669486135,
+            "a": 0.187,
+            "b": 0.215
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              1
+            ],
+            "step": 0.028279257669486135,
+            "a": 0.215,
+            "b": 0.187
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              29,
+              1
+            ],
+            "step": 0.023136486612557128,
+            "a": 0.448,
+            "b": 0.425
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.012807988711603213,
+            "a": 0.235,
+            "b": 0.247
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              6
+            ],
+            "step": 0.01085422772169764,
+            "a": 0.275,
+            "b": 0.286
+          }
+        ]
+      },
+      "ms": 3081
+    },
+    {
+      "name": "L1 workshop-1920x1080 应急：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 28,
+        "kinds": {
+          "face-row": 12,
+          "top-row": 7,
+          "top-column": 9
+        },
+        "median": 0.001,
+        "p90": 0.011,
+        "max": 0.013,
+        "innerP90": 0.009,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.013034069749886856,
+            "a": 0.631,
+            "b": 0.644
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.01210705192764816,
+            "a": 0.328,
+            "b": 0.34
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              1,
+              7
+            ],
+            "step": 0.011516466568163714,
+            "a": 0.225,
+            "b": 0.237
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.01085422772169764,
+            "a": 0.256,
+            "b": 0.246
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              1,
+              9
+            ],
+            "step": 0.008729979703884894,
+            "a": 0.255,
+            "b": 0.247
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.005312474075733098,
+            "a": 0.341,
+            "b": 0.336
+          }
+        ]
+      },
+      "ms": 3101
+    },
+    {
+      "name": "L1 seawall-1920x1080 应急：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 38,
+        "kinds": {
+          "face-row": 20,
+          "top-row": 18,
+          "top-column": 0
+        },
+        "median": 0,
+        "p90": 0.004,
+        "max": 0.008,
+        "innerP90": 0.004,
+        "worst": [
+          {
+            "kind": "top-row",
+            "tile": [
+              24,
+              21
+            ],
+            "step": 0.007910814062646432,
+            "a": 0.329,
+            "b": 0.336
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              12,
+              21
+            ],
+            "step": 0.007725023869455783,
+            "a": 0.365,
+            "b": 0.373
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              13,
+              21
+            ],
+            "step": 0.004582010634653966,
+            "a": 0.359,
+            "b": 0.355
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.004289741389876256,
+            "a": 0.328,
+            "b": 0.324
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.004253103029250971,
+            "a": 0.369,
+            "b": 0.374
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.0018931362074554592,
+            "a": 0.333,
+            "b": 0.331
+          }
+        ]
+      },
+      "ms": 3096
+    },
+    {
+      "name": "L1 clinic-1920x1080 通电：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 30,
+        "kinds": {
+          "face-row": 9,
+          "top-row": 6,
+          "top-column": 15
+        },
+        "median": 0.007,
+        "p90": 0.027,
+        "max": 0.037,
+        "innerP90": 0.036,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.03704415509537318,
+            "a": 0.868,
+            "b": 0.905
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              11
+            ],
+            "step": 0.03310430980637091,
+            "a": 0.837,
+            "b": 0.804
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              11
+            ],
+            "step": 0.029692980348820508,
+            "a": 0.556,
+            "b": 0.526
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              26,
+              14
+            ],
+            "step": 0.026918484749809957,
+            "a": 0.58,
+            "b": 0.607
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              30,
+              11
+            ],
+            "step": 0.025022453181239523,
+            "a": 0.542,
+            "b": 0.517
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.01845218712688601,
+            "a": 0.527,
+            "b": 0.546
+          }
+        ]
+      },
+      "ms": 3021
+    },
+    {
+      "name": "L1 radio-1280x720 通电：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 21,
+        "kinds": {
+          "face-row": 8,
+          "top-row": 5,
+          "top-column": 8
+        },
+        "median": 0.006,
+        "p90": 0.033,
+        "max": 0.055,
+        "innerP90": 0.026,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.05548541850776423,
+            "a": 0.849,
+            "b": 0.793
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.037179649034213,
+            "a": 0.839,
+            "b": 0.876
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.032849545926672,
+            "a": 0.477,
+            "b": 0.444
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              1
+            ],
+            "step": 0.03269789168034337,
+            "a": 0.347,
+            "b": 0.314
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              29,
+              1
+            ],
+            "step": 0.032465715085362334,
+            "a": 0.661,
+            "b": 0.628
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.02685759447697711,
+            "a": 0.472,
+            "b": 0.498
+          }
+        ]
+      },
+      "ms": 2964
+    },
+    {
+      "name": "L1 workshop-1920x1080 通电：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 28,
+        "kinds": {
+          "face-row": 12,
+          "top-row": 7,
+          "top-column": 9
+        },
+        "median": 0.008,
+        "p90": 0.022,
+        "max": 0.031,
+        "innerP90": 0.045,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              5,
+              10
+            ],
+            "step": 0.03116651825467498,
+            "a": 0.649,
+            "b": 0.618
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              2,
+              10
+            ],
+            "step": 0.030622340951815596,
+            "a": 0.618,
+            "b": 0.648
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              2,
+              10
+            ],
+            "step": 0.023794540421189614,
+            "a": 0.423,
+            "b": 0.447
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              8,
+              13
+            ],
+            "step": 0.021708455443395225,
+            "a": 0.443,
+            "b": 0.464
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.019576266921644492,
+            "a": 0.698,
+            "b": 0.718
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              6,
+              10
+            ],
+            "step": 0.018304145641634517,
+            "a": 0.405,
+            "b": 0.387
+          }
+        ]
+      },
+      "ms": 3086
+    },
+    {
+      "name": "L1 seawall-1920x1080 通电：同一墙面相邻格的接缝处实际渲染明暗跳变 p90 ≤ 0.05、最大 ≤ 0.10（行与列）",
+      "status": "passed",
+      "detail": {
+        "edges": 38,
+        "kinds": {
+          "face-row": 20,
+          "top-row": 18,
+          "top-column": 0
+        },
+        "median": 0.005,
+        "p90": 0.026,
+        "max": 0.06,
+        "innerP90": 0.023,
+        "worst": [
+          {
+            "kind": "top-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.06034806940917259,
+            "a": 0.638,
+            "b": 0.698
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.048019122390101865,
+            "a": 0.868,
+            "b": 0.916
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              19,
+              21
+            ],
+            "step": 0.03124728756184353,
+            "a": 0.465,
+            "b": 0.496
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.029966907709278123,
+            "a": 0.853,
+            "b": 0.883
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.026167422478244884,
+            "a": 0.607,
+            "b": 0.633
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              8,
+              21
+            ],
+            "step": 0.022434726680026773,
+            "a": 0.797,
+            "b": 0.82
+          }
+        ]
+      },
+      "ms": 3111
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "frameAudit": [
+    {
+      "message": "injected frame error (test)",
+      "count": 1,
+      "expected": true
+    },
+    {
+      "message": "injected frame error (test)",
+      "count": 2,
+      "expected": true
+    },
+    {
+      "message": "injected frame error (test)",
+      "count": 3,
+      "expected": true
+    }
+  ],
+  "expectedLogs": [
+    {
+      "step": "A4",
+      "lines": [
+        "[console] Error: Station yard needs WebGL (got canvas).\n    at wm (https://station.test/?test=1:9178:35254)"
+      ]
+    }
+  ],
+  "warnings": [],
+  "coverage": {
+    "supplyRefused": {
+      "before": {
+        "rev": 11,
+        "profile": {
+          "version": 2,
+          "cash": 6000,
+          "stash": {
+            "w": 10,
+            "h": 6,
+            "items": [
+              {
+                "uid": "bc-mv6psrx2-x",
+                "id": "medkit",
+                "qty": 1,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-y",
+                "id": "ammo9",
+                "qty": 24,
+                "x": 2,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-z",
+                "id": "scrap",
+                "qty": 5,
+                "x": 3,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-10",
+                "id": "wire",
+                "qty": 5,
+                "x": 4,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-11",
+                "id": "fuse",
+                "qty": 3,
+                "x": 5,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-13",
+                "id": "watch",
+                "qty": 1,
+                "x": 7,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-15",
+                "id": "scrap",
+                "qty": 3,
+                "x": 8,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-16",
+                "id": "bandage",
+                "qty": 2,
+                "x": 9,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psuf0-c",
+                "id": "food",
+                "qty": 2,
+                "x": 6,
+                "y": 0
+              }
+            ]
+          },
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "uid": "bc-mv6psrx2-u",
+                "id": "ammo9",
+                "qty": 16,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-12",
+                "id": "cloth",
+                "qty": 4,
+                "x": 4,
+                "y": 2
+              },
+              {
+                "uid": "bc-mv6psrx2-w",
+                "id": "water",
+                "qty": 1,
+                "x": 3,
+                "y": 3,
+                "rotated": true
+              },
+              {
+                "uid": "bc-mv6psupr-d",
+                "id": "ammo9",
+                "qty": 16,
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "safe": {
+            "w": 2,
+            "h": 2,
+            "items": [
+              {
+                "uid": "bc-mv6psuyu-e",
+                "id": "bandage",
+                "qty": 2,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "equipment": {
+            "weapon": "pistol",
+            "relief": false,
+            "ammo": 0,
+            "ammoRelief": 0
+          },
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "upgraded": false,
+          "settings": {
+            "volume": 0.35
+          },
+          "stats": {
+            "runs": 0,
+            "extracts": 0,
+            "kills": 0
+          },
+          "activeRun": null
+        },
+        "charm": null,
+        "base": {
+          "facilities": {
+            "rest": 0,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "queue": [],
+          "completed": [],
+          "nextBatch": 1,
+          "cursor": 1791897996486,
+          "location": "base",
+          "restSeconds": 2.9739999999999998,
+          "energizedGranted": false,
+          "extractedPearl": false,
+          "training": {
+            "startedAt": 1791897993512,
+            "quantity": 0,
+            "credited": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            },
+            "activeSeconds": 0,
+            "attribute": null,
+            "windowLeft": 596.702
+          }
+        },
+        "body": {
+          "hp": 100,
+          "stamina": 100,
+          "mental": 100,
+          "water": 100,
+          "satiety": 100,
+          "pollution": 0,
+          "bleeding": false,
+          "exhausted": false,
+          "effects": [],
+          "treatment": {
+            "bleeding": 0,
+            "pain": 0,
+            "injectionFatigue": 0
+          },
+          "luckEffect": 0,
+          "hpMax": 100,
+          "staminaMax": 100,
+          "carry": 24,
+          "attributes": {
+            "strength": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            },
+            "constitution": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            },
+            "technique": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            }
+          }
+        },
+        "power": "restored",
+        "storage": {
+          "ok": true,
+          "conflict": false,
+          "pendingSettlement": false,
+          "pendingBase": false,
+          "upgradeRequired": false
+        },
+        "day": 1,
+        "phase": "hideout",
+        "arrival": null
+      },
+      "after": {
+        "rev": 11,
+        "profile": {
+          "version": 2,
+          "cash": 6000,
+          "stash": {
+            "w": 10,
+            "h": 6,
+            "items": [
+              {
+                "uid": "bc-mv6psrx2-x",
+                "id": "medkit",
+                "qty": 1,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-y",
+                "id": "ammo9",
+                "qty": 24,
+                "x": 2,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-z",
+                "id": "scrap",
+                "qty": 5,
+                "x": 3,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-10",
+                "id": "wire",
+                "qty": 5,
+                "x": 4,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-11",
+                "id": "fuse",
+                "qty": 3,
+                "x": 5,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-13",
+                "id": "watch",
+                "qty": 1,
+                "x": 7,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-15",
+                "id": "scrap",
+                "qty": 3,
+                "x": 8,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-16",
+                "id": "bandage",
+                "qty": 2,
+                "x": 9,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psuf0-c",
+                "id": "food",
+                "qty": 2,
+                "x": 6,
+                "y": 0
+              }
+            ]
+          },
+          "bag": {
+            "w": 6,
+            "h": 5,
+            "items": [
+              {
+                "uid": "bc-mv6psrx2-u",
+                "id": "ammo9",
+                "qty": 16,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "uid": "bc-mv6psrx2-12",
+                "id": "cloth",
+                "qty": 4,
+                "x": 4,
+                "y": 2
+              },
+              {
+                "uid": "bc-mv6psrx2-w",
+                "id": "water",
+                "qty": 1,
+                "x": 3,
+                "y": 3,
+                "rotated": true
+              },
+              {
+                "uid": "bc-mv6psupr-d",
+                "id": "ammo9",
+                "qty": 16,
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "safe": {
+            "w": 2,
+            "h": 2,
+            "items": [
+              {
+                "uid": "bc-mv6psuyu-e",
+                "id": "bandage",
+                "qty": 2,
+                "x": 0,
+                "y": 0
+              }
+            ]
+          },
+          "equipment": {
+            "weapon": "pistol",
+            "relief": false,
+            "ammo": 0,
+            "ammoRelief": 0
+          },
+          "quests": {
+            "repair": true,
+            "sample": false,
+            "ledger": false
+          },
+          "upgraded": false,
+          "settings": {
+            "volume": 0.35
+          },
+          "stats": {
+            "runs": 0,
+            "extracts": 0,
+            "kills": 0
+          },
+          "activeRun": null
+        },
+        "charm": null,
+        "base": {
+          "facilities": {
+            "rest": 0,
+            "medical": 0,
+            "training": 0,
+            "workbench": 0,
+            "blackmarket": 0
+          },
+          "queue": [],
+          "completed": [],
+          "nextBatch": 1,
+          "cursor": 1791897996486,
+          "location": "base",
+          "restSeconds": 2.9739999999999998,
+          "energizedGranted": false,
+          "extractedPearl": false,
+          "training": {
+            "startedAt": 1791897993512,
+            "quantity": 0,
+            "credited": {
+              "strength": 0,
+              "constitution": 0,
+              "technique": 0
+            },
+            "activeSeconds": 0,
+            "attribute": null,
+            "windowLeft": 596.514
+          }
+        },
+        "body": {
+          "hp": 100,
+          "stamina": 100,
+          "mental": 100,
+          "water": 100,
+          "satiety": 100,
+          "pollution": 0,
+          "bleeding": false,
+          "exhausted": false,
+          "effects": [],
+          "treatment": {
+            "bleeding": 0,
+            "pain": 0,
+            "injectionFatigue": 0
+          },
+          "luckEffect": 0,
+          "hpMax": 100,
+          "staminaMax": 100,
+          "carry": 24,
+          "attributes": {
+            "strength": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            },
+            "constitution": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            },
+            "technique": {
+              "base": 10,
+              "effective": 10,
+              "progress": 0
+            }
+          }
+        },
+        "power": "restored",
+        "storage": {
+          "ok": true,
+          "conflict": false,
+          "pendingSettlement": false,
+          "pendingBase": false,
+          "upgradeRequired": false
+        },
+        "day": 1,
+        "phase": "hideout",
+        "arrival": null
+      },
+      "message": "饱食、生命和耐力已满，食用罐头没有效果。"
+    },
+    "supplyUsed": {
+      "before": {
+        "qty": 2,
+        "satiety": 20
+      },
+      "after": {
+        "qty": 1,
+        "satiety": 55.02055
+      }
+    },
+    "training": {
+      "wallSeconds": 125.438,
+      "before": {
+        "startedAt": 1791898029576,
+        "quantity": 0,
+        "credited": {
+          "strength": 0,
+          "constitution": 0,
+          "technique": 0
+        },
+        "activeSeconds": 0,
+        "attribute": "technique",
+        "windowLeft": 591.501
+      },
+      "after": {
+        "startedAt": 1791898029576,
+        "quantity": 0.2875,
+        "credited": {
+          "strength": 0,
+          "constitution": 0,
+          "technique": 0.057499999999999996
+        },
+        "activeSeconds": 4.404899999987264,
+        "attribute": "technique",
+        "windowLeft": 466.065
+      },
+      "beforeProgress": 0,
+      "afterProgress": 0.057499999999999996,
+      "level": 3,
+      "trace": {
+        "acceptedSeconds": 124.40489999998641,
+        "accepted": 20528,
+        "offered": 20674,
+        "events": [
+          {
+            "type": "practice-credited",
+            "attribute": "technique",
+            "amount": 0.057499999999999996
+          }
+        ]
+      },
+      "pauses": [
+        {
+          "name": "静止",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "name": "面板打开且按住移动键",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "name": "失焦门控模拟（实际切窗未测）",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "name": "隐藏门控模拟",
+          "before": 0,
+          "after": 0
+        }
+      ]
+    },
+    "sharedState": {
+      "cashBefore": 6000,
+      "cashAfter": 5916
+    },
+    "actionReports": [
+      {
+        "label": "first ordinary raid",
+        "last": {
+          "outcome": "extract",
+          "kills": 0,
+          "keptValue": 336,
+          "lostValue": 0,
+          "seed": 42,
+          "recovered": false,
+          "message": "成功撤离，装备和物资已带回水产站。"
+        },
+        "stats": {
+          "runs": 1,
+          "extracts": 1,
+          "kills": 0
+        },
+        "displayed": [
+          "0",
+          "¥ 336",
+          "1 / 1"
+        ]
+      },
+      {
+        "label": "village raid",
+        "last": {
+          "outcome": "extract",
+          "kills": 0,
+          "keptValue": 336,
+          "lostValue": 0,
+          "seed": 42,
+          "recovered": false,
+          "message": "成功撤离，装备和物资已带回水产站。"
+        },
+        "stats": {
+          "runs": 1,
+          "extracts": 1,
+          "kills": 0
+        },
+        "displayed": [
+          "0",
+          "¥ 336",
+          "1 / 1"
+        ]
+      }
+    ],
+    "releasedYard": {
+      "collected": false,
+      "textures": 0,
+      "npcCanvases": 0,
+      "targets": [
+        true,
+        true,
+        true
+      ]
+    },
+    "parkedApplication": {
+      "children": 0,
+      "ticker": false,
+      "attached": false,
+      "events": {
+        "attached": false,
+        "roots": {
+          "_rootPointerEvent": false,
+          "_rootWheelEvent": false,
+          "_rootContextMenuEvent": false
+        },
+        "pooled": 0,
+        "native": 0
+      }
+    },
+    "managedNegative": [
+      {
+        "name": "missing-list",
+        "rejected": true,
+        "error": "PIXI_MANAGED_CONTRACT: _managedResourceHashes must be an array"
+      },
+      {
+        "name": "empty-list",
+        "rejected": true,
+        "error": "PIXI_MANAGED_CONTRACT: _managedResourceHashes is empty"
+      },
+      {
+        "name": "missing-table",
+        "rejected": true,
+        "error": "PIXI_MANAGED_CONTRACT: required table graphics missing"
+      },
+      {
+        "name": "bad-descriptor",
+        "rejected": true,
+        "error": "PIXI_MANAGED_CONTRACT: descriptor 0 shape changed"
+      }
+    ],
+    "poles": [
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 0,
+        "from": {
+          "x": 11.7,
+          "y": 9.8
+        },
+        "to": {
+          "x": 7.3,
+          "y": 9.8
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": false,
+          "stationTarget": true
+        }
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 1,
+        "from": {
+          "x": 11.055634918610405,
+          "y": 10.931370849898476
+        },
+        "to": {
+          "x": 7.944365081389595,
+          "y": 8.668629150101525
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": true,
+          "stationTarget": true
+        }
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 2,
+        "from": {
+          "x": 9.5,
+          "y": 11.4
+        },
+        "to": {
+          "x": 9.5,
+          "y": 8.200000000000001
+        },
+        "status": "executed",
+        "distancePx": 2.5947422426214524
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 3,
+        "from": {
+          "x": 7.944365081389595,
+          "y": 10.931370849898476
+        },
+        "to": {
+          "x": 11.055634918610405,
+          "y": 8.668629150101525
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 4,
+        "from": {
+          "x": 7.3,
+          "y": 9.8
+        },
+        "to": {
+          "x": 11.7,
+          "y": 9.8
+        },
+        "status": "executed",
+        "distancePx": 2.495747059137984
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 5,
+        "from": {
+          "x": 7.944365081389595,
+          "y": 8.668629150101525
+        },
+        "to": {
+          "x": 11.055634918610405,
+          "y": 10.931370849898476
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 6,
+        "from": {
+          "x": 9.5,
+          "y": 8.200000000000001
+        },
+        "to": {
+          "x": 9.5,
+          "y": 11.4
+        },
+        "status": "executed",
+        "distancePx": 2.8181583165682147
+      },
+      {
+        "pole": [
+          9,
+          9
+        ],
+        "direction": 7,
+        "from": {
+          "x": 11.055634918610405,
+          "y": 8.668629150101525
+        },
+        "to": {
+          "x": 7.944365081389596,
+          "y": 10.931370849898476
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": true
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 0,
+        "from": {
+          "x": 24.7,
+          "y": 9.8
+        },
+        "to": {
+          "x": 20.3,
+          "y": 9.8
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": true
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 1,
+        "from": {
+          "x": 24.055634918610405,
+          "y": 10.931370849898476
+        },
+        "to": {
+          "x": 20.944365081389595,
+          "y": 8.668629150101525
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": true
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 2,
+        "from": {
+          "x": 22.5,
+          "y": 11.4
+        },
+        "to": {
+          "x": 22.5,
+          "y": 8.200000000000001
+        },
+        "status": "executed",
+        "distancePx": 2.3337010219117733
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 3,
+        "from": {
+          "x": 20.944365081389595,
+          "y": 10.931370849898476
+        },
+        "to": {
+          "x": 24.055634918610405,
+          "y": 8.668629150101525
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 4,
+        "from": {
+          "x": 20.3,
+          "y": 9.8
+        },
+        "to": {
+          "x": 24.7,
+          "y": 9.8
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 5,
+        "from": {
+          "x": 20.944365081389595,
+          "y": 8.668629150101525
+        },
+        "to": {
+          "x": 24.055634918610405,
+          "y": 10.931370849898476
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 6,
+        "from": {
+          "x": 22.5,
+          "y": 8.200000000000001
+        },
+        "to": {
+          "x": 22.5,
+          "y": 11.4
+        },
+        "status": "executed",
+        "distancePx": 2.7998387246061616
+      },
+      {
+        "pole": [
+          22,
+          9
+        ],
+        "direction": 7,
+        "from": {
+          "x": 24.055634918610405,
+          "y": 8.668629150101525
+        },
+        "to": {
+          "x": 20.944365081389595,
+          "y": 10.931370849898476
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 0,
+        "from": {
+          "x": 11.7,
+          "y": 19.8
+        },
+        "to": {
+          "x": 7.3,
+          "y": 19.8
+        },
+        "status": "executed",
+        "distancePx": 2.5047292740271736
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 1,
+        "from": {
+          "x": 11.055634918610405,
+          "y": 20.931370849898478
+        },
+        "to": {
+          "x": 7.944365081389595,
+          "y": 18.668629150101523
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 2,
+        "from": {
+          "x": 9.5,
+          "y": 21.400000000000002
+        },
+        "to": {
+          "x": 9.5,
+          "y": 18.2
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 3,
+        "from": {
+          "x": 7.944365081389595,
+          "y": 20.931370849898478
+        },
+        "to": {
+          "x": 11.055634918610405,
+          "y": 18.668629150101523
+        },
+        "status": "executed",
+        "distancePx": 2.518165495560446
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 4,
+        "from": {
+          "x": 7.3,
+          "y": 19.8
+        },
+        "to": {
+          "x": 11.7,
+          "y": 19.8
+        },
+        "status": "executed",
+        "distancePx": 2.4935292740275607
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 5,
+        "from": {
+          "x": 7.944365081389595,
+          "y": 18.668629150101523
+        },
+        "to": {
+          "x": 11.055634918610405,
+          "y": 20.931370849898478
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 6,
+        "from": {
+          "x": 9.5,
+          "y": 18.2
+        },
+        "to": {
+          "x": 9.5,
+          "y": 21.400000000000002
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          9,
+          19
+        ],
+        "direction": 7,
+        "from": {
+          "x": 11.055634918610405,
+          "y": 18.668629150101523
+        },
+        "to": {
+          "x": 7.944365081389596,
+          "y": 20.931370849898478
+        },
+        "status": "executed",
+        "distancePx": 2.98389010729061
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 0,
+        "from": {
+          "x": 26.7,
+          "y": 19.8
+        },
+        "to": {
+          "x": 22.3,
+          "y": 19.8
+        },
+        "status": "executed",
+        "distancePx": 2.5025126946736966
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 1,
+        "from": {
+          "x": 26.055634918610405,
+          "y": 20.931370849898478
+        },
+        "to": {
+          "x": 22.944365081389595,
+          "y": 18.668629150101523
+        },
+        "status": "executed",
+        "distancePx": 2.7389286138454936
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 2,
+        "from": {
+          "x": 24.5,
+          "y": 21.400000000000002
+        },
+        "to": {
+          "x": 24.5,
+          "y": 18.2
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": true,
+          "toBlocked": false,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 3,
+        "from": {
+          "x": 22.944365081389595,
+          "y": 20.931370849898478
+        },
+        "to": {
+          "x": 26.055634918610405,
+          "y": 18.668629150101523
+        },
+        "status": "executed",
+        "distancePx": 2.514009273383509
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 4,
+        "from": {
+          "x": 22.3,
+          "y": 19.8
+        },
+        "to": {
+          "x": 26.7,
+          "y": 19.8
+        },
+        "status": "executed",
+        "distancePx": 2.484547059136239
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 5,
+        "from": {
+          "x": 22.944365081389595,
+          "y": 18.668629150101523
+        },
+        "to": {
+          "x": 26.055634918610405,
+          "y": 20.931370849898478
+        },
+        "status": "executed",
+        "distancePx": 2.83632400650599
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 6,
+        "from": {
+          "x": 24.5,
+          "y": 18.2
+        },
+        "to": {
+          "x": 24.5,
+          "y": 21.400000000000002
+        },
+        "status": "skipped",
+        "reasons": {
+          "fromBlocked": false,
+          "toBlocked": true,
+          "stationTarget": false
+        }
+      },
+      {
+        "pole": [
+          24,
+          19
+        ],
+        "direction": 7,
+        "from": {
+          "x": 26.055634918610405,
+          "y": 18.668629150101523
+        },
+        "to": {
+          "x": 22.944365081389595,
+          "y": 20.931370849898478
+        },
+        "status": "executed",
+        "distancePx": 2.8893740640575656
+      }
+    ],
+    "art": [
+      {
+        "look": "xu",
+        "idle": {
+          "actor": {
+            "id": "med",
+            "look": "xu",
+            "x": 912,
+            "y": 407.68,
+            "dir": "s",
+            "pose": "idle",
+            "frame": 932
+          },
+          "feet": 409,
+          "shadow": 408,
+          "depth": 407.88,
+          "maskDepth": 407.88,
+          "maskTextureSame": true
+        },
+        "talk": {
+          "id": "med",
+          "look": "xu",
+          "x": 912,
+          "y": 407.68,
+          "dir": "s",
+          "pose": "talk",
+          "frame": 929
+        },
+        "turn": {
+          "id": "med",
+          "look": "xu",
+          "x": 912,
+          "y": 407.68,
+          "dir": "e",
+          "pose": "idle",
+          "frame": 937
+        }
+      },
+      {
+        "look": "shuan",
+        "idle": {
+          "actor": {
+            "id": "arms",
+            "look": "shuan",
+            "x": 128,
+            "y": 535.68,
+            "dir": "s",
+            "pose": "idle",
+            "frame": 158
+          },
+          "feet": 537,
+          "shadow": 536,
+          "depth": 535.88,
+          "maskDepth": 535.88,
+          "maskTextureSame": true
+        },
+        "talk": {
+          "id": "arms",
+          "look": "shuan",
+          "x": 128,
+          "y": 535.68,
+          "dir": "s",
+          "pose": "talk",
+          "frame": 152
+        },
+        "turn": {
+          "id": "arms",
+          "look": "shuan",
+          "x": 128,
+          "y": 535.68,
+          "dir": "e",
+          "pose": "idle",
+          "frame": 163
+        }
+      },
+      {
+        "look": "cai",
+        "idle": {
+          "actor": {
+            "id": "radio",
+            "look": "cai",
+            "x": 976,
+            "y": 112,
+            "dir": "s",
+            "pose": "idle",
+            "frame": 1016
+          },
+          "feet": 113,
+          "shadow": 112,
+          "depth": 112.2,
+          "maskDepth": 112.2,
+          "maskTextureSame": true
+        },
+        "talk": {
+          "id": "radio",
+          "look": "cai",
+          "x": 976,
+          "y": 112,
+          "dir": "s",
+          "pose": "talk",
+          "frame": 1007
+        },
+        "turn": {
+          "id": "radio",
+          "look": "cai",
+          "x": 976,
+          "y": 112,
+          "dir": "e",
+          "pose": "idle",
+          "frame": 1021
+        }
+      },
+      {
+        "look": "cook",
+        "idle": {
+          "actor": {
+            "id": "cook",
+            "look": "cook",
+            "x": 483.2,
+            "y": 112,
+            "dir": "s",
+            "pose": "idle",
+            "frame": 533
+          },
+          "feet": 113,
+          "shadow": 112,
+          "depth": 112.2,
+          "maskDepth": 112.2,
+          "maskTextureSame": true
+        },
+        "talk": {
+          "id": "cook",
+          "look": "cook",
+          "x": 483.2,
+          "y": 112,
+          "dir": "s",
+          "pose": "talk",
+          "frame": 522
+        },
+        "turn": {
+          "id": "cook",
+          "look": "cook",
+          "x": 483.2,
+          "y": 112,
+          "dir": "e",
+          "pose": "idle",
+          "frame": 538
+        }
+      },
+      {
+        "occlusion": "xu-desk",
+        "player": {
+          "x": 912,
+          "y": 403.2,
+          "dir8": 6,
+          "walk": 0,
+          "moving": false
+        },
+        "fades": [
+          {
+            "id": "pots",
+            "alpha": 0.4501841308005512
+          },
+          {
+            "id": "radio-cot",
+            "alpha": 0.4502221605356248
+          },
+          {
+            "id": "xu-desk",
+            "alpha": 0.4500000212802809
+          }
+        ]
+      },
+      {
+        "occlusion": "repair-counter",
+        "player": {
+          "x": 128,
+          "y": 534.4,
+          "dir8": 6,
+          "walk": 0,
+          "moving": false
+        },
+        "fades": [
+          {
+            "id": "pots",
+            "alpha": 0.4501841308005512
+          },
+          {
+            "id": "radio-cot",
+            "alpha": 0.4502221605356248
+          },
+          {
+            "id": "repair-counter",
+            "alpha": 0.45005975089464056
+          },
+          {
+            "id": "xu-desk",
+            "alpha": 0.45000001998218375
+          }
+        ]
+      }
+    ],
+    "artAssets": {
+      "delivered": [
+        "station-npc-cai-n-work-f0-v1",
+        "station-npc-cai-n-work-f1-v1",
+        "station-npc-cai-s-idle-f0-v1",
+        "station-npc-cai-s-idle-f1-v1",
+        "station-npc-cai-s-talk-f0-v1",
+        "station-npc-cai-s-talk-f1-v1",
+        "station-npc-cook-n-work-f0-v1",
+        "station-npc-cook-n-work-f1-v1",
+        "station-npc-cook-s-idle-f0-v1",
+        "station-npc-cook-s-idle-f1-v1",
+        "station-npc-cook-s-talk-f0-v1",
+        "station-npc-cook-s-talk-f1-v1",
+        "station-npc-shuan-n-work-f0-v1",
+        "station-npc-shuan-n-work-f1-v1",
+        "station-npc-shuan-s-idle-f0-v1",
+        "station-npc-shuan-s-idle-f1-v1",
+        "station-npc-shuan-s-talk-f0-v1",
+        "station-npc-shuan-s-talk-f1-v1",
+        "station-npc-xu-s-idle-f0-v1",
+        "station-npc-xu-s-idle-f1-v1",
+        "station-npc-xu-s-talk-f0-v1",
+        "station-npc-xu-s-talk-f1-v1",
+        "station-prop-counter-v1",
+        "station-prop-desk-v1",
+        "station-prop-generator-running-emit-v1",
+        "station-prop-generator-running-v1",
+        "station-prop-generator-stopped-emit-v1",
+        "station-prop-generator-stopped-v1",
+        "station-prop-pool-v1",
+        "station-prop-radio-desk-emit-v1",
+        "station-prop-radio-desk-v1",
+        "station-prop-stove-emit-v1",
+        "station-prop-stove-v1"
+      ],
+      "used": [
+        "station-npc-cai-n-work-f0-v1",
+        "station-npc-cai-n-work-f1-v1",
+        "station-npc-cai-s-idle-f0-v1",
+        "station-npc-cai-s-idle-f1-v1",
+        "station-npc-cai-s-talk-f0-v1",
+        "station-npc-cai-s-talk-f1-v1",
+        "station-npc-cook-n-work-f0-v1",
+        "station-npc-cook-n-work-f1-v1",
+        "station-npc-cook-s-idle-f0-v1",
+        "station-npc-cook-s-idle-f1-v1",
+        "station-npc-cook-s-talk-f0-v1",
+        "station-npc-cook-s-talk-f1-v1",
+        "station-npc-shuan-n-work-f0-v1",
+        "station-npc-shuan-n-work-f1-v1",
+        "station-npc-shuan-s-idle-f0-v1",
+        "station-npc-shuan-s-idle-f1-v1",
+        "station-npc-shuan-s-talk-f0-v1",
+        "station-npc-shuan-s-talk-f1-v1",
+        "station-npc-xu-s-idle-f0-v1",
+        "station-npc-xu-s-idle-f1-v1",
+        "station-npc-xu-s-talk-f0-v1",
+        "station-npc-xu-s-talk-f1-v1",
+        "station-prop-counter-v1",
+        "station-prop-desk-v1",
+        "station-prop-generator-running-emit-v1",
+        "station-prop-generator-running-v1",
+        "station-prop-generator-stopped-emit-v1",
+        "station-prop-generator-stopped-v1",
+        "station-prop-pool-v1",
+        "station-prop-radio-desk-emit-v1",
+        "station-prop-radio-desk-v1",
+        "station-prop-stove-emit-v1",
+        "station-prop-stove-v1"
+      ],
+      "rejected": [],
+      "missing": [],
+      "roofGlows": [
+        {
+          "room": "cold",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "canteen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "dorm",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "gen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "radio",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "cold",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "cold",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "canteen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "canteen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "canteen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "dorm",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "gen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "gen",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "radio",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "radio",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "work",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "clinic",
+          "alpha": 0,
+          "visible": false
+        },
+        {
+          "room": "clinic",
+          "alpha": 0,
+          "visible": false
+        }
+      ]
+    },
+    "mobileMenuHit": [
+      {
+        "kind": "gear",
+        "box": {
+          "x": 211,
+          "y": 529,
+          "width": 76,
+          "height": 44
+        },
+        "centre": {
+          "x": 249,
+          "y": 551
+        },
+        "hit": {
+          "tag": "SPAN",
+          "class": "",
+          "quick": "gear",
+          "aria": null
+        },
+        "actual": "gear"
+      },
+      {
+        "kind": "arms",
+        "box": {
+          "x": 293,
+          "y": 529,
+          "width": 76,
+          "height": 44
+        },
+        "centre": {
+          "x": 331,
+          "y": 551
+        },
+        "hit": {
+          "tag": "SPAN",
+          "class": "",
+          "quick": "arms",
+          "aria": null
+        },
+        "actual": "arms"
+      }
+    ],
+    "wallLight": [
+      {
+        "name": "clinic-1920x1080",
+        "power": "emergency",
+        "edges": 30,
+        "kinds": {
+          "face-row": 9,
+          "top-row": 6,
+          "top-column": 15
+        },
+        "median": 0,
+        "p90": 0.011,
+        "max": 0.013,
+        "innerP90": 0.009,
+        "worst": [
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              10
+            ],
+            "step": 0.013419399888111277,
+            "a": 0.254,
+            "b": 0.241
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              11
+            ],
+            "step": 0.012444145485994401,
+            "a": 0.23,
+            "b": 0.217
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.011915629654542848,
+            "a": 0.222,
+            "b": 0.234
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              13
+            ],
+            "step": 0.010854227721697585,
+            "a": 0.286,
+            "b": 0.297
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              26,
+              14
+            ],
+            "step": 0.010854227721697585,
+            "a": 0.263,
+            "b": 0.252
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              8
+            ],
+            "step": 0.009634580331568499,
+            "a": 0.31,
+            "b": 0.32
+          }
+        ]
+      },
+      {
+        "name": "radio-1280x720",
+        "power": "emergency",
+        "edges": 21,
+        "kinds": {
+          "face-row": 8,
+          "top-row": 5,
+          "top-column": 8
+        },
+        "median": 0.005,
+        "p90": 0.028,
+        "max": 0.03,
+        "innerP90": 0.013,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.030109834616841247,
+            "a": 0.509,
+            "b": 0.479
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.028279257669486135,
+            "a": 0.187,
+            "b": 0.215
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              1
+            ],
+            "step": 0.028279257669486135,
+            "a": 0.215,
+            "b": 0.187
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              29,
+              1
+            ],
+            "step": 0.023136486612557128,
+            "a": 0.448,
+            "b": 0.425
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.012807988711603213,
+            "a": 0.235,
+            "b": 0.247
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              33,
+              6
+            ],
+            "step": 0.01085422772169764,
+            "a": 0.275,
+            "b": 0.286
+          }
+        ]
+      },
+      {
+        "name": "workshop-1920x1080",
+        "power": "emergency",
+        "edges": 28,
+        "kinds": {
+          "face-row": 12,
+          "top-row": 7,
+          "top-column": 9
+        },
+        "median": 0.001,
+        "p90": 0.011,
+        "max": 0.013,
+        "innerP90": 0.009,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.013034069749886856,
+            "a": 0.631,
+            "b": 0.644
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.01210705192764816,
+            "a": 0.328,
+            "b": 0.34
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              1,
+              7
+            ],
+            "step": 0.011516466568163714,
+            "a": 0.225,
+            "b": 0.237
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.01085422772169764,
+            "a": 0.256,
+            "b": 0.246
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              1,
+              9
+            ],
+            "step": 0.008729979703884894,
+            "a": 0.255,
+            "b": 0.247
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.005312474075733098,
+            "a": 0.341,
+            "b": 0.336
+          }
+        ]
+      },
+      {
+        "name": "seawall-1920x1080",
+        "power": "emergency",
+        "edges": 38,
+        "kinds": {
+          "face-row": 20,
+          "top-row": 18,
+          "top-column": 0
+        },
+        "median": 0,
+        "p90": 0.004,
+        "max": 0.008,
+        "innerP90": 0.004,
+        "worst": [
+          {
+            "kind": "top-row",
+            "tile": [
+              24,
+              21
+            ],
+            "step": 0.007910814062646432,
+            "a": 0.329,
+            "b": 0.336
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              12,
+              21
+            ],
+            "step": 0.007725023869455783,
+            "a": 0.365,
+            "b": 0.373
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              13,
+              21
+            ],
+            "step": 0.004582010634653966,
+            "a": 0.359,
+            "b": 0.355
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.004289741389876256,
+            "a": 0.328,
+            "b": 0.324
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.004253103029250971,
+            "a": 0.369,
+            "b": 0.374
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              7,
+              15
+            ],
+            "step": 0.0018931362074554592,
+            "a": 0.333,
+            "b": 0.331
+          }
+        ]
+      },
+      {
+        "name": "clinic-1920x1080",
+        "power": "restored",
+        "edges": 30,
+        "kinds": {
+          "face-row": 9,
+          "top-row": 6,
+          "top-column": 15
+        },
+        "median": 0.007,
+        "p90": 0.027,
+        "max": 0.037,
+        "innerP90": 0.036,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.03704415509537318,
+            "a": 0.868,
+            "b": 0.905
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              11
+            ],
+            "step": 0.03310430980637091,
+            "a": 0.837,
+            "b": 0.804
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              11
+            ],
+            "step": 0.029692980348820508,
+            "a": 0.556,
+            "b": 0.526
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              26,
+              14
+            ],
+            "step": 0.026918484749809957,
+            "a": 0.58,
+            "b": 0.607
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              30,
+              11
+            ],
+            "step": 0.025022453181239523,
+            "a": 0.542,
+            "b": 0.517
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              27,
+              11
+            ],
+            "step": 0.01845218712688601,
+            "a": 0.527,
+            "b": 0.546
+          }
+        ]
+      },
+      {
+        "name": "radio-1280x720",
+        "power": "restored",
+        "edges": 21,
+        "kinds": {
+          "face-row": 8,
+          "top-row": 5,
+          "top-column": 8
+        },
+        "median": 0.006,
+        "p90": 0.033,
+        "max": 0.055,
+        "innerP90": 0.026,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.05548541850776423,
+            "a": 0.849,
+            "b": 0.793
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.037179649034213,
+            "a": 0.839,
+            "b": 0.876
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              30,
+              1
+            ],
+            "step": 0.032849545926672,
+            "a": 0.477,
+            "b": 0.444
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              31,
+              1
+            ],
+            "step": 0.03269789168034337,
+            "a": 0.347,
+            "b": 0.314
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              29,
+              1
+            ],
+            "step": 0.032465715085362334,
+            "a": 0.661,
+            "b": 0.628
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              28,
+              1
+            ],
+            "step": 0.02685759447697711,
+            "a": 0.472,
+            "b": 0.498
+          }
+        ]
+      },
+      {
+        "name": "workshop-1920x1080",
+        "power": "restored",
+        "edges": 28,
+        "kinds": {
+          "face-row": 12,
+          "top-row": 7,
+          "top-column": 9
+        },
+        "median": 0.008,
+        "p90": 0.022,
+        "max": 0.031,
+        "innerP90": 0.045,
+        "worst": [
+          {
+            "kind": "face-row",
+            "tile": [
+              5,
+              10
+            ],
+            "step": 0.03116651825467498,
+            "a": 0.649,
+            "b": 0.618
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              2,
+              10
+            ],
+            "step": 0.030622340951815596,
+            "a": 0.618,
+            "b": 0.648
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              2,
+              10
+            ],
+            "step": 0.023794540421189614,
+            "a": 0.423,
+            "b": 0.447
+          },
+          {
+            "kind": "top-column",
+            "tile": [
+              8,
+              13
+            ],
+            "step": 0.021708455443395225,
+            "a": 0.443,
+            "b": 0.464
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              4,
+              15
+            ],
+            "step": 0.019576266921644492,
+            "a": 0.698,
+            "b": 0.718
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              6,
+              10
+            ],
+            "step": 0.018304145641634517,
+            "a": 0.405,
+            "b": 0.387
+          }
+        ]
+      },
+      {
+        "name": "seawall-1920x1080",
+        "power": "restored",
+        "edges": 38,
+        "kinds": {
+          "face-row": 20,
+          "top-row": 18,
+          "top-column": 0
+        },
+        "median": 0.005,
+        "p90": 0.026,
+        "max": 0.06,
+        "innerP90": 0.023,
+        "worst": [
+          {
+            "kind": "top-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.06034806940917259,
+            "a": 0.638,
+            "b": 0.698
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.048019122390101865,
+            "a": 0.868,
+            "b": 0.916
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              19,
+              21
+            ],
+            "step": 0.03124728756184353,
+            "a": 0.465,
+            "b": 0.496
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              21,
+              21
+            ],
+            "step": 0.029966907709278123,
+            "a": 0.853,
+            "b": 0.883
+          },
+          {
+            "kind": "face-row",
+            "tile": [
+              20,
+              21
+            ],
+            "step": 0.026167422478244884,
+            "a": 0.607,
+            "b": 0.633
+          },
+          {
+            "kind": "top-row",
+            "tile": [
+              8,
+              21
+            ],
+            "step": 0.022434726680026773,
+            "a": 0.797,
+            "b": 0.82
+          }
+        ]
+      }
+    ]
+  },
+  "webgl": {
+    "vendor": "Google Inc. (NVIDIA)",
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "heapObservation": {
+    "before": {
+      "listeners": 24,
+      "tickers": 1,
+      "observers": 0,
+      "timers": 0,
+      "apps": 1,
+      "parked": 0,
+      "views": 1,
+      "renderTextures": 0,
+      "canvases": 2,
+      "roots": 1,
+      "gpuTextures": 203,
+      "managed": {
+        "live": 269,
+        "empty": 0
+      },
+      "heap": 37516166,
+      "scene": 336,
+      "tables": {
+        "schema": "pixi-8.22.0-managed-hashes",
+        "running": false,
+        "required": [
+          "graphics",
+          "graphicsContext",
+          "glBuffer",
+          "glTexture",
+          "glGeometry",
+          "tilingSprite"
+        ],
+        "tables": [
+          {
+            "name": "graphics",
+            "hash": "items",
+            "live": 9,
+            "empty": 0,
+            "keys": 9
+          },
+          {
+            "name": "graphicsContext",
+            "hash": "items",
+            "live": 9,
+            "empty": 0,
+            "keys": 9
+          },
+          {
+            "name": "glBuffer",
+            "hash": "items",
+            "live": 31,
+            "empty": 0,
+            "keys": 31
+          },
+          {
+            "name": "glTexture",
+            "hash": "items",
+            "live": 203,
+            "empty": 0,
+            "keys": 203
+          },
+          {
+            "name": "glGeometry",
+            "hash": "items",
+            "live": 15,
+            "empty": 0,
+            "keys": 15
+          },
+          {
+            "name": "tilingSprite",
+            "hash": "items",
+            "live": 2,
+            "empty": 0,
+            "keys": 2
+          }
+        ],
+        "live": 269,
+        "empty": 0
+      }
+    },
+    "after": {
+      "listeners": 24,
+      "tickers": 1,
+      "observers": 0,
+      "timers": 0,
+      "apps": 1,
+      "parked": 0,
+      "views": 1,
+      "renderTextures": 0,
+      "canvases": 2,
+      "roots": 1,
+      "gpuTextures": 203,
+      "managed": {
+        "live": 269,
+        "empty": 0
+      },
+      "heap": 37225634,
+      "scene": 336,
+      "tables": {
+        "schema": "pixi-8.22.0-managed-hashes",
+        "running": false,
+        "required": [
+          "graphics",
+          "graphicsContext",
+          "glBuffer",
+          "glTexture",
+          "glGeometry",
+          "tilingSprite"
+        ],
+        "tables": [
+          {
+            "name": "graphics",
+            "hash": "items",
+            "live": 9,
+            "empty": 0,
+            "keys": 9
+          },
+          {
+            "name": "graphicsContext",
+            "hash": "items",
+            "live": 9,
+            "empty": 0,
+            "keys": 9
+          },
+          {
+            "name": "glBuffer",
+            "hash": "items",
+            "live": 31,
+            "empty": 0,
+            "keys": 31
+          },
+          {
+            "name": "glTexture",
+            "hash": "items",
+            "live": 203,
+            "empty": 0,
+            "keys": 203
+          },
+          {
+            "name": "glGeometry",
+            "hash": "items",
+            "live": 15,
+            "empty": 0,
+            "keys": 15
+          },
+          {
+            "name": "tilingSprite",
+            "hash": "items",
+            "live": 2,
+            "empty": 0,
+            "keys": 2
+          }
+        ],
+        "live": 269,
+        "empty": 0
+      }
+    },
+    "deltaBytes": -290532,
+    "underSmokeLimit": true,
+    "noGrowth": true,
+    "conclusion": "PARTIAL: short 20-remount observation; historical F20 remains PARTIAL"
+  },
+  "finishedAt": "2026-10-13T13:34:37.960Z",
+  "summary": {
+    "passed": 75,
+    "total": 76
+  }
+}

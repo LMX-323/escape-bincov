@@ -1,0 +1,844 @@
+{
+  "browser": "153.0.8010.12",
+  "samples": [
+    {
+      "targets": [
+        {
+          "uid": 437,
+          "live": true
+        },
+        {
+          "uid": 438,
+          "live": true
+        },
+        {
+          "uid": 439,
+          "live": true
+        }
+      ],
+      "live": 16,
+      "empty": 0
+    },
+    {
+      "targets": [
+        {
+          "uid": 451,
+          "live": true
+        },
+        {
+          "uid": 452,
+          "live": true
+        },
+        {
+          "uid": 453,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 3,
+      "old": [
+        {
+          "uid": 437,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 438,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 439,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 454,
+          "live": true
+        },
+        {
+          "uid": 455,
+          "live": true
+        },
+        {
+          "uid": 456,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 6,
+      "old": [
+        {
+          "uid": 451,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 452,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 453,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 457,
+          "live": true
+        },
+        {
+          "uid": 458,
+          "live": true
+        },
+        {
+          "uid": 459,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 9,
+      "old": [
+        {
+          "uid": 454,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 455,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 456,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 460,
+          "live": true
+        },
+        {
+          "uid": 461,
+          "live": true
+        },
+        {
+          "uid": 462,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 12,
+      "old": [
+        {
+          "uid": 457,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 458,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 459,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 463,
+          "live": true
+        },
+        {
+          "uid": 464,
+          "live": true
+        },
+        {
+          "uid": 465,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 15,
+      "old": [
+        {
+          "uid": 460,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 461,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 462,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 466,
+          "live": true
+        },
+        {
+          "uid": 467,
+          "live": true
+        },
+        {
+          "uid": 468,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 18,
+      "old": [
+        {
+          "uid": 463,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 464,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 465,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 469,
+          "live": true
+        },
+        {
+          "uid": 470,
+          "live": true
+        },
+        {
+          "uid": 471,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 21,
+      "old": [
+        {
+          "uid": 466,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 467,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 468,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 472,
+          "live": true
+        },
+        {
+          "uid": 473,
+          "live": true
+        },
+        {
+          "uid": 474,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 24,
+      "old": [
+        {
+          "uid": 469,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 470,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 471,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 475,
+          "live": true
+        },
+        {
+          "uid": 476,
+          "live": true
+        },
+        {
+          "uid": 477,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 27,
+      "old": [
+        {
+          "uid": 472,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 473,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 474,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 478,
+          "live": true
+        },
+        {
+          "uid": 479,
+          "live": true
+        },
+        {
+          "uid": 480,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 30,
+      "old": [
+        {
+          "uid": 475,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 476,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 477,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 481,
+          "live": true
+        },
+        {
+          "uid": 482,
+          "live": true
+        },
+        {
+          "uid": 483,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 33,
+      "old": [
+        {
+          "uid": 478,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 479,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 480,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 484,
+          "live": true
+        },
+        {
+          "uid": 485,
+          "live": true
+        },
+        {
+          "uid": 486,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 36,
+      "old": [
+        {
+          "uid": 481,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 482,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 483,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 487,
+          "live": true
+        },
+        {
+          "uid": 488,
+          "live": true
+        },
+        {
+          "uid": 489,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 39,
+      "old": [
+        {
+          "uid": 484,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 485,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 486,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 490,
+          "live": true
+        },
+        {
+          "uid": 491,
+          "live": true
+        },
+        {
+          "uid": 492,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 42,
+      "old": [
+        {
+          "uid": 487,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 488,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 489,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 493,
+          "live": true
+        },
+        {
+          "uid": 494,
+          "live": true
+        },
+        {
+          "uid": 495,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 45,
+      "old": [
+        {
+          "uid": 490,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 491,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 492,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 496,
+          "live": true
+        },
+        {
+          "uid": 497,
+          "live": true
+        },
+        {
+          "uid": 498,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 48,
+      "old": [
+        {
+          "uid": 493,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 494,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 495,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 499,
+          "live": true
+        },
+        {
+          "uid": 500,
+          "live": true
+        },
+        {
+          "uid": 501,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 51,
+      "old": [
+        {
+          "uid": 496,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 497,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 498,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 502,
+          "live": true
+        },
+        {
+          "uid": 503,
+          "live": true
+        },
+        {
+          "uid": 504,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 54,
+      "old": [
+        {
+          "uid": 499,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 500,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 501,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 505,
+          "live": true
+        },
+        {
+          "uid": 506,
+          "live": true
+        },
+        {
+          "uid": 507,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 57,
+      "old": [
+        {
+          "uid": 502,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 503,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 504,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    },
+    {
+      "targets": [
+        {
+          "uid": 508,
+          "live": true
+        },
+        {
+          "uid": 509,
+          "live": true
+        },
+        {
+          "uid": 510,
+          "live": true
+        }
+      ],
+      "live": 17,
+      "empty": 60,
+      "old": [
+        {
+          "uid": 505,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 506,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        },
+        {
+          "uid": 507,
+          "slot": "null",
+          "destroyed": true,
+          "collected": false,
+          "gpu": null
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

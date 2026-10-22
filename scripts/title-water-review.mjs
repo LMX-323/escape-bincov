@@ -15,7 +15,7 @@ const context=await browser.newContext({viewport:{width:1920,height:1080},offlin
 context.on('request',r=>{if(/^https?:/.test(r.url()))report.externalRequests.push(r.url());});
 const page=await context.newPage();
 page.on('pageerror',e=>report.errors.push(e.message));
-const state=()=>page.evaluate(()=>window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+const state=()=>page.evaluate(()=>window.__bincov.title.snapshot());
 const diff=(a,b)=>{
  const x=decodePng(a),y=decodePng(b);assert.equal(x.w,y.w);assert.equal(x.h,y.h);let n=0;
  for(let i=0;i<x.data.length;i+=4)if(x.data[i]!==y.data[i]||x.data[i+1]!==y.data[i+1]||x.data[i+2]!==y.data[i+2])n++;
@@ -28,7 +28,7 @@ try{
  await page.screenshot({path:resolve(out,'boat-static.png'),clip:{x:690,y:330,width:324,height:340}});
  const logo=await page.locator('.title-mark-art').boundingBox();assert.ok(logo.y/1080>.1&&logo.y/1080<.17,'Logo must be in the approved upper-left zone');
  await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('.title-motion').click();
- await page.evaluate(()=>{const s=window.__bincov.app.game.scene.getScene('Menu');s.title.setRain(false);s.events.emit('title-overlay',true);});
+ await page.evaluate(()=>{const t=window.__bincov.title;t.setRain(false);t.setOverlay(true);});
  await page.waitForTimeout(300);
  const clips={water:{x:1500,y:405,width:210,height:65},reflection:{x:735,y:534,width:215,height:108}};
  const first={};for(const [name,clip] of Object.entries(clips))first[name]=await page.screenshot({path:resolve(out,name+'-a.png'),clip});
@@ -39,13 +39,13 @@ try{
   report.checks.push({name:'visible '+name+' changes without rain',changedPixels:pixels});
  }
  assert.deepEqual(before.camera,after.camera);report.checks.push({name:'fixed-camera diagnostic',camera:before.camera});
- await page.evaluate(()=>window.__bincov.app.game.scene.getScene('Menu').events.emit('title-overlay',false));
+ await page.evaluate(()=>window.__bincov.title.setOverlay(false));
  for(const [name,x,y] of [['upper-right',1900,20],['lower-left',20,1060]]){
   await page.mouse.move(x,y,{steps:20});await page.waitForTimeout(1300);
   await page.screenshot({path:resolve(out,'parallax-'+name+'.png')});
  }
  const pose=await page.evaluate(()=>{
-  const t=window.__bincov.app.game.scene.getScene('Menu').title;
+  const t=window.__bincov.title;
   const a=t.snapshot();document.querySelector('.title-motion').click();const b=t.snapshot();
   return {before:[a.groups,a.boatY,a.lamp,a.waterFrame],after:[b.groups,b.boatY,b.lamp,b.waterFrame]};
  });
