@@ -8,7 +8,8 @@ import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
 import { retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
-import { BACKUP_MAX_BYTES, decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
+import { decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
+import { PROFILE_MAX_BYTES } from '../src/profile-codec';
 
 let stored: string | null;
 let failWrites: boolean;
@@ -160,7 +161,7 @@ test('a session backup import that cannot be written keeps the dialog and report
 });
 
 test('backup reader rejects unrelated, unsupported, truncated, oversized, overlapping and live-raid data', () => {
-  for (const text of ['{}', '{', JSON.stringify({ version: 2 }), ' '.repeat(BACKUP_MAX_BYTES + 1)]) assert.throws(() => decodeBackup(text));
+  for (const text of ['{}', '{', JSON.stringify({ version: 2 }), ' '.repeat(PROFILE_MAX_BYTES + 1)]) assert.throws(() => decodeBackup(text));
   const save = D.newSave();
   save.bag.items[1].x = save.bag.items[0].x; save.bag.items[1].y = save.bag.items[0].y;
   assert.throws(() => decodeBackup(JSON.stringify(save)));

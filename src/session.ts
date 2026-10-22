@@ -3,7 +3,7 @@ import { moveQuantity, placementError, type LootContainer, type LootEndpoint, ty
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
 import { decodeSession, RecoveryStore, StorageConflictError, type SessionRecord } from './recovery-store';
-import { newExpansion, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
+import { newExpansion, upgradeToRpg, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
 import { initializeMallRaid, mallRunConfig, mallWorldV2, mallWorldV3 } from './mall-world';
 import { initializeBuildingRaid, buildingRunConfig } from './building-world';
@@ -181,7 +181,7 @@ export class SaveSession {
         const s = this.session;
         if (s.save.activeRun || s.pendingSettlement || s.conflict || !this.owned) return false;
         const expansion = structuredClone(s.expansion ?? newExpansion(now));
-        if (expansion.version === 1) { expansion.version = 2; expansion.charm = null; expansion.awards = []; expansion.base.cursor = Math.max(expansion.base.cursor, now); }
+        upgradeToRpg(expansion, now);
         return this.persist(s.save, null, undefined, expansion);
     }
     private expansionBefore(): string {
@@ -261,7 +261,7 @@ export class SaveSession {
         const expansion = buildings ? structuredClone(s.expansion ?? newExpansion(this.now())) : structuredClone(s.expansion);
         if (expansion?.version === 2) advanceRealTime(expansion, this.now());
         if (buildings) {
-            if (expansion!.version === 1) { expansion!.version = 2; expansion!.charm = null; expansion!.awards = []; expansion!.base.cursor = Math.max(expansion!.base.cursor, this.now()); }
+            if (expansion!.version === 1) upgradeToRpg(expansion!, this.now());
             Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
             if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
