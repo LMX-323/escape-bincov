@@ -4,13 +4,15 @@ import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
 import { mapPresentation, buildingRunConfig } from '../building-world';
+import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
-import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem } from '../rpg';
+import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
+import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
 import { advancePursuits } from '../pursuit';
-import { ActiveClock, PlayerInput, type InputFrame } from '../input';
+import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
 import type { RaidRuntime, RaidIntent, PublishedView, WorldKey, MapDef, StampedEvent, ViewEventBody, Durability, WeaponLook, TargetRef, Interaction, HurtCause } from './contract';
@@ -70,7 +72,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private checkpointAt = 0;
     private clock = new ActiveClock();
     private lastNow: number | null = null;
-    inputFrame: InputFrame = new PlayerInput().read(false);
+    inputFrame: InputFrame = idleFrame();
     intent: RaidIntent = emptyIntent();
     inputSuppressed = false;
     overlay = '';
@@ -116,9 +118,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (session.state !== 'run' || !session.loadout || !session.save.activeRun || !session.storageOK || session.conflict || session.pendingSettlement)
             throw new Error('Resume or deploy a valid owned raid before creating Runtime.');
         this.layered = session.expansion?.raid ? structuredClone(session.expansion) : null;
-        if (this.layered?.raid?.worldVersion && this.layered.raid.worldVersion !== 'coast-buildings-v1')
-            throw new Error('Sample Runtime supports coastal raids only.');
-        this.config = this.layered ? buildingRunConfig(this.layered.raid!.seed) : generateRun(session.checkpoint!.seed);
+        const world = this.layered?.raid?.worldVersion;
+        if (world && world !== 'coast-buildings-v1' && !isMallWorld(world))
+            throw new Error('Sample Runtime does not support this world.');
+        this.config = this.layered ? (isMallWorld(world) ? mallRunConfig : buildingRunConfig)(this.layered.raid!.seed)
+            : generateRun(session.checkpoint!.seed);
         this.terminalLoadout = structuredClone(session.loadout);
         if (this.layered)
             this.restoreExpansion(this.layered);
@@ -148,7 +152,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.suppressFire ||= this.intent.fireHeld;
         this.suppressInteract ||= this.intent.interactHeld;
         this.intent = emptyIntent();
-        this.inputFrame = new PlayerInput().read(false);
+        this.inputFrame = idleFrame();
         this.clock.reset();
         this.extractTime = 0;
         this.sprinting = false;
@@ -157,6 +161,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private setOverlay(value: string) {
         if (this.overlay === 'checkpoint-error' && !this.session.storageOK && value !== 'checkpoint-error')
             return;
+        if (value !== 'loot') this.lootContext = null;
         this.releaseInput();
         this.overlay = value;
         this.dirty = true;
@@ -172,6 +177,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     resume() { this.assertLive(); if (this.ending || this.session.conflict || !this.session.storageOK)
         return; this.setOverlay(''); }
+    resetClock() { this.assertLive(); this.clock.reset(); }
     setBlocked(blocked: boolean) { this.assertLive(); if (this.ending || this.paused)
         return; this.setOverlay(blocked ? 'inventory' : ''); if (!blocked)
         this.lootContext = null; }
@@ -312,7 +318,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         return ok;
     }
-    snapshot(): RaidCheckpoint {
+    snapshot(): ActiveRaidSnapshot {
         this.syncMagazine();
         return structuredClone({ version: 2, worldVersion: WORLD_VERSION, seed: this.config.seed, runId: this.terminalLoadout.runId!,
             loadout: this.session.loadout ?? this.terminalLoadout, player: this.player, hp: this.hp, stamina: this.stamina, pollution: this.pollution,
@@ -392,8 +398,12 @@ export class CoastRaidRuntime implements RaidRuntime {
             for (const e of this.queue.slice(mark))
                 e.durability = 'committed';
         else {
-            this.queue.splice(mark);
-            this.rejected(action, result);
+            const discarded = this.queue.splice(mark);
+            // A no-effect supply explains its refusal before returning false. Keep that explanation
+            // in the rejection, never any tentative success events or notices from a failed write.
+            const explanation = result === 'rejected' && (action === 'heal' || action === 'use-item')
+                ? discarded.find(e => e.body.type === 'notice')?.body : undefined;
+            this.rejected(action, explanation?.type === 'notice' ? explanation.text : result);
             if (result === 'save-failed')
                 this.setOverlay('checkpoint-error');
         }
@@ -542,19 +552,18 @@ export class CoastRaidRuntime implements RaidRuntime {
         points.sort((a, b) => distance(from, a) - distance(from, b) || a.y - b.y || a.x - b.x);
         return points.find(p => spacePath({ ...context, highTide: false }, from, p, true).length) ?? null;
     }
+    /**
+     * Capture live state, not the last committed record; snapshot also synchronizes live ammo.
+     * Clone layered first, then overlay current entities; pursuits retain enemy ownership.
+     * The returned candidate is isolated, but only SaveSession can make it durable.
+     * No clock/RNG advance or publication occurs here; a missing layered raid throws.
+     * @see applyActiveRaidSnapshot
+     */
     snapshotExpansion(): ExpansionState {
         if (!this.layered?.raid)
             throw new Error('没有多层行动。');
-        const state = structuredClone(this.layered), raid = state.raid!, c = this.snapshot(), layer = raid.maps[raid.currentMap];
-        Object.assign(state.body, { hp: this.hp, stamina: this.stamina, pollution: this.pollution, bleeding: !!this.bleeding, exhausted: this.exhausted });
-        Object.assign(raid, { player: c.player, loadout: c.loadout, elapsed: c.elapsed, highTide: c.highTide, warned: c.warned, tideChanged: c.tideChanged,
-            kills: c.kills, rng: c.rng, nextEntity: c.nextEntity, reloadLeft: c.reloadLeft, fireCooldown: c.fireCooldown, knife: c.knife, hitTime: c.hitTime });
-        const projected = raid.pursuits.filter(p => p.sourceMap === raid.currentMap);
-        layer.enemies = c.enemies.filter(e => !projected.some(p => p.enemy.uid === e.uid));
-        projected.forEach(p => { const enemy = c.enemies.find(e => e.uid === p.enemy.uid); if (enemy)
-            p.enemy = enemy; });
-        Object.assign(layer, { loot: c.loot, containers: c.containers!, bullets: c.bullets,
-            noise: c.shotNoise && c.noiseTime > 0 ? { at: c.shotNoise, radius: c.noiseRadius, remaining: c.noiseTime } : null });
+        const state = structuredClone(this.layered), c = this.snapshot();
+        applyActiveRaidSnapshot(state.body, state.raid!, c);
         return state;
     }
     restoreExpansion(state: ExpansionState): void {
@@ -562,13 +571,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         // A durable terminal write restores body/base state before the scene stops.
         if (!this.layered.raid)
             return;
-        const raid = this.layered.raid!, layer = raid.maps[raid.currentMap];
-        this.restore({ version: 2, worldVersion: WORLD_VERSION, seed: raid.seed, runId: raid.runId, loadout: raid.loadout, player: raid.player,
-            hp: state.body.hp, stamina: state.body.stamina, pollution: state.body.pollution, bleeding: Number(state.body.bleeding),
-            kills: raid.kills, elapsed: raid.elapsed, highTide: raid.highTide, knife: raid.knife, reloadLeft: raid.reloadLeft, fireCooldown: raid.fireCooldown,
-            warned: raid.warned, tideChanged: raid.tideChanged, shotNoise: layer.noise?.at ?? null, noiseRadius: layer.noise?.radius ?? 510, noiseTime: layer.noise?.remaining ?? 0,
-            hitTime: raid.hitTime, exhausted: state.body.exhausted, stepTime: this.stepTime, noteSeen: [], rng: raid.rng, nextEntity: raid.nextEntity,
-            enemies: [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)], loot: layer.loot, containers: layer.containers, bullets: layer.bullets });
+        this.restore(activeRaidCheckpoint(state.body, this.layered.raid, this.stepTime));
     }
     getLootContainer(id: string): LootContainer | undefined { return this.containers.find(container => container.id === id); }
     canLootContainer(id: string, runId: string): boolean {
@@ -621,8 +624,9 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (!D.count(inv, id))
                 return false;
             const state = this.snapshotExpansion();
-            if (!useRpgItem(state, id)) {
-                this.say('当前状态无需使用这件补给。');
+            const effect = useRpgItemResult(state, id);
+            if (!effect.ok) {
+                this.say(effect.message);
                 return false;
             }
             if (chosen) {
@@ -795,7 +799,9 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
             environment = { bleed: dt * this.bleeding * B.bleedDamage, pollution: dt * (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0) };
-            this.hp -= dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0));
+            // The drain stops at 0, as a blow does (applyDamage): a classic raid settles its health into the body, which
+            // accepts 0 to the limit, so a bleed-out past zero would fail the terminal write.
+            this.hp = Math.max(0, this.hp - dt * (this.bleeding * B.bleedDamage + (this.pollution > B.pollutionDamageThreshold ? (this.pollution - B.pollutionDamageBase) * B.pollutionDamageFactor : 0)));
         }
         this.environmentHurt(beforeEnvironment - this.hp, environment);
         if (this.hp <= 0) {
@@ -818,11 +824,12 @@ export class CoastRaidRuntime implements RaidRuntime {
                 if (this.layered?.raid?.pursuits.some(p => p.enemy.uid === e.uid))
                     continue;
                 this.updateEnemy(e, dt);
-                if (this.session.state !== 'run' || this.locked)
+                // A failed world commit pauses here; later actors must not move away from its retained baseline.
+                if (this.session.state !== 'run' || this.paused)
                     return;
             }
         this.updateBullets(dt);
-        if (this.session.state !== 'run' || this.locked)
+        if (this.session.state !== 'run' || this.paused)
             return;
         this.interact(dt, input, moving);
         if (this.session.state !== 'run' || this.locked)
@@ -922,11 +929,16 @@ export class CoastRaidRuntime implements RaidRuntime {
             this.move(e, Math.cos(angle) * def.speed * dt, Math.sin(angle) * def.speed * dt, true);
         }
     }
-    private layerMutation(action: (state: ExpansionState) => boolean | void, suppress = false, name = 'world', events: ViewEventBody[] = []): boolean {
+    private layerMutation(action: (state: ExpansionState) => boolean | void | 'unreachable' | 'occupied', suppress = false, name = 'world', events: ViewEventBody[] = []): boolean {
         const mark = this.queue.length, from = this.worldKey().mapId;
         let ticket: ExpansionTransaction | null;
+        let refusal = 'unreachable-or-rejected';
         try {
-            ticket = this.saves.prepareExpansionMutation(draft => action(draft.expansion));
+            ticket = this.saves.prepareExpansionMutation(draft => {
+                const result = action(draft.expansion);
+                if (typeof result === 'string') { refusal = result; return false; }
+                return result;
+            });
         }
         catch (error) {
             this.queue.splice(mark);
@@ -935,7 +947,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         const staged = this.queue.splice(mark);
         if (!ticket) {
-            this.rejected(name, 'unreachable-or-rejected');
+            this.rejected(name, refusal);
             return false;
         }
         for (const body of events)
@@ -950,6 +962,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                 this.pendingLayer = pending;
                 this.setOverlay('checkpoint-error');
             }
+            // A retained ticket whose baseline moved can never commit; nothing of it was applied or published.
+            else if (result === 'rejected' && this.pendingLayer === pending)
+                this.pendingLayer = null;
             return false;
         }
         this.pendingLayer = null;
@@ -968,7 +983,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.assertLive();
         if (this.ending)
             return this.retrySettlement();
-        const ok = this.pendingLayer ? this.commitLayer(this.pendingLayer) : this.checkpoint();
+        const pending = this.pendingLayer;
+        let ok = pending ? this.commitLayer(pending) : this.checkpoint();
+        // A dropped stale ticket leaves the live world as the state to save.
+        if (!ok && pending && !this.pendingLayer)
+            ok = this.checkpoint();
         if (ok)
             this.setOverlay('');
         return ok;
@@ -1198,18 +1217,29 @@ export class CoastRaidRuntime implements RaidRuntime {
             return null;
         return { kind: t.kind, ref: { runId: this.worldKey().runId, mapId: this.worldKey().mapId, kind: t.kind, id: t.id },
             at: { x: t.at.x, y: t.at.y }, label: t.label, hold: t.kind === 'exit' ? { required: B.extractionSeconds, progress: this.extractTime } : null,
-            choices: t.kind === 'exit' || this.space && !['container', 'ground'].includes(t.kind) ? [] : this.lootTargets().map(c => ({ id: c.id, name: this.lootTargetName(c), empty: !c.inventory.items.length, selected: c.id === this.lootTargetId })) };
+            choices: t.kind === 'exit' || this.space && !['container', 'ground'].includes(t.kind) ? [] : this.lootTargets().map(c => ({ id: c.id, name: this.lootTargetName(c), empty: !c.inventory.items.length, selected: c.id === this.lootTargetId })),
+            nearby: t.kind === 'container' || t.kind === 'ground' ? this.nearbyLoot().map(l => ({ id: l.uid, item: l.id, qty: l.qty })) : [] };
     }
+    /** Explicit ground refs use nearbyLoot's range/tide/occlusion rules, independent of E's
+     * preferred target. Inventory and remaining ground loot commit together or both roll back.
+     * A ref is scoped to its run/map; overlays and pauses still block activation.
+     */
     activate(ref: TargetRef): boolean {
         if (!this.validRef(ref) || this.paused || this.overlay) {
             this.rejected('interact', 'stale-or-blocked');
             return false;
         }
+        if (ref.kind === 'ground')
+            return this.pickupLoot(ref.id);
         if (ref.kind === 'container' && this.canLootContainer(ref.id, ref.runId)) {
             this.lootContext = { containerId: ref.id, runId: ref.runId };
             this.suppressHeldInput();
             this.setOverlay('loot');
             return true;
+        }
+        if (ref.kind === 'door' && (!this.space || !doorAnchor(this.space, ref.id, this.player))) {
+            this.rejected('door', 'unreachable');
+            return false;
         }
         const target = this.target();
         if (!target || target.id !== ref.id || target.kind !== ref.kind) {
@@ -1224,11 +1254,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                 const raid = state.raid!, layer = raid.maps[raid.currentMap];
                 const living = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === raid.currentMap).map(p => p.enemy)].filter(e => e.hp > 0);
                 const result = toggleDoor({ definition: this.space!.definition, doors: layer.doors, highTide: raid.highTide }, target.id, raid.player, living);
-                return result !== 'unreachable' && result !== 'occupied';
+                return result === 'unreachable' || result === 'occupied' ? result : true;
             }, true, 'door', [{ type: 'door', id: target.id, open, by: 'player' }]);
         }
-        if (target.kind === 'ground')
-            return this.pickupLoot(target.id);
         if (target.kind === 'note') {
             const note = this.mapData.notes.find(n => n.title === target.id)!;
             this.say(`${note.title}：${note.text}`, 14);

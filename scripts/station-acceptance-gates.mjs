@@ -6,10 +6,11 @@ export function assertFrames(records) {
   assert.deepEqual(records, [], 'normal flow internal frame errors');
 }
 export function assertFallback(lines) {
-  const expected = '[console] Error: Station yard needs WebGL (got canvas).';
+  // Pixi now refuses to start without WebGL; the route's own check remains for a renderer that silently falls back.
+  const expected = ['[console] Error: This browser does not support WebGL. Try using the canvas renderer', '[console] Error: Station yard needs WebGL (got canvas).'];
   assert.equal(lines.length,1,'no-WebGL whitelist requires exactly one error');
-  const [headline,...stack]=lines[0].split('\n');assert.equal(headline,expected,'unexpected no-WebGL error');
-  assert.ok(stack.length>0 && stack.every(line=>/^    at \S+ \(https:\/\/station\.test\/\?test=1:\d+:\d+\)$/.test(line)), 'unexpected text appended to expected fallback error');
+  const [headline,...stack]=lines[0].split('\n');assert.ok(expected.includes(headline),'unexpected no-WebGL error');
+  assert.ok(stack.length>0 && stack.every(line=>/^    at (?:async )?\S+ \(https:\/\/station\.test\/\?test=1:\d+:\d+\)$/.test(line)), 'unexpected text appended to expected fallback error');
   return lines;
 }
 export function assertSupplyRefused(before, after) {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import type { LootContainer, LootEndpoint, LootTransfer } from '../src/loot';
+import type { LootEndpoint, LootTransfer } from '../src/loot';
 import { createSessionState, SaveSession } from '../src/session';
 import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
 const read = (storage: D.StorageLike) => new RecoveryStore(storage).load();
@@ -160,7 +160,7 @@ test('merging consumes the source UID while keeping target identity and relief r
 });
 
 test('invalid slots, endpoints and unavailable items have no side effects or writes', () => {
-    const f = fixture(save => D.addItem(save.bag, 'sample')), uid = add(f.container.inventory, 'shotgun');
+    const f = fixture(save => D.addItem(save.bag, 'sample', 2)), uid = add(f.container.inventory, 'shotgun');
     const valid = f.request('container', 'bag', uid), before = f.snapshot();
     const invalid: LootTransfer[] = [
         valid,

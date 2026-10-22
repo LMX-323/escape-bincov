@@ -1,0 +1,133 @@
+{
+  "build": "/tmp/escape-bincov-baseline.html",
+  "browser": "153.0.8010.12",
+  "startedAt": "2026-10-13T02:20:20.289Z",
+  "methodology": "Packaged offline build at https://station.test/ (routed, no network). Real session/localStorage, real DOM input in headless Chrome; phone sizes are viewport/touch emulation. ?test=1 fixtures: player placement, save seeding through SaveSession transactions while the yard is closed, storage fault injection, production time shortening. No mock Runtime and no simulated raid result.",
+  "steps": [
+    {
+      "name": "B1 键盘走动与碰撞（按住 D；向北撞育苗池停住）",
+      "status": "passed",
+      "detail": "右移 95 px；北向停在 y=12.16 格",
+      "ms": 6796
+    },
+    {
+      "name": "B2 点电台屋顶：寻路穿过两道门进电台，打开任务面板",
+      "status": "passed",
+      "detail": "面板 radio，玩家 (30.5, 4.6)",
+      "ms": 5319
+    },
+    {
+      "name": "B3 交付「让灯亮起来」：真实任务事务 → 供电恢复序列（F02 全景）→ 现金 +420",
+      "status": "failed",
+      "error": "Error: timeout: sequence end\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:198:5\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:192:3",
+      "ms": 15615
+    },
+    {
+      "name": "E4 训练：真实有效120秒、规则奖励、静止/面板/后台暂停不计时",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: effective seconds exceed wall-clock or insufficient\n    at assertTraining (file:///workspace/escape-bincov/scripts/station-acceptance-gates.mjs:26:10)\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:361:5\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:315:3",
+      "ms": 175056
+    },
+    {
+      "name": "G7 WebGL 上下文丢失后暂停绘制，恢复后继续，循环不中断",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 丢失 18 帧，恢复 5 帧\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:580:12\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:574:3",
+      "ms": 3465
+    },
+    {
+      "name": "H1 F01 侧门：发电机房→电台、食堂→宿舍、院子→加工间",
+      "status": "passed",
+      "detail": "揭开 gen、radio；门牌“电台 →”；揭开 canteen、dorm；门牌“宿舍 →”；揭开 work；门牌“← 加工间”",
+      "ms": 8622
+    },
+    {
+      "name": "H2 F03：点自己脚下的寻路格不卡死；之后键盘与寻路正常",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 点击后 0.5 秒只刷新 7 帧\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:606:75\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:602:3",
+      "ms": 1495
+    },
+    {
+      "name": "H3 F03：点在杆身、墙上、池里、门柱，走到最近的空地",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 杆身 卡死\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:619:14\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:614:3",
+      "ms": 3390
+    },
+    {
+      "name": "H5 F03：斜挤杆与墙角的缝、正对杆子直走不卡住；帧出错不停循环",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: false == true\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:644:12\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:636:3",
+      "ms": 4530
+    },
+    {
+      "name": "H6 F02：1280×720 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "failed",
+      "error": "Error: timeout: sequence end\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:656:7\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:649:5",
+      "ms": 16498
+    },
+    {
+      "name": "H6 F02：1024×720 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "failed",
+      "error": "Error: timeout: sequence end\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:656:7\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:649:5",
+      "ms": 15920
+    },
+    {
+      "name": "H6 F02：844×390 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "failed",
+      "error": "Error: timeout: sequence end\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:656:7\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:649:5",
+      "ms": 18074
+    },
+    {
+      "name": "H6 F02：390×844 通电序列里所有灯都在画面内，结束后恢复视野",
+      "status": "failed",
+      "error": "Error: timeout: sequence end\n    at file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:141\n    at async until (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:103:68)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:656:7\n    at async step (file:///workspace/escape-bincov/scripts/station-browser-test.mjs:90:18)\n    at async file:///workspace/escape-bincov/scripts/station-browser-test.mjs:649:5",
+      "ms": 19586
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "frameAudit": [
+    {
+      "message": "injected frame error (test)",
+      "count": 1,
+      "expected": true
+    },
+    {
+      "message": "injected frame error (test)",
+      "count": 2,
+      "expected": true
+    },
+    {
+      "message": "injected frame error (test)",
+      "count": 3,
+      "expected": true
+    }
+  ],
+  "expectedLogs": [],
+  "warnings": [
+    {
+      "text": "[.WebGL-0x2d8c02372000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2d8c02372000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2d8c02372000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "https://station.test/?test=1"
+    },
+    {
+      "text": "[.WebGL-0x2d8c02372000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "url": "https://station.test/?test=1"
+    }
+  ],
+  "coverage": {
+    "wallLight": []
+  },
+  "finishedAt": "2026-10-13T02:25:14.977Z",
+  "summary": {
+    "passed": 3,
+    "total": 13
+  },
+  "htmlSha256": "2320bd31ef8a192e7e3ca2e1175e93742ba19001eb88ab4f9c44046503b88231"
+}

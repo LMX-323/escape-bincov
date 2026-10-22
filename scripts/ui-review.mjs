@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { batch, drive, frames, raidReady, stand, waitPanel } from './raid-view.mjs';
+import { openPause, resumeStalls, running } from './stall-resume.mjs';
 
 const out = resolve('test-results/ui');
 await mkdir(out, { recursive: true });
@@ -15,6 +17,7 @@ try {
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     const size = `${viewport.width}x${viewport.height}`;
     const context = await browser.newContext({ viewport, offline: true });
+    await resumeStalls(context);
     try {
       context.on('request', r => { if (/^https?:/.test(r.url())) report.externalRequests.push(r.url()); });
       const page = await context.newPage();
@@ -25,10 +28,11 @@ try {
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({ path: resolve(out, `${size}-${name}.png`) });
         const escaped = await page.evaluate(() => {
-          const frame = document.querySelector('#frame').getBoundingClientRect();
-          return [...document.querySelectorAll('.hideout, .modal, .map-modal, .inventory-modal, .result')].filter(el => {
+          const frame = document.querySelector('#frame').getBoundingClientRect(), view = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+          // The raid's panels belong to the full-window raid view, the page's own panels to the game frame.
+          return [...document.querySelectorAll('.hideout, .modal, .result, .coast-sample [data-panel]:not([hidden])')].filter(el => {
             const r = el.getBoundingClientRect();
-            const bounds = el.matches(".inventory-modal") ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : frame;
+            const bounds = el.closest('.coast-sample') ? view : frame;
             return r.left < bounds.left || r.top < bounds.top || r.right > bounds.right + 1 || r.bottom > bounds.bottom + 1;
           }).map(el => el.className);
         });
@@ -37,7 +41,7 @@ try {
         console.log(`PASS ${size} ${name}`);
       };
       await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
-      await action('enter').waitFor(); await page.waitForTimeout(200);
+      await action('enter').waitFor({ timeout: 60000 }); await page.waitForTimeout(200);
       await shot('menu');
       await action('help').click(); await shot('help'); await action('close').click();
       await action('enter').click(); await shot('gear');
@@ -85,46 +89,52 @@ try {
       await action('tab', 'quests').click(); await shot('completed-quests');
       await action('tab', 'home').click(); await shot('upgraded-home');
       await action('tab', 'gear').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
-      await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-      await page.evaluate(() => {
-        const r = window.__bincov.app.raid;
-        r.enemies.forEach(e => { e.cooldown = 9999; });
-        r.player.setPosition(700, 784);
-      });
-      // Bleeding must not be described as a normal state when pollution is low.
-      const statusLabels = await page.evaluate(() => {
-        const r = window.__bincov.app.raid;
-        const before = { bleeding: r.bleeding, pollution: r.pollution };
-        r.bleeding = 1; r.pollution = 0; r.updateHud();
-        const bleeding = document.querySelector('#status').textContent;
-        r.pollution = 50; r.updateHud();
-        const combined = document.querySelector('#status').textContent;
-        Object.assign(r, before); r.updateHud();
-        return { bleeding, combined };
-      });
-      assert.match(statusLabels.bleeding, /流血/);
-      assert.doesNotMatch(statusLabels.bleeding, /正常|稳定/);
-      assert.match(statusLabels.combined, /流血.*污染 50%/);
-      await page.waitForTimeout(300); await shot('raid');
-      await page.keyboard.press('Tab'); await shot('inventory');
-      await page.locator('[data-source="bag"][aria-label^="密封绷带"]').click(); await shot('inventory-item');
-      const bandagesBefore = await page.evaluate(() => {
-        const { app } = window.__bincov;
-        app.raid.hp = 100; app.raid.bleeding = 0;
-        return app.loadout.bag.items.filter(i => i.id === 'bandage').reduce((n, i) => n + i.qty, 0);
-      });
-      await action('use').click();
-      assert.match(await page.locator('#toast').textContent(), /生命已满/,
-        'Unnecessary treatment explanation was replaced by a generic transaction error');
-      assert.equal(await page.evaluate(() => window.__bincov.app.loadout.bag.items
-        .filter(i => i.id === 'bandage').reduce((n, i) => n + i.qty, 0)), bandagesBefore);
-      await action('close').click(); await page.keyboard.press('m'); await shot('map');
-      await action('close').click(); await page.keyboard.press('Escape'); await shot('pause');
-      const timer = await page.locator('#timer').textContent();
-      await page.waitForTimeout(200);
-      assert.equal(await page.locator('#timer').textContent(), timer, 'Pause changes the displayed clock');
-      await action('abandon').click(); await shot('abandon');
-      await action('confirm-abandon').click(); await action('return').waitFor(); await shot('result');
+      // Every raid runs on the 2.5D host: its own HUD, panels and fixtures (window.__bincovSample).
+      await raidReady(page);
+      await stand(page, { x: 700, y: 784 });
+      // Bleeding must not be described as a normal state when pollution is low. The status line refreshes every 8 frames.
+      const status = () => page.locator('.coast-sample [data-state]').textContent();
+      const before = (await batch(page)).frame.hud;
+      await drive(page, 'vitals', { bleeding: true, pollution: 0 }); await frames(page, 10);
+      const bleeding = await status();
+      await drive(page, 'vitals', { pollution: 50 });
+      // The line shows the Runtime's own value: pollution recovers 0.2 %/s while dry, and ten frames are seconds of raid
+      // time on a slow runner. Read it on a frame where the line and the published value agree (it refreshes every 8).
+      const combined = await (await page.waitForFunction(() => {
+        const t = document.querySelector('.coast-sample [data-state]').textContent, p = window.__bincovSample.host.lastBatch.frame.hud.pollution;
+        return p > 45 && t.includes(`污染 ${Math.round(p)}%`) ? t : false;
+      }, null, { timeout: 20000 })).jsonValue();
+      await drive(page, 'vitals', { bleeding: before.bleeding, pollution: before.pollution, hp: before.maxHp }); await frames(page, 10);
+      assert.match(bleeding, /流血/);
+      assert.doesNotMatch(bleeding, /正常|稳定/);
+      assert.match(combined, /流血.*污染 (4[6-9]|50)%/);
+      // The camera eases onto the placed player and every rebuild fades in from black (0.45 s).
+      await page.waitForTimeout(1500); await shot('raid');
+      // Tab opens the bag only while the raid runs (a stall pause resumed after the deploy would swallow it).
+      await running(page);
+      await page.keyboard.press('Tab'); await waitPanel(page, 'inventory'); await shot('inventory');
+      const raidBandage = page.locator('.coast-sample [data-panel] [data-source="bag"][aria-label^="密封绷带"]');
+      await raidBandage.click(); await page.locator('.coast-sample [data-do="inv-use"]').waitFor(); await shot('inventory-item');
+      const bandages = () => page.evaluate(() => window.__bincov.app.loadout.bag.items.filter(i => i.id === 'bandage').reduce((n, i) => n + i.qty, 0));
+      const max = (await batch(page)).frame.hud.maxHp;
+      await drive(page, 'vitals', { hp: max, bleeding: false }); await frames(page, 3);
+      const bandagesBefore = await bandages();
+      await page.locator('.coast-sample [data-do="inv-use"]').click();
+      // The panel's own notice is replaced by the host's once the Runtime's rejection is published.
+      await page.waitForFunction(() => window.__bincovSample.host.eventLog.some(e => e.type === 'rejected' && e.detail.action === 'use-item')); await frames(page, 2);
+      const toast = await page.locator('.coast-sample [data-toast]').innerText();
+      assert.match(toast, /生命已满/);
+      assert.equal(await bandages(), bandagesBefore, 'Unnecessary treatment consumed a bandage');
+      await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
+      await running(page);
+      await page.keyboard.press('m'); await waitPanel(page, 'map'); await page.locator('.coast-sample [data-map]').waitFor(); await frames(page, 3); await shot('map');
+      await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
+      await openPause(page); await shot('pause');
+      const timer = await page.locator('.coast-sample [data-time]').textContent();
+      await frames(page, 4);
+      assert.equal(await page.locator('.coast-sample [data-time]').textContent(), timer, 'Pause changes the displayed clock');
+      await page.locator('.coast-sample [data-do="abandon"]').click(); await page.locator('.coast-sample [data-do="abandon-yes"]').waitFor(); await shot('abandon');
+      await page.locator('.coast-sample [data-do="abandon-yes"]').click(); await action('return').waitFor({ timeout: 30000 }); await shot('result');
     } finally { await context.close(); }
   }
   assert.deepEqual(report.errors, []); assert.deepEqual(report.externalRequests, []);

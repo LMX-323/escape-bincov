@@ -211,7 +211,8 @@ export const PROPS: PropDef[] = [
   P('stove', 'stove', 14, 2, 3, 1, 'canteen'),
   P('table-a', 'table-long', 9, 4, 4, 1, 'canteen', { inset: 3 }), P('table-b', 'table-long', 9, 6, 4, 1, 'canteen', { inset: 3 }),
   P('bench-a', 'bench', 9, 3, 4, 1, 'canteen', { blocks: false }), P('bench-b', 'bench', 9, 5, 4, 1, 'canteen', { blocks: false }),
-  P('pots', 'pots', 16, 4, 1, 2, 'canteen'),
+  // The prep counter stands against the east wall south of the dorm door: at (16,4) it filled the door's only approach.
+  P('pots', 'pots', 16, 5, 1, 2, 'canteen'),
   P('rice-sacks', 'sacks', 9, 2, 2, 1, 'canteen'),
   // Dorm (rest facility): mats -> bunks -> stove and curtains
   P('mats', 'mats', 18, 2, 3, 3, 'dorm', { blocks: false, facility: { id: 'rest', min: 1, below: true } }),

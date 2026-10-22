@@ -1,19 +1,22 @@
 import assert from 'node:assert/strict';
 
-/** Controlled renderer probe, not a gameplay screenshot: clone the actual desk
+/** Controlled renderer probe, not a gameplay screenshot: draw the actual desk
  * texture over black at a quarter-pixel offset and compare a painted pixel to the
  * framebuffer. A low-resolution linear filter mixes it with the previous pixel. */
 export async function checkPixelEdge(page) {
   const previous = page.viewportSize();
   await page.setViewportSize({ width: 1920, height: 1080 });
   try {
-    // Browser viewport changes and Phaser's resize listener are asynchronous.
+    // Browser viewport changes and the title's resize listener are asynchronous.
     // Sample only after layout and two display frames have consumed the resize.
     await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
     const result = await page.evaluate(async () => {
-      const game = window.__bincov.app.game, scene = game.scene.getScene('Menu');
-      const originalKey = 'title-desk-master-v3';
-      const source = scene.textures.get(originalKey).getSourceImage();
+      const { app } = window.__bincov.title.debug();
+      let desk;
+      const visit = node => { if (node.layer === 'desk') desk = node; for (const child of node.children ?? []) visit(child); };
+      visit(app.stage);
+      if (!desk) throw new Error('Actual desk image missing');
+      const source = desk.texture.source.resource;
       const canvas = document.createElement('canvas'); canvas.width = source.width; canvas.height = source.height;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(source, 0, 0);
       const pixels = ctx.getImageData(0, 0, source.width, source.height).data;
@@ -26,26 +29,24 @@ export async function checkPixelEdge(page) {
         }
       }
       if (!point) throw new Error('No opaque contrasting edge in the desk painting');
-      let key;
-      for (const group of scene.children.list) for (const image of group.list || [])
-        if (image.texture?.key.startsWith(originalKey)) key = image.texture.key;
-      if (!key) throw new Error('Actual desk image missing');
-      const black = scene.add.rectangle(0, 0, 960, 540, 0x000000).setOrigin(0).setDepth(9999);
-      const probe = scene.add.image(.25, 0, key).setOrigin(0).setDisplaySize(source.width, source.height).setDepth(10000);
+      // The scene's own classes and texture: a black plate and the desk drawn one texel per logical unit, .25 right.
+      const Sprite = desk.constructor, Texture = desk.texture.constructor;
+      const black = new Sprite(Texture.WHITE); black.tint = 0x000000; black.width = 960; black.height = 540;
+      const probe = new Sprite(desk.texture); probe.position.set(.25, 0); probe.width = source.width; probe.height = source.height;
+      app.stage.addChild(black, probe);
       try {
-        const scale = game.canvas.width / 960;
-        // Area snapshots use the same top-left convention in Canvas and WebGL.
-        const sample = () => new Promise((done, reject) => game.renderer.snapshotArea(
-          Math.floor((point.x + .75) * scale), Math.floor((point.y + .75) * scale), 1, 1, image => {
-            if (!image) { reject(new Error('Framebuffer snapshot failed')); return; }
-            const pixel = document.createElement('canvas'); pixel.width = pixel.height = 1;
-            const context = pixel.getContext('2d'); context.drawImage(image, 0, 0);
-            done([...context.getImageData(0, 0, 1, 1).data.slice(0, 3)]);
-          }));
-        const actual = await sample(), repeated = await sample();
+        const scale = app.renderer.width / 960, gl = app.renderer.gl;
+        // Read the default framebuffer right after rendering, before the page composites it.
+        const sample = () => {
+          app.renderer.render(app.stage);
+          const pixel = new Uint8Array(4);
+          gl.readPixels(Math.floor((point.x + .75) * scale), gl.drawingBufferHeight - 1 - Math.floor((point.y + .75) * scale), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+          return [...pixel.slice(0, 3)];
+        };
+        const actual = sample(), repeated = sample();
         return { ...point, actual, repeated, error: Math.max(...actual.map((c, i) => Math.abs(c - point.expected[i]))),
-          surface: [game.canvas.width, game.canvas.height], renderer: game.renderer.type };
-      } finally { probe.destroy(); black.destroy(); }
+          surface: [app.renderer.width, app.renderer.height], renderer: app.renderer.name };
+      } finally { app.stage.removeChild(black, probe); probe.destroy(); black.destroy(); }
     });
     assert.ok(result.error <= 1, `A painted pixel was blurred into its neighbour (RGB error ${result.error})`);
     assert.deepEqual(result.surface, [1920, 1080], 'Title is stretched from a low-resolution render surface');

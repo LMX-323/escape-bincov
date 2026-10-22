@@ -1,0 +1,70 @@
+✔ A1: deployment defaults to v1; explicit v2 is atomic and cannot change an active raid or other routes (65.0269ms)
+✔ A1/A3: yard forwards the layout once and the explicitly gated host driver works on both mall floors (29.6537ms)
+✔ A2: both mall layouts use the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits (336.1759ms)
+✔ A4/S-03/S-07/S-08: both floors and layouts survive refresh and recovery backup; malformed worlds never overwrite (82.3459ms)
+✔ G-06: every connector round-trips ten times in both layouts without respawn or duplicate entities (801.2048ms)
+✖ G-07/S-04: held stair/fire/movement inputs do not carry over; an open panel blocks the transition (283.8037ms)
+✔ G-08: crowded landing is deterministic; fully blocked landing refuses and a freed slot allows exactly one transition (13.5084ms)
+✔ L-06/S-02/S-03: departure settles hit/wall/range/enemy bullets once, freezes source, and failed commit restores every byte (147.2101ms)
+✔ L-04/L-05: all four stairs preserve pursuing identities and HP; arrival waits for occupied landing then resumes (1212.8501ms)
+✔ L-07/L-08: terrace never extracts; only O-06 floods, one warning/flip, indoor and F2 remain dry (428.7897ms)
+✔ S-09: only active ground exits, stationary held 3s, durable settlement before success, single retry award (478.7728ms)
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (26.4306ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4209.6009
+
+✖ failing tests:
+
+test at tests\mall-runtime.test.ts:1:8378
+✖ G-07/S-04: held stair/fire/movement inputs do not carry over; an open panel blocks the transition (283.8037ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    {
+      rotation: 0,
+  +   x: 2037.9999999999995,
+  -   x: 2000,
+      y: 432
+    }
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:150:60)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { x: 2037.9999999999995, y: 432, rotation: 0 },
+    expected: { x: 2000, y: 432, rotation: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\mall-runtime.test.ts:1:16750
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (26.4306ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(f.state.pendingSettlement)
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:257:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

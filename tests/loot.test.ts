@@ -19,10 +19,10 @@ test('exact placement validates the complete footprint without changing either i
     assert.deepEqual({ source, target }, before);
 });
 
-test('full inventory rejects a chosen slot even when the source could stack elsewhere', () => {
+test('chosen slot previews a compatible swap or merge without redirecting to another stack', () => {
     const source = inventory('ammo9', 5), target = D.createInventory(2, 1);
     D.addItem(target, 'sample'); D.addItem(target, 'ammo9', 2);
-    assert.match(placementError(source, target, source.items[0].uid, 0, 0)!, /其他物品/);
+    assert.equal(placementError(source, target, source.items[0].uid, 0, 0), null);
     assert.equal(placementError(source, target, source.items[0].uid, 1, 0), null);
     const before = structuredClone({ source, target });
     assert.match(placementError(source, target, 'consumed-uid', 1, 0)!, /重新选择/);
@@ -50,11 +50,11 @@ test('relief identity is preserved for both accepted and refused stacks', () => 
     assert.equal(placementError(source, target, uid, 1, 0), null);
 });
 
-test('same-inventory rearrangement can overlap its old footprint but cannot overlap other items', () => {
+test('same-inventory rearrangement can overlap its old footprint and swap one item into the cleared origin', () => {
     const inv = inventory('shotgun'), uid = inv.items[0].uid;
     assert.equal(placementError(inv, inv, uid, 1, 0), null);
     D.addItem(inv, 'sample');
-    assert.match(placementError(inv, inv, uid, 1, 0)!, /其他物品/);
+    assert.equal(placementError(inv, inv, uid, 1, 0), null);
     assert.equal(placementError(inv, inv, uid, 0, 1), null);
     const stack = inventory('ammo9', 45);
     stack.items[0].qty = 30;

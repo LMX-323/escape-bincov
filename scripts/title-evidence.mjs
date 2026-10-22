@@ -26,7 +26,7 @@ const contextFor = async (width, height, extra = {}) => {
   return context;
 };
 const ready = async page => { await page.locator('.title-enter').waitFor(); await page.evaluate(() => document.fonts.ready); };
-const snap = page => page.evaluate(() => window.__bincov.app.game.scene.getScene('Menu').title.snapshot());
+const snap = page => page.evaluate(() => window.__bincov.title.snapshot());
 // Demo-only pointer marker so viewers can follow the mouse in recordings (not part of the game).
 const pointerMarker = page => page.evaluate(() => {
   const dot = document.createElement('div');
@@ -125,7 +125,7 @@ try {
     await page.goto(url + '?test=1&entry=tabs'); await ready(page);
     await page.mouse.move(900, 500, { steps: 20 });
     report.continuity60s = await page.evaluate(() => new Promise(done => {
-      const title = window.__bincov.app.game.scene.getScene('Menu').title;
+      const title = window.__bincov.title;
       let last = title.snapshot(), frames = 0, rainViolations = 0, respawns = 0, fogBack = 0, poseJumps = 0, maxClockStep = 0;
       const seen = { lamp: new Set(), rope: new Set(), boatY: new Set(), needle: new Set() };
       const end = performance.now() + 60000;
@@ -149,7 +149,7 @@ try {
     const times = []; let last = performance.now(); const end = last + duration;
     const frame = now => { times.push(now - last); last = now; if (now < end) requestAnimationFrame(frame); else {
       times.sort((a, b) => a - b); const q = p => +times[Math.min(times.length - 1, Math.floor(times.length * p))].toFixed(2);
-      done({ frames: times.length, p50Ms: q(.5), p95Ms: q(.95), p99Ms: q(.99), maxMs: q(1), over33ms: times.filter(t => t > 33.4).length, phaserFps: +window.__bincov.app.game.loop.actualFps.toFixed(1) }); } };
+      done({ frames: times.length, p50Ms: q(.5), p95Ms: q(.95), p99Ms: q(.99), maxMs: q(1), over33ms: times.filter(t => t > 33.4).length, titleFps: +window.__bincov.title.renderInfo().fps.toFixed(1) }); } };
     requestAnimationFrame(frame);
   }), ms);
   {

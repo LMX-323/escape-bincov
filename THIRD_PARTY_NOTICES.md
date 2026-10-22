@@ -1,10 +1,6 @@
 # Third-party notices
 
-The standalone game includes Phaser 3.90.0, PixiJS 8.22.0 (used by the opt-in village sample view) and their bundled dependencies EventEmitter3 5.0.4, @pixi/colord 2.9.6, ismobilejs 1.1.1 and parse-svg-path 0.2.0 under the MIT license, and earcut 3.2.4 under the ISC license. The notices below are also embedded in `dist/index.html` so that copying that file retains them. Original game code, pixel art, narrative and synthesized audio are authored for this project; no third-party illustrations or audio assets are used. The interface also embeds the OFL-licensed font subset described below.
-
-## Phaser 3.90.0
-
-Copyright (c) 2024 Richard Davey, Phaser Studio Inc.
+The standalone game includes PixiJS 8.22.0 (it draws the title scene, the station yard and every raid) and its bundled dependencies EventEmitter3 5.0.4, @pixi/colord 2.9.6, ismobilejs 1.1.1 and parse-svg-path 0.2.0 under the MIT license, and earcut 3.2.4 under the ISC license. The notices below are also embedded in `dist/index.html` so that copying that file retains them. Original game code, pixel art, narrative and synthesized audio are authored for this project; no third-party illustrations or audio assets are used. The interface also embeds the OFL-licensed font subset described below.
 
 ## EventEmitter3 5.0.4
 

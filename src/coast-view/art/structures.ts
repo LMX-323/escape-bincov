@@ -5,6 +5,52 @@ export const STOREY_H = 30;
 export const ROOF_MARGIN = 26;
 export const LOW_H = 16;
 
+/** The threshold is in the real door cell; the arrow follows its passable axis, not the drawn leaf. */
+export function paintDoorGuide(wall: 'ew' | 'ns', open: boolean): HTMLCanvasElement {
+  const { c, g } = canvas(32, WALL_H + 32), color = open ? '#b9dec5' : '#e7c28b', y = WALL_H;
+  g.fillStyle = open ? '#233d34' : '#403225'; g.globalAlpha = .65; g.fillRect(2, y + 2, 28, 28); g.globalAlpha = 1;
+  for (const [x, yy] of [[2, 2], [24, 2], [2, 24], [24, 24]]) {
+    rect(g, color, x, y + yy, 6, 2); rect(g, color, x + (x > 2 ? 4 : 0), y + yy, 2, 6);
+  }
+  if (open) {
+    // Two arrowheads and no crossbar distinguish an open passage even without colour.
+    const point = (along: number, across: number) => wall === 'ns' ? [16 + along, y + 16 + across] : [16 + across, y + 16 + along];
+    const a = point(-10, 0), b = point(10, 0); line(g, color, a[0], a[1], b[0], b[1]);
+    for (const sign of [-1, 1]) for (const side of [-1, 1]) {
+      const tip = point(sign * 10, 0), wing = point(sign * 5, side * 4); line(g, color, tip[0], tip[1], wing[0], wing[1]);
+    }
+  } else {
+    if (wall === 'ns') { rect(g, color, 15, y + 4, 2, 24); rect(g, color, 10, 6, 1, WALL_H + 21); rect(g, color, 21, 6, 1, WALL_H + 21); rect(g, color, 10, 6, 12, 1); }
+    else { rect(g, color, 4, y + 15, 24, 2); rect(g, color, 4, 36, 1, 41); rect(g, color, 27, 36, 1, 41); rect(g, color, 4, 35, 24, 1); }
+  }
+  return c;
+}
+
+/**
+ * Guide over a mall entrance (`cells` open cells along a wall line running `wall`): the village's open-door marks over the
+ * whole gap, corner brackets and a double arrow across it, so the way through reads even where wall tops cover it.
+ * Canvas the size of the gap on the ground.
+ */
+export function paintOpeningGuide(wall: 'ew' | 'ns', cells: number, depth = 1): HTMLCanvasElement {
+  const W = wall === 'ew' ? cells * 32 : depth * 32, H = wall === 'ew' ? depth * 32 : cells * 32, { c, g } = canvas(W, H), color = '#b9dec5';
+  g.fillStyle = '#233d34'; g.globalAlpha = .35; g.fillRect(2, 2, W - 4, H - 4); g.globalAlpha = 1;
+  for (const [x, y] of [[2, 2], [W - 8, 2], [2, H - 4], [W - 8, H - 4]]) rect(g, color, x, y, 6, 2);
+  for (const [x, y] of [[2, 2], [W - 4, 2], [2, H - 8], [W - 4, H - 8]]) rect(g, color, x, y, 2, 6);
+  // The arrow crosses the wall line: north-south through an east-west wall, east-west through a north-south one.
+  const cx = W / 2, cy = H / 2, point = (along: number, across: number) => wall === 'ew' ? [cx + across, cy + along] : [cx + along, cy + across];
+  const a = point(-10, 0), b = point(10, 0); line(g, color, a[0], a[1], b[0], b[1]);
+  for (const sign of [-1, 1]) for (const side of [-1, 1]) { const tip = point(sign * 10, 0), wing = point(sign * 5, side * 4); line(g, color, tip[0], tip[1], wing[0], wing[1]); }
+  return c;
+}
+
+export function paintStairLabel(label: string): HTMLCanvasElement {
+  const font = '10px "Microsoft YaHei", sans-serif', probe = canvas(1, 1).g; probe.font = font;
+  const { c, g } = canvas(Math.ceil(probe.measureText(label).width) + 10, 18);
+  rect(g, '#272b27', 0, 0, c.width, c.height); rect(g, '#c6c39c', 0, 0, c.width, 1);
+  g.font = font; g.fillStyle = '#eee5c4'; g.textBaseline = 'middle'; g.fillText(label, 5, 9);
+  return c;
+}
+
 export interface WallSpec {
   n: boolean; e: boolean; s: boolean; w: boolean;
   face: 'ext' | 'int';

@@ -131,7 +131,7 @@ test('exterior pier owns no interior floor below the threshold; room owns the fl
 
 test('every runtime title import matches the imported-art manifest', () => {
     validateTitleArt();
-    const imports=readFileSync('src/title/assets.ts','utf8');
+    const imports=readFileSync('src/title/art.ts','utf8');
     for (const name of Object.keys(LAYERS) as LayerName[]) {
         const entry = manifest.layers[name], bytes = readFileSync(entry.file);
         assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256, `${name} file hash`);

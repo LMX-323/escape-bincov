@@ -1,0 +1,120 @@
+{
+  "sha256": "ff9b6e5f1a652b7932ec62173e53e29e3ccfbd6015a3993108b44c0081d19c42",
+  "browser": "155.0.8059.40",
+  "cpuRate": 1,
+  "only": [
+    "timing"
+  ],
+  "checks": [
+    {
+      "name": "timing: quick input survives a long task before its second pointerup handler",
+      "fixedTime": false,
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "inputGapMs": 80,
+        "blockSecondUpMs": 450,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 737,
+            "receivedAt": 1757.5999999996275,
+            "beforeHandlerAt": 1757.5999999996275,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3oi6-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 737,
+            "receivedAt": 1757.7999999998137,
+            "beforeHandlerAt": 1757.7999999998137,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3oi6-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 816.8999999994412,
+            "receivedAt": 1759.5,
+            "beforeHandlerAt": 1759.5,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3oi6-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 816.8999999994412,
+            "receivedAt": 1759.5,
+            "beforeHandlerAt": 2209.5,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3oi6-b"
+          }
+        ],
+        "gapMs": 79.8999999994412,
+        "handlerGapMs": 451.70000000018626
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: quick input still enters the cart after the stall\n\n0 !== 1\n\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:134:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:104:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:126:3; taps={\"mode\":\"queued-cdp-touch\",\"inputGapMs\":80,\"blockSecondUpMs\":450,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":737,\"receivedAt\":1757.5999999996275,\"beforeHandlerAt\":1757.5999999996275,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3oi6-b\"},{\"type\":\"pointerup\",\"timeStamp\":737,\"receivedAt\":1757.7999999998137,\"beforeHandlerAt\":1757.7999999998137,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3oi6-b\"},{\"type\":\"pointerdown\",\"timeStamp\":816.8999999994412,\"receivedAt\":1759.5,\"beforeHandlerAt\":1759.5,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3oi6-b\"},{\"type\":\"pointerup\",\"timeStamp\":816.8999999994412,\"receivedAt\":1759.5,\"beforeHandlerAt\":2209.5,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3oi6-b\"}],\"gapMs\":79.8999999994412,\"handlerGapMs\":451.70000000018626}"
+    },
+    {
+      "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+      "fixedTime": false,
+      "taps": {
+        "mode": "queued-cdp-touch",
+        "inputGapMs": 350,
+        "blockSecondUpMs": 0,
+        "events": [
+          {
+            "type": "pointerdown",
+            "timeStamp": 541.5,
+            "receivedAt": 1563,
+            "beforeHandlerAt": 1563,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3q6y-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 541.5,
+            "receivedAt": 1563.2000000001863,
+            "beforeHandlerAt": 1563.2000000001863,
+            "pointerId": 2,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3q6y-b"
+          },
+          {
+            "type": "pointerdown",
+            "timeStamp": 891.5,
+            "receivedAt": 1565.2000000001863,
+            "beforeHandlerAt": 1565.2000000001863,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3q6y-b"
+          },
+          {
+            "type": "pointerup",
+            "timeStamp": 891.5,
+            "receivedAt": 1565.2000000001863,
+            "beforeHandlerAt": 1565.2000000001863,
+            "pointerId": 3,
+            "pointerType": "touch",
+            "trusted": true,
+            "uid": "bc-mv6p3q6y-b"
+          }
+        ],
+        "gapMs": 350,
+        "handlerGapMs": 2
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: separate input never enters the cart\n\n1 !== 0\n\n    at file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:144:12\n    at async check (file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:104:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:138:3; taps={\"mode\":\"queued-cdp-touch\",\"inputGapMs\":350,\"blockSecondUpMs\":0,\"events\":[{\"type\":\"pointerdown\",\"timeStamp\":541.5,\"receivedAt\":1563,\"beforeHandlerAt\":1563,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3q6y-b\"},{\"type\":\"pointerup\",\"timeStamp\":541.5,\"receivedAt\":1563.2000000001863,\"beforeHandlerAt\":1563.2000000001863,\"pointerId\":2,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3q6y-b\"},{\"type\":\"pointerdown\",\"timeStamp\":891.5,\"receivedAt\":1565.2000000001863,\"beforeHandlerAt\":1565.2000000001863,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3q6y-b\"},{\"type\":\"pointerup\",\"timeStamp\":891.5,\"receivedAt\":1565.2000000001863,\"beforeHandlerAt\":1565.2000000001863,\"pointerId\":3,\"pointerType\":\"touch\",\"trusted\":true,\"uid\":\"bc-mv6p3q6y-b\"}],\"gapMs\":350,\"handlerGapMs\":2}"
+    }
+  ]
+}

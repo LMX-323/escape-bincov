@@ -1,0 +1,18 @@
+{
+  "htmlSha256": "292b29967fb18ba3c3ccab95b667ab016ce082b30c03816a2a1779fab1fd3cfa",
+  "checks": [
+    "1280x720: equipment / bag / stash order, visible safe, fixed details, actual font B at 16px",
+    "1280x720: 30 inventory objects, eight rotated shapes, no clipped artwork",
+    "1280x720: merchant / buy-sell buffer / warehouse order, artwork, inspection and atomic checkout",
+    "1280x720: full viewport loot, own inventory on left, live clock, pointer drag and return at both scales",
+    "1920x1080: equipment / bag / stash order, visible safe, fixed details, actual font B at 16px",
+    "1920x1080: 30 inventory objects, eight rotated shapes, no clipped artwork",
+    "1920x1080: merchant / buy-sell buffer / warehouse order, artwork, inspection and atomic checkout",
+    "1920x1080: full viewport loot, own inventory on left, live clock, pointer drag and return at both scales"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "method": "Unmodified offline game captures. The all-item and rotated inventories are declared fixtures; buying, selling, selection, and drag/drop use real browser input.",
+  "browser": "155.0.8059.40",
+  "status": "passed"
+}

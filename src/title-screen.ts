@@ -1,6 +1,6 @@
 import { uiIcon } from './art/symbols';
 
-// The menu is real HTML over the layered Phaser scene; nothing interactive is baked into art.
+// The menu is real HTML over the layered Pixi title scene; nothing interactive is baked into art.
 // The wordmark image arrives as the --title-wordmark CSS variable (src/title/assets.ts).
 export function titleScreen(options: { runs: number; extracts: number; motion: boolean; overlay: boolean; storageOK: boolean; resume: boolean; touch: boolean }) {
     const { runs, extracts, motion, overlay, storageOK, resume, touch } = options;
@@ -14,6 +14,7 @@ export function titleScreen(options: { runs: number; extracts: number; motion: b
             <nav class="title-menu" aria-label="主菜单">
                 <button class="title-enter" data-action="enter"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">${resume ? '继续上次行动' : '进入水产站'}</strong>${detail ? `<small>${detail}</small>` : ''}</button>
                 <button class="title-option" data-action="help"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">行动指南</strong></button>
+                <button class="title-option" data-action="opening"><span class="title-marker" aria-hidden="true"></span><strong class="title-label">序幕</strong></button>
                 ${!storageOK ? '<p class="title-storage-note" role="status">浏览器无法保存进度，暂时不能出击。</p>' : ''}
             </nav>
         </div>

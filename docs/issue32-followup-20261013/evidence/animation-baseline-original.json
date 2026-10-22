@@ -1,0 +1,107 @@
+{
+  "startedAt": "2026-10-13T03:19:32.543Z",
+  "seed": "42",
+  "steps": [
+    {
+      "name": "V03 sol: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: frames of fall: 1\n    at file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:150:12\n    at async step (file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:23:24)\n    at async file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:131:3"
+    },
+    {
+      "name": "V04 sol: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 14,
+          "changed": 0
+        },
+        "reveal": 12,
+        "indoorFallFrames": 1,
+        "stairs": 14,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 48
+      }
+    },
+    {
+      "name": "V03 placeholder: a real Runtime kill in view tips the standing body over its feet, weapon gone, before the corpse replaces it",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: frames of fall: 1\n    at file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:150:12\n    at async step (file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:23:24)\n    at async file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:131:3"
+    },
+    {
+      "name": "V04 placeholder: no fall for a kill in an unrevealed room (0 changed pixels), nor for corpses rebuilt by an epoch, the stairs or a reload",
+      "status": "passed",
+      "detail": {
+        "hidden": {
+          "frames": 14,
+          "changed": 0
+        },
+        "reveal": 12,
+        "indoorFallFrames": 1,
+        "stairs": 14,
+        "loaded": [
+          {
+            "uid": "enemy-3",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-12",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          },
+          {
+            "uid": "enemy-21",
+            "deathT": 0,
+            "rotation": 0,
+            "body": false,
+            "hasCorpse": true,
+            "shown": true
+          }
+        ],
+        "resumed": 48
+      }
+    },
+    {
+      "name": "V10 damage causes: a blow (even under 1 point) pulses the red edge and flashes the body; bleeding, pollution, thirst, hunger and a lowered limit show as readouts under the health bar with a tinted edge and never flash",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: a 0.4-point blow still pulses: 0.27\n    at file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:254:12\n    at async step (file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:23:24)\n    at async file:///workspace/escape-bincov/test-results/automation-audit/coast-control-fixed.mjs:213:3"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "153.0.8010.12",
+  "finishedAt": "2026-10-13T03:20:36.424Z",
+  "passed": 2,
+  "failed": 3
+}

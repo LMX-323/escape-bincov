@@ -1,0 +1,216 @@
+{
+  "build": "dist/index.html",
+  "sha256": "774d9ea4aefa4f683d7fc1f21f0eb33a2d2bca7eb5fa4b630fdbe80686af4c3d",
+  "browser": "155.0.8059.40",
+  "startedAt": "2026-10-13T13:38:57.266Z",
+  "methodology": "Packaged HTML offline; real pointer/touch input, Runtime, SaveSession and localStorage. Explicit inventory fixtures use the session transaction with ?test=1. Storage faults override only the main session write. Date is fixed so background checkpoint writes cannot consume the fault. Narrow viewports emulate touch, not real devices.",
+  "steps": [
+    {
+      "name": "F01-existing-mouse-double-click-roundtrip",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 2164.699999999255,
+            "handled": 2165.0999999996275,
+            "trusted": true,
+            "uid": "bc-mv6q8qk3-6",
+            "x": 880,
+            "y": 177.5
+          },
+          {
+            "stamp": 2164.7999999988824,
+            "handled": 2169.699999999255,
+            "trusted": true,
+            "uid": "bc-mv6q8qk3-6",
+            "x": 880,
+            "y": 177.5
+          }
+        ],
+        [
+          {
+            "stamp": 2211.9000000003725,
+            "handled": 2212.199999999255,
+            "trusted": true,
+            "uid": "bc-mv6q8qq1-b",
+            "x": 648,
+            "y": 294.5
+          },
+          {
+            "stamp": 2212,
+            "handled": 2213.9000000003725,
+            "trusted": true,
+            "uid": "bc-mv6q8qq1-b",
+            "x": 648,
+            "y": 294.5
+          }
+        ]
+      ],
+      "detail": {
+        "committedTransfers": 2,
+        "countBefore": {
+          "pistol:false": 1
+        },
+        "countAfter": {
+          "pistol:false": 1
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "name": "F01-full-bag-keeps-item-and-shows-reason",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 1833,
+            "handled": 1833.5,
+            "trusted": true,
+            "uid": "bc-mv6q8t3s-c",
+            "x": 880,
+            "y": 177.5
+          },
+          {
+            "stamp": 1833.0999999996275,
+            "handled": 1838.9000000003725,
+            "trusted": true,
+            "uid": "bc-mv6q8t3s-c",
+            "x": 880,
+            "y": 177.5
+          }
+        ]
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "F01-queued-double-click-survives-busy-frame",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 1917.4000000003725,
+            "handled": 1920.4000000003725,
+            "trusted": true,
+            "uid": "bc-mv6q8un7-i",
+            "x": 880,
+            "y": 177.5
+          },
+          {
+            "stamp": 1917.4000000003725,
+            "handled": 2324.7999999988824,
+            "trusted": true,
+            "uid": "bc-mv6q8un7-i",
+            "x": 880,
+            "y": 177.5
+          }
+        ]
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "F01-double-click-storage-failure-rolls-back",
+      "doubleClicks": [
+        [
+          {
+            "stamp": 1834.5,
+            "handled": 1834.9000000003725,
+            "trusted": true,
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
+          },
+          {
+            "stamp": 1834.5,
+            "handled": 1841.2000000011176,
+            "trusted": true,
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
+          }
+        ],
+        [
+          {
+            "stamp": 2193.60000000149,
+            "handled": 2196,
+            "trusted": true,
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
+          },
+          {
+            "stamp": 2193.7000000011176,
+            "handled": 2197.9000000003725,
+            "trusted": true,
+            "uid": "bc-mv6q8wkc-o",
+            "x": 880,
+            "y": 177.5
+          }
+        ]
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "F02-real-drag-swap-persistent",
+      "status": "passed"
+    },
+    {
+      "name": "F02-real-drag-swap-storage-rollback",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-1280x720",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-1920x1080",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-390x844",
+      "status": "passed"
+    },
+    {
+      "name": "F05-F09-F10-visible-and-persistent-844x390",
+      "status": "passed"
+    },
+    {
+      "name": "F05-safe-gun-explains-return-and-keeps-equip-selection",
+      "status": "passed"
+    },
+    {
+      "name": "F05-old-weapon-return-space-explained",
+      "status": "passed"
+    },
+    {
+      "name": "F05-equip-storage-failure-keeps-selection-for-retry",
+      "status": "passed"
+    },
+    {
+      "name": "F09-full-stash-rejects-whole-batch",
+      "status": "passed"
+    },
+    {
+      "name": "F09-F10-stash-all-storage-failure-rolls-back",
+      "status": "passed"
+    },
+    {
+      "name": "F09-F10-sort-stash-storage-failure-rolls-back",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "screenshots": [
+    "gear-1280x720.png",
+    "equip-1280x720.png",
+    "gear-1920x1080.png",
+    "equip-1920x1080.png",
+    "gear-390x844.png",
+    "equip-390x844.png",
+    "gear-844x390.png",
+    "equip-844x390.png",
+    "full-stash-refusal.png"
+  ],
+  "finishedAt": "2026-10-13T13:39:41.209Z",
+  "summary": {
+    "passed": 16,
+    "total": 16
+  }
+}

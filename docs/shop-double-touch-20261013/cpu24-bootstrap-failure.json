@@ -1,0 +1,20 @@
+{
+  "sha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "browser": "155.0.8059.40",
+  "cpuRate": 24,
+  "only": [
+    "390x844"
+  ],
+  "checks": [
+    {
+      "name": "390x844 funds rejection",
+      "status": "failed",
+      "error": "page.goto: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://shop.test/?test=1\", waiting until \"load\"\u001b[22m\n\n    at open (D:\\bincov\\shop-doubletouch-fix\\scripts\\shop-feedback-test.mjs:30:14)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:114:5\n    at async check (D:\\bincov\\shop-doubletouch-fix\\scripts\\shop-feedback-test.mjs:106:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:113:102"
+    },
+    {
+      "name": "390x844 space rejection",
+      "status": "failed",
+      "error": "page.goto: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://shop.test/?test=1\", waiting until \"load\"\u001b[22m\n\n    at open (D:\\bincov\\shop-doubletouch-fix\\scripts\\shop-feedback-test.mjs:30:14)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:114:5\n    at async check (D:\\bincov\\shop-doubletouch-fix\\scripts\\shop-feedback-test.mjs:106:22)\n    at async file:///D:/bincov/shop-doubletouch-fix/scripts/shop-feedback-test.mjs:113:102"
+    }
+  ]
+}

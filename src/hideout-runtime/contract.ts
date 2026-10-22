@@ -8,7 +8,6 @@ export type Recipe = 'bandage' | 'medkit' | 'antidote';
 export type Source = 'stash' | 'bag' | 'safe';
 export type ShopSource = 'merchant' | 'buy' | 'sell' | 'stash';
 export type Merchant = 'arms' | 'med';
-export type Power = 'emergency' | 'restored';
 export type RunWorld = 'coast' | 'buildings' | 'mall';
 export type FailReason = 'rule' | 'space' | 'funds' | 'materials' | 'locked' | 'stale' | 'storage' | 'conflict' | 'missing-item' | 'not-supply' | 'no-effect';
 export type Result = { ok: true; message?: string } | { ok: false; reason: FailReason; message: string;
@@ -53,6 +52,8 @@ export interface HideoutSnapshot {
 export interface CartView {
     merchant: Merchant; name: string; subtitle: string; catalog: Inventory; buy: Inventory; sell: Inventory; stash: Inventory;
     totals: { buy: number; sell: number; net: number }; dirty: boolean; warnings: string[];
+    /** The stash changed since opening; explicit reset discards the old list without writing the save. */
+    stale: boolean;
     /** Buy slots are a shopping list; existing rules auto-place purchases into the stash. */
     placement: 'automatic-stash';
 }
@@ -90,6 +91,10 @@ export interface HideoutRuntime {
     move(from: Source, to: Source, uid: string, x: number, y: number, rotated: boolean, quantity?: number): Result;
     split(from: Source, uid: string, quantity: number, x: number, y: number, rotated?: boolean): Result;
     quickMove(from: Source, uid: string): Result;
+    /** Move every bag item to the stash in one commit; equipment and safe contents are excluded. */
+    stashAll(): Result;
+    /** Merge matching relief/ordinary stacks and deterministically repack only the stash. */
+    sortStash(): Result;
     secure(from: Source, uid: string): Result;
     equip(from: Source, uid: string): Result;
     unequip(): Result;
@@ -114,12 +119,13 @@ export interface HideoutRuntime {
     importBackup(text: string, token: string): Result;
     setVolume(volume: number): Result;
     departure(): { warnings: string[]; weight: number; carry: number };
-    deploy(req: { world: RunWorld; seed: string }): Result & { runId?: string };
+    /** mallLayout defaults to 1 and only applies to a new mall raid. */
+    deploy(req: { world: RunWorld; seed: string; mallLayout?: 1 | 2 | 3 }): Result & { runId?: string };
     /** After the host's departure animation; never calls beginRun again. */
     startRaid(runId: string): Result;
     returnToBase(): Result;
     consumeArrival(): HideoutSnapshot['arrival'];
-    /** Flush before changing hosts, opening old walking mode or leaving the page. */
+    /** Flush before changing hosts (yard, tab page, raid) or leaving the page. */
     flush(): Result;
     backToMenu(): Result;
     dispose(): Result;

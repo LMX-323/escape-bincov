@@ -1,0 +1,70 @@
+[
+  {
+    "command": [
+      "node",
+      "scripts/hud-release-test.mjs",
+      "--out=test-results/issue32/hud-final"
+    ],
+    "exit": 0,
+    "seconds": 26.58,
+    "log": "0.log"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/asset-load-test.mjs",
+      "--out=test-results/issue32/assets-keyboard-final"
+    ],
+    "exit": 0,
+    "seconds": 13.54,
+    "log": "1.log"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/shop-feedback-test.mjs",
+      "--out=test-results/issue32/shop-keyboard-final"
+    ],
+    "exit": 0,
+    "seconds": 42.83,
+    "log": "2.log"
+  },
+  {
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/station-browser-test.mjs",
+      "--only=G1 ,G2 ,G3 ,G4 ,G5 ",
+      "--out=test-results/issue32/station-final-transitions"
+    ],
+    "exit": 0,
+    "seconds": 59.61,
+    "log": "3.log"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/shop-feedback-test.mjs",
+      "--html=/tmp/escape-bincov-baseline.html",
+      "--out=test-results/issue32/shop-baseline"
+    ],
+    "exit": 1,
+    "seconds": 53.91,
+    "log": "4.log"
+  },
+  {
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/station-browser-test.mjs",
+      "--html=/tmp/escape-bincov-baseline.html",
+      "--only=B1 ,B2 ,B3 ,E4 ,G7 ,H1 ,H2 ,H3 ,H5 ,H6 ",
+      "--out=test-results/issue32/station-baseline-failures"
+    ],
+    "exit": 1,
+    "seconds": 295.27,
+    "log": "5.log"
+  }
+]

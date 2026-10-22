@@ -5,7 +5,9 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { resumeStalls } from './stall-resume.mjs';
 import { placeAt, clickSlot } from './inventory-actions.mjs';
+import { batch, drive, frames, panel, raidReady, waitPanel } from './raid-view.mjs';
 const url = new URL(process.env.BINCOV_TEST_URL || pathToFileURL(resolve('dist/index.html')).href);
 if (url.protocol !== 'file:' && !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))) throw Error('Only offline or loopback test URLs are supported');
 url.searchParams.set('test', '1'); url.searchParams.set('entry', 'tabs');
@@ -16,7 +18,8 @@ async function suite(viewport, touch = false) {
   const label = `${viewport.width}x${viewport.height}${touch ? '-touch' : ''}`;
   const hybrid = !touch && viewport.width === 1280;
   const context = await browser.newContext({ viewport, hasTouch: touch || hybrid, isMobile: touch, offline: url.protocol === 'file:' });
-  const page = await context.newPage(), errors = []; page.setDefaultTimeout(12000);
+  await resumeStalls(context);
+  const page = await context.newPage(), errors = []; page.setDefaultTimeout(30000);
   page.on('pageerror', e => errors.push(e.message));
   await context.route(/^https?:/, route => { if (url.protocol === 'http:' && new URL(route.request().url()).origin === url.origin) return route.continue(); errors.push('External request'); return route.abort(); });
   const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
@@ -97,6 +100,13 @@ async function suite(viewport, touch = false) {
       const box=await action('deploy').boundingBox(); assert.ok(box.y>=0 && box.y+box.height<=viewport.height);
       await page.screenshot({path:resolve(out,`qol-departure-${label}.png`)});
     });
+    // Raid steps run on the 2.5D host: its loot panel, HUD and driver fixtures (?test=1 only).
+    const raidPanel = () => panel(page);
+    const live = () => page.evaluate(() => {
+      const a = window.__bincov.app, raid = window.__bincov.saveSession.captureExpansion().raid;
+      return { bag: a.loadout.bag, safe: a.loadout.safe, containers: Object.values(raid.maps).flatMap(m => m.containers.map(c => ({ id: c.id, inventory: c.inventory }))) };
+    });
+    let crate = '';
     await step('loot rotation and quantity previews cancel cleanly; split and partial merge preserve remainders', async () => {
       await page.evaluate(() => {
         const { app, persist } = window.__bincov;
@@ -104,42 +114,61 @@ async function suite(viewport, touch = false) {
         app.save.bag.items = [{ uid: 'qol-ammo', id: 'ammo9', qty: 35, x: 0, y: 0 }]; app.save.safe.items = []; persist();
       });
       await page.locator('#seed').fill('42'); await action('deploy').click();
-      await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-      const id = await page.evaluate(() => {
-        const a = window.__bincov.app, r = a.raid, c = r.containers[0];
-        r.enemies.forEach(e => { e.sprite.setPosition(208,1456); e.home = e.target = {x:208,y:1456}; e.timer = e.cooldown = 9999; e.path = []; });
-        c.inventory.items = [{uid:'qol-water',id:'water',qty:2,x:0,y:0},{uid:'qol-incoming',id:'ammo9',qty:12,x:1,y:0}];
-        r.player.setPosition(c.x,c.y); r.hp=100; r.bleeding=0; r.checkpoint(); return c.id;
+      await raidReady(page);
+      // Declared fixture through the session's transaction: an outdoor crate with two waters and twelve rounds, the
+      // player beside it at full health, enemies frozen.
+      crate = await page.evaluate(() => {
+        const { app, saveSession } = window.__bincov, h = window.__bincovSample.host, driver = window.__bincovSample.driver;
+        driver.freezeAI(true);
+        const box = h.lastBatch.frame.containers.filter(c => c.kind === 'crate' && c.regionId === null).sort((a, b) => Math.hypot(a.x - 640, a.y - 456) - Math.hypot(b.x - 640, b.y - 456))[0];
+        if (!box) throw new Error('No outdoor crate for the loot fixture');
+        driver.placePlayer({ x: box.x, y: box.y + 12 }, -Math.PI / 2, 'coast');
+        const ticket = saveSession.prepareExpansionMutation(draft => {
+          const r = draft.expansion.raid, c = r.maps[r.currentMap].containers.find(c => c.id === box.id);
+          c.inventory = { w: 6, h: 5, items: [{uid:'qol-water',id:'water',qty:2,x:0,y:0},{uid:'qol-incoming',id:'ammo9',qty:12,x:1,y:0}] };
+          Object.assign(draft.expansion.body, { hp: 100, bleeding: false });
+        });
+        if (!ticket || saveSession.commitExpansionMutation(ticket) !== 'committed') throw new Error(`Loot fixture rejected: ${app.storageError}`);
+        return box.id;
       });
-      if (touch) await page.locator(`[data-loot-target="${id}"] button`).tap(); else await page.keyboard.press('e');
-      const inventoryState = () => page.evaluate(id => ({bag:window.__bincov.app.loadout.bag, safe:window.__bincov.app.loadout.safe, source:window.__bincov.app.raid.getLootContainer(id).inventory}), id);
+      await frames(page, 4);
+      assert.equal((await batch(page)).frame.interaction?.ref.id, crate, 'the fixture crate is the interaction target');
+      if (touch) await page.locator('.coast-sample [data-act]').tap(); else await page.keyboard.press('e');
+      await waitPanel(page, 'loot'); await page.locator('.coast-sample [data-grid="container"]').waitFor();
+      const inventoryState = async () => { const s = await live(); return { bag: s.bag, safe: s.safe, source: s.containers.find(c => c.id === crate).inventory }; };
       const before = await inventoryState();
-      await page.locator('[data-uid="qol-water"]').click(); await action('rotate-item').click();
-      assert.deepEqual(await inventoryState(), before); await action('clear-selection').click(); assert.deepEqual(await inventoryState(), before);
-      await page.locator('[data-uid="qol-water"]').click(); await page.locator('#split-quantity').fill('1'); await action('split-item').click();
-      await action('rotate-preview').click(); await clickSlot(page,'safe',0,0);
+      const water = '.coast-sample [data-uid="qol-water"]', act = name => page.locator(`.coast-sample [data-do="${name}"]`);
+      // A rotation preview of a source item changes nothing; cancelling the placement leaves everything in place.
+      await page.locator(water).click(); await act('inv-rotate').click();
+      assert.deepEqual(await inventoryState(), before); await act('inv-place-cancel').click(); assert.deepEqual(await inventoryState(), before);
+      await page.locator(water).click(); await page.locator('.coast-sample [data-split]').fill('1'); await act('inv-split').click();
+      await act('inv-place-rotate').click(); await clickSlot(page,'safe',0,0);
       let after = await inventoryState(); assert.equal(after.source.items.find(i=>i.uid==='qol-water').qty,1);
       assert.equal(after.safe.items[0].rotated,true); assert.equal(after.safe.items[0].qty,1); assert.notEqual(after.safe.items[0].uid,'qol-water');
-      await placeAt(page,'container','ammo9','bag',0,0); after = await inventoryState();
+      // Partial merge: the bag's 35 rounds take 5 of the 12 (a stack of 40); 7 stay in the crate.
+      await page.locator('.coast-sample [data-source="container"][data-uid="qol-incoming"]').click(); await act('inv-place').click(); await clickSlot(page,'bag',0,0);
+      after = await inventoryState();
       assert.equal(after.bag.items.find(i=>i.uid==='qol-ammo').qty,40); assert.equal(after.source.items.find(i=>i.uid==='qol-incoming').qty,7);
-      await page.screenshot({path:resolve(out,`qol-inventory-${label}.png`)}); await action('close').click();
+      await page.screenshot({path:resolve(out,`qol-inventory-${label}.png`)}); await act('close').click(); await waitPanel(page, null);
     });
     if (!touch) await step('R previews rotation; Escape, outside release, blur and background cancel; hybrid touch placement and normal reload work', async () => {
-      await page.keyboard.press('e');
-      const snapshot = () => page.evaluate(() => ({bag:window.__bincov.app.loadout.bag, containers:window.__bincov.app.raid.containers.map(c=>c.inventory)}));
+      const openLoot = async () => { await page.keyboard.press('e'); await waitPanel(page, 'loot'); await page.locator('.coast-sample [data-grid="container"]').waitFor(); };
+      await openLoot();
+      const snapshot = async () => { const s = await live(); return { bag: s.bag, containers: s.containers.map(c => c.inventory) }; };
       const before = await snapshot();
       async function start() {
-        const source = await page.locator('[data-uid="qol-water"]').boundingBox(), grid = await page.locator('[data-grid="bag"]').boundingBox(), cell = grid.width/6;
+        const source = await page.locator('.coast-sample [data-uid="qol-water"]').boundingBox(), grid = await page.locator('.coast-sample [data-grid="bag"]').boundingBox(), cell = grid.width/6;
         await page.mouse.move(source.x+10,source.y+10); await page.mouse.down(); await page.mouse.move(source.x+25,source.y+20,{steps:4});
         await page.mouse.move(grid.x+3.4*cell,grid.y+4.4*cell,{steps:8});
-        await page.locator('.drop-preview[data-valid="false"]').waitFor(); await page.keyboard.press('r');
-        await page.locator('.drop-preview[data-valid="true"]').waitFor();
-        const box = await page.locator('.drop-preview').boundingBox(); assert.ok(Math.abs(box.width/box.height-2)<.05);
+        // R redraws the preview at once, with the pointer still.
+        await page.locator('.coast-sample .drop-preview.invalid').waitFor(); await page.keyboard.press('r');
+        await page.locator('.coast-sample .drop-preview:not(.invalid)').waitFor();
+        const box = await page.locator('.coast-sample .drop-preview').boundingBox(); assert.ok(Math.abs(box.width/box.height-2)<.05);
       }
       await start(); assert.deepEqual(await snapshot(),before); await page.keyboard.press('Escape'); await page.mouse.up();
-      assert.equal(await overlay(),'loot'); assert.deepEqual(await snapshot(),before);
+      assert.equal(await raidPanel(),'loot'); assert.deepEqual(await snapshot(),before);
       await start(); await page.mouse.move(-30,-30); await page.mouse.up(); await page.mouse.move(20,20);
-      assert.equal(await page.locator('.inventory-drag-ghost').count(),0); assert.deepEqual(await snapshot(),before);
+      assert.equal(await page.locator('.cs-ghost').count(),0); assert.deepEqual(await snapshot(),before);
       for (const event of ['blur','visibilitychange']) {
         await start();
         await page.evaluate(event => {
@@ -149,51 +178,61 @@ async function suite(viewport, touch = false) {
             try { document.dispatchEvent(new Event('visibilitychange')); } finally { delete document.hidden; }
           }
         },event);
-        await page.mouse.up(); assert.equal(await overlay(),'pause');
-        assert.equal(await page.locator('.inventory-drag-ghost').count(),0); assert.deepEqual(await snapshot(),before);
-        await page.keyboard.press('Escape'); await page.keyboard.press('e');
+        await page.mouse.up(); await waitPanel(page, 'pause');
+        assert.equal(await page.locator('.cs-ghost').count(),0); assert.deepEqual(await snapshot(),before);
+        await page.keyboard.press('Escape'); await waitPanel(page, null); await openLoot();
       }
-      await start(); await page.mouse.up();
+      await start(); await page.mouse.up(); await frames(page, 2);
       assert.equal((await snapshot()).bag.items.find(i=>i.uid==='qol-water').rotated,true);
       if (hybrid) {
         assert.equal(await page.locator('html').evaluate(el=>el.classList.contains('mobile')),false);
-        await page.locator('[data-uid="qol-water"]').tap(); await action('place-item').tap(); await action('rotate-preview').tap();
-        const slot=await page.locator('[data-grid="container"]').evaluate(el=>{const r=el.getBoundingClientRect(),c=Number(el.dataset.cell)*r.width/el.offsetWidth;return {x:r.x+c/2,y:r.y+c/2};});
+        await page.locator('.coast-sample [data-uid="qol-water"]').tap(); await page.locator('.coast-sample [data-do="inv-place"]').tap(); await page.locator('.coast-sample [data-do="inv-place-rotate"]').tap();
+        const slot=await page.locator('.coast-sample [data-grid="container"]').evaluate(el=>{const r=el.getBoundingClientRect(),c=Number(el.dataset.cell)*r.width/el.offsetWidth;return {x:r.x+c/2,y:r.y+c/2};});
         await page.touchscreen.tap(slot.x,slot.y);
-        assert.equal(await page.locator('[data-source="container"][data-uid="qol-water"]').count(),1);
+        await page.locator('.coast-sample [data-source="container"][data-uid="qol-water"]').waitFor();
+        assert.equal(await page.locator('.coast-sample [data-source="container"][data-uid="qol-water"]').count(),1);
         const afterTouch=await snapshot(); await start(); await page.keyboard.press('Escape'); await page.mouse.up();
         assert.deepEqual(await snapshot(),afterTouch,'Mouse cancellation still works after touch placement');
       }
-      await action('close').click();
-      await page.evaluate(()=>{const r=window.__bincov.app.raid;r.mag=4;r.syncMagazine();});
-      await page.keyboard.press('r'); await page.waitForFunction(()=>window.__bincov.app.raid.reloadLeft>0);
+      await page.locator('.coast-sample [data-do="close"]').click(); await waitPanel(page, null);
+      await drive(page, 'magazine', 4);
+      await page.keyboard.press('r'); await page.waitForFunction(()=>window.__bincovSample.host.lastBatch.frame.hud.weapon.reloading,null,{timeout:15000});
     });
     await step('exit choice shows straight-line bearing; collapsed quests separate stored and carried goods; hit directions expire', async () => {
-      assert.equal(await page.locator('#raid-quests').getAttribute('open'),null);
-      await action('map').click();
-      const exit = await page.evaluate(()=>window.__bincov.app.raid.config.exits[0]);
-      await page.locator('#exit-choice').selectOption(exit.name); await action('close').click();
-      assert.match(await page.locator('#exit-navigation').innerText(),/直线 [0-9.]+ 格/);
-      assert.ok((await page.locator('#exit-navigation').innerText()).includes(exit.name));
+      assert.equal(await page.locator('.coast-sample [data-quests]').getAttribute('open'),null);
+      await page.locator('.coast-sample [data-exit-nav]').click(); await waitPanel(page, 'map');
+      const exit = (await batch(page)).map.exits[0];
+      await page.locator('.coast-sample [data-panel] [data-exit]').selectOption(exit.name); await page.locator('.coast-sample [data-panel] [data-do="close"]').click(); await waitPanel(page, null);
+      await page.waitForFunction(name=>/直线 [0-9.]+ 格/.test(document.querySelector('.coast-sample [data-exit-nav]').textContent)&&document.querySelector('.coast-sample [data-exit-nav]').textContent.includes(name),exit.name,{timeout:15000});
+      // Fixture: two pump parts in the stash and one carried (a plain bag edit through the session, as the panel makes it).
       await page.evaluate(()=>{
-        const {app}=window.__bincov;
+        const {app,saveSession}=window.__bincov;
         app.save.stash.items=[{uid:'tracking-stored',id:'scrap',qty:2,x:0,y:0}];
-        app.loadout.bag.items.push({uid:'tracking-carried',id:'scrap',qty:1,x:0,y:1});
-        app.raid.checkpoint();app.raid.updateHud();
+        if(saveSession.mutate(()=>{app.loadout.bag.items.push({uid:'tracking-carried',id:'scrap',qty:1,x:0,y:1});})!=='committed')throw new Error('Carried fixture rejected');
       });
-      await page.locator('#raid-quests summary').click();
-      assert.equal(await page.locator('#raid-quest-list section').count(),3);
-      if (touch) assert.ok(await page.locator('#raid-quests').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('#touch-controls button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
-      if (touch) assert.ok(await page.locator('.radio').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.raid-information').getBoundingClientRect(); return r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom; }), 'Radio and navigation must remain readable without overlap');
-      assert.match(await page.locator('#raid-quest-list').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
-      assert.match(await page.locator('#raid-quests small').innerText(),/携带含带入物资/);
-      await page.evaluate(()=>{const r=window.__bincov.app.raid;r.hurt(1,{x:r.player.x+100,y:r.player.y});r.hurt(1,{x:r.player.x,y:r.player.y-100});r.bleeding=0;r.updateHud();});
-      assert.equal(await page.locator('#hit-directions i').count(),2);
+      await page.locator('.coast-sample [data-quests] summary').click();
+      await page.waitForFunction(()=>/泵机零件：仓库 2 · 携带 1 \/ 需 3/.test(document.querySelector('.coast-sample [data-quest-list]').innerText),null,{timeout:15000});
+      assert.equal(await page.locator('.coast-sample [data-quest-list] section').count(),3);
+      if (touch) assert.ok(await page.locator('.coast-sample [data-quests]').evaluate(el => { const r=el.getBoundingClientRect(); return [...document.querySelectorAll('.coast-sample .cs-touch button')].every(b=>{const t=b.getBoundingClientRect(); return r.right<=t.left || r.left>=t.right || r.bottom<=t.top || r.top>=t.bottom;}); }), 'Expanded tasks must not cover touch actions');
+      if (touch) {
+        // A radio line is on screen for the check: the tide warning at 270 s.
+        await drive(page, 'clock', 269.9);
+        await page.waitForFunction(()=>!document.querySelector('.coast-sample [data-radio]').hidden,null,{timeout:15000});
+        assert.ok(await page.locator('.coast-sample [data-radio]').evaluate(el => { const r=el.getBoundingClientRect(), n=document.querySelector('.coast-sample .cs-info').getBoundingClientRect(); return r.width>0 && (r.right<=n.left || r.left>=n.right || r.bottom<=n.top || r.top>=n.bottom); }), 'Radio and navigation must remain readable without overlap');
+      }
+      assert.match(await page.locator('.coast-sample [data-quest-list]').innerText(),/泵机零件：仓库 2 · 携带 1 \/ 需 3/);
+      assert.match(await page.locator('.coast-sample [data-quests] small').innerText(),/携带含带入物资/);
+      const p = (await batch(page)).frame.player;
+      // Both blows in one task: on a slow runner raid time moves on between page calls, and the first direction could
+      // expire before the second lands.
+      await page.evaluate(p => { const d = window.__bincovSample.driver; d.hurt(1, { x: p.x + 100, y: p.y }); d.hurt(1, { x: p.x, y: p.y - 100 }); d.vitals({ bleeding: false }); }, p);
+      await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===2,null,{timeout:15000});
       await page.screenshot({path:resolve(out,`qol-information-${label}.png`)});
-      await page.waitForFunction(()=>document.querySelectorAll('#hit-directions i').length===0);
-      const hp=await page.evaluate(()=>{const r=window.__bincov.app.raid;r.bleeding=1;r.pollution=80;return r.hp;});
-      await page.waitForFunction(hp=>window.__bincov.app.raid.hp<hp,hp);
-      assert.equal(await page.locator('#hit-directions i').count(),0);
+      await page.waitForFunction(()=>document.querySelectorAll('.coast-sample [data-hits] i').length===0,null,{timeout:15000});
+      const hp=(await batch(page)).frame.hud.hp;
+      await drive(page, 'vitals', { bleeding: true, pollution: 80 });
+      await page.waitForFunction(hp=>window.__bincovSample.host.lastBatch.frame.hud.hp<hp,hp,{timeout:15000});
+      assert.equal(await page.locator('.coast-sample [data-hits] i').count(),0);
     });
   } finally { await context.close(); }
 }

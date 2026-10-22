@@ -18,12 +18,11 @@ try {
   await page.waitForTimeout(1500);
   if (throttle > 1) {const cdp=await context.newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:throttle});}
   const result=await page.evaluate(async()=>{
-    const game=window.__bincov.app.game, title=game.scene.getScene('Menu').title, renderer=game.renderer;
+    const title=window.__bincov.title, renderer=title.debug().app.renderer;
     const gl=renderer.gl, ext=gl?.getExtension('WEBGL_debug_renderer_info');
-    const info={type:renderer.type,gpu:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null};
-    let draws=0, commands=0;
-    const walk=o=>{if(o.type==='Graphics'){draws++;commands+=o.commandBuffer.length;}if(o.list) o.list.forEach(walk);};
-    game.scene.getScene('Menu').children.list.forEach(walk);
+    const info={type:renderer.name,gpu:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null};
+    // The title draws no vector Graphics; the count stays as a regression guard.
+    const draws=title.counts().graphics, commands=0;
     const render=[],update=[],frameCpu=[];let lastUpdate=0;
     const originalRender=renderer.render,originalUpdate=title.update;
     renderer.render=function(...args){const t=performance.now();const r=originalRender.apply(this,args);const duration=performance.now()-t;render.push(duration);frameCpu.push(duration+lastUpdate);return r;};
