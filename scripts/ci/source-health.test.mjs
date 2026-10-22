@@ -33,10 +33,9 @@ const target = symbol => {
 
 // Rule modules (AGENTS.md section 3): they import only each other and use nothing that only the DOM provides.
 const PURE = ['src/domain.ts', 'src/balance.ts', 'src/world.ts'];
-// Known runtime cycles, tracked in #60. A cycle may shrink or disappear; a new or larger one fails.
-const KNOWN_CYCLES = [
-  ['src/coast-view/sample.ts', 'src/station-view/route.ts', 'src/ui.ts'], // Q-E02: the tab page and the view routers
-];
+// Known runtime cycles, tracked in #60; the two it listed (Q-E05 save codecs, Q-E02 view routers) are gone. A listed
+// cycle may shrink or disappear; a new or larger one fails.
+const KNOWN_CYCLES = [];
 
 test('every exported declaration in src is used somewhere besides its own declaration', () => {
   const exported = new Map();

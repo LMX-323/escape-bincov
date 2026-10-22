@@ -21,7 +21,7 @@ let renderer: Application | null = null;
 /**
  * The title's own WebGL renderer, created once at boot (after the WebGL check) and kept for the page's life: the menu
  * mounts its scene on it and the canvas leaves the page while another screen shows. The raid and yard hosts keep their
- * shared renderer (coast-view/host.ts takeApp), so neither ever draws the other's textures.
+ * shared renderer (pixi-app.ts takeApp), so neither ever draws the other's textures.
  */
 export async function prepareTitleRenderer(): Promise<void> {
     if (renderer) return;
