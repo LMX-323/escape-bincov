@@ -16,6 +16,8 @@ const at = (x: number, y: number) => ({ x: x * T, y: y * T });
 const POWER_SHOT = { x: 0.75 * T, y: -0.75 * T, w: 33.5 * T, h: 24 * T };
 /** Walking speed (px/s) and the Shift multiplier: 112 × 1.45 stays under the Runtime's 168 px/s practice limit. */
 const WALK = 112, SPRINT = 1.45;
+/** Keys (with the SHORTCUTS digits) that open or close the menu or a panel, or leave the yard: one action per press. */
+const TOGGLE_KEYS = ['Escape', 'Tab', '0', 'j', 'g', 'c', 'h', 'F1'];
 interface StationNpc { id: StationId; look: string; home: { x: number; y: number }; dir: Dir; pose: Pose; when?: (s: HideoutSnapshot) => boolean }
 const NPCS: StationNpc[] = [
   { id: 'med', look: 'xu', home: at(28.5, 12.74), dir: 's', pose: 'idle' },
@@ -138,6 +140,7 @@ export class StationHost {
   // ---------------- input ----------------
   private bindInput() {
     const canvas = this.app.canvas, s = this.scope, joyEl = () => this.ui.root.querySelector<HTMLElement>('.joy');
+    const dropJoy = () => { this.joy = null; this.ui.root.classList.remove('joying'); };
     const gesture = () => { this.hooks.audioStart(); this.audio.start(); };
     s.on(window, 'keydown', e => {
       gesture();
@@ -146,6 +149,9 @@ export class StationHost {
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (this.ui.dragging) return;
       if (this.seq && this.seq.kind !== 'away') { if (k === 'Escape' && this.seq.kind === 'power') this.seq.t = Math.max(this.seq.t, 5.4); e.preventDefault(); return; }
+      // A held key auto-repeats: toggles must not flip back and forth (Tab and F1 keep their browser action blocked);
+      // walking and zoom keep repeating.
+      if (e.repeat && (TOGGLE_KEYS.includes(k) || SHORTCUTS.some(q => q.key === k))) { e.preventDefault(); return; }
       if (k === 'Escape') { e.preventDefault(); if (this.ui.menuOpen) this.ui.setMenu(false); else if (this.ui.open) this.ui.close(); else this.ui.show('menu'); return; }
       if (this.ui.dialogKind) return;
       if (k === 'Tab') { e.preventDefault(); this.ui.quickOpen('gear'); return; }
@@ -163,8 +169,8 @@ export class StationHost {
       this.keys.add(k);
     });
     s.on(window, 'keyup', e => { this.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
-    s.on(window, 'blur', () => { this.keys.clear(); this.joy = null; });
-    s.on(document, 'visibilitychange', () => { this.keys.clear(); this.joy = null; });
+    s.on(window, 'blur', () => { this.keys.clear(); dropJoy(); });
+    s.on(document, 'visibilitychange', () => { this.keys.clear(); dropJoy(); });
     s.on(canvas, 'contextmenu', e => e.preventDefault());
     s.on(canvas, 'wheel', e => { e.preventDefault(); this.scene.zoom(e.deltaY < 0 ? 1 : -1); }, { passive: false });
     s.on(canvas, 'pointerdown', e => {
@@ -198,7 +204,7 @@ export class StationHost {
       const m = Math.hypot(this.joy.dx, this.joy.dy); if (m > 1) { this.joy.dx /= m; this.joy.dy /= m; }
       joyEl()?.style.setProperty('--kx', `${this.joy.dx * 34}px`); joyEl()?.style.setProperty('--ky', `${this.joy.dy * 34}px`);
     });
-    const endJoy = (e: PointerEvent) => { if (this.joy && e.pointerId === this.joy.id) { this.joy = null; this.ui.root.classList.remove('joying'); } };
+    const endJoy = (e: PointerEvent) => { if (this.joy && e.pointerId === this.joy.id) dropJoy(); };
     s.on(window, 'pointerup', endJoy); s.on(window, 'pointercancel', endJoy);
     s.on(this.ui.root.querySelector<HTMLElement>('.touch-act')!, 'click', () => { gesture(); if (!this.ui.open && !this.seq && !this.ui.menuOpen) this.interact(); });
     // Rotating or narrowing the window folds the shortcut menu: its layout belongs to the old screen shape. A height-only

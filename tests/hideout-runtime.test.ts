@@ -315,6 +315,25 @@ test('departure saves once before animation, locks actions and refresh resumes e
     const record = decodeSession(f.raw), g = fixture(f.raw, false); assert.ok(g.saves.resumeRun()); assert.deepEqual(g.state.expansion?.raid, record.expansion?.raid);
     const rev = f.saves.revision; assert.ok(f.runtime.startRaid(start.runId!).ok); assert.equal(f.saves.revision, rev); assert.equal(reason(f.runtime.startRaid(start.runId!)), 'stale');
 });
+test('a zero deploy seed starts buildings and the mall as the seed-1 raid; the coast keeps seed 0', () => {
+    const layout = (raw: string) => {
+        const raid = decodeSession(raw).expansion!.raid!;
+        return JSON.stringify([raid.initialHigh, raid.rng, Object.values(raid.maps).map(m => [m.loot.map(i => [i.id, i.qty, i.x, i.y]), m.containers.map(c => c.inventory.items.map(i => [i.id, i.qty]))])]);
+    };
+    for (const world of ['buildings', 'mall'] as const) {
+        const one = fixture(); assert.ok(one.runtime.deploy({ world, seed: '1' }).ok);
+        for (const seed of ['0', '4294967296']) {
+            const f = fixture(), start = f.runtime.deploy({ world, seed });
+            assert.ok(start.ok, `${world} seed ${seed}`); assert.equal(f.state.storageOK, true);
+            const record = decodeSession(f.raw);
+            assert.equal(record.profile.activeRun?.seed, 1); assert.equal(record.expansion!.raid!.seed, 1);
+            assert.equal(layout(f.raw), layout(one.raw));
+            const g = fixture(f.raw, false); assert.ok(g.saves.resumeRun()); assert.deepEqual(g.state.expansion?.raid, record.expansion?.raid);
+        }
+    }
+    const coast = fixture(); assert.ok(coast.runtime.deploy({ world: 'coast', seed: '0' }).ok);
+    const record = decodeSession(coast.raw); assert.equal(record.profile.activeRun?.seed, 0); assert.equal(record.raid?.seed, 0);
+});
 test('pending real settlement blocks return; success produces one ephemeral arrival', () => {
     const f = fixture(); const start = f.runtime.deploy({ world: 'buildings', seed: '333' }); assert.ok(start.ok); assert.ok(f.runtime.startRaid(start.runId!).ok);
     assert.ok(f.saves.prepareSettlement('extract', 2)); f.fail(); assert.equal(f.saves.retrySettlement(), false); assert.equal(reason(f.runtime.returnToBase()), 'storage'); assert.equal(f.runtime.snapshot().arrival, null);
