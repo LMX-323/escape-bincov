@@ -1,4 +1,5 @@
 import * as D from './domain';
+import { getLegacyEnemyProfile } from './enemy-profile';
 import type { BulletState, EnemyState } from './checkpoint';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
@@ -80,7 +81,7 @@ export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: En
         layer.enemies.push(enemy);
     }
     const inventory = D.createInventory(6, 5);
-    const drops = D.rollLoot(raid.seed + raid.kills * 47, enemy.id === 'elite' ? 3 : 1);
+    const drops = D.rollLoot(raid.seed + raid.kills * 47, getLegacyEnemyProfile(enemy.id).corpseLootRolls);
     const random = D.seededRandom(raid.rng);
     for (const drop of drops) {
         if (D.addItem(inventory, drop.id, drop.qty, false, false, true, () => entityUid(raid, raid.nextEntity++))) throw new Error('尸体容器容量不足。');

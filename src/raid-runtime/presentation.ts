@@ -1,4 +1,5 @@
 import * as D from '../domain';
+import { getLegacyEnemyProfile } from '../enemy-profile';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
@@ -104,10 +105,10 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
     const actor = (e: typeof r.player | typeof r.enemies[number], player: boolean): ActorView => {
         const enemy = player ? null : e as typeof r.enemies[number], hp = enemy?.hp ?? r.hp;
         const uid = enemy?.uid ?? 'player', velocity = velocities.get(uid) ?? { x: 0, y: 0 };
-        const containerId = `corpse-${uid}`;
-        return { uid, kind: enemy ? enemy.id as ActorView['kind'] : 'player', x: e.x, y: e.y, aim: e.rotation,
+        const containerId = `corpse-${uid}`, profile = enemy ? getLegacyEnemyProfile(enemy.id) : null;
+        return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? D.ENEMIES[enemy.id].hp : limits.hp, alive: hp > 0,
-            weapon: enemy ? enemy.id === 'scav' ? 'club' : enemy.id === 'creature' ? 'claw' : 'rifle' : r.currentWeapon.id as ActorView['weapon'],
+            weapon: profile?.weapon ?? r.currentWeapon.id as ActorView['weapon'],
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
                 reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },

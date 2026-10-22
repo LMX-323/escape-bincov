@@ -1,5 +1,7 @@
 /** Headless coastal raid. Rules transplanted from RaidScene at f144147; no renderer/DOM imports. */
 import * as D from '../domain';
+import { getLegacyEnemyProfile } from '../enemy-profile';
+import { advanceLegacyEnemy, type LegacyEnemyEffects } from './enemy-ai';
 import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
@@ -69,6 +71,27 @@ export class CoastRaidRuntime implements RaidRuntime {
     noteSeen = new Set<string>();
     private random = D.seededRandom(0);
     private nextEntity = 1;
+    /** Bind once. The controller can request effects but cannot allocate IDs, publish events or commit storage. */
+    private readonly enemyEffects: LegacyEnemyEffects = {
+        random: () => this.random(),
+        fire: (enemy, angle) => {
+            const def = D.ENEMIES[enemy.id];
+            const bullet = { uid: this.allocateEntityUid(), x: enemy.x + Math.cos(angle) * 18, y: enemy.y + Math.sin(angle) * 18,
+                rotation: wrap(angle), vx: Math.cos(angle) * 365, vy: Math.sin(angle) * 365, left: def.range + 70,
+                damage: def.damage, enemy: true, ...(this.layered ? { owner: enemy.uid } : {}) };
+            this.bullets.push(bullet);
+            this.shotEvent(enemy.uid, getLegacyEnemyProfile(enemy.id).weapon, [bullet], [angle]);
+        },
+        strike: enemy => {
+            const def = D.ENEMIES[enemy.id];
+            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: def.range, hit: 'player' });
+            this.hurt(def.damage, enemy, enemy.uid);
+        },
+        openDoor: (enemy, id) => {
+            this.layerMutation(state => { state.raid!.maps[state.raid!.currentMap].doors[id] = true; }, false,
+                'door', [{ type: 'door', id, open: true, by: enemy.uid }]);
+        },
+    };
     private checkpointAt = 0;
     private clock = new ActiveClock();
     private lastNow: number | null = null;
@@ -835,100 +858,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.session.state !== 'run' || this.locked)
             return;
     }
-    updateEnemy(e: Enemy, dt: number) {
-        const def = D.ENEMIES[e.id], dist = distance(e, this.player), sees = dist < def.vision && this.sight(e, this.player);
-        e.timer -= dt;
-        e.cooldown -= dt;
-        e.repath -= dt;
-        e.alert = Math.max(0, e.alert - dt);
-        const escaping = this.highTide && !this.walkable(e.x, e.y, true, 10);
-        if (escaping) {
-            const refuge = this.dryRefuge(e);
-            if (refuge) {
-                if (!e.path.length || e.repath <= 0) {
-                    e.path = this.path(e, refuge, false);
-                    e.repath = 1;
-                }
-                while (e.path.length && distance(e, e.path[0]) < 10)
-                    e.path.shift();
-                const target = e.path[0] || refuge, angle = Math.atan2(target.y - e.y, target.x - e.x);
-                e.rotation = wrap(angle);
-                this.move(e, Math.cos(angle) * def.speed * dt, Math.sin(angle) * def.speed * dt, true);
-            }
-            return;
-        }
-        if (sees) {
-            e.state = dist < def.range ? 'attack' : 'chase';
-            e.target = { x: this.player.x, y: this.player.y };
-            e.alert = 5;
-        }
-        else if (this.noiseTime > 0 && this.shotNoise && distance(e, this.shotNoise) < this.noiseRadius) {
-            e.state = 'investigate';
-            e.target = { ...this.shotNoise };
-            e.alert = 5;
-        }
-        else if ((e.state === 'chase' || e.state === 'attack') && e.alert <= 0) {
-            e.state = 'return';
-            e.target = e.home;
-        }
-        if (e.state === 'investigate' && distance(e, e.target) < 24 && e.alert <= 0) {
-            e.state = 'return';
-            e.target = e.home;
-        }
-        if (e.state === 'return' && distance(e, e.home) < 28) {
-            e.state = 'patrol';
-            e.timer = 0;
-        }
-        if (e.state === 'patrol' && e.timer <= 0) {
-            const p = { x: e.home.x + (this.random() - .5) * 170, y: e.home.y + (this.random() - .5) * 170 };
-            if (this.walkable(p.x, p.y, this.highTide))
-                e.target = p;
-            e.timer = 3 + this.random() * 4;
-        }
-        if (e.state === 'attack' && sees) {
-            e.rotation = wrap(Math.atan2(this.player.y - e.y, this.player.x - e.x));
-            if (e.cooldown <= 0) {
-                e.cooldown = def.cooldown;
-                const angle = e.rotation + (this.random() - .5) * .16;
-                if (e.id === 'salt' || e.id === 'elite') {
-                    const bullet = { uid: this.allocateEntityUid(), x: e.x + Math.cos(angle) * 18, y: e.y + Math.sin(angle) * 18, rotation: wrap(angle), vx: Math.cos(angle) * 365, vy: Math.sin(angle) * 365, left: def.range + 70, damage: def.damage, enemy: true, ...(this.layered ? { owner: e.uid } : {}) };
-                    this.bullets.push(bullet);
-                    this.shotEvent(e.uid, 'rifle', [bullet], [angle]);
-                }
-                else if (!this.space || this.sight(e, this.player, this.highTide, 10)) {
-                    this.emit({ type: 'melee', attacker: e.uid, angle: e.rotation, range: def.range, hit: 'player' });
-                    this.hurt(def.damage, e, e.uid);
-                }
-            }
-            return;
-        }
-        if (distance(e, e.target) > 12) {
-            if (e.repath <= 0) {
-                e.path = this.path(e, e.target, this.highTide);
-                e.repath = .9 + this.random() * .6;
-            }
-            let target = e.target;
-            if (!this.sight(e, target, this.highTide, 10) || !this.walkable(target.x, target.y, this.highTide)) {
-                while (e.path.length && distance(e, e.path[0]) < 14)
-                    e.path.shift();
-                if (e.path.length)
-                    target = e.path[0];
-                else
-                    return;
-            }
-            const angle = Math.atan2(target.y - e.y, target.x - e.x);
-            if (this.space) {
-                const next = { x: e.x + Math.cos(angle) * (def.speed * dt + 12), y: e.y + Math.sin(angle) * (def.speed * dt + 12) };
-                const door = this.space.definition.doors.find(d => Math.floor(next.x / 32) === d.x && Math.floor(next.y / 32) === d.y);
-                if (door && !this.space.doors[door.id]) {
-                    this.layerMutation(state => { state.raid!.maps[state.raid!.currentMap].doors[door.id] = true; }, false, 'door', [{ type: 'door', id: door.id, open: true, by: e.uid }]);
-                    return;
-                }
-            }
-            e.rotation = wrap(angle);
-            this.move(e, Math.cos(angle) * def.speed * dt, Math.sin(angle) * def.speed * dt, true);
-        }
-    }
+    updateEnemy(e: Enemy, dt: number) { advanceLegacyEnemy(this, this.enemyEffects, e, dt); }
     private layerMutation(action: (state: ExpansionState) => boolean | void | 'unreachable' | 'occupied', suppress = false, name = 'world', events: ViewEventBody[] = []): boolean {
         const mark = this.queue.length, from = this.worldKey().mapId;
         let ticket: ExpansionTransaction | null;
@@ -1053,7 +983,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (e.hp <= 0) {
                 this.kills++;
                 e.rotation = wrap(e.rotation + Math.PI / 2);
-                const drops = D.rollLoot(this.config.seed + this.kills * 47, e.id === 'elite' ? 3 : 1);
+                const drops = D.rollLoot(this.config.seed + this.kills * 47, getLegacyEnemyProfile(e.id).corpseLootRolls);
                 for (let i = 0; i < drops.length; i++) {
                     this.random();
                     this.random();

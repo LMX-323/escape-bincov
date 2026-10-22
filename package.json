@@ -8,6 +8,8 @@
     "dev": "node scripts/build.mjs --serve",
     "build": "tsc --noEmit && node scripts/build.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
+    "enemy:catalog": "node --import tsx scripts/enemy-catalog.ts",
+    "bench:enemy": "node --import tsx scripts/enemy-benchmark.ts",
     "test:browser": "node scripts/browser-test.mjs",
     "test:desktop-input": "node scripts/desktop-input-test.mjs",
     "test:save-browser": "node scripts/save-browser-test.mjs",
