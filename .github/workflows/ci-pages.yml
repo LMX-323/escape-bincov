@@ -85,6 +85,13 @@ jobs:
     if: needs.build.outputs.browser_required == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      # WebGL on Mesa's lavapipe (Vulkan on the CPU) instead of Chromium's own SwiftShader: several times faster on
+      # these GPU-less runners. Chromium blocklists software drivers, so --ignore-gpu-blocklist is required; the
+      # --disable-* flags keep 2D canvas, page raster and compositing on the CPU paths they used before (WebGL is
+      # read back, as with SwiftShader). Local runs are unaffected.
+      BINCOV_CHROME_ARGS: '["--use-angle=vulkan","--ignore-gpu-blocklist","--disable-accelerated-2d-canvas","--disable-gpu-rasterization","--disable-gpu-compositing"]'
+      BINCOV_EXPECT_RENDERER: 'Vulkan.*llvmpipe'
     strategy:
       # Independent runners avoid competing Chromium processes and report paths.
       fail-fast: false
@@ -110,10 +117,47 @@ jobs:
           digest-mismatch: error
       - name: Verify shared artifact checksums
         run: sha256sum --check build-checksums.sha256
+      # No apt mirror on the critical path: pinned fonts and the runner's lavapipe build come from a cache, or once
+      # from bounded, checksummed downloads (scripts/ci/host-packages.sh).
+      - name: Choose the host package cache
+        id: host-debs
+        run: |
+          label=$(bash scripts/ci/host-packages.sh cache-label)
+          echo "key=ci-host-debs-${{ hashFiles('scripts/ci/fonts-noble.lock', 'scripts/ci/host-packages.sh') }}-$label" >> "$GITHUB_OUTPUT"
+      - name: Restore host packages
+        id: host-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/ci-host-debs
+          key: ${{ steps.host-debs.outputs.key }}
+      - name: Download pinned host packages
+        if: steps.host-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        run: bash scripts/ci/host-packages.sh fetch ~/ci-host-debs
+      - name: Save host packages
+        if: steps.host-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/ci-host-debs
+          key: ${{ steps.host-debs.outputs.key }}
+      - name: Install Chinese screenshot fonts and the lavapipe driver
+        timeout-minutes: 5
+        run: bash scripts/ci/host-packages.sh install ~/ci-host-debs
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Install Chinese screenshot fonts
-        run: sudo apt-get install -y fonts-noto-cjk
+        timeout-minutes: 8
+        run: pnpm exec playwright install chromium
+      - name: Check Chromium starts on the expected WebGL renderer
+        timeout-minutes: 15
+        run: |
+          status=0
+          node scripts/ci/check-renderer.mjs || status=$?
+          if [ "$status" = 2 ]; then
+            echo "::warning::Chromium did not start without Playwright's apt dependencies; installing them"
+            pnpm exec playwright install --with-deps chromium
+            node scripts/ci/check-renderer.mjs
+          elif [ "$status" != 0 ]; then
+            exit "$status"
+          fi
       - name: Obtain actual pre-expansion client
         if: matrix.group == 'batch-8'
         run: |

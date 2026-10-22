@@ -9,7 +9,7 @@
 | 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1。遗留：枪口火光比枪管低 3–4 px，盐民与拾荒者同为棕褐色 |
 | 地图敌人详细设定（纯文档） | [设计提案](ENEMY-DESIGN.md) · [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) | 已合入（`9502bbb`）；五大类/18 原型/十二规划区域。盐枭并入拾荒者头目，守潮人归入盐蚀者相关人群；未接入游戏。与 #66 现有四类素材接入分开，不要求其重做；设计审阅与未来实施另记 |
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
-| CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入；新基线测量、安全分片与性能验收，及手动套件是否进 CI 的评估 |
+| CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入。2026-10-22：浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe，分支 `ci/setup-and-renderer`（承接 PR 见 #61，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)）；之后按新耗时重新分组（长套件的安全拆法已调研），及手动套件是否进 CI 的评估 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | 两者都与 main 冲突（落后 200 多个提交）；续作前先同步，行动规则收敛前核对在途设计 |
 | 暴击/Perk 方案 | [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) | 与 main 冲突；方案与实现状态以 PR 为准 |
@@ -19,6 +19,15 @@
 
 <details>
 <summary>历史交接与旧任务快照（按需查证，保留原文）</summary>
+
+## 2026-10-22 · CI：主机包改走缓存，WebGL 改用 lavapipe（#61，`ci/setup-and-renderer`）
+
+用户要求研究并改进 CI。调研结论：2.5D 之后全量门禁中位约 33 分钟（10-15 时约 15 分钟），主要耗在软件渲染上；runner 的 CPU 快慢相差约 2.5 倍；当天 Azure 的 apt 镜像故障，使单个 job 光安装就要 15–26 分钟。本次先做两步，只改 CI，游戏、测试断言和生成物都不变：
+
+- 浏览器 job 不再经过 apt 镜像：10 个字体包固定版本和 SHA-256，lavapipe 跟随 runner 的 Mesa 版本，都走 Actions 缓存；Chromium 只从 Playwright CDN 下载。
+- WebGL 改用 lavapipe（`BINCOV_CHROME_ARGS`），套件开始前检查渲染器；耗时报告记录 CPU 与渲染器。
+
+按新耗时重新分组（长套件的安全拆法已调研）仍在 #61。本记录不表示已经合并或达到提速目标。
 
 ## 2026-10-16 · 2.5D 收尾：旧行动在 2.5D 上打完，去掉 Phaser（`feat/2-5d-closeout`）
 

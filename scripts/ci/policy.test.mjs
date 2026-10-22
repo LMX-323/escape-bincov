@@ -149,6 +149,39 @@ test('schedule preserves every baseline browser command exactly once and runs th
   assert.match(yaml, /name: Require every scheduled suite to have passed\s+if: needs.build.outputs.browser_required == 'true'\s+run: node scripts\/ci\/verify-timings\.mjs/);
 });
 
+test('browser jobs take host packages from pinned files, not apt mirrors, and check the renderer before any suite', () => {
+  const yaml = readFileSync(resolve('.github/workflows/ci-pages.yml'), 'utf8');
+  const browser = yaml.split('\n  browser:')[1].split('\n  verify:')[0];
+  const steps = browser.split('\n      - ').slice(1);
+  const at = pattern => steps.findIndex(step => pattern.test(step));
+  // apt only as the fallback when Chromium cannot start at all; never on the normal path.
+  assert.equal(steps.filter(step => /apt-get|--with-deps/.test(step)).length, 1);
+  assert.match(steps[at(/--with-deps/)], /^name: Check Chromium starts on the expected WebGL renderer\n[\s\S]*"\$status" = 2/);
+  assert.match(browser, /run: pnpm exec playwright install chromium\n/);
+  const order = [/host-packages\.sh fetch/, /host-packages\.sh install/, /playwright install chromium/,
+    /node scripts\/ci\/check-renderer\.mjs/, /node scripts\/ci\/run-browser\.mjs/].map(at);
+  assert.ok(order.every((index, i) => index >= 0 && (i === 0 || index > order[i - 1])), `step order ${order}`);
+  assert.match(browser, /hashFiles\('scripts\/ci\/fonts-noble\.lock', 'scripts\/ci\/host-packages\.sh'\)/);
+
+  const env = name => new RegExp(`\\n      ${name}: '([^']+)'\\n`).exec(browser)[1]; // single-quoted YAML, no escapes
+  const args = JSON.parse(env('BINCOV_CHROME_ARGS'));
+  assert.ok(args.includes('--use-angle=vulkan') && args.includes('--ignore-gpu-blocklist'), 'lavapipe needs both flags');
+  const expected = new RegExp(env('BINCOV_EXPECT_RENDERER'));
+  assert.match('ANGLE (Mesa, Vulkan 1.4.335 (llvmpipe (LLVM 21.1.8 256 bits) (0x00000000)), llvmpipe)', expected);
+  assert.doesNotMatch('ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)', expected);
+
+  const lock = readFileSync(resolve('scripts/ci/fonts-noble.lock'), 'utf8').split('\n').filter(line => line && !line.startsWith('#'));
+  const packages = lock.map(line => {
+    const match = /^([0-9a-f]{64}) {2}(pool\/(?:main|universe)\/[a-z0-9]\/[^/\s]+\/([a-z0-9.+-]+)_[^/\s]+\.deb) {2}([a-z0-9.+-]+)=(\S+)$/.exec(line);
+    assert.ok(match, `lock line: ${line}`);
+    assert.equal(match[3], match[4], `${match[2]} must be the ${match[4]} package`);
+    return match[4];
+  });
+  assert.equal(new Set(packages).size, packages.length);
+  // Playwright's own CJK fallbacks stay installed alongside Noto CJK, so screenshots keep the same fonts.
+  for (const font of ['fonts-noto-cjk', 'fonts-wqy-zenhei', 'fonts-ipafont-gothic']) assert.ok(packages.includes(font), font);
+});
+
 test('every package test script is scheduled in CI or registered as a manual suite with its reason', () => {
   const scripts = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).scripts;
   const packaged = Object.keys(scripts).filter(name => name.startsWith('test:')).map(name => name.slice(5)).sort();

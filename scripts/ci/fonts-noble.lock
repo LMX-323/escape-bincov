@@ -1,0 +1,14 @@
+# Fonts that browser jobs install from fixed Ubuntu 24.04 (noble) packages instead of apt mirrors.
+# The set is what `playwright install --with-deps chromium` (Playwright 1.63) adds on ubuntu-24.04 runners,
+# plus fonts-noto-cjk for Chinese screenshots. Re-check it when Playwright or the runner OS changes.
+# sha256  pool path  package=version (dependencies first)
+3bac5ff1cba3b001aee1652e3af45d200c415b68e9b27932cb51fe9c464feb40  pool/main/x/xfonts-encodings/xfonts-encodings_1.0.5-0ubuntu2_all.deb  xfonts-encodings=1:1.0.5-0ubuntu2
+8da5fccbc50005d50dd69ef558ae72673435026e1d3134d0c1cc836d22953c44  pool/main/x/xfonts-utils/xfonts-utils_7.7+6build3_amd64.deb  xfonts-utils=1:7.7+6build3
+7d64b985f6fe128c99eae5610d5c047338e572bdcfb2bb09736be01b824a7f6c  pool/main/f/fonts-noto-cjk/fonts-noto-cjk_20230817+repack1-3_all.deb  fonts-noto-cjk=1:20230817+repack1-3
+c8283ec9ca390e6ad8d2114cb0942182db62bb97f5142c2f955218fc5f2027b4  pool/main/f/fonts-freefont/fonts-freefont-ttf_20211204+svn4273-2_all.deb  fonts-freefont-ttf=20211204+svn4273-2
+71e63f0f88cca672fbb24ed27873d799d8c37233f001aa0bbcdc2f303b1b98a2  pool/universe/f/fonts-ipafont/fonts-ipafont-gothic_00303-21ubuntu1_all.deb  fonts-ipafont-gothic=00303-21ubuntu1
+888038637a15d11993e3a9ddd50f6391a704918b2e38fe75b2f4d74b4fcfda9a  pool/universe/f/fonts-tlwg/fonts-tlwg-loma-otf_0.7.3-1_all.deb  fonts-tlwg-loma-otf=1:0.7.3-1
+56c9d46ce8223fa29c28eaeb99cabfc3a3159d3eec58f0bbbea839953f4cf363  pool/universe/u/unifont/fonts-unifont_15.1.01-1build1_all.deb  fonts-unifont=1:15.1.01-1build1
+496969d65dc5664a3291e678d5cbef6815dc308ee5bf37b656c00af2cb490410  pool/universe/f/fonts-wqy-zenhei/fonts-wqy-zenhei_0.9.45-8_all.deb  fonts-wqy-zenhei=0.9.45-8
+d4a63d4da9f6d58467ccaa22b7b26c009ab46b07f0b1be2138d3bb037e74d2cb  pool/universe/x/xfonts-cyrillic/xfonts-cyrillic_1.0.5+nmu1_all.deb  xfonts-cyrillic=1:1.0.5+nmu1
+517f73a4f6e37332addffe6ff1795d5371f2f9c0863781efc31c4613f69993de  pool/main/x/xfonts-scalable/xfonts-scalable_1.0.3-1.3_all.deb  xfonts-scalable=1:1.0.3-1.3
