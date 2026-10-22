@@ -48,6 +48,7 @@
     "test:mall-landing": "node --import tsx scripts/mall-landing.mjs",
     "test:mall-sample": "node scripts/mall-sample-test.mjs",
     "test:raid-default": "node scripts/raid-default-test.mjs",
+    "test:range": "node scripts/range-test.mjs",
     "test:art": "node --import tsx scripts/art-review.mjs",
     "test:tactical": "node --import tsx scripts/tactical-review.mjs",
     "test:title-water": "node --import tsx scripts/title-water-review.mjs",
