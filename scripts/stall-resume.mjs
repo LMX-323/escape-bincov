@@ -25,7 +25,7 @@ export async function resumeStalls(context, hook = '__bincovSample') {
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  });
+  }, hook);
 }
 
 /** How many stall pauses were resumed on this page (for the suite report). */
