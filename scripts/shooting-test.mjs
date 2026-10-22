@@ -137,7 +137,8 @@ async function context(name, options) {
   if (touchCtx) await act('enter').tap({ timeout: 60000 }); else await act('enter').click({ timeout: 60000 });
   await page.locator('#seed').fill('42');
   if (touchCtx) await act('deploy').tap(); else await act('deploy').click();
-  await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch && !window.__bincovSample.host.panel && window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 60000 });
+  // A phone viewport on a software renderer can take over a minute to deploy and draw its first running frame.
+  await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch && !window.__bincovSample.host.panel && window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 120000 });
   await page.evaluate(install);
   await drive(page, 'freezeAI', true);
   const maxHp = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.maxHp);
@@ -367,7 +368,9 @@ async function hiddenRoom(page) {
   const room = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.regions.find(r => r.inside));
   for (const door of ['resident-front', 'resident-west', 'resident-east']) await drive(page, 'door', door, false);
   await drive(page, 'placeEnemy', shooter.uid, { x: 368, y: 336 }, 76);
-  await place(page, { x: 272, y: 336 }, 0);
+  // Far enough west that a bullet leaving the window is published outside the room at least once even on CI's slowest
+  // frames (365 px/s x .5 s = 183 px between frames; the player stands 218 px past the window).
+  await place(page, { x: 112, y: 336 }, 0);
   const maxHp = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.maxHp);
   await drive(page, 'vitals', { hp: maxHp, bleeding: false });
   await rec(page, true);

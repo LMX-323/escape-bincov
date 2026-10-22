@@ -134,8 +134,9 @@ export class CoastView {
   private bullets = new Map<string, { g: Graphics; born: Point; vx: number; vy: number; from: Point | null; seen: Point | null; off: Point }>();
   private crates = new Map<string, { s: Sprite; shadow: Sprite; empty: boolean; look: 'full' | 'empty' | 'open' }>();
   private loot = new Map<string, Sprite>();
-  private muzzles: { s: Sprite; t: number }[] = [];
-  private swings: { g: Graphics; t: number }[] = [];
+  /** Muzzle flashes and knife swings; `t` is null until the frame that made one has been drawn (see present). */
+  private muzzles: { s: Sprite; t: number | null }[] = [];
+  private swings: { g: Graphics; t: number | null }[] = [];
   private highlight = new Sprite();
   private fadeClock = 0;
   private rngState = 7;
@@ -253,8 +254,10 @@ export class CoastView {
     this.bakeAhead(dt);
     this.fx.update(dt);
     this.fx.reveal(f.revealed);
-    for (let i = this.muzzles.length - 1; i >= 0; i--) { const m = this.muzzles[i]; m.t += dt; if (m.t > .03) m.s.texture = this.tex.muzzle(1); if (m.t > .07) { m.s.destroy(); this.muzzles.splice(i, 1); } }
-    for (let i = this.swings.length - 1; i >= 0; i--) { const s = this.swings[i]; s.t += dt; s.g.alpha = 1 - s.t / .14; if (s.t > .14) { s.g.destroy(); this.swings.splice(i, 1); } }
+    // A flash or swing made by this batch's events is drawn once before it ages: below about 14 frames a second it used to
+    // age past its life in the frame that made it and was never seen (PR #39, on CI's software renderer every time).
+    for (let i = this.muzzles.length - 1; i >= 0; i--) { const m = this.muzzles[i]; if (m.t === null) { m.t = 0; continue; } m.t += dt; if (m.t > .03) m.s.texture = this.tex.muzzle(1); if (m.t > .07) { m.s.destroy(); this.muzzles.splice(i, 1); } }
+    for (let i = this.swings.length - 1; i >= 0; i--) { const s = this.swings[i]; if (s.t === null) { s.t = 0; continue; } s.t += dt; s.g.alpha = 1 - s.t / .14; if (s.t > .14) { s.g.destroy(); this.swings.splice(i, 1); } }
 
     this.updateExit(f);
     this.updateTall(f);
@@ -552,7 +555,7 @@ export class CoastView {
         else sp.position.set(Math.round(a.x + c * reach), Math.round(a.y - AIM_H + s * reach));
         sp.rotation = angle; sp.zIndex = a.y + .2 + (s < -.2 ? -.4 : 0);
         if (e.weapon === 'shotgun') sp.scale.set(1.4);
-        this.sorted.addChild(sp); this.muzzles.push({ s: sp, t: 0 });
+        this.sorted.addChild(sp); this.muzzles.push({ s: sp, t: null });
         this.light.lights.push({ x: a.x + c * 20, y: a.y + s * 20, r: e.weapon === 'shotgun' ? 100 : 80, color: 0xe0b878, k: .9, ttl: .07, region: a.regionId });
         if (e.weapon !== 'shotgun') this.fx.casing(a.x + c * 4, a.y + s * 4, AIM_H - 2, angle, this.rnd);
         this.fx.smoke(a.x + c * (reach + 2), a.y + s * (reach + 2) * .6, AIM_H, this.rnd, e.weapon === 'shotgun' ? 5 : 3);
@@ -567,7 +570,7 @@ export class CoastView {
         const a = actor(e.attacker); if (!a || !shown(a)) break;
         const g = new Graphics(), cx = Math.round(a.x), cy = Math.round(a.y - AIM_H + 4);
         g.arc(cx, cy, Math.min(30, e.range * .7), e.angle - .7, e.angle + .7).stroke({ width: 2, color: 0xe4debb, alpha: .85 });
-        g.zIndex = a.y + .3 + (Math.sin(e.angle) < -.3 ? -.6 : 0); this.sorted.addChild(g); this.swings.push({ g, t: 0 });
+        g.zIndex = a.y + .3 + (Math.sin(e.angle) < -.3 ? -.6 : 0); this.sorted.addChild(g); this.swings.push({ g, t: null });
         const ag = this.actors.get(a.uid); if (ag) ag.swingT = .14;
         break;
       }
