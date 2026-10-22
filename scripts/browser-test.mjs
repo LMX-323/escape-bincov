@@ -181,12 +181,21 @@ async function suite(viewport) {
     }
     return last;
   }
+  /**
+   * Put the real pointer on `point` and keep it there. The camera looks ahead along the aim, so moving the pointer turns
+   * the player, the camera follows the new aim and the point slides from under the still pointer; one measurement left
+   * the aim up to 0.13 rad off on slow runners, where the old aim came from a longer walk overshoot. Measure the settled
+   * screen point again after each move until pointer and point agree (two or three moves at the normal look-ahead).
+   */
   async function aimAt(point) {
-    const screen = await settledScreen(point);
-    assert.ok(screen.x >= 0 && screen.x < viewport.width && screen.y >= 0 && screen.y < viewport.height, 'Fixture target must be visible');
-    await page.mouse.move(screen.x, screen.y);
-    await frames(page, 4);
-    return screen;
+    let at = null;
+    for (let i = 0; i < 8; i++) {
+      const screen = await settledScreen(point);
+      assert.ok(screen.x >= 0 && screen.x < viewport.width && screen.y >= 0 && screen.y < viewport.height, 'Fixture target must be visible');
+      if (at && Math.hypot(screen.x - at.x, screen.y - at.y) < .5) return screen;
+      await page.mouse.move(screen.x, screen.y); at = screen;
+    }
+    throw new Error(`The pointer did not settle on ${JSON.stringify(point)}`);
   }
   /** Stand, with the camera settled on the new position (it follows over about a second). */
   async function standAt(point) {
@@ -194,6 +203,29 @@ async function suite(viewport) {
     await page.waitForFunction(p => { const f = window.__bincovSample.host.lastBatch.frame.player; return Math.hypot(f.x - p.x, f.y - p.y) < 1; }, point);
     await page.waitForTimeout(1200);
     await running();
+  }
+  /**
+   * One precise, aimed click at `target`, retried only while no round leaves the magazine (`mag` before): a stall pause
+   * on a slow runner puts the click on the pause panel, and resuming it drops the held right button. Aim at the normal
+   * look-ahead; precise aim then only lengthens the look-ahead along that aim, so its published aim is checked rather
+   * than re-aimed (corrections under precise aim overshoot by about three quarters each time).
+   */
+  async function shootAt(target, mag) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await running();
+      await aimAt(target);
+      await page.mouse.down({ button: 'right' });
+      try {
+        await settledScreen(target);
+        const { from, aim } = await page.evaluate(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return { from: { x: p.x, y: p.y }, aim: p.aim }; });
+        const want = Math.atan2(target.y - from.y, target.x - from.x), off = Math.abs(Math.atan2(Math.sin(aim - want), Math.cos(aim - want)));
+        assert.ok(off < .03, `The aim is ${off.toFixed(3)} rad off the enemy before the shot`);
+        await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
+        const fired = await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag < m, mag, { timeout: 5000 }).then(() => true, () => false);
+        if (fired) return;
+      } finally { await page.mouse.up({ button: 'right' }); }
+    }
+    throw new Error('Three aimed clicks fired no round');
   }
   /** Pick up the run's street sample with E from a spot where no container is in reach (E would open it instead). */
   async function collectSample() {
@@ -358,15 +390,13 @@ async function suite(viewport) {
       await page.keyboard.press('1');
       await frames(page, 3);
       const target = await page.evaluate(uid => { const e = window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid); return { x: e.x, y: e.y }; }, fixture.uid);
-      await aimAt(target);
       const mag = (await run()).mag;
-      await page.mouse.down({ button: 'right' });
       try {
-        await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
+        await shootAt(target, mag);
         await page.waitForFunction(({ uid, hp }) => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid).hp < hp, fixture)
           .catch(async error => {
-            // Intermittent on CI since 2026-10-22 (#61): the round leaves (7/8) yet misses a frozen enemy. Record where the
-            // shot started and went, what it struck, and where the player and the enemy stood.
+            // Should a round still miss, record where the shot started and went, what it struck, and where the player and
+            // the enemy stood.
             const seen = await page.evaluate(uid => {
               const h = window.__bincovSample.host, f = h.lastBatch.frame, e = f.actors.find(a => a.uid === uid);
               return { player: f.player, enemy: e && { x: e.x, y: e.y, hp: e.hp }, mag: f.hud.weapon.mag,
