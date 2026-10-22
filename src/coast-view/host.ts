@@ -837,8 +837,13 @@ export class CoastSampleHost {
       // Rewritten only when it changes: a row replaced between a finger's press and release loses the tap.
       if (html !== this.choicesHtml) { this.choicesHtml = html; list.innerHTML = html; list.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' }); }
       const side = this.view.worldToClient({ x: t.at.x + 26, y: t.at.y - AIM_H }), w = list.offsetWidth || 160;
-      const lx = side.x + w + 8 > innerWidth ? this.view.worldToClient({ x: t.at.x - 26, y: 0 }).x - w : side.x;
-      list.style.transform = `translate(${Math.round(Math.max(8, lx))}px, ${Math.round(side.y)}px) translate(0, -50%)`;
+      const lx = Math.max(8, side.x + w + 8 > innerWidth ? this.view.worldToClient({ x: t.at.x - 26, y: 0 }).x - w : side.x);
+      list.style.transform = `translate(${Math.round(lx)}px, ${Math.round(side.y)}px) translate(0, -50%)`;
+      // A tall list (附近 opened, many sources) reaches up into the prompt above the target. The prompt rises clear of it
+      // instead of the list moving: the list stays under the finger, and below it are the touch buttons on short phones.
+      const top = side.y - list.offsetHeight / 2 - 4, ph = el.offsetWidth / 2;
+      if (above && top < p.y && lx < px + ph && lx + w > px - ph && top - h >= 8 && !hitsStatus(px, top - h))
+        el.style.transform = `translate(${Math.round(px)}px, ${Math.round(top)}px) translate(-50%, -100%)`;
     } else { list.hidden = true; this.choicesHtml = ''; }
   }
   private choicesHtml = '';
