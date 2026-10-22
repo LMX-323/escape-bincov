@@ -72,3 +72,40 @@
 - 扫描确认的 10 个行为缺陷（含 1 个高：楼宇行动中敌人推门时写入失败后重试保存永远被拒）登记在 #60，修复另行交付。
 - 剩余已知 import 环：存档 codec（Q-E05）、`ui.ts` 与 `coast-view/sample.ts`/`station-view/route.ts`（Q-E02），已登记在 `source-health.test.mjs`，只许变小。
 - `test:station`、`test:coast-sample`、自然游玩与基准套件仍是手动；是否加固后进 CI 归 #61。
+
+## Q-E05 存档 codec 去环
+
+2026-10-22，分支 `agent/save-codec-cycle`，起点 main `c8a5ed8`（已含 #68）。承接 #60 的 Q-E05，分工见 [#60 协作说明](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6333683019)。只改结构：存档格式、接受/拒绝集合与迁移结果不变。
+
+**有效决定**
+
+- 新模块 `src/profile-codec.ts`，只依赖 domain：已解析 profile 的严格解码 `decodeProfileDocument`（含导出封套）、放在其他记录里的 profile `decodeStoredProfile`、各格式共用的物品栏检查 `validInventory`（旋转、未知字段按格式显式传入）和校验原语 `finite`/`whole`/`identity`、`COUNT_MAX`/`UINT32_MAX`。检查返回布尔或抛 profile 的错误，各格式保留自己的报错文案。
+- 依赖方向：`checkpoint`、`recovery-store`、`save-backup` 单向调用 codec；`recovery-store` 不再引用 `save-backup`，`checkpoint` 不再把拼出的 profile 序列化成 JSON 去借 `decodeBackup`。`source-health.test.mjs` 的 `KNOWN_CYCLES` 删去 Q-E05。
+- 实测确认后显式保留的既有边界：旧键 v2 存档、会话里的 profile 和经典行动携带物受 1 MiB 限制，按紧凑 JSON 计、源文本空白不算；这些 profile 里的导出封套字段仍按封套解读；携带物带少量未知字段照旧接受。
+- 三处持久物品检查（profile 物品栏、经典检查点容器、分层行动物品栏）合成 `validInventory`。`validateCheckpoint`、`validateExpansion` 的整数上下界全部写明，不再依赖默认的 1e9。`domain.ts` 迁移用的整数强制转换语义不同，保留。
+- expansion v1→v2 升级原有 4 份（`enableRpg`、`beginRun`、水产站导入、`freshStartRecord`），合成 `upgradeToRpg`。原来只在 v1 时才读时钟的两处保留判断，时钟调用次数不变。
+
+**行为对照**
+
+改动前用游戏自己的流程造 59 份种子：各代 profile 与备份封套、session v2–v4、coast-v1/v2 检查点（含行动中途）、分层街区、商场三版布局、四种结算与待结算备份、带 legacy/migration/systems 原字节的记录、恢复备份封套。按字段形状逐一变异（删字段、改类型、越界、小数、重复元素、未知键等），另加 21 个大小与封套边界用例，共 100,581 个用例。`decodeBackup`、`decodeSession`、`decodePortableBackup`、`encodeRecoveryBackup`、`RecoveryStore.load` 共 247,627 次调用，逐例记录接受/拒绝、报错类型与文案、规范化输出哈希。工具先在 `c8a5ed8` 自比两次，0 差异。
+
+改动后：接受/拒绝集合与全部被接受用例的输出逐例一致，其余报错文案也一致。130 处差异只有一类：分层行动物品栏里的物品为 `null` 时，以前抛 JS 的 `TypeError: Cannot use 'in' operator…`，现在抛该模块的「建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。」。用改动后的代码重造 59 份种子，与原种子逐字节相同，开启成长、出击和结算的写入流程未变。
+
+**实际验证**（Windows、Node 24.22.1、pnpm 11.19.0、本机 Chrome）
+
+| 检查 | 结果 |
+| --- | --- |
+| 严格类型检查 | 通过 |
+| `pnpm test` | 463/463（新增 4 项：存储 profile 大小规则、解码结果不共享对象、统一物品栏规则、`upgradeToRpg`） |
+| `node --test scripts/ci/*.test.mjs` | 48/49；唯一失败的 shell 门禁用例在 Windows 写死 `C:/Program Files/Git/bin/bash.exe`，本机 Git 不在该路径，未改动的 `c8a5ed8` 同样失败，CI 在 Linux 上执行 |
+| `pnpm package` | 通过，两份 HTML、两份 ZIP 与清单重新生成 |
+| `test:save-browser` | 9/9 |
+| `test:expansion` | 5/5，旧客户端取自 `07b1414` 的 `dist/index.html` |
+| `test:portable`、`test:systems`、`test:station-reset`、`test:hideout` | 通过（systems 13/13） |
+| `test:loot`、`test:qol-expansion`、`test:raid-default`、`test:buildings` | 25/25、4/4、9/9（含旧封锁区与商场一版行动恢复后结算）、8/8 |
+
+**未做 / 下一步**
+
+- Q-E02 路由收敛由同一承接者随后续作：`ui.ts` 与两个视图路由的三角、共享 Pixi 池可以先做；行动句柄合同和背包有限服务与 PR #65 改同一批文件，建议 #65 合入后再做。
+- #60 评论登记的 Q-E04 类问题本批未改：`persist` 把校验异常当作存储失败、行动与据点的失败票据处理不一致、被拒票据留在 `SaveSession.prepared`。
+- 新发现：`validateExpansion` 的装备检查用 `D.WEAPONS[weapon]`，没有 `Object.hasOwn`。分层行动携带物的 `weapon` 写成 `constructor`、`toString` 等原型键时会被接受，不存在的名字则会被拒绝。修复会改变接受集合，本批不改，另行处理。

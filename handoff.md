@@ -2,6 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-22 · [#60 Q-E05 存档 codec 去环](docs/tasks/quality-entropy.md#q-e05-存档-codec-去环)：严格的 profile/物品栏规则和校验原语抽到 `src/profile-codec.ts`，checkpoint、recovery-store、save-backup 单向调用它；expansion v1→v2 升级合成 `upgradeToRpg`。10 万用例行为对照：接受/拒绝与输出逐例一致，只有分层行动里 `null` 物品的报错从 JS TypeError 改为存档损坏提示。
 - 2026-10-22 · [#60 减熵第二批](docs/tasks/quality-entropy.md#第二批)：删死代码与只被测试使用的旧接口、合并重复实现、修好三个失效的 CI 外套件（hideout 进 CI），新增套件登记、源码健康与入口文档三道守卫；健康扫描确认的 10 个缺陷登记在 #60。
 - 2026-10-16 · [PR #64 2.5D 收尾](https://github.com/xuys2025/escape-bincov/pull/64)：旧行动在 2.5D 上打完，Phaser 删除，旧局内测试迁到 2.5D；剩余美术与 Runtime 缺口见 [收尾说明](docs/2-5d-closeout/README.md)。
 - 2026-10-15 · [#60 质量与减熵实施摘要](docs/tasks/quality-entropy.md)：代码导航、局部契约与共享投影。实际测试状态随该摘要及 PR 更新。
