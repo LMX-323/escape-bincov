@@ -67,8 +67,9 @@ export class CoastRaidRuntime implements RaidRuntime {
     /** Playtest parameter set (src/shooting.ts FEELS), chosen by an explicit URL or the range page; never saved. */
     feel: Feel = 'brisk';
     /**
-     * The trigger as the last frame's intent left it. Held fire applies over the next frame's interval and a click takes
-     * effect at its own frame's time (see pull), so shots fall at the same instants at any display rate.
+     * The trigger as the last frame's intent left it. Held fire covers a frame's interval only when that frame's own
+     * sample still holds it, so a release is never followed by a shot; a click or a new hold takes effect at its frame's
+     * own time (see pull). Input that changes on frame boundaries then fires at the same raid times at any display rate.
      */
     private trigger = { held: false, touch: false };
     /** Seconds a click that found the gun busy may still fire: one click, never a queue. */
@@ -289,6 +290,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                             this.suppressInteract = false;
                         const effective = this.overlay ? emptyIntent() : { ...intent, fireHeld: intent.fireHeld && !this.suppressFire, interactHeld: intent.interactHeld && !this.suppressInteract };
                         this.intent = effective;
+                        // Released somewhere in this interval: no held shot may follow the release.
+                        if (!effective.fireHeld)
+                            this.trigger = { held: false, touch: this.trigger.touch };
                         const frame: InputFrame = { x: effective.move.x, y: effective.move.y, sprint: effective.move.sprint, aim: null,
                             pointer: { x: 0, y: 0 }, precise: effective.precise, firePressed: effective.firePressed, fireHeld: effective.fireHeld,
                             interactHeld: effective.interactHeld, actions: new Set([...effective.commands, ...(effective.interactPressed ? ['interact' as const] : [])]), touch: intent.source === 'touch' };

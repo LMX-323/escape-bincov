@@ -324,9 +324,10 @@ export type PublishedView = Readonly<{
 /**
  * One display frame's input, read at `nowMs` of `advance`. `aim` is a ground-plane angle in radians (null keeps the
  * facing). Commands and `interactPressed` act in the frame's first substep. The trigger is different: `firePressed`
- * (a click) and a change of `fireHeld` take effect at the frame's own time, and the held state then fires over the
- * next frame's whole interval at the weapon's rate, so shots land at the same raid times at any display rate. Whether
- * holding repeats depends on the weapon (automatic) and on `source` (touch repeats semi-automatic guns too).
+ * (a click) and a new hold take effect at the frame's own time; a hold fires at the weapon's rate over a frame's
+ * interval only while this frame still reports it, so a release never lets another shot out. Input changing on frame
+ * boundaries fires at the same raid times at any display rate. Whether holding repeats depends on the weapon
+ * (automatic) and on `source` (touch repeats semi-automatic guns too).
  */
 export type RaidIntent = Readonly<{
     move: Readonly<{

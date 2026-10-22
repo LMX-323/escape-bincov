@@ -71,6 +71,14 @@ test('shooting bench: a held touch stick repeats semi-automatic guns at their ow
     }
 });
 
+test('shooting bench: a frame that sees the trigger released lets no held shot out of its interval', () => {
+    // 20 Hz: the carbine shot due at .96 s falls inside the .95–1.0 s frame, whose sample already has the stick back
+    // inside the ring, so it is not fired (the release could have come first). Nothing ever fires after a release.
+    const cut = replay(arm(benchRaid(), 'carbine'), touchHold(0, 1), 1.3, 20);
+    assert.equal(cut.shots.length, 4);
+    assert.ok(cut.shots.every(s => s.t < .95 + 1e-9), JSON.stringify(cut.shots.map(s => s.t)));
+});
+
 test('shooting bench: pause, a panel, a layer of suppression or losing focus drop the trigger and a waiting click', () => {
     // A held rifle: pausing stops it, and after resuming the still-held button stays dead until it is released.
     const b = arm(benchRaid(), 'm4a1'), r = b.runtime, held = { ...emptyIntent(), aim: 0, firePressed: false, fireHeld: true };
