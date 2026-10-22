@@ -1108,7 +1108,7 @@ if (!group) {
 {
   const { context, page } = await open('?test=1&entry=tabs&sample=village');
   await deploy(page);
-  await step('V-CAM camera: a walk keeps the player on one screen pixel (walk, sprint, diagonal aim, late frames) with one weapon and arm offset; the ground never steps back and settles within 1.2 s; the aim look-ahead is 24 px, 81.6 with the right button', async () => {
+  await step('V-CAM camera: a walk keeps the player on one screen pixel (walk, sprint, diagonal aim, late frames) with one weapon and arm offset; the ground never steps back and settles within 1.2 s; the mouse look-ahead is 0 px, 81.6 with the right button', async () => {
     await page.evaluate(() => {
       const h = window.__bincovSample.host, v = h.view; h.app.ticker.stop();
       let seed = 26, vsync = performance.now();
@@ -1168,17 +1168,18 @@ if (!group) {
     }
     // In-run control: the old rounding on the same smoothed camera would have trembled.
     assert.ok(oldChanges >= 10, `Math.round(camF) changes on the same frames: ${oldChanges}`);
-    // Aim look-ahead: pointer 150 px right, then left of the drawn player (the view slides 2 x 24 px); with the right button
-    // held, left then right (2 x 81.6 px, as before F-04).
+    // Mouse look-ahead (PR #39): pointer 150 px right, then left of the drawn player: without the right button the view
+    // does not slide at all. With it held, the view looks ahead toward the pointer: 330 px out it reaches the full 81.6 px
+    // of the precise ellipse each way (2 x 81.6, the reach kept from before F-04).
     await place(page, 640, 456, 0, 'coast'); await frames(2); await pointTo(150, 0); await frames(60);
     const cam = async () => (await frames(1))[0];
     const right = await cam(); await pointTo(-150, 0); await frames(60); const left = await cam();
-    await page.mouse.down({ button: 'right' }); await frames(60); const preciseLeft = await cam();
-    await pointTo(150, 0); await frames(60); const preciseRight = await cam();
+    await pointTo(-330, 0); await page.mouse.down({ button: 'right' }); await frames(60); const preciseLeft = await cam();
+    await pointTo(330, 0); await frames(60); const preciseRight = await cam();
     await page.mouse.up({ button: 'right' }); await frames(2);
     const flick = { slide: right.cx - left.cx, preciseSlide: preciseRight.cx - preciseLeft.cx, precise: [right.precise, left.precise, preciseLeft.precise, preciseRight.precise] };
     assert.deepEqual(flick.precise, [false, false, true, true], 'the right button holds precise aim');
-    assert.ok(Math.abs(flick.slide - 48) <= 2, `default look-ahead slide ${flick.slide}`);
+    assert.ok(Math.abs(flick.slide) <= 1, `default look-ahead slide ${flick.slide}`);
     assert.ok(Math.abs(flick.preciseSlide - 163.2) <= 3, `right-button look-ahead slide ${flick.preciseSlide}`);
     return { walks, oldChanges, flick };
   });
