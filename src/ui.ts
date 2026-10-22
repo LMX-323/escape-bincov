@@ -540,8 +540,9 @@ function bind() {
             case 'export-save': exportSave(); break;
             case 'import-save': document.getElementById('backup-file')?.click(); break;
             case 'confirm-import':
-                if (app.pendingRecoveryImport && saveSession.importRecord(app.pendingRecoveryImport)) {
-                    app.pendingRecoveryImport = null; changeState('menu'); toast('备份已导入，可继续保存的行动。');
+                if (app.pendingRecoveryImport) {
+                    // A failed write keeps the dialog open and reports it like a settled-save import.
+                    if (saved(saveSession.importRecord(app.pendingRecoveryImport))) { app.pendingRecoveryImport = null; changeState('menu'); toast('备份已导入，可继续保存的行动。'); }
                 } else if (app.pendingImport) importSave(app.pendingImport);
                 break;
             case 'enter':

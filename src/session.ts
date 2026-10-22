@@ -252,6 +252,8 @@ export class SaveSession {
     beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 | 3 } = {}): boolean {
         const s = this.session;
         if (s.state !== 'hideout' || s.conflict || s.pendingSettlement || s.save.activeRun) return false;
+        // Layered raids store seeds 1..0xffffffff (older pages reject 0), so seed 0 deploys as seed 1; the coast keeps 0.
+        if (buildings && !(seed >>> 0)) seed = 1;
         const candidate = structuredClone(s.save);
         const loadout = D.beginRun(candidate, seed);
         const config = buildings === 'mall' ? mallRunConfig(seed) : buildings ? buildingRunConfig(seed) : generateRun(seed);
