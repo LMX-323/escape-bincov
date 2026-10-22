@@ -34,7 +34,7 @@ test('all current-run groups and exact suites validate and produce a complete ti
   const result = verifyTimings({ directory: f.directory, env, summaryPath });
   assert.equal(result.reports.length, 8);
   const suites = browserGroups.flatMap(suitesForGroup);
-  assert.equal(suites.length, 37);
+  assert.equal(suites.length, 38);
   for (const suite of suites) assert.ok(result.summary.includes(`pnpm ${suite.command}`), suite.id);
   assert.match(result.summary, /queue time and Pages deployment are excluded/);
   assert.equal(readFileSync(summaryPath, 'utf8'), result.summary);
@@ -174,7 +174,7 @@ test('CLI validates real JSON files without project dependencies and exits nonze
     env: { ...process.env, ...env, GITHUB_STEP_SUMMARY: join(f.root, 'summary.md') }, encoding: 'utf8' });
   const passed = run();
   assert.equal(passed.status, 0, passed.stderr);
-  assert.match(passed.stdout, /All 8 groups and 37 suites passed/);
+  assert.match(passed.stdout, /All 8 groups and 38 suites passed/);
   f.reports[0].commit = 'b'.repeat(40); f.save();
   const failed = run();
   assert.equal(failed.status, 1);
