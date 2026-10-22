@@ -11,7 +11,7 @@
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入；新基线测量、安全分片与性能验收，及手动套件是否进 CI 的评估 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
-| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | 两者都与 main 冲突（落后 200 多个提交）；续作前先同步，行动规则收敛前核对在途设计 |
+| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | #39 已同步 main，按 [S0–S5 阶段](SHOOTING-SYSTEM-REWORK.md#阶段)实施，维护者决定见同页；#39 试玩认可并获准合入后 #28 才进改装实现。#28 仍落后 main，续作前先同步 |
 | 暴击/Perk 方案 | [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) | 与 main 冲突；方案与实现状态以 PR 为准 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
 
