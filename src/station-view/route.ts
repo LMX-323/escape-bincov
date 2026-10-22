@@ -3,14 +3,14 @@
  * stays as a shortcut fallback). This module is in the app's static graph; the Pixi view, its PNGs and its CSS load on
  * demand, so Node tests that import the UI never touch them.
  *
- * Ownership: the yard and the old tab page share the one HideoutRuntime / SaveSession. The yard never starts a
- * Phaser scene; the Phaser loop sleeps while it is mounted and the Pixi Application is the one the village sample
- * parks between mounts. Every switch away from the yard flushes first; a failed flush keeps the yard and its dialog.
+ * Ownership: the yard and the old tab page share the one HideoutRuntime / SaveSession. The Pixi Application is the one
+ * the raid view parks between mounts. Every switch away from the yard flushes first; a failed flush keeps the yard and its dialog.
  */
 import { app, audio, hideoutRuntime } from '../app';
-import { changeState, hideoutExternal, render, startPreparedHideoutRaid, toast } from '../ui';
-import { sampleEnabled, villageSeed } from '../coast-view/sample';
-import { gpuTextures, managedSlots, parkApp, takeApp } from '../coast-view/host';
+import { navigation } from '../navigation';
+import { gpuTextures, managedSlots, parkApp, takeApp } from '../pixi-app';
+import { raidWorlds, sampleMallLayout, sampleMode, villageSeed } from '../raid-areas';
+import { toast } from '../toast';
 import { lifecycle } from '../coast-view/scope';
 import type { HideoutSnapshot, RunWorld } from '../hideout-runtime/contract';
 import type { StationHost } from './host';
@@ -31,7 +31,7 @@ let exposed = false;
 export async function enterStation(): Promise<boolean> {
   if (current || starting) return false;
   const entered = hideoutRuntime.enter();
-  if (!entered.ok) { render(); toast(entered.message); return false; }
+  if (!entered.ok) { navigation().render(); toast(entered.message); return false; }
   return openStation(null);
 }
 /** Result page "返回": the Runtime hands over a one-time arrival; the yard plays the walk-in and the report. */
@@ -47,11 +47,10 @@ const handle = { checkpoint: () => !current || current.host.busy || hideoutRunti
 
 async function openStation(arrival: Arrival): Promise<boolean> {
   app.station = handle;
-  if (!hideoutExternal()) { app.station = null; return false; }
+  if (!navigation().hideoutExternal()) { app.station = null; return false; }
   starting = true;
   let root: HTMLElement | null = null, pixi: import('pixi.js').Application | null = null;
   try {
-    app.game?.loop.sleep();
     document.documentElement.dataset.station = 'yard';
     root = document.createElement('div'); root.id = 'station-yard';
     const shadow = root.attachShadow({ mode: 'open' });
@@ -72,15 +71,16 @@ async function openStation(arrival: Arrival): Promise<boolean> {
       app: pixi, shadow, mount: shadow.querySelector<HTMLElement>('.mount')!, rt: hideoutRuntime, sol, art,
       test, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, frozen: test && p.get('freeze') === '1', mood: 'night',
       touch: document.documentElement.classList.contains('mobile'), volume: app.save.settings.volume,
-      arrival, world: app.runWorld, seed: app.seed, hooks: {
-        departed: runId => { closeStation(); void startPreparedHideoutRaid(runId).then(ok => { if (!ok) { toast('行动已保存，但没能启动。请在标题页继续行动。'); changeState('menu'); } }); },
-        seedFor: (world: RunWorld) => sampleEnabled() && world === 'buildings' ? String(villageSeed()) : '',
-        tabs: () => leave(() => changeState('hideout', false)),
-        title: () => { const r = hideoutRuntime.backToMenu(); if (!r.ok) { failed(r.message); return; } closeStation(); changeState('menu'); },
+      arrival, world: app.runWorld, seed: app.seed, worlds: raidWorlds(), hooks: {
+        departed: runId => { closeStation(); void navigation().startPreparedHideoutRaid(runId).then(ok => { if (!ok) { toast('行动已保存，但没能启动。请在标题页继续行动。'); navigation().changeState('menu'); } }); },
+        seedFor: (world: RunWorld) => sampleMode() === 'village' && world === 'buildings' ? String(villageSeed()) : '',
+        mallLayout: (world: RunWorld) => sampleMallLayout(world),
+        tabs: () => leave(() => navigation().changeState('hideout')),
+        title: () => { const r = hideoutRuntime.backToMenu(); if (!r.ok) { failed(r.message); return; } closeStation(); navigation().changeState('menu'); },
         exportSave: () => download(hideoutRuntime.exportBackup()),
         imported: () => {
           // A backup with a live raid resumes from the title, like the old import path.
-          if (app.save.activeRun) { closeStation(); changeState('menu'); toast('备份中有进行中的行动，请在标题页继续。'); }
+          if (app.save.activeRun) { closeStation(); navigation().changeState('menu'); toast('备份中有进行中的行动，请在标题页继续。'); }
           else current?.host.resync();
         },
         volume: v => { const r = hideoutRuntime.setVolume(v); if (r.ok) audio.setVolume(app.save.settings.volume); else current?.host.ui.toast(r.message, 'error'); },
@@ -99,9 +99,8 @@ async function openStation(arrival: Arrival): Promise<boolean> {
     root?.remove();
     delete document.documentElement.dataset.station;
     app.station = null; current = null;
-    app.game?.loop.wake();
     // The old tab page is the fallback entry: the save is untouched, only the view failed.
-    changeState('hideout', false);
+    navigation().changeState('hideout');
     toast('院子画面启动失败，已切换到页签界面。');
     return false;
   } finally { starting = false; }
@@ -115,7 +114,6 @@ export function closeStation() {
   resetCanvas(c.pixi); parkApp(c.pixi); lifecycle.apps--;
   c.root.remove();
   delete document.documentElement.dataset.station;
-  app.game?.loop.wake();
 }
 const resetCanvas = (pixi: import('pixi.js').Application) => { for (const k of ['width', 'height', 'cursor'] as const) pixi.canvas.style[k] = ''; };
 
@@ -161,7 +159,7 @@ function expose() {
         closeStation(); await openStation(null);
         await new Promise(res => setTimeout(res, 60));
       }
-      render();
+      navigation().render();
     },
   };
 }

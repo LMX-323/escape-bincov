@@ -9,7 +9,7 @@ export interface Puddle { x: number; y: number; parts: { dx: number; dy: number;
 
 const isWall = (geo: GroundGeometry, x: number, y: number) => x >= 0 && y >= 0 && x < geo.cols && y < geo.rows && geo.wall[y * geo.cols + x] === 1;
 
-function tile(g: Ctx, M: GroundMaterial[][], tx: number, ty: number, x: number, y: number, art: SolArt | null) {
+export function tile(g: Ctx, M: GroundMaterial[][], tx: number, ty: number, x: number, y: number, art: SolArt | null) {
   const mat = M[ty]?.[tx] ?? 'void', h = (i: number) => hash(tx, ty, i);
   // Sol samples replace the base texture (softened, see sol.ts); cracks, moss and drains stay as runtime variation.
   // Large-scale wear, damp and contact shade come from the shading pass, so no tile carries a rectangular patch.
@@ -227,7 +227,7 @@ export function paintGround(m: MapDef, b: Rect, M: GroundMaterial[][], art: SolA
 }
 
 /** Shadow mask levels: 3 core, 2 first penumbra ring, 1 second ring; the strongest level wins where rects overlap. */
-function shadowMask(rects: [number, number, number, number][], w: number, h: number): Uint8Array | null {
+export function shadowMask(rects: [number, number, number, number][], w: number, h: number): Uint8Array | null {
   if (!rects.length) return null;
   const mask = new Uint8Array(w * h);
   const mark = (x: number, y: number, level: number) => { if (x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x] < level) mask[y * w + x] = level; };

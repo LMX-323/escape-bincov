@@ -33,8 +33,7 @@ button.text-button:hover:not(:disabled) { border-color: transparent; background:
 .muted { color: var(--muted); }
 .orange { color: var(--warm); }
 .small { font-size: 11px; line-height: 1.7; }
-.eyebrow, .section-label { font-size: 10px; line-height: 1.5; letter-spacing: 1px; color: var(--muted); }
-.eyebrow { font-family: var(--mono); }
+.section-label { font-size: 10px; line-height: 1.5; letter-spacing: 1px; color: var(--muted); }
 .panel { pointer-events: auto; background: #15221ff7; border: 1px solid #4c6050; box-shadow: 0 12px 32px #0005; }
 
 /* Hideout uses a fixed header/footer and a separately scrollable working area. */
@@ -120,13 +119,6 @@ button.text-button:hover:not(:disabled) { border-color: transparent; background:
 .merchant-heading h3 { margin: 0; font-size: 15px; font-weight: 600; }
 .merchant-heading h3 span { font-size: 10px; font-weight: 400; color: #9cab91; border-left: 1px solid #4b5c45; margin-left: 12px; padding-left: 12px; }
 .merchant-heading p { font-size: 10px; color: #a5b195; margin: 6px 0 0; }
-.shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 18px; }
-.shop-card { min-width: 0; min-height: 46px; padding: 6px 0; border-bottom: 1px solid #334636; display: flex; align-items: center; gap: 9px; }
-.shop-icon { width: 32px; height: 32px; background: #24342a; display: grid; place-items: center; flex-shrink: 0; }
-.shop-description { min-width: 0; flex: 1; }
-.shop-card strong { display: block; font-size: 11px; font-weight: 500; }
-.shop-card .small { color: #91a287; font-size: 9px; }
-.shop-card button { min-width: 64px; padding: 7px 8px; font: 11px var(--mono); }
 .content-note { margin: 13px 0 0; font-size: 10px; line-height: 1.7; color: #9baa92; }
 .quests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .quest { height: 248px; padding: 14px 16px; background: #1c2b23; border-top: 2px solid #79835b; display: flex; flex-direction: column; }
@@ -174,44 +166,17 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .station-links { display: flex; gap: 18px; margin-top: 10px; }
 .station-links button { font-size: 10px; }
 
-/* In-raid instruments stay small enough to leave the center clear. */
-.hud { position: absolute; inset: 0; pointer-events: none; }
-.hud-top { position: absolute; top: 18px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-.location { border-left: 2px solid #bcca85; padding: 2px 0 3px 11px; text-shadow: 1px 2px #081410; }
-.location .section-label { color: #a7b497; font-size: 9px; margin-bottom: 3px; }
-.location strong { display: block; font-size: 17px; letter-spacing: 2px; line-height: 1.5; }
-.location .small { color: #b9c5ac; font-size: 10px; }
-.timer { background: #101c19e8; border-top: 2px solid #b4c481; padding: 7px 13px 9px; text-align: center; min-width: 110px; }
-.timer strong { font: 26px var(--mono); letter-spacing: 1px; color: #e0e6c7; font-variant-numeric: tabular-nums; }
-.timer small { display: block; font-size: 9px; color: #a6b59b; margin-top: 3px; }
-.hud-bottom { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-.vitals { width: 202px; background: #101c19e8; border-left: 2px solid #8fa76b; padding: 10px 12px; }
-.vital-row { display: flex; justify-content: space-between; font-size: 10px; line-height: 1.4; margin-bottom: 5px; color: #c4d1b8; }
-.vital-row span:last-child { font-variant-numeric: tabular-nums; }
-.bar { height: 4px; background: #304137; margin-bottom: 9px; }
-.bar i { display: block; height: 100%; background: #b5c882; }
-.bar.stamina i { background: #83b1a4; }
-.weapon-hud { min-width: 178px; background: #101c19e8; border-right: 2px solid #8fa76b; padding: 10px 13px; }
-.weapon-hud .eyebrow { font-family: inherit; color: #bacaac; letter-spacing: 1px; }
-.weapon-hud .ammo { font: 28px/1.35 var(--mono); color: #e3e8c8; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.weapon-hud .ammo small { font-size: 12px; color: #a2b491; }
-.weapon-hud .small { font-size: 9px; }
-.keytips { position: absolute; bottom: 24px; left: 244px; color: #bfccaf; font-size: 9px; letter-spacing: 0; text-shadow: 1px 1px #081411; }
-.keytips kbd { border-bottom: 1px solid #74866a; padding: 2px 3px; margin-right: 3px; background: #16251de8; font-family: var(--mono); }
-.interaction { position: absolute; left: 50%; top: 65%; transform: translate(-50%, -50%); background: #18271fec; border: 1px solid #a3b87e; padding: 9px 16px; font-size: 12px; text-align: center; max-width: 470px; line-height: 1.8; }
-.loot-targets { position: relative; list-style: none; margin: 5px 0 0; padding: 0; max-height: 112px; overflow: hidden; text-align: left; min-width: 190px; }
-.loot-targets li { padding: 2px 8px; color: var(--muted); }
-.loot-targets [aria-current="true"] { color: #edf1c8; background: #3a4b32; box-shadow: inset 2px 0 var(--accent); }
-.radio { position: absolute; left: 20px; top: 99px; width: 272px; background: #101e1bdc; border-left: 2px solid #bb895d; padding: 8px 11px; font-size: 11px; line-height: 1.8; color: #c6d1b7; }
-.banner { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 7px 14px; background: #683c2ae8; border: 1px solid #b9825e; color: #f0d6b4; font-size: 11px; letter-spacing: 1px; }
-
 /* Dialogs share one spacing rhythm. No blur over pixel art. */
 .overlay { position: absolute; inset: 0; background: #06100ebd; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
-.inventory-overlay { background: #06100e88; }
 .modal { width: 480px; max-width: 880px; max-height: 500px; overflow-y: auto; padding: 26px 28px; border-top: 2px solid #9daa72; }
 .modal h2 { margin: 8px 0 16px; font-size: 23px; line-height: 1.4; letter-spacing: 1px; font-weight: 600; }
 .modal p { font-size: 12px; line-height: 1.9; color: #acb99f; }
 .modal .orange { color: #d4ad7f; }
+/* Shown instead of the game when the browser has no WebGL (webgl.ts). */
+.webgl-required { width: min(480px, calc(100vw - 32px)); padding: 26px 28px; border-top: 2px solid #9daa72; }
+.webgl-required h2 { margin: 8px 0 16px; font-size: 23px; line-height: 1.4; letter-spacing: 1px; font-weight: 600; }
+.webgl-required p { font-size: 14px; line-height: 1.9; color: #acb99f; margin: 0 0 8px; }
+.webgl-required p.muted { color: var(--muted); margin-top: 16px; }
 .modal .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 18px; margin-top: 18px; border-top: 1px solid #374c38; }
 .result { width: 544px; padding: 30px 32px; border-top: 2px solid #aabd79; }
 .result .stamp { display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #a5b590; letter-spacing: 1px; }
@@ -221,63 +186,25 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .result .stats { display: grid; grid-template-columns: 1fr 1.3fr 1.4fr; margin: 24px 0; padding: 19px 0; gap: 16px; border-top: 1px solid #3b503b; border-bottom: 1px solid #3b503b; }
 .result .stats strong { display: block; font: 25px var(--mono); color: #d7dfb2; margin-bottom: 5px; }
 .result .stats span { font-size: 10px; color: #9aae8e; }
-.map-modal { width: 738px; padding: 18px 23px; }
-.map-modal canvas { width: 690px; height: 400px; background: #122121; margin: 12px auto; border: 1px solid #4d634b; }
-.legend { display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #b0bf9f; }
-.legend .text-button { font-size: 10px; }
-.inventory-modal { width: 784px; padding: 22px; }
-.inventory-modal > .section-title { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #41553e; font-size: 15px; }
-.inventory-modal .columns { gap: 22px; }
-.inventory-modal .details { min-height: 245px; padding-left: 20px; }
-.inventory-modal .item-actions { grid-template-columns: repeat(2, max-content); }
-.inventory-modal .item-actions button { padding: 7px 13px; }
-.inventory-modal > .text-button { margin-top: 13px; font-size: 11px; }
 /* The search source and carried inventory stay visible together. */
-.loot-overlay { background: #06100e88; }
-.loot-modal { width: 850px; padding: 16px 22px 12px; border-top: 2px solid var(--warm); }
-.loot-header { display: flex; align-items: center; gap: 22px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-.loot-header h2 { margin: 3px 0 0; font-size: 17px; letter-spacing: 1px; font-weight: 500; }
-.loot-header button { margin-left: auto; }
-.loot-risk { display: grid; grid-template-columns: auto auto; gap: 4px 18px; margin-left: auto; font-size: 10px; color: #bcc9ab; }
-.loot-risk strong { font-family: var(--mono); color: #e2d0a4; }
-.loot-risk small { grid-column: 1 / -1; color: #c49976; font-size: 10px; }
-.loot-columns { display: grid; grid-template-columns: 1fr 1.5fr; gap: 28px; padding: 14px 0 10px; }
-.loot-source { border-right: 1px solid var(--line); padding-right: 28px; }
-.loot-source > .section-title { width: 240px; }
-.loot-carried { display: flex; gap: 24px; }
-.loot-safe h4 { margin: 0 0 7px; font-size: 11px; font-weight: 400; color: var(--accent); }
 .loot-player > .section-title { width: 240px; }
-.loot-safe .protected { white-space: normal; max-width: 80px; }
-.loot-details { border-left: 0; border-top: 1px solid var(--line); min-height: 86px; padding: 12px 0 0; display: flex; align-items: flex-start; gap: 18px; }
-.loot-details > div:first-child { min-width: 216px; }
-.loot-details p { font-size: 10px; line-height: 1.7; margin: 5px 0; }
-.loot-details .item-description { flex: 1; }
-.loot-details .item-actions { margin-left: auto; max-width: 225px; min-width: 155px; }
-.loot-details .item-actions button { padding: 6px 10px; }
-.loot-details .inv-help { border: 0; padding: 0; }
-.loot-details.details-empty { align-items: center; }
-.loot-details.details-empty h3 { margin: 3px 0; font-size: 12px; }
-.loot-footer { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 9px; font-size: 9px; color: var(--muted); }
-.loot-status { color: #c1ce9f; }
 .drop-preview { position: absolute; z-index: 5; border: 2px solid #c7dd8a; background: #bbd88538; pointer-events: none; }
 .drop-preview.invalid { border-color: #dc8971; background: #c260473b; }
 .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; padding: 15px 0; border-top: 1px solid #3b503b; border-bottom: 1px solid #3b503b; font-size: 11px; color: #b7c5a9; }
 .help-grid kbd { color: #dbe4ba; font-family: var(--mono); display: inline-block; width: 96px; font-size: 11px; }
 #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #1e3024; border: 1px solid #869a6c; box-shadow: 0 4px 16px #0005; color: #e0e8c5; padding: 10px 18px; max-width: 90vw; pointer-events: none; font-size: 12px; line-height: 1.6; opacity: 0; transition: opacity .15s; z-index: 50; }
-.storage-error { color: #e8a186; font-size: 11px; }
 @media (prefers-reduced-motion: reduce) { button, #toast { transition: none; } }
 
 /* Mobile UI uses CSS pixels; only the 16:9 world scales. No DPR-sized backing buffer. */
 :root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); }
-#touch-controls, #world-labels { display: none; }
 .mobile body { height: var(--view-height, 100dvh); overscroll-behavior: none; }
 .mobile #frame { width: 100%; height: 100%; transform: none; }
 .mobile #game { inset: auto; width: 960px; height: 540px; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(var(--world-scale, .5)); transform-origin: center; touch-action: none; }
-.mobile #ui, .mobile #touch-controls, .mobile #world-labels { inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
+.mobile #ui { inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
 .mobile body:not([data-screen="menu"]) button { min-height: 48px; font-size: 14px; padding: 10px 12px; touch-action: manipulation; }
 .mobile input { min-height: 48px; font-size: 16px; }
 .mobile .small, .mobile .inv-help, .mobile .content-note { font-size: 12px; }
-.mobile .section-label, .mobile .eyebrow { font-size: 11px; }
+.mobile .section-label { font-size: 11px; }
 .mobile .section-title { font-size: 15px; }
 .mobile .section-title span { font-size: 11px; white-space: normal; }
 .mobile .hideout { inset: 6px; }
@@ -319,11 +246,6 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile .seed-label { margin-left: 0; font-size: 12px; }
 .mobile .seed { width: 88px; }
 .mobile .bottom-bar .primary { margin-left: auto; min-width: 118px; }
-.mobile .shop-grid { grid-template-columns: 1fr; width: 100%; }
-.mobile .shop-card { min-height: 70px; }
-.mobile .shop-card strong { font-size: 15px; }
-.mobile .shop-card .small { font-size: 12px; }
-.mobile .shop-card button { font-size: 14px; }
 .mobile .merchant-heading { align-items: flex-start; gap: 12px; }
 .mobile .merchant-heading h3 span { display: block; border: 0; margin: 4px 0; padding: 0; font-size: 12px; }
 .mobile .merchant-heading p { font-size: 12px; }
@@ -335,158 +257,37 @@ input[type="range"]::-moz-range-thumb { width: 7px; height: 11px; border: 1px so
 .mobile .station-copy, .mobile .tide-notes > div, .mobile .save-controls p { font-size: 14px; }
 .mobile .save-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .mobile .overlay { padding: 10px; overflow: auto; }
-.mobile .modal, .mobile .result, .mobile .inventory-modal, .mobile .map-modal { width: min(100%, 660px) !important; max-height: 100%; padding: 18px; overflow: auto; }
+.mobile .modal, .mobile .result { width: min(100%, 660px) !important; max-height: 100%; padding: 18px; overflow: auto; }
 .mobile .modal p, .mobile .result p { font-size: 14px; }
 .mobile .modal h2, .mobile .result h2 { font-size: 26px; }
 .mobile .actions { flex-wrap: wrap; gap: 8px; }
 .mobile .help-grid { grid-template-columns: 1fr; font-size: 14px; }
-.mobile .inventory-modal .columns > div { max-width: 100%; overflow: auto; }
-.mobile .map-modal #map { width: 100%; height: auto; }
-.mobile .legend { flex-wrap: wrap; font-size: 12px; line-height: 1.7; gap: 6px; }
-.mobile .hud-top { top: 10px; left: 12px; right: 178px; padding: 0; }
-.mobile .location strong { font-size: 16px; }
-.mobile .location .section-label { display: none; }
-.mobile .location .small { font-size: 11px; }
 .mobile .timer strong { font-size: 24px; }
 .mobile .timer small { display: none; }
-.mobile .hud-bottom { top: 56px; left: 12px; bottom: auto; right: 12px; align-items: flex-start; }
 .mobile .vitals { width: 148px; padding: 8px 10px; }
-.mobile .vital-row { font-size: 11px; }
-.mobile .weapon-hud { text-align: right; padding: 4px 8px; }
-.mobile .weapon-hud .ammo { font-size: 23px; }
 .mobile #reload { max-width: 180px; font-size: 11px; }
-.mobile .keytips { display: none; }
-.mobile .radio { top: 112px; left: 175px; right: 175px; width: auto; font-size: 12px; padding: 7px; }
-.mobile .interaction { top: auto; bottom: 12px; left: 50%; width: min(310px, 43%); transform: translateX(-50%); font-size: 12px; padding: 8px; text-align: center; }
-.mobile .banner { top: 35%; font-size: 14px; }
-.mobile #touch-controls { display: block; position: absolute; pointer-events: none; z-index: 10; touch-action: none; user-select: none; -webkit-user-select: none; }
-.mobile:not([data-state="run"]) #touch-controls, .mobile:not([data-overlay=""]) #touch-controls { display: none; }
-.mobile #touch-controls button, .mobile .stick { pointer-events: auto; touch-action: none; -webkit-touch-callout: none; }
-.mobile .touch-top { position: absolute; top: 6px; right: 8px; display: flex; gap: 6px; }
-.mobile .touch-top button { min-width: 48px; background: #1b2a22df; }
-.mobile .stick { position: absolute; bottom: 28px; width: 104px; height: 104px; border-radius: 50%; border: 1px solid #b4c68688; background: radial-gradient(circle, #bccf9920 0 18%, transparent 19% 60%, #afbd8715 61% 100%); box-shadow: inset 0 0 0 14px #8dab6715; }
-.mobile .move-stick { left: 24px; }
-.mobile .aim-stick { right: 24px; border-color: #ccaf8088; }
-.mobile .stick i { position: absolute; width: 38px; height: 38px; left: calc(50% - 19px); top: calc(50% - 19px); transform: translate(var(--stick-x, 0px), var(--stick-y, 0px)); border-radius: 50%; border: 1px solid #c8d4a38c; background: #a7bd8150; }
-.mobile .stick span { position: absolute; top: calc(100% + 6px); width: 100%; text-align: center; font-size: 10px; letter-spacing: 1px; color: #c4c9a9; }
-.mobile .aim-stick.firing { border-color: #e4aa6c; background-color: #b4753c35; }
-.mobile .aim-stick.firing i { background: #dda16670; }
-.mobile .touch-tools { position: absolute; bottom: 36px; left: 148px; display: flex; flex-direction: column; gap: 5px; }
-.mobile .touch-combat { position: absolute; bottom: 40px; right: 146px; display: flex; flex-direction: column; gap: 8px; }
-.mobile .touch-tools button, .mobile .touch-combat button { background: #18251cce; font-size: 12px; padding: 6px 10px; min-width: 54px; }
-.mobile #touch-interact { border-color: #b6c487; color: #e3eabb; }
-.mobile #world-labels { display: block; position: absolute; pointer-events: none; overflow: hidden; }
-.mobile #world-labels span { position: absolute; font-size: 12px; padding: 3px 7px; color: #dbe6ad; background: #17251ede; white-space: nowrap; transform: translate(-50%, -100%); }
-.mobile:not([data-state="run"]) #world-labels, .mobile:not([data-overlay=""]) #world-labels { display: none; }
 .mobile #toast { bottom: max(15px, var(--safe-bottom)); max-width: calc(100vw - 24px); font-size: 13px; z-index: 100; }
 @media (orientation: landscape) {
-  .mobile .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .mobile .quests { grid-template-columns: repeat(2, 1fr); }
   .mobile .help-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-height: 340px) and (orientation: landscape) {
-  .mobile .hud-top { top: 4px; }
-  .mobile .hud-bottom { top: 43px; }
   .mobile .vitals { width: 130px; padding: 4px 8px; }
-  .mobile .location .small, .mobile .weapon-hud .small { display: none; }
-  .mobile .stick { bottom: 20px; width: 96px; height: 96px; }
-  .mobile .touch-tools { flex-direction: row; left: 140px; bottom: 60px; }
-  .mobile .touch-tools button[data-command="primary"] { position: absolute; top: 53px; left: 0; }
-  .mobile .interaction { top: auto; bottom: 8px; }
 }
 
 /* Inventory exits and current action feedback stay reachable on a phone. */
 .placement-cell { position: absolute; pointer-events: none; border: 2px dashed #c6d58b88; z-index: 3; }
 .placement-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
-.inventory-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-shrink: 0; }
-.inventory-header > div { display: flex; flex-direction: column; gap: 4px; }
-.quick-modal { width: min(560px, 100%); max-height: 90%; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-.quick-body { min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.quick-body h3 { font-size: 14px; color: #c6d58b; margin: 14px 0 6px; }
-.quick-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #35493e; padding: 10px 0; }
-.quick-row > div { min-width: 0; }
-.quick-row p { margin: 5px 0; font-size: 12px; color: #99aa9b; line-height: 1.6; }
-.quick-row button { flex-shrink: 0; min-width: 64px; min-height: 48px; }
-.reading-text { white-space: pre-wrap; line-height: 1.9; margin: 8px 0; font-size: 15px; }
-.interaction button { pointer-events: auto; display: block; margin: 5px auto 0; }
-.mobile { --control-left: 220px; --control-right: 220px; --radio-top: 64px; --radio-left: 175px; --radio-right: 205px; }
-.mobile .hud-top { right: 240px; }
-.mobile .radio { top: var(--radio-top); left: var(--radio-left); right: var(--radio-right); font-size: 12px; line-height: 1.5; max-height: 48px; overflow: hidden; }
-.mobile .banner { top: 118px; max-width: calc(100% - var(--control-left) - var(--control-right)); text-align: center; }
-.mobile .interaction { left: calc((100% + var(--control-left) - var(--control-right)) / 2); width: min(310px, calc(100% - var(--control-left) - var(--control-right))); max-width: none; }
-.mobile[data-state="run"][data-overlay=""] #toast { left: calc((100vw + var(--safe-left) - var(--safe-right) + var(--control-left) - var(--control-right)) / 2); bottom: calc(var(--interaction-height, 0px) + 20px + var(--safe-bottom)); max-width: min(310px, calc(100vw - var(--control-left) - var(--control-right) - var(--safe-left) - var(--safe-right))); }
 .mobile:not([data-overlay=""]) #toast { top: max(12px, var(--safe-top)); bottom: auto; }
-@media (orientation: landscape) {
-  /* A nearby button can fill the bottom gap. Brief success feedback uses the
-     radio slot instead, keeping the warning and nearby actions unobstructed. */
-  .mobile[data-state="run"][data-overlay=""][data-toast-kind="success"] .radio { visibility: hidden; }
-  .mobile[data-state="run"][data-overlay=""][data-toast-kind="success"] #toast {
-    top: calc(var(--radio-top) + var(--safe-top)); bottom: auto;
-    left: calc(var(--radio-left) + var(--safe-left)); right: calc(var(--radio-right) + var(--safe-right));
-    transform: none; max-width: none; padding: 7px; font-size: 12px; line-height: 1.5;
-  }
-}
 .mobile .details:not(.details-empty) { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .mobile .details .item-heading { flex-shrink: 0; margin-bottom: 8px; }
 .mobile .detail-close { margin-left: auto; flex-shrink: 0; }
 .mobile .detail-body { min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.mobile .inventory-modal .item-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.mobile .mobile-raid-inventory { display: flex; flex-direction: column; gap: 8px; height: 100%; overflow: hidden; padding: 12px 18px; }
-.mobile .mobile-raid-inventory .mobile-inventory-tabs { flex-shrink: 0; margin: 0; }
-.mobile .run-inventory-content { min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .mobile .placement-controls { flex-shrink: 0; margin: 0; font-size: 12px; }
 .mobile .placement-controls button { flex-shrink: 0; }
-.mobile .quick-modal { height: min(100%, 560px); max-height: 100%; }
-.mobile #touch-controls button[aria-pressed="true"] { border-color: #b6c487; background: #35472c; color: #e3eabb; }
-@media (max-height: 340px) and (orientation: landscape) {
-  /* Left tools are wider than right combat buttons on short screens. */
-  .mobile { --control-left: 270px; --control-right: 205px; --radio-top: 65px; --radio-left: 155px; }
-  .mobile .interaction { padding: 4px 6px; line-height: 1.4; }
-  .mobile .radio { max-height: 42px; padding: 3px 7px; }
-  .mobile .banner { top: 116px; left: calc((100% + var(--radio-left) - var(--radio-right)) / 2); max-width: calc(100% - var(--radio-left) - var(--radio-right)); padding: 5px 9px; }
-  .mobile .quick-modal { padding: 10px 14px; }
-}
 
 .mobile .touch-guide + .help-grid { display: none; }
-.mobile .loot-modal { width: 100%; max-height: 100%; padding: 12px; display: flex; flex-direction: column; overflow: hidden; }
-.mobile .loot-header { gap: 12px; padding-bottom: 8px; flex-shrink: 0; }
-.mobile .loot-header h2 { font-size: 16px; }
-.mobile .loot-risk { gap: 4px 8px; }
-.mobile .loot-columns { display: flex; overflow: auto; min-height: 0; gap: 18px; overscroll-behavior: contain; }
-.mobile .loot-source { flex-shrink: 0; padding-right: 18px; }
-.mobile .loot-carried { gap: 18px; }
-.mobile .loot-details { flex-shrink: 0; }
-.mobile .loot-details.details-empty { display: flex; min-height: 0; padding: 5px 0 0; }
-.mobile .loot-details.details-empty > div, .mobile .loot-details.details-empty > p { display: none; }
-.mobile .loot-details.details-empty:has(button) > p { display: block; }
-.mobile .loot-details.details-empty button { margin-left: auto; }
-.mobile .loot-details:not(.details-empty) { overflow: auto; }
-.mobile .loot-details .item-actions { width: 100%; max-width: none; margin: 0; }
-.mobile .loot-details .item-description, .mobile .loot-details p { font-size: 12px; }
-.mobile .loot-footer { flex-shrink: 0; margin-top: 5px; font-size: 11px; }
 .mobile { -webkit-tap-highlight-color: transparent; }
-.mobile .map-modal { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(calc(var(--view-height, 100dvh) - 20px), 600px); overflow: hidden; }
-.mobile .map-modal #map { width: 100%; height: 100%; object-fit: contain; min-height: 0; margin: 0; border: 0; }
-.mobile .map-modal .legend { padding-top: 6px; }
-@media (max-height: 340px) and (orientation: landscape) {
-  .mobile .weapon-hud { margin-top: 16px; }
-  .mobile .map-modal { padding: 10px 14px; }
-  .mobile .map-modal .section-title { margin-bottom: 5px; }
-  .mobile .map-modal .legend { font-size: 11px; }
-}
-
-/* Loot danger remains visible above every scrolling inventory or detail panel. */
-.loot-modal { max-height: calc(100% - 24px); display: flex; flex-direction: column; overflow: hidden; }
-.loot-header { flex-shrink: 0; position: relative; z-index: 2; background: #15231f; }
-.loot-header.under-attack { outline: 2px solid #ef8168; background: #522c26; }
-#loot-hit { grid-column: 1 / -1; color: #ffd2b8; min-height: 1em; }
-.loot-columns { min-height: 0; overflow: auto; }
-.loot-details { flex-shrink: 0; max-height: 30vh; overflow: auto; }
-.loot-footer { flex-shrink: 0; }
-.mobile .loot-details:not(.details-empty) { position: static; width: auto; max-height: 40vh; flex-shrink: 1; padding: 8px; box-shadow: none; overflow: auto; }
-.mobile .loot-targets { max-height: min(144px, 30vh); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
-.mobile .loot-targets li { padding: 0; }
-.mobile .loot-targets button { width: 100%; min-height: 44px; text-align: left; }
 
 .shop-layout { display: grid; grid-template-columns: max-content max-content max-content; gap: 22px; align-items: start; overflow: auto; }
 .shop-layout h3 { font-size: 12px; font-weight: 500; color: var(--accent); }
@@ -502,9 +303,6 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 
 .split-control { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .split-control input { width: 64px; padding: 6px; }
-.mobile .loot-details .placement-controls { display: flex; flex-wrap: wrap; width: 100%; }
-.mobile .loot-details .placement-hint { flex: 1 1 180px; }
-.mobile .loot-details.details-empty > .placement-controls { display: flex; }
 
 .item, .item img { user-select: none; -webkit-user-drag: none; }
 .inventory-dragging, .inventory-dragging * { cursor: grabbing !important; }
@@ -547,37 +345,11 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 
 .departure-check { display: flex; align-items: center; gap: 12px; }
 .departure-check p { max-width: 220px; margin: 0; color: #d2b081; font-size: 11px; line-height: 1.6; }
-.raid-information { position: absolute; right: 22px; top: 100px; width: 270px; pointer-events: auto; font-size: 11px; }
-.raid-information > button { width: 100%; padding: 8px; text-align: left; }
-#raid-quests { margin-top: 6px; padding: 8px; background: #101d18ee; border: 1px solid var(--line); }
-#raid-quests summary { cursor: pointer; min-height: 24px; }
-#raid-quest-list { max-height: 30vh; overflow: auto; }
-#raid-quest-list section { border-top: 1px solid var(--line); padding-top: 8px; }
-#raid-quest-list p { margin: 4px 0; }
-#raid-quests small { color: var(--muted); }
-#hit-directions { position: absolute; inset: 0; pointer-events: none; }
-#hit-directions i { position: absolute; color: #ff8668; font-style: normal; font-size: 28px; text-shadow: 0 0 5px #511c10; }
-.exit-choice { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 11px; }
-.exit-choice select { background: #192b22; color: var(--ink); padding: 6px; }
 .mobile .departure-check { justify-content: space-between; width: 100%; }
 .mobile .departure-check p { max-width: none; flex: 1; font-size: 12px; }
-.mobile .raid-information { right: max(120px, var(--safe-right)); top: 58px; width: 220px; font-size: 11px; }
-.mobile .raid-information > button { min-height: 36px; font-size: 11px; padding: 5px; }
-.mobile #raid-quests summary { min-height: 32px; }
-.mobile .exit-choice { flex-wrap: wrap; }
-.mobile .exit-choice span { display: none; }
-html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden; }
-.map-modal { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; height: min(calc(100% - 20px), 540px); }
-.map-modal canvas { width: 100%; height: 100%; min-height: 0; object-fit: contain; margin: 0; }
-.mobile .map-modal { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 @media (max-width: 600px) {
   .mobile .shopping .bottom-bar { flex-wrap: wrap; }
 }
-.hud { isolation: isolate; }
-#hit-directions { z-index: 1; }
-.mobile .raid-information #exit-navigation { min-height: 44px; padding: 6px; font-size: 11px; white-space: nowrap; }
-.mobile #raid-quest-list { max-height: clamp(20px, calc(100dvh - 330px), 160px); }
-.mobile .radio { right: max(350px, var(--safe-right)); overflow: auto; pointer-events: auto; }
 
 /* Choosing a shop slot replaces the footer action instead of shrinking its grids. */
 .shopping .shop-placement { flex: 0 1 280px; min-width: 220px; }
@@ -589,11 +361,6 @@ html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden
   .mobile .shopping .cash > span, .mobile .shop-content > .merchant-heading { display: none; }
   .mobile .shopping .shop-buffer { gap: 4px; }
   .mobile .shopping .shop-buffer h3 { padding: 2px 0; line-height: 1.25; margin-bottom: 2px; }
-  .mobile .raid-information { right: max(215px, var(--safe-right)); }
-  .mobile .radio { right: max(445px, var(--safe-right)); }
-  .mobile #raid-quests { padding: 4px; }
-  .mobile #raid-quests summary { min-height: 24px; }
-  .mobile #raid-quest-list { max-height: 44px; }
 }
 /* Building and station controls share the existing inventory and touch surfaces. */
 .rpg-cards { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
@@ -601,21 +368,11 @@ html[data-overlay]:not([data-overlay=""]) .raid-information { visibility: hidden
 .rpg-cards strong { font-size: 22px; color: #d8dbad; }
 .facility-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .production-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #3c4e3b; padding: 12px 0; }
-.base-hud { pointer-events: none; position: absolute; inset: 0; padding: 18px 24px; color: #e2e4bd; }
-.base-hud > div { display: flex; flex-direction: column; gap: 5px; }
-.base-hud nav { pointer-events: auto; position: absolute; right: 20px; top: 18px; display: flex; gap: 8px; }
-.base-hud p { position: absolute; left: 50%; bottom: 15px; transform: translateX(-50%); background: #10231eee; padding: 10px 16px; width: max-content; max-width: 60%; }
-.base-modal { width: min(720px, 95%); max-height: 90%; overflow-y: auto; padding: 20px; }
-.base-modal header { display: flex; justify-content: space-between; align-items: center; }
-.mobile[data-base-walking="true"][data-overlay=""] #touch-controls { display: block; }
-.mobile[data-base-walking="true"] .aim-stick, .mobile[data-base-walking="true"] .touch-tools, .mobile[data-base-walking="true"] .touch-top, .mobile[data-base-walking="true"] [data-command="reload"] { display: none; }
-.mobile[data-base-walking="true"] .touch-combat { right: 30px; }
-.mobile .base-hud { padding: 12px; }
-.mobile .base-hud nav { right: 12px; top: 10px; }
-.mobile .base-hud p { bottom: 4px; max-width: 55%; font-size: 12px; }
 .mobile .rpg-cards { gap: 6px; margin: 8px 0; }
 .mobile .rpg-cards > div { min-width: 85px; padding: 8px; }
 
-/* Station yard (src/station-view): its own shadow root covers the page while the Phaser frame sleeps. */
+/* Station yard (src/station-view): its own shadow root covers the page while the page frame is hidden. */
 html[data-station] #frame { visibility: hidden; }
 #station-yard { position: fixed; inset: 0; z-index: 2; background: #0a0c0e; }
+.inventory-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.inventory-tools span { color: var(--muted, #9daba4); font-size: 12px; }

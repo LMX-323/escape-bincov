@@ -16,6 +16,8 @@ const at = (x: number, y: number) => ({ x: x * T, y: y * T });
 const POWER_SHOT = { x: 0.75 * T, y: -0.75 * T, w: 33.5 * T, h: 24 * T };
 /** Walking speed (px/s) and the Shift multiplier: 112 × 1.45 stays under the Runtime's 168 px/s practice limit. */
 const WALK = 112, SPRINT = 1.45;
+/** Keys (with the SHORTCUTS digits) that open or close the menu or a panel, or leave the yard: one action per press. */
+const TOGGLE_KEYS = ['Escape', 'Tab', '0', 'j', 'g', 'c', 'h', 'F1'];
 interface StationNpc { id: StationId; look: string; home: { x: number; y: number }; dir: Dir; pose: Pose; when?: (s: HideoutSnapshot) => boolean }
 const NPCS: StationNpc[] = [
   { id: 'med', look: 'xu', home: at(28.5, 12.74), dir: 's', pose: 'idle' },
@@ -38,6 +40,8 @@ export interface StationHooks {
   departed(runId: string): void;
   /** Seed the Runtime should use for an empty seed field (village corner for the sample), or '' for the clock. */
   seedFor(world: RunWorld): string;
+  /** Layout revision for a new mall raid (3, the 2.5D one); undefined keeps the Runtime default. */
+  mallLayout?(world: RunWorld): 1 | 2 | 3 | undefined;
   tabs(): void;
   title(): void;
   exportSave(): void;
@@ -52,6 +56,8 @@ export interface HostOptions {
   app: Application; shadow: ShadowRoot; mount: HTMLElement; rt: HideoutRuntime; sol: Map<string, HTMLCanvasElement>; art: StationArt;
   test: boolean; reduced: boolean; frozen: boolean; mood: string; touch: boolean; volume: number;
   arrival: { runId: string; summary: D.RunSummary } | null; world: RunWorld; seed: string; hooks: StationHooks;
+  /** Areas the deploy panel offers. */
+  worlds: readonly RunWorld[];
 }
 
 /** Owns the yard while it is mounted: input, movement, NPC behaviour, interaction, camera and the gate / power sequences. */
@@ -64,7 +70,6 @@ export class StationHost {
   player = { x: 27.5 * T, y: 19.4 * T, dir8: 6, walk: 0, moving: false };
   private scope = new Scope();
   private app: Application;
-  private mount: HTMLElement;
   private hooks: StationHooks;
   private keys = new Set<string>();
   private path: { x: number; y: number }[] | null = null;
@@ -89,7 +94,7 @@ export class StationHost {
 
   constructor(private opts: HostOptions) {
     const { app, rt, mount, hooks } = opts;
-    this.app = app; this.rt = rt; this.mount = mount; this.hooks = hooks;
+    this.app = app; this.rt = rt; this.hooks = hooks;
     this.audio = new StationAudio(hooks.audioBus);
     this.scene = new HideoutScene(app, opts.sol, { reduced: opts.reduced, mood: opts.mood }, opts.art);
     lifecycle.views++;
@@ -106,7 +111,7 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-    }, this.scope, { world: opts.world, seed: opts.seed });
+    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds });
     this.ui.volume = opts.volume;
     this.ui.setTouch(opts.touch);
     const unsubscribe = rt.subscribe(e => this.event(e));
@@ -134,6 +139,7 @@ export class StationHost {
   // ---------------- input ----------------
   private bindInput() {
     const canvas = this.app.canvas, s = this.scope, joyEl = () => this.ui.root.querySelector<HTMLElement>('.joy');
+    const dropJoy = () => { this.joy = null; this.ui.root.classList.remove('joying'); };
     const gesture = () => { this.hooks.audioStart(); this.audio.start(); };
     s.on(window, 'keydown', e => {
       gesture();
@@ -142,6 +148,9 @@ export class StationHost {
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (this.ui.dragging) return;
       if (this.seq && this.seq.kind !== 'away') { if (k === 'Escape' && this.seq.kind === 'power') this.seq.t = Math.max(this.seq.t, 5.4); e.preventDefault(); return; }
+      // A held key auto-repeats: toggles must not flip back and forth (Tab and F1 keep their browser action blocked);
+      // walking and zoom keep repeating.
+      if (e.repeat && (TOGGLE_KEYS.includes(k) || SHORTCUTS.some(q => q.key === k))) { e.preventDefault(); return; }
       if (k === 'Escape') { e.preventDefault(); if (this.ui.menuOpen) this.ui.setMenu(false); else if (this.ui.open) this.ui.close(); else this.ui.show('menu'); return; }
       if (this.ui.dialogKind) return;
       if (k === 'Tab') { e.preventDefault(); this.ui.quickOpen('gear'); return; }
@@ -159,8 +168,8 @@ export class StationHost {
       this.keys.add(k);
     });
     s.on(window, 'keyup', e => { this.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
-    s.on(window, 'blur', () => { this.keys.clear(); this.joy = null; });
-    s.on(document, 'visibilitychange', () => { this.keys.clear(); this.joy = null; });
+    s.on(window, 'blur', () => { this.keys.clear(); dropJoy(); });
+    s.on(document, 'visibilitychange', () => { this.keys.clear(); dropJoy(); });
     s.on(canvas, 'contextmenu', e => e.preventDefault());
     s.on(canvas, 'wheel', e => { e.preventDefault(); this.scene.zoom(e.deltaY < 0 ? 1 : -1); }, { passive: false });
     s.on(canvas, 'pointerdown', e => {
@@ -194,7 +203,7 @@ export class StationHost {
       const m = Math.hypot(this.joy.dx, this.joy.dy); if (m > 1) { this.joy.dx /= m; this.joy.dy /= m; }
       joyEl()?.style.setProperty('--kx', `${this.joy.dx * 34}px`); joyEl()?.style.setProperty('--ky', `${this.joy.dy * 34}px`);
     });
-    const endJoy = (e: PointerEvent) => { if (this.joy && e.pointerId === this.joy.id) { this.joy = null; this.ui.root.classList.remove('joying'); } };
+    const endJoy = (e: PointerEvent) => { if (this.joy && e.pointerId === this.joy.id) dropJoy(); };
     s.on(window, 'pointerup', endJoy); s.on(window, 'pointercancel', endJoy);
     s.on(this.ui.root.querySelector<HTMLElement>('.touch-act')!, 'click', () => { gesture(); if (!this.ui.open && !this.seq && !this.ui.menuOpen) this.interact(); });
     // Rotating or narrowing the window folds the shortcut menu: its layout belongs to the old screen shape. A height-only
@@ -259,7 +268,8 @@ export class StationHost {
   // ---------------- departure and return ----------------
   private deploy(world: RunWorld, seed: string) {
     if (this.seq) return;
-    const r = this.rt.deploy({ world, seed: seed.trim() || this.hooks.seedFor(world) });
+    const mallLayout = this.hooks.mallLayout?.(world);
+    const r = this.rt.deploy({ world, seed: seed.trim() || this.hooks.seedFor(world), ...mallLayout ? { mallLayout } : {} });
     if (!r.ok || !r.runId) { this.ui.toast(r.ok ? '出击没有准备好。' : r.message, 'error'); this.audio.cue('error'); if (!r.ok && (r.reason === 'storage' || r.reason === 'conflict')) this.ui.showStorage(); return; }
     // The run is saved now: the gate animation plays, then the raid starts from that checkpoint.
     this.ui.discard(); this.ui.setQuickVisible(false);

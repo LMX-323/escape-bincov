@@ -6,6 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { throughYard } from './yard-entry.mjs';
 import { browserOptions } from './browser-options.mjs';
+import { raidReady, frames, drive, panel, waitPanel, stand } from './raid-view.mjs';
+import { failSessionWritesOnClick, restoreSessionWrites } from './storage-fault.mjs';
 
 const out = resolve('test-results');
 await mkdir(out, { recursive: true });
@@ -13,7 +15,7 @@ const browser = await chromium.launch(browserOptions);
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true, acceptDownloads: true });
 const page = await context.newPage();
 page.setDefaultTimeout(15000);
-const report = { startedAt: new Date().toISOString(), browser: browser.version(), steps: [], errors: [], externalRequests: [], methodology: 'Storage-failure injection and inventory/position fixtures with real UI buttons, downloads, file import and a real three-second E hold. Not a natural-play difficulty test.' };
+const report = { startedAt: new Date().toISOString(), browser: browser.version(), steps: [], errors: [], externalRequests: [], methodology: 'Storage-failure injection and inventory/position fixtures with real UI buttons, downloads, file import and a real three-second E hold. Raids run on the 2.5D view; positions and enemy readiness use the explicit ?test=1 driver. Not a natural-play difficulty test.' };
 page.on('pageerror', error => report.errors.push(error.message));
 page.on('console', message => { if (message.type() === 'error') report.errors.push(message.text()); });
 context.on('request', request => { if (/^https?:/.test(request.url())) report.externalRequests.push(request.url()); });
@@ -27,6 +29,28 @@ async function failStorage(on, terminalOnly = false) {
       return window.__realStorageWrite.call(this, key, value);
     } : window.__realStorageWrite;
   }, {on, terminalOnly});
+}
+/**
+ * On a slow runner (CI's software GL) the first frames after a mount can be more than 2 s apart, and the Runtime then
+ * stall-pauses the raid ("画面暂时停顿…"), as it would for a player; keys then do nothing. Where a step needs the raid
+ * running, resume it through the pause panel, as a player would, and wait until it has stayed running for a few frames.
+ */
+async function running(p) {
+  for (let i = 0; i < 5; i++) {
+    const now = await p.evaluate(() => ({ panel: window.__bincovSample.host.panel, phase: window.__bincovSample.host.lastBatch.frame.phase }));
+    if (now.phase === 'running' && now.panel === null) {
+      await frames(p, 3);
+      if (await p.evaluate(() => window.__bincovSample.host.lastBatch.frame.phase === 'running')) return;
+      continue;
+    }
+    assert.equal(now.panel, 'pause', `the raid waits on ${now.panel}`);
+    // Only the Runtime's own stall pause is resumed here; any other pause is a failure of the step.
+    assert.ok(await p.evaluate(() => { const h = window.__bincovSample.host, seen = h.__stallSeen ?? 0, stalls = h.eventLog.filter(e => e.type === 'notice' && /^画面暂时停顿/.test(e.detail?.text ?? '') && e.seq > seen); if (!stalls.length) return false; h.__stallSeen = Math.max(...stalls.map(e => e.seq)); return true; }), 'the raid paused without the Runtime\'s stall notice');
+    report.stallResumes = (report.stallResumes ?? 0) + 1; console.log('STALL: resumed a stall pause');
+    await p.locator('.coast-sample [data-do="resume"]').click();
+    await p.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 30000 });
+  }
+  throw new Error('the raid did not stay running');
 }
 async function step(name, work) {
   const item = { name, status: 'running' }; report.steps.push(item);
@@ -89,39 +113,54 @@ try {
     assert.equal((await state()).state, 'hideout');
     assert.deepEqual((await state()).save, before);
     assert.equal(await page.evaluate(() => window.__bincov.app.loadout), null);
-    assert.equal(await page.evaluate(() => window.__bincov.app.game.scene.isActive('Raid')), false);
+    assert.equal(await page.evaluate(() => !!window.__bincov.app.coastSample || !!document.querySelector('.coast-sample')), false, 'no raid view started');
     await failStorage(false);
   });
   await step('failed safe transfer rolls back live containers', async () => {
     await action('tab', 'gear').click(); await page.locator('#seed').fill('42'); await action('deploy').click();
-    await page.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-    await page.evaluate(() => window.__bincov.app.raid.enemies.forEach(e => e.cooldown = 9999));
-    await page.keyboard.press('Tab');
-    const item = page.locator('[data-source="bag"][aria-label^="密封绷带"]');
-    await item.click();
-    const before = await page.evaluate(() => window.__bincov.app.loadout);
-    await failStorage(true); await action('secure').click();
+    await raidReady(page); await drive(page, 'freezeAI', true); await running(page);
+    const item = page.locator('.coast-sample [data-panel] [data-source="bag"][aria-label^="密封绷带"]');
+    let before;
+    for (let attempt = 0; ; attempt++) {
+      await page.keyboard.press('Tab'); await waitPanel(page, 'inventory');
+      await item.click();
+      before = await page.evaluate(() => window.__bincov.app.loadout);
+      // Bag to safe through the panel's quick transfer; a failed write restores both containers and shows the save dialog.
+      // The fault arms on the click itself, so a periodic checkpoint just before it cannot take the failure instead.
+      await failSessionWritesOnClick(page, '.coast-sample [data-do="inv-quick"]');
+      try { await page.locator('.coast-sample [data-do="inv-quick"]').click({ timeout: 10000 }); break; }
+      catch (error) {
+        // A stall pause on a slow runner closed the panel before the tap (nothing was written): resume and open it again.
+        if (attempt >= 2 || await panel(page) !== 'pause' || await page.evaluate(() => window.__failedSessionWrites) > 0) throw error;
+        await running(page);
+      }
+    }
+    await waitPanel(page, 'pause'); await page.locator('.coast-sample [data-do="retry-save"]').waitFor();
     assert.deepEqual(await page.evaluate(() => window.__bincov.app.loadout), before);
-    await failStorage(false); await action('retry-checkpoint').click(); await action('close').click();
+    await restoreSessionWrites(page); await page.locator('.coast-sample [data-do="retry-save"]').click(); await waitPanel(page, null);
   });
   await step('real extraction freezes on failed save; backup contains the collected sample', async () => {
-    await page.evaluate(() => {
-      const raid = window.__bincov.app.raid, sample = raid.loot.find(l => l.id === 'sample');
-      raid.player.setPosition(sample.sprite.x, sample.sprite.y);
-    });
-    await page.waitForTimeout(600); await page.keyboard.press('e', { delay: 100 });
+    // The guaranteed sample lies on the street, with no container in reach to take the E press instead.
+    const sample = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.loot.find(l => l.item === 'sample'));
+    assert.ok(sample, 'the run placed its sample on the street');
+    await stand(page, { x: sample.x, y: sample.y }); await running(page);
+    await page.keyboard.press('e', { delay: 100 });
     await page.waitForFunction(() => window.__bincov.app.loadout.bag.items.some(i => i.id === 'sample'));
-    await page.evaluate(() => { const r = window.__bincov.app.raid; r.player.setPosition(r.config.exits[0].x, r.config.exits[0].y); });
-    await page.waitForTimeout(600); await failStorage(true, true);
+    const exit = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.exits[0].at);
+    await stand(page, exit); await running(page); await failStorage(true, true);
     await page.keyboard.down('e');
-    try { await page.getByRole('heading', { name: '结算尚未保存' }).waitFor(); } finally { await page.keyboard.up('e'); }
+    try {
+      await page.waitForFunction(() => document.querySelector('.coast-sample [data-ending-title]')?.textContent === '撤离成功 · 正在保存结算'
+        && !!document.querySelector('.coast-sample [data-do="retry-settlement"]'), null, { timeout: 30000 });
+    } finally { await page.keyboard.up('e'); }
     const pending = await state(); assert.equal(pending.state, 'run'); assert.equal(pending.pending.lastResult.outcome, 'extract');
-    await page.keyboard.press('Escape'); await page.keyboard.press('m');
-    assert.equal((await state()).overlay, 'save-error');
-    const elapsed = await page.evaluate(() => window.__bincov.app.raid.elapsed);
+    // Neither Esc nor M hides an unsaved settlement, and the world stays stopped.
+    await page.keyboard.press('Escape'); await page.keyboard.press('m'); await frames(page, 3);
+    assert.equal(await panel(page), 'ending');
+    const elapsed = await page.evaluate(() => window.__bincovSample.host.lastBatch.stamp.simulationTime);
     await page.waitForTimeout(1100);
-    assert.equal(await page.evaluate(() => window.__bincov.app.raid.elapsed), elapsed);
-    const downloadPromise = page.waitForEvent('download'); await action('export-save').click();
+    assert.equal(await page.evaluate(() => window.__bincovSample.host.lastBatch.stamp.simulationTime), elapsed);
+    const downloadPromise = page.waitForEvent('download'); await page.locator('.coast-sample [data-do="backup"]').click();
     backupPath = resolve(out, 'pending-settlement-backup.json'); await (await downloadPromise).saveAs(backupPath);
     const envelope = JSON.parse(await readFile(backupPath, 'utf8'));
     assert.equal(envelope.formatVersion, 4); assert.equal(envelope.record.expansion.base.location, 'settlement');
@@ -130,8 +169,8 @@ try {
     await page.screenshot({ path: resolve(out, 'save-failure.png') });
   });
   await step('retry saves once; refresh retains extraction and loot', async () => {
-    await failStorage(false); await action('retry-save').click();
-    await action('return').waitFor();
+    await failStorage(false); await page.locator('.coast-sample [data-do="retry-settlement"]').click();
+    await action('return').waitFor({ timeout: 30000 });
     const saved = (await state()).save;
     assert.equal(saved.stats.extracts, 1); assert.equal(saved.stats.runs, 1);
     await page.reload(); await action('enter').click();
@@ -170,8 +209,8 @@ try {
       await p.goto('https://bincov.test/game?test=1&entry=tabs');
       await p.locator('[data-action="enter"]').click();
       await p.locator('[data-action="deploy"]').click();
-      await p.waitForFunction(() => window.__bincov.app.raid?.player?.active);
-      await p.keyboard.press('Escape');
+      await raidReady(p); await running(p);
+      await p.keyboard.press('Escape'); await waitPanel(p, 'pause');
       await p.evaluate(() => {
         window.__realStorageWrite = Storage.prototype.setItem;
         Storage.prototype.setItem = function (key, value) {
@@ -179,9 +218,10 @@ try {
           return window.__realStorageWrite.call(this, key, value);
         };
       });
-      await p.locator('[data-action="abandon"]').click();
-      await p.locator('[data-action="confirm-abandon"]').click();
-      await p.getByRole('heading', { name: '结算尚未保存' }).waitFor();
+      await p.locator('.coast-sample [data-do="abandon"]').click();
+      await p.locator('.coast-sample [data-do="abandon-yes"]').click();
+      await p.waitForFunction(() => document.querySelector('.coast-sample [data-ending-title]')?.textContent === '已放弃行动 · 正在保存结算'
+        && !!document.querySelector('.coast-sample [data-do="retry-settlement"]'), null, { timeout: 30000 });
       const pending = await p.evaluate(() => window.__bincov.app.pendingSettlement);
       assert.ok(pending);
       const latest = await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2')));
@@ -191,12 +231,15 @@ try {
       await peer.evaluate(save => localStorage.setItem('escape-bincov.session.v2', JSON.stringify(save)), latest);
       await p.waitForFunction(() => window.__bincov.app.conflict && !window.__bincov.app.storageOK);
       await p.evaluate(() => { Storage.prototype.setItem = window.__realStorageWrite; });
-      assert.equal(await p.locator('[data-action="retry-save"]').isDisabled(), true);
+      // The newer record from the other window must not be overwritten: no retry is offered, only the backup.
+      await p.waitForFunction(() => !document.querySelector('.coast-sample [data-do="retry-settlement"]'));
+      assert.equal(await p.locator('.coast-sample [data-ending-row] [data-do="backup"]').count(), 1);
+      assert.equal(await p.evaluate(() => window.__bincovSample.host.services.settlement().retryable), false);
       assert.equal(await p.evaluate(() => window.__bincov.persist()), false);
       assert.deepEqual(await p.evaluate(() => window.__bincov.app.pendingSettlement), pending);
       assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2'))), latest);
       const downloadPromise = p.waitForEvent('download');
-      await p.locator('[data-action="export-save"]').click();
+      await p.locator('.coast-sample [data-do="backup"]').click();
       const file = resolve(out, 'conflict-settlement-backup.json');
       await (await downloadPromise).saveAs(file);
       const backup = JSON.parse(await readFile(file, 'utf8'));

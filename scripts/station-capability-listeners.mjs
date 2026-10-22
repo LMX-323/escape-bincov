@@ -10,11 +10,16 @@
  *   trip:  no scratch draw. After each restore a real yard -> village (buildings, seed 42) -> yard trip on the shared
  *          renderer; samples in the yard and in the village (product only).
  * A listener is the bind group of one shader. It is matched to the current users of that shader: the graphics adaptor,
- * BatcherPipe batchers, product Graphics render data, the probe's pooled render data. A shader seen earlier that has
- * no user now is reported as 'kept' if it is still alive after GC (the page's per-count DefaultShader).
+ * BatcherPipe batchers, product Graphics render data, the probe's pooled render data, and the title's renderer. The
+ * title keeps its own Pixi renderer for the page's life (src/title/scene.ts prepareTitleRenderer, since #64); its
+ * graphics adaptor Shader listens on the 16-texture group from boot and its batchers borrow the page's DefaultShader.
+ * That renderer is only reachable from the menu, so each page takes it there (a WeakRef) before entering the yard.
+ * A shader seen earlier that has no user now is reported as 'kept' if it is still alive after GC (the page's
+ * per-count DefaultShader).
  * Checks after three CDP GCs: no listener whose shader was collected or never seen; one DefaultShader per texture
  * count; per group, the same DefaultShader listeners at the end of every round and, of the graphics adaptor's Shaders
- * (new on every context change), only the current one; the yard still draws and walks.
+ * (new on every context change), only the current one; of the title renderer, only its graphics adaptor's one Shader;
+ * the yard still draws and walks.
  * Usage: node --import tsx scripts/station-capability-listeners.mjs [--html=dist/index.html]
  *        [--out=test-results/cap-listener] [--workload=probe,idle,remount,trip] [--rounds=3]
  * Exit 1 on any failed check. On the pre-fix build (1dbacb4) probe and trip fail the first three checks; idle and
@@ -57,6 +62,8 @@ async function open(village) {
   page.on('pageerror', e => report.errors.push(e.stack ?? e.message));
   page.on('console', m => { if (m.type() === 'error') report.errors.push(`[console] ${m.text()}`); });
   await page.goto(`https://station.test/?test=1${village ? '&sample=village' : ''}`);
+  await page.waitForFunction(() => window.__bincov?.title);
+  await page.evaluate(() => { window.__capTitle = new WeakRef(window.__bincov.title.debug().app.renderer); });
   await page.locator('[data-action="enter"]').click(); await yardReady();
   if (village) {
     await page.evaluate(fx => window.__station.reseed(() => {
@@ -81,7 +88,7 @@ async function gc() { const c = await ctx.newCDPSession(page); for (let i = 0; i
  */
 const sample = (label, draw = false) => page.evaluate(([label, draw]) => {
   const W = window, app = W.__station?.mounted ? W.__station.host.app : W.__bincovSample.host.app, r = app.renderer;
-  const a = r.renderPipes.graphics._adaptor;
+  const a = r.renderPipes.graphics._adaptor, title = W.__capTitle?.deref(), ta = title?.renderPipes.graphics._adaptor;
   const S = (W.__capOwners ??= { groups: {}, groupList: [], bindGroups: new WeakMap(), nextBindGroup: 0, shaders: [], probe: [] });
   const g0 = a.shader.resources.batchSamplers, units = r.limits.maxBatchableTextures;
   if (!S.groupList.some(x => x.ref.deref() === g0)) S.groupList.push({ units, ref: new WeakRef(g0) });
@@ -90,9 +97,11 @@ const sample = (label, draw = false) => page.evaluate(([label, draw]) => {
   for (const v of Object.values(r.renderPipes.batch._batchersByInstructionSet)) for (const b of Object.values(v)) use(b?.shader, 'batch-pipe');
   for (const c of Object.values(r.graphicsContext._managedContexts.items)) use(c?._gpuData?.[r.uid]?.graphicsData?.batcher?.shader, 'product-render-data');
   for (const w of S.probe) use(w.deref()?.batcher?.shader, 'probe-render-data (test)');
+  use(ta?.shader, 'title-graphics-adaptor');
+  for (const v of Object.values(title?.renderPipes.batch._batchersByInstructionSet ?? {})) for (const b of Object.values(v)) use(b?.shader, 'title-batch-pipe');
   for (const shader of users.keys()) {
     let i = S.shaders.findIndex(x => x.ref.deref() === shader);
-    if (i < 0) { S.shaders.push({ ref: new WeakRef(shader), units: shader.maxTextures ?? null, adaptor: shader === a.shader, first: label, firstUsers: [...users.get(shader)] }); i = S.shaders.length - 1; }
+    if (i < 0) { S.shaders.push({ ref: new WeakRef(shader), units: shader.maxTextures ?? null, adaptor: shader === a.shader, title: !!ta && shader === ta.shader, first: label, firstUsers: [...users.get(shader)] }); i = S.shaders.length - 1; }
     for (const bg of shader._ownedBindGroups ?? []) if (!S.bindGroups.has(bg)) S.bindGroups.set(bg, { id: S.nextBindGroup++, shader: i });
   }
   const groups = S.groupList.map(({ units, ref }) => {
@@ -100,7 +109,7 @@ const sample = (label, draw = false) => page.evaluate(([label, draw]) => {
     return { units, listeners: list.map(e => {
       const seen = S.bindGroups.get(e.context), sh = seen ? S.shaders[seen.shader] : null, alive = sh?.ref.deref();
       const now = alive ? users.get(alive) : null;
-      return { bindGroup: seen?.id ?? null, shader: seen?.shader ?? null, kind: !sh ? 'unseen' : sh.adaptor ? 'graphics-shader' : 'default-shader', units: sh?.units ?? null,
+      return { bindGroup: seen?.id ?? null, shader: seen?.shader ?? null, kind: !sh ? 'unseen' : sh.adaptor ? 'graphics-shader' : sh.title ? 'title-graphics-shader' : 'default-shader', units: sh?.units ?? null,
         owner: now ? [...now].sort().join('+') : !sh ? 'never seen with a shader' : alive ? 'kept (no current user)' : 'collected shader',
         first: sh ? `${sh.first}: ${sh.firstUsers.join('+')}` : null };
     }) };
@@ -114,7 +123,7 @@ const sample = (label, draw = false) => page.evaluate(([label, draw]) => {
     if (!S.probe.some(w => w.deref() === rd)) S.probe.push(new WeakRef(rd));
     g.destroy({ context: true }); t.destroy(true);
   }
-  const defaultShaders = S.shaders.filter(x => !x.adaptor).map((x, i) => ({ units: x.units, alive: !!x.ref.deref(), first: `${x.first}: ${x.firstUsers.join('+')}` }));
+  const defaultShaders = S.shaders.filter(x => !x.adaptor && !x.title).map((x, i) => ({ units: x.units, alive: !!x.ref.deref(), first: `${x.first}: ${x.firstUsers.join('+')}` }));
   return { label, units, groups, defaultShaders };
 }, [label, draw]);
 
@@ -169,12 +178,14 @@ async function run(workload) {
       oneDefaultShaderPerCount: perCount.every(([, n]) => n === 1),
       sameDefaultShaderListenersEachRound: roundEnds.every(r => JSON.stringify(ids(r)) === JSON.stringify(ids(roundEnds[0]))),
       onlyCurrentGraphicsShader: JSON.stringify(listeners.filter(l => l.kind === 'graphics-shader').map(l => l.owner)) === '["graphics-adaptor"]',
+      onlyTitleGraphicsShader: JSON.stringify(listeners.filter(l => l.kind === 'title-graphics-shader').map(l => l.owner)) === '["title-graphics-adaptor"]',
       yardDrawsAndWalks: pic.mean > 3 && pic.sd > 3 && walked > 8,
     };
     assert.deepEqual(listeners.filter(l => l.owner === 'collected shader' || l.owner === 'never seen with a shader').map(l => `${l.units}:${l.first}`), [], 'listeners left by released or unknown shaders');
     assert.ok(perCount.every(([, n]) => n === 1), 'one DefaultShader per texture count: ' + JSON.stringify(perCount));
     assert.deepEqual(roundEnds.map(ids), roundEnds.map(() => ids(roundEnds[0])), 'same default-shader listener identities at every round end');
     assert.deepEqual(listeners.filter(l => l.kind === 'graphics-shader').map(l => l.owner), ['graphics-adaptor'], 'only the current graphics adaptor Shader listens');
+    assert.deepEqual(listeners.filter(l => l.kind === 'title-graphics-shader').map(l => l.owner), ['title-graphics-adaptor'], 'the title renderer adds only its graphics adaptor Shader');
     assert.ok(pic.mean > 3 && pic.sd > 3, 'world target not blank: ' + JSON.stringify(pic));
     assert.ok(walked > 8, `keyboard walk after the switches: ${walked}`);
     assert.deepEqual(report.errors.slice(errors0), [], 'page errors');

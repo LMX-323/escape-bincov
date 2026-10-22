@@ -8,7 +8,7 @@
 
 | 决定 | 实现及证据 |
 | --- | --- |
-| 名称改为“仓库／携带”，按当前位置统计 | [game.ts](../src/game.ts) 的 `updateHud` 更新标签；[qol.ts](../src/qol.ts) 的 `questProgress` 保持仓库／本次背包与安全箱的计数，不重复算安全箱检查点，也不以数量差伪造新拾取量。界面和游玩说明注明包含带入物资 |
+| 名称改为“仓库／携带”，按当前位置统计 | [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts) 的 `updateHud` 更新标签；[qol.ts](../src/qol.ts) 的 `questProgress` 保持仓库／本次背包与安全箱的计数，不重复算安全箱检查点，也不以数量差伪造新拾取量。界面和游玩说明注明包含带入物资 |
 | 接受页面处理桌面拖动 | 保留 [ui.ts](../src/ui.ts) 的 `installInventoryDrag`；[qol-test.mjs](../scripts/qol-test.mjs) 检查 R 预览、Esc 取消、拖出视口后松手、失焦、后台事件，以及触屏电脑先触控摆放再鼠标拖动。行动 R 仍换弹 |
 | 按顺序安排真机与真人验收 | 下方保留可直接执行的清单，状态均未验收；没有虚指负责人或机型 |
 

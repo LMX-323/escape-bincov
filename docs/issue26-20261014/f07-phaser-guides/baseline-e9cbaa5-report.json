@@ -1,0 +1,347 @@
+{
+  "html": "baseline-e9cbaa5.html",
+  "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7",
+  "browser": "155.0.8059.40",
+  "checks": [
+    {
+      "name": "1280x720 P01 exterior-door-guide-above-roof",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: door cell shows the closed guide above the roof, warm pixels 0/1024\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:119:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:114:7"
+    },
+    {
+      "name": "1280x720 P02 real-E-opens-front-door-and-W-walks-through",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: door guides are tracked\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:133:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:126:7"
+    },
+    {
+      "name": "1280x720 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: east-west passage arrow crosses the wall, mint pixels 0/208\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:144:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:137:7"
+    },
+    {
+      "name": "1280x720 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 560,
+          "y": 340,
+          "width": 64,
+          "height": 40
+        },
+        "pixels": 2560,
+        "body": 546,
+        "covered": 0,
+        "blended": 0,
+        "guide": 0,
+        "overlap": 0,
+        "info": {
+          "layers": [],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: positive control: the enemy and bullet sit on the guide (0 px, need > 20)\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:183:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:150:7"
+    },
+    {
+      "name": "1280x720 P06 ground-floor-stair-labels-clear-room-name",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 上楼 · 二楼 must not cover another stair label\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:202:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:195:7"
+    },
+    {
+      "name": "1280x720 P04 f2-landing-storage-door-and-label",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: storage door guide is visible at the landing, warm pixels 0/1024\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:213:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:206:7"
+    },
+    {
+      "name": "1280x720 P05 covered-room-zero-pixel-change-with-positive-control",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: moving a hidden enemy under the roof changed 962 px (max delta 5)\n\n962 !== 0\n\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:243:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:226:9"
+    },
+    {
+      "name": "1280x720 P07 critical-text-follows-the-drawn-roof",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}",
+            "storageCovered": null
+          },
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 1
+        },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: critical text must not reveal an enemy in a covered room\n\n1 !== 0\n\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:302:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:246:9"
+    },
+    {
+      "name": "1280x720 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 666,
+          "y": 260,
+          "width": 80,
+          "height": 40
+        },
+        "roofClip": {
+          "x": 706,
+          "y": 274,
+          "width": 24,
+          "height": 12
+        },
+        "pixels": 3200,
+        "body": 494,
+        "covered": 0,
+        "blended": 0,
+        "guide": 0,
+        "overlap": 0,
+        "above": {
+          "changed": 0,
+          "max": 0
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": null,
+          "labels": [
+            {
+              "depth": 3,
+              "masked": false,
+              "x": 269,
+              "y": 42,
+              "w": 70,
+              "h": 16
+            }
+          ]
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: the label crosses the roof edge over the enemy {\"depth\":3,\"masked\":false,\"x\":269,\"y\":42,\"w\":70,\"h\":16}\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:352:20\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:319:9"
+    },
+    {
+      "name": "1920x1080 P01 exterior-door-guide-above-roof",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: door cell shows the closed guide above the roof, warm pixels 0/4096\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:119:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:114:7"
+    },
+    {
+      "name": "1920x1080 P02 real-E-opens-front-door-and-W-walks-through",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: door guides are tracked\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:133:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:126:7"
+    },
+    {
+      "name": "1920x1080 P03 inside-E-opens-ns-door-with-passage-arrow",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: east-west passage arrow crosses the wall, mint pixels 0/832\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:144:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:137:7"
+    },
+    {
+      "name": "1920x1080 P08 enemy-and-bullet-in-a-visible-open-doorway-draw-over-the-guide",
+      "detail": {
+        "clip": {
+          "x": 800,
+          "y": 500,
+          "width": 128,
+          "height": 80
+        },
+        "pixels": 10240,
+        "body": 2184,
+        "covered": 0,
+        "blended": 0,
+        "guide": 0,
+        "overlap": 0,
+        "info": {
+          "layers": [],
+          "enemy": "enemy-2",
+          "enemyDepth": 6,
+          "doors": {
+            "resident-front": true,
+            "resident-west": true,
+            "resident-east": false
+          }
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: positive control: the enemy and bullet sit on the guide (0 px, need > 80)\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:183:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:150:7"
+    },
+    {
+      "name": "1920x1080 P06 ground-floor-stair-labels-clear-room-name",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: 上楼 · 二楼 must not cover another stair label\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:202:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:195:7"
+    },
+    {
+      "name": "1920x1080 P04 f2-landing-storage-door-and-label",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: storage door guide is visible at the landing, warm pixels 0/4096\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:213:16\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:206:7"
+    },
+    {
+      "name": "1920x1080 P05 covered-room-zero-pixel-change-with-positive-control",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: moving a hidden enemy under the roof changed 3848 px (max delta 5)\n\n3848 !== 0\n\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:243:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:226:9"
+    },
+    {
+      "name": "1920x1080 P07 critical-text-follows-the-drawn-roof",
+      "detail": {
+        "hidden": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "visible": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1
+        },
+        "sameCell": {
+          "drawn": {
+            "signature": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}",
+            "storageCovered": null
+          },
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "signatureAtHit": "13,2:{\"resident-f2-west\":false,\"resident-f2-east\":false,\"resident-storage\":false}"
+        },
+        "closing": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "visibleAfterCover": 1
+        },
+        "mutation": {
+          "seed": 15,
+          "count": 1,
+          "visible": 1,
+          "opened": true,
+          "afterMutation": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "at450": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": true
+          },
+          "closed": true,
+          "afterCover": {
+            "same": true,
+            "count": 1,
+            "visible": 1,
+            "door": false
+          },
+          "afterExpiry": 0
+        },
+        "player": {
+          "x": 304,
+          "y": 80
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: critical text must not reveal an enemy in a covered room\n\n1 !== 0\n\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:302:18\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:246:9"
+    },
+    {
+      "name": "1920x1080 P09 stair-label-under-an-enemy-on-uncovered-floor-and-readable-over-the-roof",
+      "detail": {
+        "clip": {
+          "x": 1012,
+          "y": 340,
+          "width": 160,
+          "height": 80
+        },
+        "roofClip": {
+          "x": 1092,
+          "y": 368,
+          "width": 48,
+          "height": 24
+        },
+        "pixels": 12800,
+        "body": 1976,
+        "covered": 0,
+        "blended": 0,
+        "guide": 0,
+        "overlap": 0,
+        "above": {
+          "changed": 0,
+          "max": 0
+        },
+        "info": {
+          "map": "resident-f2",
+          "player": {
+            "x": 200,
+            "y": 64
+          },
+          "roofs": null,
+          "labels": [
+            {
+              "depth": 3,
+              "masked": false,
+              "x": 269,
+              "y": 42,
+              "w": 70,
+              "h": 16
+            }
+          ]
+        }
+      },
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: the label crosses the roof edge over the enemy {\"depth\":3,\"masked\":false,\"x\":269,\"y\":42,\"w\":70,\"h\":16}\n    at file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:352:20\n    at async check (file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:89:22)\n    at async file:///D:/bincov/i26-phaser/scripts/issue26-phaser-spatial.mjs:319:9"
+    }
+  ],
+  "errors": [],
+  "renderer": "webgl"
+}

@@ -1,4 +1,3 @@
-import * as D from './domain';
 import { ATTRIBUTES, derivedLimits, effectiveAttributes, type Attribute, type ExpansionState, type TrainingState } from './expansion-state';
 import { separation } from './spatial';
 import type { Point } from './world';
@@ -107,6 +106,8 @@ export function healingTraining(state: ExpansionState, actual: number): void {
     }
     training.quantity.constitution += qualified / 50 * trainingEfficiency(state);
 }
+/** Items a player can use from an inventory; useRpgItemResult applies each of them and rejects every other id. */
+export const SUPPLY_IDS: readonly string[] = ['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet'];
 export type RpgItemResult = { ok: true } | { ok: false; reason: 'not-supply' | 'no-effect'; message: string };
 /** The same effect application serves every caller; full resources alone cannot reject a compound supply. */
 export function useRpgItemResult(state: ExpansionState, id: string): RpgItemResult {

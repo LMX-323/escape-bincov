@@ -1,0 +1,118 @@
+✔ A1: deployment defaults to v1; explicit v2 is atomic and cannot change an active raid or other routes (65.0895ms)
+✔ A1/A3: yard forwards the layout once and the explicitly gated host driver works on both mall floors (30.5404ms)
+✖ A2: both mall layouts use the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits (10.2826ms)
+✔ A4/S-03/S-07/S-08: both floors and layouts survive refresh and recovery backup; malformed worlds never overwrite (100.1014ms)
+✔ G-06: every connector round-trips ten times in both layouts without respawn or duplicate entities (833.627ms)
+✖ G-07/S-04: held stair/fire/movement inputs do not carry over; an open panel blocks the transition (88.8053ms)
+✔ G-08: crowded landing is deterministic; fully blocked landing refuses and a freed slot allows exactly one transition (15.6414ms)
+✖ L-06/S-02/S-03: departure settles hit/wall/range/enemy bullets once, freezes source, and failed commit restores every byte (14.1001ms)
+✖ L-04/L-05: all four stairs preserve pursuing identities and HP; arrival waits for occupied landing then resumes (154.6174ms)
+✔ L-07/L-08: terrace never extracts; only O-06 floods, one warning/flip, indoor and F2 remain dry (353.9188ms)
+✔ S-09: only active ground exits, stationary held 3s, durable settlement before success, single retry award (485.4508ms)
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (23.1724ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 7
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2609.2061
+
+✖ failing tests:
+
+test at tests\mall-runtime.test.ts:1:5248
+✖ A2: both mall layouts use the exact Phaser mallRunConfig; stable building/indoor IDs and ground-only exits (10.2826ms)
+  Error: Settlement must be committed before disposal.
+      at CoastRaidRuntime.dispose (D:\bincov\mall-runtime\src\raid-runtime\runtime.ts:188:19)
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:108:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests\mall-runtime.test.ts:1:8284
+✖ G-07/S-04: held stair/fire/movement inputs do not carry over; an open panel blocks the transition (88.8053ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'mall-f1'
+  - 'mall-f2'
+           ^
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:147:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'mall-f1',
+    expected: 'mall-f2',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\mall-runtime.test.ts:1:10749
+✖ L-06/S-02/S-03: departure settles hit/wall/range/enemy bullets once, freezes source, and failed commit restores every byte (14.1001ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(f.r.checkpoint())
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:181:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\mall-runtime.test.ts:1:12444
+✖ L-04/L-05: all four stairs preserve pursuing identities and HP; arrival waits for occupied landing then resumes (154.6174ms)
+  AssertionError [ERR_ASSERTION]: player and earlier arrivals occupy landing
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:200:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\mall-runtime.test.ts:1:16069
+✖ S-10: death/timeout/abandon preserve safe and lose bag/equipment on F1, F2 and terrace, including failed terminal writes (23.1724ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(f.state.pendingSettlement)
+
+      at TestContext.<anonymous> (D:\bincov\mall-runtime\tests\mall-runtime.test.ts:244:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

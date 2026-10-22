@@ -1,9 +1,12 @@
 import * as D from '../domain';
 import type { Attribute, Facility, HideoutRuntime, HideoutSnapshot, Merchant, Recipe, Result, RunWorld, ShopSession, ShopSource, Source } from '../hideout-runtime/contract';
 import type { Scope } from '../coast-view/scope';
+import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
-import { GridDrag, esc, type DragHooks } from './grid';
+import { GridDrag, type DragHooks } from './grid';
+import { esc } from '../html';
 import * as P from './panels';
+import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -24,7 +27,9 @@ export interface UIHost {
 /** A confirmation or failure dialog drawn over the open panel. */
 type Dialog =
   | { kind: 'sale'; token: string; warnings: string[] }
-  | { kind: 'import'; text: string; token: string; name: string }
+  // No preview token is kept: base checkpoints stale it while the dialog is open, so confirming previews again (confirmImport).
+  | { kind: 'import'; text: string; name: string }
+  | { kind: 'reset' }
   | { kind: 'storage' };
 
 const WIDE: PanelKind[] = ['gear', 'arms', 'med'];
@@ -45,7 +50,9 @@ const TITLES: Partial<Record<PanelKind, [string, string]>> = {
   generator: ['发电机', '发电机房'], deploy: ['出击准备', '院门'], body: ['身体与成长', '在站里休息会慢慢恢复'], menu: ['暂停', '滨科夫水产站'], help: ['操作说明', ''],
   board: ['寻人板', '食堂门口'], chat: ['食堂', '炊事员'], report: ['行动报告', ''],
 };
-const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', storage: '存档没有写入' };
+const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入' };
+/** Browser storage for the pre-reset copy; even reading the localStorage property can throw. */
+const browserStorage = () => localStorage;
 
 export class UI {
   readonly root: HTMLElement;
@@ -59,7 +66,7 @@ export class UI {
   private paneB: 'stash' | 'safe' = 'stash';
   private shopMode: 'buy' | 'sell' = 'buy';
   private shop: ShopSession | null = null;
-  private world: RunWorld = 'coast'; private seed = '';
+  private world: RunWorld = 'buildings'; private seed = ''; private worlds: readonly RunWorld[];
   private dialog: Dialog | null = null;
   summary: D.RunSummary | null = null;
   private drag: GridDrag;
@@ -69,8 +76,8 @@ export class UI {
   private tagEls = new Map<StationId, HTMLElement>();
   private timers = new Set<number>();
 
-  constructor(parent: HTMLElement, shadow: ShadowRoot, private rt: HideoutRuntime, private host: UIHost, scope: Scope, opts: { world: RunWorld; seed: string }) {
-    this.world = opts.world; this.seed = opts.seed;
+  constructor(parent: HTMLElement, shadow: ShadowRoot, private rt: HideoutRuntime, private host: UIHost, scope: Scope, opts: { world: RunWorld; seed: string; worlds: readonly RunWorld[] }) {
+    this.worlds = opts.worlds; this.world = opts.worlds.includes(opts.world) ? opts.world : opts.worlds[0]; this.seed = opts.seed;
     this.root = document.createElement('div'); this.root.className = 'ui'; parent.appendChild(this.root);
     this.root.innerHTML = `<div class="tags"></div><div class="bubbles"></div>
       <header class="hud"><div class="id"><i class="sig"></i><div><b>滨科夫水产站</b><span id="hud-sub"></span></div></div><div class="cash"><span>可用现金</span><b id="hud-cash"></b><small id="hud-prod"></small></div></header>
@@ -100,6 +107,8 @@ export class UI {
   show(kind: PanelKind, station: Station | null = null, facility?: Facility) {
     if (this.kind && (this.kind === 'arms' || this.kind === 'med') && kind !== this.kind && this.shop?.view().dirty) { this.toast('待买或待卖区还有物品，先结算或清空。', 'error'); this.host.sound('error'); return; }
     const was = this.kind;
+    // The panel is painted anew: a drag from the old grids ends here instead of waiting for a release.
+    this.drag.cancel();
     this.kind = kind; this.station = station; this.selected = null;
     if (facility) this.facility = facility;
     if (kind === 'arms' || kind === 'med') { this.shop = this.rt.openShop(kind as Merchant); this.shopMode = 'buy'; } else this.shop = null;
@@ -111,6 +120,7 @@ export class UI {
     if (this.dialog) { this.closeDialog(); return; }
     if (!this.kind) return;
     if ((this.kind === 'arms' || this.kind === 'med') && this.shop?.view().dirty) { this.toast('待买或待卖区还有物品，先结算或清空。', 'error'); this.host.sound('error'); return; }
+    this.drag.cancel();
     this.kind = null; this.station = null; this.shop = null; this.selected = null;
     this.panel.hidden = true; this.modal.hidden = true; this.panel.innerHTML = ''; this.modal.innerHTML = '';
     this.root.classList.remove('has-panel', 'has-modal');
@@ -136,8 +146,10 @@ export class UI {
     }
     if (kind === 'gear') {
       // Left: slot, three headings and the weight meter (~224 px) around bag (5 rows) and safe (2 rows); right: stash, upgrade and details (~180 px).
-      const byH = Math.min((H - 164 - 262) / 7, (H - 164 - 190) / rows), byW = (Math.min(Wd - 24, Wd * .74) - 70) / 16;
-      return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
+      const byH = Math.min((H - 164 - 326) / 7, (H - 164 - 254) / rows), byW = (Math.min(Wd - 24, Wd * .74) - 70) / 16;
+      // Below 36 px, three-character labels such as 保险管 no longer fit after the new gear actions.
+      // Keep labels readable and allow the existing vertical scroll on exceptionally short desktop panels.
+      return Math.max(36, Math.min(56, Math.floor(Math.min(byH, byW))));
     }
     const byH = Math.min((H - 331 - 70) / 6, (H - 331) / rows), byW = (Math.min(Wd - 24, Wd * .76) - 74) / 20;
     return Math.max(28, Math.min(56, Math.floor(Math.min(byH, byW))));
@@ -156,8 +168,10 @@ export class UI {
     for (let pass = 0; ; pass++) {
       this.paint(kind, s, cell, center, el, title, sub, line);
       const pb = el.querySelector<HTMLElement>('.pbody')!, over = pb.scrollHeight - pb.clientHeight;
-      if (over <= 1 || this.compact || !WIDE.includes(kind) || cell <= 28 || pass >= 2) break;
-      cell = Math.max(28, cell - Math.ceil(over / Math.max(kind === 'gear' ? 7 : 6, s.profile.stash.h)));
+      // Gear details may scroll vertically; keep inventory geometry fixed while a first click selects an item,
+      // otherwise the second click of a double click can land outside that item after the panel resizes.
+      if (kind === 'gear' || over <= 1 || this.compact || !WIDE.includes(kind) || cell <= 28 || pass >= 2) break;
+      cell = Math.max(28, cell - Math.ceil(over / Math.max(6, s.profile.stash.h)));
     }
   }
   private paint(kind: PanelKind, s: HideoutSnapshot, cell: number, center: boolean, el: HTMLElement, title: string, sub: string, line: string) {
@@ -168,15 +182,20 @@ export class UI {
         const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear');
         body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details) : P.gearHtml(s, cell, sel, this.rt.departure(), details); break;
       }
-      case 'arms': case 'med': { const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null; body = this.compact ? P.shopCompactHtml(v, cell, sel, s.profile.cash, this.shopMode) : P.shopHtml(v, cell, sel, s.profile.cash) + P.detailsHtml(item, this.selected?.src ?? null, 'shop'); break; }
+      case 'arms': case 'med': {
+        const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null;
+        // Sellable stacks still in the bag or safe: this shop sells from the stash only, so its header says so.
+        const outside = [s.profile.bag, s.profile.safe].reduce((n, inv) => n + inv.items.filter(i => !i.relief && (D.ITEMS[i.id]?.sell ?? 0) > 0).length, 0);
+        body = this.compact ? P.shopCompactHtml(v, cell, this.selected, s.profile.cash, this.shopMode, outside) : P.shopHtml(v, cell, sel, s.profile.cash, outside) + P.detailsHtml(item, this.selected?.src ?? null, 'shop', item ? questUses(s.profile, item.id) : []); break;
+      }
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
-      case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed); break;
+      case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed, this.worlds); break;
       case 'facility': body = `<nav class="seg facs">${FACILITY_ORDER.map(f => P.btn(`${FACILITY_LABEL[f]}${s.base.facilities[f] ? ` <small>${s.base.facilities[f]} 级</small>` : ''}`, `fac:${f}`, f === this.facility ? 'on' : '')).join('')}</nav>` + P.facilityHtml(this.rt.facility(this.facility), s, this.rt.trainingProgress()); break;
       case 'body': body = P.bodyHtml(s); break;
       case 'board': body = P.boardHtml(); break;
       case 'chat': body = `<p class="muted">长桌上摆着碗。灶上那锅粥一直温着，谁回来谁盛。</p>`; break;
-      case 'menu': body = P.menuHtml(this.volume); break;
+      case 'menu': body = P.menuHtml(this.volume, readResetCopy(browserStorage) !== null); break;
       case 'help': body = P.helpHtml(this.touch); break;
       case 'report': body = this.summary ? P.reportHtml(this.summary, s) : ''; break;
     }
@@ -187,7 +206,7 @@ export class UI {
     const tabbed = SHORTCUTS.some(q => q.kind === kind) || kind === 'generator';
     const tabs = tabbed ? `<nav class="ptabs" aria-label="水产站功能">${SHORTCUTS.map(q => `<button data-tab="${q.kind}" class="${q.kind === kind ? 'on' : ''}" ${q.kind === kind ? 'aria-current="page"' : ''}>${q.label}<kbd>${q.key}</kbd></button>`).join('')}</nav>` : '';
     const heading = this.compact && tabbed ? `<button class="tabmenu" data-tabmenu aria-label="切换功能"><h2>${esc(title)}</h2><i class="caret" aria-hidden="true"></i></button>` : `<h2>${esc(title)}</h2>`;
-    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
+    el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${kind === 'gear' && !this.compact ? P.gearActions(s.profile, false) : ''}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
     el.querySelector('.pbody')!.scrollTop = scroll;
     el.hidden = false;
     (center ? this.panel : this.modal).hidden = true;
@@ -198,13 +217,14 @@ export class UI {
     this.dialogEl.hidden = !d; this.root.classList.toggle('has-dialog', !!d);
     if (!d) { this.dialogEl.innerHTML = ''; return; }
     const s = this.rt.snapshot();
-    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : P.storageHtml(s);
+    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : d.kind === 'reset' ? P.resetConfirmHtml() : P.storageHtml(s);
     this.dialogEl.className = `modal dialog k-${d.kind}`;
     const title = d.kind === 'storage' && s.storage.conflict ? '存档已被另一个窗口接管' : DIALOG_TITLES[d.kind];
     this.dialogEl.setAttribute('aria-label', title);
     this.dialogEl.innerHTML = `<header class="phead"><div><h2>${title}</h2></div>${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header><div class="pbody">${body}</div>`;
   }
-  private openDialog(d: Dialog) { const was = this.open; this.dialog = d; this.renderDialog(); if (!was) this.host.panelChanged(this.kind, this.station); }
+  /** A dialog (a failed write too) ends a drag at once: the grids under it take no drop until it closes. */
+  private openDialog(d: Dialog) { const was = this.open; this.drag.cancel(); this.dialog = d; this.renderDialog(); if (!was) this.host.panelChanged(this.kind, this.station); }
   private closeDialog() { this.dialog = null; this.renderDialog(); this.host.sound('close'); if (!this.kind) this.host.panelChanged(null, null); }
   /** The storage dialog follows the Runtime: it opens when a write fails and closes once a retry succeeded. */
   syncStorage(s: HideoutSnapshot) {
@@ -235,7 +255,7 @@ export class UI {
       inv: src => this.rt.snapshot().profile[src as Source] ?? null,
       check: (from, to, uid, x, y, r) => this.rt.placementError(from as Source, to as Source, uid, x, y, r),
       drop: (from, to, uid, x, y, r) => { this.result(this.rt.move(from as Source, to as Source, uid, x, y, r), 'drop'); this.selected = { src: to, uid }; this.render(); },
-      dropSlot: (slot, from, uid) => { if (slot === 'weapon') { this.result(this.rt.equip(from as Source, uid), 'drop'); this.selected = null; this.render(); } },
+      dropSlot: (slot, from, uid) => { if (slot === 'weapon') this.equip(from as Source, uid); },
       select: (src, uid) => { this.selected = { src, uid }; this.host.sound('pick'); this.render(); },
       quick: (src, uid) => { this.result(this.rt.quickMove(src as Source, uid), 'drop'); this.selected = null; this.render(); },
       reject: m => { this.toast(m, 'error'); this.host.sound('error'); },
@@ -251,8 +271,10 @@ export class UI {
           // Double-click: catalog <-> buy, stash <-> sell, using the first free cell.
           const to: ShopSource | null = src === 'merchant' ? 'buy' : src === 'buy' ? 'merchant' : src === 'stash' ? 'sell' : src === 'sell' ? 'stash' : null;
           if (!to) return; const target = inv(to);
-          for (let y = 0; y < target.h; y++) for (let x = 0; x < target.w; x++) if (!shop.placementError(src as ShopSource, to, uid, x, y)) { const r = shop.place(src as ShopSource, to, uid, x, y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
-          this.toast(to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。', 'error'); this.host.sound('error');
+          const at = firstShopCell(target.w, target.h, (x, y) => shop.placementError(src as ShopSource, to, uid, x, y));
+          if ('x' in at) { const r = shop.place(src as ShopSource, to, uid, at.x, at.y); if (r.ok) this.host.sound('drop'); else this.toast(r.message, 'error'); this.render(); return; }
+          // A rule (relief goods, a changed stash) names itself; otherwise only room was missing.
+          this.toast(at.reason ?? (to === 'buy' || to === 'sell' ? '待买或待卖区放不下了。' : '仓库放不下。'), 'error'); this.host.sound('error');
         },
         reject: m => { this.toast(m, 'error'); this.host.sound('error'); },
       };
@@ -264,6 +286,25 @@ export class UI {
     if (r.ok) { if (r.message) this.toast(r.message, 'ok'); this.host.sound(okCue); }
     else { this.toast(r.message, 'error'); this.host.sound('error'); if (r.reason === 'storage' || r.reason === 'conflict') this.showStorage(); }
     return r.ok;
+  }
+  private equip(src: Source, uid: string) {
+    const item = this.rt.snapshot().profile[src]?.items.find(i => i.uid === uid);
+    this.selected = { src, uid };
+    const r: Result = src === 'safe' ? { ok: false, reason: 'rule', message: '安全箱里的枪械请先移回背包，再装备主武器。' } : this.rt.equip(src, uid);
+    if (this.result(r, 'drop')) { this.toast(`已装备主武器：${D.ITEMS[item?.id ?? '']?.name ?? '枪械'}。`, 'ok'); this.selected = null; }
+    this.render();
+  }
+  private secure(src: Source, uid: string) {
+    const before = this.rt.snapshot().profile, item = before[src].items.find(i => i.uid === uid);
+    if (this.result(this.rt.secure(src, uid), 'drop')) {
+      this.selected = null;
+      if (src === 'safe' && item && D.WEAPONS[item.id] && item.id !== 'knife') {
+        // Automatic transfers allocate a fresh UID; select the newly created gun, not its former safe entry.
+        const moved = this.rt.snapshot().profile.bag.items.find(i => i.id === item.id && !!i.relief === !!item.relief && !before.bag.items.some(old => old.uid === i.uid));
+        if (moved) this.selected = { src: 'bag', uid: moved.uid };
+      }
+    }
+    this.render();
   }
   private settle(token?: string) {
     if (!this.shop) return;
@@ -286,7 +327,28 @@ export class UI {
     const text = await file.text().catch(() => '');
     const preview = text ? this.rt.previewImport(text) : { ok: false as const, reason: 'rule' as const, message: '无法读取这个文件。' };
     if (!preview.ok || !preview.token) { this.result(preview); return; }
-    this.openDialog({ kind: 'import', text, token: preview.token, name: file.name });
+    this.openDialog({ kind: 'import', text, name: file.name });
+  }
+  /** Confirmed fresh start. A refused or failed write leaves the save as it was; success resyncs like an import. */
+  private startOver() {
+    this.dialog = null; this.renderDialog();
+    const r = startOver(this.rt, browserStorage, Date.now(), () => this.host.exportSave());
+    if (r.ok) {
+      // A still pristine save is not copied (fresh-start.ts), so the toast must not claim a new local copy.
+      const message = r.copied !== false ? '存档已清空，重新开始。'
+        : readResetCopy(browserStorage) ? '存档已清空。当前存档没动过，本机保留的仍是之前清空前的存档。' : '存档已清空。当前存档没动过，本机没有另存。';
+      this.toast(message, 'ok'); this.host.sound('ok'); this.host.imported(); this.render(); return;
+    }
+    this.toast(r.message, 'error'); this.host.sound('error');
+    if (r.reason === 'conflict' || !this.rt.snapshot().storage.ok) this.showStorage();
+  }
+  /** The local pre-reset copy goes through the same preview and overwrite confirmation as an imported file. */
+  private restoreCopy() {
+    const copy = readResetCopy(browserStorage);
+    if (!copy) { this.result({ ok: false, reason: 'rule', message: '本机没有清空前的存档。' }); this.render(); return; }
+    const preview = this.rt.previewImport(copy);
+    if (!preview.ok || !preview.token) { this.result(preview); return; }
+    this.openDialog({ kind: 'import', text: copy, name: '清空前的存档' }); this.host.sound('open');
   }
 
   private click = (e: MouseEvent) => {
@@ -307,16 +369,18 @@ export class UI {
       case 'close': if (b.closest('.dialog')) this.closeDialog(); else this.close(); break;
       case 'pane': this.paneB = a1 as 'stash' | 'safe'; this.selected = null; this.render(); break;
       case 'mode': this.shopMode = a1 as 'buy' | 'sell'; this.selected = null; this.render(); break;
-      case 'equip': if (src && uid) { this.result(this.rt.equip(src, uid), 'drop'); this.selected = null; this.render(); } break;
+      case 'equip': if (src && uid) this.equip(src, uid); break;
       case 'unequip': this.result(this.rt.unequip(), 'drop'); this.render(); break;
       case 'charm-equip': if (src && uid) { this.result(this.rt.equipCharm(src, uid), 'drop'); this.selected = null; this.render(); } break;
       case 'charm-unequip': this.result(this.rt.unequipCharm(), 'drop'); this.render(); break;
       case 'use': if (src && uid) { const name = D.ITEMS[this.findSelected(this.rt.snapshot())?.id ?? '']?.name; if (this.result(this.rt.useSupply(src, uid))) this.toast(`已使用${name ?? '补给'}。`, 'ok'); this.selected = null; this.render(); } break;
-      case 'secure': if (src && uid) { this.result(this.rt.secure(src, uid), 'drop'); this.selected = null; this.render(); } break;
+      case 'secure': if (src && uid) this.secure(src, uid); break;
       case 'split': this.split(); break;
       case 'quick': if (src && uid) { this.result(this.rt.quickMove(src, uid), 'drop'); this.selected = null; this.render(); } break;
       case 'rotate': if (src) { const it = this.findSelected(this.rt.snapshot()); if (it) { const r = this.rt.move(src, src, it.uid, it.x, it.y, !it.rotated); this.result(r.ok || r.reason !== 'space' ? r : { ok: false, reason: 'space', message: '原位旋转放不下，拖动时按 R 换个位置。' }, 'drop'); this.render(); } } break;
       case 'upgrade': this.result(this.rt.upgradeStash(), 'build'); this.render(); break;
+      case 'stash-all': if (this.result(this.rt.stashAll(), 'drop')) this.selected = null; this.render(); break;
+      case 'sort-stash': if (this.result(this.rt.sortStash(), 'drop')) this.selected = null; this.render(); break;
       case 'relief': this.result(this.rt.claimRelief()); this.render(); break;
       case 'cart-reset': this.shop?.reset(); this.selected = null; this.host.sound('close'); this.render(); break;
       case 'cart-settle': this.settle(); break;
@@ -333,7 +397,10 @@ export class UI {
       case 'title': this.host.title(); break;
       case 'export': this.host.exportSave(); break;
       case 'import': this.root.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
-      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = this.rt.importBackup(d.text, d.token); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'import-confirm': if (this.dialog?.kind === 'import') { const d = this.dialog; const r = confirmImport(this.rt, d.text); this.dialog = null; this.renderDialog(); if (this.result(r)) { this.toast('备份已导入。', 'ok'); this.host.imported(); } } break;
+      case 'reset': this.openDialog({ kind: 'reset' }); this.host.sound('open'); break;
+      case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
+      case 'reset-restore': this.restoreCopy(); break;
       case 'retry-save': { const r = this.rt.retrySave(); if (r.ok) { this.toast('已重新保存。', 'ok'); this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
       case 'reload': location.reload(); break;
       case 'fac': { this.facility = a1 as Facility; this.station = STATIONS.find(q => q.facility === a1) ?? this.station; this.render(); this.host.panelChanged(this.kind, this.station); break; }

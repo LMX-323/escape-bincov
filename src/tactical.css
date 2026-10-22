@@ -9,7 +9,7 @@ button.primary:hover:not(:disabled) { background:#e0d5ad; color:#151810; }
 button.text-button { color:#c5bd9c; }
 button:disabled { color:#95978b; background:#24271f; border-color:#42463c; }
 .panel { background:#1a1d19fa; border-color:#555847; box-shadow:0 8px 30px #0006; }
-.small, .inv-help, .content-note, .section-label, .eyebrow { font-size:16px; line-height:1.5; letter-spacing:0; }
+.small, .inv-help, .content-note, .section-label { font-size:16px; line-height:1.5; letter-spacing:0; }
 .section-title { font-size:16px; line-height:24px; margin:0 0 8px; font-weight:400; letter-spacing:0; justify-content:flex-start; }
 .section-title span { margin-left:auto; font:12px/1.5 "Microsoft YaHei",sans-serif; color:var(--muted); }
 .section-number { font:12px var(--mono); color:#d3c599; border:1px solid #5d604c; padding:1px 4px; font-weight:400; }
@@ -52,25 +52,11 @@ button:disabled { color:#95978b; background:#24271f; border-color:#42463c; }
 .merchant-heading h3 { font-size:16px; font-weight:400; margin:0 0 4px; }
 .merchant-heading h3 span, .merchant-heading p { font-size:16px; }
 .merchant-heading p { margin:0; color:var(--muted); }
-.trade-stock { min-width:0; }
-.shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.shop-card { display:flex; flex-direction:column; align-items:stretch; gap:0; padding:0; background:#22271e; border:1px solid #4c523e; min-width:0; }
-.shop-card.inspected { border-color:#c7ba8c; }
-.shop-inspect { border:0; padding:10px; display:flex; flex-direction:column; gap:6px; text-align:left; background:transparent; flex:1; }
-.shop-icon { display:flex; align-items:center; justify-content:center; width:100%; height:68px; background:#171c15; }
-.shop-description { display:flex; flex-direction:column; gap:3px; }
-.shop-description strong { font-size:16px; font-weight:400; }
-.shop-description .small { color:var(--muted); }
-.shop-card > button[data-action="buy"] { margin:0 10px 10px; font-size:16px; }
-.trade-inspector { border-top:1px solid #777455; margin-top:14px; padding-top:10px; font-size:16px; line-height:1.5; }
-.trade-inspector strong { font-weight:400; color:#e3d5a7; }
-.trade-inspector p { margin:8px 0; }
-.trade-inspector span { color:var(--muted); }
 .quest h3, .station-log h3 { font-size:24px; font-weight:400; }
 .quest p, .quest-needs li, .quest-needs strong, .quest-footer span, .station-copy, .tide-notes > div, .save-controls p, .volume-control { font-size:16px; line-height:1.5; }
 .quest { height:auto; min-height:320px; background:#22271e; border-color:#4e5440; }
 .quest-status, .completion-mark { font-size:16px; }
-.modal p, .result p, .help-grid, .help-grid kbd, .quick-row p { font-size:16px; line-height:1.5; }
+.modal p, .result p, .help-grid, .help-grid kbd { font-size:16px; line-height:1.5; }
 .modal h2, .result h2 { font-size:32px; font-weight:400; }
 .help-grid kbd { width:116px; font-family:var(--mono); }
 #toast { font-size:16px; background:#242c20; border-color:#a49d74; color:#eee7d1; }
@@ -87,12 +73,13 @@ html:not(.mobile) .tabs { gap:32px; padding:0 20px; background:#1b1f18; }
 html:not(.mobile) .tabs button { font-size:16px; padding:9px 0; }
 html:not(.mobile) .tabs button.active { color:#ebdfb2; }
 html:not(.mobile) .tabs button.active::after { background:#c7ba8c; }
+html:not(.mobile) .tabs .inventory-tools { margin:0 0 0 auto; flex-wrap:nowrap; gap:8px; }
+html:not(.mobile) .tabs .inventory-tools button { padding:4px 8px; border:1px solid #646653; white-space:nowrap; }
 html:not(.mobile) .content { padding:14px 20px 0; }
-html:not(.mobile) .gear-content, html:not(.mobile) .trade-content { display:flex; flex-direction:column; overflow:hidden; }
-html:not(.mobile) .gear-columns, html:not(.mobile) .tactical-columns { display:grid; grid-template-columns:minmax(210px,1fr) calc(var(--inventory-cell) * 6) calc(var(--inventory-cell) * 10); gap:24px; flex:1; min-height:0; overflow:auto; padding:0 0 14px; align-items:start; }
+html:not(.mobile) .gear-content { display:flex; flex-direction:column; overflow:hidden; }
+html:not(.mobile) .gear-columns { display:grid; grid-template-columns:minmax(210px,1fr) calc(var(--inventory-cell) * 6) calc(var(--inventory-cell) * 10); gap:24px; flex:1; min-height:0; overflow:auto; padding:0 0 14px; align-items:start; }
 html:not(.mobile) .gear-columns > section { position:static; }
-html:not(.mobile) .trade-layout { display:grid; grid-template-columns:minmax(0,1fr) calc(var(--inventory-cell) * 10); gap:24px; flex:1; min-height:0; overflow:auto; padding-bottom:14px; }
-html:not(.mobile) .content > .details, html:not(.mobile) .inventory-modal > .details, html:not(.mobile) .loot-modal > .details { display:grid; grid-template-columns:210px 1fr; gap:16px; width:100%; flex:0 0 120px; height:120px; min-height:120px; padding:12px 0; border-left:0; border-top:1px solid #686b52; overflow:auto; background:#1a1d19; }
+html:not(.mobile) .content > .details { display:grid; grid-template-columns:210px 1fr; gap:16px; width:100%; flex:0 0 120px; height:120px; min-height:120px; padding:12px 0; border-left:0; border-top:1px solid #686b52; overflow:auto; background:#1a1d19; }
 html:not(.mobile) .details .item-heading { align-items:flex-start; margin:0; gap:10px; }
 html:not(.mobile) .details h3 { font-size:16px; font-weight:400; margin:3px 0; }
 html:not(.mobile) .details .section-label, html:not(.mobile) .details p, html:not(.mobile) .details .inv-help { font-size:16px; line-height:1.5; margin:0; }
@@ -116,33 +103,14 @@ html:not(.mobile) .departure-note strong span { font-size:16px; }
 html:not(.mobile) .bottom-bar button { min-width:152px; padding:8px 20px; }
 html:not(.mobile) .seed { font-size:16px; min-height:38px; width:112px; }
 /* The HUD keeps the integer-scaled game coordinates; inventory panels cancel that scale. */
-html:not(.mobile) .loot-overlay, html:not(.mobile) .inventory-overlay { position:fixed; inset:auto; left:50%; top:50%; width:100vw; height:100dvh; transform:translate(-50%,-50%) scale(calc(1 / var(--world-scale,1))); transform-origin:center; background:#10130fdd; }
-html:not(.mobile) .loot-modal, html:not(.mobile) .inventory-modal { width:min(100%,1808px); height:100%; max-height:100%; padding:18px 20px 12px; display:flex; flex-direction:column; }
-html:not(.mobile) .loot-header, html:not(.mobile) .inventory-header { flex-shrink:0; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid #62664d; }
-html:not(.mobile) .loot-header h2 { font-size:24px; font-weight:400; }
-html:not(.mobile) .loot-risk, html:not(.mobile) .loot-risk small { font-size:16px; }
-html:not(.mobile) .loot-source { border-right:0; border-left:1px solid var(--line); padding:0 0 0 18px; }
-html:not(.mobile) .loot-source > .section-title, html:not(.mobile) .loot-player > .section-title { width:auto; }
-html:not(.mobile) .loot-details { grid-template-columns:210px minmax(200px,1fr) minmax(220px,auto)!important; }
-html:not(.mobile) .loot-details .item-actions { grid-column:auto; grid-row:auto; }
-html:not(.mobile) .loot-details.details-empty > p { grid-column:2/4; grid-row:1; }
-html:not(.mobile) .loot-footer { flex-shrink:0; font-size:16px; margin-top:0; }
-html:not(.mobile) .raid-inventory-columns { flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:minmax(250px,420px) calc(var(--inventory-cell) * 6); justify-content:center; gap:40px; padding-bottom:18px; }
-html:not(.mobile) .hud .section-label, html:not(.mobile) .hud .small, html:not(.mobile) .vital-row, html:not(.mobile) .radio, html:not(.mobile) .interaction, html:not(.mobile) .weapon-hud .eyebrow { font-size:16px; line-height:1.5; }
-html:not(.mobile) .keytips { font:11px "Microsoft YaHei",sans-serif; }
+html:not(.mobile) .loot-player > .section-title { width:auto; }
 html:not(.mobile) .vitals { width:218px; }
-html:not(.mobile) .radio { width:288px; }
-html:not(.mobile) .weapon-hud { min-width:208px; }
 /* Phone inventory keeps the existing single-container and explicit placement flow. */
 .mobile .item .item-label, .mobile .item .qty { font-size:16px; }
 .mobile .equipment-section .equip { width:100%; max-width:340px; }
-.mobile .trade-layout { display:flex; flex-direction:column; gap:22px; }
-.mobile .trade-stash { overflow:auto; }
-.mobile .shop-card strong, .mobile .shop-card .small, .mobile .shop-card button, .mobile .item-description, .mobile .modal p, .mobile .result p { font-size:16px; }
-.mobile .shop-card { min-height:160px; }
+.mobile .item-description, .mobile .modal p, .mobile .result p { font-size:16px; }
 .mobile .details .item-heading h3 { font-size:16px; }
 .mobile .merchant-heading h3 span, .mobile .merchant-heading p { font-size:16px; }
-.mobile .hud, .mobile #touch-controls, .mobile #world-labels { font-family:"Microsoft YaHei",sans-serif; }
 .mobile .section-title { font-size:16px; }
 @media (min-width:1700px) and (min-height:900px) { html:not(.mobile) .equipped-icon { height:120px; } }
 
@@ -150,21 +118,12 @@ html:not(.mobile) .weapon-hud { min-width:208px; }
 html:not(.mobile) .field-notes dt { font-size:16px; }
 html:not(.mobile) .field-notes > div { margin-bottom:4px; }
 /* Small metadata uses a text face; bitmap glyphs stay on the native 16px grid. */
-.legend, .station-stats span, .result .stats span { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
-.mobile .small, .mobile .inv-help, .mobile .content-note, .mobile .section-label, .mobile .eyebrow, .mobile .inventory-row small, .mobile .item-facts, .mobile .loot-footer, .mobile .placement-controls { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
+.station-stats span, .result .stats span { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
+.mobile .small, .mobile .inv-help, .mobile .content-note, .mobile .section-label, .mobile .inventory-row small, .mobile .item-facts, .mobile .placement-controls { font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
 .mobile .item-description, .mobile .quest p, .mobile .quest-needs li, .mobile .station-copy, .mobile .tide-notes > div, .mobile .save-controls p { font-size:16px; }
 /* Keep inspected merchandise visible while the catalogue and warehouse scroll independently. */
-html:not(.mobile) .trade-layout { overflow:hidden; }
-html:not(.mobile) .trade-stock { display:flex; flex-direction:column; height:100%; min-height:0; }
-html:not(.mobile) .trade-stock .shop-grid { flex:1; min-height:0; overflow:auto; align-content:start; padding-right:4px; }
-html:not(.mobile) .trade-inspector { flex-shrink:0; padding-bottom:8px; }
-html:not(.mobile) .trade-stash { height:100%; min-height:0; overflow:auto; }
-.shop-grid { grid-auto-rows:max-content; }
-.shop-card { min-height:184px; }
-.shop-card .shop-inspect { flex:0 0 auto; font:16px/24px var(--pixel); }
-.shop-card .small { font:12px/18px "Microsoft YaHei","PingFang SC",sans-serif; }
 /* QOL panels share the accepted palette; compact metadata uses the text face. */
-.shop-layout h3, .departure-check p, .raid-information, .shop-placement .placement-hint {
+.shop-layout h3, .departure-check p, .shop-placement .placement-hint {
   font-family:"Microsoft YaHei","PingFang SC",sans-serif;
 }
 html:not(.mobile) .shop-layout h3 { font-size:14px; }
@@ -174,9 +133,6 @@ html:not(.mobile) .shop-content > .shop-details:not(.details-empty) { grid-templ
 html:not(.mobile) .shop-details .item-actions { grid-column:3; grid-row:1/4; }
 
 /* The extended body readout and weight each keep their own readable line. */
-.rpg-vitals .vital-status { display:block; }
-.rpg-vitals #status { display:block; font:12px/1.5 "Microsoft YaHei",sans-serif; }
-.rpg-vitals #weight { display:block; text-align:right; white-space:nowrap; }
 
 /* Keep the gear grids visible when region selection and departure checks share the footer. */
 @media (max-width:1500px) {

@@ -1,0 +1,63 @@
+{
+  "baseline": "7df2d222210c803ae69ae60e9e709b8db0b12cd2",
+  "baselineHtmlSha256": "e21266f8843b6b7fe82f950794c66fe3fe586cd14fec8145aca55fda3df556ed",
+  "currentHtmlSha256": "d14cc1360a433657240888de95de48f22970f683aeca167cc7f095855c7ebab6",
+  "fixtureSha256": "4c559cb75e88b6861a5a1fe95975d35a7d8156ff6a50f25819fa82134765ee33",
+  "startedAt": "2026-10-13T14:51:43.517Z",
+  "methodology": "Actual accepted main HTML; new renderer-free production Runtime plus explicit ?test=1 driver. Same HTTPS origin fulfilled offline, real browser localStorage and reloads. Controlled clock; this is save compatibility, not mall-view or natural-input acceptance.",
+  "steps": [
+    {
+      "name": "A4/S-07 actual main creates a v1 raid; its accepted snapshot and abandon result are the reference",
+      "status": "passed",
+      "evidence": {
+        "snapshotSha256": "0f15bc7c1edd2008de61178b8c132f20a39d18e38305dd09e13e54f258dc48e4",
+        "terminalSha256": "27af5c34656e36b20608434f1a7fdbf956938ad47775aeb9797dff8c43f0d7d4",
+        "world": "mall-v1"
+      }
+    },
+    {
+      "name": "A4 v1 snapshot resumes in new Runtime without change and settles identically to actual main",
+      "status": "passed",
+      "evidence": {
+        "exactSnapshot": true,
+        "exactTerminal": true
+      }
+    },
+    {
+      "name": "A4/S-03/S-08 v2 F2 survives browser refresh and exported backup import",
+      "status": "passed",
+      "evidence": {
+        "key": {
+          "runId": "bc-mv6sudei-b",
+          "worldVersion": "mall-v2",
+          "layoutRevision": "mall-layout-2",
+          "mapId": "mall-f2"
+        },
+        "rawSha256": "7ffbc5ace71338c7c880ef822f0604da260de6d5aabe266683b2ab5d319531ec",
+        "backupSha256": "1d5969dc18c113a99fd000f6d28c5d97eb1e2ebd8863b64cbea1106e73249173"
+      }
+    },
+    {
+      "name": "A4/S-07 actual main HTML rejects a v2 action without a writer lock and preserves exact raw bytes",
+      "status": "passed",
+      "evidence": {
+        "ok": false,
+        "error": "建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。",
+        "write": false,
+        "unchanged": true,
+        "rawSha256": "7ffbc5ace71338c7c880ef822f0604da260de6d5aabe266683b2ab5d319531ec"
+      }
+    },
+    {
+      "name": "S-08 current game native import cancel/failure/confirmation keeps complete v2 F2 backup",
+      "status": "failed",
+      "error": "locator.setInputFiles: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#backup-file')\u001b[22m\n\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:111:9\n    at async step (D:\\bincov\\mall-runtime\\scripts\\mall-runtime-compat.mjs:60:26)\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:107:5"
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "browser": "155.0.8059.40",
+  "status": "failed",
+  "failure": "locator.setInputFiles: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#backup-file')\u001b[22m\n\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:111:9\n    at async step (D:\\bincov\\mall-runtime\\scripts\\mall-runtime-compat.mjs:60:26)\n    at async file:///D:/bincov/mall-runtime/scripts/mall-runtime-compat.mjs:107:5",
+  "finishedAt": "2026-10-13T14:52:19.091Z"
+}

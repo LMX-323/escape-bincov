@@ -224,8 +224,8 @@
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| `pnpm test` | 233/233 | [test.log](evidence/test.log) |
-| `pnpm package` | 通过。HTML 3,204,347 字节，SHA-256 `21373471…`；两个 ZIP 和 release-manifest 一并更新 | [package.log](evidence/package.log) |
+| `pnpm test` | 233/233 | test.log（未入库） |
+| `pnpm package` | 通过。HTML 3,204,347 字节，SHA-256 `21373471…`；两个 ZIP 和 release-manifest 一并更新 | package.log（未入库） |
 | 样板门禁 `coast-sample-test.mjs` | **42/42**（原 37 项加新增 V06、V06b、V07、V08、V09），页面错误 0，外部请求 0 | [sample-report.json](evidence/sample-report.json) |
 | 新增门禁在 `1c1c935` 上运行 | 0/5（功能不存在，全部失败，说明门禁有效） | [gates-on-1c1c935.json](evidence/gates-on-1c1c935.json) |
 | 玩家倒地探针 `opus-player-death-probe.mjs` | 两种素材模式都在被真实敌火击倒后继续绘制：倾倒超过 0.16 秒后换成尸体（`1c1c935` 只有 1 帧） | [player-death-probe.json](evidence/player-death-probe.json) |

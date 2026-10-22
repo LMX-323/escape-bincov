@@ -2,11 +2,13 @@
 import { placeAt } from './inventory-actions.mjs';
 import assert from 'node:assert/strict';
 import { access, mkdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { chromium } from 'playwright';
 import { executablePath, browserOptions } from './browser-options.mjs';
+import { raidReady, frames, drive, panel, waitPanel, screenOf } from './raid-view.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'test-results');
@@ -20,9 +22,9 @@ const report = {
   methodology: [
     'Each viewport uses a fresh isolated browser context and the single file:// HTML; no development server.',
     'HTTP(S) access is blocked and attempted requests fail acceptance.',
-    'Travel, enemy positions, health and elapsed time use explicit test fixtures. Movement, aiming, firing, looting, dragging and extraction use browser input.',
+    'Raids deploy to the default area (沿海街区, three maps) and run on the 2.5D view. Travel, enemy positions, health and elapsed time use the explicit ?test=1 driver. Movement, aiming, firing, looting, dragging and extraction use browser input.',
     'Success, combat death and timeout are three consecutive runs per context, followed by reload and a fourth interrupted run.',
-    'FPS is sampled from Phaser actualFps and requestAnimationFrame in headless Chrome; this is not a claim about every physical GPU.',
+    'FPS is sampled from requestAnimationFrame and the raid renderer\'s ticker in headless Chrome; this is not a claim about every physical GPU.',
     'The test does not establish 30–60 minutes of subjective replay value or natural ten-minute difficulty balance.',
   ],
 };
@@ -36,6 +38,17 @@ let activePage;
 
 function rounded(value) { return Math.round(value * 100) / 100; }
 async function saveReport() { await writeFile(join(out, smoke ? 'browser-smoke.json' : 'browser-report.json'), JSON.stringify(report, null, 2)); }
+/**
+ * The seed's original records for the default area, from the game's own generator (tsx in a child process): the
+ * deployed three-map world must hold exactly these item amounts. Crates merge repeated stacks, so stacks are not records.
+ */
+function seedLoot(seed) {
+  const code = `import('./src/building-world.ts').then(m => { const c = m.buildingRunConfig(${Number(seed)}), all = [...c.loot, ...c.containers.flatMap(x => x.items)], amounts = {};
+    for (const i of all) amounts[i.id] = (amounts[i.id] ?? 0) + i.qty;
+    console.log(JSON.stringify({ records: all.length, crates: c.containers.length, amounts })); })`;
+  return JSON.parse(execFileSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', code], { cwd: root, encoding: 'utf8' }));
+}
+const sorted = amounts => Object.fromEntries(Object.entries(amounts).sort(([a], [b]) => a.localeCompare(b)));
 
 async function suite(viewport) {
   const label = `${viewport.width}x${viewport.height}`;
@@ -46,13 +59,12 @@ async function suite(viewport) {
   await context.route(/^https?:/i, route => route.abort('internetdisconnected'));
   const page = await context.newPage();
   activePage = page;
-  page.setDefaultTimeout(10000);
+  page.setDefaultTimeout(15000);
   await page.addInitScript(() => { window.__longTasks = []; new PerformanceObserver(list => { window.__longTasks.push(...list.getEntries().map(e => ({ start: e.startTime, duration: e.duration }))); }).observe({ entryTypes: ['longtask'] }); });
   page.on('pageerror', error => record.errors.push({ type: 'pageerror', message: error.stack || error.message }));
   page.on('console', message => { if (message.type() === 'error') record.errors.push({ type: 'console', message: message.text() }); });
   const action = (name, id) => page.locator(`[data-action="${name}"]${id ? `[data-id="${id}"]` : ''}`);
-  const waitState = state => page.waitForFunction(expected => window.__bincov?.app.state === expected, state);
-  const hold = async (key, milliseconds) => { await page.keyboard.down(key); try { await page.waitForTimeout(milliseconds); } finally { await page.keyboard.up(key); } };
+  const waitState = (state, timeout = 30000) => page.waitForFunction(expected => window.__bincov?.app.state === expected, state, { timeout });
   const screenshot = async name => {
     const path = join(out, `${label}-${name}.png`);
     await page.screenshot({ path });
@@ -62,9 +74,15 @@ async function suite(viewport) {
     const { app } = window.__bincov;
     return { state: app.state, cash: app.save.cash, stats: app.save.stats, safe: app.save.safe, bag: app.save.bag, stash: app.save.stash, equipment: app.save.equipment, quests: app.save.quests, activeRun: app.save.activeRun, result: app.save.lastResult, volume: app.save.settings.volume };
   });
+  // Live raid state: the published frame for the player and HUD, the live expansion capture for every map's population.
   const run = () => page.evaluate(() => {
-    const raid = window.__bincov.app.raid;
-    return { x: raid.player.x, y: raid.player.y, rotation: raid.player.rotation, elapsed: raid.elapsed, hp: raid.hp, mag: raid.mag, high: raid.highTide, enemies: raid.enemies.length, alive: raid.enemies.filter(e => e.hp > 0).length, loot: raid.loot.length, crates: raid.config.containers.length, originalLootEntries: raid.loot.length + raid.config.containers.reduce((sum, container) => sum + container.items.length, 0), seed: raid.config.seed };
+    const b = window.__bincovSample.host.lastBatch, f = b.frame, raid = window.__bincov.saveSession.captureExpansion().raid, maps = Object.values(raid.maps);
+    const enemies = maps.flatMap(m => m.enemies), crates = maps.flatMap(m => m.containers).filter(c => c.kind === 'crate');
+    const amounts = {};
+    for (const i of [...maps.flatMap(m => m.loot), ...crates.flatMap(c => c.inventory.items)]) amounts[i.id] = (amounts[i.id] ?? 0) + i.qty;
+    return { x: f.player.x, y: f.player.y, rotation: f.player.aim, elapsed: b.stamp.simulationTime, hp: f.hud.hp, mag: f.hud.weapon.mag, high: f.hud.highTide,
+      enemies: raid.roster.length, alive: enemies.filter(e => e.hp > 0).length, loot: maps.reduce((n, m) => n + m.loot.length, 0), crates: crates.length,
+      amounts, seed: raid.seed, map: b.stamp.world.mapId };
   });
   async function step(name, task) {
     const start = performance.now();
@@ -79,59 +97,166 @@ async function suite(viewport) {
       console.log(`PASS ${label} · ${name}`);
     } catch (error) {
       item.status = 'failed'; item.error = error.stack || String(error);
-      record.failureState = await page.evaluate(() => ({overlay:__bincov.app.overlay,error:__bincov.app.storageError,elapsed:__bincov.app.raid?.elapsed,stall:__bincov.app.raid?.lastStall,now:performance.now(),longTasks:window.__longTasks.slice(-15)}));
+      record.failureState = await page.evaluate(() => ({ state: __bincov.app.state, panel: window.__bincovSample?.host?.panel ?? null, error: __bincov.app.storageError,
+        elapsed: window.__bincovSample?.host?.lastBatch?.stamp.simulationTime ?? null, phase: window.__bincovSample?.host?.lastBatch?.frame.phase ?? null, now: performance.now(), longTasks: window.__longTasks.slice(-15) })).catch(() => null);
       console.log(JSON.stringify(record.failureState));
       throw error;
     } finally { item.durationMs = rounded(performance.now() - start); await saveReport(); }
   }
+  /**
+   * On a slow runner (CI's software GL) the first frames after a mount can be more than 2 s apart, and the Runtime then
+   * stall-pauses the raid ("画面暂时停顿…"), as it would for a player. Resume it through the pause panel, as a player
+   * would, and wait until it has stayed running for a few frames.
+   */
+  async function running() {
+    for (let i = 0; i < 5; i++) {
+      const now = await page.evaluate(() => ({ panel: window.__bincovSample.host.panel, phase: window.__bincovSample.host.lastBatch.frame.phase }));
+      if (now.phase === 'running' && now.panel === null) {
+        await frames(page, 3);
+        if (await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.phase === 'running')) return;
+        continue;
+      }
+      assert.equal(now.panel, 'pause', `the raid waits on ${now.panel}`);
+      // Only the Runtime's own stall pause is resumed here; any other pause is a failure of the step.
+      assert.ok(await page.evaluate(() => { const h = window.__bincovSample.host, seen = h.__stallSeen ?? 0, stalls = h.eventLog.filter(e => e.type === 'notice' && /^画面暂时停顿/.test(e.detail?.text ?? '') && e.seq > seen); if (!stalls.length) return false; h.__stallSeen = Math.max(...stalls.map(e => e.seq)); return true; }), 'the raid paused without the Runtime\'s stall notice');
+      record.stallResumes = (record.stallResumes ?? 0) + 1; console.log(`STALL ${label}: resumed a stall pause`);
+      await page.locator('.coast-sample [data-do="resume"]').click();
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.phase === 'running', null, { timeout: 30000 });
+    }
+    throw new Error('the raid did not stay running');
+  }
+  /**
+   * Fixture: a rested body before a deployment. After a death the 2.5D body keeps 1 health (the base heals it over real
+   * minutes); on a slow runner the AI acts for a second or two before the test can freeze it, so one blow would end the
+   * run. One validated session transaction, as the base's own recovery would write it.
+   */
+  async function rest() {
+    const ok = await page.evaluate(() => {
+      const s = window.__bincov.saveSession;
+      if (!window.__bincov.app.expansion) return true;
+      const ticket = s.prepareExpansionMutation(d => { Object.assign(d.expansion.body, { hp: 100, stamina: 100, pollution: 0, bleeding: false }); });
+      return !!ticket && s.commitExpansionMutation(ticket) === 'committed';
+    });
+    assert.ok(ok, 'rested body fixture committed');
+  }
+  /**
+   * Hold a movement key until the published player position passes `bound` on `axis` (direction 1: above, -1: below).
+   * Movement keys are read once per frame, so a fixed-length hold can miss every frame on a slow runner. On a timeout
+   * the caller's own assertion reports the failure.
+   */
+  async function holdUntil(key, axis, bound, direction) {
+    await page.keyboard.down(key);
+    try {
+      await page.waitForFunction(([axis, bound, direction]) => { const v = window.__bincovSample.host.lastBatch.frame.player[axis]; return direction > 0 ? v > bound : v < bound; },
+        [axis, bound, direction], { timeout: 20000 }).catch(() => {});
+    } finally { await page.keyboard.up(key); }
+  }
   async function deploy(seed) {
+    await rest();
     await page.locator('#seed').fill(String(seed));
     await action('deploy').click();
     await waitState('run');
-    await page.waitForFunction(() => window.__bincov.app.raid?.player?.active && window.__bincov.app.raid.enemies.length === 25);
-    assert.equal((await run()).seed, seed);
-    const combat = await page.locator('#game canvas').boundingBox();
-    const scale = Math.floor(Math.min(viewport.width / 960, viewport.height / 540));
-    assert.equal(combat.width, 960 * scale); assert.equal(combat.height, 540 * scale);
-    const sceneKeys = await page.evaluate(() => window.__bincov.app.game.scene.getScenes(true).map(scene => scene.scene.key));
-    assert.deepEqual(sceneKeys, ['Raid'], 'Only the current scene may continue running');
+    await raidReady(page);
+    await drive(page, 'freezeAI', true);
+    await running();
+    const current = await run();
+    assert.equal(current.seed, seed);
+    // One raid view owns the page: the Pixi raid canvas fills the window and no title or station canvas remains.
+    const canvas = await page.locator('.coast-sample canvas').boundingBox();
+    assert.equal(Math.round(canvas.width), viewport.width); assert.equal(Math.round(canvas.height), viewport.height);
+    const owners = await page.evaluate(() => ({ views: window.__bincovSample.counts().liveViews, roots: window.__bincovSample.counts().sampleRoots, pageCanvases: document.querySelectorAll('#game canvas').length }));
+    assert.deepEqual(owners, { views: 1, roots: 1, pageCanvases: 0 }, 'Only the raid view may continue running');
   }
+  /**
+   * The client point of a world point once the camera has settled: it follows the player over about a second, which on a
+   * slow runner is only a few frames, and a pointer placed earlier would aim where the target was on screen.
+   */
+  async function settledScreen(point) {
+    let last = await screenOf(page, point);
+    for (let i = 0; i < 40; i++) {
+      await frames(page, 2);
+      const now = await screenOf(page, point);
+      if (Math.hypot(now.x - last.x, now.y - last.y) < .5) return now;
+      last = now;
+    }
+    return last;
+  }
+  /**
+   * Put the real pointer on `point` and keep it there. The camera looks ahead along the aim, so moving the pointer turns
+   * the player, the camera follows the new aim and the point slides from under the still pointer; one measurement left
+   * the aim up to 0.13 rad off on slow runners, where the old aim came from a longer walk overshoot. Measure the settled
+   * screen point again after each move until pointer and point agree (two or three moves at the normal look-ahead).
+   */
   async function aimAt(point) {
-    const screen = await page.evaluate(({ x, y }) => {
-      const { app } = window.__bincov, camera = app.raid.cameras.main;
-      const box = app.game.canvas.getBoundingClientRect();
-      return { x: box.x + ((x - camera.scrollX) * camera.zoom + camera.x) * box.width / 960, y: box.y + ((y - camera.scrollY) * camera.zoom + camera.y) * box.height / 540 };
-    }, point);
-    assert.ok(screen.x >= 0 && screen.x < viewport.width && screen.y >= 0 && screen.y < viewport.height, 'Fixture target must be visible');
-    await page.mouse.move(screen.x, screen.y);
-    await page.waitForTimeout(100);
-    return screen;
+    let at = null;
+    for (let i = 0; i < 8; i++) {
+      const screen = await settledScreen(point);
+      assert.ok(screen.x >= 0 && screen.x < viewport.width && screen.y >= 0 && screen.y < viewport.height, 'Fixture target must be visible');
+      if (at && Math.hypot(screen.x - at.x, screen.y - at.y) < .5) return screen;
+      await page.mouse.move(screen.x, screen.y); at = screen;
+    }
+    throw new Error(`The pointer did not settle on ${JSON.stringify(point)}`);
   }
-  async function settleCamera() { await page.waitForTimeout(550); }
+  /** Stand, with the camera settled on the new position (it follows over about a second). */
+  async function standAt(point) {
+    await drive(page, 'placePlayer', point, 0, 'coast');
+    await page.waitForFunction(p => { const f = window.__bincovSample.host.lastBatch.frame.player; return Math.hypot(f.x - p.x, f.y - p.y) < 1; }, point);
+    await page.waitForTimeout(1200);
+    await running();
+  }
+  /**
+   * One precise, aimed click at `target`, retried only while no round leaves the magazine (`mag` before): a stall pause
+   * on a slow runner puts the click on the pause panel, and resuming it drops the held right button. Aim at the normal
+   * look-ahead; precise aim then only lengthens the look-ahead along that aim, so its published aim is checked rather
+   * than re-aimed (corrections under precise aim overshoot by about three quarters each time).
+   */
+  async function shootAt(target, mag) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await running();
+      await aimAt(target);
+      await page.mouse.down({ button: 'right' });
+      try {
+        await settledScreen(target);
+        const { from, aim } = await page.evaluate(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return { from: { x: p.x, y: p.y }, aim: p.aim }; });
+        const want = Math.atan2(target.y - from.y, target.x - from.x), off = Math.abs(Math.atan2(Math.sin(aim - want), Math.cos(aim - want)));
+        assert.ok(off < .03, `The aim is ${off.toFixed(3)} rad off the enemy before the shot`);
+        await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
+        const fired = await page.waitForFunction(m => window.__bincovSample.host.lastBatch.frame.hud.weapon.mag < m, mag, { timeout: 5000 }).then(() => true, () => false);
+        if (fired) return;
+      } finally { await page.mouse.up({ button: 'right' }); }
+    }
+    throw new Error('Three aimed clicks fired no round');
+  }
+  /** Pick up the run's street sample with E from a spot where no container is in reach (E would open it instead). */
   async function collectSample() {
-    await page.evaluate(() => {
-      const raid = window.__bincov.app.raid;
-      raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
-      const sample = raid.loot.find(item => item.id === 'sample');
+    const spot = await page.evaluate(() => {
+      const f = window.__bincovSample.host.lastBatch.frame, sample = f.loot.find(l => l.item === 'sample');
       if (!sample) throw new Error('Guaranteed sample missing');
-      raid.player.setPosition(sample.sprite.x, sample.sprite.y);
-      raid.bleeding = 0; raid.hp = 100;
+      for (const r of [0, 12, 20, 28]) for (let a = 0; a < 8; a++) {
+        const p = { x: sample.x + Math.round(Math.cos(a * Math.PI / 4) * r), y: sample.y + Math.round(Math.sin(a * Math.PI / 4) * r) };
+        if (f.containers.some(c => Math.hypot(c.x - p.x, c.y - p.y) < 48)) continue;
+        try { window.__bincovSample.driver.placePlayer(p, 0, 'coast'); return p; } catch { /* body does not fit here */ }
+        if (r === 0) break;
+      }
+      throw new Error('No clear spot beside the sample');
     });
-    await settleCamera();
+    await drive(page, 'vitals', { hp: 100, bleeding: false });
+    await standAt(spot);
     await page.keyboard.press('e', { delay: 110 });
     await page.waitForFunction(() => window.__bincov.app.loadout.bag.items.some(item => item.id === 'sample'));
   }
+  const resultShown = (timeout = 30000) => page.waitForFunction(() => window.__bincov.app.state === 'result' && !document.querySelector('.coast-sample'), null, { timeout });
 
   try {
     await step('offline viewport title and fixed logical canvas', async () => {
       await page.goto(url, { waitUntil: 'load' });
-      await page.waitForFunction(() => window.__bincov?.app.game?.canvas && window.__bincov.app.game.scene.isActive('Menu'));
+      await page.waitForFunction(() => !!window.__bincov?.title && document.body.dataset.screen === 'menu');
       await action('enter').waitFor();
       assert.match(await page.locator('h1').innerText(), /逃离[\s\S]*滨科夫/);
       const bounds = await page.evaluate(() => {
-        const game = window.__bincov.app.game, canvas = game.canvas, rect = canvas.getBoundingClientRect(), camera = game.scene.getScene('Menu').cameras.main;
+        const canvas = document.querySelector('#game canvas'), rect = canvas.getBoundingClientRect(), r = window.__bincov.title.renderInfo();
         return { width: rect.width, height: rect.height, x: rect.x, y: rect.y, renderWidth: canvas.width, renderHeight: canvas.height,
-          logicalWidth: camera.width / camera.zoom, logicalHeight: camera.height / camera.zoom };
+          logicalWidth: r.surface[0] / r.scale, logicalHeight: r.surface[1] / r.scale, renderer: r.renderer };
       });
       assert.equal(bounds.logicalWidth, 960); assert.equal(bounds.logicalHeight, 540);
       assert.equal(bounds.renderWidth, viewport.width); assert.equal(bounds.renderHeight, viewport.height);
@@ -142,8 +267,8 @@ async function suite(viewport) {
     });
     await step('hideout, merchant price and pointer inventory drag', async () => {
       await action('enter').click(); await waitState('hideout');
-      assert.deepEqual(await page.locator('#game canvas').evaluate(c => [c.width, c.height]), [960, 540], 'Menu render density must not leak into gameplay');
-      // Hideout panels use the viewport; combat retains the fixed logical canvas.
+      assert.deepEqual(await page.locator('#game canvas').evaluate(c => [c.width, c.height]), [960, 540], 'Menu render density must not leak into the station page');
+      // Hideout panels use the viewport over the station painting.
       const bounds = await page.locator('#game canvas').boundingBox();
       assert.equal(bounds.width, Math.min(viewport.width, 1808)); assert.equal(bounds.height, viewport.height);
       assert.equal(bounds.x, (viewport.width - bounds.width) / 2);
@@ -178,9 +303,10 @@ async function suite(viewport) {
     });
     await step('seeded deployment: 25 enemies and 60 original loot entries across ground and crates', async () => {
       await deploy(42);
-      const current = await run();
-      assert.equal(current.enemies, 25); assert.equal(current.originalLootEntries, 60);
-      assert.ok(current.crates > 0 && current.crates <= 10);
+      const current = await run(), expected = seedLoot(42);
+      assert.equal(current.enemies, 25); assert.equal(current.alive, 25); assert.equal(expected.records, 60);
+      assert.deepEqual(sorted(current.amounts), sorted(expected.amounts), 'every original record is on the ground or in a crate, across the three maps');
+      assert.equal(current.crates, expected.crates); assert.ok(current.crates > 0 && current.crates <= 10);
       const committed = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, SAVE_KEY);
       assert.ok(committed.activeRun); assert.equal(committed.bag.items.length, 0);
       await screenshot('raid');
@@ -189,18 +315,13 @@ async function suite(viewport) {
     if (smoke) return;
 
     await step('real WASD movement and pointer mapping', async () => {
-      await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        raid.player.setPosition(208, 784);
-        raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
-      });
-      await settleCamera();
+      await standAt({ x: 208, y: 784 });
       const before = await run();
-      await hold('d', 450); const right = await run();
+      await holdUntil('d', 'x', before.x + 15, 1); const right = await run();
       assert.ok(right.x > before.x + 15, 'D moves the actor right');
-      await hold('w', 450); const up = await run();
+      await holdUntil('w', 'y', right.y - 15, -1); const up = await run();
       assert.ok(up.y < right.y - 15, 'W moves the actor up');
-      await settleCamera();
+      await page.waitForTimeout(1200);
       const target = { x: up.x + 140, y: up.y + 20 };
       await aimAt(target);
       const aimed = await run(), expected = Math.atan2(target.y - aimed.y, target.x - aimed.x);
@@ -209,101 +330,123 @@ async function suite(viewport) {
       return { movementX: rounded(right.x - before.x), movementY: rounded(up.y - right.y), aimErrorRadians: rounded(error) };
     });
     await step('25-enemy, 60-original-loot battle performance sample', async () => {
-      await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        raid.player.setPosition(700, 784); raid.hp = 100; raid.bleeding = 0;
-        const enemy = raid.enemies.find(candidate => candidate.id === 'salt');
-        enemy.sprite.setPosition(900, 784); enemy.home = { x: 900, y: 784 }; enemy.target = { x: 700, y: 784 }; enemy.cooldown = 0.5;
+      await drive(page, 'vitals', { hp: 100, bleeding: false });
+      await standAt({ x: 700, y: 784 });
+      // One rifle enemy engages at 200 px; everyone else waits far down the quay road, so the five seconds stay a duel.
+      const salt = await page.evaluate(() => {
+        const { driver, host } = window.__bincovSample, actors = host.lastBatch.frame.actors.filter(a => a.alive), rifle = actors.find(a => a.kind === 'salt');
+        if (!rifle) return null;
+        for (const other of actors) if (other.uid !== rifle.uid) driver.placeEnemy(other.uid, { x: 208, y: 1456 });
+        driver.placeEnemy(rifle.uid, { x: 900, y: 784 });
+        return rifle.uid;
       });
-      await settleCamera();
-      const before = await run();
-      assert.equal(before.alive, 25); assert.equal(before.originalLootEntries, 60);
+      assert.ok(salt, 'a rifle enemy on the street');
+      // The world check first: seedLoot runs a tsx child process, which takes seconds on a slow runner, and the duel
+      // (AI unfrozen) must last only the sampled five seconds.
+      const before = await run(), stocked = seedLoot(42).amounts;
+      assert.equal(before.alive, 25); assert.deepEqual(sorted(before.amounts), sorted(stocked), 'the world is still fully stocked');
+      await drive(page, 'freezeAI', false);
       record.fps = await page.evaluate(() => new Promise(resolveSample => {
         const start = performance.now(), values = [], intervals = [];
-        let previous = start, frames = 0, stayedInRun = true;
-        function sample(now) {
-          const { app } = window.__bincov;
-          stayedInRun &&= app.state === 'run';
-          if (frames++) intervals.push(now - previous);
-          previous = now;
-          const fps = app.game.loop.actualFps;
-          if (frames % 10 === 0 && Number.isFinite(fps) && fps > 0) values.push(fps);
-          if (now - start < 5000) { requestAnimationFrame(sample); return; }
+        let previous = start, frames = 0, stayedInRun = true, sampledAt = start;
+        let done = false;
+        function finish(now) {
+          if (done) return; done = true;
           values.sort((a, b) => a - b); intervals.sort((a, b) => a - b);
           const average = values.reduce((a, b) => a + b, 0) / values.length;
           resolveSample({ measuredMs: now - start, frames, samples: values.length, average, minimum: values[0], median: values[Math.floor(values.length / 2)], frameIntervalP95Ms: intervals[Math.floor(intervals.length * .95)], stayedInRun, target60ApproxMet: average >= 55 });
         }
+        function sample(now) {
+          if (done) return;
+          const { app } = window.__bincov;
+          stayedInRun &&= app.state === 'run';
+          if (frames++) intervals.push(now - previous);
+          previous = now;
+          const fps = window.__bincovSample.host.app.ticker.FPS;
+          if ((frames % 10 === 0 || now - sampledAt >= 500) && Number.isFinite(fps) && fps > 0) { values.push(fps); sampledAt = now; }
+          if (now - start < 5000) { requestAnimationFrame(sample); return; }
+          finish(now);
+        }
         requestAnimationFrame(sample);
+        // If frames stop altogether the sample ends anyway, and the check below reports it instead of hanging the suite.
+        setTimeout(() => finish(performance.now()), 20000);
       }));
+      await drive(page, 'freezeAI', true);
       assert.ok(record.fps.samples >= 2 && record.fps.average > 0, 'FPS sampler produced measurements');
       assert.equal(record.fps.stayedInRun, true);
-      await page.evaluate(() => { const raid = window.__bincov.app.raid; raid.enemies.forEach(enemy => { enemy.cooldown = 9999; }); raid.hp = 100; raid.bleeding = 0; });
+      await drive(page, 'vitals', { hp: 100, bleeding: false });
       return record.fps;
     });
     await step('actual aimed pistol shot consumes ammunition and hits an enemy', async () => {
+      await standAt({ x: 700, y: 784 });
       const fixture = await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        raid.player.setPosition(700, 784);
-        raid.bullets.forEach(bullet => bullet.sprite.destroy()); raid.bullets = [];
-        const index = raid.enemies.findIndex(enemy => enemy.id === 'scav');
-        raid.enemies.forEach((other,otherIndex)=>{if(otherIndex!==index){other.sprite.setPosition(208,1456);other.home={x:208,y:1456};other.target={x:208,y:1456};other.timer=9999;other.alert=0;other.state='patrol';other.path=[];}});
-        const enemy = raid.enemies[index];
-        enemy.sprite.setPosition(820, 784); enemy.hp = 56; enemy.cooldown = 9999;
-        enemy.home = { x: 820, y: 784 }; enemy.target = { x: 820, y: 784 }; enemy.timer = 9999;
-        return { index, hp: enemy.hp, mag: raid.mag };
+        const { driver, host } = window.__bincovSample, actors = host.lastBatch.frame.actors.filter(a => a.alive);
+        const enemy = actors.find(a => a.kind === 'scav');
+        // Everyone else waits far down the quay road, out of the line of fire.
+        for (const other of actors) if (other.uid !== enemy.uid) driver.placeEnemy(other.uid, { x: 208, y: 1456 });
+        driver.placeEnemy(enemy.uid, { x: 820, y: 784 }, 56);
+        return { uid: enemy.uid, hp: 56, mag: host.lastBatch.frame.hud.weapon.mag };
       });
-      await settleCamera();
       await page.keyboard.press('1');
-      const target = await page.evaluate(index => { const enemy = window.__bincov.app.raid.enemies[index]; return { x: enemy.sprite.x, y: enemy.sprite.y }; }, fixture.index);
-      await aimAt(target);
-      await page.mouse.down({ button: 'right' });
+      await frames(page, 3);
+      const target = await page.evaluate(uid => { const e = window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid); return { x: e.x, y: e.y }; }, fixture.uid);
+      const mag = (await run()).mag;
       try {
-        await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
-        await page.waitForFunction(({ index, hp }) => window.__bincov.app.raid.enemies[index].hp < hp, fixture);
+        await shootAt(target, mag);
+        await page.waitForFunction(({ uid, hp }) => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid).hp < hp, fixture)
+          .catch(async error => {
+            // Should a round still miss, record where the shot started and went, what it struck, and where the player and
+            // the enemy stood.
+            const seen = await page.evaluate(uid => {
+              const h = window.__bincovSample.host, f = h.lastBatch.frame, e = f.actors.find(a => a.uid === uid);
+              return { player: f.player, enemy: e && { x: e.x, y: e.y, hp: e.hp }, mag: f.hud.weapon.mag,
+                events: h.eventLog.filter(v => v.type === 'shot' || v.type === 'impact').slice(-4) };
+            }, fixture.uid).catch(() => null);
+            throw new Error(`${error.message}\n${JSON.stringify(seen)}`);
+          });
       } finally { await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' }); }
       const result = await run();
-      assert.equal(result.mag, fixture.mag - 1);
-      return { beforeAmmo: fixture.mag, afterAmmo: result.mag, damagedEnemyIndex: fixture.index };
+      assert.equal(result.mag, mag - 1);
+      return { beforeAmmo: mag, afterAmmo: result.mag, damagedEnemy: fixture.uid };
     });
     await step('real E pickup, pause, map and persisted volume controls', async () => {
       await collectSample();
       await page.keyboard.press('Escape');
-      await page.waitForFunction(() => window.__bincov.app.overlay === 'pause');
+      await waitPanel(page, 'pause');
       const paused = await run();
       await page.waitForTimeout(500);
       assert.equal((await run()).elapsed, paused.elapsed, 'Pause must stop the action clock');
-      const volume = page.locator('#volume');
+      const volume = page.locator('.coast-sample [data-volume]');
       await volume.focus(); await page.keyboard.press('Home');
       for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
       assert.equal(Number(await volume.inputValue()), 0.2);
       assert.equal((await state()).volume, 0.2);
-      await action('close').click();
+      await page.locator('.coast-sample [data-do="resume"]').click(); await waitPanel(page, null);
       await page.keyboard.press('m');
-      await page.locator('#map').waitFor();
+      await page.locator('.coast-sample [data-panel].map [data-map]').waitFor();
       const mapTime = (await run()).elapsed;
-      await page.waitForTimeout(250);
+      // The world keeps running behind the map: the published clock moves on (frames may be far apart on a slow runner).
+      await page.waitForFunction(t => window.__bincovSample.host.lastBatch.stamp.simulationTime > t, mapTime, { timeout: 15000 }).catch(() => {});
       assert.ok((await run()).elapsed > mapTime, 'Map is not a pause');
       await screenshot('map');
-      await page.keyboard.press('m');
+      await page.keyboard.press('m'); await waitPanel(page, null);
       return { volume: 0.2, sampleLootedByKeyboard: true };
     });
     await step('tide warning, high-tide transition and real movement out of flood', async () => {
-      await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        raid.highTide = false; raid.drawFlood(); raid.elapsed = raid.config.warningAt - .01;
-        raid.player.setPosition(63 * 32 + 16, 10 * 32 + 16);
-        raid.hp = 100; raid.bleeding = 0;
-      });
-      await page.waitForFunction(() => document.getElementById('warning')?.textContent.includes('潮汐预警'));
-      await page.evaluate(() => { const raid = window.__bincov.app.raid; raid.elapsed = raid.config.tideAt - .01; });
-      await page.waitForFunction(() => window.__bincov.app.raid.highTide === true);
+      assert.equal((await run()).high, false, 'seed 42 starts at low tide');
+      await drive(page, 'vitals', { hp: 100, bleeding: false });
+      await drive(page, 'clock', 269.9);
+      await standAt({ x: 63 * 32 + 16, y: 10 * 32 + 16 });
+      await page.waitForFunction(() => document.querySelector('.coast-sample [data-tide]')?.textContent.includes('潮汐预警'));
+      await drive(page, 'clock', 299.9);
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.highTide === true);
       const afterFlip = await run();
-      await hold('a', 600);
+      await holdUntil('a', 'x', 63 * 32 - 10, -1);
       const escaped = await run();
       assert.ok(escaped.x < 63 * 32 - 10, 'Player can leave the high-tide strip');
       // Regression: actor center is dry but the collision radius still overlaps water.
-      await page.evaluate(() => { window.__bincov.app.raid.player.setPosition(63 * 32 - 1, 10 * 32 + 16); });
-      await hold('a', 450);
+      await drive(page, 'placePlayer', { x: 63 * 32 - 1, y: 10 * 32 + 16 }, 0, 'coast'); await frames(page, 2); await running();
+      await holdUntil('a', 'x', 63 * 32 - 20, -1);
       assert.ok((await run()).x < 63 * 32 - 20, 'Half-overlapping flood boundary must not trap the actor');
       await screenshot('high-tide');
       return { warningAt: 270, tideAt: 300, xAfterFlip: rounded(afterFlip.x), xAfterMovement: rounded(escaped.x) };
@@ -311,17 +454,12 @@ async function suite(viewport) {
 
     const beforeResults = await state();
     await step('first run: actual three-second extraction retains loot and gear', async () => {
-      await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        const exit = raid.config.exits[0];
-        raid.player.setPosition(exit.x, exit.y); raid.hp = 100; raid.bleeding = 0; raid.pollution = 0;
-        raid.enemies.forEach(enemy => { enemy.cooldown = 9999; });
-        raid.bullets.forEach(bullet => bullet.sprite.destroy()); raid.bullets = [];
-      });
-      await settleCamera();
+      await drive(page, 'vitals', { hp: 100, bleeding: false, pollution: 0 });
+      const exit = await page.evaluate(() => window.__bincovSample.host.lastBatch.map.exits[0].at);
+      await standAt(exit);
       const start = performance.now();
       await page.keyboard.down('e');
-      try { await page.waitForFunction(() => window.__bincov.app.state === 'result', null, { timeout: 12000 }); }
+      try { await resultShown(); }
       finally { await page.keyboard.up('e'); }
       const elapsed = performance.now() - start, saved = await state();
       assert.ok(elapsed >= 2500, 'Extraction must perform a real three-second progress bar');
@@ -334,14 +472,14 @@ async function suite(viewport) {
       return { actualHoldMs: rounded(elapsed), savedRuns: saved.stats.runs };
     });
     await step('second run: actual enemy attack causes death and protects the safe', async () => {
-      await action('return').click(); await deploy(43);
-      await page.evaluate(() => {
-        const raid = window.__bincov.app.raid;
-        raid.player.setPosition(700, 784); raid.hp = 1; raid.bleeding = 0; raid.pollution = 0;
-        const enemy = raid.enemies.find(candidate => candidate.id === 'scav');
-        enemy.sprite.setPosition(720, 784); enemy.cooldown = 0; enemy.target = { x: 700, y: 784 }; enemy.state = 'attack';
-      });
-      await waitState('result');
+      await action('return').click(); await waitState('hideout'); await deploy(43);
+      await standAt({ x: 700, y: 784 });
+      const scav = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.kind === 'scav' && a.alive)?.uid);
+      assert.ok(scav, 'a club enemy on the street');
+      await drive(page, 'vitals', { hp: 1, bleeding: false, pollution: 0 });
+      await drive(page, 'placeEnemy', scav, { x: 720, y: 784 });
+      await drive(page, 'freezeAI', false);
+      await resultShown(60000);
       const saved = await state();
       assert.equal(saved.result.outcome, 'death'); assert.equal(saved.stats.runs, 2);
       assert.equal(saved.bag.items.length, 0); assert.equal(saved.equipment.weapon, null);
@@ -350,9 +488,9 @@ async function suite(viewport) {
       await screenshot('result-death');
     });
     await step('third run: timeout and three-run persistence after reload', async () => {
-      await action('return').click(); await deploy(44);
-      await page.evaluate(() => { window.__bincov.app.raid.elapsed = 599.99; });
-      await waitState('result');
+      await action('return').click(); await waitState('hideout'); await deploy(44);
+      await drive(page, 'clock', 599.99);
+      await resultShown();
       const saved = await state();
       assert.equal(saved.result.outcome, 'timeout'); assert.equal(saved.stats.runs, 3);
       assert.equal(saved.stats.extracts, 1); assert.equal(saved.bag.items.length, 0);
@@ -372,21 +510,23 @@ async function suite(viewport) {
       await deploy(45);
       await collectSample();
       await page.keyboard.press('Tab');
-      await page.waitForFunction(() => window.__bincov.app.overlay === 'inventory');
+      await waitPanel(page, 'inventory');
       const sampleUid = await page.evaluate(() => window.__bincov.app.loadout.bag.items.find(item => item.id === 'sample').uid);
-      await page.locator(`[data-uid="${sampleUid}"]`).click(); await action('secure').click();
+      await page.locator(`.coast-sample [data-panel] [data-source="bag"][data-uid="${sampleUid}"]`).click();
+      await page.locator('.coast-sample [data-do="inv-quick"]').click();
+      await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).profile.safe.items.some(item => item.id === 'sample'), SAVE_KEY);
       const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).profile, SAVE_KEY);
       assert.ok(checkpoint.activeRun); assert.ok(checkpoint.safe.items.some(item => item.id === 'sample'));
       await page.reload({ waitUntil: 'load' }); await waitState('menu'); await action('enter').waitFor();
       const recovered = await state();
       assert.ok(recovered.activeRun); assert.equal(recovered.stats.runs, 4);
       assert.equal(recovered.result.outcome, 'timeout', 'Reload must not settle the new run');
-      assert.ok(await page.evaluate(() => __bincov.app.checkpoint.loadout.bag.items.some(i => i.id === 'medkit')));
+      assert.ok(await page.evaluate(() => __bincov.app.expansion.raid.loadout.bag.items.some(i => i.id === 'medkit')));
       assert.equal(recovered.bag.items.length, 0); assert.equal(recovered.equipment.weapon, null);
       assert.deepEqual(recovered.stash, stashBefore); assert.deepEqual(recovered.safe, checkpoint.safe);
       assert.equal(recovered.cash, beforeResults.cash); assert.deepEqual(recovered.quests, beforeResults.quests);
-      await action('enter').click(); await waitState('run'); await page.waitForFunction(() => __bincov.app.raid?.player?.active);
-      assert.equal(await page.evaluate(() => __bincov.app.overlay), 'pause'); await screenshot('recovered-raid');
+      await action('enter').click(); await waitState('run'); await raidReady(page);
+      await waitPanel(page, 'pause'); assert.equal(await panel(page), 'pause'); await screenshot('recovered-raid');
       return { carriedMedkitRestored: true, safeSamplePreserved: true, noExtraSettlement: recovered.stats.runs === 4 };
     });
   } finally {

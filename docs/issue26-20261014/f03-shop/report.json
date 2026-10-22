@@ -1,0 +1,691 @@
+{
+  "item": "#26 F03 yard shop quick fixes C1-C4",
+  "base": "origin/main e9cbaa5",
+  "command": "pnpm test:shop-feedback",
+  "newBuild": {
+    "html": "dist/index.html (local pnpm build of this branch, not committed)",
+    "sha256": "1263c618c68352901b5e92d66d576f238a63f39cdcd2f01c06802651ccc4fa4e",
+    "browser": "155.0.8059.40",
+    "passed": 26,
+    "total": 26,
+    "checks": [
+      {
+        "name": "1280x720 funds rejection",
+        "status": "passed"
+      },
+      {
+        "name": "1280x720 space rejection",
+        "status": "passed"
+      },
+      {
+        "name": "1920x1080 funds rejection",
+        "status": "passed"
+      },
+      {
+        "name": "1920x1080 space rejection",
+        "status": "passed"
+      },
+      {
+        "name": "390x844 funds rejection",
+        "status": "passed"
+      },
+      {
+        "name": "390x844 space rejection",
+        "status": "passed"
+      },
+      {
+        "name": "timing: quick input survives a long task before its second pointerup handler",
+        "status": "passed"
+      },
+      {
+        "name": "timing: inputs 350 ms apart remain separate selections even when queued together",
+        "status": "passed"
+      },
+      {
+        "name": "yard refreshes stale empty cart without reopening",
+        "status": "passed"
+      },
+      {
+        "name": "tabs refreshes stale empty cart without reopening",
+        "status": "passed"
+      },
+      {
+        "name": "legacy tabs show the same funds rejection",
+        "status": "passed"
+      },
+      {
+        "name": "legacy tabs show the same space rejection",
+        "status": "passed"
+      },
+      {
+        "name": "another window still locks settlement and cannot be overwritten through refresh",
+        "status": "passed"
+      },
+      {
+        "name": "F03 C1 1280x720 details price by side and fixed shop geometry",
+        "status": "passed",
+        "detail": {
+          "geometry": {
+            "cells": {
+              "merchant": 44,
+              "buy": 44,
+              "sell": 44,
+              "stash": 44
+            },
+            "pistol": [
+              332,
+              199,
+              88,
+              44
+            ],
+            "details": 76
+          },
+          "hint": "选中一件物品\n单击查看 · 双击加入或放回 · 拖到待买或待卖，再统一结算",
+          "rows": [
+            {
+              "uid": "bc-mv7l0xtw-e",
+              "dl": "占用 1 × 1 重量 0.14 kg 买入 ¥ 84",
+              "kind": "弹药",
+              "clipped": 0
+            },
+            {
+              "uid": "bc-mv7l0xtw-h",
+              "dl": "占用 1 × 1 重量 0.55 kg 买入 ¥ 85",
+              "kind": "零件 · 任务用途：让灯亮起来",
+              "clipped": 0
+            },
+            {
+              "uid": "st-watch",
+              "dl": "占用 1 × 1 重量 0.15 kg 卖出 ¥ 240",
+              "kind": "贵重物资",
+              "clipped": 0
+            },
+            {
+              "uid": "st-pistol",
+              "dl": "占用 2 × 1 重量 0.80 kg 卖出 ¥ 150",
+              "kind": "武器",
+              "clipped": 0
+            },
+            {
+              "uid": "st-relief",
+              "dl": "占用 1 × 1 重量 0.14 kg 卖出 不可出售",
+              "kind": "弹药 · 救济 · 不可出售",
+              "clipped": 0
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C1 1920x1080 details price by side and fixed shop geometry",
+        "status": "passed",
+        "detail": {
+          "geometry": {
+            "cells": {
+              "merchant": 56,
+              "buy": 56,
+              "sell": 56,
+              "stash": 56
+            },
+            "pistol": [
+              732,
+              199,
+              112,
+              56
+            ],
+            "details": 76
+          },
+          "hint": "选中一件物品\n单击查看 · 双击加入或放回 · 拖到待买或待卖，再统一结算",
+          "rows": [
+            {
+              "uid": "bc-mv7l0zdv-e",
+              "dl": "占用 1 × 1 重量 0.14 kg 买入 ¥ 84",
+              "kind": "弹药",
+              "clipped": 0
+            },
+            {
+              "uid": "bc-mv7l0zdv-h",
+              "dl": "占用 1 × 1 重量 0.55 kg 买入 ¥ 85",
+              "kind": "零件 · 任务用途：让灯亮起来",
+              "clipped": 0
+            },
+            {
+              "uid": "st-watch",
+              "dl": "占用 1 × 1 重量 0.15 kg 卖出 ¥ 240",
+              "kind": "贵重物资",
+              "clipped": 0
+            },
+            {
+              "uid": "st-pistol",
+              "dl": "占用 2 × 1 重量 0.80 kg 卖出 ¥ 150",
+              "kind": "武器",
+              "clipped": 0
+            },
+            {
+              "uid": "st-relief",
+              "dl": "占用 1 × 1 重量 0.14 kg 卖出 不可出售",
+              "kind": "弹药 · 救济 · 不可出售",
+              "clipped": 0
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C1 1280x600 details price by side and fixed shop geometry",
+        "status": "passed",
+        "detail": {
+          "geometry": {
+            "cells": {
+              "merchant": 29,
+              "buy": 29,
+              "sell": 29,
+              "stash": 29
+            },
+            "pistol": [
+              632,
+              199,
+              58,
+              29
+            ],
+            "details": 76
+          },
+          "hint": "选中一件物品\n单击查看 · 双击加入或放回 · 拖到待买或待卖，再统一结算",
+          "rows": [
+            {
+              "uid": "bc-mv7l10ys-e",
+              "dl": "占用 1 × 1 重量 0.14 kg 买入 ¥ 84",
+              "kind": "弹药",
+              "clipped": 0
+            },
+            {
+              "uid": "bc-mv7l10ys-h",
+              "dl": "占用 1 × 1 重量 0.55 kg 买入 ¥ 85",
+              "kind": "零件 · 任务用途：让灯亮起来",
+              "clipped": 0
+            },
+            {
+              "uid": "st-watch",
+              "dl": "占用 1 × 1 重量 0.15 kg 卖出 ¥ 240",
+              "kind": "贵重物资",
+              "clipped": 0
+            },
+            {
+              "uid": "st-pistol",
+              "dl": "占用 2 × 1 重量 0.80 kg 卖出 ¥ 150",
+              "kind": "武器",
+              "clipped": 0
+            },
+            {
+              "uid": "st-relief",
+              "dl": "占用 1 × 1 重量 0.14 kg 卖出 不可出售",
+              "kind": "弹药 · 救济 · 不可出售",
+              "clipped": 0
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C2 1280x720 quick move of relief goods names the rule",
+        "status": "passed",
+        "detail": {
+          "message": "这件物品不可出售。",
+          "unchangedSave": true
+        }
+      },
+      {
+        "name": "F03 C2 390x844 quick move of relief goods names the rule",
+        "status": "passed",
+        "detail": {
+          "message": "这件物品不可出售。",
+          "unchangedSave": true
+        }
+      },
+      {
+        "name": "F03 C2 1280x720 quick move on a changed stash asks for a refresh",
+        "status": "passed",
+        "detail": {
+          "message": "仓库已改变，请刷新清单后重新选择物品。",
+          "unchangedSave": true
+        }
+      },
+      {
+        "name": "F03 C3 1280x720 goods stash header",
+        "status": "passed",
+        "detail": {
+          "text": "整组出售 · 背包与安全箱 1 件需先入库",
+          "cut": 0,
+          "overflow": 0
+        }
+      },
+      {
+        "name": "F03 C3 1280x720 goods-clear stash header",
+        "status": "passed",
+        "detail": {
+          "text": "整组出售",
+          "cut": 0,
+          "overflow": 0
+        }
+      },
+      {
+        "name": "F03 C3 844x390 goods stash header",
+        "status": "passed",
+        "detail": {
+          "text": "整组出售 · 背包与安全箱 1 件需先入库",
+          "cut": 0,
+          "overflow": 0
+        }
+      },
+      {
+        "name": "F03 C4 844x390 compact header shows the selected price",
+        "status": "passed",
+        "detail": {
+          "rows": [
+            {
+              "uid": "bc-mv7l1adx-b",
+              "shown": "手枪 · 买入 ¥ 320",
+              "cut": 0,
+              "overflow": 0
+            },
+            {
+              "uid": "st-watch",
+              "shown": "怀表 · 卖出 ¥ 240",
+              "cut": 0,
+              "overflow": 0
+            },
+            {
+              "uid": "st-relief",
+              "shown": "9mm · 不可出售",
+              "cut": 0,
+              "overflow": 0
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C4 390x844 compact header shows the selected price",
+        "status": "passed",
+        "detail": {
+          "rows": [
+            {
+              "uid": "bc-mv7l1bkq-b",
+              "shown": "手枪 · 买入 ¥ 320",
+              "cut": 0,
+              "overflow": 0
+            },
+            {
+              "uid": "st-watch",
+              "shown": "怀表 · 卖出 ¥ 240",
+              "cut": 0,
+              "overflow": 0
+            },
+            {
+              "uid": "st-relief",
+              "shown": "9mm · 不可出售",
+              "cut": 0,
+              "overflow": 0
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C4 844x390 compact headers keep totals after a quick move",
+        "status": "passed",
+        "detail": {
+          "rows": [
+            {
+              "from": "stash",
+              "to": "sell",
+              "shown": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 240"
+              ],
+              "expected": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 240"
+              ]
+            },
+            {
+              "from": "sell",
+              "to": "stash",
+              "shown": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 0"
+              ],
+              "expected": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 0"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "F03 C4 390x844 compact headers keep totals after a quick move",
+        "status": "passed",
+        "detail": {
+          "rows": [
+            {
+              "from": "stash",
+              "to": "sell",
+              "shown": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 240"
+              ],
+              "expected": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 240"
+              ]
+            },
+            {
+              "from": "sell",
+              "to": "stash",
+              "shown": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 0"
+              ],
+              "expected": [
+                "整组出售 · 背包与安全箱 1 件需先入库",
+                "¥ 0"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "oldBuildNegativeControl": {
+    "command": "node scripts/shop-feedback-test.mjs --html=<scratchpad>/baseline-e9cbaa5.html --only=F03 --out=test-results/shop-feedback-baseline",
+    "html": "baseline-e9cbaa5.html (identical to e9cbaa5 committed dist/index.html)",
+    "sha256": "a47cd458ec3c46848ed3e5d5471cebef36512e2b8ee6aba63aac937abe52cad7",
+    "failed": 12,
+    "total": 13,
+    "checks": [
+      {
+        "name": "F03 C1 1280x720 details price by side and fixed shop geometry",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: selecting merchant bc-mv7l1k51-e must keep the shop geometry",
+          "+ actual - expected",
+          "",
+          "  {",
+          "    cells: {",
+          "      buy: 44,",
+          "      merchant: 44,",
+          "      sell: 44,",
+          "      stash: 44",
+          "    },",
+          "+   details: 72.5,",
+          "-   details: 64,",
+          "    pistol: [",
+          "      332,",
+          "      199,",
+          "      88,",
+          "      44",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C1 1920x1080 details price by side and fixed shop geometry",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: selecting merchant bc-mv7l1lsu-e must keep the shop geometry",
+          "+ actual - expected",
+          "",
+          "  {",
+          "    cells: {",
+          "      buy: 56,",
+          "      merchant: 56,",
+          "      sell: 56,",
+          "      stash: 56",
+          "    },",
+          "+   details: 72.5,",
+          "-   details: 64,",
+          "    pistol: [",
+          "      732,",
+          "      199,",
+          "      112,",
+          "      56",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C1 1280x600 details price by side and fixed shop geometry",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: selecting merchant bc-mv7l1n8h-e must keep the shop geometry",
+          "+ actual - expected",
+          "",
+          "  {",
+          "    cells: {",
+          "+     buy: 30,",
+          "+     merchant: 30,",
+          "+     sell: 30,",
+          "+     stash: 30",
+          "-     buy: 31,",
+          "-     merchant: 31,",
+          "-     sell: 31,",
+          "-     stash: 31",
+          "    },",
+          "+   details: 72.5,",
+          "-   details: 64,",
+          "    pistol: [",
+          "+     612,",
+          "-     592,",
+          "      199,",
+          "+     60,",
+          "+     30",
+          "-     62,",
+          "-     31"
+        ]
+      },
+      {
+        "name": "F03 C2 1280x720 quick move of relief goods names the rule",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '待买或待卖区放不下了。'",
+          "- '这件物品不可出售。'",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C2 390x844 quick move of relief goods names the rule",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '待买或待卖区放不下了。'",
+          "- '这件物品不可出售。'",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C2 1280x720 quick move on a changed stash asks for a refresh",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '待买或待卖区放不下了。'",
+          "- '仓库已改变，请刷新清单后重新选择物品。'",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C3 1280x720 goods stash header",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '整组出售'",
+          "- '整组出售 · 背包与安全箱 1 件需先入库'",
+          "       ^",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C3 1280x720 goods-clear stash header",
+        "status": "passed"
+      },
+      {
+        "name": "F03 C3 844x390 goods stash header",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '整组出售'",
+          "- '整组出售 · 背包与安全箱 1 件需先入库'",
+          "       ^",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C4 844x390 compact header shows the selected price",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '按包购买'",
+          "- '手枪 · 买入 ¥ 320'",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C4 390x844 compact header shows the selected price",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+          "+ actual - expected",
+          "",
+          "+ '按包购买'",
+          "- '手枪 · 买入 ¥ 320'",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C4 844x390 compact headers keep totals after a quick move",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: quick moves keep the stash note and the sell total",
+          "+ actual - expected",
+          "",
+          "  [",
+          "    [",
+          "+     '整组出售',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 240'",
+          "    ],",
+          "    [",
+          "+     '整组出售',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 0'",
+          "    ]",
+          "  ]",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C4 390x844 compact headers keep totals after a quick move",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: quick moves keep the stash note and the sell total",
+          "+ actual - expected",
+          "",
+          "  [",
+          "    [",
+          "+     '整组出售',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 240'",
+          "    ],",
+          "    [",
+          "+     '整组出售',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 0'",
+          "    ]",
+          "  ]",
+          ""
+        ]
+      }
+    ]
+  },
+  "quickMoveHeaderNegativeControl": {
+    "command": "node scripts/shop-feedback-test.mjs --html=<scratchpad>/i26-shop/eca7d23.html --only=\"F03 C4\" --out=<scratchpad>/i26-shop/c4-eca7d23",
+    "html": "eca7d23.html (local pnpm build of the first F03 commit eca7d23, before the compact header matched the selected source)",
+    "sha256": "edc072a4248abe1df7fb4ae1279f4981f873142c5dd5ece8f94584bd6825177d",
+    "failed": 2,
+    "total": 4,
+    "checks": [
+      {
+        "name": "F03 C4 844x390 compact header shows the selected price",
+        "status": "passed"
+      },
+      {
+        "name": "F03 C4 390x844 compact header shows the selected price",
+        "status": "passed"
+      },
+      {
+        "name": "F03 C4 844x390 compact headers keep totals after a quick move",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: quick moves keep the stash note and the sell total",
+          "+ actual - expected",
+          "",
+          "  [",
+          "    [",
+          "      '整组出售 · 背包与安全箱 1 件需先入库',",
+          "+     '怀表 · 卖出 ¥ 240'",
+          "-     '¥ 240'",
+          "    ],",
+          "    [",
+          "+     '怀表 · 卖出 ¥ 240',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 0'",
+          "    ]",
+          "  ]",
+          ""
+        ]
+      },
+      {
+        "name": "F03 C4 390x844 compact headers keep totals after a quick move",
+        "status": "failed",
+        "error": [
+          "AssertionError [ERR_ASSERTION]: quick moves keep the stash note and the sell total",
+          "+ actual - expected",
+          "",
+          "  [",
+          "    [",
+          "      '整组出售 · 背包与安全箱 1 件需先入库',",
+          "+     '怀表 · 卖出 ¥ 240'",
+          "-     '¥ 240'",
+          "    ],",
+          "    [",
+          "+     '怀表 · 卖出 ¥ 240',",
+          "-     '整组出售 · 背包与安全箱 1 件需先入库',",
+          "      '¥ 0'",
+          "    ]",
+          "  ]",
+          ""
+        ]
+      }
+    ]
+  },
+  "screenshots": [
+    "F03-C1-1280x720-merchant.png",
+    "F03-C1-1280x720-stash.png",
+    "F03-C1-1920x1080-merchant.png",
+    "F03-C1-1920x1080-stash.png",
+    "F03-C2-1280x720-relief-toast.png",
+    "F03-C4-844x390-buy.png",
+    "F03-C4-844x390-sell.png",
+    "F03-C4-390x844-buy.png",
+    "F03-C4-390x844-sell.png",
+    "F03-C4-844x390-quick-sell.png",
+    "F03-C4-390x844-quick-sell.png"
+  ],
+  "screenshotNote": "The first nine PNGs were captured on the eca7d23 build. The fix in this report only changes compact pane headers when the selected source differs from the pane, which none of those states hit. The two quick-sell PNGs are from the newBuild run."
+}

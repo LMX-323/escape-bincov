@@ -3,9 +3,9 @@ import { moveQuantity, placementError, type LootContainer, type LootEndpoint, ty
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
 import { decodeSession, RecoveryStore, StorageConflictError, type SessionRecord } from './recovery-store';
-import { newExpansion, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
+import { newExpansion, upgradeToRpg, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
-import { initializeMallRaid, mallRunConfig } from './mall-world';
+import { initializeMallRaid, mallRunConfig, mallWorldV2, mallWorldV3 } from './mall-world';
 import { initializeBuildingRaid, buildingRunConfig } from './building-world';
 import { creditTraining } from './rpg';
 import { advanceRealTime } from './base';
@@ -53,7 +53,7 @@ export interface ExpansionDraft { profile: D.SaveDataV1; legacyRaid: RaidCheckpo
 export interface ExpansionTransaction { readonly kind: 'expansion-transaction' }
 
 /**
- * Coordinates domain rules and durable writes without DOM, Phaser or audio.
+ * Coordinates domain rules and durable writes without DOM, rendering or audio.
  * Storage is resolved lazily: even accessing browser localStorage can throw.
  * Callers own rendering, scene transitions and effects after a successful commit.
  */
@@ -74,6 +74,17 @@ export class SaveSession {
 
     attachRaid(raid: typeof this.raid) { this.raid = raid; }
     attachExpansion(layered: typeof this.layered) { this.layered = layered; }
+    /**
+     * Commit a checkpoint; callers own transaction rollback and publication of save/loadout.
+     * Same-reference expansion means live input: capture the port, then advance v2 real time.
+     * A separate candidate skips that time advance; RPG training credit still runs.
+     * undefined snapshot captures live coast state; null explicitly supplies no coast snapshot.
+     * Safe-box synchronization can mutate save before the single-record store commit.
+     * Success updates session checkpoint/expansion and restores the expansion port.
+     * false means success was not confirmed, not that all memory changes were rolled back;
+     * caught errors update storage/conflict status. Never split profile/world/expansion writes.
+     * @see mutate, prepareExpansionMutation, commitExpansionMutation
+     */
     persist(save = this.session.save, snapshot?: RaidCheckpoint | null, terminal?: SessionRecord['terminal'], expansion = this.session.expansion): boolean {
         if (this.session.conflict || !this.owned || this.deferred && !this.committingDeferred) return false;
         try {
@@ -170,13 +181,24 @@ export class SaveSession {
         const s = this.session;
         if (s.save.activeRun || s.pendingSettlement || s.conflict || !this.owned) return false;
         const expansion = structuredClone(s.expansion ?? newExpansion(now));
-        if (expansion.version === 1) { expansion.version = 2; expansion.charm = null; expansion.awards = []; expansion.base.cursor = Math.max(expansion.base.cursor, now); }
+        upgradeToRpg(expansion, now);
         return this.persist(s.save, null, undefined, expansion);
     }
     private expansionBefore(): string {
         const s = this.session;
         return JSON.stringify([s.save, this.raid?.capture() ?? s.checkpoint, this.layered?.capture() ?? s.expansion, s.loadout]);
     }
+    /**
+     * Prepare a private complete candidate tied to the revision and captured live baseline.
+     * action may synchronously edit draft only; defer external effects until committed.
+     * v2 real time advances in the draft first; ineligible/rejected returns null, errors throw.
+     * Retaining the callback's draft cannot change the privately cloned candidate afterward.
+     * Commit rejects a changed baseline; committed publishes and consumes the ticket once.
+     * save-failed retains the same candidate for retry without rerunning action or its costs.
+     * Failure alone is not exclusive: retainExpansionTransaction explicitly reserves a ticket.
+     * Callers own pending presentation events; SaveSession owns the candidate and write right.
+     * @see commitExpansionMutation, retainExpansionTransaction
+     */
     prepareExpansionMutation(action: (draft: ExpansionDraft) => boolean | void): ExpansionTransaction | null {
         const s = this.session, record = this.store?.record;
         if (!record || !s.expansion || s.conflict || s.pendingSettlement || !this.owned || this.deferred) return null;
@@ -196,6 +218,7 @@ export class SaveSession {
     retainExpansionTransaction(ticket: ExpansionTransaction): void {
         if (this.prepared.has(ticket) && !this.deferred) this.deferred = ticket;
     }
+    /** Publish only after persistence succeeds; retry/ownership contract: {@link prepareExpansionMutation}. */
     commitExpansionMutation(ticket: ExpansionTransaction): MutationResult {
         const s = this.session, prepared = this.prepared.get(ticket);
         if (s.conflict || s.pendingSettlement || !this.owned || this.deferred && this.deferred !== ticket) return 'blocked';
@@ -225,9 +248,12 @@ export class SaveSession {
         this.session.storageOK = false;
     }
 
-    beginRun(seed: number, buildings: boolean | 'mall' = false): boolean {
+    /** Layout is chosen only on deployment; active raids restore their saved world/revision. */
+    beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 | 3 } = {}): boolean {
         const s = this.session;
         if (s.state !== 'hideout' || s.conflict || s.pendingSettlement || s.save.activeRun) return false;
+        // Layered raids store seeds 1..0xffffffff (older pages reject 0), so seed 0 deploys as seed 1; the coast keeps 0.
+        if (buildings && !(seed >>> 0)) seed = 1;
         const candidate = structuredClone(s.save);
         const loadout = D.beginRun(candidate, seed);
         const config = buildings === 'mall' ? mallRunConfig(seed) : buildings ? buildingRunConfig(seed) : generateRun(seed);
@@ -235,9 +261,9 @@ export class SaveSession {
         const expansion = buildings ? structuredClone(s.expansion ?? newExpansion(this.now())) : structuredClone(s.expansion);
         if (expansion?.version === 2) advanceRealTime(expansion, this.now());
         if (buildings) {
-            if (expansion!.version === 1) { expansion!.version = 2; expansion!.charm = null; expansion!.awards = []; expansion!.base.cursor = Math.max(expansion!.base.cursor, this.now()); }
+            if (expansion!.version === 1) upgradeToRpg(expansion!, this.now());
             Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
-            if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config);
+            if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
         }
         if (expansion) expansion.base.location = 'raid';

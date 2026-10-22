@@ -2,7 +2,8 @@ import * as D from './domain';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
-import { inSpace, separation, traversable, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
+import { inSpace, separation, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
+import { finite, hasExactKeys, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 
 export const EXPANSION_VERSION = 1;
 export const ATTRIBUTES = ['strength', 'constitution', 'technique'] as const;
@@ -92,6 +93,11 @@ export function newExpansion(now: number, oldRaid?: RaidCheckpoint | null): Expa
             cursor: now, location: oldRaid ? 'raid' : 'base', restSeconds: 0, energizedGranted: false, extractedPearl: false,
             training: { startedAt: now, quantity: 0, credited: triple(0), activeSeconds: 0, attribute: null } }, raid: null };
 }
+/** The station-boundary RPG upgrade, in place: v2 starts with no charm or awards and base time counts from `now`. v2 is left as is. */
+export function upgradeToRpg(state: ExpansionState, now: number): void {
+    if (state.version !== 1) return;
+    state.version = 2; state.charm = null; state.awards = []; state.base.cursor = Math.max(state.base.cursor, now);
+}
 export function effectiveAttributes(state: ExpansionState): Attributes {
     return Object.fromEntries(ATTRIBUTES.map(a => [a, Math.max(1, Math.min(40, state.growth.permanent[a] + (state.body.effects[a] > 0 ? 5 : 0)))])) as Attributes;
 }
@@ -102,19 +108,16 @@ export function derivedLimits(state: ExpansionState) {
 
 const fail = (): never => { throw new Error('建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。'); };
 function obj(value: unknown): value is Record<string, any> { return !!value && typeof value === 'object' && !Array.isArray(value); }
-function n(value: unknown, min: number, max: number): value is number { return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max; }
-function integer(value: unknown, min = 0, max = 1e9): value is number { return n(value, min, max) && Number.isSafeInteger(value); }
-function identity(value: unknown): value is string { return typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value); }
-function exactKeys(value: unknown, keys: readonly string[]) { if (!obj(value) || Object.keys(value).length !== keys.length || keys.some(k => !Object.hasOwn(value, k))) fail(); }
-function attributes(value: unknown, min: number, max: number, whole = false) {
+function exactKeys(value: unknown, keys: readonly string[]) { if (!hasExactKeys(value, keys)) fail(); }
+function attributes(value: unknown, min: number, max: number, integral = false) {
     exactKeys(value, ATTRIBUTES);
-    for (const a of ATTRIBUTES) if (!(whole ? integer((value as Attributes)[a], min, max) : n((value as Attributes)[a], min, max))) fail();
+    for (const a of ATTRIBUTES) if (!(integral ? whole((value as Attributes)[a], min, max) : finite((value as Attributes)[a], min, max))) fail();
 }
 function dictionary(value: unknown, max: number) {
-    if (!obj(value) || Object.keys(value).length > 1000 || Object.entries(value).some(([id, amount]) => !identity(id) || !n(amount, 0, max))) fail();
+    if (!obj(value) || Object.keys(value).length > 1000 || Object.entries(value).some(([id, amount]) => !identity(id) || !finite(amount, 0, max))) fail();
 }
 function goods(value: unknown) {
-    if (!Array.isArray(value) || value.length > 30 || value.some(i => !obj(i) || Object.keys(i).length !== 2 || !Object.hasOwn(D.ITEMS, i.id) || !integer(i.qty, 1, 300))) fail();
+    if (!Array.isArray(value) || value.length > 30 || value.some(i => !obj(i) || Object.keys(i).length !== 2 || !Object.hasOwn(D.ITEMS, i.id) || !whole(i.qty, 1, 300))) fail();
 }
 export const RECIPES = {
     bandage: { level: 1, medical: 0, seconds: 600, cash: 35, materials: [{ id: 'cloth', qty: 2 }], result: [{ id: 'bandage', qty: 2 }] },
@@ -125,7 +128,7 @@ export const PRODUCTION_SPEED = [1, 1, .85, .7] as const;
 function batch(value: ProductionBatch) {
     exactKeys(value, ['id', 'recipe', 'duration', 'remaining', 'workbenchLevel', 'paidCash', 'paidItems', 'result']);
     if (!obj(value) || !identity(value.id) || !['bandage', 'medkit', 'antidote'].includes(value.recipe)
-        || !integer(value.workbenchLevel, 1, 3) || !n(value.duration, 1, 1800) || !n(value.remaining, 0, value.duration) || !integer(value.paidCash)) fail();
+        || !whole(value.workbenchLevel, 1, 3) || !finite(value.duration, 1, 1800) || !finite(value.remaining, 0, value.duration) || !whole(value.paidCash, 0, COUNT_MAX)) fail();
     goods(value.paidItems); goods(value.result);
     const recipe = RECIPES[value.recipe];
     const matchingGoods = (a: readonly { id: string; qty: number }[], b: readonly { id: string; qty: number }[]) =>
@@ -154,33 +157,33 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     exactKeys(base, ['facilities', 'queue', 'completed', 'nextBatch', 'cursor', 'location', 'restSeconds', 'energizedGranted', 'extractedPearl', 'training']);
     attributes(growth.permanent, 10, 30, true); attributes(growth.progress, 0, 1);
     if (ATTRIBUTES.some(a => growth.progress[a] >= 1 || (growth.permanent[a] === 30 && growth.progress[a] !== 0))) fail();
-    if (!obj(growth.reputation) || Object.keys(growth.reputation).length > 100 || Object.entries(growth.reputation).some(([id, amount]) => !identity(id) || !integer(amount, -100, 100))
-        || !integer(growth.luck, -3, 5)) fail();
+    if (!obj(growth.reputation) || Object.keys(growth.reputation).length > 100 || Object.entries(growth.reputation).some(([id, amount]) => !identity(id) || !whole(amount, -100, 100))
+        || !whole(growth.luck, -3, 5)) fail();
     exactKeys(body.effects, EFFECTS);
-    for (const e of EFFECTS) if (!n(body.effects[e], 0, EFFECT_MAX[e])) fail();
+    for (const e of EFFECTS) if (!finite(body.effects[e], 0, EFFECT_MAX[e])) fail();
     const limits = derivedLimits(state);
-    if (!n(body.hp, 0, limits.hp) || !n(body.stamina, 0, limits.stamina)
-        || ['mental', 'water', 'satiety', 'pollution'].some(k => !n(body[k as keyof BodyState], 0, 100))
-        || typeof body.bleeding !== 'boolean' || typeof body.exhausted !== 'boolean' || !integer(body.luckEffect, -1, 1)
+    if (!finite(body.hp, 0, limits.hp) || !finite(body.stamina, 0, limits.stamina)
+        || ['mental', 'water', 'satiety', 'pollution'].some(k => !finite(body[k as keyof BodyState], 0, 100))
+        || typeof body.bleeding !== 'boolean' || typeof body.exhausted !== 'boolean' || !whole(body.luckEffect, -1, 1)
         || (body.effects.luck === 0 && body.luckEffect !== 0)) fail();
     exactKeys(body.treatment, ['bleeding', 'pain', 'injectionFatigue']);
-    if (Object.values(body.treatment).some(v => !n(v, 0, 120))) fail();
+    if (Object.values(body.treatment).some(v => !finite(v, 0, 120))) fail();
     exactKeys(base.facilities, FACILITIES);
-    if (FACILITIES.some(f => !integer(base.facilities[f], 0, 3)) || !integer(base.cursor, 0, Number.MAX_SAFE_INTEGER)
-        || !integer(base.nextBatch, 1) || !['base', 'raid', 'settlement'].includes(base.location)
-        || !n(base.restSeconds, 0, 120) || typeof base.energizedGranted !== 'boolean' || typeof base.extractedPearl !== 'boolean'
+    if (FACILITIES.some(f => !whole(base.facilities[f], 0, 3)) || !whole(base.cursor, 0, Number.MAX_SAFE_INTEGER)
+        || !whole(base.nextBatch, 1, COUNT_MAX) || !['base', 'raid', 'settlement'].includes(base.location)
+        || !finite(base.restSeconds, 0, 120) || typeof base.energizedGranted !== 'boolean' || typeof base.extractedPearl !== 'boolean'
         || !Array.isArray(base.queue) || base.queue.length > base.facilities.workbench || !Array.isArray(base.completed) || base.completed.length > 3) fail();
     const batchIds = new Set<string>();
     for (const b of [...base.queue, ...base.completed]) {
         batch(b);
         const id = /^batch-([0-9]+)$/.exec(b.id);
-        if (batchIds.has(b.id) || !id || !integer(Number(id[1]), 1, base.nextBatch - 1)
+        if (batchIds.has(b.id) || !id || !whole(Number(id[1]), 1, base.nextBatch - 1)
             || b.workbenchLevel > base.facilities.workbench || base.facilities.medical < RECIPES[b.recipe].medical) fail();
         batchIds.add(b.id);
     }
     if (base.completed.some(b => b.remaining !== 0) || base.queue.some((b, i) => i > 0 && b.remaining !== b.duration)) fail();
-    if (!obj(base.training) || !integer(base.training.startedAt, 0, Number.MAX_SAFE_INTEGER) || !n(base.training.quantity, 0, 1)
-        || !n(base.training.activeSeconds, 0, 120) || (base.training.attribute !== null && !ATTRIBUTES.includes(base.training.attribute))) fail();
+    if (!obj(base.training) || !whole(base.training.startedAt, 0, Number.MAX_SAFE_INTEGER) || !finite(base.training.quantity, 0, 1)
+        || !finite(base.training.activeSeconds, 0, 120) || (base.training.attribute !== null && !ATTRIBUTES.includes(base.training.attribute))) fail();
     exactKeys(base.training, ['startedAt', 'quantity', 'credited', 'activeSeconds', 'attribute']);
     attributes(base.training.credited, 0, .45);
     if (state.raid === null) {
@@ -195,14 +198,14 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version === 2 ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    if (![1, 2].includes(raid.version) || (raid.version === 2 && (!n(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !integer(raid.seed, 1, 0xffffffff)
+    if (![1, 2].includes(raid.version) || (raid.version === 2 && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
     exactKeys(raid.player, ['x', 'y', 'rotation']);
-    if (!Object.hasOwn(raid.maps, raid.currentMap) || !inSpace(world.maps[raid.currentMap], raid.player, 10) || !n(raid.player.rotation, -100, 100)
-        || !n(raid.elapsed, 0, 600) || !integer(raid.rng, 0, 0xffffffff) || !integer(raid.nextEntity, 1)
-        || !integer(raid.kills, 0, world.enemyCount) || !Array.isArray(raid.roster) || raid.roster.length !== world.enemyCount
+    if (!Object.hasOwn(raid.maps, raid.currentMap) || !inSpace(world.maps[raid.currentMap], raid.player, 10) || !finite(raid.player.rotation, -100, 100)
+        || !finite(raid.elapsed, 0, 600) || !whole(raid.rng, 0, UINT32_MAX) || !whole(raid.nextEntity, 1, COUNT_MAX)
+        || !whole(raid.kills, 0, world.enemyCount) || !Array.isArray(raid.roster) || raid.roster.length !== world.enemyCount
         || !Array.isArray(raid.pursuits) || raid.pursuits.length > world.enemyCount) fail();
     for (const flag of ['initialHigh', 'highTide', 'warned', 'tideChanged', 'knife', 'eventRolled'] as const) if (typeof raid[flag] !== 'boolean') fail();
     if (raid.warned !== (raid.elapsed >= 270) || raid.tideChanged !== (raid.elapsed >= 300)
@@ -211,7 +214,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     // permanent walls/windows/furniture and closed doors are never valid body positions.
     const bodyFits = (mapId: string, p: Point) => checkpointBodyFits({ definition: world.maps[mapId], doors: raid.maps[mapId]?.doors ?? {}, highTide: false }, p);
     if (!bodyFits(raid.currentMap, raid.player)) fail();
-    for (const key of ['reloadLeft', 'fireCooldown', 'hitTime'] as const) if (!n(raid[key], 0, 10)) fail();
+    for (const key of ['reloadLeft', 'fireCooldown', 'hitTime'] as const) if (!finite(raid[key], 0, 10)) fail();
     const invIds = new Set<string>(state.charm ? [state.charm.uid] : []);
     const allocated = (id: string) => {
         const prefix = `entity-${raid.runId}-`;
@@ -219,25 +222,16 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             : /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
         if (raid.version === 2 && id.startsWith(prefix) && !match) fail();
         if (raid.version === 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
-        if (match && (!integer(Number(match[1]), 1) || Number(match[1]) >= raid.nextEntity)) fail();
+        if (match && (!whole(Number(match[1]), 1, COUNT_MAX) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
-        exactKeys(inv, ['w', 'h', 'items']);
-        if (!obj(inv) || inv.w !== w || inv.h !== h || !Array.isArray(inv.items) || inv.items.length > w * h) fail();
-        const checked = D.createInventory(w, h);
-        for (const i of inv.items) {
-            exactKeys(i, ['uid', 'id', 'qty', 'x', 'y', ...('relief' in i ? ['relief'] : []), ...('rotated' in i ? ['rotated'] : [])]);
-            if (!obj(i) || !identity(i.uid) || invIds.has(i.uid) || !Object.hasOwn(D.ITEMS, i.id) || !integer(i.qty, 1, D.ITEMS[i.id].stack)
-                || !integer(i.x) || !integer(i.y) || (i.relief !== undefined && typeof i.relief !== 'boolean')
-                || (i.rotated !== undefined && typeof i.rotated !== 'boolean') || !D.fits(checked, i.id, i.x, i.y, undefined, !!i.rotated)) fail();
-            allocated(i.uid); invIds.add(i.uid); checked.items.push(i);
-        }
+        if (!validInventory(inv, w, h, invIds, { rotation: true, exact: true }, item => allocated(item.uid))) fail();
     };
     inventory(profile.stash, 10, profile.upgraded ? 9 : 6); inventory(raid.loadout.bag, 6, 5); inventory(raid.loadout.safe, 2, 2);
     exactKeys(raid.loadout, ['bag', 'safe', 'weapon', 'ammo', 'ammoRelief', 'relief', 'runId']);
     const magazine = raid.loadout, gun = magazine.weapon === null ? null : D.WEAPONS[magazine.weapon];
-    if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !integer(magazine.ammo, 0, gun?.magazine ?? 0)
-        || !integer(magazine.ammoRelief, 0, magazine.ammo) || typeof magazine.relief !== 'boolean'
+    if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !whole(magazine.ammo, 0, gun?.magazine ?? 0)
+        || !whole(magazine.ammoRelief, 0, magazine.ammo) || typeof magazine.relief !== 'boolean'
         || profile.bag.items.length || profile.equipment.weapon !== null) fail();
     const inventoryIdentity = (inv: D.Inventory) => JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated])]);
     if (inventoryIdentity(profile.safe) !== inventoryIdentity(raid.loadout.safe)) fail();
@@ -250,25 +244,25 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         if (!obj(e)) return fail();
         exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert']);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
-        if (!Object.hasOwn(D.ENEMIES, e.id) || !n(e.hp, 0, D.ENEMIES[e.id].hp) || !n(e.rotation, -100, 100)
+        if (!Object.hasOwn(D.ENEMIES, e.id) || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !finite(e.rotation, -100, 100)
             || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state) || !Array.isArray(e.path) || e.path.length > 4000) fail();
         if (e.hp > 0 && !bodyFits(map.id, e)) fail();
         e.path.forEach(p => plainPoint(p, map));
-        for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!n(e[key], -10000, 10000)) fail();
+        for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();
         enemies.set(e.uid, e);
         enemyMaps.set(e.uid, map.id);
     };
     for (const [mapId, layer] of Object.entries(raid.maps)) {
         const map = world.maps[mapId];
         exactKeys(layer, ['doors', 'localTime', 'enemies', 'loot', 'containers', 'bullets', 'noise']);
-        if (!obj(layer) || !n(layer.localTime, 0, raid.elapsed)) fail();
+        if (!obj(layer) || !finite(layer.localTime, 0, raid.elapsed)) fail();
         exactKeys(layer.doors, map.doors.map(d => d.id));
         if (Object.values(layer.doors).some(v => typeof v !== 'boolean')) fail();
         if (!Array.isArray(layer.enemies) || layer.enemies.length > world.enemyCount || !Array.isArray(layer.loot) || layer.loot.length > 4000
             || !Array.isArray(layer.containers) || layer.containers.length > 100 || !Array.isArray(layer.bullets) || layer.bullets.length > 1000
             || (mapId !== raid.currentMap && layer.bullets.length > 0)) fail();
         layer.enemies.forEach(e => enemy(e, map));
-        for (const l of layer.loot) { exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y']); entity(l.uid); point(l, map); if (!Object.hasOwn(D.ITEMS, l.id) || !integer(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail(); }
+        for (const l of layer.loot) { exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y']); entity(l.uid); point(l, map); if (!Object.hasOwn(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail(); }
         for (const c of layer.containers) {
             exactKeys(c, ['id', 'runId', 'kind', 'name', 'x', 'y', 'inventory']);
             entity(c.id); point(c, map);
@@ -278,19 +272,19 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         for (const b of layer.bullets) {
             exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version === 2 && b.enemy ? ['owner'] : [])]);
             entity(b.uid); point(b, map);
-            if (!n(b.vx, -1000, 1000) || !n(b.vy, -1000, 1000) || !n(b.left, 0, 2000) || !n(b.damage, 0, 1000)
-                || !n(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
+            if (!finite(b.vx, -1000, 1000) || !finite(b.vy, -1000, 1000) || !finite(b.left, 0, 2000) || !finite(b.damage, 0, 1000)
+                || !finite(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
                 || (raid.version === 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
         }
-        if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!n(layer.noise.radius, 0, 2000) || !n(layer.noise.remaining, 0, 10)) fail(); }
+        if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!finite(layer.noise.radius, 0, 2000) || !finite(layer.noise.remaining, 0, 10)) fail(); }
     }
     const events = new Set<string>();
     for (const event of raid.pursuits) {
         exactKeys(event, ['id', 'enemy', 'sourceMap', 'targetMap', 'entry', 'path', 'distance', 'speed', 'registeredAt', 'arrivalAt', 'waiting']);
         const from = world.maps[event.sourceMap], target = world.maps[event.targetMap], entry = from?.entries.find(e => e.id === event.entry);
         if (!/^pursuit-[0-9]+$/.test(event.id) || events.has(event.id) || !from || !target || !entry || entry.targetMap !== event.targetMap
-            || !Array.isArray(event.path) || !event.path.length || event.path.length > 4000 || !n(event.distance, 0, 1e6)
-            || !n(event.speed, .01, 1000) || !n(event.registeredAt, 0, raid.elapsed) || !n(event.arrivalAt, event.registeredAt + 1, 1e6)
+            || !Array.isArray(event.path) || !event.path.length || event.path.length > 4000 || !finite(event.distance, 0, 1e6)
+            || !finite(event.speed, .01, 1000) || !finite(event.registeredAt, 0, raid.elapsed) || !finite(event.arrivalAt, event.registeredAt + 1, 1e6)
             || typeof event.waiting !== 'boolean' || event.enemy.hp <= 0) fail();
         if (entities.has(event.id) || invIds.has(event.id)) fail(); allocated(event.id);
         events.add(event.id); event.path.forEach(p => plainPoint(p, from)); enemy(event.enemy, from);
@@ -312,7 +306,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (Object.keys(raid.training.eligibleDamage).some(id => !enemies.has(id)) || Object.keys(raid.training.healedByEnemy).some(id => !enemies.has(id))) fail();
     attributes(raid.training.quantity, 0, 1e6); attributes(raid.training.credited, 0, .45);
     dictionary(raid.training.eligibleDamage, 50); dictionary(raid.training.healedByEnemy, 50);
-    if (!obj(raid.training.motion) || !n(raid.training.motion.windowStarted, 0, raid.elapsed) || !n(raid.training.motion.localSeconds, 0, 15)) fail();
+    if (!obj(raid.training.motion) || !finite(raid.training.motion.windowStarted, 0, raid.elapsed) || !finite(raid.training.motion.localSeconds, 0, 15)) fail();
     exactKeys(raid.training.motion, ['anchor', 'windowStarted', 'localSeconds']);
     if (raid.training.motion.anchor !== null) plainPoint(raid.training.motion.anchor, world.maps[raid.currentMap]);
     return structuredClone(state);

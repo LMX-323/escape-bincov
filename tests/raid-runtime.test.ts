@@ -106,6 +106,36 @@ test('door mutation failure publishes no success, and retries original candidate
     assert.equal(committed.events.filter(e => e.type === 'door' && e.durability === 'committed').length, 1);
     r.retrySave(); assert.equal(r.current().events.some(e => e.type === 'door'), false);
 });
+function enemyAtDoor() {
+    const f = fixture(true), r = f.runtime, c = r.snapshot(), opener = c.enemies[0];
+    c.player = { x: 208, y: 80, rotation: 0 };
+    Object.assign(opener, { x: 464, y: 430, state: 'investigate', target: { x: 464, y: 352 }, alert: 5, path: [], repath: 0, timer: 5, cooldown: 1 });
+    r.restore(c); r.advance(0, intent()); assert.equal(r.space!.doors['resident-front'], false);
+    f.fail(true); const failed = r.advance(40, intent()); assert.equal(r.overlay, 'checkpoint-error');
+    assert.deepEqual(failed.events.flatMap(e => e.type === 'rejected' ? [`${e.action}:${e.reason}`] : []), ['door:save-failed']);
+    assert.equal(failed.frame.doors['resident-front'], false); assert.equal(failed.events.some(e => e.type === 'door'), false);
+    return { f, r, opener: opener.uid };
+}
+const savedDoor = (f: ReturnType<typeof fixture>) => { const raid = f.saves.currentRecord()!.expansion!.raid!; return raid.maps[raid.currentMap].doors['resident-front']; };
+test('enemy door save failure halts the substep, and retry commits the original ticket exactly once', () => {
+    const { f, r, opener } = enemyAtDoor(), halted = r.snapshotExpansion();
+    r.advance(80, intent()); assert.deepEqual(r.snapshotExpansion(), halted);
+    f.fail(false); assert.equal(r.retrySave(), true, f.state.storageError); assert.equal(r.overlay, '');
+    const committed = r.current(); assert.equal(committed.frame.doors['resident-front'], true); assert.equal(savedDoor(f), true);
+    assert.equal(committed.events.filter(e => e.type === 'door' && e.by === opener && e.durability === 'committed').length, 1);
+    assert.equal(r.retrySave(), true); assert.equal(r.current().events.some(e => e.type === 'door'), false);
+});
+test('a stale retained world ticket is dropped on retry and the live world checkpoints instead', () => {
+    const { f, r, opener } = enemyAtDoor(); f.fail(false);
+    r.pause('blur'); assert.equal(f.state.storageOK, true); assert.equal(r.overlay, 'checkpoint-error'); const live = r.snapshotExpansion().raid;
+    assert.equal(r.retrySave(), true, f.state.storageError); assert.equal(r.overlay, '');
+    const retried = r.current(); assert.equal(retried.frame.doors['resident-front'], false); assert.equal(savedDoor(f), false);
+    assert.equal(retried.events.some(e => e.type === 'door'), false); assert.deepEqual(r.snapshotExpansion().raid, live);
+    assert.equal(r.retrySave(), true); assert.equal(r.overlay, '');
+    r.advance(1000, intent()); r.advance(1040, intent()); const reopened = r.current();
+    assert.equal(reopened.frame.doors['resident-front'], true); assert.equal(savedDoor(f), true);
+    assert.equal(reopened.events.filter(e => e.type === 'door' && e.by === opener && e.durability === 'committed').length, 1);
+});
 test('layer commit moves epoch once, freezes source time and filters source event stamps', () => {
     const f = fixture(true), r = f.runtime; f.driver.freezeAI(true); f.driver.placePlayer({ x: 560, y: 272 });
     const epoch = r.epoch, source = r.snapshotExpansion().raid!.maps.coast.localTime;
@@ -201,9 +231,13 @@ test('container transfer is atomic, partial quantity is truthful, and stale requ
         const ref = { runId: container.runId, mapId: 'coast', kind: 'container' as const, id: container.id };
         const request = { runId: container.runId, containerId: container.id, from: 'container' as const, to: 'bag' as const,
             uid: container.inventory.items[0].uid, x: 0, y: 0, quantity: 1 };
+        assert.equal(r.activate(ref), true); assert.equal(r.lootContext?.containerId, container.id);
         const before = r.snapshot(); f.fail(true); assert.equal(r.transferLoot(ref, request), 'save-failed');
         assert.deepEqual(r.snapshot(), before); assert.ok(!r.current().events.some(e => e.type === 'looted'));
+        assert.equal(r.lootContext, null, 'a failed loot write closes the obsolete interaction context');
         f.fail(false); assert.equal(r.retrySave(), true, f.state.storageError);
+        assert.equal(r.lootContext, null, 'retrying persistence does not reopen or replay the rejected transfer');
+        assert.equal(r.activate(ref), true, 'the player can explicitly open the same container again');
         assert.equal(r.transferLoot({ ...ref, mapId: 'resident-f2' }, request), 'rejected');
         assert.equal(r.transferLoot(ref, request), 'committed');
         assert.equal(D.count(r.snapshot().loadout.bag, 'scrap'), 1);
@@ -282,7 +316,7 @@ test('production host exposes no mutable core or fixture controls and preserves 
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (fail) throw Error('quota'); data.set(k, v); } }));
     assert.equal(saves.initialize(), true); state.state = 'hideout'; assert.equal(saves.beginRun(42, true), true); state.state = 'run';
     const host = createCoastRaidHost(state, saves);
-    assert.deepEqual(Object.keys(host.runtime).sort(), ['advance', 'current', 'dispose', 'pause', 'resume', 'setBlocked']);
+    assert.deepEqual(Object.keys(host.runtime).sort(), ['advance', 'current', 'dispose', 'pause', 'resetClock', 'resume', 'setBlocked']);
     assert.equal('test' in host, false); assert.equal('freezeAI' in host.runtime, false);
     fail = true; host.services.abandon(); assert.equal(host.runtime.current().frame.phase, 'ending');
     assert.equal(host.services.settlement().retryable, true); assert.ok(host.services.backup()!.terminal);

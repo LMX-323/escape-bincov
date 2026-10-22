@@ -15,12 +15,12 @@
 | 实际资产 | 基线位置与数量 | 本次重绘范围 |
 | --- | --- | --- |
 | 主菜单 SVG | [title-screen.ts](../src/title-screen.ts)：24×24、1.5 描边的书本、风、箭头、罗盘，共 4 个定义 | 重新设计图形、光学重量和像素网格，保留文字标签及按钮语义 |
-| 物品图标 | [art.ts](../src/art.ts) 的 `itemIcon`：20 张 32×32；[domain.ts](../src/domain.ts) 提供名称与设定 | 逐件改轮廓与材质；原生 24px 小图及 32px 标准图，共 40 张明确设计的图稿；图形、名称、数量的实际排布一同验收 |
+| 物品图标 | [art.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/art.ts) 的 `itemIcon`：20 张 32×32；[domain.ts](../src/domain.ts) 提供名称与设定 | 逐件改轮廓与材质；原生 24px 小图及 32px 标准图，共 40 张明确设计的图稿；图形、名称、数量的实际排布一同验收 |
 | 角色 | `human` / `createTextures`：玩家基础及 4 种持械纹理、4 类敌人，共 9 张 32×32 | 玩家与 4 类敌人各自造型；玩家持械变体；死亡图与少帧动作另列，不能算作换色变体 |
 | 散落物、容器、弹道 | `createTextures`：20×20 小箱、32×32 搜刮箱、10×4 子弹，共 3 张 | 重绘地面包裹与搜刮箱，设计容器状态；弹道及枪口效果保持短促清楚 |
 | 地形、建筑与道具 | `groundTile` / `drawWorld`；[world.ts](../src/world.ts)：7 种 tile 值、15 栋建筑、5 个命名区域，另含水产站 | 地面、墙体、岸线的模块库；每区域地标与道具；保持当前通行图 |
-| 场景符号 | [game.ts](../src/game.ts)：5 处便笺的 `▤`、撤离圈、准星、天气与状态图形 | 便笺用自绘图标；撤离、阅读、容器、危险采用一致符号规则 |
-| 地图 / 触控 / DOM | [ui.ts](../src/ui.ts)、[mobile.ts](../src/mobile.ts)、[style.css](../src/style.css)：Canvas 地图、文字按钮、`Ⅱ` 等字形 | 地图符号与场景同义；触控仍保留可读名称，不能全部改成无标签图标 |
+| 场景符号 | [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts)：5 处便笺的 `▤`、撤离圈、准星、天气与状态图形 | 便笺用自绘图标；撤离、阅读、容器、危险采用一致符号规则 |
+| 地图 / 触控 / DOM | [ui.ts](../src/ui.ts)、[mobile.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/mobile.ts)、[style.css](../src/style.css)：Canvas 地图、文字按钮、`Ⅱ` 等字形 | 地图符号与场景同义；触控仍保留可读名称，不能全部改成无标签图标 |
 | 夜港与站内背景 | [title-art.ts](../src/title-art.ts) 新夜港；`art.ts` 的旧 `drawBackdrop` 用于整备与结算 | 保留夜港叙事构图，统一站房、船只、道具和光色；站内/结算补足联系 |
 
 已从未经修改的 main HTML 读取上述 **32 张运行纹理**（20 物品 + 9 角色 + 3 其他），在独立诊断页排列为原尺寸 / 3 倍最近邻图录。图录不是游戏截图，也不是重绘效果图；没有更改纹理，未套用游戏中的旋转、染色或天气。
