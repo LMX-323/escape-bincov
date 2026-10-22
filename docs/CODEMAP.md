@@ -70,7 +70,9 @@
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
 - 选择区域/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
-- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
+- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`。
+- 鼠标瞄准与镜头：[coast-view/scene.ts](../src/coast-view/scene.ts) 的 `aimFromClient` 经平滑镜头换算瞄准，镜头前探由 [coast-view/camera.ts](../src/coast-view/camera.ts) 的 `pointerLead` / `stepLead`（鼠标，只在精瞄时）或 `aimLead`（触屏）决定。改前探前先跑 `test:shooting` 的“静止指针不漂”。
+- 试枪场：[range/](../src/range/index.ts)（`?range=1`，内存存档，不碰正式存档）。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
 **结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放的断言。资源生命周期只有在本次改变宿主归属时才展开。
