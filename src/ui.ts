@@ -3,7 +3,7 @@ import * as Shop from './shop';
 import * as D from './domain';
 import { generateRun } from './world';
 import { SURVIVAL } from './balance';
-import { encodeBackup, encodeRecoveryBackup, decodePortableBackup } from './save-backup';
+import { decodePortableBackup } from './save-backup';
 import { SESSION_MAX_BYTES } from './recovery-store';
 import { app, audio, saveSession, hideoutRuntime } from './app';
 import type { SessionMutation } from './session';
@@ -19,12 +19,18 @@ import type { ExpansionDraft } from './session';
 import { paintItem } from './art/items';
 import { artId, itemArtwork, painted } from './art/item-images';
 import { paintPortrait } from './art/portraits';
-import { raidWorlds, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
+import { sampleSupports, startCoastSample } from './coast-view/sample';
 import { enterStation, returnToStation, stationDefault } from './station-view/route';
+import { raidWorlds, sampleMallLayout, sampleMode, villageSeed } from './raid-areas';
+import { provideNavigation } from './navigation';
+import { exportSave } from './save-export';
+import { toast } from './toast';
 import { openingAutoplay, playOpening } from './opening/gate';
 import { showScreen, titleScene } from './screen';
 import { esc } from './html';
 import { SUPPLY_IDS } from './rpg';
+// The raid view and the station yard switch screens through this port rather than importing the page.
+provideNavigation({ changeState, enterExternalRun, render, hideoutExternal, startPreparedHideoutRaid });
 let phoneLayout = false;
 /** Phone layout, set by main.ts from the device and screen size: a presentation choice, not an input mode. */
 export function setPhoneLayout(on: boolean) { phoneLayout = on; }
@@ -36,21 +42,6 @@ let pointerDrag: { pointerId: number; drag: InventoryDrag; startX: number; start
 let dragGhost: HTMLElement | null = null;
 let suppressDragClick = false;
 const ui = () => document.getElementById('ui')!;
-let toastTimer: ReturnType<typeof setTimeout>, lastSuccess = '', successCount = 0;
-export function toast(message: string, kind: 'info' | 'success' = 'info') {
-    const el = document.getElementById('toast')!;
-    const root = document.documentElement;
-    successCount = kind === 'success' && lastSuccess === message && el.style.opacity === '1' ? successCount + 1 : 1;
-    lastSuccess = kind === 'success' ? message : '';
-    el.textContent = message + (kind === 'success' && successCount > 1 ? ` × ${successCount}` : '');
-    root.dataset.toastKind = kind;
-    el.style.opacity = '1'; clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-        el.style.opacity = '0';
-        // Restore the radio after the toast's opacity transition has finished.
-        toastTimer = setTimeout(() => delete root.dataset.toastKind, 150);
-    }, kind === 'success' ? 1500 : 3300);
-}
 function clearSelection() { app.selected = ''; app.placement = false; app.placementRotated = undefined; app.placementQuantity = undefined; }
 function saved(ok: boolean): boolean {
     if (!ok && !app.conflict && !app.storageOK)
@@ -322,25 +313,6 @@ export function retrySettlement(): boolean {
     if (app.result!.outcome === 'extract') audio.extract(); else audio.death();
     changeState('result');
     return true;
-}
-export function exportSave() {
-    try {
-        let text: string;
-        // A raid in progress exports the Runtime's live capture (registered with the session), not the last checkpoint written.
-        if (app.expansion || app.save.activeRun && !app.pendingSettlement) {
-            const record = saveSession.backupRecord();
-            if (!record) throw new Error('无法读取行动记录，请导出原始存档。');
-            text = encodeRecoveryBackup(record);
-        } else if (app.pendingSettlement) text = encodeBackup(app.pendingSettlement);
-        else text = encodeBackup(app.save);
-        const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Escape-Bincov-save-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-        document.body.appendChild(link); link.click(); link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        toast('已生成备份文件，请确认下载完成。');
-    } catch (error) { toast(error instanceof Error ? error.message : '备份下载失败，请重试。'); }
 }
 export function importSave(candidate: D.SaveDataV1): boolean {
     if (!saved(saveSession.importSave(candidate))) return false;
