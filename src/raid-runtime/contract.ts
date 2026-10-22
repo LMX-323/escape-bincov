@@ -181,6 +181,21 @@ export type Interaction = Readonly<{
         selected: boolean;
     }>[];
 }>;
+/**
+ * The player's weapon handling as the next shot would meet it (PR #39). Display only: the Runtime decides every shot.
+ * Angles are radians; `drift` turns the centre of the cone toward the shooter's right (clockwise on the map).
+ */
+export type AimView = Readonly<{
+    mode: 'semi' | 'auto';
+    feel: 'brisk' | 'steady';
+    /** Full cone angle a shot fired now scatters over (stance, sway, bloom and the body's state). */
+    cone: number;
+    drift: number;
+    /** Precise aim raised, body sway and bloom, each 0 to 1. */
+    raise: number;
+    sway: number;
+    bloom: number;
+}>;
 export type HudView = Readonly<{
     hp: number;
     maxHp: number;
@@ -199,6 +214,7 @@ export type HudView = Readonly<{
         reserve: number;
         reloading: boolean;
     }>;
+    aim: AimView;
     heals: number;
     hitDirections: readonly Readonly<{
         angle: number | null;
@@ -305,6 +321,13 @@ export type PublishedView = Readonly<{
     frame: ViewFrame;
     events: readonly StampedEvent[];
 }>;
+/**
+ * One display frame's input, read at `nowMs` of `advance`. `aim` is a ground-plane angle in radians (null keeps the
+ * facing). Commands and `interactPressed` act in the frame's first substep. The trigger is different: `firePressed`
+ * (a click) and a change of `fireHeld` take effect at the frame's own time, and the held state then fires over the
+ * next frame's whole interval at the weapon's rate, so shots land at the same raid times at any display rate. Whether
+ * holding repeats depends on the weapon (automatic) and on `source` (touch repeats semi-automatic guns too).
+ */
 export type RaidIntent = Readonly<{
     move: Readonly<{
         x: number;
@@ -314,6 +337,7 @@ export type RaidIntent = Readonly<{
     aim: number | null;
     precise: boolean;
     firePressed: boolean;
+    /** The trigger is held: the touch aim stick past its fire ring, or the left button outside the phone layout. */
     fireHeld: boolean;
     interactPressed: boolean;
     interactHeld: boolean;

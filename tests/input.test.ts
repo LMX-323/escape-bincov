@@ -24,9 +24,12 @@ test('aim-only inner ring, held fire outer ring, no shot on release or resume', 
   assert.equal(read(input, false).fireHeld, false);
   input.clear(); input.release(2); assert.equal(read(input).firePressed, false); assert.equal(read(input).fireHeld, false);
 });
-test('desktop remains press-to-fire; command repeats and lost releases are cleared', () => {
+test('desktop clicks once and reports the held button; command repeats and lost releases are cleared', () => {
   const input = new InputState(); input.mouse(0, true);
-  assert.equal(read(input).firePressed, true); assert.equal(read(input).firePressed, false); assert.equal(read(input).fireHeld, false);
+  // The press is one click; the held button is reported for automatic guns (the Runtime never repeats a semi-automatic one).
+  const first = read(input); assert.equal(first.firePressed, true); assert.equal(first.fireHeld, true);
+  assert.equal(read(input).firePressed, false); assert.equal(read(input).fireHeld, true);
+  input.mouse(0, false); assert.equal(read(input).fireHeld, false);
   input.key('R', true); assert.ok(read(input).commands.includes('reload'));
   input.key('R', true); const repeat = read(input); assert.equal(repeat.commands.length, 0); assert.equal(repeat.interactPressed, false);
   input.key('e', true); input.clear(); assert.equal(read(input).interactHeld, false);

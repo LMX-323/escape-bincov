@@ -7,6 +7,7 @@ import { ITEMS, WEAPONS, addItem } from '../domain';
 import { derivedLimits } from '../expansion-state';
 import { checkpointBodyFits } from '../spatial';
 import { isWalkable } from '../world';
+import { FEELS, type Feel } from '../shooting';
 
 export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: string) {
     if (new URLSearchParams(search).get('test') !== '1') throw new Error('Runtime fixtures require ?test=1.');
@@ -55,6 +56,10 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             const state = runtime.snapshot(); state.loadout.weapon = id; state.loadout.ammo = WEAPONS[id].magazine; // a full magazine; more fails checkpoint validation
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
         },
+        /** Hand the playtest sample gun (SAMPLE_GUNS in src/shooting.ts) or take it back; the loadout is untouched. */
+        sampleGun(id: 'm4a1' | null) { runtime.setSampleGun(id); },
+        /** Weapon handling parameter set (FEELS in src/shooting.ts). */
+        feel(value: Feel) { if (!FEELS.includes(value)) throw new Error(`Unknown feel: ${value}.`); runtime.feel = value; },
         /** Rounds in the equipped gun's magazine (0 to its size); relief rounds never exceed what is loaded. */
         magazine(rounds: number) {
             const state = runtime.snapshot(), w = WEAPONS[state.loadout.weapon || 'knife'];

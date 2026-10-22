@@ -13,6 +13,7 @@ import { resolveLayerShot } from '../src/layer-transition';
 import type { ShotObservation } from '../src/layer-transition';
 import { entityUid } from '../src/expansion-state';
 import { createCoastRaidHost } from '../src/raid-runtime/host';
+import { coneOf, handlingOf, unsteadyAim } from '../src/shooting';
 
 function fixture(layered = false, seed = 42) {
     const state = createSessionState(), data = new Map<string, string>(); let fail = false, writes = 0;
@@ -58,7 +59,10 @@ test('blocked panels advance the world with empty input; pause freezes it; old h
 });
 test('shotgun batches report six actual pellets without additional RNG draws, and aim is continuous', () => {
     const f = fixture(); safe(f); f.driver.weapon('shotgun'); const r = f.runtime;
-    const c = r.snapshot(), random = D.seededRandom(c.rng), angle = .2137, spread = D.WEAPONS.shotgun.spread * .35;
+    // A new Runtime starts unsteady and a click fires at once, before a precise aim has had time to rise.
+    const c = r.snapshot(), random = D.seededRandom(c.rng), angle = .2137, grip = handlingOf('shotgun', r.feel);
+    assert.deepEqual(r.handling, unsteadyAim());
+    const spread = coneOf(unsteadyAim(), D.WEAPONS.shotgun, grip);
     const normalized = ((angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
     const angles = Array.from({ length: 6 }, () => normalized + (random() - .5) * spread);
     const batch = r.advance(0, intent({ aim: angle, precise: true, firePressed: true }));
@@ -69,12 +73,16 @@ test('shotgun batches report six actual pellets without additional RNG draws, an
         assert.ok(Math.abs(bullet.rotation - pellet.angle) < 1e-12); assert.deepEqual(pellet.origin, { x: bullet.x, y: bullet.y }); }
     const mag = r.mag; r.advance(20, intent()); assert.equal(r.mag, mag);
 });
-test('commands and fireHeld only reach first substep; primary and knife retain actual weapon semantics', () => {
+test('commands reach only the first substep; a trigger pulled this frame fires at its end, then holds at the gun rate', () => {
     const f = fixture(); safe(f); const r = f.runtime;
     r.advance(0, intent({ commands: ['knife'] })); assert.equal(r.current().frame.player.weapon, 'knife');
+    // One 1 s frame: the swap applies in its first substep, the new hold only at the frame's own time.
     r.advance(1000, intent({ commands: ['primary'], fireHeld: true, source: 'touch' }));
     assert.equal(r.current().events.filter(e => e.type === 'shot').length, 1);
     assert.equal(r.current().frame.player.weapon, 'pistol');
+    // Still held on touch: the pistol (.29 s) fires at 1.29, 1.58 and 1.87 s inside the next 1 s frame.
+    r.advance(2000, intent({ fireHeld: true, source: 'touch' }));
+    assert.equal(r.current().events.filter(e => e.type === 'shot').length, 3);
 });
 test('map data retains classic water, real door orientation, stable region IDs and half-open revelation', () => {
     const classic = fixture(), f = fixture(true), r = f.runtime;

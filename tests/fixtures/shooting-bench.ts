@@ -2,21 +2,22 @@
  * Deterministic shooting bench (PR #39): one layered building raid with frozen AI, the player standing on a clear
  * outdoor lane, and scripted input replayed at chosen display frame rates. Input is a function of the frame's wall
  * time, so the same script means the same intent at 30, 60 or 120 Hz; only the frame sampling differs. The log keeps
- * what the Runtime published (shot pellets, impacts, hurt events, magazine), never view state.
+ * what the Runtime published (shot pellets, impacts, hurt events, magazine, the aim view), never view state.
  */
 import assert from 'node:assert/strict';
 import * as D from '../../src/domain';
 import { createSessionState, SaveSession } from '../../src/session';
 import { CoastRaidRuntime, emptyIntent } from '../../src/raid-runtime/runtime';
 import { createRuntimeTestDriver } from '../../src/raid-runtime/test-support';
-import type { RaidIntent } from '../../src/raid-runtime/contract';
+import type { AimView, RaidIntent } from '../../src/raid-runtime/contract';
+import type { Feel } from '../../src/shooting';
 import type { Point } from '../../src/world';
 
-export type Gun = 'pistol' | 'carbine' | 'shotgun';
+export type Gun = 'pistol' | 'carbine' | 'shotgun' | 'm4a1';
 export const GUNS: readonly Gun[] = ['pistol', 'carbine', 'shotgun'];
 /**
  * Outdoor spot on the coast map of coast-buildings-v1 (seed 42): from here a bullet flies at least 700 px east without
- * a wall, every 32 px of the lane fits a body, and no enemy of that seed stands within 40 px of it.
+ * a wall, every 16 px of the lane fits a body at either tide, and no enemy of that seed stands within 120 px of it.
  */
 export const LANE = { at: { x: 208, y: 1104 }, aim: 0 } as const;
 export const DUMMY_RADIUS = 14;
@@ -31,15 +32,21 @@ export function benchRaid(seed = 42) {
 }
 export type Bench = ReturnType<typeof benchRaid>;
 
-/** Frozen AI, the player on the lane facing east, `gun` in hand with a full magazine and `reserve` rounds in the bag. */
-export function arm(b: Bench, gun: Gun, reserve = 60): Bench {
+/**
+ * Frozen AI, the player on the lane facing east with `gun` and a full magazine, `reserve` rounds in the bag, and the
+ * aim settled (a new Runtime starts unsteady; the bench measures from a calm stance unless a test says otherwise).
+ */
+export function arm(b: Bench, gun: Gun, { reserve = 60, feel = 'brisk' as Feel } = {}): Bench {
     b.driver.freezeAI(true);
     b.driver.placePlayer(LANE.at, LANE.aim);
-    b.driver.weapon(gun);
-    const c = b.runtime.snapshot(), ammo = D.WEAPONS[gun].ammo!;
+    b.driver.weapon(gun === 'm4a1' ? 'carbine' : gun);
+    const c = b.runtime.snapshot(), ammo = D.WEAPONS[gun === 'm4a1' ? 'carbine' : gun].ammo!;
     let left = reserve;
     while (left > 0) { const qty = Math.min(left, D.ITEMS[ammo].stack); assert.equal(D.addItem(c.loadout.bag, ammo, qty), 0); left -= qty; }
     b.runtime.restore(c);
+    if (gun === 'm4a1') b.driver.sampleGun('m4a1');
+    b.driver.feel(feel);
+    b.runtime.handling = { raise: 0, sway: 0, bloom: 0, drift: 0, settle: 0 };
     const lane = b.runtime.enemies.filter(e => e.hp > 0 && e.x > LANE.at.x - 40 && e.x < LANE.at.x + 740 && Math.abs(e.y - LANE.at.y) < 40);
     assert.deepEqual(lane.map(e => e.uid), [], 'an enemy stands on the bench lane');
     return b;
@@ -65,15 +72,17 @@ export interface RunLog {
     shots: Shot[];
     impacts: { t: number; reason: string; target: string | null }[];
     hurt: { t: number; uid: string; damage: number }[];
+    /** The published aim after every frame. */
+    aims: (AimView & { t: number })[];
     frames: number; elapsed: number; mag: number;
 }
 /**
  * Replay `script` for `seconds` of wall time at `fps` (or a repeating list of frame intervals in ms). Frame k starts at
  * 1000 ms + its wall time; the first frame only starts the Runtime clock. `keep` restores a dummy's health after every
- * frame so a long string stays on one target.
+ * frame so a long string stays on one target. Shot times are the publishing frame's raid time.
  */
 export function replay(b: Bench, script: Script, seconds: number, fps: number | readonly number[], keep?: string): RunLog {
-    const log: RunLog = { shots: [], impacts: [], hurt: [], frames: 0, elapsed: 0, mag: 0 };
+    const log: RunLog = { shots: [], impacts: [], hurt: [], aims: [], frames: 0, elapsed: 0, mag: 0 };
     const intervals = typeof fps === 'number' ? null : fps;
     let previous: number | null = null, wall = 0;
     for (let k = 0; ; k++) {
@@ -88,6 +97,7 @@ export function replay(b: Bench, script: Script, seconds: number, fps: number | 
             else if (e.type === 'impact' && e.owner === 'player') log.impacts.push({ t: e.stamp.simulationTime, reason: e.reason, target: e.target });
             else if (e.type === 'hurt' && e.uid !== 'player') log.hurt.push({ t: e.stamp.simulationTime, uid: e.uid, damage: e.damage });
         }
+        log.aims.push({ ...batch.frame.hud.aim, t: batch.stamp.simulationTime });
         if (keep) { const e = b.runtime.enemies.find(a => a.uid === keep)!; if (e.hp < D.ENEMIES[e.id].hp) b.driver.placeEnemy(keep, { x: e.x, y: e.y }, D.ENEMIES[e.id].hp); }
         previous = t;
     }
@@ -98,6 +108,11 @@ export function replay(b: Bench, script: Script, seconds: number, fps: number | 
 export const mouse = (times: readonly number[], precise = false): Script => {
     const press = clicks(times);
     return (t, previous) => ({ firePressed: press(t, previous), precise, source: 'mouse-keyboard' });
+};
+/** The left button held during [from, to): a click when it goes down, then held. */
+export const mouseHold = (from: number, to: number, precise = false): Script => {
+    const press = clicks([from]), on = held(from, to);
+    return (t, previous) => ({ firePressed: press(t, previous), fireHeld: on(t), precise, source: 'mouse-keyboard' });
 };
 /** The touch aim stick pushed past the fire ring during [from, to). */
 export const touchHold = (from: number, to: number): Script => { const on = held(from, to); return t => ({ fireHeld: on(t), source: 'touch' }); };
