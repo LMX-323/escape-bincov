@@ -1,18 +1,6 @@
-import { ITEM_ART_IDS, type ItemArtId } from '../art/items';
-import { inventoryArtSize, paintInventoryItem } from '../art/inventory';
+import { inventoryArtSize } from '../art/inventory';
+import { inventoryArtUrl } from '../art/item-images';
 
-/** The game's own inventory artwork (the old tabs draw the same pixels through Phaser textures). */
-const cache = new Map<string, string>();
-const known = new Set<string>(ITEM_ART_IDS);
-
+/** The game's own inventory artwork, shared with the old tab page and the raid inventory (art/item-images.ts). */
 export const itemArtSize = (id: string) => inventoryArtSize(id);
-export function itemArt(id: string): string {
-  let url = cache.get(id);
-  if (url) return url;
-  const [w, h] = inventoryArtSize(id), c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const g = c.getContext('2d')!; g.imageSmoothingEnabled = false;
-  if (known.has(id)) paintInventoryItem(g, id as ItemArtId);
-  url = c.toDataURL(); cache.set(id, url);
-  return url;
-}
+export const itemArt = (id: string): string => inventoryArtUrl(id);

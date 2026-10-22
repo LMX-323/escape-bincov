@@ -1,5 +1,4 @@
 import * as D from '../domain';
-import { SURVIVAL as B } from '../balance';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';

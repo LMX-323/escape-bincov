@@ -364,7 +364,7 @@ test('L-02/S-01/S-05: floor-specific loot/crates/corpses keep atomic quantities 
     const f = fixture(), point = at(62, 13);
     edit(f, state => {
         const raid = state.raid!;
-        for (const [mapId, m] of Object.entries(raid.maps)) {
+        for (const m of Object.values(raid.maps)) {
             Object.assign(m.loot[0], point); Object.assign(m.containers[0], point);
             m.containers[0].inventory = D.createInventory(6, 5);
             D.addItem(m.containers[0].inventory, 'scrap', 3, false, false, true, () => entityUid(raid, raid.nextEntity++));

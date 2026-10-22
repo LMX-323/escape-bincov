@@ -53,7 +53,7 @@ export interface ExpansionDraft { profile: D.SaveDataV1; legacyRaid: RaidCheckpo
 export interface ExpansionTransaction { readonly kind: 'expansion-transaction' }
 
 /**
- * Coordinates domain rules and durable writes without DOM, Phaser or audio.
+ * Coordinates domain rules and durable writes without DOM, rendering or audio.
  * Storage is resolved lazily: even accessing browser localStorage can throw.
  * Callers own rendering, scene transitions and effects after a successful commit.
  */
@@ -252,6 +252,8 @@ export class SaveSession {
     beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 | 3 } = {}): boolean {
         const s = this.session;
         if (s.state !== 'hideout' || s.conflict || s.pendingSettlement || s.save.activeRun) return false;
+        // Layered raids store seeds 1..0xffffffff (older pages reject 0), so seed 0 deploys as seed 1; the coast keeps 0.
+        if (buildings && !(seed >>> 0)) seed = 1;
         const candidate = structuredClone(s.save);
         const loadout = D.beginRun(candidate, seed);
         const config = buildings === 'mall' ? mallRunConfig(seed) : buildings ? buildingRunConfig(seed) : generateRun(seed);
