@@ -108,4 +108,4 @@
 
 - Q-E02 路由收敛由同一承接者随后续作：`ui.ts` 与两个视图路由的三角、共享 Pixi 池可以先做；行动句柄合同和背包有限服务与 PR #65 改同一批文件，建议 #65 合入后再做。
 - #60 评论登记的 Q-E04 类问题本批未改：`persist` 把校验异常当作存储失败、行动与据点的失败票据处理不一致、被拒票据留在 `SaveSession.prepared`。
-- 新发现：`validateExpansion` 的装备检查用 `D.WEAPONS[weapon]`，没有 `Object.hasOwn`。分层行动携带物的 `weapon` 写成 `constructor`、`toString` 等原型键时会被接受，不存在的名字则会被拒绝。修复会改变接受集合，本批不改，另行处理。
+- 新发现：`validateExpansion` 的装备检查用 `D.WEAPONS[weapon]`，没有 `Object.hasOwn`。分层行动携带物的 `weapon` 写成 `constructor`、`toString` 等原型键时会被接受，不存在的名字则会被拒绝。修复会改变接受集合，本批不改，已登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)。
