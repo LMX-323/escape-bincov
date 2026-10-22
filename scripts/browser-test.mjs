@@ -363,7 +363,17 @@ async function suite(viewport) {
       await page.mouse.down({ button: 'right' });
       try {
         await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
-        await page.waitForFunction(({ uid, hp }) => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid).hp < hp, fixture);
+        await page.waitForFunction(({ uid, hp }) => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid).hp < hp, fixture)
+          .catch(async error => {
+            // Intermittent on CI since 2026-10-22 (#61): the round leaves (7/8) yet misses a frozen enemy. Record where the
+            // shot started and went, what it struck, and where the player and the enemy stood.
+            const seen = await page.evaluate(uid => {
+              const h = window.__bincovSample.host, f = h.lastBatch.frame, e = f.actors.find(a => a.uid === uid);
+              return { player: f.player, enemy: e && { x: e.x, y: e.y, hp: e.hp }, mag: f.hud.weapon.mag,
+                events: h.eventLog.filter(v => v.type === 'shot' || v.type === 'impact').slice(-4) };
+            }, fixture.uid).catch(() => null);
+            throw new Error(`${error.message}\n${JSON.stringify(seen)}`);
+          });
       } finally { await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' }); }
       const result = await run();
       assert.equal(result.mag, mag - 1);

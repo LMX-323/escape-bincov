@@ -108,17 +108,17 @@
 
 - Q-E02 路由收敛由同一承接者随后续作：`ui.ts` 与两个视图路由的三角、共享 Pixi 池可以先做；行动句柄合同和背包有限服务与 PR #65 改同一批文件，建议 #65 合入后再做。
 - #60 评论登记的 Q-E04 类问题本批未改：`persist` 把校验异常当作存储失败、行动与据点的失败票据处理不一致、被拒票据留在 `SaveSession.prepared`。
-- 新发现：`validateExpansion` 的装备检查用 `D.WEAPONS[weapon]`，没有 `Object.hasOwn`。分层行动携带物的 `weapon` 写成 `constructor`、`toString` 等原型键时会被接受，不存在的名字则会被拒绝。修复会改变接受集合，本批不改，另行处理。
+- 新发现：`validateExpansion` 的装备检查用 `D.WEAPONS[weapon]`，没有 `Object.hasOwn`。分层行动携带物的 `weapon` 写成 `constructor`、`toString` 等原型键时会被接受，不存在的名字则会被拒绝。修复会改变接受集合，本批不改，已登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)。
 
 ## Q-E02 路由收敛
 
-2026-10-22，[PR #72](https://github.com/xuys2025/escape-bincov/pull/72)（草稿），分支 `agent/route-convergence`，叠在 PR #71 上（起点 main `c8a5ed8`，随 #71 同步到 main `d62603d`）。承接 #60 的 Q-E02，分工同上。同一 PR 分两段交付：A 段拆掉页面与两个视图之间的环，并移出共享 Pixi 应用；B 段（行动句柄合同、背包只走有限服务）与 PR #65 改同一批文件，等 #65 合入后续作。只改结构，不改玩法、存档或界面行为。
+2026-10-22，[PR #72](https://github.com/xuys2025/escape-bincov/pull/72)，分支 `agent/route-convergence`，叠在 PR #71 上（起点 main `c8a5ed8`，随 #71 同步到 main `8614c28`）。承接 #60 的 Q-E02，分工同上。本 PR 交付 A 段：拆掉页面与两个视图之间的环，并移出共享 Pixi 应用。B 段（行动句柄合同、背包只走有限服务）与 PR #65 改同一批文件；维护者决定 A 段先合，B 段登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)，依赖 #65。只改结构，不改玩法、存档或界面行为。
 
 **有效决定（A 段）**
 
 - `ui.ts` 既是旧页签界面，又是整页的换画面入口。行动视图 `coast-view/sample.ts` 和院子 `station-view/route.ts` 为了换画面反向导入它，形成运行时环。现在两者经 `src/navigation.ts` 的窄接口请求换画面，由 `ui.ts` 在加载时注册。接口只有 `changeState`、`enterExternalRun`、`render`、`hideoutExternal`、`startPreparedHideoutRaid`，方法名与 `ui.ts` 原函数一一对应，不设通用命令总线。
 - 视图原来借用 `ui.ts` 的叶子功能，移成独立模块：`src/toast.ts`、`src/save-export.ts`（备份下载）、`src/raid-areas.ts`（可出击区域、默认区域、`?sample=` 标记、village 种子、商场新布局）。只读 `app` 的 `sampleSupports` 留在 `coast-view/sample.ts`。
-- 共享 Pixi 应用池（`takeApp`/`parkApp`，样板计数 `gpuTextures`/`managedSlots`）连同它需要的 `renderer-lifetime` 注册，移到 `src/pixi-app.ts`。这个模块不导入场景、页面或玩法，院子路由不再依赖行动宿主。`Scope` 与 `renderer-lifetime.ts` 仍留在 `coast-view/`：A 段开工时 PR #66 正在改 `scene.ts`，搬动留到 B 段。
+- 共享 Pixi 应用池（`takeApp`/`parkApp`，样板计数 `gpuTextures`/`managedSlots`）连同它需要的 `renderer-lifetime` 注册，移到 `src/pixi-app.ts`。这个模块不导入场景、页面或玩法，院子路由不再依赖行动宿主。`Scope` 与 `renderer-lifetime.ts` 仍留在 `coast-view/`：A 段开工时 PR #66 正在改 `scene.ts`，搬动随 B 段一起登记。
 - 两个堆诊断脚本（`coast-sample-heap.mjs`、`sol-r6-heap.mjs`）原来往 `host.ts` 注入代码读取私有的 `parked`/`current`，改为注入 `pixi-app.ts`。它们受 Q-B06 影响在 main 上本就无法构建，本批未运行。
 - `KNOWN_CYCLES` 为空：`src` 里不再有运行时 import 环。
 
@@ -132,8 +132,8 @@
 | 仅 A 段（基于 main），17 个页面相关套件 | 16 套通过：`station`（76 步）、`hideout`、`raid-default`、`browser`、`save-browser`、`desktop-input`、`mobile`、`systems`、`title`、`station-capability`（本机 GPU）、`mall-sample`、`station-tier1`/`tier2`/`relief`/`reset`、`ui`；`coast-sample` 52/53 |
 | 叠在 #71 上的合并构建，14 个套件 | 13 套通过：`save-browser`、`expansion`、`loot`、`systems`、`station`（78/78）、`hideout`、`raid-default`（9/9）、`browser`、`station-reset`、`station-tier1`、`desktop-input`、`mobile`、`title`；`coast-sample` 52/53，失败的仍是 W13 |
 
-`coast-sample` 唯一失败的 W13（第二局从暂停菜单放弃，期望落幕显示「已放弃行动」）在未改动的 main `c8a5ed8` 和更早的 `345aff4` 上同样失败，与本批无关。原因是测试时序：Runtime 的 `retrySettlement` 在结算写入成功时同步把 `app.state` 设为 `result`，宿主在下一帧才设置落幕标记；W13 等到“落幕或 result”后立即读取落幕，读在两帧之间。产品照常播放落幕。修法是让 W13 只等落幕标记。已在 PR 中报告，修复归属待维护者安排。
+`coast-sample` 唯一失败的 W13（第二局从暂停菜单放弃，期望落幕显示「已放弃行动」）在未改动的 main `c8a5ed8` 和更早的 `345aff4` 上同样失败，与本批无关。原因是测试时序：Runtime 的 `retrySettlement` 在结算写入成功时同步把 `app.state` 设为 `result`，宿主在下一帧才设置落幕标记；W13 等到“落幕或 result”后立即读取落幕，读在两帧之间。产品照常播放落幕。修法是让 W13 只等落幕标记。已登记在 [#61](https://github.com/xuys2025/escape-bincov/issues/61#issuecomment-6338851506)。
 
 **未做 / 下一步**
 
-- B 段：`CoastServices`/`CoastHandle` 移入 Runtime 合同，工厂显式返回，去掉 `as unknown as CoastHandle`；背包面板的背包/安全箱移动改走有限服务，不再持有 `SaveSession`/`SessionState`。等 PR #65 合入后续作。
+- B 段：`CoastServices`/`CoastHandle` 移入 Runtime 合同，工厂显式返回，去掉 `as unknown as CoastHandle`；背包面板的背包/安全箱移动改走有限服务，不再持有 `SaveSession`/`SessionState`；顺带把 `Scope`/`renderer-lifetime.ts` 移出 `coast-view/`。具体位置与验收登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)，依赖 PR #65。

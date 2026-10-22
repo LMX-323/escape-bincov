@@ -310,7 +310,9 @@ async function suite(viewport) {
       const c = await fixture({ bag: [item('input-bandage', 'bandage', 2), item('input-ammo', 'ammo9', 10, 1)] }); await open(c.id);
       // A patrolling club enemy far down the road shows that the AI keeps running behind the panel.
       const scav = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.actors.find(e => e.alive && e.kind === 'scav').uid);
-      await candidate((draft, uid) => { const r = draft.expansion.raid, e = r.maps[r.currentMap].enemies.find(e => e.uid === uid); e.timer = 5; e.state = 'patrol'; }, scav);
+      // A long patrol leg: at 5 s the setup frames of a slow runner could end it, and the reset (3-7 s) left the timer above
+      // the value read below, so the decrease this step waits for never came.
+      await candidate((draft, uid) => { const r = draft.expansion.raid, e = r.maps[r.currentMap].enemies.find(e => e.uid === uid); e.timer = 60; e.state = 'patrol'; }, scav);
       await drive(page, 'vitals', { hp: 70 }); await drive(page, 'magazine', 3); await drive(page, 'freezeAI', false); await frames(page, 2);
       const timer = () => page.evaluate(uid => { const r = window.__bincov.saveSession.captureExpansion().raid; return r.maps[r.currentMap].enemies.find(e => e.uid === uid).timer; }, scav);
       const before = await snapshot(), enemyBefore = await timer();

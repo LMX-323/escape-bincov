@@ -9,8 +9,9 @@ import { MALL_PASSAGES } from '../src/mall-world.ts';
 import { browserOptions } from './browser-options.mjs';
 import { raidReady, frames } from './raid-view.mjs';
 const out=resolve('test-results');await mkdir(out,{recursive:true});
-const report={htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),startedAt:new Date().toISOString(),methodology:'Offline built mall on the 2.5D view (layout 3; the passages come from the shared skeleton). Explicit candidates position the player 40px outside each passage, and enemy AI is frozen through the test driver. Keyboard walking/sprinting crosses the actual scene geometry ten round trips per mode; health/stamina are reset between sprint loops. This checks geometry/input and conservation, not combat, natural travel or human/reference-image recognition.',passages:[],errors:[],requests:[]};
-const browser=await chromium.launch(browserOptions);report.browser=browser.version();const ctx=await browser.newContext({viewport:{width:1280,height:720},offline:true}),page=await ctx.newPage();page.setDefaultTimeout(30000);page.on('pageerror',e=>report.errors.push(e.stack??e.message));ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
+const report={htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),startedAt:new Date().toISOString(),methodology:'Offline built mall on the 2.5D view (layout 3; the passages come from the shared skeleton). Explicit candidates position the player 40px outside each passage, and enemy AI is frozen through the test driver. Keyboard walking/sprinting crosses the actual scene geometry ten round trips per mode; health/stamina are reset between sprint loops. This checks geometry/input and conservation, not combat, natural travel or human/reference-image recognition. Past half of the 600 s raid clock (slow runners), the same seed is deployed again in a fresh page before the next passage.',passages:[],errors:[],requests:[]};
+const browser=await chromium.launch(browserOptions);report.browser=browser.version();let ctx,page;
+const open=async()=>{ctx=await browser.newContext({viewport:{width:1280,height:720},offline:true});page=await ctx.newPage();page.setDefaultTimeout(30000);page.on('pageerror',e=>report.errors.push(e.stack??e.message));ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});};
 const snapshot=()=>page.evaluate(()=>{const b=window.__bincovSample.host.lastBatch,s=window.__bincov.saveSession.captureExpansion();return{map:s.raid.currentMap,shown:b.stamp.world.mapId,x:b.frame.player.x,y:b.frame.player.y,roster:s.raid.roster,counts:Object.fromEntries(Object.entries(s.raid.maps).map(([id,m])=>[id,{enemies:m.enemies.length,loot:m.loot.length,containers:m.containers.length}])),zone:document.querySelector('.coast-sample [data-where]').textContent};});
 /** Body reset through the session (the Runtime is the attached owner): full health and stamina, no exhaustion or pain. */
 const rested=()=>page.evaluate(()=>{const s=window.__bincov.saveSession,t=s.prepareExpansionMutation(d=>{const b=d.expansion.body;b.hp=100;b.stamina=100;b.bleeding=false;b.exhausted=false;b.effects.pain=0;});if(!t||s.commitExpansionMutation(t)!=='committed')throw new Error('Body reset rejected');});
@@ -35,11 +36,15 @@ const leg=async(key,axis,target,direction,sprint)=>{const passed=()=>page.evalua
   if(await passed())return;
   if(sprint)await page.keyboard.up('Shift');await running();if(sprint){await rested();await page.keyboard.down('Shift');}}
  throw new Error(`${key} did not reach ${axis} ${target}`);};
+/** A fresh profile deploys the seed-41 mall raid with frozen AI; returns its starting snapshot. */
+const deployMall=async()=>{await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await page.locator('[data-action="enter"]').click();await page.locator('#run-world').selectOption('mall');await page.locator('#seed').fill('41');await page.locator('[data-action="deploy"]').click();
+ const world=await raidReady(page);assert.equal(world.worldVersion,'mall-v3');await page.evaluate(()=>window.__bincovSample.driver.freezeAI(true));return snapshot();};
 try{
- await page.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');await page.locator('[data-action="enter"]').click();await page.locator('#run-world').selectOption('mall');await page.locator('#seed').fill('41');await page.locator('[data-action="deploy"]').click();
- const world=await raidReady(page);assert.equal(world.worldVersion,'mall-v3');await page.evaluate(()=>window.__bincovSample.driver.freezeAI(true));
- const initial=await snapshot();
+ await open();let initial=await deployMall();
  for(const p of MALL_PASSAGES){
+  // The raid clock follows real time, and a slow runner spends it ~4x faster than a desktop: past half of the 600 s raid,
+  // deploy the same seed again in a new page so no passage meets the raid's timeout (which ends the raid mid-walk).
+  if(await page.evaluate(()=>window.__bincov.saveSession.captureExpansion().raid.elapsed)>300){await ctx.close();await open();initial=await deployMall();report.redeploys=(report.redeploys??0)+1;console.log('REDEPLOY: fresh raid before',p.id);}
   const axis=['P-N','P-S'].includes(p.id)?'y':'x',forward=axis==='x'?'d':'s',backward=axis==='x'?'a':'w',row={id:p.id,map:p.map,modes:[]};report.passages.push(row);
   for(const sprint of [false,true]){
    await page.evaluate(({p,axis})=>{const s=window.__bincov.saveSession,t=s.prepareExpansionMutation(d=>{const r=d.expansion.raid;r.currentMap=p.map;r.player={...p.at,rotation:0};r.player[axis]-=40;d.expansion.body.hp=100;d.expansion.body.stamina=100;d.expansion.body.bleeding=false;d.expansion.body.exhausted=false;d.expansion.body.effects.pain=0;});if(!t||s.commitExpansionMutation(t)!=='committed')throw new Error('Passage fixture rejected');},{p,axis});
@@ -61,4 +66,4 @@ try{
  }
  report.status='passed';
 }catch(e){report.status='failed';report.failure=e.stack;console.error(e);process.exitCode=1;}
-finally{await page.keyboard.up('Shift').catch(()=>{});report.finishedAt=new Date().toISOString();await writeFile(resolve(out,'mall-passages-report.json'),JSON.stringify(report,null,2));await ctx.close();await browser.close();}
+finally{await page?.keyboard.up('Shift').catch(()=>{});report.finishedAt=new Date().toISOString();await writeFile(resolve(out,'mall-passages-report.json'),JSON.stringify(report,null,2));await ctx?.close();await browser.close();}
