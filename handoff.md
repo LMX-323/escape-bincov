@@ -2,6 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-22 · [PR #65 Runtime 缺口收尾](docs/tasks/runtime-gaps.md#收尾与同步)：同步 main `a4f463a` 后重新打包，冲突只在生成物和任务清单。Runtime 接口（`07d3efc`）与前端接入（`a678142`：附近逐件列表、门被占提示、挂载/换层后重对时）均已完成；本地 479/479 单测和 10 套浏览器检查通过，coast-sample 只剩 #61 登记的 W13。合入后 #60 的 Q-E02 B 段可开工。
 - 2026-10-22 · [#60 Q-E02 路由收敛 A 段](docs/tasks/quality-entropy.md#q-e02-路由收敛)：行动视图和院子经 `src/navigation.ts` 请页面换画面，不再导入 `ui.ts`；`toast`、备份下载、出击区域移成叶子模块；共享 Pixi 应用移到 `src/pixi-app.ts`，院子路由不再依赖行动宿主。`src` 已无运行时 import 环。B 段（行动句柄合同、背包有限服务）登记在 #60，依赖 #65；`coast-sample` W13 的测试时序问题登记在 #61。
 - 2026-10-22 · [#60 Q-E05 存档 codec 去环](docs/tasks/quality-entropy.md#q-e05-存档-codec-去环)：严格的 profile/物品栏规则和校验原语抽到 `src/profile-codec.ts`，checkpoint、recovery-store、save-backup 单向调用它；expansion v1→v2 升级合成 `upgradeToRpg`。10 万用例行为对照：接受/拒绝与输出逐例一致，只有分层行动里 `null` 物品的报错从 JS TypeError 改为存档损坏提示。
 - 2026-10-22 · [#60 减熵第二批](docs/tasks/quality-entropy.md#第二批)：删死代码与只被测试使用的旧接口、合并重复实现、修好三个失效的 CI 外套件（hideout 进 CI），新增套件登记、源码健康与入口文档三道守卫；健康扫描确认的 10 个缺陷登记在 #60。

@@ -1,6 +1,6 @@
 # Runtime 收尾接口与存档复验
 
-2026-10-17，Astra；分支 `agent/runtime-gaps`。起点为 PR #64 的 `92a0b237b18b2aea36f7c9bfbdb67b0b34346748`，已接受 main 为 `1764874`。本 PR 目标 main，依赖 #64，须等 #64 合并后再合。未修改 Opus 的测试时序加固、宿主、地图、美术或存档格式。
+2026-10-17，Astra；分支 `agent/runtime-gaps`。起点为 PR #64 的 `92a0b237b18b2aea36f7c9bfbdb67b0b34346748`，已接受 main 为 `1764874`。本 PR 目标 main，依赖 #64（已合并为 `345aff4`）。Runtime 提交 `07d3efc` 未修改 Opus 的测试时序加固、宿主、地图、美术或存档格式；宿主接入由 Opus 在 `a678142` 完成，见 [Opus 接入](#opus-接入)。2026-10-22 同步 main 与收尾验证见[收尾与同步](#收尾与同步)。
 
 ## 固定 head 复验
 
@@ -25,15 +25,33 @@
 
 ## 验证与边界
 
-本地 Windows，先用系统 Node 22.22.2 验证，再用内置 Node 24.19.0 补验完整单测及 package；两次均通过且 HTML 哈希相同。pnpm 11.25.0、Chrome 155.0.8059.80；pnpm 与仓库 CI 的 11.19.0 有版本差异，不能把本地结果冒充 CI。浏览器由系统 Node 启动，为离线自动化；桌面两尺寸 1280×720、1920×1080，移动尺寸按各套件。
+以下为 Runtime 阶段（2026-10-17，`07d3efc`）的结果。本地 Windows，先用系统 Node 22.22.2 验证，再用内置 Node 24.19.0 补验完整单测及 package；两次均通过且 HTML 哈希相同。pnpm 11.25.0、Chrome 155.0.8059.80；pnpm 与仓库 CI 的 11.19.0 有版本差异，不能把本地结果冒充 CI。浏览器由系统 Node 启动，为离线自动化；桌面两尺寸 1280×720、1920×1080，移动尺寸按各套件。
 
-本分支 `pnpm test` 468/468（新增 16 项），`pnpm package` 通过。desktop-input 10 项、mobile 11 项、ui 38 个检查点、save-browser 9 项以及 loot-target、mobile-ux 均已通过。后两套保留原前端缺口守卫，不代表附近列表已完成；浏览器后续结果在 PR 验证表更新。日志保留于本地忽略目录和 `*.log`；构建制品及 SHA-256 见 [release-manifest](../release-manifest.json)。没有真机、无 GPU 慢设备端到端、真人平衡性或十分钟真实计时的结果；慢帧方案只验 Runtime 时钟契约，宿主尚未接入。未宣称 #64 红 CI 已修复或全 36 套已通过。
+当时 `pnpm test` 468/468（新增 16 项），`pnpm package` 通过。desktop-input 10 项、mobile 11 项、ui 38 个检查点、save-browser 9 项以及 loot-target、mobile-ux 均已通过。后两套当时保留原前端缺口守卫，`a678142` 接入附近列表后改为正式验收。日志保留于本地忽略目录和 `*.log`；构建制品及 SHA-256 见 [release-manifest](../release-manifest.json)。没有真机、无 GPU 慢设备端到端、真人平衡性或十分钟真实计时的结果；慢帧方案当时只验 Runtime 时钟契约，宿主接入见下文。未宣称 #64 红 CI 已修复或全 36 套已通过。
 
 ## Opus 接入
 
-1. 按 ground 引用接「附近」逐件列表及触屏入口，再翻转 loot-target/mobile-ux 的旧守卫。本分支按要求保留这两处守卫，接口可用不等于前端已接。
-2. 宿主门提示直接映射 `occupied` / `unreachable`，移除按开门状态猜测；当前宿主对新码会落到通用提示，需接完才能宣称门文案完整。
-3. 挂载/换层的实际烘焙结束后接 `resetClock()`，在无 GPU 慢设备验证首局、换层不误暂停，真实卡顿仍暂停。
-4. 治疗中文 reason 已被当前宿主直接显示；如之后调整呈现，保留上述三处断言。#64 的测试时序加固由 Opus 继续，合入本分支时保留这些已恢复断言。
+`a678142` 完成以下四项，`1875890` 重新打包；验证见 PR 正文和下文[收尾与同步](#收尾与同步)。
+
+1. 「附近」逐件列表：E 指向容器，或指向散落物且范围内有两件以上时，来源列表多一行「附近 n」，展开后每件一行；桌面点击、触屏轻点都经 `activate({kind:'ground'})` 拾取该件，E 仍打开选中的容器，最后一件拿走后这一行消失（[搜刮说明](../LOOTING.md)）。列表数据是 `Interaction.nearby`，与 `nearbyLoot` 同一距离、视线和潮汐规则。loot-target、mobile-ux 的旧缺口守卫已改为正式验收。
+2. 门提示：`occupied` 显示“门口有人，暂时不能关门。”；`unreachable` 与旧画面一样不提示；楼层入口被拒仍显示“入口被挡住”。
+3. 重对时：宿主在挂载和换层重建后置位，下一帧 `advance()` 之前调用一次 `resetClock()`，首次烘焙和贴图上传的耗时不再触发卡顿暂停；之后的正常帧不重置，超过 2 秒的真实卡顿仍暂停。
+4. 治疗被拒的中文 reason 由宿主直接显示，desktop-input、mobile、ui-review 三处“生命已满”断言保留。
 
 商场布局四版注册/并存与新沿海封锁区地图数据没有开工。
+
+## 收尾与同步
+
+2026-10-22，按维护者要求由本机 Claude Code 收尾：把 main `a4f463a`（含 #66–#72）合并进本分支，保留原历史，不改写。冲突只在生成物和任务清单：生成物由 `pnpm package` 重新生成，清单以 main 版本为准再更新本项。#72 的路由收敛（`src/navigation.ts`、`src/pixi-app.ts`）与本分支对 `src/coast-view/host.ts` 的改动没有文本冲突，合并后严格类型检查通过。
+
+合并提交的本地验证（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome；桌面套件含 1280×720 与 1920×1080）：
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm test` | 479/479 通过 |
+| `pnpm package`（含 `tsc --noEmit`） | 通过；制品哈希见 [release-manifest](../release-manifest.json) |
+| `scripts/ci` 守卫 | 48/49。唯一失败是 policy 的 shell 门禁用例写死了 Git for Windows 的默认安装路径，本机 Git 装在用户目录，属环境问题；CI 照常运行该用例 |
+| loot-target、mobile-ux、desktop-input、mobile、ui、save-browser、raid-default、loot、issue26-inventory、buildings | 10 套全部通过，raid-default 9/9 |
+| coast-sample | 52/53，只有 W13 失败；main 上同样失败，是测试时序问题，登记在 [#61](https://github.com/xuys2025/escape-bincov/issues/61#issuecomment-6338851506) |
+
+CI 结果以 PR #65 页面为准。存档格式未改。未验：真机与 Safari、无 GPU 慢设备的完整流程、真人平衡性、十分钟自然游玩。#60 的 Q-E02 B 段（行动句柄合同、背包有限服务）与本 PR 改同一批文件，本 PR 合入后即可开工。
