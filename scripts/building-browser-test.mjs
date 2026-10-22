@@ -73,6 +73,16 @@ try {
         await page.keyboard.down('w'); await page.waitForFunction(() => window.__bincov.saveSession.captureExpansion().raid.player.y < 400, null, { timeout: 15000 }); await page.keyboard.up('w');
         assert.ok((await info()).player.y < 400, 'Open doorway accepts real movement');
     });
+    await step('closing the door from inside the doorway is refused with 门口有人 and leaves it open', async () => {
+        // The player's own body counts as someone in the doorway (toggleDoor); the host names that refusal.
+        await stand(464, 400);
+        await page.waitForFunction(() => { const i = window.__bincovSample.host.lastBatch.frame.interaction; return i?.kind === 'door' && i.ref.id === 'resident-front'; });
+        await page.keyboard.press('e');
+        await page.waitForFunction(() => { const t = document.querySelector('.coast-sample [data-toast]'); return t?.classList.contains('on') && t.classList.contains('bad') && t.textContent === '门口有人，暂时不能关门。'; });
+        const after = await info();
+        assert.equal(after.doors['resident-front'], true);
+        assert.equal(JSON.parse(after.raw).expansion.raid.maps.coast.doors['resident-front'], true, 'The stored door stays open');
+    });
     await step('one held E switches once, releases held movement, and keeps global time and saved doors', async () => {
         await stand(560, 272); const before = await info();
         await page.keyboard.down('w'); await page.keyboard.down('e');
