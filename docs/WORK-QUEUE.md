@@ -11,8 +11,8 @@
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入。2026-10-22：浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe，分支 `ci/setup-and-renderer`（承接 PR 见 #61，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)）；之后按新耗时重新分组（长套件的安全拆法已调研），及手动套件是否进 CI 的评估 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
-| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | 两者都与 main 冲突（落后 200 多个提交）；续作前先同步，行动规则收敛前核对在途设计 |
-| 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 已排期、功能待实现；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。战斗接入依赖 #39 合入；#40 只交付设计与排期，合并不关闭 #77 |
+| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已实现，维护者 2026-10-22 选定“稳定”参数并试玩认可，决定见同页；#39 合入 main 后 #28 才进改装实现。#28 仍落后 main，续作前先同步 |
+| 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 已排期、功能待实现；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。#39 已合入 `2bac4fb`，战斗基础前置已满足；#40 只交付设计与排期，合并不关闭 #77 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
 
 开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
@@ -178,6 +178,10 @@
 ## 2026-10-13 · #32 商店反馈、冷图片恢复与旧 HUD 释放
 
 从最新 main `64505046` 在独立分支 `fix/issue32-shop-recovery` 复现并修复三类可独立确认的缺陷：交易现金/空间拒绝原因及过期清单原地刷新；两套冷 PNG 绘制异常导致加载不结束；SOL-F20-HUD-01 的 Phaser 全局鼠标事件保留旧 HUD。原版有效负对照、实际验证、截图与剩余范围见[验收报告](issue32-20261013/README.md)。295项单测、最终构建17项专项、5项场景往返和5项生命周期通过；产品提交91a38b1完整CI通过。额外旧院子65/76、城中村47/51，其全部失败点已在原main对照复现并保留，未降低断言。最终验收记录与CI见[PR #42](https://github.com/xuys2025/escape-bincov/pull/42)。维护者已明确授权自验通过后经 PR 合并，不直接推送 main。#32/#26总单、F20总堆、原R/K、SAVE/A6历史未确认、真机及产品/素材待定项保持开放；既有射击与剧情 PR 不改。以下原历史记录保留。
+
+## 2026-10-12 · 游戏射击系统改造（PR #28 实现前置）
+
+维护者明确要求独立建 PR，由 `feat/shooting-system-rework` 承接原 PR #28 规划的 M0-S 射击基础。见[范围、分工与验收门槛](SHOOTING-SYSTEM-REWORK.md)。射击实现、独立验收和维护者试玩完成并获准合入 main 后，[PR #28](https://github.com/xuys2025/escape-bincov/pull/28) 再同步主线进入改装实现；#28 文档可继续审阅。今天只建档，完成后停止，等下次指令再实施；文档或 CI 通过不等于前置功能完成。以下历史记录保留。
 
 ## 2026-10-12 · SOL-R3-CAP-LISTENER-01（AI 遗留三级单项）
 

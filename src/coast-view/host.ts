@@ -26,6 +26,7 @@ import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
 import { parkApp, takeApp } from '../pixi-app';
 import { SampleSound } from './sound';
+import { playtestMarks } from '../shooting';
 import { esc } from '../html';
 
 export interface CoastServices {
@@ -47,7 +48,10 @@ export interface CoastServices {
   checkpoint(): boolean;
   lootContext(): { containerId: string; runId: string } | null;
   lootInventory(ref: TargetRef): D.Inventory | null;
+  /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
+  sampleGun(id: 'm4a1' | null): void;
 }
+
 export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
 export type SampleExit = { kind: 'settled' };
 type Panel = null | 'pause' | 'inventory' | 'loot' | 'map' | 'reading' | 'ending';
@@ -75,7 +79,10 @@ const DRAIN: Record<Drain, { label: string; tint: string }> = {
 };
 const ease = (t: number) => t * t * (3 - 2 * t);
 const weaponIcons = new Map<string, string>();
-/** The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. */
+/**
+ * The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. The sample rifle (PR #39) has
+ * no item art of its own; its caller passes the carbine's.
+ */
 function weaponIcon(id: string): string {
   let url = weaponIcons.get(id);
   if (!url) {
@@ -104,7 +111,7 @@ const HTML = `
     <div data-where class="cs-where"></div>
   </section>
   <section class="cs-clock"><b data-time></b><small data-tide></small></section>
-  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small data-reserve></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div></section>
+  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div></section>
   <div data-radio class="cs-radio" hidden></div>
   <section class="cs-info">
     <button type="button" data-do="map" data-exit-nav>选择撤离点</button>
@@ -116,6 +123,8 @@ const HTML = `
   <ul data-choices class="cs-choices" hidden aria-label="附近可搜刮的箱子和尸体"></ul>
   <div data-toast class="cs-toast" role="status"></div>
   <div data-cross class="cs-cross" hidden><i class="cs-ring"></i></div>
+  <div data-cone class="cs-cone" hidden></div>
+  <div data-fan class="cs-fan" hidden><i></i><i></i></div>
   <div data-hitpop class="cs-hitpop" aria-hidden="true"><b><i></i><i></i><i></i><i></i></b></div>
   <div data-fade class="cs-fade"></div>
   <div data-curtain class="cs-curtain" aria-live="assertive"><b data-curtain-text></b></div>
@@ -192,6 +201,8 @@ export class CoastSampleHost {
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
       const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.measureHudTop(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
+      const marks = playtestMarks(location.search);
+      if (marks.gun) this.services.sampleGun(marks.gun);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
   }
@@ -206,6 +217,8 @@ export class CoastSampleHost {
     const follow = this.frameAt === null ? this.app.ticker.deltaMS / 1000 : Math.min(.1, Math.max(0, (t0 - this.frameAt) / 1000));
     this.frameAt = t0;
     const playing = this.panel === null;
+    // The mouse look-ahead follows the pointer's place on screen (none while touch aims); the aim reads through it.
+    this.view.pointer = this.input.touch ? null : { x: this.input.pointer.x, y: this.input.pointer.y };
     const intent = this.input.read(playing, (x, y) => this.view.aimFromClient(x, y));
     if (intent.firePressed) this.sound.trigger(this.last?.frame.hud.weapon);
     const note = playing && intent.interactPressed && this.last?.frame.interaction?.kind === 'note' ? this.last.frame.interaction.ref.id : null;
@@ -645,9 +658,10 @@ export class CoastSampleHost {
     q('[data-hp]').style.width = `${Math.max(0, h.hp / h.maxHp) * 100}%`; q('[data-hp-text]').textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;
     q('[data-st]').style.width = `${Math.max(0, h.stamina / h.maxStamina) * 100}%`; q('[data-st-text]').textContent = `${Math.round(h.stamina)}`;
     const w = h.weapon;
-    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id); q('[data-weapon-name]').textContent = w.name; q('[data-swap]').textContent = w.id === 'knife' ? '主武器' : '匕首'; }
+    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id === 'm4a1' ? 'carbine' : w.id); q('[data-weapon-name]').textContent = w.name; q('[data-swap]').textContent = w.id === 'knife' ? '主武器' : '匕首'; }
     q('[data-mag]').textContent = !w.magSize ? '近战' : w.reloading ? '换弹中' : `${w.mag} / ${w.magSize}`;
     q('[data-reserve]').textContent = w.magSize ? `备用 ${w.reserve}` : '';
+    q('[data-mode]').textContent = w.magSize ? h.aim.mode === 'auto' ? '全自动' : '单发' : '';
     q('[data-weapon]').classList.toggle('empty', !!w.magSize && w.mag === 0 && !w.reloading);
     q('[data-weapon]').classList.toggle('reloading', w.reloading);
     q('[data-heals]').textContent = String(h.heals);
@@ -671,6 +685,7 @@ export class CoastSampleHost {
     const reload = f.player.state.reloading;
     cross.classList.toggle('reloading', !!reload);
     if (reload) cross.style.setProperty('--reload', `${Math.round((1 - reload.left / Math.max(.01, reload.total)) * 360)}deg`);
+    this.aimMarks(f, cross.hidden);
     this.root.classList.toggle('touch', this.input.touch);
     let lootChanged = false;
     // Rooms may overlap: only a point whose every room is revealed (or one in the open) makes a hit or impact sound.
@@ -687,6 +702,29 @@ export class CoastSampleHost {
     if (this.panel === 'loot' && lootChanged) this.inv.render();
     if (this.panel === 'loot') this.lootRisk(f.hud, dt);
     this.feedbackFrame(b, dt);
+  }
+  /**
+   * The handling the next shot meets (PR #39), display only. With a mouse, a ring around the pointer as wide as the cone
+   * at that distance, centred where recoil has turned the shot; on touch, a fan from the chest along the aim stick.
+   * Both use only the player's own published state, so a hidden room reveals nothing through them.
+   */
+  private aimMarks(f: PublishedView['frame'], crossHidden: boolean) {
+    const a = f.hud.aim, p = f.player, cone = this.q('[data-cone]'), fan = this.q('[data-fan]');
+    const at = this.view.worldToClient({ x: p.x, y: p.y - AIM_H }), live = p.alive && a.cone > 0 && !this.panel;
+    cone.hidden = crossHidden || !live;
+    if (!cone.hidden) {
+      const dx = this.input.pointer.x - at.x, dy = this.input.pointer.y - at.y, c = Math.cos(a.drift), s = Math.sin(a.drift);
+      const r = Math.max(3, Math.hypot(dx, dy) * Math.tan(a.cone / 2)), x = at.x + dx * c - dy * s, y = at.y + dx * s + dy * c;
+      cone.style.transform = `translate(${(x - r).toFixed(1)}px, ${(y - r).toFixed(1)}px)`;
+      cone.style.width = cone.style.height = `${(2 * r).toFixed(1)}px`;
+      cone.classList.toggle('steady', a.raise >= 1 && a.sway < .1);
+    }
+    const stick = this.input.touch ? this.input.stick('aim') : null;
+    fan.hidden = !live || !stick || stick.distance <= .18;
+    if (!fan.hidden) {
+      fan.style.transform = `translate(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px) rotate(${(p.aim + a.drift).toFixed(4)}rad)`;
+      fan.style.setProperty('--half', `${(a.cone / 2).toFixed(4)}rad`);
+    }
   }
   /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
   private lootHitT = 0;

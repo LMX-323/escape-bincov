@@ -4,7 +4,7 @@
 
 初稿日期：2026-10-05，历史基线 `a34c7a1ba810919fc33d4fce158aba0a028a0f78`；暴击/perk修订日期：2026-10-12，核对主线 `64505046fb737af195bc808d2f8e4274df21cf24`。本轮仅修订设计、导航与交接，不修改代码、存档格式、版本号、HTML、ZIP或发布清单。除明确修订处外，下列状态/基地章节保留初稿设计语境，当前实际能力以源码与实施记录为准。
 
-2026-10-22 接手补充：[可行性与实施安排](tasks/critical-perk-plan.md)、[开发任务 #77](https://github.com/xuys2025/escape-bincov/issues/77)。基于 main `8ef783f` 核对当前单一 Runtime 与 #39 射击候选；本文历史基线不替代现状证据，具体任务状态在 Issue 维护。
+2026-10-22 接手补充：[可行性与实施安排](tasks/critical-perk-plan.md)、[开发任务 #77](https://github.com/xuys2025/escape-bincov/issues/77)。初核 main `8ef783f`，交付前同步 #39 已合入的 `2bac4fb` 并复核当前单一 Runtime 与射击接口；本文历史基线不替代现状证据，具体任务状态在 Issue 维护。
 
 ## 1. 目标与设计基线
 

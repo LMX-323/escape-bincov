@@ -29,6 +29,7 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
             return structuredClone(core.getLootContainer(ref.id)!.inventory);
         },
         backup: () => saves.backupRecord(),
+        sampleGun: (id: 'm4a1' | null) => core.setSampleGun(id),
     });
     return Object.freeze({ runtime, services });
 }
