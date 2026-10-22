@@ -1,6 +1,6 @@
 import * as D from './domain';
 import { validateCheckpoint, type RaidCheckpoint } from './checkpoint';
-import { decodeBackup } from './save-backup';
+import { decodeStoredProfile, identity, utf8Bytes, whole, UINT32_MAX } from './profile-codec';
 import { validateExpansion, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
 
@@ -27,7 +27,7 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 export function decodeSession(text: string, resolveWorld: WorldResolver = resolveExpansionWorld): SessionRecord {
-  if (new TextEncoder().encode(text).length > SESSION_MAX_BYTES) return failure();
+  if (utf8Bytes(text) > SESSION_MAX_BYTES) return failure();
   let r: any;
   try { r = JSON.parse(text); } catch { return failure(); }
   if (!r || r.format !== 'escape-bincov-session' || ![2, 3, 4].includes(r.version) || !Number.isSafeInteger(r.revision)
@@ -43,21 +43,21 @@ export function decodeSession(text: string, resolveWorld: WorldResolver = resolv
   }
   const legacy = r.version === 2;
   const active = r.profile.activeRun;
-  // Profile fields retain the existing strict inventory and economy validation.
-  const checked = decodeBackup(JSON.stringify({ ...r.profile, activeRun: null }));
+  // Profile fields keep the strict rules of a stored profile (inventory, economy, 1 MiB).
+  const checked = decodeStoredProfile({ ...r.profile, activeRun: null });
   checked.activeRun = active ? { seed: active.seed, runId: active.runId } : null;
   // Never discard the strict decoder's normalized result and then trust unchecked fields.
   if (canonical(checked) !== canonical({ ...r.profile, version: 2 })) return failure();
   r.profile = checked;
   if (active) {
-    if (typeof active.runId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(active.runId) || r.terminal !== null) return failure();
+    if (!identity(active.runId) || r.terminal !== null) return failure();
     if (legacy && r.raid?.loadout && [...r.raid.loadout.bag.items, ...r.raid.loadout.safe.items].some((i: D.Item) => i.rotated !== undefined)) return failure();
     if (r.version === 4 && r.expansion?.raid !== null && r.raid === null) {
       // Layered worlds have their own complete, strictly validated checkpoint.
       if (!r.expansion?.raid) return failure();
     } else r.raid = validateCheckpoint(r.raid, r.profile, legacy);
   } else if (r.raid !== null) return failure();
-  if (r.terminal !== null && (!r.terminal || typeof r.terminal.runId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(r.terminal.runId)
+  if (r.terminal !== null && (!r.terminal || !identity(r.terminal.runId)
       || !['death', 'timeout', 'extract'].includes(r.terminal.outcome) || r.profile.lastResult?.outcome !== r.terminal.outcome)) return failure();
   if (r.terminal?.reason !== undefined && (r.version !== 4 || !['death', 'timeout', 'extract', 'abandon'].includes(r.terminal.reason)
       || (r.terminal.reason === 'abandon' ? r.terminal.outcome !== 'death' : r.terminal.reason !== r.terminal.outcome))) return failure();
@@ -93,12 +93,11 @@ export class RecoveryStore {
       try { raw = JSON.parse(this.legacy); } catch { return failure(); }
       if (!raw || typeof raw !== 'object' || Array.isArray(raw) || ![undefined, 0, 1, 2].includes(raw.version)
           || (!raw.stash && !raw.inventory)) return failure();
-      save = raw.version === 2 ? decodeBackup(JSON.stringify({ ...raw, activeRun: null })) : D.migrateSave(raw);
+      save = raw.version === 2 ? decodeStoredProfile({ ...raw, activeRun: null }) : D.migrateSave(raw);
       if (raw.version === 2) {
         const active = raw.activeRun;
         if (active !== null && (!active || typeof active !== 'object' || Array.isArray(active)
-            || !Number.isSafeInteger(active.seed) || active.seed < 1 || active.seed > 0xffffffff
-            || (active.runId !== undefined && (typeof active.runId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(active.runId)))
+            || !whole(active.seed, 1, UINT32_MAX) || (active.runId !== undefined && !identity(active.runId))
             || Object.keys(active).some(k => k !== 'seed' && k !== 'runId'))) return failure();
         save.activeRun = active;
       }

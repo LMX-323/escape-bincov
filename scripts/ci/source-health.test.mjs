@@ -35,7 +35,6 @@ const target = symbol => {
 const PURE = ['src/domain.ts', 'src/balance.ts', 'src/world.ts'];
 // Known runtime cycles, tracked in #60. A cycle may shrink or disappear; a new or larger one fails.
 const KNOWN_CYCLES = [
-  ['src/checkpoint.ts', 'src/recovery-store.ts', 'src/save-backup.ts'], // Q-E05: the save codecs still call each other
   ['src/coast-view/sample.ts', 'src/station-view/route.ts', 'src/ui.ts'], // Q-E02: the tab page and the view routers
 ];
 
