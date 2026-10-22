@@ -60,7 +60,7 @@ test('blocked panels advance the world with empty input; pause freezes it; old h
 test('shotgun batches report six actual pellets without additional RNG draws, and aim is continuous', () => {
     const f = fixture(); safe(f); f.driver.weapon('shotgun'); const r = f.runtime;
     // A new Runtime starts unsteady and a click fires at once, before a precise aim has had time to rise.
-    const c = r.snapshot(), random = D.seededRandom(c.rng), angle = .2137, grip = handlingOf('shotgun', r.feel);
+    const c = r.snapshot(), random = D.seededRandom(c.rng), angle = .2137, grip = handlingOf('shotgun');
     assert.deepEqual(r.handling, unsteadyAim());
     const spread = coneOf(unsteadyAim(), D.WEAPONS.shotgun, grip);
     const normalized = ((angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;

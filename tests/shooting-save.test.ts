@@ -10,7 +10,7 @@ import { benchRaid, arm, replay, reopen, mouse, mouseHold } from './fixtures/sho
 // record keeps its format, a reload starts the aim at its worst, failed writes cannot reset it, and the sample rifle
 // and its endless reserve never reach the loadout or the bag.
 // ('sample' alone is an item id, so the sample rifle is looked for by its own id.)
-const HANDLING_WORDS = ['handling', 'bloom', 'drift', 'sway', 'raise', 'feel', 'trigger', 'clickLeft', 'sampleGun', 'm4a1'];
+const HANDLING_WORDS = ['handling', 'bloom', 'drift', 'sway', 'raise', 'trigger', 'clickLeft', 'sampleGun', 'm4a1'];
 
 test('a refresh mid-fight saves no handling: the new Runtime starts unsteady with the saved rounds, cooldown and bullets', () => {
     const b = arm(benchRaid(), 'pistol');

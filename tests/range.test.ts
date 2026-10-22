@@ -117,14 +117,6 @@ test('range: every weapon can be armed, the M4A1 sample fires automatically and 
     assert.equal(r.session.storageOK, true);
 });
 
-test('range: the feel switch reaches the published aim', () => {
-    const r = open();
-    for (const feel of ['steady', 'brisk', 'steady'] as const) {
-        r.range.setFeel(feel);
-        assert.equal(frame(r, 0).frame.hud.aim.feel, feel);
-    }
-});
-
 test('range: the moving target walks across the street on raid time and stops when switched off or paused', () => {
     const r = open(), y = () => at(r, 'mover').y;
     frame(r, 0);

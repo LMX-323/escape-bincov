@@ -2,7 +2,7 @@
  * 试枪场 (src/range) on an isolated offline build: real mouse clicks on the 2.5D raid canvas and on the range panel. The
  * page's read-only ?test=1 hook (window.__bincovRange) is only read, never driven. The page must leave browser storage
  * alone; every gun must land hits on the 5-tile target and the panel must count them; the M4A1 sample must fire while
- * the button is held; the feel switch must reach the published aim; presses on the panel must never fire or turn the
+ * the button is held; presses on the panel must never fire or turn the
  * aim; the panel must fit 1280x720 and 1920x1080; abandoning settles in memory and reloads a fresh range. A phone page
  * without ?test=1 checks the touch layout and that no test hook exists there.
  */
@@ -168,25 +168,15 @@ async function holdRifle(p) {
 }
 
 try {
-  await test('range: storage, hits with every gun, automatic fire, feel, panel presses, layout and abandon', {}, '?range=1&test=1', async p => {
+  await test('range: storage, hits with every gun, automatic fire, panel presses, layout and abandon', {}, '?range=1&test=1', async p => {
     await running(p, 60000, HOOK);
     const start = await state(p);
-    assert.equal(start.weapon.id, 'pistol'); assert.equal(start.aim.feel, 'brisk');
+    assert.equal(start.weapon.id, 'pistol');
     assert.equal(await p.evaluate(() => typeof window.__bincov), 'undefined', 'the game test hook stays off on the range');
     await untouched(p);
     const guns = [];
     for (const gun of ['pistol', 'carbine', 'shotgun', 'm4a1']) guns.push(await hitWith(p, gun));
     const rifle = await holdRifle(p);
-
-    // The feel switch reaches the published aim, and the panel marks the active one.
-    const feel = [];
-    for (const f of ['steady', 'brisk']) {
-      await p.locator(`[data-feel="${f}"]`).click();
-      await p.waitForFunction(f => window.__bincovRange.host.lastBatch.frame.hud.aim.feel === f, f);
-      await frames(p, 2);
-      assert.equal(await p.locator(`[data-feel="${f}"]`).getAttribute('aria-pressed'), 'true');
-      feel.push(f);
-    }
 
     // Presses on the panel: no shot, the magazine untouched, and the host's pointer (the aim's source) never moves. The
     // camera may still settle by a whole pixel, which turns the aim by under 0.01 rad; a press that reached the canvas
@@ -199,7 +189,7 @@ try {
     await frames(p, 6);
     const pointer = () => p.evaluate(() => { const { x, y } = window.__bincovRange.host.input.pointer; return { x, y }; });
     const before = await state(p), from = await pointer();
-    const presses = ['[data-feel="steady"]', '[data-feel="brisk"]', '[data-act="mover"]', '[data-act="mover"]', '[data-act="fold"]', '[data-act="fold"]'];
+    const presses = ['[data-act="mover"]', '[data-act="mover"]', '[data-act="fold"]', '[data-act="fold"]'];
     for (const selector of presses) {
       await p.locator(selector).click();
       await frames(p, 2);
@@ -249,7 +239,7 @@ try {
     const fresh = await state(p);
     assert.equal(fresh.weapon.id, 'pistol', 'the reloaded range starts over');
     assert.deepEqual(fresh.stats, { shots: 0, hits: { d5: 0, d10: 0, d15: 0, d20: 0, mover: 0 } });
-    return { guns, rifle, feel, sizes, reloaded: fresh.weapon.id };
+    return { guns, rifle, sizes, reloaded: fresh.weapon.id };
   });
 
   await test('range: phone layout without the test hook, by touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }, '?range=1', async p => {

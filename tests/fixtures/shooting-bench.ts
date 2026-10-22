@@ -10,7 +10,6 @@ import { createSessionState, SaveSession } from '../../src/session';
 import { CoastRaidRuntime, emptyIntent } from '../../src/raid-runtime/runtime';
 import { createRuntimeTestDriver } from '../../src/raid-runtime/test-support';
 import type { AimView, RaidIntent } from '../../src/raid-runtime/contract';
-import type { Feel } from '../../src/shooting';
 import type { Point } from '../../src/world';
 
 export type Gun = 'pistol' | 'carbine' | 'shotgun' | 'm4a1';
@@ -43,7 +42,7 @@ export type Bench = ReturnType<typeof benchRaid>;
  * Frozen AI, the player on the lane facing east with `gun` and a full magazine, `reserve` rounds in the bag, and the
  * aim settled (a new Runtime starts unsteady; the bench measures from a calm stance unless a test says otherwise).
  */
-export function arm(b: Bench, gun: Gun, { reserve = 60, feel = 'brisk' as Feel } = {}): Bench {
+export function arm(b: Bench, gun: Gun, { reserve = 60 } = {}): Bench {
     b.driver.freezeAI(true);
     b.driver.placePlayer(LANE.at, LANE.aim);
     b.driver.weapon(gun === 'm4a1' ? 'carbine' : gun);
@@ -52,7 +51,6 @@ export function arm(b: Bench, gun: Gun, { reserve = 60, feel = 'brisk' as Feel }
     while (left > 0) { const qty = Math.min(left, D.ITEMS[ammo].stack); assert.equal(D.addItem(c.loadout.bag, ammo, qty), 0); left -= qty; }
     b.runtime.restore(c);
     if (gun === 'm4a1') b.driver.sampleGun('m4a1');
-    b.driver.feel(feel);
     b.runtime.handling = { raise: 0, sway: 0, bloom: 0, drift: 0, settle: 0 };
     const lane = b.runtime.enemies.filter(e => e.hp > 0 && e.x > LANE.at.x - 40 && e.x < LANE.at.x + 740 && Math.abs(e.y - LANE.at.y) < 40);
     assert.deepEqual(lane.map(e => e.uid), [], 'an enemy stands on the bench lane');

@@ -2,7 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
-- 2026-10-22 · [PR #39 射击系统改造](docs/SHOOTING-SYSTEM-REWORK.md)：S0–S5 与试枪场都已实现（规则 `src/shooting.ts`，扳机在 `CoastRaidRuntime.pull` / `runTrigger`，表现在 `hud.aim` 与宿主准星，试枪场 `src/range/`）；实验台 `tests/shooting-bench.test.ts`，浏览器 `test:shooting`、`test:range`。维护者的五项决定、阶段状态、S1 测量与兼容方案见任务页；待维护者试玩选定手感参数。
+- 2026-10-22 · [PR #39 射击系统改造](docs/SHOOTING-SYSTEM-REWORK.md)：S0–S5 与试枪场都已实现（规则 `src/shooting.ts`，扳机在 `CoastRaidRuntime.pull` / `runTrigger`，表现在 `hud.aim` 与宿主准星，试枪场 `src/range/`）；实验台 `tests/shooting-bench.test.ts`，浏览器 `test:shooting`、`test:range`。维护者的决定（含选定“稳定”参数以突出改枪）、阶段状态、S1 测量与兼容方案见任务页；待维护者试玩认可。
 - 2026-10-22 · [#61 CI：主机包缓存与 lavapipe](docs/CI.md#浏览器-job-的主机环境字体chromium-与渲染器)：浏览器 job 不再经过 apt 镜像（字体固定版本走缓存），WebGL 改用 lavapipe 并在套件前检查渲染器；只改 CI，游戏、断言与生成物不变。实测结果与对照见承接 PR。
 - 2026-10-22 · [#60 Q-E02 路由收敛 A 段](docs/tasks/quality-entropy.md#q-e02-路由收敛)：行动视图和院子经 `src/navigation.ts` 请页面换画面，不再导入 `ui.ts`；`toast`、备份下载、出击区域移成叶子模块；共享 Pixi 应用移到 `src/pixi-app.ts`，院子路由不再依赖行动宿主。`src` 已无运行时 import 环。B 段（行动句柄合同、背包有限服务）登记在 #60，依赖 #65；`coast-sample` W13 的测试时序问题登记在 #61。
 - 2026-10-22 · [#60 Q-E05 存档 codec 去环](docs/tasks/quality-entropy.md#q-e05-存档-codec-去环)：严格的 profile/物品栏规则和校验原语抽到 `src/profile-codec.ts`，checkpoint、recovery-store、save-backup 单向调用它；expansion v1→v2 升级合成 `upgradeToRpg`。10 万用例行为对照：接受/拒绝与输出逐例一致，只有分层行动里 `null` 物品的报错从 JS TypeError 改为存档损坏提示。

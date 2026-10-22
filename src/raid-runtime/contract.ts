@@ -187,7 +187,6 @@ export type Interaction = Readonly<{
  */
 export type AimView = Readonly<{
     mode: 'semi' | 'auto';
-    feel: 'brisk' | 'steady';
     /** Full cone angle a shot fired now scatters over (stance, sway, bloom and the body's state). */
     cone: number;
     drift: number;

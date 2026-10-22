@@ -11,7 +11,7 @@ import { CoastRaidRuntime } from '../raid-runtime/runtime';
 import type { PublishedView } from '../raid-runtime/contract';
 import type { EnemyState } from '../checkpoint';
 import type { ExpansionState } from '../expansion-state';
-import { drawAim, swayRules, type Feel } from '../shooting';
+import { drawAim, SWAY } from '../shooting';
 import { checkpointBodyFits, traversable } from '../spatial';
 import type { Point } from '../world';
 
@@ -165,16 +165,14 @@ export class ShootingRange {
         state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0;
         stock(state.loadout, 1);
         c.restore(state);
-        drawAim(c.handling, swayRules(c.feel));
+        drawAim(c.handling, SWAY);
     }
     private knife(on: boolean) {
         const c = this.core;
         if (c.knife === on) return;
         const state = c.snapshot(); state.knife = on; state.reloadLeft = 0; c.restore(state);
-        drawAim(c.handling, swayRules(c.feel));
+        drawAim(c.handling, SWAY);
     }
-    /** Weapon handling parameter set (FEELS in src/shooting.ts); the next shot uses it. */
-    setFeel(feel: Feel) { this.core.feel = feel; }
     /** The moving target stops where it stands, or walks on from there. */
     setMoving(on: boolean) { this.moving = on; }
     /** Counts back to zero, every target at its spot, the moving one back at its start, the player on the firing line. */

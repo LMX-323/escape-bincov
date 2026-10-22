@@ -1,18 +1,16 @@
 /**
- * The 试枪场 panel: weapon, feel and moving-target switches, a reset, hits per target, the live aim numbers of the last
+ * The 试枪场 panel: weapon and moving-target switches, a reset, hits per target, the live aim numbers of the last
  * published batch and a way back to the title. A plain DOM overlay in its own shadow root, outside the raid host's
  * root: the host reads mouse and touch input from its canvas only, so presses here never pull the trigger or turn the
  * aim. A pressed button gives its focus back, so the keyboard keeps playing and Space or Enter cannot press it again.
  */
 import css from './range.css';
 import { esc } from '../html';
-import { FEELS, type Feel } from '../shooting';
 import type { PublishedView } from '../raid-runtime/contract';
 import type { CoastSampleHost } from '../coast-view/host';
 import { MOVER, RANGE_WEAPONS, TARGETS, type RangeWeapon, type ShootingRange } from './raid';
 
 const WEAPON_NAMES: Record<RangeWeapon, string> = { pistol: '手枪', carbine: '卡宾枪', shotgun: '霰弹枪', m4a1: 'M4A1 样本', knife: '匕首' };
-const FEEL_NAMES: Record<Feel, string> = { brisk: '快速', steady: '稳定' };
 /** Aim angles are radians (contract AimView); the panel shows degrees and shares as percentages. */
 const degrees = (radians: number) => `${(radians * 180 / Math.PI).toFixed(1)} 度`;
 const percent = (share: number) => `${Math.round(share * 100)}%`;
@@ -25,8 +23,6 @@ const markup = (exit: string) => `<section class="rg" aria-label="试枪场">
 <p class="rg-note">内存存档 · 不保存进度</p>
 <div class="rg-label">枪械</div>
 <div class="rg-grid">${RANGE_WEAPONS.map(w => `<button type="button" data-gun="${w}" aria-pressed="false"${w === 'm4a1' ? ' class="rg-wide"' : ''}>${WEAPON_NAMES[w]}</button>`).join('')}</div>
-<div class="rg-label">手感</div>
-<div class="rg-grid two">${FEELS.map(f => `<button type="button" data-feel="${f}" aria-pressed="false">${FEEL_NAMES[f]}</button>`).join('')}</div>
 <div class="rg-grid two rg-gap"><button type="button" data-act="mover" aria-pressed="true">移动目标：开</button><button type="button" data-act="reset">重新开始</button></div>
 <table><thead><tr><th>目标</th><th>命中</th></tr></thead>
 <tbody>${[...TARGETS.map(t => [t.id, `${t.tiles} 格`]), [MOVER.id, '移动目标']].map(([id, label]) => `<tr><td>${label}</td><td data-hits="${id}">0</td></tr>`).join('')}</tbody>
@@ -60,9 +56,8 @@ export class RangePanel {
     private press(e: Event) {
         const button = (e.target as Element).closest<HTMLButtonElement>('button');
         if (!button) return;
-        const { gun, feel, act } = button.dataset;
+        const { gun, act } = button.dataset;
         if (gun) this.range.arm(gun as RangeWeapon);
-        else if (feel) this.range.setFeel(feel as Feel);
         else if (act === 'mover') this.range.setMoving(!this.range.moving);
         else if (act === 'reset') this.range.reset();
         else if (act === 'fold') this.fold(!this.box.classList.contains('folded'));
@@ -101,7 +96,6 @@ export class RangePanel {
         this.place();
         const { weapon: w, aim } = b.frame.hud, stats = this.range.stats;
         for (const id of RANGE_WEAPONS) press(this.q(`[data-gun="${id}"]`), w.id === id);
-        for (const f of FEELS) press(this.q(`[data-feel="${f}"]`), aim.feel === f);
         const mover = this.q('[data-act="mover"]');
         press(mover, this.range.moving); text(mover, this.range.moving ? '移动目标：开' : '移动目标：关');
         for (const [id, hits] of Object.entries(stats.hits)) text(this.q(`[data-hits="${id}"]`), String(hits));

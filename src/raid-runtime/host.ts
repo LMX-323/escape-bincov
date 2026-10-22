@@ -2,7 +2,6 @@ import type { SessionState, SaveSession } from '../session';
 import type { LootTransfer } from '../loot';
 import type { RaidRuntime, TargetRef } from './contract';
 import { CoastRaidRuntime } from './runtime';
-import type { Feel } from '../shooting';
 
 /** Production handoff: expose the v1 port and durable services, never mutable simulation internals. */
 export function createCoastRaidHost(session: SessionState, saves: SaveSession, freezeFrames = true) {
@@ -30,7 +29,6 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
             return structuredClone(core.getLootContainer(ref.id)!.inventory);
         },
         backup: () => saves.backupRecord(),
-        setFeel: (feel: Feel) => { core.feel = feel; },
         sampleGun: (id: 'm4a1' | null) => core.setSampleGun(id),
     });
     return Object.freeze({ runtime, services });

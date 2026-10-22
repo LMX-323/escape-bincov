@@ -10,11 +10,8 @@
 import type { WeaponDef } from './domain';
 
 export type FireMode = 'semi' | 'auto';
-/** Two parameter sets for the maintainer's playtest, brisk and steady; the final values follow it. */
-export type Feel = 'brisk' | 'steady';
-export const FEELS: readonly Feel[] = ['brisk', 'steady'];
 
-/** One weapon's handling in one feel. Angles in radians (full cone angles), times in seconds, rates per second. */
+/** One weapon's handling. Angles in radians (full cone angles), times in seconds, rates per second. */
 export interface Handling {
     mode: FireMode;
     /** Cone at rest from the hip, as a multiple of the weapon's base `spread`. */
@@ -30,7 +27,7 @@ export interface Handling {
     /** Seconds after the last shot before bloom and drift recover, then the share they lose per second (exponential). */
     settle: number; recover: number;
 }
-/** Body sway rules of a feel: targets while walking and sprinting, approach rates, turn and draw impulses. */
+/** Body sway rules: targets while walking and sprinting, approach rates, turn and draw impulses. */
 export interface SwayRules { walk: number; sprint: number; up: number; down: number; turn: number; draw: number }
 
 export interface AimState {
@@ -53,33 +50,22 @@ export interface Motion { pace: number; sprint: boolean; precise: boolean; hold?
 /** Below this pace the shooter counts as standing still (a share of walk speed). */
 const STILL = .05;
 
-const SWAY: Record<Feel, SwayRules> = {
-    brisk: { walk: .5, sprint: 1, up: 10, down: 5, turn: .35, draw: .6 },
-    steady: { walk: .7, sprint: 1, up: 10, down: 3, turn: .55, draw: .9 },
-};
+/**
+ * The handling values (maintainer, 2026-10-22): the steady set of the two built for the playtest, so a stock gun rewards
+ * stopping and aiming, pays for moving, turning and long bursts, and leaves gunsmithing (#28) room to improve it. The
+ * other set (brisk) is recorded in docs/SHOOTING-SYSTEM-REWORK.md.
+ */
+export const SWAY: SwayRules = { walk: .7, sprint: 1, up: 10, down: 3, turn: .55, draw: .9 };
 const semi = (h: Omit<Handling, 'mode'>): Handling => ({ mode: 'semi', ...h });
 const NONE = semi({ hip: 1, precise: 1, raise: .2, sway: 0, bloom: 0, bloomMax: 0, kick: 0, kickMax: 0, settle: 0, recover: 1 });
-const HANDLING: Record<string, Record<Feel, Handling>> = {
-    knife: { brisk: NONE, steady: NONE },
-    pistol: {
-        brisk: semi({ hip: 1.6, precise: .3, raise: .18, sway: 1.2, bloom: .012, bloomMax: .05, kick: .006, kickMax: .035, settle: .1, recover: 8 }),
-        steady: semi({ hip: 1.8, precise: .22, raise: .3, sway: 1.8, bloom: .016, bloomMax: .07, kick: .009, kickMax: .05, settle: .15, recover: 5 }),
-    },
-    carbine: {
-        brisk: semi({ hip: 2, precise: .25, raise: .25, sway: 1.4, bloom: .01, bloomMax: .04, kick: .008, kickMax: .04, settle: .12, recover: 7 }),
-        steady: semi({ hip: 2.2, precise: .2, raise: .4, sway: 2, bloom: .014, bloomMax: .06, kick: .012, kickMax: .06, settle: .18, recover: 4.5 }),
-    },
-    shotgun: {
-        brisk: semi({ hip: 1, precise: .6, raise: .15, sway: .8, bloom: .03, bloomMax: .06, kick: .02, kickMax: .04, settle: .2, recover: 6 }),
-        steady: semi({ hip: 1, precise: .5, raise: .25, sway: 1.2, bloom: .04, bloomMax: .08, kick: .03, kickMax: .06, settle: .25, recover: 4 }),
-    },
-    m4a1: {
-        brisk: { mode: 'auto', hip: 2.2, precise: .3, raise: .25, sway: 1.5, bloom: .006, bloomMax: .05, kick: .005, kickMax: .05, settle: .1, recover: 6 },
-        steady: { mode: 'auto', hip: 2.4, precise: .22, raise: .4, sway: 2.2, bloom: .009, bloomMax: .08, kick: .008, kickMax: .08, settle: .15, recover: 4 },
-    },
+const HANDLING: Record<string, Handling> = {
+    knife: NONE,
+    pistol: semi({ hip: 1.8, precise: .22, raise: .3, sway: 1.8, bloom: .016, bloomMax: .07, kick: .009, kickMax: .05, settle: .15, recover: 5 }),
+    carbine: semi({ hip: 2.2, precise: .2, raise: .4, sway: 2, bloom: .014, bloomMax: .06, kick: .012, kickMax: .06, settle: .18, recover: 4.5 }),
+    shotgun: semi({ hip: 1, precise: .5, raise: .25, sway: 1.2, bloom: .04, bloomMax: .08, kick: .03, kickMax: .06, settle: .25, recover: 4 }),
+    m4a1: { mode: 'auto', hip: 2.4, precise: .22, raise: .4, sway: 2.2, bloom: .009, bloomMax: .08, kick: .008, kickMax: .08, settle: .15, recover: 4 },
 };
-export const handlingOf = (weaponId: string, feel: Feel): Handling => HANDLING[weaponId]?.[feel] ?? NONE;
-export const swayRules = (feel: Feel): SwayRules => SWAY[feel];
+export const handlingOf = (weaponId: string): Handling => HANDLING[weaponId] ?? NONE;
 
 /**
  * Sample automatic rifle for the playtest (maintainer, 2026-10-22): only the ?test=1 driver, an explicit sample URL
@@ -90,13 +76,10 @@ export const SAMPLE_GUNS: Readonly<Record<'m4a1', WeaponDef>> = {
     m4a1: { id: 'm4a1', name: 'M4A1 样本', ammo: 'ammoR', magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03 },
 };
 
-/**
- * Playtest marks a maintainer may add to the raid URL: `feel=steady` (or `brisk`) picks the parameter set, and
- * `gun=m4a1` hands the sample rifle, the latter only together with a `sample=` mark. Neither is saved.
- */
-export function playtestMarks(search: string): { feel: Feel | null; gun: 'm4a1' | null } {
-    const p = new URLSearchParams(search), feel = p.get('feel');
-    return { feel: FEELS.find(f => f === feel) ?? null, gun: p.has('sample') && p.get('gun') === 'm4a1' ? 'm4a1' : null };
+/** Playtest mark a maintainer may add to the raid URL: `gun=m4a1` beside a `sample=` mark hands the sample rifle. Not saved. */
+export function playtestMarks(search: string): { gun: 'm4a1' | null } {
+    const p = new URLSearchParams(search);
+    return { gun: p.has('sample') && p.get('gun') === 'm4a1' ? 'm4a1' : null };
 }
 
 /** Advance an aim over `seconds` of unchanged motion. Mutates and returns `aim`. */

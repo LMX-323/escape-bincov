@@ -12,7 +12,7 @@ import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItem 
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
 import { advancePursuits } from '../pursuit';
-import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, swayRules, turnAim, unsteadyAim, SAMPLE_GUNS, type AimState, type Feel, type Motion } from '../shooting';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
@@ -64,8 +64,6 @@ export class CoastRaidRuntime implements RaidRuntime {
      * from a checkpoint (page load, reloadCommitted) starts unsteady, so a refresh cannot clear the cost of shooting.
      */
     handling: AimState = unsteadyAim();
-    /** Playtest parameter set (src/shooting.ts FEELS), chosen by an explicit URL or the range page; never saved. */
-    feel: Feel = 'brisk';
     /**
      * The trigger as the last frame's intent left it. Held fire covers a frame's interval only when that frame's own
      * sample still holds it, so a release is never followed by a shot; a click or a new hold takes effect at its frame's
@@ -170,7 +168,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.sample?.def ?? D.WEAPONS[(this.session.loadout ?? this.terminalLoadout).weapon || 'knife']; }
     /** How the held weapon is drawn: the sample rifle borrows the rifle look. */
     get weaponLook(): WeaponLook { return this.currentWeapon.id === 'm4a1' ? 'rifle' : this.currentWeapon.id as WeaponLook; }
-    get grip() { return handlingOf(this.currentWeapon.id, this.feel); }
+    get grip() { return handlingOf(this.currentWeapon.id); }
     get sampleGun() { return this.sample?.def.id ?? null; }
     private worldKey(): WorldKey {
         const r = this.layered?.raid;
@@ -490,7 +488,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     equipItem(uid: string) {
         this.setSampleGun(null);
         return this.transaction('equip', () => {
-            drawAim(this.handling, swayRules(this.feel));
+            drawAim(this.handling, SWAY);
             this.syncMagazine();
             if (!D.equipRun(this.session.loadout!, uid))
                 return false;
@@ -673,7 +671,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.sample) { this.mag = this.sample.def.magazine; this.magRelief = 0; }
         this.knife = false;
         this.reloadLeft = 0;
-        drawAim(this.handling, swayRules(this.feel));
+        drawAim(this.handling, SWAY);
         this.dirty = true;
     }
     carriedWeight() { const l = this.session.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
@@ -801,12 +799,12 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (frame.actions.has('heal'))
                 this.heal();
             if (frame.actions.has('primary')) {
-                if (this.knife) drawAim(this.handling, swayRules(this.feel));
+                if (this.knife) drawAim(this.handling, SWAY);
                 this.knife = false;
                 this.reloadLeft = 0;
             }
             if (frame.actions.has('knife')) {
-                if (!this.knife) drawAim(this.handling, swayRules(this.feel));
+                if (!this.knife) drawAim(this.handling, SWAY);
                 this.knife = true;
                 this.reloadLeft = 0;
             }
@@ -1057,9 +1055,8 @@ export class CoastRaidRuntime implements RaidRuntime {
      * the body before this substep's move; the body moved in a straight line to where it is now.
      */
     private runTrigger(dt: number, from: Point, motion: Motion, turned: number) {
-        const rules = swayRules(this.feel);
         if (turned)
-            turnAim(this.handling, rules, turned);
+            turnAim(this.handling, SWAY, turned);
         const to = { x: this.player.x, y: this.player.y };
         let t = 0;
         const pass = (s: number) => {
@@ -1069,7 +1066,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             this.fireCooldown = Math.max(0, this.fireCooldown - s);
             this.clickLeft = Math.max(0, this.clickLeft - s);
             this.reloadLeft = Math.max(0, this.reloadLeft - s);
-            advanceAim(this.handling, this.grip, rules, s, motion);
+            advanceAim(this.handling, this.grip, SWAY, s, motion);
         };
         for (;;) {
             // An event due at the very end of the substep (within rounding) belongs to it, at every display rate.

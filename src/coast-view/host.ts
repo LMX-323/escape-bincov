@@ -26,7 +26,7 @@ import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
 import { parkApp, takeApp } from '../pixi-app';
 import { SampleSound } from './sound';
-import { playtestMarks, type Feel } from '../shooting';
+import { playtestMarks } from '../shooting';
 import { esc } from '../html';
 
 export interface CoastServices {
@@ -48,8 +48,7 @@ export interface CoastServices {
   checkpoint(): boolean;
   lootContext(): { containerId: string; runId: string } | null;
   lootInventory(ref: TargetRef): D.Inventory | null;
-  /** Playtest handling parameter set and sample gun, only from explicit URL marks (see playtestMarks). */
-  setFeel(feel: Feel): void;
+  /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
   sampleGun(id: 'm4a1' | null): void;
 }
 
@@ -203,7 +202,6 @@ export class CoastSampleHost {
       const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
       const marks = playtestMarks(location.search);
-      if (marks.feel) this.services.setFeel(marks.feel);
       if (marks.gun) this.services.sampleGun(marks.gun);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
