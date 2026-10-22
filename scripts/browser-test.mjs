@@ -357,11 +357,19 @@ async function suite(viewport) {
       });
       await page.keyboard.press('1');
       await frames(page, 3);
-      const target = await page.evaluate(uid => { const e = window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid); return { x: e.x, y: e.y }; }, fixture.uid);
-      await aimAt(target);
+      const target = () => page.evaluate(uid => { const e = window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid); return { x: e.x, y: e.y }; }, fixture.uid);
       const mag = (await run()).mag;
       await page.mouse.down({ button: 'right' });
       try {
+        // Precise aim pushes the camera further ahead, and the lead follows the pointer. Aim once it is held, then again
+        // until the enemy holds still under the pointer: on a slow runner one long frame after the press moved the
+        // camera under a pointer aimed beforehand, and the shot passed over the enemy (CI showed 7/8 rounds, no hit).
+        let screen = await aimAt(await target());
+        for (let i = 0; i < 5; i++) {
+          const now = await settledScreen(await target());
+          if (Math.hypot(now.x - screen.x, now.y - screen.y) < 1) break;
+          await page.mouse.move(now.x, now.y); await frames(page, 4); screen = now;
+        }
         await page.mouse.down({ button: 'left' }); await page.waitForTimeout(90); await page.mouse.up({ button: 'left' });
         await page.waitForFunction(({ uid, hp }) => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid).hp < hp, fixture);
       } finally { await page.mouse.up({ button: 'left' }); await page.mouse.up({ button: 'right' }); }
