@@ -75,7 +75,7 @@
 
 ## Q-E05 存档 codec 去环
 
-2026-10-22，分支 `agent/save-codec-cycle`，起点 main `c8a5ed8`（已含 #68）。承接 #60 的 Q-E05，分工见 [#60 协作说明](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6333683019)。只改结构：存档格式、接受/拒绝集合与迁移结果不变。
+2026-10-22，[PR #71](https://github.com/xuys2025/escape-bincov/pull/71)，分支 `agent/save-codec-cycle`，起点 main `c8a5ed8`（已含 #68）。承接 #60 的 Q-E05，分工见 [#60 协作说明](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6333683019)。只改结构：存档格式、接受/拒绝集合与迁移结果不变。
 
 **有效决定**
 
