@@ -85,6 +85,15 @@ export const SAMPLE_GUNS: Readonly<Record<'m4a1', WeaponDef>> = {
     m4a1: { id: 'm4a1', name: 'M4A1 样本', ammo: 'ammoR', magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03 },
 };
 
+/**
+ * Playtest marks a maintainer may add to the raid URL: `feel=steady` (or `brisk`) picks the parameter set, and
+ * `gun=m4a1` hands the sample rifle, the latter only together with a `sample=` mark. Neither is saved.
+ */
+export function playtestMarks(search: string): { feel: Feel | null; gun: 'm4a1' | null } {
+    const p = new URLSearchParams(search), feel = p.get('feel');
+    return { feel: FEELS.find(f => f === feel) ?? null, gun: p.has('sample') && p.get('gun') === 'm4a1' ? 'm4a1' : null };
+}
+
 /** Advance an aim over `seconds` of unchanged motion. Mutates and returns `aim`. */
 export function advanceAim(aim: AimState, h: Handling, rules: SwayRules, seconds: number, motion: Motion): AimState {
     if (seconds <= 0) return aim;

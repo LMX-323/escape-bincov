@@ -634,7 +634,9 @@ export class CoastView {
     const art = this.tex.weapon(a.weapon, a.kind);
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;
     const swing = g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
-    const angle = a.aim + reload + swing, c = Math.cos(angle), s = Math.sin(angle);
+    // The player's gun turns with recoil (hud.aim.drift): it points where the next shot is centred, not at the pointer.
+    const drift = a.uid === 'player' ? this.last?.hud.aim.drift ?? 0 : 0;
+    const angle = a.aim + reload + swing + drift, c = Math.cos(angle), s = Math.sin(angle);
     g.weapon.texture = art.texture; g.weapon.anchor.set(art.pivotX / art.canvas.width, art.pivotY / art.canvas.height);
     // Weapon and arms round their offsets, not their positions: on the body's whole pixel they never shimmer against it.
     g.weapon.position.set(x + Math.round(c * art.forward), y - AIM_H + Math.round(s * art.forward));

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, swayRules, turnAim, unsteadyAim, FEELS, SAMPLE_GUNS, type AimState, type Motion } from '../src/shooting';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, playtestMarks, recoil, swayRules, turnAim, unsteadyAim, FEELS, SAMPLE_GUNS, type AimState, type Motion } from '../src/shooting';
 
 const near = (a: number, b: number) => Math.abs(a - b) < 1e-12;
 const aim = (patch: Partial<AimState> = {}): AimState => ({ raise: 0, sway: 0, bloom: 0, drift: 0, settle: 0, ...patch });
@@ -61,6 +61,13 @@ test('turns and draws shake the aim; the worst state is fully unsteady and bloom
     assert.deepEqual(unsteadyAim(), { raise: 0, sway: 1, bloom: 1, drift: 0, settle: 0 });
 });
 
+test('playtest marks: a known feel from any URL, the sample rifle only beside an explicit sample mark', () => {
+    assert.deepEqual(playtestMarks(''), { feel: null, gun: null });
+    assert.deepEqual(playtestMarks('?feel=steady'), { feel: 'steady', gun: null });
+    assert.deepEqual(playtestMarks('?feel=fast&gun=m4a1'), { feel: null, gun: null });
+    assert.deepEqual(playtestMarks('?sample=village&gun=m4a1&feel=brisk'), { feel: 'brisk', gun: 'm4a1' });
+    assert.deepEqual(playtestMarks('?sample=mall&gun=ak'), { feel: null, gun: null });
+});
 test('the sample rifle is automatic and kept out of the item and weapon tables a save can hold', () => {
     assert.equal(handlingOf('m4a1', 'brisk').mode, 'auto');
     assert.ok(['pistol', 'carbine', 'shotgun', 'knife'].every(id => handlingOf(id, 'steady').mode === 'semi'));

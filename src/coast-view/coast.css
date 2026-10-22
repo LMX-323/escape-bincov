@@ -61,6 +61,15 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
     linear-gradient(#f0e3bd, #f0e3bd) 0 12px/8px 1px no-repeat, linear-gradient(#f0e3bd, #f0e3bd) 17px 12px/8px 1px no-repeat;
   filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .cs-cross.precise { background-size: 1px 5px, 1px 5px, 5px 1px, 5px 1px; background-position: 12px 3px, 12px 17px, 3px 12px, 17px 12px; }
+/* PR #39: the cone the next shot meets around the pointer, centred where recoil turns it, and its touch fan. */
+.cs-cone { position: absolute; left: var(--cs-ox); top: var(--cs-oy); box-sizing: border-box; border: 1px solid #f0e3bd5c; border-radius: 50%; pointer-events: none;
+  filter: drop-shadow(0 0 1px #000); }
+.cs-cone.steady { border-color: #f0e3bdb8; }
+.cs-fan { position: absolute; left: var(--cs-ox); top: var(--cs-oy); width: 0; height: 0; pointer-events: none; }
+.cs-fan i { position: absolute; left: 0; top: 0; width: 96px; height: 1px; transform-origin: 0 0; background: linear-gradient(90deg, #f0e3bd00 20px, #f0e3bd8c 34px, #f0e3bd00); }
+.cs-fan i:first-child { transform: rotate(calc(-1 * var(--half, 0rad))); }
+.cs-fan i:last-child { transform: rotate(var(--half, 0rad)); }
+.cs-arms-text small em { font-style: normal; color: var(--cs-muted); }
 .cs-fade { position: absolute; inset: 0; background: #0b0a09; opacity: 0; pointer-events: none; }
 .cs-fade.on { animation: cs-fade .45s ease-out; }
 @keyframes cs-fade { from { opacity: 1; } to { opacity: 0; } }
@@ -73,7 +82,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-touch button { min-width: 60px; min-height: 48px; background: #1b1a17cc; color: #f0e3bd; border-color: #c9a65e99; }
 /* Phones have no keys: the medical shortcut shows no Q. */
 .coast-sample.touch .cs-heal kbd { display: none; }
-.coast-sample.touch .cs-cross { display: none; }
+.coast-sample.touch .cs-cross, .coast-sample.touch .cs-cone { display: none; }
 .cs-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 16px 18px; background: var(--cs-panel); border: 1px solid var(--cs-line); font-size: 16px; line-height: 24px; pointer-events: auto; }
 .cs-panel h2 { margin: 0 0 8px; font-size: 16px; font-weight: 400; color: #f0e3bd; }
 .cs-panel h3 { margin: 4px 0; font-size: 16px; font-weight: 400; color: var(--cs-muted); }
@@ -211,7 +220,7 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .coast-sample[data-outro="died"] .cs-curtain b { color: #f0c8b8; }
 .coast-sample[data-outro="extract"] .cs-curtain b { color: #e2f0b4; }
 .coast-sample.outro .cs-status, .coast-sample.outro .cs-arms, .coast-sample.outro .cs-clock, .coast-sample.outro .cs-keys, .coast-sample.outro .cs-info,
-.coast-sample.outro .cs-prompt, .coast-sample.outro .cs-choices, .coast-sample.outro .cs-touch, .coast-sample.outro .cs-exitptr, .coast-sample.outro .cs-cross,
+.coast-sample.outro .cs-prompt, .coast-sample.outro .cs-choices, .coast-sample.outro .cs-touch, .coast-sample.outro .cs-exitptr, .coast-sample.outro .cs-cross, .coast-sample.outro .cs-cone, .coast-sample.outro .cs-fan,
 .coast-sample.outro .cs-hits, .coast-sample.outro .cs-radio, .coast-sample.outro .cs-toast, .coast-sample.outro .cs-hitpop, .coast-sample.outro .cs-stairs { visibility: hidden; }
 /* The pixel face is drawn for 16 px and its integer multiples; short screens use the small system face instead. */
 @media (max-height: 480px) { .cs-exitptr span, .cs-stair { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 14px; } }
