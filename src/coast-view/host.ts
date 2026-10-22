@@ -190,7 +190,7 @@ export class CoastSampleHost {
       this.app.ticker.add(tick); lifecycle.tickers++;
       this.scope.add(() => { this.app.ticker.remove(tick); lifecycle.tickers--; });
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
-      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.orientation(); });
+      const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.measureHudTop(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
@@ -660,7 +660,7 @@ export class CoastSampleHost {
     q('[data-time]').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     q('[data-tide]').textContent = h.tideWarning ? '潮汐预警' : h.highTide ? '高潮' : '';
     q('[data-hits]').innerHTML = h.hitDirections.filter(x => x.angle !== null).map(x => `<i style="transform:rotate(${x.angle!}rad);opacity:${Math.min(1, x.left)}"></i>`).join('');
-    if ((this.stats.frames & 15) === 0) { const r = this.q('.cs-status').getBoundingClientRect(); this.view.hudTop = innerHeight < 480 ? r.bottom : 0; }
+    if ((this.stats.frames & 15) === 0) this.measureHudTop();
     if ((this.stats.frames & 3) === 0) { const docked = this.panel === 'loot' || this.panel === 'inventory'; this.view.panelInset = docked ? Math.max(0, innerHeight - this.q('[data-panel]').getBoundingClientRect().top) : 0; }
     this.prompt(this.panel ? null : f.interaction, f.player.y);
     this.stairNames(f);
@@ -736,6 +736,12 @@ export class CoastSampleHost {
     const r = this.q('.cs-hud').getBoundingClientRect();
     this.safe = { l: r.left, t: r.top, r: Math.max(0, innerWidth - r.right), b: Math.max(0, innerHeight - r.bottom) };
   }
+  /**
+   * On short screens the camera keeps the player below the status card. Re-measured every 16 frames as the card's rows
+   * change, and at once on a resize: otherwise a rotated phone's view jumps up to 16 frames later, under a finger
+   * already reaching for a row.
+   */
+  private measureHudTop() { this.view.hudTop = innerHeight < 480 ? this.q('.cs-status').getBoundingClientRect().bottom : 0; }
   /**
    * The exit chosen on the map: a marker over it when it is on screen, otherwise an arrow on the screen edge pointing
    * at it with its straight-line distance in tiles. Exits are the Runtime's visible exits; nothing else is pointed at.
