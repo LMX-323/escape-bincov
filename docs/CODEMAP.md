@@ -10,7 +10,7 @@
 | 行动命令、输入、暂停或恢复 | [行动输入](#行动输入) | 触屏按钮、DOM 绑定、持久字段分别扩展 |
 | 新持久字段、迁移、导入、恢复 | [存档](#存档) | 活动行动字段必须核对两端捕获/恢复 |
 
-地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主。只改素材时无需先读交易和迁移实现。
+地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
 
 ## 交易
 
@@ -67,7 +67,7 @@
 
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
-- 选择区域/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
+- 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
@@ -105,4 +105,4 @@
 
 公开端口、提交边界或文件归属改变时，在同一个 PR 更新对应卡片；内部算法变化无需重抄实现。路径/符号改名同步修链接，当前行为与计划分开写。先查符号和调用点，再扩大阅读；不按固定行数拆源码，不生成手工全量符号表，也不为每目录增加重复 AGENTS。
 
-CI 的 [source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拦下三类退化：没有任何使用者的导出、新的或变大的运行时 import 环（已知的环登记在该文件与 #60，目前只剩 Q-E02 一个）、规则模块（domain/balance/world）引用彼此以外的模块或 DOM；`tsconfig.json` 另禁止未用的局部变量和参数。删掉旧代码时连同只为它存在的测试一起迁移，不要为通过检查而保留空导出。
+CI 的 [source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拦下三类退化：没有任何使用者的导出、新的运行时 import 环（#60 登记过的两个已消除，`KNOWN_CYCLES` 为空）、规则模块（domain/balance/world）引用彼此以外的模块或 DOM；`tsconfig.json` 另禁止未用的局部变量和参数。删掉旧代码时连同只为它存在的测试一起迁移，不要为通过检查而保留空导出。

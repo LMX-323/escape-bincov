@@ -32,7 +32,7 @@ const TRACKED = /^_?(CoastSampleHost|CoastView|CoastRaidRuntime|InventoryPanel|T
 const packaged = await readFile('dist/index.html', 'utf8');
 const bundle = await build({ entryPoints: ['src/main.ts'], bundle: true, write: false, minify: false, target: 'es2020', format: 'iife', loader: { '.png': 'dataurl' }, define: { 'process.env.NODE_ENV': '"production"' },
   // Detached probe only: return primitives from the existing page pool, never expose/retain an Application or host.
-  plugins: [{ name: 'read-only-page-pool', setup(b) { b.onLoad({ filter: /[\\/]coast-view[\\/]host\.ts$/ }, async args => ({ loader: 'ts', resolveDir: dirname(args.path), contents: await readFile(args.path, 'utf8') + `
+  plugins: [{ name: 'read-only-page-pool', setup(b) { b.onLoad({ filter: /[\\/]src[\\/]pixi-app\.ts$/ }, async args => ({ loader: 'ts', resolveDir: dirname(args.path), contents: await readFile(args.path, 'utf8') + `
 ;globalThis.__solPagePool = () => ({ parked: !!parked, currentIsParked: current === parked, stageChildren: parked?.stage.children.length ?? null, tickerStarted: parked?.ticker.started ?? null, canvasConnected: parked?.canvas.isConnected ?? null, gpuTextures: gpuTextures() });
 ` })); } }] });
 const at = packaged.lastIndexOf('<script>'), end = packaged.lastIndexOf('</script>');
