@@ -112,7 +112,3 @@ export function settleCartResult(save: D.SaveDataV1, cart: ShopCart, rpg = false
     save.stash = stash; save.cash -= net;
     return { ok: true };
 }
-/** Existing tabs keep the boolean API; both entrances execute the same settlement. */
-export function settleCart(save: D.SaveDataV1, cart: ShopCart, rpg = false): boolean {
-    return settleCartResult(save, cart, rpg).ok;
-}

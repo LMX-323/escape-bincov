@@ -4,6 +4,16 @@ type Action = 'reload' | 'heal' | 'primary' | 'knife' | 'interact';
 type Stick = { id: number; x: number; y: number; distance: number };
 const ACTION_KEYS: Record<string, Action> = { r: 'reload', q: 'heal', '1': 'primary', '2': 'knife', e: 'interact' };
 
+/** The InputState name of a key event, the same for its press and release. Letters, digits and Shift go by the physical
+ *  key (e.code): with Shift held a US layout reports 2 as "@" and a 1 released as "!", and AZERTY digits are symbols
+ *  without it. Other keys keep e.key. */
+export function inputKey(e: Pick<KeyboardEvent, 'key' | 'code'>): string {
+  if (/^Key[A-Z]$/.test(e.code)) return e.code.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(e.code)) return e.code.slice(5);
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return 'shift';
+  return e.key;
+}
+
 export class InputState {
   touch = false;
   pointer = { x: innerWidth / 2, y: innerHeight / 2, inside: false };

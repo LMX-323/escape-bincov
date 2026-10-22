@@ -48,8 +48,6 @@ export interface MallDress {
   /** Entrances (world px rectangle of the open cells, the wall line's direction), for the door guides. */
   openings: { x: number; y: number; w: number; h: number; wall: 'ew' | 'ns' }[];
 }
-/** Painted arrows on the floor between a drawn flight's stair point and its foot, pointing at the flight. */
-export interface StairGuide { x: number; y: number; dx: number; dy: number }
 
 const T = 32;
 const ZONES = ['indoor', 'outdoor', 'drop'] as const;

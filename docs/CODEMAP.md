@@ -10,7 +10,7 @@
 | 行动命令、输入、暂停或恢复 | [行动输入](#行动输入) | 触屏按钮、DOM 绑定、持久字段分别扩展 |
 | 新持久字段、迁移、导入、恢复 | [存档](#存档) | 活动行动字段必须核对两端捕获/恢复 |
 
-地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主。只改素材时无需先读交易和迁移实现。
+地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
 
 ## 交易
 
@@ -50,7 +50,7 @@
 
 1. [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)：`RaidIntent`、`RaidRuntime`，先区分边沿、持续输入、暂停与屏蔽。
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
-3. [input.ts](../src/input.ts)：`PlayerInput.read` / `suppressHeld` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用。
+3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`。
 5. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
 
@@ -60,7 +60,7 @@
 
 **验证入口。**
 
-- [input.test.ts](../tests/input.test.ts)：单次按下、取消、held-input 释放和面板切换。
+- [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands and fireHeld only reach first substep`、`blocked panels advance the world`。
 - [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
@@ -69,7 +69,7 @@
 
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
-- 选择区域/布局：[coast-view/sample.ts](../src/coast-view/sample.ts) 的 `raidWorlds`、`defaultWorld`、`sampleSupports`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。
+- 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
@@ -81,10 +81,10 @@
 
 **首读路径：增加持久字段或修改恢复行为。**
 
-1. [expansion-state.ts](../src/expansion-state.ts)：字段所属类型、`newExpansion`、`validateExpansion` / `exactKeys`。纯派生显示值无需自动入档。
+1. [expansion-state.ts](../src/expansion-state.ts)：字段所属类型、`newExpansion` 与唯一的 v1→v2 升级 `upgradeToRpg`、`validateExpansion` / `exactKeys`。纯派生显示值无需自动入档。
 2. [session.ts](../src/session.ts)：`ensureRpg` / `enableRpg`、`enableExpansion`、`beginRun` → [building-world.ts](../src/building-world.ts) 的 `initializeBuildingRaid` / [mall-world.ts](../src/mall-world.ts) 的 `initializeMallRaid`；读取 `persist` 的完整写入链，而非只搜字段名。
 3. 同文件继续按操作读：`prepareExpansionMutation` / `commitExpansionMutation`、`prepareSettlement` / `retrySettlement`、`backupRecord`、`importRecord`。
-4. [recovery-store.ts](../src/recovery-store.ts)：`SessionRecord`、`decodeSession`、`RecoveryStore.commit`；[save-backup.ts](../src/save-backup.ts)：`encodeRecoveryBackup` / `decodePortableBackup`。
+4. [profile-codec.ts](../src/profile-codec.ts)：各格式共用的严格 profile 与物品栏规则（`decodeStoredProfile`、`validInventory`）；[recovery-store.ts](../src/recovery-store.ts)：`SessionRecord`、`decodeSession`、`RecoveryStore.commit`；[save-backup.ts](../src/save-backup.ts)：`encodeRecoveryBackup` / `decodePortableBackup`。
 5. [hideout-runtime/runtime.ts](../src/hideout-runtime/runtime.ts)：`previewImport` / `importBackup` 的确认与升级；[fresh-start.ts](../src/fresh-start.ts)：`freshStartRecord` / `startOver` 的完整新档路径。
 6. 当前层与完整记录的共享映射：[raid-state-projection.ts](../src/raid-state-projection.ts) 的 `applyActiveRaidSnapshot` / `activeRaidCheckpoint`；这里不克隆、不提交。
 7. 执行器端核对 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `snapshot` / `restore`、`snapshotExpansion` / `restoreExpansion`；旧检查点还读 [checkpoint.ts](../src/checkpoint.ts) 的 `RaidCheckpoint` / `initialCheckpoint` / `validateCheckpoint`。
@@ -99,10 +99,12 @@
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
 
-**按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [save-backup.ts](../src/save-backup.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
+**按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 
 **结束定位的判据。** 新建、旧档升级、活动恢复、失败重试、完整导入/导出和重开都能说明字段来源；不能只补一个类型和默认值就结束。
 
 ## 维护本页
 
 公开端口、提交边界或文件归属改变时，在同一个 PR 更新对应卡片；内部算法变化无需重抄实现。路径/符号改名同步修链接，当前行为与计划分开写。先查符号和调用点，再扩大阅读；不按固定行数拆源码，不生成手工全量符号表，也不为每目录增加重复 AGENTS。
+
+CI 的 [source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拦下三类退化：没有任何使用者的导出、新的运行时 import 环（#60 登记过的两个已消除，`KNOWN_CYCLES` 为空）、规则模块（domain/balance/world）引用彼此以外的模块或 DOM；`tsconfig.json` 另禁止未用的局部变量和参数。删掉旧代码时连同只为它存在的测试一起迁移，不要为通过检查而保留空导出。

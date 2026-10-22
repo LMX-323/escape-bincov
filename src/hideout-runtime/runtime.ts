@@ -4,7 +4,7 @@ import * as B from '../base';
 import * as Shop from '../shop';
 import { moveQuantity, placementError } from '../loot';
 import { organizeStash, transferBagToStash } from '../inventory-actions';
-import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, type ExpansionState } from '../expansion-state';
+import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, upgradeToRpg, type ExpansionState } from '../expansion-state';
 import { useRpgItemResult } from '../rpg';
 import { equipCharm, unequipCharm } from '../reputation-luck';
 import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
@@ -290,10 +290,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         // Existing v4 protection: never silently discard facilities or a live legacy checkpoint.
         if (data.kind === 'settled' || !data.record.expansion) return fail('locked', '当前成长存档不接受降级覆盖；请在旧版入口恢复旧备份后升级。');
         const record = structuredClone(data.record);
-        if (!record.profile.activeRun && record.expansion?.version === 1) {
-            record.expansion.version = 2; record.expansion.charm = null; record.expansion.awards = [];
-            record.expansion.base.cursor = Math.max(record.expansion.base.cursor, this.now());
-        }
+        if (!record.profile.activeRun && record.expansion?.version === 1) upgradeToRpg(record.expansion, this.now());
         if (!this.saves.importRecord(record)) return this.failed('import');
         this.importPreview = null; this.samples = []; this.arrival = null; this.preparedRun = null;
         if (this.state.save.activeRun) this.state.state = 'menu';

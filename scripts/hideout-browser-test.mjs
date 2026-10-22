@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { skipOpening } from './yard-entry.mjs';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 const out = resolve('test-results/hideout-browser'); await mkdir(out, { recursive: true });
@@ -25,7 +26,7 @@ const fault = enabled => page.evaluate(enabled => {
 }, enabled);
 try {
  await step('normal offline entry has no test globals; default old shortcut shares upgraded v2', async () => {
-  await page.goto('https://station.test/'); await action('enter').click();
+  await page.goto('https://station.test/'); await action('enter').click(); await skipOpening(page);
   assert.equal(await page.evaluate(() => '__bincov' in window), false);
   const r = await page.evaluate(() => JSON.parse(localStorage.getItem('escape-bincov.session.v2'))); assert.equal(r.version,4); assert.equal(r.expansion.version,2); assert.equal(r.profile.cash,700);
   await page.screenshot({ path: resolve(out,'ordinary-1280.png') });

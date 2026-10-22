@@ -8,9 +8,7 @@
  * controls until they are released. Item and save operations go only through the Runtime services, or through
  * SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
  */
-import { Application, GlobalResourceRegistry } from 'pixi.js';
-// Registers the kept-program graphics adaptor before takeApp creates the page's renderer (ASTRA-R3-PIXI-01).
-import './renderer-lifetime';
+import type { Application } from 'pixi.js';
 import * as D from '../domain';
 import { SURVIVAL } from '../balance';
 import { derivedLimits } from '../expansion-state';
@@ -20,13 +18,15 @@ import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, 
 import type { LootTransfer } from '../loot';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
-import { InputState } from './input';
+import { InputState, inputKey } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
 import { Scope, lifecycle } from './scope';
 import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
+import { parkApp, takeApp } from '../pixi-app';
 import { SampleSound } from './sound';
+import { esc } from '../html';
 
 export interface CoastServices {
   cancelStart(): void;
@@ -35,6 +35,11 @@ export interface CoastServices {
   useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
   equipItem(uid: string): MutationResult;
   dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
+  /**
+   * Carried kg, live, as the Runtime uses it for movement, overload and stamina (worn charm and loaded rounds
+   * included). The HUD and the inventory only format this value; they never re-derive it.
+   */
+  carriedWeight(): number;
   retrySave(): boolean;
   retrySettlement(): boolean;
   settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
@@ -53,7 +58,6 @@ const REASONS: Record<string, string> = {
 };
 /** A storage error arrives as the browser's own (translated) message; any other unknown code gets a plain sentence. */
 const reasonText = (reason: string) => REASONS[reason] ?? (/[\u4e00-\u9fff]/.test(reason) ? reason : '操作未完成。');
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const name = (id: string) => D.ITEMS[id]?.name ?? id;
 type Outro = 'died' | 'extract' | 'timeout' | 'abandon' | 'failed';
 const OUTRO_TEXT: Record<Outro, string> = { died: '你倒下了', extract: '撤离成功', timeout: '行动超时', abandon: '已放弃行动', failed: '行动失败' };
@@ -118,100 +122,6 @@ const HTML = `
   <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button><button type="button" data-pause aria-label="暂停">暂停</button></div>
 </div>
 <section class="cs-panel" data-panel hidden role="dialog" aria-modal="true"></section>`;
-
-/**
- * One Pixi Application per page, parked between mounts (OPUS-MEM-01). Every new renderer compiles its graphics and
- * back-buffer programs again, and Pixi 8 names each compile with a new counter suffix, so each source string is new
- * to its global id cache and kept for the page's life: about 5.4 KB per mount. Reusing the renderer compiles them once.
- * Parking leaves no scene: the view has destroyed its containers, render targets and textures; the stage is emptied,
- * the ticker stopped, the canvas detached and Pixi's global pools released. A parked context that was lost is destroyed
- * and replaced.
- */
-let parked: Application | null = null, current: Application | null = null;
-/** Also used by the station yard: the yard and the village sample take turns on this one renderer. */
-export async function takeApp(): Promise<Application> {
-  const app = parked; parked = null; lifecycle.parked = 0;
-  if (app && !(app.renderer as { gl?: WebGL2RenderingContext }).gl?.isContextLost()) {
-    app.renderer.resize(innerWidth, innerHeight); app.ticker.start();
-    return current = app;
-  }
-  if (app) dropApp(app);
-  const fresh = new Application();
-  try {
-    await fresh.init({ background: 0x121110, antialias: false, resolution: 1, autoDensity: false, preference: 'webgl', width: innerWidth, height: innerHeight, powerPreference: 'high-performance' });
-  } catch (error) {
-    // Before init resolves Application.destroy assumes a renderer that may not exist yet.
-    if (fresh.renderer) dropApp(fresh);
-    else fresh.stage.destroy({ children: true, context: true });
-    throw error;
-  }
-  detachPixiEvents(fresh);
-  return current = fresh;
-}
-/**
- * The sample never uses Pixi's federated events: input.ts reads the DOM itself. Left attached, Pixi's event system
- * listens on the canvas, document and window, and its pooled events keep the last native PointerEvent, whose event path
- * holds the HUD of an unmounted host while the renderer is parked (R7-F20-FE-02). It is detached once, right after
- * init; Application.destroy detaches again harmlessly. The two styles it wrote on the canvas (touch-action none,
- * cursor inherit) are kept by coast.css.
- */
-function detachPixiEvents(app: Application) {
-  (app.renderer as unknown as { events?: { setTargetElement(element: HTMLElement | null): void } }).events?.setTargetElement(null);
-}
-/**
- * Pixi 8 keeps every GPU resource and renderable it manages in GCSystem hashes keyed by uid, and a released entry
- * becomes a null placeholder (GCManagedHash.remove). Pixi rebuilds a hash without them only after 10,000 placeholders
- * and only while rendering, so a parked renderer keeps one per Graphics, texture, buffer and geometry the last view
- * released: about 24 Graphics slots a run (R7-F20-FE-01). Parking does the same rebuild Pixi does (copy the live
- * entries into a fresh table), never touching a live entry. Returns the placeholders dropped; if Pixi's internals
- * change shape this finds no table and returns 0, which the sample check W11 would report as growth.
- */
-function compactManagedHashes(app: Application): number {
-  const gc = (app.renderer as unknown as { gc?: { _running?: boolean; _managedResourceHashes?: { context: Record<string, unknown>; hash: string }[] } }).gc;
-  const list = gc?._managedResourceHashes;
-  if (!Array.isArray(list) || gc!._running) return 0;
-  let dropped = 0;
-  for (const { context, hash } of list) {
-    const table = context?.[hash] as Record<string, unknown> | undefined;
-    if (!table || typeof table !== 'object' || Array.isArray(table)) continue;
-    let nulls = 0;
-    for (const key in table) if (table[key] === null) nulls++;
-    if (!nulls) continue;
-    const live: Record<string, unknown> = Object.create(null);
-    for (const key in table) if (table[key] !== null) live[key] = table[key];
-    context[hash] = live; dropped += nulls;
-  }
-  return dropped;
-}
-/** Null placeholders and live entries across the renderer's GC-managed hashes (read by the sample checks). */
-export function managedSlots(): { live: number; empty: number } {
-  const list = (current?.renderer as unknown as { gc?: { _managedResourceHashes?: { context: Record<string, unknown>; hash: string }[] } } | undefined)?.gc?._managedResourceHashes;
-  let live = 0, empty = 0;
-  for (const { context, hash } of Array.isArray(list) ? list : []) {
-    const table = context?.[hash] as Record<string, unknown> | undefined;
-    if (table && typeof table === 'object' && !Array.isArray(table)) for (const key in table) if (table[key] === null) empty++; else live++;
-  }
-  return { live, empty };
-}
-export function parkApp(app: Application) {
-  for (const c of app.stage.removeChildren()) c.destroy({ children: true, context: true });
-  app.ticker.stop(); app.canvas.remove();
-  // Pixi's global pools (BigPool batch objects, pooled render textures, canvases) are what releaseGlobalResources
-  // cleared on destroy; they only hold returned objects, so emptying them with the renderer alive is safe.
-  GlobalResourceRegistry.release();
-  compactManagedHashes(app);
-  if (parked && parked !== app) dropApp(parked);
-  parked = app; lifecycle.parked = 1;
-}
-function dropApp(app: Application) {
-  app.destroy({ removeView: true, releaseGlobalResources: true }, { children: true, texture: true, textureSource: true });
-  if (current === app) current = null;
-}
-/**
- * GPU textures the page's renderer still manages, mounted or parked (read by the sample checks). Pixi nulls a released
- * slot and compacts the hash later, so only live entries are counted.
- */
-export const gpuTextures = () => (current?.renderer.texture as { managedTextures?: unknown[] } | undefined)?.managedTextures?.filter(Boolean).length ?? 0;
 
 export class CoastSampleHost {
   private scope = new Scope();
@@ -450,8 +360,10 @@ export class CoastSampleHost {
   private wire() {
     const s = this.scope, canvas = this.app.canvas, panel = this.q('[data-panel]');
     s.on(window, 'keydown', e => {
-      if (/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)) return;
-      const k = e.key.toLowerCase();
+      const k = e.key.toLowerCase(), target = e.target as HTMLElement;
+      // A form control (the map's exit list, the volume slider, the split count) keeps its typing; Esc, Tab and M leave it
+      // and follow the panel rules below, as in the yard, so a focused control never traps an open map or pause.
+      if (/INPUT|TEXTAREA|SELECT/.test(target.tagName)) { if (!['escape', 'tab', 'm'].includes(k)) return; target.blur(); }
       if (['tab', ' ', 'escape'].includes(k)) e.preventDefault();
       if (e.repeat) return;
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.key(k)) return;
@@ -460,9 +372,9 @@ export class CoastSampleHost {
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
       if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
-      this.input.key(e.key, true);
+      this.input.key(inputKey(e), true);
     });
-    s.on(window, 'keyup', e => this.input.key(e.key, false));
+    s.on(window, 'keyup', e => this.input.key(inputKey(e), false));
     s.on(canvas, 'contextmenu', e => e.preventDefault());
     // A touch screen with a mouse (or a tablet): a finger switches to the touch controls, the mouse or wheel back, except
     // in the phone layout, which always plays by touch.
@@ -522,7 +434,6 @@ export class CoastSampleHost {
     });
     s.on(this.q('[data-pause]'), 'click', () => { if (!this.panel) this.pause(); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
-    s.on(this.q('[data-quests]'), 'toggle', () => { this.questsOpen = (this.q<HTMLDetailsElement>('[data-quests]')).open; });
     // A drop that re-renders the grid removes the press target, so the browser may send no trailing click: every new press clears the suppression.
     s.on(panel, 'pointerdown', e => { this.suppressClick = false; if (this.panel === 'inventory' || this.panel === 'loot') this.inv.pointerDown(e); });
     s.on(panel, 'click', e => {
@@ -539,7 +450,6 @@ export class CoastSampleHost {
     });
   }
   private suppressClick = false;
-  private questsOpen = false;
 
   private sticks = new Map<number, { kind: 'move' | 'aim'; ox: number; oy: number }>();
   private touchStart(e: PointerEvent) {
@@ -675,8 +585,14 @@ export class CoastSampleHost {
       case 'pause-back': this.showPause(); break;
       case 'abandon': this.setPanel('pause', '<h2>放弃行动？</h2><p>放弃按撤离失败结算：背包物资和主武器丢失，安全箱保留。</p><div class="cs-row"><button type="button" data-do="abandon-yes">确认放弃</button><button type="button" data-do="resume">继续行动</button></div>', '放弃行动'); break;
       case 'abandon-yes': this.services.abandon(); break;
-      // Saved while held upright: the panel turns into the rotate notice, and 继续 comes back once the phone is landscape.
-      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); if (this.upright()) this.showPause(); else this.resume(); } else this.toast('仍然无法保存。', true); break;
+      // A successful retry resumes the Runtime. Held upright or with the picture lost, the raid pauses again at once (the
+      // guard resume() keeps) and the panel turns into the rotate or context-lost notice; 继续 comes back with landscape.
+      case 'retry-save':
+        if (this.services.retrySave()) {
+          this.lastRejected = ''; this.toast('已保存。');
+          if (this.contextLost || this.upright()) { this.runtime.pause(this.contextLost ? 'context-lost' : 'overlay'); this.showPause(); } else this.resume();
+        } else this.toast('仍然无法保存。', true);
+        break;
       case 'backup': this.exportBackup(); break;
       case 'retry-settlement': this.services.retrySettlement(); this.refreshEnding(); break;
       case 'close': this.closePanel(true); break;
@@ -863,7 +779,7 @@ export class CoastSampleHost {
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
     let weight = '';
     // A no-break space keeps the number and its unit together when the line wraps, as the original weight readout did.
-    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)}\u00a0kg`; }
+    if (l) weight = `${this.services.carriedWeight().toFixed(1)}\u00a0kg`;
     this.q('[data-state]').textContent = `${status}　${weight}`;
     // Short screens hide the routine body line; a bleed or pollution warning keeps it.
     this.q('[data-state]').classList.toggle('calm', !h.bleeding && h.pollution <= 10);

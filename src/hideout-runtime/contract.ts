@@ -8,7 +8,6 @@ export type Recipe = 'bandage' | 'medkit' | 'antidote';
 export type Source = 'stash' | 'bag' | 'safe';
 export type ShopSource = 'merchant' | 'buy' | 'sell' | 'stash';
 export type Merchant = 'arms' | 'med';
-export type Power = 'emergency' | 'restored';
 export type RunWorld = 'coast' | 'buildings' | 'mall';
 export type FailReason = 'rule' | 'space' | 'funds' | 'materials' | 'locked' | 'stale' | 'storage' | 'conflict' | 'missing-item' | 'not-supply' | 'no-effect';
 export type Result = { ok: true; message?: string } | { ok: false; reason: FailReason; message: string;
@@ -126,7 +125,7 @@ export interface HideoutRuntime {
     startRaid(runId: string): Result;
     returnToBase(): Result;
     consumeArrival(): HideoutSnapshot['arrival'];
-    /** Flush before changing hosts, opening old walking mode or leaving the page. */
+    /** Flush before changing hosts (yard, tab page, raid) or leaving the page. */
     flush(): Result;
     backToMenu(): Result;
     dispose(): Result;

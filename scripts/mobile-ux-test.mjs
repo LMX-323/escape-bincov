@@ -228,7 +228,8 @@ try {
   await fixture();await drive('vitals',{hp:40});
   await carry({bag:[],safe:[{uid:'ux-medkit',id:'medkit',qty:1,x:0,y:0},{uid:'ux-relief-bandage',id:'bandage',qty:1,x:0,y:1,relief:true},{uid:'ux-normal-bandage',id:'bandage',qty:1,x:1,y:1}]});
   const hp=()=>host(()=>window.__bincovSample.host.lastBatch.frame.hud.hp);
-  await page.locator('.coast-sample [data-heal]').tap();
+  // A tap during a stall pause (slow runner) is ignored like any command while paused: heal only once the raid runs.
+  await running(page);await page.locator('.coast-sample [data-heal]').tap();
   // Quick therapy uses only the bag: the radio says there is nothing to use.
   await page.waitForFunction(()=>(document.querySelector('.coast-sample [data-radio]')?.textContent??'').includes('背包中没有绷带或急救包'));
   assert.equal(await hp(),40);assert.equal(await host(()=>__bincov.app.loadout.safe.items[0].qty),1);

@@ -3,7 +3,8 @@ import type { Attribute, Facility, HideoutRuntime, HideoutSnapshot, Merchant, Re
 import type { Scope } from '../coast-view/scope';
 import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
-import { GridDrag, esc, type DragHooks } from './grid';
+import { GridDrag, type DragHooks } from './grid';
+import { esc } from '../html';
 import * as P from './panels';
 import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 
@@ -106,6 +107,8 @@ export class UI {
   show(kind: PanelKind, station: Station | null = null, facility?: Facility) {
     if (this.kind && (this.kind === 'arms' || this.kind === 'med') && kind !== this.kind && this.shop?.view().dirty) { this.toast('待买或待卖区还有物品，先结算或清空。', 'error'); this.host.sound('error'); return; }
     const was = this.kind;
+    // The panel is painted anew: a drag from the old grids ends here instead of waiting for a release.
+    this.drag.cancel();
     this.kind = kind; this.station = station; this.selected = null;
     if (facility) this.facility = facility;
     if (kind === 'arms' || kind === 'med') { this.shop = this.rt.openShop(kind as Merchant); this.shopMode = 'buy'; } else this.shop = null;
@@ -117,6 +120,7 @@ export class UI {
     if (this.dialog) { this.closeDialog(); return; }
     if (!this.kind) return;
     if ((this.kind === 'arms' || this.kind === 'med') && this.shop?.view().dirty) { this.toast('待买或待卖区还有物品，先结算或清空。', 'error'); this.host.sound('error'); return; }
+    this.drag.cancel();
     this.kind = null; this.station = null; this.shop = null; this.selected = null;
     this.panel.hidden = true; this.modal.hidden = true; this.panel.innerHTML = ''; this.modal.innerHTML = '';
     this.root.classList.remove('has-panel', 'has-modal');
@@ -219,7 +223,8 @@ export class UI {
     this.dialogEl.setAttribute('aria-label', title);
     this.dialogEl.innerHTML = `<header class="phead"><div><h2>${title}</h2></div>${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header><div class="pbody">${body}</div>`;
   }
-  private openDialog(d: Dialog) { const was = this.open; this.dialog = d; this.renderDialog(); if (!was) this.host.panelChanged(this.kind, this.station); }
+  /** A dialog (a failed write too) ends a drag at once: the grids under it take no drop until it closes. */
+  private openDialog(d: Dialog) { const was = this.open; this.drag.cancel(); this.dialog = d; this.renderDialog(); if (!was) this.host.panelChanged(this.kind, this.station); }
   private closeDialog() { this.dialog = null; this.renderDialog(); this.host.sound('close'); if (!this.kind) this.host.panelChanged(null, null); }
   /** The storage dialog follows the Runtime: it opens when a write fails and closes once a retry succeeded. */
   syncStorage(s: HideoutSnapshot) {

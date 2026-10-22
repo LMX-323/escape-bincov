@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import type { LootContainer, LootEndpoint, LootTransfer } from '../src/loot';
+import type { LootEndpoint, LootTransfer } from '../src/loot';
 import { createSessionState, SaveSession } from '../src/session';
 import { RecoveryStore, SESSION_KEY } from '../src/recovery-store';
 const read = (storage: D.StorageLike) => new RecoveryStore(storage).load();

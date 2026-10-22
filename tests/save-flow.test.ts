@@ -7,13 +7,17 @@ import { initialCheckpoint } from '../src/checkpoint';
 import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
-import { retrySettlement, mutate, importSave, setOverlay, toast } from '../src/ui';
-import { BACKUP_MAX_BYTES, decodeBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
+import { retrySettlement, mutate, importSave, setOverlay } from '../src/ui';
+import { toast } from '../src/toast';
+import { decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
+import { PROFILE_MAX_BYTES } from '../src/profile-codec';
 
 let stored: string | null;
 let failWrites: boolean;
 let writes: number;
-const screen = { innerHTML: '', style: {}, querySelectorAll: () => [], querySelector: () => null };
+// Buttons the page binds on render (bind() looks them up with '[data-action]').
+let buttons: { dataset: Record<string, string>; onclick?: () => void }[] = [];
+const screen = { innerHTML: '', style: {}, querySelectorAll: (selector: string) => selector === '[data-action]' ? buttons : [], querySelector: () => null };
 const notification = { textContent: '', style: {} };
 const globals = new Map<string, PropertyDescriptor | undefined>();
 /**
@@ -26,7 +30,7 @@ function settle(outcome: 'extract' | 'death' | 'timeout' | 'abandon', kills: num
 }
 
 beforeEach(() => {
-  stored = null; failWrites = false; writes = 0;
+  stored = null; failWrites = false; writes = 0; buttons = [];
   for (const key of ['document', 'localStorage', 'innerWidth', 'innerHeight']) globals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
   Object.defineProperty(globalThis, 'innerWidth', { configurable: true, value: 1280 });
   Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 720 });
@@ -133,8 +137,32 @@ test('backup import preserves the old save on failure and commits the full new s
   assert.deepEqual(read(), candidate);
 });
 
+test('a session backup import that cannot be written keeps the dialog and reports the failure', () => {
+  saveSession.persist(app.save);
+  const record = saveSession.backupRecord()!; record.profile.cash = 4321;
+  const candidate = decodePortableBackup(encodeRecoveryBackup(record));
+  assert.equal(candidate.kind, 'session');
+  const confirm: (typeof buttons)[number] = { dataset: { action: 'confirm-import' } };
+  buttons = [confirm]; notification.textContent = '';
+  app.pendingRecoveryImport = candidate.kind === 'session' ? candidate.record : null;
+  setOverlay('import-save');
+  const before = stored, original = structuredClone(app.save);
+  failWrites = true;
+  confirm.onclick!();
+  assert.equal(stored, before);
+  assert.deepEqual(app.save, original);
+  assert.equal(notification.textContent, '存档保存失败。请检查浏览器是否允许保存数据，然后重试。');
+  assert.equal(app.overlay, 'import-save', 'the dialog stays open for another try');
+  assert.ok(app.pendingRecoveryImport);
+  failWrites = false;
+  confirm.onclick!();
+  assert.equal(app.pendingRecoveryImport, null);
+  assert.equal(app.state, 'menu');
+  assert.equal(read().cash, 4321);
+});
+
 test('backup reader rejects unrelated, unsupported, truncated, oversized, overlapping and live-raid data', () => {
-  for (const text of ['{}', '{', JSON.stringify({ version: 2 }), ' '.repeat(BACKUP_MAX_BYTES + 1)]) assert.throws(() => decodeBackup(text));
+  for (const text of ['{}', '{', JSON.stringify({ version: 2 }), ' '.repeat(PROFILE_MAX_BYTES + 1)]) assert.throws(() => decodeBackup(text));
   const save = D.newSave();
   save.bag.items[1].x = save.bag.items[0].x; save.bag.items[1].y = save.bag.items[0].y;
   assert.throws(() => decodeBackup(JSON.stringify(save)));

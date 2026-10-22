@@ -10,9 +10,8 @@ type Glint = { img: Img; period: number; phase: number; still: number };
 type Drop = { img: Img; x: number; y: number; speed: number; floor: number };
 type Mote = { img: Img; x: number; y: number; vx: number; vy: number; phase: number };
 
-/** Live controllers; tests assert re-entering the menu never leaves an extra one behind. */
+/** Live controllers, reported by the test snapshot; re-entering the menu must never leave an extra one behind. */
 let live = 0;
-export const liveTitleControllers = () => live;
 
 const SPARK = { warm: 0, warm2: 1, cool: 2, coolLong: 3, warmGlint: 4, warmLong: 5, red: 6, mote: 7 } as const;
 const PIER = { top: 292, bottom: 424 };
@@ -22,7 +21,7 @@ let renderer: Application | null = null;
 /**
  * The title's own WebGL renderer, created once at boot (after the WebGL check) and kept for the page's life: the menu
  * mounts its scene on it and the canvas leaves the page while another screen shows. The raid and yard hosts keep their
- * shared renderer (coast-view/host.ts takeApp), so neither ever draws the other's textures.
+ * shared renderer (pixi-app.ts takeApp), so neither ever draws the other's textures.
  */
 export async function prepareTitleRenderer(): Promise<void> {
     if (renderer) return;

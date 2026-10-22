@@ -5,11 +5,12 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { reportFilter, stepFilter } from './step-filter.mjs';
 import * as D from '../src/domain.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
-const out = resolve(option('out', 'test-results/issue26/station')), only = option('only', '').split(',').filter(Boolean);
+const out = resolve(option('out', 'test-results/issue26/station')), filter = stepFilter();
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
@@ -133,6 +134,21 @@ async function drag(src, uid, to, x, y) {
   await page.mouse.move(b.x + x * cell + 8, b.y + y * cell + 8, { steps: 8 });
   assert.equal(await target.locator('.preview.good').isVisible(), true, 'valid exchange must show valid placement'); await page.mouse.up();
 }
+/** Press on an item and move past the drag threshold; the drag stays under way (no release). */
+async function hold(src, uid) {
+  const a = await yard(`[data-grid="${src}"] [data-uid="${uid}"]`).boundingBox(); assert.ok(a);
+  await page.evaluate(() => addEventListener('pointerdown', e => { window.__issue26Pointer = e.pointerId; }, { capture: true, once: true }));
+  await page.mouse.move(a.x + 8, a.y + 8); await page.mouse.down(); await page.mouse.move(a.x + 30, a.y + 20, { steps: 4 });
+  assert.equal(await page.evaluate(() => window.__station.host.ui.dragging), true, 'drag under way');
+}
+/** Release the held button over the bag (a real mouse up). */
+async function release() { const b = await yard('[data-grid="bag"]').boundingBox(); await page.mouse.move(b.x + 10, b.y + 10); await page.mouse.up(); }
+const IDLE = { dragging: false, ghosts: 0, lifted: 0, rootDragging: false, previews: 0 };
+const dragState = () => page.evaluate(() => {
+  const ui = document.querySelector('#station-yard').shadowRoot.querySelector('.ui');
+  return { dragging: window.__station.host.ui.dragging, ghosts: ui.querySelectorAll('.ghost').length, lifted: ui.querySelectorAll('.lifted').length,
+    rootDragging: ui.classList.contains('dragging'), previews: ui.querySelectorAll('.grid .preview:not([hidden])').length };
+});
 async function fault(on) {
   await page.evaluate(on => {
     window.__issue26Write ??= Storage.prototype.setItem;
@@ -144,7 +160,7 @@ async function recover() {
   await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().storage.ok && !window.__station.host.ui.dialogKind);
 }
 async function step(name, fn) {
-  if (only.length && !only.some(id => name.startsWith(id))) return;
+  if (!filter.selects(name)) return;
   const row = { name }, errorStart = report.errors.length; report.steps.push(row);
   try { row.detail = await fn(); assert.deepEqual(report.errors.slice(errorStart), []); assert.deepEqual(report.external, []);
     assert.deepEqual(await page.evaluate(() => window.__station?.host?.errors ?? []), []); row.status = 'passed'; console.log('PASS', name);
@@ -199,6 +215,39 @@ try {
     assert.equal(after.bag.items.find(i => i.uid === a.uid)?.id, 'watch'); assert.equal(after.stash.items.find(i => i.uid === b.uid)?.id, 'fuse');
     assert.deepEqual(totals(after), totals(p)); assert.deepEqual(JSON.parse(await raw()).profile.stash, after.stash); assert.deepEqual(JSON.parse(await raw()).profile.bag, after.bag);
   });
+  await step('F02-storage-dialog-mid-drag-ends-the-drag', async () => {
+    const p = fixture(), a = add(p.stash, 'watch'); await open(p); const before = await raw();
+    await hold('stash', a.uid);
+    // The yard's own five-second checkpoint fails mid-drag (wall time moves on) and opens the storage dialog.
+    await fault(true); await page.evaluate(() => { const t = Date.now() + 6000; Date.now = () => t; });
+    await yard('.dialog [data-act="retry-save"]').waitFor(); await release();
+    assert.deepEqual(await dragState(), IDLE, 'released under the dialog: no ghost, lifted item or dragging state');
+    assert.equal(await raw(), before); assert.deepEqual((await snapshot()).profile.stash, p.stash); assert.deepEqual((await snapshot()).profile.bag, p.bag);
+    await recover(); await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => window.__station.host.ui.kind), null, 'after the retry Tab closes 整备 again');
+    await gear(); await drag('stash', a.uid, 'bag', 0, 0);
+    assert.equal((await snapshot()).profile.bag.items.find(i => i.uid === a.uid)?.id, 'watch'); assert.deepEqual(await dragState(), IDLE);
+  });
+  await step('F02-focus-loss-hidden-page-or-lost-release-cancels-the-drag', async () => {
+    const p = fixture(), a = add(p.stash, 'watch'); await open(p);
+    const ends = {
+      blur: () => page.evaluate(() => dispatchEvent(new Event('blur'))),
+      hidden: () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))),
+      // The button went up outside the window: the next move reports no button and no release came before it.
+      lostRelease: () => page.evaluate(() => dispatchEvent(new PointerEvent('pointermove', { pointerId: window.__issue26Pointer, pointerType: 'mouse', buttons: 0, clientX: 4, clientY: 4 }))),
+    };
+    for (const [name, end] of Object.entries(ends)) {
+      await hold('stash', a.uid); await end();
+      assert.deepEqual(await dragState(), IDLE, `${name}: the drag ends at once`);
+      await end(); assert.deepEqual(await dragState(), IDLE, `${name}: a second cancel changes nothing`);
+      await release(); assert.deepEqual(await dragState(), IDLE, `${name}: the later release drops nothing`);
+      // Focus loss writes the yard's checkpoint (main.ts), so the stored inventories are compared, not the bytes.
+      const stored = JSON.parse(await raw()).profile, now = (await snapshot()).profile;
+      assert.deepEqual([now.stash, now.bag, stored.stash, stored.bag], [p.stash, p.bag, p.stash, p.bag], `${name}: nothing moved`);
+    }
+    await drag('stash', a.uid, 'bag', 0, 0);
+    assert.equal((await snapshot()).profile.bag.items.find(i => i.uid === a.uid)?.id, 'watch'); assert.deepEqual(await dragState(), IDLE);
+  });
   for (const size of [[1280, 720], [1920, 1080], [390, 844], [844, 390]]) {
     await step(`F05-F09-F10-visible-and-persistent-${size.join('x')}`, async () => {
       const p = fixture(), gun = add(p.bag, 'pistol'); add(p.bag, 'bandage', 3); add(p.safe, 'food', 1);
@@ -252,6 +301,7 @@ try {
 } finally {
   await context?.close(); await browser.close(); report.finishedAt = new Date().toISOString();
   report.summary = { passed: report.steps.filter(s => s.status === 'passed').length, total: report.steps.length };
+  const filterProblems = reportFilter(filter, report.steps.length); if (filterProblems.length) report.summary.filterProblems = filterProblems;
   await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify(report.summary));
   if (report.summary.passed !== report.summary.total || report.errors.length || report.external.length) process.exitCode = 1;
 }

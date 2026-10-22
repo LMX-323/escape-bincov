@@ -49,7 +49,7 @@
 
 捕获之前的弹匣同步、世界克隆，以及恢复时的对象和碰撞重建属于执行器的接线责任。`raid-runtime/presentation.ts` 的 `mapView` / `frameView` 是供视图消费的展示投影，不是存档格式；展示事件的序号、epoch 和纹理状态不应直接加入存档。
 
-宿主切换先完成相应检查点/flush，失败则保留当前宿主及重试/备份入口。院子和行动轮用一个 Pixi 应用（`takeApp` / `parkApp`）；标题页的渲染器另起一个，离开标题页即停止并移出页面，不会同时推进同一会话。失焦、屏蔽、暂停和释放输入是不同操作，调用语义以端口注释和输入测试为准。
+宿主切换先完成相应检查点/flush，失败则保留当前宿主及重试/备份入口。院子和行动轮用 [pixi-app.ts](../src/pixi-app.ts) 的一个 Pixi 应用（`takeApp` / `parkApp`），这个模块不认识任何场景、页面或玩法；两个视图经 [navigation.ts](../src/navigation.ts) 请页面换画面，不直接导入 `ui.ts`；标题页的渲染器另起一个，离开标题页即停止并移出页面，不会同时推进同一会话。失焦、屏蔽、暂停和释放输入是不同操作，调用语义以端口注释和输入测试为准。
 
 ## 格式与恢复兼容
 
@@ -61,7 +61,7 @@ profile/已结算备份版本、session/完整备份封套版本、`ExpansionSta
 
 旧 `coast-v1` 检查点继续恢复原地面物资；带容器的 `coast-v2` 保存稳定容器/行动身份，恢复时不重生掉落。没有检查点的历史旧行动仍沿用中断失败规则。新版刷新恢复最近成功检查点，不等于恢复尚未写入的内存进度。
 
-导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
+导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验。备份文件、会话里的 profile、旧键和经典行动的携带物共用 [profile-codec.ts](../src/profile-codec.ts) 的 profile/物品栏规则（1 MiB 上限对嵌入的 profile 按紧凑 JSON 计），`checkpoint`、`recovery-store`、`save-backup` 只单向调用它；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
 
 `freshStartRecord` 也是完整 v4 新档构造入口，仅保留音量；`startOver` 通过同一确认导入路径替换主档。重开前的本机恢复副本使用单独的 `escape-bincov.reset-copy.v1` 槽位，不是第二个正在运行的会话。新增持久字段必须同时检查新建、升级、导入、重开、结算候选和两执行器捕获/恢复。
 
