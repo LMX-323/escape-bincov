@@ -1,4 +1,31 @@
 /** Opus v1 with additive R6 facts (2026-10-09); no simulation or save schema changes. */
+import type { Inventory } from '../domain';
+import type { LootTransfer } from '../loot';
+import type { MutationResult } from '../session';
+
+/** Durable actions and detached reads offered to a raid view. Implemented by raid-runtime/host, never by a view.
+ * Read again after any transaction: rollback/restore may replace loadout and world objects. */
+export interface CoastServices {
+    cancelStart(): void;
+    activate(ref: TargetRef): boolean;
+    transferLoot(ref: TargetRef, request: LootTransfer): MutationResult;
+    useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
+    equipItem(uid: string): MutationResult;
+    dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
+    /** Live carried kg, including worn charm and loaded rounds; views only format this value. */
+    carriedWeight(): number;
+    /** Live movement limit in kg. Session expansion is the last checkpoint and can still contain expired buffs. */
+    carryLimit(): number;
+    retrySave(): boolean;
+    retrySettlement(): boolean;
+    settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
+    abandon(): void;
+    checkpoint(): boolean;
+    lootContext(): { containerId: string; runId: string } | null;
+    lootInventory(ref: TargetRef): Inventory | null;
+}
+export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
+
 export type Point = Readonly<{
     x: number;
     y: number;

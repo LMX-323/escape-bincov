@@ -243,8 +243,11 @@ export class CoastRaidRuntime implements RaidRuntime {
                 }
                 else {
                     seconds = tick.seconds;
-                    this.elapsed += seconds;
-                    if (this.elapsed >= this.config.duration) {
+                    const startedAt = this.elapsed, endsAt = startedAt + seconds;
+                    // Timeout wins over this frame's input. Otherwise each substep sees its own time: using endsAt
+                    // throughout would let a late-arriving pursuit attack for the whole frame and advance tides early.
+                    if (endsAt >= this.config.duration) {
+                        this.elapsed = endsAt;
                         this.extracted = true;
                         this.finish('timeout');
                     }
@@ -264,6 +267,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                         for (let i = 0; i < tick.steps; i++) {
                             if (this.session.state !== 'run' || this.paused || this.ending)
                                 break;
+                            // Derive from the frame origin rather than accumulating rounding error. A failed commit
+                            // can pause mid-frame; the snapshot then retains exactly the substeps that ran.
+                            this.elapsed = startedAt + seconds * ((i + 1) / tick.steps);
                             this.inputFrame = i === 0 ? frame : { ...frame, actions: new Set(), firePressed: false, fireHeld: false };
                             if (this.inputSuppressed)
                                 this.inputFrame = { ...this.inputFrame, x: 0, y: 0, sprint: false, aim: null, firePressed: false, fireHeld: false, interactHeld: false, actions: new Set() };
@@ -344,6 +350,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const sync = <T extends {
             uid: string;
         }>(old: T[], values: T[]) => values.map(v => Object.assign(old.find(e => e.uid === v.uid) ?? {} as T, structuredClone(v)));
+        // Layered simulation may restore during an AI iteration (for example an enemy opening a door). Preserve
+        // actor identity by uid so the iterator keeps updating the live actor, not a detached pre-transaction copy.
         this.enemies = this.layered ? sync(this.enemies, c.enemies) : structuredClone(c.enemies);
         this.loot = this.layered ? sync(this.loot, c.loot) : structuredClone(c.loot);
         this.bullets = this.layered ? sync(this.bullets, c.bullets) : structuredClone(c.bullets);

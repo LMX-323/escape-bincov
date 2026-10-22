@@ -64,6 +64,8 @@ export class SaveSession {
     private owned = true;
     private deferred: ExpansionTransaction | null = null;
     private committingDeferred = false;
+    // Tickets are owned by callers (or deferred); abandoning one releases its candidate through WeakMap GC.
+    // This is not a queue of every historical candidate. Do not replace it with a Map without explicit disposal.
     private prepared = new WeakMap<ExpansionTransaction, { revision: number; before: string; draft: ExpansionDraft }>();
     constructor(
         private readonly session: SessionState,
@@ -138,6 +140,7 @@ export class SaveSession {
     }
     get revision(): number { return this.store?.record?.revision ?? 0; }
     get ownsStorage(): boolean { return this.owned; }
+    /** Live detached capture when a Runtime is attached; session.expansion alone is the last published checkpoint. */
     captureExpansion(): ExpansionState | null { return structuredClone(this.layered?.capture() ?? this.session.expansion); }
     /** Idempotent station-boundary upgrade; never converts a live legacy raid. */
     ensureRpg(): boolean {

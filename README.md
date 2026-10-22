@@ -156,11 +156,13 @@ pnpm dev
 | `pnpm test:portable` | 实际解压离线 ZIP 并验证启动与操作 |
 | `pnpm test:play` | 约 10 分钟真实计时自动行动，不能替代真人试玩 |
 
-浏览器检查前先执行 `pnpm package` 和 `pnpm exec playwright install chromium`；Linux CI 使用 `--with-deps`。已有 Chrome 可通过环境变量 `BINCOV_CHROME` 指定路径。Linux/macOS 便携包检查还需要 Python 3。完整命令见 [package.json](package.json)，测试选取与环境见 [开发手册](docs/AGENT-HANDBOOK.md)。
+浏览器检查前先执行 `pnpm package` 和 `pnpm exec playwright install chromium`；本地 Linux 缺系统库时加 `--with-deps`，CI 的字体/Chromium/渲染器准备见 [CI 说明](docs/CI.md)。已有 Chrome 可通过环境变量 `BINCOV_CHROME` 指定路径。Linux/macOS 便携包检查还需要 Python 3。完整命令见 [package.json](package.json)，测试选取与环境见 [开发手册](docs/AGENT-HANDBOOK.md)。
 
 ## 🤝 协作与发布
 
 本仓库是项目权威来源，`main` 是已接受版本。接手先读 [AGENTS.md](AGENTS.md)，从[代码导航](docs/CODEMAP.md)选择任务、定位契约和测试，再核对[任务清单当前入口](docs/WORK-QUEUE.md)与相关 PR 的实时状态。[开发手册](docs/AGENT-HANDBOOK.md)按相关流程/风险小节读取；[handoff.md](handoff.md)及历史报告按任务需要查证，不再要求每次全文加载。
+
+当前只有一个行动 Runtime，兼容经典与分层两类存档；界面展示、实时模拟和最近检查点不是同一个状态。修改前先沿 [架构中的状态边界](docs/ARCHITECTURE.md) 确认权威值和提交入口。新增外部 ID、库存自动落格或计时逻辑时，保留非法输入、失败回滚和时间边界反例；本次审计及剩余风险见 [审计记录](docs/tasks/audit-contracts.md)。
 
 同一交付目标继续原分支与 PR，独立任务才另开分支；不得覆盖他人工作或直接推送 `main`。源码、打包脚本或游玩说明变化后按仓库要求重新打包。存档兼容、写入失败回滚与单文件离线能力必须保留。
 

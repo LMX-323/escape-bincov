@@ -1,6 +1,6 @@
 import type { SessionState, SaveSession } from '../session';
 import type { LootTransfer } from '../loot';
-import type { RaidRuntime, TargetRef } from './contract';
+import type { CoastHandle, RaidRuntime, TargetRef } from './contract';
 import { CoastRaidRuntime } from './runtime';
 
 /** Production handoff: expose the v1 port and durable services, never mutable simulation internals. */
@@ -19,7 +19,7 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
         selectTarget: core.selectTarget.bind(core), activate: core.activate.bind(core),
         transferLoot: (ref: TargetRef, request: LootTransfer) => core.transferLoot(ref, request),
         useSupply: core.useSupply.bind(core), equipItem: core.equipItem.bind(core), heal: core.heal.bind(core),
-        dropItem: core.dropItem.bind(core), carriedWeight: core.carriedWeight.bind(core),
+        dropItem: core.dropItem.bind(core), carriedWeight: core.carriedWeight.bind(core), carryLimit: core.carryLimit.bind(core),
         retrySave: core.retrySave.bind(core), retrySettlement: core.retrySettlement.bind(core),
         settlement: () => core.settlement, abandon: () => core.finish('abandon'),
         reloadCommitted: core.reloadCommitted.bind(core), checkpoint: core.checkpoint.bind(core),
@@ -30,5 +30,6 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
         },
         backup: () => saves.backupRecord(),
     });
-    return Object.freeze({ runtime, services });
+    // Preserve additional internal/test services in inference, while checking the view's port at its factory.
+    return Object.freeze({ runtime, services }) satisfies CoastHandle;
 }

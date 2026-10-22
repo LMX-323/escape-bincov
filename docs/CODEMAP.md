@@ -9,6 +9,7 @@
 | 交易、库存操作、拒绝原因 | [交易](#交易) | 新物品再看领域数据；交互变更再看视图 |
 | 行动命令、输入、暂停或恢复 | [行动输入](#行动输入) | 触屏按钮、DOM 绑定、持久字段分别扩展 |
 | 新持久字段、迁移、导入、恢复 | [存档](#存档) | 活动行动字段必须核对两端捕获/恢复 |
+| 负重、上限等画面读数不一致 | [派生读数](#派生读数) | 先分清实时模拟、最近检查点与失败候选，再查格式化 |
 
 地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
 
@@ -38,6 +39,7 @@
 
 - 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
+- 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - 新增需要保存的购买记录：继续[存档卡](#存档)，不能只改商店类型。
 
 **结束定位的判据。** 能说清规则在哪执行、哪个入口提交、失败时哪些对象保留/回滚、两个 UI 如何得知结果；与本任务无关的世界和素材不继续展开。
@@ -53,6 +55,8 @@
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`。
 5. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
+
+画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。
 
 **调用契约的维护位置。** `RaidIntent` 旁说明坐标/时间单位和边沿消费；输入类说明释放及面板抑制；`RaidRuntime` 旁说明暂停、屏蔽和销毁。不在每个按钮复制这些规定。
 
@@ -98,10 +102,19 @@
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
+- [save-validation-audit.test.ts](../tests/save-validation-audit.test.ts)：原型键、数组伪装 ID 的拒绝与原字节保留，及正常基地/经典/分层记录对照。外部 ID 必须先用 `hasOwnStringKey` 检查字符串类型和自身键，不能只做真值查表或 `Object.hasOwn`。
 
 **按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 
 **结束定位的判据。** 新建、旧档升级、活动恢复、失败重试、完整导入/导出和重开都能说明字段来源；不能只补一个类型和默认值就结束。
+
+## 派生读数
+
+**首读路径。** [raid-runtime/contract.ts](../src/raid-runtime/contract.ts) 的 `CoastServices` / `HudView` → [raid-runtime/host.ts](../src/raid-runtime/host.ts) 接线 → [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `carriedWeight` / `carryLimit` → [coast-view/inventory.ts](../src/coast-view/inventory.ts) 的 `render` / `refreshWeight`。
+
+行动中的 `Runtime.layered` 随模拟推进，`SessionState.expansion` 是最近提交后的状态，不能拿它重新计算实时上限。优先复用帧或只读服务里的权威值；显示层只做舍入与排版。背包打开时世界仍推进，更新读数只改对应文本，不能重建网格打断拖放。回归入口：[carried-weight.test.ts](../tests/carried-weight.test.ts)，覆盖护符、弹药、临时力量过期及保持放置状态。
+
+**结束定位的判据。** 能指出数值由谁计算、使用哪个时钟、什么时候刷新；修改展示不会写存档，临时效果过期后玩法与显示保持一致。
 
 ## 维护本页
 
