@@ -180,6 +180,13 @@ export type Interaction = Readonly<{
         empty: boolean;
         selected: boolean;
     }>[];
+    /** Ground items in pickup reach (the Runtime's nearbyLoot rule), nearest first, while E names a container or a ground
+     * item: docs/LOOTING.md「附近」. Each is picked up on its own through activate({ kind: 'ground', id }); empty otherwise. */
+    nearby: readonly Readonly<{
+        id: string;
+        item: string;
+        qty: number;
+    }>[];
 }>;
 /**
  * The player's weapon handling as the next shot would meet it (PR #39). Display only: the Runtime decides every shot.
@@ -303,6 +310,9 @@ export type ViewEventBody = {
 } | {
     type: 'rejected';
     action: string;
+    /** Stable failure code, or a player-facing explanation for a refused supply/storage error.
+     * Door refusals distinguish 'unreachable' from 'occupied'; no success side effects survive rejection.
+     */
     reason: string;
 } | {
     type: 'notice';
@@ -352,6 +362,11 @@ export type RaidIntent = Readonly<{
 }>;
 export interface RaidRuntime {
     advance(nowMs: number, intent: RaidIntent): PublishedView;
+    /** After mount/first texture bake or layer rebuild, discard the next wall-clock gap.
+     * Does not advance simulation, write a checkpoint, resume a pause, or relax monotonic timestamps.
+     * Call once after synchronous rendering work completes, never on every frame (real stalls must still pause).
+     */
+    resetClock(): void;
     pause(reason: 'overlay' | 'blur' | 'stall' | 'context-lost'): void;
     resume(): void;
     setBlocked(blocked: boolean): void;

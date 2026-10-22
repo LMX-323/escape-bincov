@@ -111,6 +111,8 @@ CI 第一轮（没有显卡、用软件渲染的 Linux）有 7 组失败，都�
 
 ## 剩余工作
 
+2026-10-22 现状：下面 Astra 的第 1、2、3、6 项及对应前端接入由 [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) 补齐（[实施记录](../tasks/runtime-gaps.md)），上文 loot-target、mobile-ux 的缺口守卫已改为正式验收；第 6 项没有在真实的无 GPU 设备上验证。以下保留 #64 当时的原文。
+
 需要 Astra（Runtime 规则、存档事务、复验）：
 
 1. 治疗被拒时说明原因：满血按 Q 旧画面提示“生命已满…”，2.5D 只有通用提示——Runtime 拒绝事务时把这条说明连同其他事件一起丢掉了。
