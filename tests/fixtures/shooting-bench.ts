@@ -22,13 +22,20 @@ export const GUNS: readonly Gun[] = ['pistol', 'carbine', 'shotgun'];
 export const LANE = { at: { x: 208, y: 1104 }, aim: 0 } as const;
 export const DUMMY_RADIUS = 14;
 
+/** `storage` is the page's whole storage; `fail(true)` makes every later write throw, as a full quota would. */
 export function benchRaid(seed = 42) {
-    const state = createSessionState(), data = new Map<string, string>();
-    const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } };
+    const state = createSessionState(), data = new Map<string, string>(), quota = { full: false };
+    const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (quota.full) throw Error('test quota'); data.set(k, v); } };
     const saves = new SaveSession(state, () => storage); assert.equal(saves.initialize(), true);
     state.state = 'hideout'; assert.equal(saves.beginRun(seed, true), true); state.state = 'run';
     const runtime = new CoastRaidRuntime(state, saves), driver = createRuntimeTestDriver(runtime, '?test=1');
-    return { state, saves, runtime, driver };
+    return { state, saves, runtime, driver, storage, data, fail(full: boolean) { quota.full = full; } };
+}
+/** A page reload: a new session over the same storage resumes the raid in a new Runtime (the old one is abandoned). */
+export function reopen(b: Bench) {
+    const state = createSessionState(), saves = new SaveSession(state, () => b.storage);
+    assert.equal(saves.initialize(), true); assert.equal(saves.resumeRun(), true); state.state = 'run';
+    return { state, saves, runtime: new CoastRaidRuntime(state, saves) };
 }
 export type Bench = ReturnType<typeof benchRaid>;
 
@@ -78,10 +85,11 @@ export interface RunLog {
 }
 /**
  * Replay `script` for `seconds` of wall time at `fps` (or a repeating list of frame intervals in ms). Frame k starts at
- * 1000 ms + its wall time; the first frame only starts the Runtime clock. `keep` restores a dummy's health after every
- * frame so a long string stays on one target. Shot times are the publishing frame's raid time.
+ * `startMs` (default 1000) plus its wall time; on a new Runtime the first frame only starts the clock, on a used one it
+ * spans the gap since the last frame. `keep` restores a dummy's health after every frame so a long string stays on one
+ * target. Shot times are the publishing frame's raid time.
  */
-export function replay(b: Bench, script: Script, seconds: number, fps: number | readonly number[], keep?: string): RunLog {
+export function replay(b: Bench, script: Script, seconds: number, fps: number | readonly number[], keep?: string, startMs = 1000): RunLog {
     const log: RunLog = { shots: [], impacts: [], hurt: [], aims: [], frames: 0, elapsed: 0, mag: 0 };
     const intervals = typeof fps === 'number' ? null : fps;
     let previous: number | null = null, wall = 0;
@@ -89,7 +97,7 @@ export function replay(b: Bench, script: Script, seconds: number, fps: number | 
         const t = intervals ? wall : k / (fps as number);
         if (intervals) wall += intervals[k % intervals.length] / 1000;
         if (t > seconds + 1e-9) break;
-        const batch = b.runtime.advance(1000 + t * 1000, { ...emptyIntent(), aim: LANE.aim, ...script(t, previous) });
+        const batch = b.runtime.advance(startMs + t * 1000, { ...emptyIntent(), aim: LANE.aim, ...script(t, previous) });
         log.frames++;
         for (const e of batch.events) {
             if (e.type === 'shot' && e.shooter === 'player') log.shots.push({ t: e.stamp.simulationTime, aim: b.runtime.player.rotation,
