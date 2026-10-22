@@ -152,6 +152,7 @@ pnpm dev
 | `node scripts/coast-audio-test.mjs` | 样板实际音频输出、暂停与恢复 |
 | `pnpm test:shop-drag` / `pnpm test:save-browser` | 商店拖放及触控 / 存档失败、导入导出与回滚 |
 | `pnpm test:browser` / `pnpm test:desktop-input` | 基础浏览器流程 / 桌面输入 |
+| `pnpm test:shooting` | 射击对齐：瞄准、枪口火光、曳光、贴墙挡弹、隐藏房间与开火方式 |
 | `pnpm test:mobile` / `pnpm test:mobile-ux` | 手机视口、触控与面板操作 |
 | `pnpm test:portable` | 实际解压离线 ZIP 并验证启动与操作 |
 | `pnpm test:play` | 约 10 分钟真实计时自动行动，不能替代真人试玩 |

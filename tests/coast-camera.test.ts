@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AIM_LEAD, CAMERA_HOLD, PRECISE_LEAD, aimLead, snapAxis, type AxisHold } from '../src/coast-view/camera';
+import { AIM_LEAD, CAMERA_HOLD, PRECISE_LEAD, aimLead, pointerLead, snapAxis, stepLead, type AxisHold } from '../src/coast-view/camera';
 
 // Playtest F-04: while walking, the player trembled 1 world px on screen (round(p) - round(camF) flips with the two
 // fractions). The replay below is the host loop after the fix: frame i starts at its vsync plus U(0..J ms) of
@@ -175,4 +175,37 @@ test('aim look-ahead: half the old 48 x 34 by default; the right button keeps th
   assert.equal(aimLead(Math.PI, true).x, -81.6);
   assert.equal(aimLead(Math.PI / 2, true).y, 57.8);
   assert.ok(Math.abs(PRECISE_LEAD.x - 1.7 * 48) < 1e-9 && Math.abs(PRECISE_LEAD.y - 1.7 * 34) < 1e-9, 'precise reach unchanged');
+});
+
+test('aim look-ahead points along the aim, so easing toward it never turns the aim under a still pointer (PR #39)', () => {
+  for (const precise of [false, true]) for (let k = 0; k < 64; k++) {
+    const aim = -Math.PI + k * Math.PI / 32, l = aimLead(aim, precise), e = precise ? PRECISE_LEAD : AIM_LEAD;
+    // Parallel to the aim, and as long as the ellipse reaches in that direction.
+    assert.ok(Math.abs(l.x * Math.sin(aim) - l.y * Math.cos(aim)) < 1e-9, `${aim} ${precise}`);
+    assert.ok(Math.abs((l.x / e.x) ** 2 + (l.y / e.y) ** 2 - 1) < 1e-9, `${aim} ${precise}`);
+    // A pointer anywhere on the aim's ray stays on it when the camera moves by the lead: the angle is unchanged.
+    const p = { x: Math.cos(aim) * 90, y: Math.sin(aim) * 90 }, moved = { x: p.x + l.x, y: p.y + l.y };
+    assert.ok(Math.abs(Math.atan2(Math.sin(Math.atan2(moved.y, moved.x) - aim), Math.cos(Math.atan2(moved.y, moved.x) - aim))) < 1e-9);
+  }
+});
+
+test('mouse look-ahead follows the pointer on screen, never the aim, so a still pointer keeps its aim (PR #39)', () => {
+  // Without the right button the camera stays on the player; with it, along the pointer's offset, a share of its
+  // distance capped by the precise ellipse in that direction.
+  assert.deepEqual(pointerLead(120, 0, false), { m: 0, ux: 1, uy: 0 });
+  const near = pointerLead(30, 0, true), far = pointerLead(0, 400, true), aimed = pointerLead(-300, -300, true);
+  assert.ok(Math.abs(near.m - 10.5) < 1e-9 && near.ux === 1);
+  assert.ok(Math.abs(far.m - 57.8) < 1e-9 && far.uy === 1, 'capped by the 81.6 x 57.8 ellipse vertically');
+  assert.ok(Math.abs(aimed.m - aimLead(Math.atan2(-1, -1), true).x / Math.cos(Math.atan2(-1, -1))) < 1e-9);
+  assert.deepEqual(pointerLead(0, 0, true), { m: 0, ux: 1, uy: 0 });
+  // A step turns at once and eases only the length; turning keeps the old length's part along the new direction.
+  const turned = stepLead({ m: 20, ux: 1, uy: 0 }, { m: 24, ux: 0, uy: 1 }, .5);
+  assert.deepEqual(turned, { m: 12, ux: 0, uy: 1 });
+  assert.deepEqual(stepLead({ m: 20, ux: 1, uy: 0 }, { m: 24, ux: -1, uy: 0 }, 0), { m: 0, ux: -1, uy: 0 });
+  // The player is drawn behind the centring point by the lead; the pointer sits q ahead of it. Whatever length the lead
+  // eases to, the pointer stays on the player's line through it: the aim does not move.
+  for (const [qx, qy] of [[90, 10], [-40, 120], [300, -260], [5, -3]]) {
+    const want = pointerLead(qx, qy, true), aim = (m: number) => Math.atan2(qy + m * want.uy, qx + m * want.ux);
+    for (const m of [0, want.m * .3, want.m, want.m * 2]) assert.ok(Math.abs(aim(m) - Math.atan2(qy, qx)) < 1e-12);
+  }
 });
