@@ -35,7 +35,7 @@ test('old client writes cannot overwrite the v2 record; migration keeps exact or
   const bytes = JSON.stringify(old); data.set(D.SAVE_KEY, bytes);
   const storage = { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => { data.set(k, v); } };
   const store = new RecoveryStore(storage), loaded = store.load(); store.commit(loaded.save, null);
-  D.writeSave(storage, D.newSave());
+  storage.setItem(D.SAVE_KEY, JSON.stringify(D.newSave())); // an old client writing its own key
   const next = new RecoveryStore(storage); assert.equal(next.load().save.cash, 1842);
   assert.equal(next.record?.legacyBackup, bytes);
 });

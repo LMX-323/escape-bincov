@@ -6,9 +6,8 @@
 
 /**
  * The same test as PixiJS's isWebGLSupported: a WebGL context with a stencil buffer. Unlike Pixi it does not force the
- * probe's context lost (WEBGL_lose_context): in Chrome that held up the page's later contexts, so Phaser's title scene
- * sometimes had not started yet when the menu was shown (test:title). The probe canvas is simply dropped, as Phaser
- * drops its own.
+ * probe's context lost (WEBGL_lose_context): in Chrome that held up the page's later WebGL contexts, so the title scene
+ * sometimes had not started yet when the menu was shown (test:title). The probe canvas is simply dropped.
  */
 export function webglSupported(): boolean {
     try {

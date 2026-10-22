@@ -50,7 +50,7 @@
 
 1. [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)：`RaidIntent`、`RaidRuntime`，先区分边沿、持续输入、暂停与屏蔽。
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
-3. [input.ts](../src/input.ts)：`PlayerInput.read` / `suppressHeld` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用。
+3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`。
 5. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
 
@@ -58,7 +58,7 @@
 
 **验证入口。**
 
-- [input.test.ts](../tests/input.test.ts)：单次按下、取消、held-input 释放和面板切换。
+- [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands and fireHeld only reach first substep`、`blocked panels advance the world`。
 - [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
@@ -104,3 +104,5 @@
 ## 维护本页
 
 公开端口、提交边界或文件归属改变时，在同一个 PR 更新对应卡片；内部算法变化无需重抄实现。路径/符号改名同步修链接，当前行为与计划分开写。先查符号和调用点，再扩大阅读；不按固定行数拆源码，不生成手工全量符号表，也不为每目录增加重复 AGENTS。
+
+CI 的 [source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拦下三类退化：没有任何使用者的导出、新的或变大的运行时 import 环（已知的两个环登记在该文件与 #60）、规则模块（domain/balance/world）引用彼此以外的模块或 DOM；`tsconfig.json` 另禁止未用的局部变量和参数。删掉旧代码时连同只为它存在的测试一起迁移，不要为通过检查而保留空导出。

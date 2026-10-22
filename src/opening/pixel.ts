@@ -275,44 +275,6 @@ export function rain(frame: Frame, t: number, style: RainStyle, calm: boolean): 
   }
 }
 
-/**
- * Splashes along surfaces: per column, the screen y where rain lands (or -1). Each splash is a three-frame sprite
- * (dot, then two droplets jumping apart), scheduled by hash so the pattern never visibly repeats.
- */
-export function splashes(frame: Frame, t: number, surface: Int16Array, colour: number, density: number, seed: number, calm: boolean): void {
-  if (calm) return;
-  const slot = Math.floor(t / 70), cells = Math.floor(W / 6);
-  for (let c = 0; c < cells; c++) {
-    for (let back = 0; back < 3; back++) {
-      const s = slot - back;
-      if (hash(c, s * 31 + seed) > density) continue;
-      const x = c * 6 + Math.floor(hash(c, s + seed * 3) * 6), y = surface[x];
-      if (y < 0) continue;
-      if (back === 0) frame.put(x, y - 1, colour);
-      else { frame.put(x - back, y - 1 - back, colour); frame.put(x + back, y - 1 - back, colour); }
-    }
-  }
-}
-
-/** For each screen column, the first opaque row of a layer at (x, y), or -1. */
-export function surfaceOf(src: Indexed, x: number, y: number, minY = 0): Int16Array {
-  const out = new Int16Array(W).fill(-1);
-  for (let sx = 0; sx < W; sx++) {
-    const lx = sx - Math.round(x);
-    if (lx < 0 || lx >= src.w) continue;
-    for (let ly = Math.max(0, minY - y); ly < src.h; ly++) if (src.px[ly * src.w + lx] !== CLEAR) { out[sx] = ly + y; break; }
-  }
-  return out;
-}
-
-/** Pixels of a layer whose colour is one of `colours`, as packed layer coordinates (for shimmer). */
-export function pixelsOf(src: Indexed, colours: Set<number>, region: { y0: number; y1: number }): Int32Array {
-  const list: number[] = [];
-  for (let y = Math.max(0, region.y0); y < Math.min(src.h, region.y1); y++)
-    for (let x = 0; x < src.w; x++) if (colours.has(src.px[y * src.w + x])) list.push((y << 16) | x);
-  return Int32Array.from(list);
-}
-
 /** Twinkle a fraction of the given pixels to another colour (water glints, wet highlights). */
 export function shimmer(frame: Frame, t: number, pixels: Int32Array, x: number, y: number, table: Uint8Array, rate: number, calm: boolean): void {
   if (calm) return;

@@ -190,7 +190,15 @@ try{
   await raid('inv-drop').tap();
   await page.waitForFunction(()=>window.__bincovSample.host.panel==='pause'&&!!document.querySelector('.coast-sample [data-do="retry-save"]'),null,{timeout:20000});
   const afterDrop=await live();assert.deepEqual({loadout:afterDrop.loadout,loot:afterDrop.loot},{loadout:beforeDrop.loadout,loot:beforeDrop.loot});
-  await restoreSessionWrites(page);await raid('retry-save').tap();await panelIs(null);await running(page);
+  // Saved while held upright: the raid stays paused behind the rotate notice (the touch buttons are hidden) until landscape.
+  await page.setViewportSize({width:390,height:844});await frames(3);
+  await restoreSessionWrites(page);await raid('retry-save').tap();
+  await page.waitForFunction(()=>document.querySelector('.coast-sample [data-panel] h2')?.textContent==='横过来，准备出发。',null,{timeout:20000});
+  const held=await runtime();await frames(6);const still=await runtime();
+  assert.deepEqual({panel:still.panel,phase:still.raid.phase,elapsed:still.raid.elapsed,storageOK:still.storageOK},{panel:'pause',phase:'paused',elapsed:held.raid.elapsed,storageOK:true});
+  await page.setViewportSize({width:844,height:390});
+  await page.waitForFunction(()=>document.querySelector('.coast-sample [data-panel] h2')?.textContent==='已暂停',null,{timeout:20000});
+  await raid('resume').tap();await panelIs(null);await running(page);
   // Phones abandon from their own pause button.
   await openPause(page,()=>page.locator('.coast-sample [data-pause]').tap());await raid('abandon').tap();await raid('abandon-yes').tap();
   await action('return').tap({timeout:30000});

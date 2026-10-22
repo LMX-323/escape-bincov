@@ -13,10 +13,10 @@ import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } f
 import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { TargetRef } from '../raid-runtime/contract';
 import type { CoastServices } from './host';
-import { itemArtwork } from '../ui';
+import { itemArtwork } from '../art/item-images';
+import { esc } from '../html';
+import { SUPPLY_IDS } from '../rpg';
 
-const SUPPLIES = new Set(['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet']);
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 type Source = 'container' | 'bag' | 'safe';
 /**
  * Whether a label fits on one line in the pixel face (16 px per CJK character, 8 per ASCII) inside an item box of
@@ -73,7 +73,7 @@ export class InventoryPanel {
     const ref = this.mode === 'loot' ? this.host.lootRef() : null, box = ref ? this.host.services.lootInventory(ref) : null;
     if (this.mode === 'loot' && !box) { this.host.close(); return; }
     if (this.selected && !this.item()) { this.selected = null; this.placement = null; }
-    const weight = this.weight(), limit = this.host.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
+    const weight = this.host.services.carriedWeight(), limit = this.host.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
     const container = this.mode === 'loot' && box ? `<section class="cs-inv-src"><h3>${esc(this.containerName())} <span>${box.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${this.grid(box, 'container')}<p class="cs-help">留在这里的物资仅保留至本局结束。</p></section>` : '';
     // docs/LOOTING.md: on a desktop your own gear is on the left and the source on the right; a phone keeps the source first.
     const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
@@ -122,7 +122,7 @@ export class InventoryPanel {
     const d = D.ITEMS[i.id], size = D.itemSize(i), carried = sel.source !== 'container';
     const btn = (label: string, action: string, extra = '') => `<button type="button" data-do="${action}" ${extra}>${label}</button>`;
     const actions = [
-      carried && SUPPLIES.has(i.id) ? btn('使用', 'inv-use') : '',
+      carried && SUPPLY_IDS.includes(i.id) ? btn('使用', 'inv-use') : '',
       sel.source === 'bag' && D.WEAPONS[i.id] && i.id !== 'knife' ? btn('装备主武器', 'inv-equip') : '',
       sel.source === 'container' ? btn('拿到背包', 'inv-quick') : btn(sel.source === 'safe' ? '放入背包' : '放入安全箱', 'inv-quick'),
       d.w !== d.h ? btn('旋转', 'inv-rotate') : '',
@@ -132,10 +132,6 @@ export class InventoryPanel {
     ].join('');
     const gun = !!D.WEAPONS[i.id] && i.id !== 'knife';
     return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${(d.weight * i.qty).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${gun && sel.source !== 'bag' ? '<p class="cs-sub">枪械先放入背包，再选中并装备主武器。</p>' : carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用。</p>'}`;
-  }
-  private weight() {
-    const l = this.host.session.loadout!, w = D.WEAPONS[l.weapon || 'knife'];
-    return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.host.magazine() : 0);
   }
 
   // --- actions ---
@@ -297,6 +293,3 @@ export class InventoryPanel {
     return { grid, cell, source: grid.dataset.grid as Source, x: Math.round((ghostLeft - r.left) / cell), y: Math.round((ghostTop - r.top) / cell) };
   }
 }
-
-/** First free top-left slot in `to`, merging into a compatible stack first, then trying rotation. */
-export const slot = firstAvailableSlot;

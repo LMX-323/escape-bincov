@@ -3,7 +3,9 @@ import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld, TrainingProgres
 import { RECIPES } from '../expansion-state';
 import { shopQuote, type ShopQuote, type ShopSource } from '../shop';
 import { itemArt } from './items';
-import { esc, gridHtml } from './grid';
+import { gridHtml } from './grid';
+import { esc } from '../html';
+import { SUPPLY_IDS } from '../rpg';
 
 export const btn = (label: string, act: string, cls = '', extra = '') => `<button class="${cls}" data-act="${act}" ${extra}>${label}</button>`;
 const kindName: Record<D.ItemKind, string> = { weapon: '武器', ammo: '弹药', medical: '医疗用品', food: '食品', part: '零件', valuable: '贵重物资', quest: '任务物品', accessory: '饰品' };
@@ -11,7 +13,6 @@ const occupied = (inv: D.Inventory) => inv.items.reduce((n, i) => n + D.ITEMS[i.
 const icon = (id: string, px = 32) => `<img class="ico" alt="" src="${itemArt(id)}" style="height:${px}px">`;
 const total = (s: HideoutSnapshot, id: string) => [s.profile.stash, s.profile.bag, s.profile.safe].reduce((n, inv) => n + D.count(inv, id), 0);
 /** Supplies the station can use on the spot (the Runtime decides whether each one does anything now). */
-export const SUPPLIES = ['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet'];
 
 /** Shop price text on the item's trading side: 买入 / 卖出 with the whole pack or stack, or 不可出售. */
 const quoteText = (q: ShopQuote) => q.total === null ? '不可出售' : `${q.side === 'buy' ? '买入' : '卖出'} ¥ ${q.total}`;
@@ -27,7 +28,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
   const acts = mode === 'gear' ? [
     gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
     d.kind === 'accessory' ? btn('佩戴', 'charm-equip', 'primary') : '',
-    SUPPLIES.includes(item.id) ? btn('使用', 'use') : '',
+    SUPPLY_IDS.includes(item.id) ? btn('使用', 'use') : '',
     source === 'stash' ? btn('放入背包', 'quick') : btn('放入仓库', 'quick'),
     btn(source === 'safe' ? '移回背包' : '放入安全箱', 'secure', gun && source === 'safe' ? 'primary' : ''),
     d.w !== d.h ? btn('旋转', 'rotate') : '',

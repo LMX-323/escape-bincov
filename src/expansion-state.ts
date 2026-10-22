@@ -2,7 +2,7 @@ import * as D from './domain';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
-import { inSpace, separation, traversable, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
+import { inSpace, separation, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
 
 export const EXPANSION_VERSION = 1;
 export const ATTRIBUTES = ['strength', 'constitution', 'technique'] as const;

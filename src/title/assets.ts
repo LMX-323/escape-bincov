@@ -49,4 +49,3 @@ export const titleImage = (name: LayerName) => decoded.get(name) ?? null;
 export const titleTextureCount = () => [...frames.values()].reduce((n, list) => n + list.length, 0);
 
 export const titleArtReady = () => !failure && decoded.size === Object.values(LAYERS).filter(layer => !layer.html).length;
-export const titleArtFailure = () => failure;

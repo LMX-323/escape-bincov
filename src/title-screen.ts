@@ -1,6 +1,6 @@
 import { uiIcon } from './art/symbols';
 
-// The menu is real HTML over the layered Phaser scene; nothing interactive is baked into art.
+// The menu is real HTML over the layered Pixi title scene; nothing interactive is baked into art.
 // The wordmark image arrives as the --title-wordmark CSS variable (src/title/assets.ts).
 export function titleScreen(options: { runs: number; extracts: number; motion: boolean; overlay: boolean; storageOK: boolean; resume: boolean; touch: boolean }) {
     const { runs, extracts, motion, overlay, storageOK, resume, touch } = options;

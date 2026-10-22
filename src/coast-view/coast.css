@@ -79,12 +79,6 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-panel h3 { margin: 4px 0; font-size: 16px; font-weight: 400; color: var(--cs-muted); }
 .cs-panel p { margin: 0 0 10px; }
 .cs-panel .cs-sub { color: var(--cs-muted); font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 18px; }
-.cs-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
-.cs-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.cs-items li { display: flex; align-items: center; gap: 6px; }
-.cs-items li span { flex: 1; }
-.cs-items button { padding: 0 8px; }
-.cs-items .cs-empty { color: var(--cs-muted); }
 .cs-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .cs-volume { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--cs-muted); }
 .cs-volume input { flex: 1; max-width: 220px; accent-color: var(--cs-accent); pointer-events: auto; }
@@ -100,7 +94,6 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 }
 @media (max-width: 900px), (max-height: 480px) {
   .cs-status { top: 6px; left: 8px; } .cs-bar { width: 84px; }
-  .cs-cols { grid-template-columns: 1fr; }
   .cs-panel { padding: 10px 12px; line-height: 20px; }
 }
 /* Inventory / loot panels reuse the original .grid/.item styles; only the layout around them lives here. */

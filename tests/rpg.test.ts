@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { newExpansion, derivedLimits } from '../src/expansion-state';
-import { shortage, trainingYield, advanceEffects, rpgMultipliers, advanceRaidBody, creditTraining, recordMotion, enemyDamage, useRpgItem, criticalChance } from '../src/rpg';
+import { shortage, trainingYield, advanceEffects, rpgMultipliers, advanceRaidBody, creditTraining, recordMotion, enemyDamage, useRpgItem, useRpgItemResult, SUPPLY_IDS, criticalChance } from '../src/rpg';
 import { prototypeRaid, prototypeWorld } from './fixtures/layered';
 
 const close = (actual: number, expected: number) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
@@ -82,4 +82,12 @@ test('暴击公式区分技巧和专注，不对中心命中作保证，最终�
     close(criticalChance(10, 0), .02); close(criticalChance(10, .5), .06); close(criticalChance(10, 1), .1);
     close(criticalChance(20, 1, .05), .165); close(criticalChance(40, 1, .2), .25);
     close(criticalChance(15, 1, .05), .1575);
+});
+
+test('the inventory supply list is exactly the set of items the use rule accepts', () => {
+    const state = raid();
+    for (const id of Object.keys(D.ITEMS)) {
+        const result = useRpgItemResult(state, id);
+        assert.equal(result.ok || result.reason !== 'not-supply', SUPPLY_IDS.includes(id), id);
+    }
 });

@@ -20,13 +20,14 @@ import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, 
 import type { LootTransfer } from '../loot';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
-import { InputState } from './input';
+import { InputState, inputKey } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
 import { Scope, lifecycle } from './scope';
 import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
 import { SampleSound } from './sound';
+import { esc } from '../html';
 
 export interface CoastServices {
   cancelStart(): void;
@@ -35,6 +36,11 @@ export interface CoastServices {
   useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
   equipItem(uid: string): MutationResult;
   dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
+  /**
+   * Carried kg, live, as the Runtime uses it for movement, overload and stamina (worn charm and loaded rounds
+   * included). The HUD and the inventory only format this value; they never re-derive it.
+   */
+  carriedWeight(): number;
   retrySave(): boolean;
   retrySettlement(): boolean;
   settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
@@ -53,7 +59,6 @@ const REASONS: Record<string, string> = {
 };
 /** A storage error arrives as the browser's own (translated) message; any other unknown code gets a plain sentence. */
 const reasonText = (reason: string) => REASONS[reason] ?? (/[\u4e00-\u9fff]/.test(reason) ? reason : '操作未完成。');
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const name = (id: string) => D.ITEMS[id]?.name ?? id;
 type Outro = 'died' | 'extract' | 'timeout' | 'abandon' | 'failed';
 const OUTRO_TEXT: Record<Outro, string> = { died: '你倒下了', extract: '撤离成功', timeout: '行动超时', abandon: '已放弃行动', failed: '行动失败' };
@@ -446,8 +451,10 @@ export class CoastSampleHost {
   private wire() {
     const s = this.scope, canvas = this.app.canvas, panel = this.q('[data-panel]');
     s.on(window, 'keydown', e => {
-      if (/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)) return;
-      const k = e.key.toLowerCase();
+      const k = e.key.toLowerCase(), target = e.target as HTMLElement;
+      // A form control (the map's exit list, the volume slider, the split count) keeps its typing; Esc, Tab and M leave it
+      // and follow the panel rules below, as in the yard, so a focused control never traps an open map or pause.
+      if (/INPUT|TEXTAREA|SELECT/.test(target.tagName)) { if (!['escape', 'tab', 'm'].includes(k)) return; target.blur(); }
       if (['tab', ' ', 'escape'].includes(k)) e.preventDefault();
       if (e.repeat) return;
       if ((this.panel === 'inventory' || this.panel === 'loot') && this.inv.key(k)) return;
@@ -456,9 +463,9 @@ export class CoastSampleHost {
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
       if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
-      this.input.key(e.key, true);
+      this.input.key(inputKey(e), true);
     });
-    s.on(window, 'keyup', e => this.input.key(e.key, false));
+    s.on(window, 'keyup', e => this.input.key(inputKey(e), false));
     s.on(canvas, 'contextmenu', e => e.preventDefault());
     // A touch screen with a mouse (or a tablet): a finger switches to the touch controls, the mouse or wheel back, except
     // in the phone layout, which always plays by touch.
@@ -514,7 +521,6 @@ export class CoastSampleHost {
     });
     s.on(this.q('[data-pause]'), 'click', () => { if (!this.panel) this.pause(); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
-    s.on(this.q('[data-quests]'), 'toggle', () => { this.questsOpen = (this.q<HTMLDetailsElement>('[data-quests]')).open; });
     // A drop that re-renders the grid removes the press target, so the browser may send no trailing click: every new press clears the suppression.
     s.on(panel, 'pointerdown', e => { this.suppressClick = false; if (this.panel === 'inventory' || this.panel === 'loot') this.inv.pointerDown(e); });
     s.on(panel, 'click', e => {
@@ -531,7 +537,6 @@ export class CoastSampleHost {
     });
   }
   private suppressClick = false;
-  private questsOpen = false;
 
   private sticks = new Map<number, { kind: 'move' | 'aim'; ox: number; oy: number }>();
   private touchStart(e: PointerEvent) {
@@ -667,8 +672,14 @@ export class CoastSampleHost {
       case 'pause-back': this.showPause(); break;
       case 'abandon': this.setPanel('pause', '<h2>放弃行动？</h2><p>放弃按撤离失败结算：背包物资和主武器丢失，安全箱保留。</p><div class="cs-row"><button type="button" data-do="abandon-yes">确认放弃</button><button type="button" data-do="resume">继续行动</button></div>', '放弃行动'); break;
       case 'abandon-yes': this.services.abandon(); break;
-      // Saved while held upright: the panel turns into the rotate notice, and 继续 comes back once the phone is landscape.
-      case 'retry-save': if (this.services.retrySave()) { this.lastRejected = ''; this.toast('已保存。'); if (this.upright()) this.showPause(); else this.resume(); } else this.toast('仍然无法保存。', true); break;
+      // A successful retry resumes the Runtime. Held upright or with the picture lost, the raid pauses again at once (the
+      // guard resume() keeps) and the panel turns into the rotate or context-lost notice; 继续 comes back with landscape.
+      case 'retry-save':
+        if (this.services.retrySave()) {
+          this.lastRejected = ''; this.toast('已保存。');
+          if (this.contextLost || this.upright()) { this.runtime.pause(this.contextLost ? 'context-lost' : 'overlay'); this.showPause(); } else this.resume();
+        } else this.toast('仍然无法保存。', true);
+        break;
       case 'backup': this.exportBackup(); break;
       case 'retry-settlement': this.services.retrySettlement(); this.refreshEnding(); break;
       case 'close': this.closePanel(true); break;
@@ -855,7 +866,7 @@ export class CoastSampleHost {
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';
     let weight = '';
     // A no-break space keeps the number and its unit together when the line wraps, as the original weight readout did.
-    if (l) { const w = D.WEAPONS[l.weapon || 'knife']; weight = `${(D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * h.weapon.mag : 0)).toFixed(1)}\u00a0kg`; }
+    if (l) weight = `${this.services.carriedWeight().toFixed(1)}\u00a0kg`;
     this.q('[data-state]').textContent = `${status}　${weight}`;
     // Short screens hide the routine body line; a bleed or pollution warning keeps it.
     this.q('[data-state]').classList.toggle('calm', !h.bleeding && h.pollution <= 10);

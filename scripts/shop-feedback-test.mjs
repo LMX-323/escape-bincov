@@ -5,8 +5,9 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { stepFilter } from './step-filter.mjs';
 const option = (key, fallback) => process.argv.find(a => a.startsWith(`--${key}=`))?.slice(key.length + 3) ?? fallback;
-const cpuRate = Number(option('cpu-rate', '1')), only = option('only', '').split(',').filter(Boolean);
+const cpuRate = Number(option('cpu-rate', '1')), filter = stepFilter(), only = filter.prefixes ?? [];
 assert.ok(Number.isFinite(cpuRate) && cpuRate >= 1 && cpuRate <= 24, 'cpu-rate must be between 1 and 24');
 const html = await readFile(option('html', 'dist/index.html'), 'utf8'), out = resolve(option('out', 'test-results/shop-feedback'));
 await mkdir(out, { recursive: true });
@@ -107,7 +108,7 @@ async function doubleTap({ x, y, uid }, { inputGapMs, blockSecondUpMs = 0 } = {}
   return trace;
 }
 async function check(name, fn) {
-  if (only.length && !only.some(prefix => name.startsWith(prefix))) return;
+  if (!filter.selects(name)) return;
   const row = { name }; report.checks.push(row);
   currentCheck = row;
   try { row.detail = await fn(); assert.deepEqual(errors, []); row.status = 'passed'; }
@@ -318,5 +319,5 @@ try {
     assert.equal(await raw(), before, 'quick moves only change the cart, never the save');
     return { rows };
   });
-  assert.ok(report.checks.length, '--only must match at least one check');
+  assert.deepEqual(filter.problems(report.checks.length), [], '--only: every prefix must match a check and at least one check must run');
 } finally { try { await throttleSession?.detach(); } finally { await context?.close(); await browser.close(); } }

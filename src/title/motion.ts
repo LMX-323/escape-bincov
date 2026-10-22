@@ -1,4 +1,4 @@
-/** Title-scene motion rules without Phaser or DOM dependencies, so they can be unit tested. */
+/** Title-scene motion rules without renderer or DOM dependencies, so they can be unit tested. */
 
 /** Largest frame step the scene will integrate; tab switches and stalls never fast-forward. */
 export const MAX_STEP_MS = 50;

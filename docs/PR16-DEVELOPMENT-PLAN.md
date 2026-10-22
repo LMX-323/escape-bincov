@@ -31,7 +31,7 @@
 | 当前 session=3、profile=2、raid=2，主键名仍为 `escape-bincov.session.v2` | 主键后缀不代表封套版本；只改 worldVersion 无法保护基地 RPG 数据 | M0 |
 | `validateCheckpoint` 会将兼容的 coast-v1 归一为 coast-v2 并保留空容器 | 必须先保存旧世界生成与恢复语义，再引入多图分流；不能把旧局重生成为新世界 | M0 |
 | [session.ts](../src/session.ts) 已有单记录提交与整局快照回滚，但 PlayerVitals 仅四项，pendingSettlement 仅档案候选 | 新身体状态、训练、队列、时间游标必须进入同一候选及备份，避免局部回滚 | M0/M3/M5 |
-| [game.ts](../src/game.ts) 弹丸、扣血和尸体生成直接操作 Phaser；掉落与击杀次序有关 | 抽出本任务需要的纯战斗结算内核，正常战斗和离层结算共用；冻结层不创建渲染对象参与计算 | M0/M2/M4 |
+| [game.ts](https://github.com/xuys2025/escape-bincov/blob/225248b1aa21f326b9057dfa393b3eb61f3c9b11/src/game.ts) 弹丸、扣血和尸体生成直接操作 Phaser；掉落与击杀次序有关 | 抽出本任务需要的纯战斗结算内核，正常战斗和离层结算共用；冻结层不创建渲染对象参与计算 | M0/M2/M4 |
 | [domain.ts](../src/domain.ts) 物品 UID 使用 Date.now 与模块序号 | 仅恢复 RNG 不足以保证重试产生相同实体；新候选生成需稳定 ID 分配或保留原候选 | M0/M2 |
 | [ui.ts](../src/ui.ts) 的 confirm-abandon 调用 `finish('death')` | RPG 中放弃保留实际状态、死亡低值返站，必须区分终局原因；失败物资规则仍共用 | M0/M3 |
 | 出击检查点当前重置为满生命/耐力、零污染/流血 | RPG 出击要从已保存身体状态创建；旧局兼容另测 | M3/M5 |
