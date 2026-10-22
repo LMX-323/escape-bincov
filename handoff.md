@@ -3,6 +3,7 @@
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
 - 2026-10-22 · [改枪任务拆分与排期](docs/gunsmith/TASKS.md)（#28）：维护者要求把改枪规划拆成可执行小任务并排期，#28 合入表示已排期；同步 main（`8ef783f`、`2bac4fb`），按当前代码核对计划（Phaser 已删、射击基础由 #39 完成、物品没有实例数据、商店没有轮换），修正过时描述和失效链接。M0–M5 共 55 项任务、4 个实现 PR，预计 12-15 完成；M0 已由子代理在 `feat/gunsmith` 开工，进度在 [#80](https://github.com/xuys2025/escape-bincov/issues/80)。本 PR 只改文档。
+- 2026-10-22 · [PR #40 暴击与 Perk 排期](docs/tasks/critical-perk-plan.md)：初核 main `8ef783f`，交付前同步 #39 已合入的 `2bac4fb`；[Issue #77](https://github.com/xuys2025/escape-bincov/issues/77) 承接 CP-T01～T10。可实施，最高风险为严格迁移、旧行动和弹丸快照；控枪/屏息接口仍待接入。沿用原 fork 分支并正常合入 main，保留双方历史；仅六份文档，功能/迁移/真人平衡待实施。维护者授权检查通过后合并设计稿；准确 head、静态检查及 CI 见 PR，#77 保持开放。
 - 2026-10-22 · [PR #39 射击系统改造](docs/SHOOTING-SYSTEM-REWORK.md)：S0–S5 与试枪场都已实现（规则 `src/shooting.ts`，扳机在 `CoastRaidRuntime.pull` / `runTrigger`，表现在 `hud.aim` 与宿主准星，试枪场 `src/range/`）；实验台 `tests/shooting-bench.test.ts`，浏览器 `test:shooting`、`test:range`。维护者的决定（含选定“稳定”参数以突出改枪）、阶段状态、S1 测量与兼容方案见任务页；维护者 2026-10-22 试玩认可。
 - 2026-10-22 · [PR #65 Runtime 缺口收尾](docs/tasks/runtime-gaps.md#收尾与同步)：同步 main（`a4f463a`、`c6ad042`），冲突只在生成物和记录。Runtime 接口（`07d3efc`）与前端接入（`a678142`：附近逐件列表、门被占提示、挂载/换层后重对时）均已完成；收尾时修了展开「附近」后来源列表压住 E 提示的问题，给门被占提示补了 buildings 回归，并修了矮屏换尺寸后画面最多 16 帧才再下移一次的旧竞态（首次 CI 里 qol-expansion 失败的根因）。本地 479/479 单测、13 套浏览器检查通过，coast-sample 只剩 #61 登记的 W13。合入后 #60 的 Q-E02 B 段可开工。
 - 2026-10-22 · [#61 CI：主机包缓存与 lavapipe](docs/CI.md#浏览器-job-的主机环境字体chromium-与渲染器)：浏览器 job 不再经过 apt 镜像（字体固定版本走缓存），WebGL 改用 lavapipe 并在套件前检查渲染器；只改 CI，游戏、断言与生成物不变。实测结果与对照见承接 PR。
@@ -19,6 +20,18 @@
 
 <details>
 <summary>历史交接全文（按需查证，保留原文）</summary>
+
+## 2026-10-12 · 暴击与Perk方案落实（仅设计文档）
+
+维护者批准本会话方案：取消暴击与瞄准部位相关性，暴击按1减各来源未暴击概率之积合并，30%与30%得到51%，上限100%；三项永久属性15/20/25/30级各档独立二选一，满级12项；屏息每秒独立10%、3秒30%，开枪清空；基地500现金重置一项属性全部perk。
+
+从最新main `64505046fb737af195bc808d2f8e4274df21cf24` 建隔离分支 `docs/critical-perk-design`。更新[RPG规则](docs/RPG-SYSTEM-DESIGN.md)、新增[24项perk及25项未来验收规格](docs/CRITICAL-PERK-DESIGN.md)，同步README导航与任务清单。原#13/#16历史保留；其旧中心暴击公式已被本次新行动目标取代，但当前代码和旧行动兼容仍有旧规则。本次未实现新玩法。
+
+已核对相关开放PR的实际正文：#39承接射击基础、#28承接改枪目录；本次不改其分支、不派工，控枪perk未来接入独立后坐契约，不能靠缩小霰弹散布冒充后坐减免。新旧行动边界、弹丸快照、付费重置回滚及严格导入均为待实现要求，不代表已通过迁移验收。
+
+本地初次fetch因沙箱权限失败，获准重试后同步成功；GitHub连接器也核对同一主线SHA。原工作目录的handoff及未跟踪文件保留，全部编辑在独立工作树。Windows / Node 24.19.0实际完成58个相对链接与锚点、31张表/273行、24个候选标识/12个节点、25项未来验收编号、26项数值复算和11项源码事实检查，均通过；历史交接原文完整保留，git diff --check与仅五份文档范围检查通过。本地验证脚本与结果保存在忽略的test-results目录。
+
+仅文档导航和设计变化，不改正式游玩说明、源码、测试、版本号、存档协议、HTML/ZIP或发布清单；pnpm test、pnpm package和浏览器测试本地未运行，纯设计无需游戏打包。未来CP验收、真人/真机和平衡均未运行。PR自动CI按对应提交另行核对，不能以文档公式通过代替功能实现；本轮不合并、不发布。
 
 ## 2026-10-16 · 2.5D 收尾：旧行动在 2.5D 上打完，去掉 Phaser（`feat/2-5d-closeout`）
 

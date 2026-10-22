@@ -12,13 +12,19 @@
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入。2026-10-22：浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe，分支 `ci/setup-and-renderer`（承接 PR 见 #61，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)）；之后按新耗时重新分组（长套件的安全拆法已调研），及手动套件是否进 CI 的评估 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
 | 射击与改枪 | [#80 改枪进度](https://github.com/xuys2025/escape-bincov/issues/80) · [任务与排期](gunsmith/TASKS.md) · [射击说明](SHOOTING-SYSTEM-REWORK.md) | #39 射击基础已合入（`2bac4fb`，维护者选定“稳定”手感）。#28 改枪规划 2026-10-22 拆成小任务、排期后合入；M0 已开工（分支 `feat/gunsmith`），分 4 个实现 PR，预计 12-15 完成，进度只在 #80 更新 |
-| 暴击/Perk 方案 | [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) | 与 main 冲突；方案与实现状态以 PR 为准 |
+| 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 已排期、功能待实现；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。#39 已合入 `2bac4fb`，战斗基础前置已满足；#40 只交付设计与排期，合并不关闭 #77 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
 
 开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
 
 <details>
 <summary>历史交接与旧任务快照（按需查证，保留原文）</summary>
+
+## 2026-10-12 · 暴击与三属性Perk修订（独立设计文档）
+
+维护者已批准方案并要求提交设计文档PR，由 `docs/critical-perk-design` 承接：[专项规格](CRITICAL-PERK-DESIGN.md)、[RPG总设计](RPG-SYSTEM-DESIGN.md)。基于main `64505046fb737af195bc808d2f8e4274df21cf24`：取消新行动暴击与命中部位相关性，按未暴击概率乘法合并、上限100%；永久15/20/25/30级独立二选一，24候选/12节点；屏息每秒独立10%、3秒30%，基地500现金重置单属性perk。
+
+本次只交付文档、公式与兼容/验收要求，不启动代码实现或新增派工。[#39](https://github.com/xuys2025/escape-bincov/pull/39)承担射击/真实后坐基础，[#28](https://github.com/xuys2025/escape-bincov/pull/28)承担完整改枪目录，本规格的控枪perk将来接入其正式契约；不改动两者分支或已有范围。原RPG #13/#16已结束，当前没有同目标perk设计承接PR，因此建立独立文档交付。完成条件为规则/链接/公式/范围核对、PR检查及维护者审阅；功能实现、迁移和真人平衡后续另行授权，历史未测状态保留。
 
 ## 2026-10-22 · CI：主机包改走缓存，WebGL 改用 lavapipe（#61，`ci/setup-and-renderer`）
 
