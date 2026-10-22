@@ -34,14 +34,14 @@ CI 策略测试还守住三件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ## 八组分配
 
-各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **37** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3），以及 2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **38** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3），2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒），以及 #39 新增、排在 batch-2 末尾的 `test:shooting`（静止指针下瞄准不漂、开枪不动瞄准、枪口火光与曳光对齐枪管、贴墙与门角挡弹、隐藏房间不漏曳光、开火方式；本地约 75 秒。batch-2 在 2026-10-22 两次 main 运行中都约 14 分钟，是余量最大的一组）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
 
 [scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
 
 | 组 | 顺序执行的完整命令 |
 | --- | --- |
 | batch-1 | `test:browser`、`test:qol-expansion`、`test:station-tier2` |
-| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages` |
+| batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages`、`test:shooting` |
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
 | batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
 | batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux` |
