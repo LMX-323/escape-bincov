@@ -2,10 +2,11 @@ import { loadPixelFont } from './font';
 import { loadTitleArt } from './title/art';
 import { prepareTitleRenderer } from './title/scene';
 import { app, audio, saveSession, hideoutRuntime } from './app';
-import { initSave, installInventoryDrag, closeOverlay, setOverlay, setPhoneLayout, persist, toast, render, startPreparedHideoutRaid } from './ui';
+import { initSave, installInventoryDrag, closeOverlay, setOverlay, setPhoneLayout, persist, render, startPreparedHideoutRaid } from './ui';
+import { toast } from './toast';
 import { SAVE_KEY } from './domain';
 import { SESSION_KEY, ownSession } from './recovery-store';
-import { defaultWorld } from './coast-view/sample';
+import { defaultWorld } from './raid-areas';
 import { showWebglRequired, webglSupported } from './webgl';
 import { showScreen, titleScene } from './screen';
 
