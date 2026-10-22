@@ -76,13 +76,6 @@ export function outline(src: HTMLCanvasElement, color = '#16140f'): HTMLCanvasEl
   return c;
 }
 
-/** Pure-white silhouette (for highlight rims). */
-export function silhouette(src: HTMLCanvasElement, color = '#ffffff'): HTMLCanvasElement {
-  const { c, g } = canvas(src.width, src.height);
-  g.drawImage(src, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
-  return c;
-}
-
 /** Outline-only ring around opaque pixels (interaction highlight). */
 export function rim(src: HTMLCanvasElement, color = '#ffe2a0'): HTMLCanvasElement {
   const w = src.width + 2, h = src.height + 2, { c, g } = canvas(w, h);

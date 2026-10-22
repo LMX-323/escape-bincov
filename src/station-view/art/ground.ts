@@ -1,5 +1,5 @@
 import { H, POOLS, ROOMS, T, TRAINING_ZONE, W, floors, wallAt, type Floor } from '../layout';
-import { canvas, ditherRect, dot, hash, line, mix, rect, shade, speckle, type Ctx } from '../paint';
+import { canvas, ditherRect, dot, hash, line, rect, shade, speckle, type Ctx } from '../paint';
 
 /** Albedo of each floor. Values are "daylight" colours: the night lightmap multiplies them. */
 const BASE: Record<Floor, string> = {
@@ -161,6 +161,3 @@ function paintContactShadows(g: Ctx) {
   }
   for (const r of ROOMS) ditherRect(g, '#1c1b17', (r.x + 1) * T, (r.y + 1) * T, (r.w - 2) * T, 5, .35);
 }
-
-/** Floor colour mix used by the minimap and debug views. */
-export const floorTone = (f: Floor) => mix(BASE[f], '#000000', .2);

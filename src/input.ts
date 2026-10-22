@@ -1,4 +1,7 @@
-/** Device-independent intentions. No gameplay rules or renderer objects live here. */
+/**
+ * The Runtime's per-substep input frame and its foreground clock. Devices are read by coast-view/input.ts (InputState)
+ * and reach the Runtime as a RaidIntent; no gameplay rules or renderer objects live here.
+ */
 export type InputAction = 'reload' | 'heal' | 'primary' | 'knife' | 'interact';
 export interface InputFrame {
   x: number; y: number; sprint: boolean; aim: { x: number; y: number } | null;
@@ -6,88 +9,12 @@ export interface InputFrame {
   firePressed: boolean; fireHeld: boolean; interactHeld: boolean;
   actions: ReadonlySet<InputAction>; touch: boolean;
 }
-type Stick = { id: number; x: number; y: number; distance: number };
-const actionKeys: Record<string, InputAction> = { r: 'reload', q: 'heal', '1': 'primary', '2': 'knife', e: 'interact' };
-export class PlayerInput {
-  /** Enables phone controls/layout; keyboard and mouse remain available on every device. */
-  touch = false;
-  pointer = { x: 480, y: 270 };
-  private keys = new Set<string>();
-  private actions = new Set<InputAction>();
-  private sticks = new Map<'move' | 'aim', Stick>();
-  private mouseFire = false;
-  private pressed = false;
-  private precise = false;
-  private interaction: number | null = null;
-  private suppressedKeys = new Set<string>();
-  private suppressedButtons = new Set<number>();
 
-  key(key: string, down: boolean) {
-    key = key.toLowerCase();
-    if (!down) { this.suppressedKeys.delete(key); this.keys.delete(key); return; }
-    if (this.suppressedKeys.has(key)) return;
-    if (!this.keys.has(key) && actionKeys[key]) this.actions.add(actionKeys[key]);
-    this.keys.add(key);
-  }
-  mouse(button: number, down: boolean) {
-    if (!down) this.suppressedButtons.delete(button);
-    else if (this.suppressedButtons.has(button)) return;
-    if (button === 0) { if (down && !this.mouseFire) this.pressed = true; this.mouseFire = down; }
-    if (button === 2) this.precise = down;
-  }
-  press(action: InputAction) { this.actions.add(action); }
-  beginStick(kind: 'move' | 'aim', id: number): boolean {
-    if (this.sticks.has(kind) || [...this.sticks.values()].some(s => s.id === id)) return false;
-    this.sticks.set(kind, { id, x: 0, y: 0, distance: 0 });
-    return true;
-  }
-  moveStick(kind: 'move' | 'aim', id: number, x: number, y: number) {
-    const stick = this.sticks.get(kind);
-    if (!stick || stick.id !== id) return;
-    const distance = Math.min(1, Math.hypot(x, y)), length = Math.max(1, Math.hypot(x, y));
-    Object.assign(stick, { x: x / length, y: y / length, distance });
-  }
-  interact(id: number) {
-    if (this.interaction !== null) return false;
-    this.interaction = id; this.press('interact'); return true;
-  }
-  release(id: number) {
-    for (const [kind, stick] of this.sticks) if (stick.id === id) this.sticks.delete(kind);
-    if (this.interaction === id) this.interaction = null;
-  }
-  /** Panel transitions suppress held physical controls until their release events arrive. */
-  suppressHeld(extraKey?: string) {
-    for (const key of this.keys) this.suppressedKeys.add(key);
-    if (extraKey) this.suppressedKeys.add(extraKey.toLowerCase());
-    if (this.mouseFire) this.suppressedButtons.add(0);
-    if (this.precise) this.suppressedButtons.add(2);
-    this.clear();
-  }
-  clear() {
-    // Keep suppression across the UI's input reset; only a release rearms that control.
-    this.keys.clear(); this.actions.clear(); this.sticks.clear();
-    this.mouseFire = this.pressed = this.precise = false; this.interaction = null;
-  }
-  read(enabled = true): InputFrame {
-    const move = this.sticks.get('move'), aim = this.sticks.get('aim');
-    const movingStick = this.touch && move && move.distance > .18 ? move : null;
-    const aimingStick = this.touch && aim && aim.distance > .18 ? aim : null;
-    const frame: InputFrame = {
-      x: movingStick ? movingStick.x : Number(this.keys.has('d')) - Number(this.keys.has('a')),
-      y: movingStick ? movingStick.y : Number(this.keys.has('s')) - Number(this.keys.has('w')),
-      sprint: movingStick ? movingStick.distance >= .9 : this.keys.has('shift'),
-      aim: aimingStick ? { x: aimingStick.x, y: aimingStick.y } : null,
-      pointer: { ...this.pointer }, precise: !aimingStick && this.precise,
-      firePressed: this.pressed,
-      fireHeld: !!aimingStick && aimingStick.distance >= .62,
-      interactHeld: (this.touch && this.interaction !== null) || this.keys.has('e'),
-      actions: new Set(this.actions), touch: this.touch,
-    };
-    this.actions.clear(); this.pressed = false;
-    if (!enabled) { frame.x = frame.y = 0; frame.sprint = frame.precise = frame.firePressed = frame.fireHeld = frame.interactHeld = false; frame.aim = null; frame.actions = new Set(); }
-    return frame;
-  }
-}
+/** A frame with every control released: no movement, aim, fire, interaction or command. */
+export const idleFrame = (): InputFrame => ({
+  x: 0, y: 0, sprint: false, aim: null, pointer: { x: 480, y: 270 }, precise: false,
+  firePressed: false, fireHeld: false, interactHeld: false, actions: new Set(), touch: false,
+});
 
 /** Wall-clock foreground time; simulation uses bounded substeps, never a clamped clock. */
 export class ActiveClock {

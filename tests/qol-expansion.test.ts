@@ -23,14 +23,14 @@ test('RPG shop keeps cloth and medicines in atomic carts; classic shop cannot bu
         const cart = Shop.createCart(f.state.save, merchant, true), item = cart.catalog.items.find(i => i.id === id)!;
         assert.ok(item); assert.equal(cart.catalog.items.length, Shop.merchantStock(merchant, true).length);
         assert.ok(Shop.moveShopItem(cart, 'merchant', 'buy', item.uid, 0, 0));
-        assert.equal(Shop.settleCart(structuredClone(f.state.save), cart), false);
+        assert.equal(Shop.settleCartResult(structuredClone(f.state.save), cart).ok, false);
         const before = f.bytes, cash = f.state.save.cash, count = D.count(f.state.save.stash, id);
-        f.deny(true); assert.equal(f.session.mutate(() => Shop.settleCart(f.state.save, cart, true)), 'save-failed');
+        f.deny(true); assert.equal(f.session.mutate(() => Shop.settleCartResult(f.state.save, cart, true).ok), 'save-failed');
         assert.equal(f.bytes, before); assert.equal(f.state.save.cash, cash); assert.equal(D.count(f.state.save.stash, id), count);
-        f.deny(false); assert.equal(f.session.mutate(() => Shop.settleCart(f.state.save, cart, true)), 'committed');
+        f.deny(false); assert.equal(f.session.mutate(() => Shop.settleCartResult(f.state.save, cart, true).ok), 'committed');
         assert.equal(f.state.save.cash, cash - D.ITEMS[id].buy); assert.equal(D.count(f.state.save.stash, id), count + 1);
         assert.equal(decodeSession(f.bytes).expansion!.version, 2);
-        assert.equal(f.session.mutate(() => Shop.settleCart(f.state.save, cart, true)), 'rejected');
+        assert.equal(f.session.mutate(() => Shop.settleCartResult(f.state.save, cart, true).ok), 'rejected');
     }
 });
 

@@ -3,7 +3,8 @@ import type { Attribute, Facility, HideoutRuntime, HideoutSnapshot, Merchant, Re
 import type { Scope } from '../coast-view/scope';
 import { firstShopCell, questUses } from '../shop';
 import { STATIONS, type Station, type StationId } from './layout';
-import { GridDrag, esc, type DragHooks } from './grid';
+import { GridDrag, type DragHooks } from './grid';
+import { esc } from '../html';
 import * as P from './panels';
 import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 

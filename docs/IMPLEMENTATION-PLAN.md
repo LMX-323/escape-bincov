@@ -115,7 +115,7 @@
 
 ## 3. 验证与完成判据
 
-现有命令以 [开发手册验证矩阵](AGENT-HANDBOOK.md#6-按风险验证) 和实际 package scripts 为准：
+现有命令以 [开发手册验证矩阵](AGENT-HANDBOOK.md#4-按风险验证) 和实际 package scripts 为准：
 
 ```bash
 pnpm test

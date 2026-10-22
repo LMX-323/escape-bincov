@@ -257,7 +257,7 @@ function retreat(g: G, t: number, ms: number, o: PaintOptions) {
   person(g, 120 - back, 336, 118, K.wang, K.wangL, 'walk', o.calm ? 0 : t / 120 + 2, -1);
 }
 
-function face(g: G, t: number, ms: number, o: PaintOptions) {
+function face(g: G, t: number, ms: number, _o: PaintOptions) {
   const up = t / ms > 0.45, lift = up ? 0 : 30;
   rect(g, '#030405', 0, 0, W, H);
   torchlit(g, 320, 180, 240, 200, () => {

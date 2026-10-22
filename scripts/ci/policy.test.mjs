@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { browserGroups, choosePlan, fingerprint, fullyTested, isDocumentation } from './policy.mjs';
 import { checkDocumentation, localLinks } from './check-docs.mjs';
-import { allSuiteIds, oldClientGroup, suitesForGroup } from './browser-suites.mjs';
+import { allSuiteIds, manualSuites, oldClientGroup, suitesForGroup } from './browser-suites.mjs';
 
 const entry = (path, sha = 'a'.repeat(40), mode = '100644', type = 'blob') => ({ path, sha, mode, type });
 const source = entry('src/session.ts'), doc = entry('docs/MAIN-STORY.md');
@@ -124,7 +124,7 @@ test('schedule preserves every baseline browser command exactly once and runs th
   const expected = ['browser', 'desktop-input', 'shop-drag', 'asset-load', 'hud-release', 'coast-render-targets', 'shop-feedback',
     'issue26-station', 'issue26-inventory', 'issue26-spatial', 'ui', 'coast-animation', 'tactical', 'art', 'opening',
     'title', 'title-water', 'save-browser', 'expansion', 'buildings', 'qol-expansion', 'systems', 'station-tier1', 'station-tier2',
-    'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable', 'raid-default'];
+    'station-relief', 'station-reset', 'mall-passages', 'mall-landing', 'mall-sample', 'loot', 'loot-target', 'qol', 'mobile', 'mobile-ux', 'portable', 'raid-default', 'hideout'];
   assert.deepEqual([...allSuiteIds].sort(), expected.sort());
   assert.equal(new Set(allSuiteIds).size, expected.length);
   const scripts = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).scripts;
@@ -147,6 +147,15 @@ test('schedule preserves every baseline browser command exactly once and runs th
   assert.match(browser, /name: browser-timing-\$\{\{ matrix.group \}\}-attempt-\$\{\{ github.run_attempt \}\}/);
   assert.match(browser, /path: test-results\/ci-timing\/\$\{\{ matrix.group \}\}-attempt-\$\{\{ github.run_attempt \}\}\.json/);
   assert.match(yaml, /name: Require every scheduled suite to have passed\s+if: needs.build.outputs.browser_required == 'true'\s+run: node scripts\/ci\/verify-timings\.mjs/);
+});
+
+test('every package test script is scheduled in CI or registered as a manual suite with its reason', () => {
+  const scripts = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).scripts;
+  const packaged = Object.keys(scripts).filter(name => name.startsWith('test:')).map(name => name.slice(5)).sort();
+  const manual = manualSuites.map(s => s.id);
+  assert.deepEqual([...allSuiteIds, ...manual].sort(), packaged, 'each test:* script is either scheduled or manual');
+  assert.equal(new Set([...allSuiteIds, ...manual]).size, allSuiteIds.length + manual.length, 'no suite is both scheduled and manual');
+  for (const s of manualSuites) { assert.equal(s.command, `test:${s.id}`); assert.ok(s.reason.length > 30, `${s.id} needs a reason`); }
 });
 
 test('actual shell gate rejects missing policy, failed build and unintended skipped/cancelled browsers', () => {

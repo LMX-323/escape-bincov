@@ -92,7 +92,6 @@ export function mallWallFace(m: DressMap, x: number, y: number): string[] {
     if (BACK_OF_HOUSE.has(own) || BACK_OF_HOUSE.has(south)) return [id(hash(x, y, 7) < .5 ? 'wall-service-a' : 'wall-service-b'), id('wall-service-a')];
     return [id('wall-facade-int-a'), id('wall-service-a')];
 }
-export const wallHasEmit = (asset: string) => EMITS.has(asset.replace(/^mall-|-v1$/g, ''));
 
 /**
  * How a wall cell is drawn. F1's map edge is the blockade hoarding. On F2 everything outside the building is the drop

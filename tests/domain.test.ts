@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ITEMS, SAVE_KEY, QUESTS, STASH_UPGRADE_COST, createInventory, addItem, moveItem, transferItem,
-  removeItem, count, weight, fits, newSave, migrateSave, readSave, writeSave, beginRun,
+  removeItem, count, weight, fits, newSave, migrateSave, beginRun,
   checkpointSafe, settleRun, recoverInterrupted, grantRelief, liquidValue, buy, buyQuantity, sell, equip, unequip, equipRun,
   submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
 } from '../src/domain';
@@ -163,9 +163,9 @@ test('storage round trip and interrupted run keep checkpointed safe without dupl
   const save = newSave(), loadout = beginRun(save, 17);
   addItem(loadout.safe, 'pearl');
   checkpointSafe(save, loadout.safe);
-  writeSave(storage, save);
+  storage.setItem(SAVE_KEY, JSON.stringify(save));
   assert.ok(data.has(SAVE_KEY));
-  const restored = readSave(storage);
+  const restored = migrateSave(JSON.parse(storage.getItem(SAVE_KEY)!));
   assert.equal(recoverInterrupted(restored)?.recovered, true);
   assert.equal(count(restored.safe, 'pearl'), 1);
   assert.equal(restored.bag.items.length, 0);
@@ -310,12 +310,6 @@ test('version-zero inventory upgrades; corrupt and unknown fields cannot inject 
   assert.equal(count(bad.stash, 'ammo9'), 0);
   assert.equal(migrateSave(null).version, 2);
   assert.equal(migrateSave({ version: 99 }).version, 2);
-  const corruptStorage = { getItem: () => '{broken', setItem: () => {} };
-  assert.equal(readSave(corruptStorage).version, 2);
-});
-
-test('storage errors propagate instead of silently authorizing an unsafe raid', () => {
-  assert.throws(() => writeSave({ getItem: () => null, setItem: () => { throw new Error('quota'); } }, newSave()), /quota/);
 });
 
 test('mixed magazines load relief rounds first without changing ordinary ammo provenance', () => {

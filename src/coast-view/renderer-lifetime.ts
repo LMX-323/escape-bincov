@@ -41,8 +41,8 @@ export function graphicsProgram(maxTextures: number): GlProgram {
 }
 
 export class KeptProgramGraphicsAdaptor extends GlGraphicsAdaptor {
-  static extension = GlGraphicsAdaptor.extension;
-  contextChange(renderer: Renderer) {
+  static override extension = GlGraphicsAdaptor.extension;
+  override contextChange(renderer: Renderer) {
     const maxTextures = renderer.limits.maxBatchableTextures;
     const uniforms = new UniformGroup({
       uColor: { value: new Float32Array([1, 1, 1, 1]), type: 'vec4<f32>' },
@@ -54,7 +54,7 @@ export class KeptProgramGraphicsAdaptor extends GlGraphicsAdaptor {
     old?.destroy(false);
   }
   /** The program is the page's, shared by every renderer: release the Shader only. */
-  destroy() {
+  override destroy() {
     this.shader?.destroy(false);
     this.shader = null as unknown as Shader;
   }

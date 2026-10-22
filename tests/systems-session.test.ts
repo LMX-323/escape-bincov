@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { createSessionState, SaveSession } from '../src/session';
 import { decodeSession, SESSION_KEY } from '../src/recovery-store';
-import { buildFacility, enqueueProduction, claimProduction } from '../src/base';
+import { buildFacility, enqueueProduction } from '../src/base';
 import { applyAward } from '../src/reputation-luck';
 import { changeLayer } from '../src/layer-transition';
 import { MALL_WORLD } from '../src/mall-world';
