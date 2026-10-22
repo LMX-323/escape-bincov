@@ -10,7 +10,7 @@
  * still a pristine fresh start never replaces that slot, so resetting twice cannot destroy the real pre-reset copy.
  */
 import * as D from './domain';
-import { ATTRIBUTES, FACILITIES, newExpansion } from './expansion-state';
+import { ATTRIBUTES, FACILITIES, newExpansion, upgradeToRpg } from './expansion-state';
 import { decodePortableBackup, encodeRecoveryBackup } from './save-backup';
 import type { SessionRecord } from './recovery-store';
 import type { HideoutRuntime, Result } from './hideout-runtime/contract';
@@ -22,9 +22,9 @@ type CopyStorage = () => D.StorageLike;
 /** A complete version-4 record equal to a new player's, keeping only the volume setting. */
 export function freshStartRecord(volume: number, now: number): SessionRecord {
   const profile = D.newSave(); profile.settings.volume = volume;
-  // Same station-boundary upgrade as SaveSession.enableRpg: the fresh record is already a v2 expansion.
+  // The fresh record is already past the station-boundary upgrade, as after SaveSession.enableRpg.
   const expansion = newExpansion(now);
-  expansion.version = 2; expansion.charm = null; expansion.awards = []; expansion.base.cursor = Math.max(expansion.base.cursor, now);
+  upgradeToRpg(expansion, now);
   return { format: 'escape-bincov-session', version: 4, revision: 1, savedAt: now, profile, raid: null, terminal: null,
     legacyBackup: null, migrationBackup: null, expansion, systemsBackup: null };
 }

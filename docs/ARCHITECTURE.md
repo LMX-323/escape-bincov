@@ -61,7 +61,7 @@ profile/已结算备份版本、session/完整备份封套版本、`ExpansionSta
 
 旧 `coast-v1` 检查点继续恢复原地面物资；带容器的 `coast-v2` 保存稳定容器/行动身份，恢复时不重生掉落。没有检查点的历史旧行动仍沿用中断失败规则。新版刷新恢复最近成功检查点，不等于恢复尚未写入的内存进度。
 
-导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
+导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验。备份文件、会话里的 profile、旧键和经典行动的携带物共用 [profile-codec.ts](../src/profile-codec.ts) 的 profile/物品栏规则（1 MiB 上限对嵌入的 profile 按紧凑 JSON 计），`checkpoint`、`recovery-store`、`save-backup` 只单向调用它；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
 
 `freshStartRecord` 也是完整 v4 新档构造入口，仅保留音量；`startOver` 通过同一确认导入路径替换主档。重开前的本机恢复副本使用单独的 `escape-bincov.reset-copy.v1` 槽位，不是第二个正在运行的会话。新增持久字段必须同时检查新建、升级、导入、重开、结算候选和两执行器捕获/恢复。
 

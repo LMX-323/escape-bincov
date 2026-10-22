@@ -2,6 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-22 · [#60 Q-E05 存档 codec 去环](docs/tasks/quality-entropy.md#q-e05-存档-codec-去环)：严格的 profile/物品栏规则和校验原语抽到 `src/profile-codec.ts`，checkpoint、recovery-store、save-backup 单向调用它；expansion v1→v2 升级合成 `upgradeToRpg`。10 万用例行为对照：接受/拒绝与输出逐例一致，只有分层行动里 `null` 物品的报错从 JS TypeError 改为存档损坏提示。
 - 2026-10-22 · [#60 减熵第二批](docs/tasks/quality-entropy.md#第二批)：删死代码与只被测试使用的旧接口、合并重复实现、修好三个失效的 CI 外套件（hideout 进 CI），新增套件登记、源码健康与入口文档三道守卫；健康扫描确认的 10 个缺陷登记在 #60。
 - 2026-10-17 · [PR #66 敌人与尸体的 2.5D 角色图](https://github.com/xuys2025/escape-bincov/pull/66)：Sol P0+P1 接入，审阅经过与截图见 [说明](docs/enemy-art/README.md)。
 - 2026-10-17 · [地图敌人详细设定](docs/ENEMY-DESIGN.md)：基于 main `345aff4`，分支 `docs/map-enemy-design`；按用户确认整理五大类、18 原型、十二规划区域及条件敌对规则。纯文档提案，源码/存档/素材/制品未改；与 #66 现有四类素材接入分开。链接、原型/字段/区域完整性及差异检查结果、准确 head 与 CI 见承接 PR 正文；本地不运行游戏测试或打包，设计合入不等于已实现。
