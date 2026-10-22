@@ -4,6 +4,8 @@ import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
 import { isMallWorld } from '../mall-world';
+import { rpgMultipliers } from '../rpg';
+import { coneOf, driftOf } from '../shooting';
 import type { CoastRaidRuntime } from './runtime';
 import type { ActorView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
 
@@ -108,14 +110,14 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
         const containerId = `corpse-${uid}`, profile = enemy ? getLegacyEnemyProfile(enemy.id) : null;
         return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? D.ENEMIES[enemy.id].hp : limits.hp, alive: hp > 0,
-            weapon: profile?.weapon ?? r.currentWeapon.id as ActorView['weapon'],
+            weapon: profile?.weapon ?? r.weaponLook,
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
                 reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },
             regionId: regionAt(e), corpse: hp > 0 ? null : { angle: e.rotation - (enemy && !r.layered ? Math.PI / 2 : 0),
                 containerId: r.containers.some(c => c.id === containerId) ? containerId : null } };
     };
-    const w = r.currentWeapon, loadout = r.session.loadout ?? r.terminalLoadout;
+    const w = r.currentWeapon, loadout = r.session.loadout ?? r.terminalLoadout, grip = r.grip, body = r.layered ? rpgMultipliers(r.layered).recoil : 1;
     return {
         player: actor(r.player, true), actors: r.enemies.map(e => actor(e, false)),
         bullets: r.bullets.map(b => ({ uid: b.uid, x: b.x, y: b.y, vx: b.vx, vy: b.vy, enemy: b.enemy, owner: bulletOwner(b) })),
@@ -126,7 +128,9 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
         doors: { ...r.space?.doors }, highTide: r.highTide, flooded: floodedCells(map, r.highTide), revealed: { ...revealed }, interaction: r.targetView(),
         hud: { hp: r.hp, maxHp: limits.hp, stamina: r.stamina, maxStamina: limits.stamina, pollution: r.pollution, bleeding: !!r.bleeding,
             timeLeft: Math.max(0, r.config.duration - r.elapsed), tideWarning: r.warned && !r.tideChanged, highTide: r.highTide,
-            weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
+            weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: r.sampleGun ? 999 : w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
+            aim: { mode: grip.mode, cone: coneOf(r.handling, w, grip, body), drift: driftOf(r.handling, grip, body),
+                raise: r.handling.raise, sway: r.handling.sway, bloom: r.handling.bloom },
             heals: D.count(loadout.bag, 'bandage') + D.count(loadout.bag, 'medkit'), hitDirections: r.hitDirections.map(h => ({ angle: h.angle, left: h.left })) },
         phase: r.ending ? 'ending' : r.paused ? 'paused' : r.overlay ? 'blocked' : 'running',
     };

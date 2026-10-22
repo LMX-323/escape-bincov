@@ -102,4 +102,3 @@ export const ENEMY_CATALOG = Object.freeze([
         weaponCategories: ['rifle'], assets: { status: 'not-produced', silhouette: '蓝灰制服、防护背心与磨损袖标', equipment: '制式长枪、硬壳记录本和电台', animations: ['清点名单', '解释规则', '明确边界', '调配防御', '安置民众'] } }),
 ]);
 export type EnemyArchetypeId = typeof ENEMY_CATALOG[number]['id'];
-

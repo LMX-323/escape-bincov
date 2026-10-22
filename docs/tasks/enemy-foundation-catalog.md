@@ -1,6 +1,6 @@
 # EN-01：敌人内容目录与旧映射边界
 
-本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。目录是内容规划数据：十八条均为 `implementation: 'design-only'`，素材均为 `not-produced`。武器类别是制作需求，不是已接入的装备、攻击、AI、掉落或随机生成规则，也不带未经试玩验证的战斗数值。
+本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog-data.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。目录是内容规划数据：十八条均为 `implementation: 'design-only'`，素材均为 `not-produced`。武器类别是制作需求，不是已接入的装备、攻击、AI、掉落或随机生成规则，也不带未经试玩验证的战斗数值。
 
 `ENEMY_CATALOG` 按设计编号排列，每条包含稳定 ID、阵营、默认立场、接敌与脱离条件、平时/警觉/交战/搜索行为、武器类别和素材需求。`ENEMY_FACTIONS` 给出五类中文名称。表与嵌套对象均冻结。用 `pnpm enemy:catalog` 输出对照表，`pnpm enemy:catalog --json --id=raider-melee` 查看单卡。目录位于制作工具中，不进入游戏包或游戏字体扫描；实际游戏只消费 [enemy-profile.ts](../../src/enemy-profile.ts) 的旧类兼容表，不将设计卡写入存档。
 

@@ -2,6 +2,8 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-22 · [#78 敌人体系实施](docs/tasks/enemy-foundation.md)：`feat/enemy-foundation` 从 `8ef783f` 开始，已同步 #39 合入后的 `2bac4fb`。十八原型目录仅供制作；旧四类 AI 提取、表现/尸体映射、兼容回归与 A/B 工具已完成。新 schema、三人遭遇及正式原型仍按 #78 推进，EN-01～04 未整项核销；准确 head、实际测试与后续边界见摘要及实施 PR。
+- 2026-10-22 · [PR #39 射击系统改造](docs/SHOOTING-SYSTEM-REWORK.md)：S0–S5 与试枪场都已实现（规则 `src/shooting.ts`，扳机在 `CoastRaidRuntime.pull` / `runTrigger`，表现在 `hud.aim` 与宿主准星，试枪场 `src/range/`）；实验台 `tests/shooting-bench.test.ts`，浏览器 `test:shooting`、`test:range`。维护者的决定（含选定“稳定”参数以突出改枪）、阶段状态、S1 测量与兼容方案见任务页；维护者 2026-10-22 试玩认可。
 - 2026-10-22 · [PR #65 Runtime 缺口收尾](docs/tasks/runtime-gaps.md#收尾与同步)：同步 main（`a4f463a`、`c6ad042`），冲突只在生成物和记录。Runtime 接口（`07d3efc`）与前端接入（`a678142`：附近逐件列表、门被占提示、挂载/换层后重对时）均已完成；收尾时修了展开「附近」后来源列表压住 E 提示的问题，给门被占提示补了 buildings 回归，并修了矮屏换尺寸后画面最多 16 帧才再下移一次的旧竞态（首次 CI 里 qol-expansion 失败的根因）。本地 479/479 单测、13 套浏览器检查通过，coast-sample 只剩 #61 登记的 W13。合入后 #60 的 Q-E02 B 段可开工。
 - 2026-10-22 · [#61 CI：主机包缓存与 lavapipe](docs/CI.md#浏览器-job-的主机环境字体chromium-与渲染器)：浏览器 job 不再经过 apt 镜像（字体固定版本走缓存），WebGL 改用 lavapipe 并在套件前检查渲染器；只改 CI，游戏、断言与生成物不变。实测结果与对照见承接 PR。
 - 2026-10-22 · [#60 Q-E02 路由收敛 A 段](docs/tasks/quality-entropy.md#q-e02-路由收敛)：行动视图和院子经 `src/navigation.ts` 请页面换画面，不再导入 `ui.ts`；`toast`、备份下载、出击区域移成叶子模块；共享 Pixi 应用移到 `src/pixi-app.ts`，院子路由不再依赖行动宿主。`src` 已无运行时 import 环。B 段（行动句柄合同、背包有限服务）登记在 #60，依赖 #65；`coast-sample` W13 的测试时序问题登记在 #61。
@@ -252,6 +254,12 @@
 ## 2026-10-12 · 开场动画剧情稿
 
 基于 main `64505046fb737af195bc808d2f8e4274df21cf24`，在独立文档分支提交用户提供的[简易分镜与完整剧情](docs/OPENING-CUTSCENE-SCRIPT.md)，保留原稿措辞，仅整理 Markdown 段落。此稿尚未接入游戏或制作动画；与已批准主线的船只身份（远汐号／七号）及抵达水产站时间（一个月／第十七天）需要后续创作者确认。本轮仅做文档核对与差异检查，未运行游戏测试或打包。
+
+## 2026-10-12 · 游戏射击系统改造独立建档
+
+按维护者明确要求，从 main `64505046fb737af195bc808d2f8e4274df21cf24` 建立 `feat/shooting-system-rework`，仅交付[任务书](docs/SHOOTING-SYSTEM-REWORK.md)和任务索引，建立名为「游戏射击系统改造」的草稿 PR。射击实现、独立验收、维护者试玩及获准合入构成 #28 改枪实现前置；仅合入文档不解除依赖。#28 保留目录、品牌详情、实例和改装扩量，本 PR 不反向依赖 #28 合并，调研固定引用 a3ff524。
+
+完成建档后停止，等待下一次明确指令再实施。未改产品、依赖、素材或制品，未派发 Astra/Opus/Sol 工作，未合并发布。本轮验证限文档、差异范围及密钥钩子，实际射击验收全部未完成。以下历史交接保留。
 
 ## 2026-10-12 · SOL-R3-CAP-LISTENER-01 能力切换监听
 

@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 交易、库存操作、拒绝原因 | [交易](#交易) | 新物品再看领域数据；交互变更再看视图 |
 | 行动命令、输入、暂停或恢复 | [行动输入](#行动输入) | 触屏按钮、DOM 绑定、持久字段分别扩展 |
+| 敌人身份、AI、表现或尸体掉落 | [敌人](#敌人) | 新持久状态继续存档卡；玩家射击继续行动输入 |
 | 新持久字段、迁移、导入、恢复 | [存档](#存档) | 活动行动字段必须核对两端捕获/恢复 |
 
 地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
@@ -51,8 +52,9 @@
 1. [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)：`RaidIntent`、`RaidRuntime`，先区分边沿、持续输入、暂停与屏蔽。
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
-4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`。
-5. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
+4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
+5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。
+6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
 
 **调用契约的维护位置。** `RaidIntent` 旁说明坐标/时间单位和边沿消费；输入类说明释放及面板抑制；`RaidRuntime` 旁说明暂停、屏蔽和销毁。不在每个按钮复制这些规定。
 
@@ -62,7 +64,8 @@
 
 - [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
-- [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands and fireHeld only reach first substep`、`blocked panels advance the world`。
+- [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands reach only the first substep`、`blocked panels advance the world`。
+- [shooting.test.ts](../tests/shooting.test.ts)、[shooting-bench.test.ts](../tests/shooting-bench.test.ts)：射击规则的时间切分不变性；固定种子与输入在不同帧率下的弹道、双端开火方式、暂停/面板取消、稳定与后坐。
 - [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
 
 **按需继续。**
@@ -70,10 +73,22 @@
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
 - 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
-- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。
+- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`。
+- 鼠标瞄准与镜头：[coast-view/scene.ts](../src/coast-view/scene.ts) 的 `aimFromClient` 经平滑镜头换算瞄准，镜头前探由 [coast-view/camera.ts](../src/coast-view/camera.ts) 的 `pointerLead` / `stepLead`（鼠标，只在精瞄时）或 `aimLead`（触屏）决定。改前探前先跑 `test:shooting` 的“静止指针不漂”。
+- 试枪场：[range/](../src/range/index.ts)（`?range=1`，内存存档，不碰正式存档）。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
 **结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放的断言。资源生命周期只有在本次改变宿主归属时才展开。
+
+## 敌人
+
+**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 和世界生成器仍定义正式四类敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)是未实现的设计数据，不进入游戏包和存档；可用 `pnpm enemy:catalog` 查看。
+
+**首读路径。** [enemy-profile.ts](../src/enemy-profile.ts) 的 `getLegacyEnemyProfile` 提供旧身体、武器、攻击类型与尸体抽取次数；[enemy-ai.ts](../src/raid-runtime/enemy-ai.ts) 的 `advanceLegacyEnemy` 更新旧敌人的感知、状态、冷却、路径和移动。世界碰撞由 `LegacyEnemyWorld` 提供，随机数、发射/近战/开门副作用经 `LegacyEnemyEffects` 同步返回 [Runtime](../src/raid-runtime/runtime.ts)。敌人状态、RNG、UID、伤害、事务和事件仍由 Runtime 所有，AI 模块不增加持久化入口。
+
+展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
+
+**验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 
 ## 存档
 

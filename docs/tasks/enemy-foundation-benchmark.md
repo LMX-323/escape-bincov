@@ -1,6 +1,6 @@
 # 敌人基础能力 EN-04：可重复 Runtime 测量
 
-承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。固定接受基线 `8ef783f02b867c520e2a4e8f03e48e6a8cc7d02c`。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
+承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。初始接受基线 `8ef783f02b867c520e2a4e8f03e48e6a8cc7d02c`；同步射击系统 #39 后改用 `2bac4fb54ab48742bb7c5ebeaf9761372c4cc06d`。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
 
 这是有界、离线、无 DOM 的 Node 测量，运行真实 `CoastRaidRuntime`、真实敌人 AI、内存 `SaveSession`，包含 Runtime 的发布与定期存档开销。它不测浏览器绘制、纹理、GPU、真实帧率或自然游玩表现；不替代验证矩阵中的 `pnpm test:play`，也没有缩短该套件约 10 分钟和训练真实 120 秒要求。
 
@@ -17,8 +17,8 @@
 在依赖已安装的任务工作树运行；不需要浏览器或服务器，也不增加依赖：
 
 ```powershell
-node --import tsx scripts/enemy-benchmark.ts --source-root=D:\bincov\enemy-baseline-8ef783f --out=test-results/enemy-baseline-8ef783f.json
-node --import tsx scripts/enemy-benchmark.ts --out=test-results/enemy-head.json --compare=test-results/enemy-baseline-8ef783f.json
+pnpm bench:enemy --source-root=../enemy-baseline-2bac4fb --out=test-results/enemy-baseline-2bac4fb.json
+pnpm bench:enemy --out=test-results/enemy-main-head.json --compare=test-results/enemy-baseline-2bac4fb.json
 node --import tsx --test tests/enemy-benchmark.test.ts
 ```
 
@@ -28,7 +28,15 @@ JSON 记录源码 commit、工作树脏状态、Node/OS/CPU、种子、初始活
 
 本工具为手动 Node 测量入口，未新增 `test:*` 命令或浏览器 CI 套件。短单测只验证夹具 ID 归一化不吞掉数值/引用变化，以及三个正式世界的重复和恢复；完整 12 秒矩阵由上述命令执行。
 
-## 本次实测
+## 同步射击系统后的实测
+
+2026-10-22，使用下述同一 Node/设备及输入协议，干净主线 `2bac4fb` 与集成后的工作树分别运行十八次：全部重复稳定、全部中点恢复成功，9/9 的行为与末态完整哈希相同，退出 0。JSON 为 `test-results/enemy-baseline-2bac4fb.json` 和 `test-results/enemy-main-head.json`。后者明确记录合并中工作树状态，准确提交证据在最终提交后重跑并更新 PR。
+
+本轮 `advanceMs` 合计分别约 10.19 秒和 15.89 秒，`wallMs` 约 10.66 秒和 16.61 秒；修改端与本机浏览器回归同时运行，负载不相同，不能据此签收提速或性能回退。基线工具提供确定性与采样入口，正式性能阈值仍待 EN-04。#39 改变玩家射击时序、散布和弹丸出生点，因此新的签名不要求等于旧 `8ef783f`；两组历史证据分别保留。
+
+其他浏览器套件结束后再顺序测量两端（真实计时游玩仍在运行），9/9 对照再次一致；`advanceMs` 合计约 11.71 / 12.36 秒，`wallMs` 约 12.30 / 12.94 秒。结果为 `enemy-baseline-2bac4fb-repeat.json` / `enemy-main-repeat.json`。此复测说明前轮并发负载不能用来判定回退，仍不足以签收性能预算。
+
+## 同步前历史实测
 
 2026-10-22，在 Windows `10.0.19045` x64、Intel Core Ultra 5 230F（10 逻辑 CPU）、Node `v24.19.0` 上顺序运行固定干净基线，再运行基于该 commit 的 AI 提取后工作树。实际 Node 位于 `C:\Users\xty\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe`；上述命令中的 `node` 均使用此程序。工作树结果明确记录 `dirty`，不冒充已经提交的 head。
 
