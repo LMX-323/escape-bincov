@@ -12,17 +12,27 @@ import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItemR
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
 import { advancePursuits } from '../pursuit';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
 import type { RaidRuntime, RaidIntent, PublishedView, WorldKey, MapDef, StampedEvent, ViewEventBody, Durability, WeaponLook, TargetRef, Interaction, HurtCause } from './contract';
 import { mapView, frameView, freeze, Revelation, bulletOwner } from './presentation';
 export const emptyIntent = (): RaidIntent => ({ move: { x: 0, y: 0, sprint: false }, aim: null, precise: false,
-    firePressed: false, fireHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null, source: 'mouse-keyboard' });
+    firePressed: false, fireHeld: false, aimHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null, source: 'mouse-keyboard' });
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const wrap = (angle: number) => ((angle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
 const owners = new WeakMap<SaveSession, CoastRaidRuntime>();
+/** How long a click that found the gun cooling or reloading may wait to fire (seconds). */
+const CLICK_WINDOW = .15;
+/** Rounding allowance (seconds) for a shot or reload due exactly at a substep's end. */
+const DUE = 1e-9;
+/**
+ * A player's bullet starts at the body's centre, never at a muzzle that may stand in or beyond a wall, and its range
+ * counts from this old muzzle distance (px), so walls, doors and corners stop it by the same collision as in flight.
+ */
+const MUZZLE = 17;
 type PendingEvent = {
     body: ViewEventBody;
     world: WorldKey;
@@ -49,6 +59,21 @@ export class CoastRaidRuntime implements RaidRuntime {
     knife = false;
     reloadLeft = 0;
     fireCooldown = 0;
+    /**
+     * Weapon handling (src/shooting.ts): stance, sway, bloom and drift. Runtime-only and never saved; a Runtime built
+     * from a checkpoint (page load, reloadCommitted) starts unsteady, so a refresh cannot clear the cost of shooting.
+     */
+    handling: AimState = unsteadyAim();
+    /**
+     * The trigger as the last frame's intent left it. Held fire covers a frame's interval only when that frame's own
+     * sample still holds it, so a release is never followed by a shot; a click or a new hold takes effect at its frame's
+     * own time (see pull). Input that changes on frame boundaries then fires at the same raid times at any display rate.
+     */
+    private trigger = { held: false, touch: false };
+    /** Seconds a click that found the gun busy may still fire: one click, never a queue. */
+    private clickLeft = 0;
+    /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
+    private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
     extractTime = 0;
     warned = false;
     tideChanged = false;
@@ -140,7 +165,11 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     get limits() { return this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit }; }
     get paused() { return this.locked || ['pause', 'help', 'abandon', 'rotate', 'checkpoint-error'].includes(this.overlay); }
-    get currentWeapon() { return D.WEAPONS[!this.knife && (this.session.loadout ?? this.terminalLoadout).weapon || 'knife']; }
+    get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.sample?.def ?? D.WEAPONS[(this.session.loadout ?? this.terminalLoadout).weapon || 'knife']; }
+    /** How the held weapon is drawn: the sample rifle borrows the rifle look. */
+    get weaponLook(): WeaponLook { return this.currentWeapon.id === 'm4a1' ? 'rifle' : this.currentWeapon.id as WeaponLook; }
+    get grip() { return handlingOf(this.currentWeapon.id); }
+    get sampleGun() { return this.sample?.def.id ?? null; }
     private worldKey(): WorldKey {
         const r = this.layered?.raid;
         return { runId: this.terminalLoadout.runId!, worldVersion: r?.worldVersion ?? WORLD_VERSION, layoutRevision: r?.layoutRevision ?? null, mapId: r?.currentMap ?? 'coast' };
@@ -151,13 +180,18 @@ export class CoastRaidRuntime implements RaidRuntime {
     private releaseInput() {
         this.suppressFire ||= this.intent.fireHeld;
         this.suppressInteract ||= this.intent.interactHeld;
+        this.trigger = { held: false, touch: false };
+        this.clickLeft = 0;
         this.intent = emptyIntent();
         this.inputFrame = idleFrame();
         this.clock.reset();
         this.extractTime = 0;
         this.sprinting = false;
     }
-    suppressHeldInput() { this.suppressFire ||= this.intent.fireHeld; this.suppressInteract ||= this.intent.interactHeld; this.extractTime = 0; this.inputSuppressed = true; }
+    suppressHeldInput() {
+        this.suppressFire ||= this.intent.fireHeld; this.suppressInteract ||= this.intent.interactHeld;
+        this.trigger = { held: false, touch: false }; this.clickLeft = 0; this.extractTime = 0; this.inputSuppressed = true;
+    }
     private setOverlay(value: string) {
         if (this.overlay === 'checkpoint-error' && !this.session.storageOK && value !== 'checkpoint-error')
             return;
@@ -255,6 +289,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                             this.suppressInteract = false;
                         const effective = this.overlay ? emptyIntent() : { ...intent, fireHeld: intent.fireHeld && !this.suppressFire, interactHeld: intent.interactHeld && !this.suppressInteract };
                         this.intent = effective;
+                        // Released somewhere in this interval: no held shot may follow the release.
+                        if (!effective.fireHeld)
+                            this.trigger = { held: false, touch: this.trigger.touch };
                         const frame: InputFrame = { x: effective.move.x, y: effective.move.y, sprint: effective.move.sprint, aim: null,
                             pointer: { x: 0, y: 0 }, precise: effective.precise, firePressed: effective.firePressed, fireHeld: effective.fireHeld,
                             interactHeld: effective.interactHeld, actions: new Set([...effective.commands, ...(effective.interactPressed ? ['interact' as const] : [])]), touch: intent.source === 'touch' };
@@ -271,6 +308,8 @@ export class CoastRaidRuntime implements RaidRuntime {
                                 this.hurtTimers.set(uid, Math.max(0, t - seconds / tick.steps));
                             this.step(seconds / tick.steps);
                         }
+                        if (this.session.state === 'run' && !this.paused && !this.ending)
+                            this.pull(this.overlay ? emptyIntent() : effective);
                         if (this.session.state === 'run' && !this.paused && !this.ending && this.elapsed - this.checkpointAt >= 2)
                             this.checkpoint();
                     }
@@ -335,8 +374,12 @@ export class CoastRaidRuntime implements RaidRuntime {
             'warned', 'tideChanged', 'noiseRadius', 'noiseTime', 'hitTime', 'exhausted', 'stepTime', 'nextEntity'] as const;
         Object.assign(this, Object.fromEntries(keys.map(k => [k, c[k]])));
         Object.assign(this.player, c.player);
-        this.mag = c.loadout.ammo;
-        this.magRelief = c.loadout.ammoRelief;
+        if (this.sample)
+            this.sample.base = { mag: c.loadout.ammo, relief: c.loadout.ammoRelief };
+        else {
+            this.mag = c.loadout.ammo;
+            this.magRelief = c.loadout.ammoRelief;
+        }
         this.player.rotation = wrap(c.player.rotation);
         this.random = D.seededRandom(c.rng);
         this.noteSeen = new Set(c.noteSeen);
@@ -372,6 +415,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.hitDirections = [];
         this.queue = [];
         this.pendingLayer = null;
+        this.handling = unsteadyAim();
         this.releaseInput();
         this.dirty = true;
     }
@@ -447,7 +491,9 @@ export class CoastRaidRuntime implements RaidRuntime {
         });
     }
     equipItem(uid: string) {
+        this.setSampleGun(null);
         return this.transaction('equip', () => {
+            drawAim(this.handling, SWAY);
             this.syncMagazine();
             if (!D.equipRun(this.session.loadout!, uid))
                 return false;
@@ -609,12 +655,31 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     syncMagazine() {
         if (this.session.loadout) {
-            this.session.loadout.ammo = this.mag;
-            this.session.loadout.ammoRelief = this.magRelief;
+            this.session.loadout.ammo = this.sample?.base.mag ?? this.mag;
+            this.session.loadout.ammoRelief = this.sample?.base.relief ?? this.magRelief;
         }
     }
-    loadMagazine() { const loaded = D.reloadMagazine(this.session.loadout!.weapon || 'knife', this.mag, this.magRelief, this.session.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine(); }
-    carriedWeight() { const l = this.session.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * this.mag : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
+    loadMagazine() {
+        if (this.sample) { this.mag = this.sample.def.magazine; return; }
+        const loaded = D.reloadMagazine(this.session.loadout!.weapon || 'knife', this.mag, this.magRelief, this.session.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine();
+    }
+    /**
+     * Hand the player a playtest sample gun (SAMPLE_GUNS) or take it back. The loadout, its weapon and its rounds stay
+     * untouched and are what every checkpoint saves; the sample's own magazine reloads from an endless reserve.
+     */
+    setSampleGun(id: keyof typeof SAMPLE_GUNS | null) {
+        this.assertLive();
+        if ((this.sample?.def.id ?? null) === id) return;
+        if (id !== null && !Object.hasOwn(SAMPLE_GUNS, id)) throw new Error(`Unknown sample gun: ${id}.`);
+        if (this.sample) { this.mag = this.sample.base.mag; this.magRelief = this.sample.base.relief; }
+        this.sample = id ? { def: SAMPLE_GUNS[id], base: { mag: this.mag, relief: this.magRelief } } : null;
+        if (this.sample) { this.mag = this.sample.def.magazine; this.magRelief = 0; }
+        this.knife = false;
+        this.reloadLeft = 0;
+        drawAim(this.handling, SWAY);
+        this.dirty = true;
+    }
+    carriedWeight() { const l = this.session.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
     carryLimit() { return this.layered ? derivedLimits(this.layered).carry : B.carryLimit; }
     useItem(id: string, inv: D.Inventory = this.session.loadout!.bag, itemUid?: string) {
         const chosen = itemUid ? inv.items.find(i => i.uid === itemUid && i.id === id && i.qty > 0) : null;
@@ -689,7 +754,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     startReload() {
         const w = this.currentWeapon;
         if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
-            if (!D.count(this.session.loadout!.bag, w.ammo)) {
+            if (!this.sample && !D.count(this.session.loadout!.bag, w.ammo)) {
                 this.say('背包中没有适用的备用弹药。');
                 return;
             }
@@ -702,7 +767,6 @@ export class CoastRaidRuntime implements RaidRuntime {
             const layer = this.layered.raid.maps[this.layered.raid.currentMap];
             layer.localTime = Math.min(this.elapsed, layer.localTime + dt);
         }
-        this.fireCooldown = Math.max(0, this.fireCooldown - dt);
         this.noiseTime = Math.max(0, this.noiseTime - dt);
         this.hitTime = Math.max(0, this.hitTime - dt);
         this.hitNotice = Math.max(0, this.hitNotice - dt);
@@ -741,10 +805,12 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (frame.actions.has('heal'))
                 this.heal();
             if (frame.actions.has('primary')) {
+                if (this.knife) drawAim(this.handling, SWAY);
                 this.knife = false;
                 this.reloadLeft = 0;
             }
             if (frame.actions.has('knife')) {
+                if (!this.knife) drawAim(this.handling, SWAY);
                 this.knife = true;
                 this.reloadLeft = 0;
             }
@@ -783,18 +849,16 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         else
             this.stamina = clamp(this.stamina + (sprint ? -(B.sprintDrain + over) : B.staminaRecovery) * dt, 0, B.maxStamina);
-        if (input) {
-            if (!this.inputSuppressed && this.intent.aim !== null)
-                this.player.rotation = wrap(this.intent.aim);
-            if (frame.firePressed || frame.fireHeld)
-                this.shoot();
+        let turned = 0;
+        if (input && !this.inputSuppressed && this.intent.aim !== null) {
+            const before = this.player.rotation;
+            this.player.rotation = wrap(this.intent.aim);
+            turned = Math.abs(wrap(this.player.rotation - before));
         }
-        if (this.reloadLeft > 0) {
-            this.reloadLeft = Math.max(0, this.reloadLeft - dt);
-            if (this.reloadLeft === 0) {
-                this.loadMagazine();
-            }
-        }
+        const walked = Math.hypot(this.player.x - beforeMove.x, this.player.y - beforeMove.y);
+        const steady = input && !this.inputSuppressed, stick = steady && this.intent.source === 'touch' && this.intent.aimHeld;
+        this.runTrigger(dt, beforeMove, { pace: dt > 0 ? walked / (B.walkSpeed * dt) : 0, sprint, precise: steady && frame.precise,
+            hold: stick ? this.intent.fireHeld ? 'fire' : 'aim' : undefined }, turned);
         const flooded = this.mapData.tiles[Math.floor(this.player.y / TILE)]?.[Math.floor(this.player.x / TILE)] === 4;
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
@@ -996,42 +1060,113 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.emit({ type: 'shot', shotId: `${shooter}:${bullets[0].uid}`, shooter, weapon,
             pellets: bullets.map((b, i) => ({ bullet: b.uid, origin: { x: b.x, y: b.y }, angle: angles[i] })) });
     }
-    shoot() {
-        const w = this.currentWeapon;
-        if (this.fireCooldown > 0 || this.reloadLeft > 0)
+    /**
+     * The trigger over one substep of `dt` seconds: the cooldown, a reload and the aim advance, and each shot falls due at
+     * its own instant (when the gun is ready and the trigger wants it), fired from where the body was then. `from` is
+     * the body before this substep's move; the body moved in a straight line to where it is now.
+     */
+    private runTrigger(dt: number, from: Point, motion: Motion, turned: number) {
+        if (turned)
+            turnAim(this.handling, SWAY, turned);
+        const to = { x: this.player.x, y: this.player.y };
+        let t = 0;
+        const pass = (s: number) => {
+            if (s <= 0)
+                return;
+            t += s;
+            this.fireCooldown = Math.max(0, this.fireCooldown - s);
+            this.clickLeft = Math.max(0, this.clickLeft - s);
+            this.reloadLeft = Math.max(0, this.reloadLeft - s);
+            advanceAim(this.handling, this.grip, SWAY, s, motion);
+        };
+        for (;;) {
+            // An event due at the very end of the substep (within rounding) belongs to it, at every display rate.
+            if (this.reloadLeft > 0) {
+                // A reload ends at its own instant; a trigger still wanting fire may shoot right after it.
+                if (this.reloadLeft > dt - t + DUE)
+                    break;
+                pass(Math.min(this.reloadLeft, dt - t));
+                this.reloadLeft = 0;
+                this.loadMagazine();
+                continue;
+            }
+            const due = this.fireCooldown;
+            if (due > dt - t + DUE || !this.wantsFire(due))
+                break;
+            pass(Math.min(due, dt - t));
+            this.fireCooldown = 0;
+            const k = dt > 0 ? t / dt : 1;
+            if (!this.shoot({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }))
+                break;
+        }
+        pass(dt - t);
+    }
+    /**
+     * Semi-automatic guns fire once per click, and keep firing at their own rate while a touch aim stick is held past the
+     * fire ring; automatic guns fire while either is held. Nothing fires behind a panel or after input was suppressed.
+     */
+    private wantsFire(due: number) {
+        if (this.overlay || this.inputSuppressed || this.paused)
+            return false;
+        return this.clickLeft > 0 && this.clickLeft + DUE >= due || this.trigger.held && (this.grip.mode === 'auto' || this.trigger.touch);
+    }
+    /** The frame's own trigger change, taking effect at the frame's time: a click, a press or a release. */
+    private pull(intent: RaidIntent) {
+        if (this.inputSuppressed) {
+            this.trigger = { held: false, touch: false };
+            this.clickLeft = 0;
             return;
+        }
+        if (intent.firePressed)
+            this.clickLeft = CLICK_WINDOW;
+        this.trigger = { held: intent.fireHeld, touch: intent.source === 'touch' };
+        this.runTrigger(0, this.player, { pace: 0, sprint: false, precise: intent.precise }, 0);
+    }
+    /**
+     * One shot or knife swing from `at` (default: where the body stands); false when the magazine is empty, which starts
+     * a reload if the bag has rounds and otherwise waits for a new pull. The caller decides that the gun is ready.
+     */
+    shoot(at: Point = this.player): boolean {
+        const w = this.currentWeapon, h = this.grip;
+        this.clickLeft = 0;
         if (w.ammo && this.mag <= 0) {
             this.startReload();
-            return;
+            if (!this.reloadLeft)
+                this.trigger.held = false;
+            return false;
         }
         this.fireCooldown = w.cooldown;
         if (!w.ammo) {
-            const hit = this.enemies.find(e => e.hp > 0 && distance(e, this.player) < w.range
-                && Math.abs(wrap(Math.atan2(e.y - this.player.y, e.x - this.player.x) - this.player.rotation)) < 1.15
-                && this.sight(this.player, e, this.highTide, this.space ? 10 : 0));
+            const hit = this.enemies.find(e => e.hp > 0 && distance(e, at) < w.range
+                && Math.abs(wrap(Math.atan2(e.y - at.y, e.x - at.x) - this.player.rotation)) < 1.15
+                && this.sight(at, e, this.highTide, this.space ? 10 : 0));
             this.emit({ type: 'melee', attacker: 'player', angle: this.player.rotation, range: w.range, hit: hit?.uid ?? null });
             if (hit)
                 this.damageEnemy(hit, w.damage);
-            return;
+            return true;
         }
         this.mag--;
         if (this.magRelief > 0)
             this.magRelief--;
         this.syncMagazine();
-        this.shotNoise = { x: this.player.x, y: this.player.y };
+        this.shotNoise = { x: at.x, y: at.y };
         this.noiseRadius = B.gunNoiseRange;
         this.noiseTime = .6;
-        const aim = (this.inputFrame.precise ? .35 : 1) * (this.layered ? rpgMultipliers(this.snapshotExpansion()).recoil : 1);
+        // Random scatter over the cone, around a centre that recoil has pushed toward the shooter's right.
+        const body = this.layered ? rpgMultipliers(this.layered).recoil : 1;
+        const cone = coneOf(this.handling, w, h, body), centre = this.player.rotation + driftOf(this.handling, h, body);
         const pellets: BulletState[] = [], angles: number[] = [];
         for (let i = 0; i < w.pellets; i++) {
-            const angle = this.player.rotation + (this.random() - .5) * w.spread * aim;
-            const b = { uid: this.allocateEntityUid(), x: this.player.x + Math.cos(angle) * 17, y: this.player.y + Math.sin(angle) * 17,
-                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range, damage: w.damage, enemy: false };
+            const angle = centre + (this.random() - .5) * cone;
+            const b = { uid: this.allocateEntityUid(), x: at.x, y: at.y,
+                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false };
             this.bullets.push(b);
             pellets.push(b);
             angles.push(angle);
         }
-        this.shotEvent('player', w.id as WeaponLook, pellets, angles);
+        recoil(this.handling, h);
+        this.shotEvent('player', this.weaponLook, pellets, angles);
+        return true;
     }
     damageEnemy(e: Enemy, damage: number, incomingAngle = Math.atan2(this.player.y - e.y, this.player.x - e.x)) {
         if (e.hp <= 0)

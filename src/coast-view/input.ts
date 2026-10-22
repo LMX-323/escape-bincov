@@ -84,14 +84,18 @@ export class InputState {
       aim: this.touch ? (aimingStick ? Math.atan2(aimingStick.y, aimingStick.x) : movingStick ? Math.atan2(movingStick.y, movingStick.x) : null) : aimFromPointer(this.pointer.x, this.pointer.y),
       precise: !aimingStick && this.precise,
       firePressed: this.pressed,
-      fireHeld: !!aimingStick && aimingStick.distance >= .62,
+      // The trigger is held by the aim stick past its fire ring or, outside the phone layout, by the left button. The
+      // Runtime decides by gun type whether holding repeats (automatic guns, semi-automatic ones on touch) or only the
+      // click fires; a mouse on the phone layout stays one shot per click.
+      fireHeld: !!aimingStick && aimingStick.distance >= .62 || !this.touch && this.mouseFire,
+      aimHeld: !!aimingStick,
       interactPressed: this.actions.has('interact'),
       interactHeld: (this.touch && this.interaction !== null) || this.keys.has('e'),
       commands, selectTarget: this.selected,
       source: this.touch ? 'touch' : 'mouse-keyboard',
     };
     this.actions.clear(); this.pressed = false; this.selected = null;
-    if (!enabled) return { ...intent, move: { x: 0, y: 0, sprint: false }, aim: null, precise: false, firePressed: false, fireHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null };
+    if (!enabled) return { ...intent, move: { x: 0, y: 0, sprint: false }, aim: null, precise: false, firePressed: false, fireHeld: false, aimHeld: false, interactPressed: false, interactHeld: false, commands: [], selectTarget: null };
     return intent;
   }
 }

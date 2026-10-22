@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>逃离滨科夫 · 试枪场</title>
+<!-- Playtest launcher: opens the offline single-file game next to this file as the shooting range (in-memory save; the real save is never read or written). -->
+<meta http-equiv="refresh" content="0; url=start%20the%20game.html?range=1">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #15140f; color: #e8e2d4; font: 16px/1.6 system-ui, sans-serif; }
+  a { color: #e6c470; }
+</style>
+<!-- Options given to this page (for example ?weather=clear) are passed on after range=1. -->
+<script>
+  var extra = location.search.slice(1).split('&').filter(function (p) { return p && p.indexOf('range=') !== 0; }).join('&');
+  location.replace('start%20the%20game.html?range=1' + (extra ? '&' + extra : '') + location.hash);
+</script>
+</head>
+<body>
+<p>正在打开试枪场……若没有自动跳转，请点 <a href="start%20the%20game.html?range=1">这里</a>，或用 <code>start the game.html?range=1</code> 打开。</p>
+</body>
+</html>

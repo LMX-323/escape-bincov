@@ -55,6 +55,8 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             const state = runtime.snapshot(); state.loadout.weapon = id; state.loadout.ammo = WEAPONS[id].magazine; // a full magazine; more fails checkpoint validation
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
         },
+        /** Hand the playtest sample gun (SAMPLE_GUNS in src/shooting.ts) or take it back; the loadout is untouched. */
+        sampleGun(id: 'm4a1' | null) { runtime.setSampleGun(id); },
         /** Rounds in the equipped gun's magazine (0 to its size); relief rounds never exceed what is loaded. */
         magazine(rounds: number) {
             const state = runtime.snapshot(), w = WEAPONS[state.loadout.weapon || 'knife'];

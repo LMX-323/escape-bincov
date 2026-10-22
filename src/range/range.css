@@ -1,0 +1,46 @@
+/* Shooting range panel (src/range/panel.ts), in its own shadow root above the raid HUD, left of the player. Colours and
+   faces follow the raid HUD (src/coast-view/coast.css). Keep this file ASCII: the build checks every other character in
+   src against the embedded font. */
+:host { all: initial; }
+.rg { position: fixed; z-index: 61; left: calc(env(safe-area-inset-left) + 12px); top: var(--rg-top, 124px); width: 236px;
+  max-height: var(--rg-max, calc(100vh - 180px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; box-sizing: border-box;
+  padding: 6px 10px 10px; background: linear-gradient(#17160fe8, #17160fd4); border: 1px solid #3f3b33; box-shadow: 0 2px 0 #0008;
+  color: #ddd5c3; font: 16px/20px "Bincov Text", "Microsoft YaHei", "PingFang SC", sans-serif;
+  user-select: none; -webkit-user-select: none; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
+.rg[hidden] { display: none; }
+.rg.folded { width: auto; padding-bottom: 6px; }
+.rg.folded .rg-body { display: none; }
+.rg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rg-head b { font-weight: 400; color: #f0e3bd; }
+.rg-note, .rg-label, .rg-tip { margin: 6px 0 4px; font: 12px/16px "Microsoft YaHei", "PingFang SC", sans-serif; color: #a49b88; }
+.rg-note { margin-top: 2px; }
+.rg-tip { margin: 4px 0 0; }
+.rg-tip[hidden] { display: none; }
+.rg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.rg-grid.two { grid-template-columns: 1fr 1fr; }
+.rg-wide { grid-column: span 2; }
+.rg-gap { margin-top: 8px; }
+button { font: inherit; font-size: 14px; line-height: 18px; min-height: 30px; margin: 0; padding: 2px 4px; background: #2b2a26; color: #ddd5c3;
+  border: 1px solid #4b4842; border-radius: 0; cursor: pointer; touch-action: manipulation; white-space: nowrap; }
+button:hover, button:focus-visible { border-color: #c9a65e; outline: none; }
+button[aria-pressed="true"] { background: #3d3524; border-color: #c9a65e; color: #fff3cf; }
+.rg-head button { min-height: 26px; padding: 0 10px; font-size: 13px; }
+table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 14px; line-height: 20px; font-variant-numeric: tabular-nums; }
+th { font: 12px/18px "Microsoft YaHei", "PingFang SC", sans-serif; color: #a49b88; text-align: left; font-weight: 400; }
+th:last-child, td:last-child { text-align: right; }
+td:last-child { color: #f3e8c8; }
+tfoot td { border-top: 1px solid #3f3b33; }
+.rg-aim { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 6px; margin: 8px 0 0; padding-top: 6px; border-top: 1px solid #3f3b33;
+  font-size: 14px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.rg-aim dt { font: 12px/18px "Microsoft YaHei", "PingFang SC", sans-serif; color: #a49b88; }
+.rg-aim dd { margin: 0; text-align: right; color: #f0e3bd; white-space: nowrap; }
+.rg-exit { display: block; margin-top: 10px; padding: 4px 0; text-align: center; color: #e6c470; font-size: 14px; }
+/* Touch: fingers need taller targets. */
+:host(.touch) button { min-height: 36px; }
+/* Short screens (landscape phones): the small system face, as the raid HUD uses there. */
+@media (max-height: 480px) {
+  .rg { width: 212px; left: calc(env(safe-area-inset-left) + 8px); padding: 4px 8px 8px; font: 13px/16px "Microsoft YaHei", "PingFang SC", sans-serif; }
+  button { font-size: 13px; line-height: 16px; }
+  table, .rg-aim { font-size: 13px; line-height: 17px; }
+  .rg-note { display: none; }
+}

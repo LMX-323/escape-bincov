@@ -13,7 +13,10 @@ import { showScreen, titleScene } from './screen';
 async function boot() {
     // Devices without WebGL are not supported: show the notice before the save is read.
     if (!webglSupported()) { showWebglRequired(); return; }
-    await Promise.all([loadPixelFont(), loadTitleArt()]);
+    // 试枪场 (?range=1): a playtest page on an in-memory save (src/range). It leaves here, before the real save is opened.
+    const range = new URLSearchParams(location.search).get('range') === '1';
+    await Promise.all([loadPixelFont(), range ? null : loadTitleArt()]);
+    if (range) { const { startRange } = await import('./range'); await startRange(); return; }
     const ownership = await ownSession(navigator.locks);
     initSave(ownership.owned);
     app.runWorld = defaultWorld();
