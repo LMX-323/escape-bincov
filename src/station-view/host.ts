@@ -70,7 +70,6 @@ export class StationHost {
   player = { x: 27.5 * T, y: 19.4 * T, dir8: 6, walk: 0, moving: false };
   private scope = new Scope();
   private app: Application;
-  private mount: HTMLElement;
   private hooks: StationHooks;
   private keys = new Set<string>();
   private path: { x: number; y: number }[] | null = null;
@@ -95,7 +94,7 @@ export class StationHost {
 
   constructor(private opts: HostOptions) {
     const { app, rt, mount, hooks } = opts;
-    this.app = app; this.rt = rt; this.mount = mount; this.hooks = hooks;
+    this.app = app; this.rt = rt; this.hooks = hooks;
     this.audio = new StationAudio(hooks.audioBus);
     this.scene = new HideoutScene(app, opts.sol, { reduced: opts.reduced, mood: opts.mood }, opts.art);
     lifecycle.views++;

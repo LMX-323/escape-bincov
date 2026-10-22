@@ -16,13 +16,15 @@ import { equipCharm, unequipCharm, reputationTier } from './reputation-luck';
 import { mallRunConfig } from './mall-world';
 import { criticalChance, useRpgItem } from './rpg';
 import type { ExpansionDraft } from './session';
-import { inventoryArtSize, paintInventoryItem } from './art/inventory';
-import { ITEM_ART_IDS, paintItem, type ItemArtId } from './art/items';
+import { paintItem } from './art/items';
+import { artId, itemArtwork, painted } from './art/item-images';
 import { paintPortrait } from './art/portraits';
 import { raidWorlds, sampleMallLayout, sampleMode, sampleSupports, startCoastSample, villageSeed } from './coast-view/sample';
 import { enterStation, returnToStation, stationDefault } from './station-view/route';
 import { openingAutoplay, playOpening } from './opening/gate';
 import { showScreen, titleScene } from './screen';
+import { esc } from './html';
+import { SUPPLY_IDS } from './rpg';
 let phoneLayout = false;
 /** Phone layout, set by main.ts from the device and screen size: a presentation choice, not an input mode. */
 export function setPhoneLayout(on: boolean) { phoneLayout = on; }
@@ -89,31 +91,9 @@ export function changeState(state: Exclude<typeof app.state, 'run'>) {
     if (state === 'hideout') saved(saveSession.grantRelief());
     showScreen(state, app.menuMotion); render();
 }
-const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const btn = (label: string, action: string, cls = '', extra = '') => `<button class="${cls}" data-action="${action}" ${extra}>${label}</button>`;
-export const weaponName = () => D.WEAPONS[app.loadout?.weapon || 'knife']?.name || '水手匕首';
 function preparedWeight(){const s=app.save,w=D.WEAPONS[s.equipment.weapon||'knife'];return D.weight(s.bag)+D.weight(s.safe)+D.ITEMS.knife.weight+(s.equipment.weapon?D.ITEMS[s.equipment.weapon].weight:0)+(w.ammo?D.ITEMS[w.ammo].weight*s.equipment.ammo:0)+(app.expansion?.charm ? D.ITEMS[app.expansion.charm.id].weight : 0);}
-const iconCache = new Map<string, string>();
-/** Item and merchant art painted once into a canvas and kept as a data URL (the same painters the views use). */
-function painted(key: string, w: number, h: number, paint: (c: CanvasRenderingContext2D) => void): string {
-    let url = iconCache.get(key);
-    if (url === undefined) {
-        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-        const c = canvas.getContext('2d');
-        if (c) { c.imageSmoothingEnabled = false; paint(c); }
-        url = c ? canvas.toDataURL() : '';
-        iconCache.set(key, url);
-    }
-    return url;
-}
-/** Items with drawn art (the rest show only their label, as before). */
-const artId = (id: string) => (ITEM_ART_IDS as readonly string[]).includes(id) ? id as ItemArtId : null;
 function inventoryCell() { return !touchLayout() && innerWidth >= 1700 && innerHeight >= 900 ? 80 : 54; }
-export function itemArtwork(id: string, maxWidth: number, maxHeight: number, rotated = false) {
-    const [w, h] = inventoryArtSize(id), art = artId(id), url = art ? painted(`item-inventory-${art}`, w, h, c => paintInventoryItem(c, art)) : '';
-    const scale = Math.max(1, Math.floor(Math.min(maxWidth / (rotated ? h : w), maxHeight / (rotated ? w : h))));
-    return url ? `<img class="inventory-art-image" data-art="${id}" width="${w * scale}" height="${h * scale}" style="width:${w * scale}px;height:${h * scale}px;${rotated ? 'transform:rotate(90deg)' : ''}" alt="" draggable="false" src="${url}">` : '';
-}
 function itemIcon(id: string, small = false) {
     const size = small ? 24 : 32, art = artId(id), url = art ? painted(`item-${small ? 'small-' : ''}${art}`, size, size, c => paintItem(c, art, size)) : '';
     return url ? `<img class="item-icon${small ? ' compact-icon' : ''}" width="${small ? 24 : 32}" height="${small ? 24 : 32}" alt="" draggable="false" src="${url}">` : '';
@@ -175,14 +155,13 @@ function placementControls() {
 function itemDescription(id: string) {
     return D.ITEMS[id].description + (id === 'bandage' ? touchLayout() ? ' 放在背包中，可点「治疗」使用。' : ' 放在背包中可按 Q 使用。' : id === 'knife' ? touchLayout() ? ' 点「匕首」切换。' : ' 按 2 切换。' : '');
 }
-const supplies = ['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet'];
 function details() {
     const item = app.selected && !app.placement ? inventory(app.selectedSource).items.find(i => i.uid === app.selected) : null;
     if (shopping()) return shopDetails(item);
     if (!item) return `<aside class="details details-empty"><div class="section-label">出发前检查</div><h3>选中一件物品</h3><p class="muted">查看用途、重量和操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>换弹只使用背包内的弹药。</dd></div><div><dt>安全箱</dt><dd>放入这里的物品，撤离失败也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
     const actions = `${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
-    const baseActions = app.state === 'hideout' && app.expansion?.version === 2 ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${supplies.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
+    const baseActions = app.state === 'hideout' && app.expansion?.version === 2 ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${SUPPLY_IDS.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
     const size = D.itemSize(item);
     return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${touchLayout() ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p><dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.WEAPONS[item.id] && item.id !== 'knife' && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
 }

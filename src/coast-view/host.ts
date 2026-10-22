@@ -27,6 +27,7 @@ import { Scope, lifecycle } from './scope';
 import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
 import { SampleSound } from './sound';
+import { esc } from '../html';
 
 export interface CoastServices {
   cancelStart(): void;
@@ -58,7 +59,6 @@ const REASONS: Record<string, string> = {
 };
 /** A storage error arrives as the browser's own (translated) message; any other unknown code gets a plain sentence. */
 const reasonText = (reason: string) => REASONS[reason] ?? (/[\u4e00-\u9fff]/.test(reason) ? reason : '操作未完成。');
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const name = (id: string) => D.ITEMS[id]?.name ?? id;
 type Outro = 'died' | 'extract' | 'timeout' | 'abandon' | 'failed';
 const OUTRO_TEXT: Record<Outro, string> = { died: '你倒下了', extract: '撤离成功', timeout: '行动超时', abandon: '已放弃行动', failed: '行动失败' };
@@ -521,7 +521,6 @@ export class CoastSampleHost {
     });
     s.on(this.q('[data-pause]'), 'click', () => { if (!this.panel) this.pause(); });
     s.on(this.q('.cs-hud'), 'click', e => { if ((e.target as HTMLElement).closest('[data-do="map"]') && !this.panel) this.openMap(); });
-    s.on(this.q('[data-quests]'), 'toggle', () => { this.questsOpen = (this.q<HTMLDetailsElement>('[data-quests]')).open; });
     // A drop that re-renders the grid removes the press target, so the browser may send no trailing click: every new press clears the suppression.
     s.on(panel, 'pointerdown', e => { this.suppressClick = false; if (this.panel === 'inventory' || this.panel === 'loot') this.inv.pointerDown(e); });
     s.on(panel, 'click', e => {
@@ -538,7 +537,6 @@ export class CoastSampleHost {
     });
   }
   private suppressClick = false;
-  private questsOpen = false;
 
   private sticks = new Map<number, { kind: 'move' | 'aim'; ox: number; oy: number }>();
   private touchStart(e: PointerEvent) {

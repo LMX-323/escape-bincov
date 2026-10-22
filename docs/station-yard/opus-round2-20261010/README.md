@@ -86,8 +86,8 @@ Node 24.19.0、pnpm 11.19.0、Chrome 154.0.8037.99（Playwright 无头），按�
 
 | 检查 | 结果 |
 | --- | --- |
-| `pnpm test` | 273/273（[日志](evidence/unit.log)） |
-| `pnpm package` | PASS（[日志](evidence/package.log)） |
+| `pnpm test` | 273/273（日志未入库） |
+| `pnpm package` | PASS（日志未入库） |
 | `pnpm test:station` 院子完整门禁 | **76/76**：Sol 的 54 项（含 H17）+ 本轮 I 组 14 项 + L1 8 项；页面错误 0、外部请求 0（[报告（已归档）](../../IMPLEMENTATION-ARCHIVE.md)） |
 | 修复前对照（同一测试脚本跑 `0abe402` 构建，`--html=`） | 7/23，失败项如上两表（[报告（已归档）](../../IMPLEMENTATION-ARCHIVE.md)） |
 | Astra `test:hideout` | 8/8 |

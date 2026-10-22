@@ -1,6 +1,6 @@
 /**
  * The opening cutscene player: one Canvas 2D at 640x360 scaled by whole numbers, HTML captions and buttons in a
- * shadow root, its own clock. No WebGL, no Phaser scene, no save access. Everything it creates is released on exit.
+ * shadow root, its own clock. No WebGL, no game scene, no save access. Everything it creates is released on exit.
  */
 import { app, audio } from '../app';
 import { titleScene } from '../screen';

@@ -8,8 +8,8 @@ import { resolveExpansionWorld } from '../expansion-worlds';
 import type { SessionState } from '../session';
 import type { PublishedView } from '../raid-runtime/contract';
 import { WORLD } from '../world';
+import { esc } from '../html';
 
-const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 export function floors(session: SessionState): { id: string; label: string }[] {
   const raid = session.expansion?.raid, world = raid ? resolveExpansionWorld(raid.worldVersion) : null;

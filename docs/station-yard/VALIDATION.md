@@ -8,8 +8,8 @@
 
 | 检查 | 结果 | 说明 |
 | --- | --- | --- |
-| `pnpm test` | **273/273 PASS** | [日志](evidence/unit.log) |
-| `pnpm package` | **PASS** | tsc 严格检查、字库与三组素材 manifest 校验、两个单文件 HTML（字节相同，3,614,460 B，sha256 `940a1955…`）、两个 ZIP、release manifest；[日志](evidence/package.log) |
+| `pnpm test` | **273/273 PASS** | 日志未入库 |
+| `pnpm package` | **PASS** | tsc 严格检查、字库与三组素材 manifest 校验、两个单文件 HTML（字节相同，3,614,460 B，sha256 `940a1955…`）、两个 ZIP、release manifest；日志未入库 |
 | `pnpm test:station`（新） | **47/47 PASS** | 院子全流程，见下节；[报告](evidence/station-report.json) |
 | `pnpm test:hideout`（Astra） | **8/8 PASS** | 真实 Runtime 交易、故障保留、五秒训练、动画中刷新、城中村结算回站、跨窗口 |
 | `node scripts/coast-sample-test.mjs` | **51/51 PASS** | 城中村样板全部门禁；普通入口 W15 改为经院子出击 |
