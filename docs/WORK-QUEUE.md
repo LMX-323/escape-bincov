@@ -1,12 +1,12 @@
 # 当前任务入口
 
-最近核对：2026-10-22，main `c8a5ed8`（已合入 #68）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-22，main `c8a5ed8`（已合入 #68、#69）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) | 首批（#63）、第二批（#68）已合入；Q-E05 存档 codec 去环 [PR #71](https://github.com/xuys2025/escape-bincov/pull/71)（`agent/save-codec-cycle`）见[摘要](tasks/quality-entropy.md#q-e05-存档-codec-去环)，Q-E02 路由收敛由同一承接者随后续作（[协作说明](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6333683019)）。健康扫描缺陷中 D1–D7、D9、D10 已由 #69 修复，余项见 #60 |
 | Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](https://github.com/xuys2025/escape-bincov/blob/agent/runtime-gaps/docs/tasks/runtime-gaps.md) | `agent/runtime-gaps`，草稿；依赖 #64 已满足，head 1875890 的 CI 已通过。与 #66 都改生成物，后合并者先同步 main 再重新打包 |
-| 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) | `feat/enemy-art`；Sol P0+P1 已接入，CI 通过。遗留：枪口火光比枪管低 3–4 px，盐民与拾荒者同为棕褐色 |
+| 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | `feat/enemy-art`；Sol P0+P1 已接入，CI 通过。遗留：枪口火光比枪管低 3–4 px，盐民与拾荒者同为棕褐色 |
 | 地图敌人设定（文档） | [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) | 外部 fork 的纯文档 PR；实现前按 PR 讨论确认范围 |
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入；新基线测量、安全分片与性能验收，及手动套件是否进 CI 的评估 |
