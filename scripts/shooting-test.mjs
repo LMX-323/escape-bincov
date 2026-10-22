@@ -380,7 +380,10 @@ async function hiddenRoom(page) {
   await waitRaid(page, .4);
   await drive(page, 'freezeAI', true);
   const log = await stop(page);
-  const inRoom = (x, y) => x >= room.x && x < room.x + room.w && y >= room.y && y < room.y + room.h;
+  // Drawn on whole pixels: the head pixel of a bullet first shown just outside the window may straddle the wall line by up
+  // to a pixel (rounding), which shows nothing of the room. A leak is a drawn point more than a pixel inside (before the
+  // fix tails reached up to 8 px in).
+  const inRoom = (x, y) => x >= room.x + 1 && x < room.x + room.w - 1 && y >= room.y + 1 && y < room.y + room.h - 1;
   const enemyBullets = new Set(shotsOf(log, shooter.uid).flatMap(s => s.pellets.map(p => p.bullet)));
   let drawn = 0; const over = [];
   for (const r of log) for (const q of r.tracers ?? []) {
