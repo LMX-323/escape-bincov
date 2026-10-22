@@ -44,10 +44,11 @@
 
 2026-10-22，按维护者要求由本机 Claude Code 收尾。先后两次把 main 合并进本分支：`a4f463a`（含 #66–#72）与 `c6ad042`（含 #74 的 CI 改动），保留原历史，不改写。冲突只在生成物和两份记录（任务清单、handoff）：生成物由 `pnpm package` 重新生成，记录两边都保留。#72 的路由收敛（`src/navigation.ts`、`src/pixi-app.ts`）与本分支对 `src/coast-view/host.ts` 的改动没有文本冲突。
 
-收尾时补了两处：
+收尾时补了三处：
 
 - **E 提示不再被列表压住**：截图检查发现，「附近」展开后来源列表变高，而列表以目标为中心上下居中，顶边会升进 E 提示，盖住提示右端（1280×720 约 20 px，手机横屏约 28×22 px，量过的七种尺寸都有）。现在列表不动，提示抬到列表顶边之上；抬起后会出屏幕顶边或碰到状态卡时保持原位。没有改为下移列表，因为在 640×300、740×300 上列表下移会压到触屏按钮。来源很多时以前也会这样遮挡，这次一并修好。
 - **门被占提示有了回归检查**：buildings 套件新增一步，玩家站在开着的门洞里按 E，要求出现“门口有人，暂时不能关门。”，且门在运行状态和已存记录里都保持开着。此前只有 Runtime 单测覆盖 `occupied` 原因码，宿主显示的文字只在本地探针里查过。
+- **矮屏换尺寸后画面不再延迟下移**：head `49361dc` 的首次 CI（[39791303362](https://github.com/xuys2025/escape-bincov/actions/runs/39791303362)）里，qol-expansion 切到 844×390 触屏后点来源名称，没有打开搜刮面板。取证显示点击落在画布上：矮屏上镜头要让开状态卡，宿主却每 16 帧才量一次状态卡，换尺寸后整个画面最多 16 帧后才再下移一次（844×390 下 87 px），测试恰好在下移前按列表的旧位置点了下去。main `c6ad042` 上这一跳的幅度和时机完全相同，撞不撞上取决于换尺寸时帧计数器的相位，与本 PR 的功能改动无关。现在换尺寸时立即重量一次，列表从换尺寸后第一帧起就在最终位置；本机 SwiftShader 下 qol-expansion 从 0/3 变为 5/5。
 
 截图来自离线构建：种子 42，箱子上放倒两名拾荒者，旁边两件地面物资，展开「附近」。
 
@@ -55,14 +56,15 @@
 
 ![1920×1080：同一场景](runtime-gaps/nearby-1920x1080.png)
 
-本地验证（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome；桌面套件含 1280×720 与 1920×1080）。浏览器检查在修复后的构建上运行，合并 `c6ad042` 后构建逐字节不变：
+本地验证（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome；桌面套件含 1280×720 与 1920×1080），全部在含三处修补的最终构建上运行：
 
 | 检查 | 结果 |
 | --- | --- |
 | `pnpm test` | 479/479 通过 |
-| `pnpm package`（含 `tsc --noEmit`） | 通过；合并后重新打包，生成物与已提交的一致，哈希见 [release-manifest](../release-manifest.json) |
+| `pnpm package`（含 `tsc --noEmit`） | 通过；生成物已随修复重新打包提交，哈希见 [release-manifest](../release-manifest.json) |
 | `scripts/ci` 守卫 | 51/52。唯一失败是 policy 的 shell 门禁用例写死了 Git for Windows 的默认安装路径，本机 Git 装在用户目录，属环境问题；CI 照常运行该用例 |
 | loot-target、mobile-ux、mobile、desktop-input、ui、buildings、qol-expansion、mall-sample、issue26-spatial、issue26-inventory、loot、save-browser、raid-default | 13 套全部通过（raid-default 9/9、mall-sample 22/22）；issue26-spatial 只报已登记的楼梯名缺口 |
+| qol-expansion（SwiftShader 软件渲染，模拟 CI 慢机） | 5/5 通过；修状态卡测量前本分支 0/3 |
 | coast-sample | 52/53，只有 W13 失败；main 上同样失败，是测试时序问题，登记在 [#61](https://github.com/xuys2025/escape-bincov/issues/61#issuecomment-6338851506) |
 | 提示与列表几何 | 1280×720、1920×1080 与 640×300、667×375、740×300、844×390、932×430 触屏共七种尺寸：展开「附近」后提示与列表不重叠；列表位置与修复前相同，两者都不压其他可见 HUD |
 
