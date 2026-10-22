@@ -91,11 +91,12 @@ export function selectTimingReports(files, identity) {
 
 export function timingSummary(reports) {
   const seconds = ms => `${(ms / 1000).toFixed(3)} s`;
-  const groupRows = reports.map(report => `| ${report.group} | ${report.runAttempt} | ${report.suites.length} | ${seconds(report.durationMs)} |`);
+  const cell = value => value == null ? '—' : String(value).replace(/[|\r\n]+/g, ' ');
+  const groupRows = reports.map(report => `| ${report.group} | ${report.runAttempt} | ${report.suites.length} | ${seconds(report.durationMs)} | ${cell(report.cpu?.model)} | ${cell(report.renderer)} |`);
   const suiteRows = reports.flatMap(report => report.suites.map(row => `| ${report.group} | \`pnpm ${row.command}\` | ${seconds(row.durationMs)} |`));
   return `\n### Validated browser timing evidence\n\nAll ${reports.length} groups and ${reports.reduce((count, report) => count + report.suites.length, 0)} suites passed for this run and commit. Each group uses its newest recorded attempt; a failed-jobs-only rerun may retain earlier successful groups. The workflow also requires GitHub's browser job result to succeed.\n\n` +
     'Durations cover the browser suite processes and group wrapper only. Runner setup, queue time and Pages deployment are excluded; these tables do not measure total workflow time.\n\n' +
-    `| Group | Recorded attempt | Suites | Duration |\n| --- | ---: | ---: | ---: |\n${groupRows.join('\n')}\n\n` +
+    `| Group | Recorded attempt | Suites | Duration | CPU | WebGL renderer |\n| --- | ---: | ---: | ---: | --- | --- |\n${groupRows.join('\n')}\n\n` +
     `| Group | Suite | Duration |\n| --- | --- | ---: |\n${suiteRows.join('\n')}\n`;
 }
 

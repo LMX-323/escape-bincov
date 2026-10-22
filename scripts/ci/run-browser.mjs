@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { constants } from 'node:os';
+import { availableParallelism, constants, cpus } from 'node:os';
 import { delimiter, dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
@@ -16,9 +16,12 @@ export function runtimeMetadata(env = process.env) {
   const fromPlaywright = createRequire(playwrightPackage);
   const core = dirname(fromPlaywright.resolve('playwright-core/package.json'));
   const chromium = JSON.parse(readFileSync(join(core, 'browsers.json'), 'utf8')).browsers.find(b => b.name === 'chromium');
+  // Runner CPUs differ about 2.5x in speed, so timings are only comparable alongside the CPU and WebGL renderer
+  // (BINCOV_RENDERER is set by scripts/ci/check-renderer.mjs).
   return { runId: env.GITHUB_RUN_ID == null ? null : String(env.GITHUB_RUN_ID), runAttempt: env.GITHUB_RUN_ATTEMPT == null ? null : String(env.GITHUB_RUN_ATTEMPT),
     commit: env.GITHUB_SHA ?? null, node: process.version, playwright,
-    chromium: chromium ? { revision: chromium.revision, browserVersion: chromium.browserVersion } : null };
+    chromium: chromium ? { revision: chromium.revision, browserVersion: chromium.browserVersion } : null,
+    cpu: { model: cpus()[0]?.model ?? null, count: availableParallelism() }, renderer: env.BINCOV_RENDERER ?? null };
 }
 
 // npm's Windows shim cannot be spawned without a shell. Resolve its Node CLI instead;

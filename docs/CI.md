@@ -1,6 +1,6 @@
 # CI 分流与浏览器分组
 
-2026-10-15 更新（#61 首批，基线 a2d716d）。流程入口为 [ci-pages.yml](../.github/workflows/ci-pages.yml)。前次 #54 基线 `5a11e3d`，纯文档 PR #51 的检查为 24 分 40 秒、合并后为 31 分 06 秒；当次构建任务只用 34 秒，主要时间在浏览器组内串行测试。
+2026-10-15 更新（#61 首批，基线 a2d716d）；2026-10-22 浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe（见“浏览器 job 的主机环境”）。流程入口为 [ci-pages.yml](../.github/workflows/ci-pages.yml)。前次 #54 基线 `5a11e3d`，纯文档 PR #51 的检查为 24 分 40 秒、合并后为 31 分 06 秒；当次构建任务只用 34 秒，主要时间在浏览器组内串行测试。
 
 ## 每次仍然执行的检查
 
@@ -55,6 +55,29 @@ CI 策略测试还守住三件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 
+## 浏览器 job 的主机环境：字体、Chromium 与渲染器
+
+2026-10-22 起（#61）。浏览器 job 准备环境时不再经过 apt 镜像：
+
+- **字体**：[fonts-noble.lock](../scripts/ci/fonts-noble.lock) 固定 10 个 Ubuntu 24.04 字体包的版本和 SHA-256，即原来 `playwright install --with-deps chromium` 在 runner 上新装的 9 个（含 Playwright 自带的中日文后备字体 wqy-zenhei、ipafont-gothic），加上截图用的 `fonts-noto-cjk`。截图看到的字体集合与以前相同。
+- **lavapipe**：Mesa 的 `mesa-vulkan-drivers`，版本跟随 runner 自己的 Mesa，SHA-256 取自 runner 的 apt 列表，没有时取 Ubuntu 的 HTTPS 包索引。runner 已自带时跳过。
+- **缓存**：两者都放在 Actions 缓存里，key 由锁文件、[host-packages.sh](../scripts/ci/host-packages.sh) 和 runner 的 Mesa 版本决定。未命中时才下载，依次尝试 archive.ubuntu.com、kernel.org 镜像、Azure 镜像（lavapipe 最后还有 Launchpad，它保留被取代的旧版本）；低于 300 kB/s 持续 15 秒就换源，校验失败也换源，整步最长 10 分钟。main 的运行写入的缓存所有 PR 都能用。
+- **安装**：用 `dpkg -i` 装本地文件。不用 `apt-get install ./x.deb`：同版本时 apt 会改从镜像下载。将来的镜像若缺某个依赖，才由 apt 补装并留警告。装完核对每个字体包的版本，以及 fontconfig 能看到 Noto Sans CJK。
+- **Chromium**：`pnpm exec playwright install chromium` 只从 Playwright CDN 下载浏览器（约 2 秒）。Chromium 的运行库已随 runner 预装的 Google Chrome 装好；若 Chromium 起不来，才退回 `--with-deps` 并留警告。
+
+起因：2026-10-22 Azure 的 Ubuntu 镜像只有几十 kB/s（[actions/runner-images#14823](https://github.com/actions/runner-images/issues/14823)、[#15040](https://github.com/actions/runner-images/issues/15040)），apt 的超时只管完全没有数据的情况，单个 job 光安装就花了 15–26 分钟。
+
+**渲染器**：浏览器 job 设置 `BINCOV_CHROME_ARGS`，WebGL 改走 lavapipe（Mesa 在 CPU 上实现的 Vulkan），不再用 Chromium 自带的 SwiftShader。2.5D 画面在 CI 上主要耗在软件渲染上。本地（WSL、Mesa 26、限 4 核）对比：1920×1080 帧时间从约 96 ms 降到约 17 ms；art、coast-animation、mall-sample、title、title-water、opening、coast-render-targets、raid-default、issue26-spatial 全部通过，用时约为原来的一半。
+
+- `--ignore-gpu-blocklist` 必须加，否则 Chromium 把软件驱动列入黑名单、直接关掉 WebGL。
+- `--disable-accelerated-2d-canvas --disable-gpu-rasterization --disable-gpu-compositing` 让 2D canvas、页面光栅化和合成仍走以前的 CPU 路径，只换 WebGL：WebGL 渲染完回读给软件合成器，和 SwiftShader 时一样。这样 art 的 Canvas2D 审查图与以前逐像素一致。lavapipe 上的 GPU 合成反而更慢，所以这一组参数也是最快的。
+- 2.5D 场景截图的像素会因光栅器不同而变化，现有断言都是阈值或相对比较，本地均通过。
+- 本地运行不设这个变量，行为不变。
+
+[check-renderer.mjs](../scripts/ci/check-renderer.mjs) 在套件之前，用与套件完全相同的启动参数打开 Chromium，要求 WebGL 渲染器匹配 `BINCOV_EXPECT_RENDERER`（`Vulkan.*llvmpipe`）。驱动缺失时 Chromium 不会退回 SwiftShader，而是没有 WebGL，所以这一步失败就说明换渲染器没成功，不会悄悄回到旧渲染器。渲染器、Chromium 的 2D/光栅/合成状态和 CPU 型号写进 job Summary；渲染器和 CPU 也写进每组的耗时报告，汇总表多出这两列。runner 的 CPU 快慢相差约 2.5 倍，对比耗时必须带上它们。
+
+升级 Playwright 或 runner 系统时，用 `pnpm exec playwright install-deps --dry-run chromium` 核对它要装的字体，再更新锁文件。
+
 ## 耗时与执行证据
 
 每条套件开始和结束时写 JSON，记录组、套件 ID/命令、状态、退出码/信号、单调时钟耗时、run/attempt/SHA 及 Node、Playwright、对应 Chromium 构建元信息。Chromium 元信息来自已安装 Playwright 的浏览器清单，实际浏览器版本仍以原浏览器报告为准。不记录环境变量全集或凭据。
@@ -75,4 +98,4 @@ main 即便走文档快速通道，也从本次重新构建并校验的制品正
 
 ## 本次未改变的验收
 
-真实 120 秒训练、存档写入失败回滚、多窗口冲突、旧档兼容和离线检查保持原样。没有以缩短等待、改阈值或自动重试掩盖失败。PR 结果复用、录像/渲染优化、缓存优化留待实际耗时和失败证据支持后再做。
+真实 120 秒训练、存档写入失败回滚、多窗口冲突、旧档兼容和离线检查保持原样。没有以缩短等待、改阈值或自动重试掩盖失败。2026-10-22 起 CI 换用 lavapipe 渲染 WebGL、主机包改走缓存（见上文“浏览器 job 的主机环境”），套件和断言不变。PR 结果复用、录像优化留待实际耗时和失败证据支持后再做。
