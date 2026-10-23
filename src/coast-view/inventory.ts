@@ -78,8 +78,10 @@ export class InventoryPanel {
     // docs/LOOTING.md: on a desktop your own gear is on the left and the source on the right; a phone keeps the source first.
     const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
         <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>`;
-    // The loot window keeps a danger line (health, time, condition, a blow), filled by the host each frame.
-    this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">世界仍在运行，请留意周围</span></div>${this.mode === 'loot' ? '<div class="cs-risk" data-risk></div>' : ''}<button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
+    // The loot window keeps a danger line (health, time, condition, a blow), filled by the host each frame. On a keyboard
+    // its subtitle names the quick way out: a movement key leaves loot and walks (issue #26 F13).
+    const sub = this.mode === 'loot' && !this.host.touch() ? '世界仍在运行，按 WASD 立即离开' : '世界仍在运行，请留意周围';
+    this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">${sub}</span></div>${this.mode === 'loot' ? '<div class="cs-risk" data-risk></div>' : ''}<button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
       ${this.placementBar()}<div class="cs-inv">${this.host.touch() ? container + own : own + container}
         <aside class="cs-details">${this.details()}</aside>
       </div>

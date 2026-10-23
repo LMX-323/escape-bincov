@@ -13,7 +13,7 @@
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已实现，维护者 2026-10-22 选定“稳定”参数并试玩认可，决定见同页；#39 合入 main 后 #28 才进改装实现。#28 仍落后 main，续作前先同步 |
 | 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 已排期、功能待实现；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。#39 已合入 `2bac4fb`，战斗基础前置已满足；#40 只交付设计与排期，合并不关闭 #77 |
-| 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
+| 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
 
 开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
 
