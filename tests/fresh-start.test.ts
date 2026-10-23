@@ -97,9 +97,10 @@ test('reset from a long-played profile wipes it, keeps volume, downloads the old
     assert.deepEqual(f.downloads, [expected]); assert.equal(f.copy, expected);
     const copy = decodePortableBackup(f.copy!); assert.equal(copy.kind, 'session');
     if (copy.kind === 'session') { assert.equal(copy.record.profile.cash, 4321); assert.equal(copy.record.expansion!.base.facilities.rest, 2); }
-    // Commit keeps the invisible recovery bytes of the record (legacy/migration/pre-v4) exactly as before.
+    // Commit keeps the invisible recovery bytes of the record (legacy/migration/pre-v4/pre-v5) exactly as before.
     const after = decodeSession(f.raw!);
-    assert.deepEqual([after.legacyBackup, after.migrationBackup, after.systemsBackup], [before.legacyBackup, before.migrationBackup, before.systemsBackup]);
+    assert.deepEqual([after.legacyBackup, after.migrationBackup, after.systemsBackup, after.perksBackup],
+        [before.legacyBackup, before.migrationBackup, before.systemsBackup, before.perksBackup]);
     // A later page load on the same origin reads the fresh start.
     const reload = page(f.o); assert.equal(reload.state.save.stats.runs, 0); assert.equal(reload.state.save.cash, 700);
 });
