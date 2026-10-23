@@ -73,7 +73,7 @@ export const handlingOf = (weaponId: string): Handling => HANDLING[weaponId] ?? 
  * endless reserve; #28 adds the real one.
  */
 export const SAMPLE_GUNS: Readonly<Record<'m4a1', WeaponDef>> = {
-    m4a1: { id: 'm4a1', name: 'M4A1 样本', ammo: 'ammoR', magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03 },
+    m4a1: { id: 'm4a1', name: 'M4A1 样本', ammo: 'ammoR', magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03, crit: .05 },
 };
 
 /** Playtest mark a maintainer may add to the raid URL: `gun=m4a1` beside a `sample=` mark hands the sample rifle. Not saved. */
