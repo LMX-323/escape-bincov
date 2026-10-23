@@ -4,12 +4,13 @@
  * values. The Runtime owns one per raid and never saves it, like its handling: a Runtime built from a checkpoint (page
  * load, reloadCommitted) starts idle, an internal restoreExpansion sync keeps it, and the interrupt events clear it.
  */
+import { BREATH_MAX } from './perks';
 
 /** `target` is the enemy uid the charge belongs to (null: none), `seconds` the effective time aimed at it, uncapped. */
 export interface BreathState { target: string | null; seconds: number }
 export const idleBreath = (): BreathState => ({ target: null, seconds: 0 });
 /** The breath source's own chance: 10 points per second aimed, continuous (not per whole second), 30% from 3 s on. */
-export const breathChance = (seconds: number) => Math.min(.3, seconds / 10);
+export const breathChance = (seconds: number) => Math.min(BREATH_MAX, seconds / 10);
 /**
  * Advance over one substep of `seconds`. With the perk `owned` and a gun drawn (false with the knife), the precise aim
  * held (shooting.ts preciseHeld) and `sight` the enemy the aim rests on (layer-transition.ts aimTarget), the charge

@@ -92,8 +92,8 @@ export interface PerkModifiers {
     /** technique-15-a: the Runtime may charge the breath source (spec 4); critSources takes its chance. */
     breath: boolean;
 }
-/** The breath source grows 10 points per second of effective aim, up to this (spec 4.1). */
-const BREATH_MAX = .3;
+/** The breath source grows 10 points per second of effective aim, up to this (spec 4.1); breath.ts charges it. */
+export const BREATH_MAX = .3;
 /** One effect per perk (spec 3.1 to 3.3); for the breath perk the number is the charge's cap. */
 const PERK_EFFECTS: Readonly<Record<PerkId, readonly [keyof PerkModifiers, number]>> = {
     'strength-15-a': ['carry', 4], 'strength-15-b': ['sprintCost', .88], 'strength-20-a': ['overweight', .7], 'strength-20-b': ['stamina', 20],
