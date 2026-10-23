@@ -8,7 +8,7 @@
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) · [本轮审计 / PR #79](tasks/audit-contracts.md) | #63/#68/#69/#71/#72 已合入；本轮 `agent/audit-contracts` 修复非法 ID 校验、负重上限、自动拆分、子步计时和新生弹飞行时间，补强服务类型和代码注释。Q-E02 B 段的背包有限服务仍待处理，#65 前置已满足；其他余项及验证边界见审计摘要和 #60 |
 | Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](tasks/runtime-gaps.md#收尾与同步) | 已合入（`a6954e5`）；Runtime 接口与前端接入均完成。后续质量修复由 [#79](https://github.com/xuys2025/escape-bincov/pull/79) 承接，剩余收敛见 #60 |
 | 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1；枪口火光对齐随后由 #39 的 S1 完成。旧报告保留当时的素材审阅与真机未验状态 |
-| 地图敌人详细设定与实施 | [设计提案](ENEMY-DESIGN.md) · [#78](https://github.com/xuys2025/escape-bincov/issues/78) · [PR #81](https://github.com/xuys2025/escape-bincov/pull/81) · [街区样板](tasks/enemy-street-encounter.md) | #81 草稿已有新街区三原型、session v6 / raid v4、[跨势力归属与最小交涉](tasks/enemy-relations.md)、两名既有成员沿已见入口跟随。首批 `16e1e24` 完整 CI 已过。其余原型、组织正式场景、美术、十二规划区域及整体验收仍开放；旧活动行动保留，Perk #92 的版本协调见合同。开发继续按 #78 核销 |
+| 地图敌人详细设定与实施 | [设计提案](ENEMY-DESIGN.md) · [#78](https://github.com/xuys2025/escape-bincov/issues/78) · [PR #81](https://github.com/xuys2025/escape-bincov/pull/81) · [街区样板](tasks/enemy-street-encounter.md) | #81 草稿已有新街区三原型、session v6 / raid v4、[跨势力归属与最小交涉](tasks/enemy-relations.md)、两名既有成员沿已见入口跟随，`0ef0323` 完整 CI 已过。续作补方向性防护/有限压制/扑击边界，以及[首三类 78 张角色图](tasks/enemy-street-art.md)。其余十五类、组织正式场景、十二规划区域及整体验收仍开放；旧活动行动保留，Perk #92 的版本协调见合同。开发继续按 #78 核销 |
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
@@ -18,7 +18,7 @@
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 已登记待排期；文稿合入不代表地图、剧情事件或结局已接入游戏 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
 
-开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
+开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。敌人接入所需地图身份和安全路线逐区见 [EN-19 台账](tasks/enemy-regions.md)；#91 选图界面/概念素材不等同真实地图交付。
 
 <details>
 <summary>历史交接与旧任务快照（按需查证，保留原文）</summary>

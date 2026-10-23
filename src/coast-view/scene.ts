@@ -610,7 +610,7 @@ export class CoastView {
     if (fell && g && !g.corpse && g.deathT === 0 && shown) g.deathT = .0001;
     if (!g) {
       const mk = () => { const s = new Sprite(); s.anchor.set(.5, 1); return s; };
-      const arm = () => { const s = new Sprite(this.tex.arm(a.kind)); s.anchor.set(0, .5); return s; };
+      const arm = () => { const s = new Sprite(this.tex.arm(a.kind, a.tactics?.archetype)); s.anchor.set(0, .5); return s; };
       g = { kind: a.kind, body: mk(), weapon: new Sprite(), flash: mk(), rim: new Sprite(), wrim: new Sprite(), shadow: new Sprite(this.tex.blob(20, 7)), corpse: null, corpseKey: '',
         arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), telegraph: new Graphics(), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, hit: false, step: 0, sense: 1 };
       g.flash.blendMode = 'add'; g.rim.anchor.set(.5, (48 + 1) / 50); g.shadow.anchor.set(.5); g.wade.anchor.set(.5, .5); g.wade.visible = false;
@@ -663,11 +663,11 @@ export class CoastView {
     g.seen = shown;
     if (dead) {
       g.wade.visible = false;
-      const facing = corpseFacing(a), key = `corpse:${a.kind}:${facing}`;
+      const facing = corpseFacing(a), key = `corpse:${a.tactics?.archetype ?? a.kind}:${facing}`;
       if (!g.corpse || g.corpseKey !== key) {
         const fresh = !g.corpse && g.deathT > 0;
         g.corpse?.destroy();
-        g.corpse = new Sprite(this.tex.corpse(a.kind, facing)); g.corpse.anchor.set(.5, this.tex.corpseAnchorY(a.kind)); g.corpseKey = key;
+        g.corpse = new Sprite(this.tex.corpse(a.kind, facing, a.tactics?.archetype)); g.corpse.anchor.set(.5, this.tex.corpseAnchorY(a.kind, a.tactics?.archetype)); g.corpseKey = key;
         this.flat.addChild(g.corpse);
         const seed = fresh ? null : [...a.uid].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
         let k = seed ?? 0; const r = () => seed === null ? this.rnd() : ((k = (k * 1103515245 + 12345) >>> 0) / 4294967296);
@@ -686,15 +686,15 @@ export class CoastView {
     // Dying: the standing frame tips over its feet toward the side the corpse will lie on, then the corpse replaces it.
     const fall = dying ? Math.min(1, g.deathT / FALL_T) : 0, side = dying ? corpseFacing(a) : 0, tilt = side * 1.25 * fall;
     const bx = x - Math.round(side * FALL_SLIDE * fall), by = y + Math.round(4 * fall);
-    g.body.texture = this.tex.actor(a.kind, g.dir, frame); g.body.position.set(bx, by); g.body.zIndex = a.y; g.body.rotation = tilt;
-    if (g.edge) { g.edge.texture = this.tex.actorEdge(a.kind, g.dir, frame); g.edge.position.set(bx, by + 1); g.edge.rotation = tilt; g.edge.zIndex = a.y - .002; }
-    g.flash.texture = this.tex.actorFlash(a.kind, g.dir, frame); g.flash.position.set(bx, by); g.flash.zIndex = a.y + .01; g.flash.visible = shown && (g.flashT > 0 || hit); g.flash.alpha = .5; g.flash.rotation = tilt;
+    g.body.texture = this.tex.actor(a.kind, g.dir, frame, a.tactics?.archetype); g.body.position.set(bx, by); g.body.zIndex = a.y; g.body.rotation = tilt;
+    if (g.edge) { g.edge.texture = this.tex.actorEdge(a.kind, g.dir, frame, a.tactics?.archetype); g.edge.position.set(bx, by + 1); g.edge.rotation = tilt; g.edge.zIndex = a.y - .002; }
+    g.flash.texture = this.tex.actorFlash(a.kind, g.dir, frame, a.tactics?.archetype); g.flash.position.set(bx, by); g.flash.zIndex = a.y + .01; g.flash.visible = shown && (g.flashT > 0 || hit); g.flash.alpha = .5; g.flash.rotation = tilt;
     g.shadow.position.set(x + 2, y - 1);
     // Caught by the tide: the water covers the boots; the shadow drowns. Only for an actor that is drawn at all.
     const wading = shown && !dying && this.tide.wet(a.x, a.y);
     g.wade.visible = wading; g.shadow.visible = shown && !wading;
     if (wading) { g.wade.position.set(x, y - 2); g.wade.zIndex = a.y + .02; g.wade.scale.x = this.opts.reducedMotion ? 1 : 1 + .06 * Math.sin(this.time * 4 + a.x); }
-    g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
+    g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame, a.tactics?.archetype); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
     const art = this.tex.weapon(a.weapon, a.kind);
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;
     const swing = a.tactics?.phase === 'windup' ? -.6 * Math.sign(Math.cos(a.aim) || 1) : g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;

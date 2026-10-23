@@ -24,7 +24,7 @@ test('the eighteen design identities stay stable and separate from legacy save I
         assert.equal(card.implementation, Number(card.designNumber) <= 3 ? 'street-prototype' : 'design-only');
         assert.equal(Object.hasOwn(ENEMIES, card.id), false, 'new archetypes must not reinterpret legacy IDs');
         assert.equal(Object.hasOwn(LEGACY_ENEMY_PROFILES, card.id), false);
-        assert.equal(card.assets.status, 'not-produced');
+        assert.equal(card.assets.status, Number(card.designNumber) <= 3 ? 'body-and-corpse' : 'not-produced');
         assert.ok(card.weaponCategories.length && card.assets.animations.length && card.engagementRule && card.disengageRule);
         for (const field of ['hp', 'damage', 'speed', 'range', 'vision', 'cooldown', 'legacyId']) assert.equal(Object.hasOwn(card, field), false);
     }

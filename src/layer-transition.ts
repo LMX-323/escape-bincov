@@ -2,6 +2,7 @@ import * as D from './domain';
 import { getLegacyEnemyProfile } from './enemy-profile';
 import { archetype, enemyDefinition } from './enemy-archetypes';
 import { canDamageEnemy } from './enemy-relations';
+import { enemyDamageAfterArmor } from './enemy-defense';
 import type { BulletState, EnemyState } from './checkpoint';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
@@ -70,17 +71,18 @@ export function shotIntersection(bullet: BulletState, enemy: Point, dx: number, 
 
 /** Actual damage and corpse ownership shared by ordinary and departing shots. */
 export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true,
-    source: { owner: string; at: Point } = { owner: 'player', at: state.raid!.player }): void {
+    source: { owner: string; at: Point; incomingAngle?: number } = { owner: 'player', at: state.raid!.player }): void {
     if (enemy.hp <= 0 || amount <= 0) return;
     if (source.owner !== 'player') {
         const attacker = [...state.raid!.maps[mapId].enemies, ...state.raid!.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)]
             .find(e => e.uid === source.owner);
         if (state.raid!.version !== 4 || !attacker || !canDamageEnemy(attacker, enemy)) return;
     }
-    const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, amount);
+    const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, enemyDamageAfterArmor(enemy, source.at, amount, source.incomingAngle));
     enemy.hp -= actual;
     if (mapId === raid.currentMap) {
-        enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: source.at.x, y: source.at.y };
+        const at = enemy.tactics ? source.at : raid.player;
+        enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: at.x, y: at.y };
         if (enemy.tactics) {
             enemy.tactics.stance = 'hostile'; enemy.tactics.awareness = 1;
             enemy.tactics.memory = { at: { ...enemy.target }, time: raid.elapsed, source: 'damage', target: source.owner };
@@ -130,7 +132,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
                 .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'))[0];
             if (first) {
                 const hp = first.enemy.hp;
-                damageLayerEnemy(state, mapId, first.enemy, bullet.damage, true, { owner: owner.uid, at: { x: bullet.x, y: bullet.y } });
+                damageLayerEnemy(state, mapId, first.enemy, bullet.damage, true, { owner: owner.uid, at: { x: bullet.x, y: bullet.y }, incomingAngle: Math.atan2(-dy, -dx) });
                 const damage = hp - first.enemy.hp;
                 observeShot(observer, context, bullet, first.distance, first.enemy.uid, damage, false, first.enemy.hp <= 0);
                 if (damage > 0) hitFeedback?.(first.enemy.uid, false);
@@ -163,7 +165,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
                 const random = D.seededRandom(raid.rng); critical = random() < chance; raid.rng = random.getState();
             }
             const hp = hits[0].enemy.hp;
-            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? 1.5 : 1));
+            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? 1.5 : 1), true, { owner: 'player', at: { x: bullet.x, y: bullet.y }, incomingAngle: Math.atan2(-dy, -dx) });
             observeShot(observer, context, bullet, hits[0].distance, hits[0].enemy.uid, hp - hits[0].enemy.hp, critical, hits[0].enemy.hp <= 0);
             hitFeedback?.(hits[0].enemy.uid, critical); return true;
         }

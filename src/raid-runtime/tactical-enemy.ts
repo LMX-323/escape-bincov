@@ -91,9 +91,17 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         t.stance = 'idle'; t.memory = null; t.warning = 0;
     }
     if (e.hp < def.hp * .25 && t.stance === 'hostile') t.stance = 'retreat';
+    if (['raider-boss', 'recovery-leader'].includes(e.id) && t.stance === 'hostile') {
+        const members = world.enemies.filter(ally => ally !== e && canReceiveReport(e, ally));
+        const losses = members.filter(ally => ally.hp <= 0 && distance(e, ally) <= def.vision && world.sight(e, ally));
+        if (members.length && losses.length >= Math.ceil(members.length / 2)) {
+            t.stance = 'retreat'; effects.notice(e, '同伴损失，正在撤回。');
+        }
+    }
     // A winding attack cannot be cancelled for a free reload/cooldown by losing sight or refreshing.
     if (t.phase !== 'idle') {
         e.state = 'attack'; e.rotation = t.lockedAim;
+        const phaseTime = t.phaseLeft;
         t.phaseLeft = Math.max(0, t.phaseLeft - dt);
         if (t.phase === 'windup' && t.phaseLeft === 0) {
             t.phase = 'release'; t.phaseLeft = def.attack === 'pounce' ? .3 : 0;
@@ -101,8 +109,15 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         }
         if (t.phase === 'release') {
             if (def.attack === 'pounce') {
-                world.move(e, Math.cos(t.lockedAim) * 300 * dt, Math.sin(t.lockedAim) * 300 * dt);
-                if (!meleeContact(world, e) && t.phaseLeft > 0) return;
+                // Sweep at <= 8 px so a low-frame step cannot leap past a body or extend the paid lunge.
+                const travel = 300 * Math.min(dt, phaseTime), steps = Math.max(1, Math.ceil(travel / 8));
+                let stopped = !!meleeContact(world, e);
+                for (let i = 0; i < steps && !stopped; i++) {
+                    const before = { x: e.x, y: e.y };
+                    world.move(e, Math.cos(t.lockedAim) * travel / steps, Math.sin(t.lockedAim) * travel / steps);
+                    stopped = distance(before, e) < .01 || !!meleeContact(world, e);
+                }
+                if (!stopped && t.phaseLeft > 0) return;
             }
             // Effects may restore entity objects. Publish the next phase before invoking them.
             t.phase = 'recovery'; t.phaseLeft = def.recovery;
@@ -121,8 +136,13 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         }
         return;
     }
-    if (!flooded && t.stance === 'hostile' && observed && distance(e, observed.point) < def.range && e.cooldown === 0) {
-        t.lockedAim = angle(e, observed.point); e.rotation = t.lockedAim;
+    // Support alone may briefly suppress a credible last sight/report. Starting a paid windup is bounded
+    // to two seconds after that observation; the committed release still completes without tracking.
+    const suppression = e.id === 'mercenary-support' && t.memory && ['sight', 'report'].includes(t.memory.source)
+        && world.elapsed - t.memory.time < 2 ? t.memory.at : null;
+    const attackPoint = observed?.point ?? suppression;
+    if (!flooded && t.stance === 'hostile' && attackPoint && distance(e, attackPoint) < def.range && e.cooldown === 0) {
+        t.lockedAim = angle(e, attackPoint); e.rotation = t.lockedAim;
         if (def.magazine && t.magazine === 0) {
             if (t.reserve === 0) t.stance = 'retreat';
             else { t.phase = 'reload'; t.phaseLeft = def.reload; effects.notice(e, '正在换弹。'); }
@@ -134,6 +154,12 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
     else if (t.stance === 'retreat' || outside || stale) { target = e.home; e.state = 'return'; }
     else if (t.stance === 'hostile' || t.memory?.source === 'sound' || t.memory?.source === 'report') {
         target = t.memory!.at; e.state = sees && t.stance === 'hostile' ? 'chase' : 'investigate';
+        if (['blockade-sentry', 'blockade-sergeant', 'mercenary-support'].includes(e.id)) target = e.home;
+        else if (observed && ['raider-melee', 'mercenary-assault'].includes(e.id)) {
+            const side = [...e.uid].reduce((sum, c) => sum + c.charCodeAt(0), 0) % 2 ? 1 : -1;
+            const bearing = angle(e, target), flank = { x: target.x - Math.sin(bearing) * 24 * side, y: target.y + Math.cos(bearing) * 24 * side };
+            if (world.walkable(flank.x, flank.y, world.highTide, 10)) target = flank;
+        }
     } else { target = e.home; e.state = 'patrol'; }
     e.target = { ...target }; e.alert = t.memory ? Math.max(0, 7 - (world.elapsed - t.memory.time)) : 0;
     if (distance(e, target) < 12) return;

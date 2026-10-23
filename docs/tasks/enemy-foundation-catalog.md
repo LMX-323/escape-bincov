@@ -1,12 +1,12 @@
 # EN-01：敌人内容目录与旧映射边界
 
-本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog-data.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。目录是内容规划数据：十八条均为 `implementation: 'design-only'`，素材均为 `not-produced`。武器类别是制作需求，不是已接入的装备、攻击、AI、掉落或随机生成规则，也不带未经试玩验证的战斗数值。
+本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog-data.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。前三条为 `street-prototype`，身体/行走/尸体素材为 `body-and-corpse`；其余十五条整项交付仍为 `design-only` / `not-produced`，部分共享机制不等于完整原型。动画需求列表仍是目标规格，不能把 78 张帧图当作搬运、查账等全部情境动画已完成。
 
-`ENEMY_CATALOG` 按设计编号排列，每条包含稳定 ID、阵营、默认立场、接敌与脱离条件、平时/警觉/交战/搜索行为、武器类别和素材需求。`ENEMY_FACTIONS` 给出五类中文名称。表与嵌套对象均冻结。用 `pnpm enemy:catalog` 输出对照表，`pnpm enemy:catalog --json --id=raider-melee` 查看单卡。目录位于制作工具中，不进入游戏包或游戏字体扫描；实际游戏只消费 [enemy-profile.ts](../../src/enemy-profile.ts) 的旧类兼容表，不将设计卡写入存档。
+`ENEMY_CATALOG` 按设计编号排列，每条包含稳定 ID、阵营、默认立场、接敌与脱离条件、平时/警觉/交战/搜索行为、武器类别和素材需求。`ENEMY_FACTIONS` 给出五类中文名称。表与嵌套对象均冻结。用 `pnpm enemy:catalog` 输出对照表，`pnpm enemy:catalog --json --id=raider-melee` 查看单卡。目录位于制作工具中，不进入游戏包或游戏字体扫描；实际新规则消费 [enemy-archetypes.ts](../../src/enemy-archetypes.ts)，旧类消费 [enemy-profile.ts](../../src/enemy-profile.ts)，不将整张设计卡写入存档。
 
 ## 十八张卡覆盖
 
-稳定 ID 不随中文文案、设计排序或图片路径更名。`hostile` 只覆盖已明确实施抢夺暴力的团伙成员；`territorial` 需要食源、驻留点或刺激条件；`conditional` 保留警告、任务边界和交涉。字段均描述目标设计，当前运行时仍维持原四类行为。
+稳定 ID 不随中文文案、设计排序或图片路径更名。`hostile` 只覆盖已明确实施抢夺暴力的团伙成员；`territorial` 需要食源、驻留点或刺激条件；`conditional` 保留警告、任务边界和交涉。字段描述目标设计，普通新街区仅接入前三类，旧活动行动继续维持原四类行为。
 
 | 设计卡 | 稳定 ID | 阵营 | 默认立场 | 武器类别与主要制作识别点 |
 | --- | --- | --- | --- | --- |
@@ -44,7 +44,9 @@
 
 旧 `salt` 名称“盐枭”不意味着它现在成为卡 04；旧 `elite` 名称“守潮人”不意味着它成为卡 10；旧 `creature` 也不能直接代表蟹、犬或喷吐兽之一。旧四类没有足够信息推断十八类的身体、阵营、条件敌对或 AI。既有活动行动与历史地图保持原 ID 和资源映射；未来新增敌人需要独立生成、战斗、素材和存档方案，不能通过目录查找静默改写旧档。
 
-## 首批沿海街区三人样板建议
+## 最初选址提案（历史依据）
+
+下列选址已由[街区样板](enemy-street-encounter.md)落实，并完成 100 种子、潮位/入口、实际游玩及恢复验证；保留原提案以说明选择原因，不以其中“下一阶段”描述当前状态。
 
 以下仅是下一阶段样板选址，不改变当前生成器。依据真实 [world.ts](../../src/world.ts) 的城中村道路、建筑与 `enemySpots`，以及 [building-world.ts](../../src/building-world.ts) 的 `BUILDING_WORLD.maps.coast`：建议近身掠夺者使用格 `(20,18)`，拾荒枪手使用 `(28,22)`，望风者使用 `(25,13)`。坐标均为零起点格坐标，像素中心为 `((x+0.5)*32,(y+0.5)*32)`；三点已存在于 `enemySpots`，当前街区图均为室外 `floor`，不在居民楼楼层入口两格内。2026-10-23 补强测试确认每点距 `WORLD.spawns` 中每个出生点均大于十格；这只证明点位间距，不替代完整路线、视线或警报范围验收。
 

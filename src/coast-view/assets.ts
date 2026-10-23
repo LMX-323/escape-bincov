@@ -1,7 +1,4 @@
-/**
- * Sol samples (153 x 1x PNG), inlined by esbuild as data URLs and decoded once per page into canvases.
- * Generated from assets/coast/manifest.json; build.mjs verifies every file hash against that manifest.
- */
+/** Coast PNGs inlined for offline play; generated from assets/coast/manifest.json. */
 import acoast_player_body_e_f0_v1 from '../../assets/coast/v1/coast-player-body-e-f0-v1.png';
 import acoast_player_body_e_f1_v1 from '../../assets/coast/v1/coast-player-body-e-f1-v1.png';
 import acoast_player_body_e_f2_v1 from '../../assets/coast/v1/coast-player-body-e-f2-v1.png';
@@ -71,6 +68,8 @@ import acoast_scav_body_n_f2_v1 from '../../assets/coast/v1/coast-scav-body-n-f2
 import acoast_scav_body_n_f3_v1 from '../../assets/coast/v1/coast-scav-body-n-f3-v1.png';
 import acoast_scav_body_n_f4_v1 from '../../assets/coast/v1/coast-scav-body-n-f4-v1.png';
 import acoast_weapon_pistol_held_v1 from '../../assets/coast/v1/coast-weapon-pistol-held-v1.png';
+import acoast_weapon_club_held_v1 from '../../assets/coast/v1/coast-weapon-club-held-v1.png';
+import acoast_scav_corpse_e_v1 from '../../assets/coast/v1/coast-scav-corpse-e-v1.png';
 import acoast_salt_body_s_f0_v1 from '../../assets/coast/v1/coast-salt-body-s-f0-v1.png';
 import acoast_salt_body_s_f1_v1 from '../../assets/coast/v1/coast-salt-body-s-f1-v1.png';
 import acoast_salt_body_s_f2_v1 from '../../assets/coast/v1/coast-salt-body-s-f2-v1.png';
@@ -153,10 +152,86 @@ import acoast_weapon_salt_rifle_held_v1 from '../../assets/coast/v1/coast-weapon
 import acoast_weapon_elite_rifle_held_v1 from '../../assets/coast/v1/coast-weapon-elite-rifle-held-v1.png';
 import acoast_weapon_shotgun_held_v1 from '../../assets/coast/v1/coast-weapon-shotgun-held-v1.png';
 import acoast_weapon_knife_held_v1 from '../../assets/coast/v1/coast-weapon-knife-held-v1.png';
-import acoast_weapon_club_held_v1 from '../../assets/coast/v1/coast-weapon-club-held-v1.png';
-import acoast_scav_corpse_e_v1 from '../../assets/coast/v1/coast-scav-corpse-e-v1.png';
+import acoast_raider_melee_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-e-f0-v1.png';
+import acoast_raider_melee_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-e-f1-v1.png';
+import acoast_raider_melee_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-e-f2-v1.png';
+import acoast_raider_melee_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-e-f3-v1.png';
+import acoast_raider_melee_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-e-f4-v1.png';
+import acoast_raider_melee_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-se-f0-v1.png';
+import acoast_raider_melee_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-se-f1-v1.png';
+import acoast_raider_melee_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-se-f2-v1.png';
+import acoast_raider_melee_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-se-f3-v1.png';
+import acoast_raider_melee_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-se-f4-v1.png';
+import acoast_raider_melee_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-s-f0-v1.png';
+import acoast_raider_melee_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-s-f1-v1.png';
+import acoast_raider_melee_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-s-f2-v1.png';
+import acoast_raider_melee_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-s-f3-v1.png';
+import acoast_raider_melee_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-s-f4-v1.png';
+import acoast_raider_melee_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-ne-f0-v1.png';
+import acoast_raider_melee_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-ne-f1-v1.png';
+import acoast_raider_melee_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-ne-f2-v1.png';
+import acoast_raider_melee_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-ne-f3-v1.png';
+import acoast_raider_melee_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-ne-f4-v1.png';
+import acoast_raider_melee_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-n-f0-v1.png';
+import acoast_raider_melee_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-n-f1-v1.png';
+import acoast_raider_melee_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-n-f2-v1.png';
+import acoast_raider_melee_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-n-f3-v1.png';
+import acoast_raider_melee_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-body-n-f4-v1.png';
+import acoast_raider_melee_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-raider-melee-corpse-e-v1.png';
+import acoast_raider_gunner_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-e-f0-v1.png';
+import acoast_raider_gunner_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-e-f1-v1.png';
+import acoast_raider_gunner_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-e-f2-v1.png';
+import acoast_raider_gunner_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-e-f3-v1.png';
+import acoast_raider_gunner_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-e-f4-v1.png';
+import acoast_raider_gunner_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-se-f0-v1.png';
+import acoast_raider_gunner_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-se-f1-v1.png';
+import acoast_raider_gunner_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-se-f2-v1.png';
+import acoast_raider_gunner_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-se-f3-v1.png';
+import acoast_raider_gunner_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-se-f4-v1.png';
+import acoast_raider_gunner_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-s-f0-v1.png';
+import acoast_raider_gunner_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-s-f1-v1.png';
+import acoast_raider_gunner_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-s-f2-v1.png';
+import acoast_raider_gunner_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-s-f3-v1.png';
+import acoast_raider_gunner_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-s-f4-v1.png';
+import acoast_raider_gunner_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-ne-f0-v1.png';
+import acoast_raider_gunner_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-ne-f1-v1.png';
+import acoast_raider_gunner_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-ne-f2-v1.png';
+import acoast_raider_gunner_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-ne-f3-v1.png';
+import acoast_raider_gunner_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-ne-f4-v1.png';
+import acoast_raider_gunner_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-n-f0-v1.png';
+import acoast_raider_gunner_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-n-f1-v1.png';
+import acoast_raider_gunner_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-n-f2-v1.png';
+import acoast_raider_gunner_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-n-f3-v1.png';
+import acoast_raider_gunner_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-body-n-f4-v1.png';
+import acoast_raider_gunner_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-raider-gunner-corpse-e-v1.png';
+import acoast_raider_lookout_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-e-f0-v1.png';
+import acoast_raider_lookout_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-e-f1-v1.png';
+import acoast_raider_lookout_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-e-f2-v1.png';
+import acoast_raider_lookout_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-e-f3-v1.png';
+import acoast_raider_lookout_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-e-f4-v1.png';
+import acoast_raider_lookout_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-se-f0-v1.png';
+import acoast_raider_lookout_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-se-f1-v1.png';
+import acoast_raider_lookout_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-se-f2-v1.png';
+import acoast_raider_lookout_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-se-f3-v1.png';
+import acoast_raider_lookout_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-se-f4-v1.png';
+import acoast_raider_lookout_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-s-f0-v1.png';
+import acoast_raider_lookout_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-s-f1-v1.png';
+import acoast_raider_lookout_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-s-f2-v1.png';
+import acoast_raider_lookout_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-s-f3-v1.png';
+import acoast_raider_lookout_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-s-f4-v1.png';
+import acoast_raider_lookout_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-ne-f0-v1.png';
+import acoast_raider_lookout_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-ne-f1-v1.png';
+import acoast_raider_lookout_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-ne-f2-v1.png';
+import acoast_raider_lookout_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-ne-f3-v1.png';
+import acoast_raider_lookout_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-ne-f4-v1.png';
+import acoast_raider_lookout_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-n-f0-v1.png';
+import acoast_raider_lookout_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-n-f1-v1.png';
+import acoast_raider_lookout_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-n-f2-v1.png';
+import acoast_raider_lookout_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-n-f3-v1.png';
+import acoast_raider_lookout_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-body-n-f4-v1.png';
+import acoast_raider_lookout_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-raider-lookout-corpse-e-v1.png';
 
-export const COAST_ASSET_URLS: Record<string, string> = {
+export const COAST_ASSET_URLS: Readonly<Record<string, string>> = {
   'coast-player-body-e-f0-v1': acoast_player_body_e_f0_v1,
   'coast-player-body-e-f1-v1': acoast_player_body_e_f1_v1,
   'coast-player-body-e-f2-v1': acoast_player_body_e_f2_v1,
@@ -226,6 +301,8 @@ export const COAST_ASSET_URLS: Record<string, string> = {
   'coast-scav-body-n-f3-v1': acoast_scav_body_n_f3_v1,
   'coast-scav-body-n-f4-v1': acoast_scav_body_n_f4_v1,
   'coast-weapon-pistol-held-v1': acoast_weapon_pistol_held_v1,
+  'coast-weapon-club-held-v1': acoast_weapon_club_held_v1,
+  'coast-scav-corpse-e-v1': acoast_scav_corpse_e_v1,
   'coast-salt-body-s-f0-v1': acoast_salt_body_s_f0_v1,
   'coast-salt-body-s-f1-v1': acoast_salt_body_s_f1_v1,
   'coast-salt-body-s-f2-v1': acoast_salt_body_s_f2_v1,
@@ -308,8 +385,84 @@ export const COAST_ASSET_URLS: Record<string, string> = {
   'coast-weapon-elite-rifle-held-v1': acoast_weapon_elite_rifle_held_v1,
   'coast-weapon-shotgun-held-v1': acoast_weapon_shotgun_held_v1,
   'coast-weapon-knife-held-v1': acoast_weapon_knife_held_v1,
-  'coast-weapon-club-held-v1': acoast_weapon_club_held_v1,
-  'coast-scav-corpse-e-v1': acoast_scav_corpse_e_v1,
+  'coast-raider-melee-body-e-f0-v1': acoast_raider_melee_body_e_f0_v1,
+  'coast-raider-melee-body-e-f1-v1': acoast_raider_melee_body_e_f1_v1,
+  'coast-raider-melee-body-e-f2-v1': acoast_raider_melee_body_e_f2_v1,
+  'coast-raider-melee-body-e-f3-v1': acoast_raider_melee_body_e_f3_v1,
+  'coast-raider-melee-body-e-f4-v1': acoast_raider_melee_body_e_f4_v1,
+  'coast-raider-melee-body-se-f0-v1': acoast_raider_melee_body_se_f0_v1,
+  'coast-raider-melee-body-se-f1-v1': acoast_raider_melee_body_se_f1_v1,
+  'coast-raider-melee-body-se-f2-v1': acoast_raider_melee_body_se_f2_v1,
+  'coast-raider-melee-body-se-f3-v1': acoast_raider_melee_body_se_f3_v1,
+  'coast-raider-melee-body-se-f4-v1': acoast_raider_melee_body_se_f4_v1,
+  'coast-raider-melee-body-s-f0-v1': acoast_raider_melee_body_s_f0_v1,
+  'coast-raider-melee-body-s-f1-v1': acoast_raider_melee_body_s_f1_v1,
+  'coast-raider-melee-body-s-f2-v1': acoast_raider_melee_body_s_f2_v1,
+  'coast-raider-melee-body-s-f3-v1': acoast_raider_melee_body_s_f3_v1,
+  'coast-raider-melee-body-s-f4-v1': acoast_raider_melee_body_s_f4_v1,
+  'coast-raider-melee-body-ne-f0-v1': acoast_raider_melee_body_ne_f0_v1,
+  'coast-raider-melee-body-ne-f1-v1': acoast_raider_melee_body_ne_f1_v1,
+  'coast-raider-melee-body-ne-f2-v1': acoast_raider_melee_body_ne_f2_v1,
+  'coast-raider-melee-body-ne-f3-v1': acoast_raider_melee_body_ne_f3_v1,
+  'coast-raider-melee-body-ne-f4-v1': acoast_raider_melee_body_ne_f4_v1,
+  'coast-raider-melee-body-n-f0-v1': acoast_raider_melee_body_n_f0_v1,
+  'coast-raider-melee-body-n-f1-v1': acoast_raider_melee_body_n_f1_v1,
+  'coast-raider-melee-body-n-f2-v1': acoast_raider_melee_body_n_f2_v1,
+  'coast-raider-melee-body-n-f3-v1': acoast_raider_melee_body_n_f3_v1,
+  'coast-raider-melee-body-n-f4-v1': acoast_raider_melee_body_n_f4_v1,
+  'coast-raider-melee-corpse-e-v1': acoast_raider_melee_corpse_e_v1,
+  'coast-raider-gunner-body-e-f0-v1': acoast_raider_gunner_body_e_f0_v1,
+  'coast-raider-gunner-body-e-f1-v1': acoast_raider_gunner_body_e_f1_v1,
+  'coast-raider-gunner-body-e-f2-v1': acoast_raider_gunner_body_e_f2_v1,
+  'coast-raider-gunner-body-e-f3-v1': acoast_raider_gunner_body_e_f3_v1,
+  'coast-raider-gunner-body-e-f4-v1': acoast_raider_gunner_body_e_f4_v1,
+  'coast-raider-gunner-body-se-f0-v1': acoast_raider_gunner_body_se_f0_v1,
+  'coast-raider-gunner-body-se-f1-v1': acoast_raider_gunner_body_se_f1_v1,
+  'coast-raider-gunner-body-se-f2-v1': acoast_raider_gunner_body_se_f2_v1,
+  'coast-raider-gunner-body-se-f3-v1': acoast_raider_gunner_body_se_f3_v1,
+  'coast-raider-gunner-body-se-f4-v1': acoast_raider_gunner_body_se_f4_v1,
+  'coast-raider-gunner-body-s-f0-v1': acoast_raider_gunner_body_s_f0_v1,
+  'coast-raider-gunner-body-s-f1-v1': acoast_raider_gunner_body_s_f1_v1,
+  'coast-raider-gunner-body-s-f2-v1': acoast_raider_gunner_body_s_f2_v1,
+  'coast-raider-gunner-body-s-f3-v1': acoast_raider_gunner_body_s_f3_v1,
+  'coast-raider-gunner-body-s-f4-v1': acoast_raider_gunner_body_s_f4_v1,
+  'coast-raider-gunner-body-ne-f0-v1': acoast_raider_gunner_body_ne_f0_v1,
+  'coast-raider-gunner-body-ne-f1-v1': acoast_raider_gunner_body_ne_f1_v1,
+  'coast-raider-gunner-body-ne-f2-v1': acoast_raider_gunner_body_ne_f2_v1,
+  'coast-raider-gunner-body-ne-f3-v1': acoast_raider_gunner_body_ne_f3_v1,
+  'coast-raider-gunner-body-ne-f4-v1': acoast_raider_gunner_body_ne_f4_v1,
+  'coast-raider-gunner-body-n-f0-v1': acoast_raider_gunner_body_n_f0_v1,
+  'coast-raider-gunner-body-n-f1-v1': acoast_raider_gunner_body_n_f1_v1,
+  'coast-raider-gunner-body-n-f2-v1': acoast_raider_gunner_body_n_f2_v1,
+  'coast-raider-gunner-body-n-f3-v1': acoast_raider_gunner_body_n_f3_v1,
+  'coast-raider-gunner-body-n-f4-v1': acoast_raider_gunner_body_n_f4_v1,
+  'coast-raider-gunner-corpse-e-v1': acoast_raider_gunner_corpse_e_v1,
+  'coast-raider-lookout-body-e-f0-v1': acoast_raider_lookout_body_e_f0_v1,
+  'coast-raider-lookout-body-e-f1-v1': acoast_raider_lookout_body_e_f1_v1,
+  'coast-raider-lookout-body-e-f2-v1': acoast_raider_lookout_body_e_f2_v1,
+  'coast-raider-lookout-body-e-f3-v1': acoast_raider_lookout_body_e_f3_v1,
+  'coast-raider-lookout-body-e-f4-v1': acoast_raider_lookout_body_e_f4_v1,
+  'coast-raider-lookout-body-se-f0-v1': acoast_raider_lookout_body_se_f0_v1,
+  'coast-raider-lookout-body-se-f1-v1': acoast_raider_lookout_body_se_f1_v1,
+  'coast-raider-lookout-body-se-f2-v1': acoast_raider_lookout_body_se_f2_v1,
+  'coast-raider-lookout-body-se-f3-v1': acoast_raider_lookout_body_se_f3_v1,
+  'coast-raider-lookout-body-se-f4-v1': acoast_raider_lookout_body_se_f4_v1,
+  'coast-raider-lookout-body-s-f0-v1': acoast_raider_lookout_body_s_f0_v1,
+  'coast-raider-lookout-body-s-f1-v1': acoast_raider_lookout_body_s_f1_v1,
+  'coast-raider-lookout-body-s-f2-v1': acoast_raider_lookout_body_s_f2_v1,
+  'coast-raider-lookout-body-s-f3-v1': acoast_raider_lookout_body_s_f3_v1,
+  'coast-raider-lookout-body-s-f4-v1': acoast_raider_lookout_body_s_f4_v1,
+  'coast-raider-lookout-body-ne-f0-v1': acoast_raider_lookout_body_ne_f0_v1,
+  'coast-raider-lookout-body-ne-f1-v1': acoast_raider_lookout_body_ne_f1_v1,
+  'coast-raider-lookout-body-ne-f2-v1': acoast_raider_lookout_body_ne_f2_v1,
+  'coast-raider-lookout-body-ne-f3-v1': acoast_raider_lookout_body_ne_f3_v1,
+  'coast-raider-lookout-body-ne-f4-v1': acoast_raider_lookout_body_ne_f4_v1,
+  'coast-raider-lookout-body-n-f0-v1': acoast_raider_lookout_body_n_f0_v1,
+  'coast-raider-lookout-body-n-f1-v1': acoast_raider_lookout_body_n_f1_v1,
+  'coast-raider-lookout-body-n-f2-v1': acoast_raider_lookout_body_n_f2_v1,
+  'coast-raider-lookout-body-n-f3-v1': acoast_raider_lookout_body_n_f3_v1,
+  'coast-raider-lookout-body-n-f4-v1': acoast_raider_lookout_body_n_f4_v1,
+  'coast-raider-lookout-corpse-e-v1': acoast_raider_lookout_corpse_e_v1,
 };
 
 let loaded: Promise<Map<string, HTMLCanvasElement>> | null = null;

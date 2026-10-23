@@ -3181,6 +3181,1710 @@
       ],
       "sha256": "cd6e21142e3c3c153e56f4ef2f40fcee7358255774fd94e8096d0ee438403ce8",
       "revision": 1
+    },
+    {
+      "id": "coast-raider-melee-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "0b33dfdf48f5122d787ba1e2b68a9788ae4487a22673fc2d56c1708496bf6fef",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b082315546fea3eb75b9accd7ec89d728b2b51ab89202c564e496cc90e333d15",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "0fc6b0b50d2a0d72fbdf38fd1b1e3066bfe95dcc908b84e5b342a4b6590bdd6f",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ec7a0f9eaae15af3adc22def587834aa4c3dad4ed591ef36db2737995cecf92e",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "d178ed98c66ad8694fa042e26021b24cbea0aa5669a5fe30159c8287b39897a1",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "06252d3328307d6410dd8728cf5de262f1211acc724743cfd46ec0e3cc75660c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b753e638a18f033806e735a5decda3cba6d8c84af576c3bd94527ae8e2a9e1bf",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "da1104c5a95c02ba5ac253eb3c66f4c2b67309b07d4a31fdc1a59e733b18fabc",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ddf0f4f23e64b37deed0bcb947c4009512e7b2b528e356ed35d5a18fa5de4beb",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "11aac9cdd6dfbce71fbc00b3a871e8a5be5ec51c0ccc84c698265d17640a88b5",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "083b60e553ed6b60c2e8d8a5c408959dfb5cbc19cf1fb56cd53027e679c74e79",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "9ec0ac17612f036b033d84f47807580f387d6823821d71e2c226c7f2cf918670",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "46648f5a83b6216395378f140da9ce1783001b139d56133631fbaede33c3da83",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ed3a739225707f31689477fd57fc033d1184a81da7c07647129b5cb2a2d3bc09",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "3835a5b7e4fdfe4eecf76f01378d90044c6ec918b549353d890e4646df987c53",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e67febad6585cd1462faf515c00eb384d60a089f6d0b2ee51a5cd5f94d81b1c1",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "cfae096d7212212312abed8d41ed7a2f2b5dcfac506be8a120695e6260759b1b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "04656609e38675e75e6f9d0bd0b16a50fb25d16c3856753e9f94290777c57c08",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6631e4b16b1cea0d13c2d51e4ea4b10ac3288ad6cb22ead25fddbd9363067535",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "cee967ff6982f73397910d28c36f1dc089fe97993a2056f22c4a79a275045bf9",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "0daea2435757b4f0a32db31fc660df7362918e4eb88d5291bd392eea31ccdadd",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8d6a5e8caa66f4b98473c952fa66570bf067aac7392e6c268d271b4d186c650d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "1cd2767454675d57f540a5f19e92c1f2ea6bbb41e8a9bd3716c7d97fbfac98d6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a64f2a24e35de621467d128a09c1f1d47d65bd4dd3c8f79d49cf971b7d5d040b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-melee",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6cf962a6ba04b354561b348fef7705460b9dff82d95b73c19e71095b8b142906",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-melee-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-melee-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "raider-melee",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-melee",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c701374dd72f44d32f95fdc806300437fb279f0dde941cedd551f11024219c19",
+      "revision": 1
+    },
+    {
+      "id": "coast-raider-gunner-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "dc2b39971594a22f66c1fff092ec2b8f071bb550408a78e1fd527fc3b952697d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "25c459643233960305c9edf6c855a5c9056328a4458098a182219f34b686733b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "fe398c6fdc495eaf5fc5009b2b0f2105ebc2e9438c62f9a86654496c57f6b80e",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ee63cd7e625cab316d9658e688bd451d77852f0836a783c4242a65d71149cda4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a32224d6b7bf63463260cdbbfeab280bbddd2e65873ecb733485681d96b033c6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "495f367a322643bbe78f7f1f3142d08e7eb00c3a7393da29c7c802e05e47e940",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c2160c2b5e545ab15127405808c16b5eb83efbc24ad94cf736767eb67f764961",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "390ff4ea9fc6a6e1d342e0bc8dea98216fdf4be7f0affec10b2c30d01a7ba053",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "348b483d203c6de5e3567ef7d8159cee5f1758c26ebe163f09a71f58cc3124fe",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "9ef8ddeec99ddb13a55f4180e4308f1c146d79d2ed177bdcc83b3803aa41007b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "78b7bc45059730e7eaf7dd783996c2d18e41309fa7ca0e75f168be45b434d559",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "04a154cfc638932f934cfc6acc6b481f17082e1cd4bc1036f357be271c1ccb5c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7bca9d510acebf758d86e6570dd0913fd26f4340280bc49671fd2daca1909525",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "eadc88033e2c009f3ac9352b819d33b03039f8ab785164a8fbf4412f07eb4a09",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "63a5f54e53128400dc89be21e798aaf41f967fc76fe37860bff9d5cdeab68f00",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4dc8098e0fb0def8907545a6df8051023bfa03b736bb186b2b4d6ef62f3071db",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "461a29cdf85baf3b4f995467f96aeb81a7a31bf070e80f6be07b1b50ccf128e5",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a44e9fbf655aa5a3c50ed49dfa9a027eec074defa4546b5b7b5012733e4579af",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "adf0c24a7605b9e5633ff1f5e1fff9a5295af32645ff562c42375f9a74d7957a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "bd15e8bc4ae5d924ba9fdff737fd2cb18992813d982608b5b3d6534d87f2790b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "f7f5daa8191e554a0835920ed0185ef614000d96dfcb0937999049210f6ba9a4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "963f1472d49ef893bbcff9b3b5f7eeeabf51a118baefb34fec3994bd5c317e36",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "986766675e255e2ca696ca3001685b8a56b7bb58f927af497f1bfee66d65c1ee",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7cf20b1fc112ff8cd053a9e467bc7ea6e578d2e8d4b9ff3736d7d4d4928b1640",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-gunner",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "019025aaa466ee548d0866cea1f46c47385467bd20c7658eddc80379c8be4fd0",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-gunner-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-gunner-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "raider-gunner",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-gunner",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "f997ef7c56ba453ab4603d8dfb93630ab04d917b346c8d36ad9716c791053e97",
+      "revision": 1
+    },
+    {
+      "id": "coast-raider-lookout-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "82a9d0cc1b30840eb6f8f07c50bd9d2d022cb6149d9b58831f94c8a3436aabbe",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "bfa98e51465b61c40fbe5fe7f23b7d974a9de391b2f816a21c4c577abef5b9f3",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "96449d8078843f1940bac69bd09d1d750f05b4d7f919dd027ed45a243ce3086b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ee4393c71421644e57acd45255d1325b078946cdca8ed958e70490f306a5ba13",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8a5eafd5e8e601cff302ec2bbeabfe61b26526a580bc27dd24ac82cdab6a166c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a6488b79af6974cfbc4285183f6c475e9c5070befce790c39369c6742ac6c9fe",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "2f35d8e921214080bdd07f5890d3429a66566063b9f4f1d3c653b1ac97bd4dba",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "9c09627e6bf9605a8c265f82dea415a7d48454065fffd70eb8f5b9d2324e403c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "5fc18fa26f5a1ff35d39e2d3878364b1405785b7ea4a05e7569c632030836df9",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "69e0b1f9ec2cd198b348db405ee0303bfcd22048e0a044eea12c4d4291f08bae",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "cda7abab805c89c674babc2549a61772da88f69b58ba53fa85187046f754bdd8",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "f618f0ed3c12e092cac384b3c52136b7ac393a2fb6f6844065c5408a3dac491b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "3d0cfa95e4ad925d14839a47d4471e3cab386c5d88bfb343240fb6be1c276f58",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "56498dd0759151ee1182230635fd9d959441f7d4cfe47e4129dfcc50ab874af2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7ca4a0ba320c6e25ddd1dc581facfc09f0842242fa66811b04af5bddc31419b4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "81e5868f8bf6e0227761286fbe7c433beaa9681ca5c3acf857262ed51d5b09e5",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "3ed5b3104a0f4ea6eba98a184cf55152d67dab47d5e34d1bb1ff3285f83f8aec",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a02aa9cfd5021e544f3662e9aa5e0269ced0f99d09d5bf74912e53948f0bfa8a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "2b3a866bde1ac411134050c1f77f88d45ecf77fb0078a43284c7e9e7b77ab414",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "bf6cfe19351771be4b099f823adb4895aa35333244a6a4186ea3d05d4073fd9b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "d2293145c3d6bc1159586fcd82928a4c78b4299d84ad2c5ad4aac8f6b4dea51a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "24b9afb7fb2210dcd04c8723969b1194e9f6b17a4c120de75b6d9c011c51fed2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "87d948205f8329ec87a7213245ebd0a0cb7ac3107cff0d96ca504497c3ce8759",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "cb8962d8d60f2624a7280af56da9a45d76a809291bde84211b215a6cbeb6a205",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-lookout",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c1c69187cd7333298ce26f8bbeed2a058ba4ee262e38dbaea2bfd922548300f9",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-lookout-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-lookout-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "raider-lookout",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-lookout",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "baae150f358645488078b2ecb835dda665d4782bee9cfa56bddf91042245d380",
+      "revision": 1
     }
   ]
 }

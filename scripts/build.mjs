@@ -21,6 +21,15 @@ async function compile() {
   const coastImports = [...(await readFile('src/coast-view/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/coast\/[^']+\.png)'/g)].map(m => m[1]).sort();
   if (JSON.stringify(coastImports) !== JSON.stringify(coast.assets.map(a => a.file).sort())) throw new Error('Coast asset imports do not match assets/coast/manifest.json.');
   for (const a of coast.assets) if (createHash('sha256').update(await readFile(a.file)).digest('hex') !== a.sha256) throw new Error(`Coast asset hash mismatch: ${a.file}`);
+  const enemyArt = JSON.parse(await readFile('assets/enemies/manifest.json', 'utf8'));
+  for (const [file, sha256] of Object.entries(enemyArt.sources)) {
+    if (createHash('sha256').update(await readFile(file)).digest('hex') !== sha256) throw new Error(`Enemy art source changed: ${file}`);
+  }
+  for (const a of enemyArt.assets) {
+    const bytes = await readFile(a.file);
+    if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Enemy frame size mismatch: ${a.file}`);
+    if (coast.assets.find(c => c.id === a.id)?.sha256 !== a.sha256) throw new Error(`Enemy art manifest mismatch: ${a.id}`);
+  }
   // Station yard art (Sol R1.1): same rule as the coast sample, plus the PNG size recorded in the manifest.
   const station = JSON.parse(await readFile('assets/station/manifest.json','utf8'));
   const stationImports = [...(await readFile('src/station-view/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/station\/[^']+\.png)'/g)].map(m => m[1]).sort();

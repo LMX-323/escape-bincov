@@ -16,7 +16,7 @@ export interface EnemyArchetype {
     readonly disengageRule: string;
     readonly behavior: Readonly<{ idle: string; alert: string; combat: string; search: string }>;
     readonly weaponCategories: readonly ('tool-melee' | 'pistol' | 'shotgun' | 'rifle' | 'natural-melee' | 'acid-spit' | 'polearm')[];
-    readonly assets: Readonly<{ status: 'not-produced'; silhouette: string; equipment: string; animations: readonly string[] }>;
+    readonly assets: Readonly<{ status: 'not-produced' | 'body-and-corpse'; silhouette: string; equipment: string; animations: readonly string[] }>;
 }
 
 // Freeze nested planning data too: a caller must not turn a content edit into live mutable state.
@@ -31,15 +31,15 @@ export const ENEMY_CATALOG = Object.freeze([
     entry({ id: 'raider-melee', designNumber: '01', name: '近身掠夺者', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '仅暴力抢夺团伙成员；确认目标后喊话或借遮挡接近。', disengageRule: '失去目标后检查近处拐角，受伤退向同伴。',
         behavior: { idle: '翻废料、撬箱与搬运', alert: '喊话并寻找接近路线', combat: '试探后挥击，打空恢复站姿', search: '搜索最近拐角，不沿未知路线追踪' },
-        weaponCategories: ['tool-melee'], assets: { status: 'not-produced', silhouette: '前倾的旧连帽外套与单肩编织袋', equipment: '可辨的铁棍、短工具或砍刀', animations: ['搬运', '喊话', '试探', '抬肩挥击', '挥空恢复'] } }),
+        weaponCategories: ['tool-melee'], assets: { status: 'body-and-corpse', silhouette: '前倾的旧连帽外套与单肩编织袋', equipment: '可辨的铁棍、短工具或砍刀', animations: ['搬运', '喊话', '试探', '抬肩挥击', '挥空恢复'] } }),
     entry({ id: 'raider-gunner', designNumber: '02', name: '拾荒枪手', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '守住抢夺物资的武装团伙成员，确认威胁后射击。', disengageRule: '遭侧击转移，缺少支援时退守。',
         behavior: { idle: '清点弹药、守货堆', alert: '从固定掩体观察', combat: '单发射击后缩回遮挡，换弹依赖同伴', search: '在据点掩体间重新观察' },
-        weaponCategories: ['pistol', 'shotgun', 'rifle'], assets: { status: 'not-produced', silhouette: '褐夹克、弹袋和高耸包口', equipment: '短枪、霰弹枪和长枪需分别可辨', animations: ['清点弹药', '举枪', '单发射击', '翻找弹药换弹', '退守'] } }),
+        weaponCategories: ['pistol', 'shotgun', 'rifle'], assets: { status: 'body-and-corpse', silhouette: '褐夹克、弹袋和高耸包口', equipment: '短枪、霰弹枪和长枪需分别可辨', animations: ['清点弹药', '举枪', '单发射击', '翻找弹药换弹', '退守'] } }),
     entry({ id: 'raider-lookout', designNumber: '03', name: '望风者', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '为暴力团伙望风，先确认再通知附近同伴。', disengageRule: '失联或近身受威胁时后撤。',
         behavior: { idle: '观察门窗与路口、记录人数', alert: '确认动静后发出有限范围信号', combat: '侧面牵制，不持续正面交火', search: '带同伴检查最后目击位置' },
-        weaponCategories: ['pistol', 'tool-melee'], assets: { status: 'not-produced', silhouette: '轻瘦、贴身小包和频繁转头', equipment: '望远镜、对讲机或哨子及短武器', animations: ['侧身观察', '发信号', '转头确认', '后撤'] } }),
+        weaponCategories: ['pistol', 'tool-melee'], assets: { status: 'body-and-corpse', silhouette: '轻瘦、贴身小包和频繁转头', equipment: '望远镜、对讲机或哨子及短武器', animations: ['侧身观察', '发信号', '转头确认', '后撤'] } }),
     entry({ id: 'raider-boss', designNumber: '04', name: '盐枭头目', faction: 'raiders', implementation: 'design-only',
         defaultStance: 'hostile', engagementRule: '仅暴力控制局部设施的匿名头目；具名船主与掮客另走剧情。', disengageRule: '护卫损失后换位，有退路时携贵重物撤离。',
         behavior: { idle: '查账与分配物资', alert: '调护卫守入口和侧路', combat: '依托预设射位与护卫', search: '保住据点和退路，不跨图追击' },

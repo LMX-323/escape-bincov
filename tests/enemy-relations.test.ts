@@ -89,6 +89,16 @@ test('wall and legacy bodies stop new NPC shots without borrowing the old player
     assert.ok(resolveLayerShot(f.state, world, 'coast', f.shot(), true)); assert.equal(f.target.hp, archetype(f.target.id)!.hp);
 });
 
+test('a projectile starting inside a shell still uses its actual incoming direction for armour', () => {
+    for (const direction of [-1, 1]) {
+        const f = fixture(); f.target.id = 'salt-hulk'; f.target.hp = 160;
+        f.target.tactics = initialTactics(f.target.id, 'hulk'); f.raid.roster.find(r => r.uid === f.target.uid)!.id = f.target.id;
+        const bullet = { ...f.shot(), x: f.target.x, vx: 365 * direction };
+        assert.ok(resolveLayerShot(f.state, BUILDING_WORLD, 'coast', bullet, true));
+        assert.equal(f.target.hp, direction === -1 ? 100 : 60); assert.equal(f.raid.training.quantity.technique, 0); f.validate();
+    }
+});
+
 test('a guard observes a rival instead of the passive player, then searches only its last observed position', () => {
     const guard = actor('blockade-sentry', 'guard', 200), raider = actor('raider-gunner', 'raider', 340);
     let visible = true;

@@ -115,9 +115,14 @@ export function paintCorpse(kind: ActorKind, facing: 1 | -1): HTMLCanvasElement 
  * One-pixel-long sleeve strip (ink, light, sleeve, ink), stretched and rotated by the view from a shoulder to a hand.
  * Hands are the gloves already painted on the held weapon art, so the arm just has to reach them.
  */
-export function paintArm(kind: ActorKind): HTMLCanvasElement {
+export function paintArm(kind: ActorKind, variant?: string): HTMLCanvasElement {
   // The player sleeve matches the Sol jacket (olive over dark grey); enemies use their own coat ramps.
-  const [ink, light, base] = kind === 'player' ? ['#242321', '#59604a', '#41443a'] : [P.ink, LOOKS[kind === 'creature' ? 'scav' : kind].coatL, LOOKS[kind === 'creature' ? 'scav' : kind].coat];
+  const sleeves: Record<string, string[]> = {
+    'raider-melee': ['#28231e', '#a58a64', '#796145'],
+    'raider-gunner': ['#242321', '#5b5854', '#3e3d3d'],
+    'raider-lookout': ['#252729', '#747c82', '#505b65'],
+  };
+  const [ink, light, base] = sleeves[variant ?? ''] ?? (kind === 'player' ? ['#242321', '#59604a', '#41443a'] : [P.ink, LOOKS[kind === 'creature' ? 'scav' : kind].coatL, LOOKS[kind === 'creature' ? 'scav' : kind].coat]);
   const { c, g } = canvas(1, 4);
   rect(g, ink, 0, 0, 1, 1); rect(g, light, 0, 1, 1, 1); rect(g, base, 0, 2, 1, 1); rect(g, ink, 0, 3, 1, 1);
   return c;
