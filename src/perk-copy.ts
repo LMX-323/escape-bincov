@@ -1,12 +1,14 @@
 /**
- * Player-facing text of the attribute perks and the static critical display (docs/CRITICAL-PERK-DESIGN.md sections
- * 2.3, 3 and 5), and the view models both base screens draw from it: the yard's body panel (station-view) and the old
- * tab page (ui.ts). Every perk display string lives here. It is UI copy, kept out of the pure rule modules: the numbers
- * come from perks.ts, and the board, the previews and the refusals from the HideoutRuntime.
+ * Player-facing text of the attribute perks and the critical display (docs/CRITICAL-PERK-DESIGN.md sections 2.3, 3 and
+ * 5), and the view models drawn from it: both base screens, the yard's body panel (station-view) and the old tab page
+ * (ui.ts), and the raid HUD's critical lines (coast-view/host.ts). Every perk display string lives here. It is UI copy,
+ * kept out of the pure rule modules: the numbers come from perks.ts, the board, the previews and the refusals from the
+ * HideoutRuntime, and the raid's chances from the raid Runtime's HudView.
  */
 import * as D from './domain';
 import { addPerk, critBreakdown, critSources, perkModifiers, perkNode, removeAttributePerks, type CritSourceId, type PerkId, type PerkModifiers, type PerkTier } from './perks';
 import type { Attribute, FailReason, HideoutSnapshot, PerkBlock, PerkBoard, PerkChoicePreview, PerkResetPreview } from './hideout-runtime/contract';
+import type { BreathView, CritChanceView } from './raid-runtime/contract';
 
 export const ATTRIBUTE_NAMES: Readonly<Record<Attribute, string>> = { strength: '力量', constitution: '体质', technique: '技巧' };
 /** The fixed lines of the board and of the preview dialogs, the same on both screens. */
@@ -79,15 +81,53 @@ const gunChance = (ctx: CritContext, perks: readonly PerkId[]) => {
     const sources = critSources({ technique: ctx.technique, weapon: ctx.weapon ? D.WEAPONS[ctx.weapon] ?? null : null, perks, focus: ctx.focus, breath: 0 });
     return sources && critBreakdown(sources);
 };
+/** The knife's or an empty hand's line (spec 2.3), on the base panels and in the raid HUD. */
+const NO_GUN = '枪械暴击：不适用';
 /** The static critical display of the base panels (spec 2.3): two decimals, "<100%", every source on its own row. */
 export function critView(ctx: CritContext): CritView {
     const breakdown = gunChance(ctx, ctx.perks);
-    if (!breakdown) return { title: '枪械暴击：不适用', total: null, rows: [], notes: ['没有装备枪械；匕首不随机暴击。'] };
+    if (!breakdown) return { title: NO_GUN, total: null, rows: [], notes: ['没有装备枪械；匕首不随机暴击。'] };
     const gun = D.WEAPONS[ctx.weapon!].name, m = perkModifiers(ctx.perks);
     return { title: `枪械暴击 · ${gun}`, total: breakdown.text,
         rows: breakdown.sources.map(s => ({ label: sourceLabel(s.id, ctx, gun), text: `独立 ${s.text} 暴击来源` })),
         notes: ['合计 = 1 − 各来源“不暴击”的概率相乘，不是把百分比相加。', `暴击伤害 ×${m.critMultiplier}${ctx.perks.includes('technique-25-a') ? '（要害打击）' : ''}`,
             ...m.breath ? ['屏息狙击另计：局内精瞄锁定目标时蓄力，独立来源最多 30%。'] : []] };
+}
+
+/**
+ * The raid HUD's critical lines (spec 2.3; a raid only reads them, they never pop up): the static chance of the gun in
+ * hand, or the knife's not-applicable line, or the note of a v1 or v2 raid that keeps its old rule; and, with the breath
+ * perk and a gun drawn, the charge's progress and the chance on the enemy it holds. Every number is the Runtime's own
+ * (HudView.crit and .breath), printed as it is: nothing here derives a chance.
+ */
+export interface CritHud {
+    /** "暴击" before `chance`, or a whole note when `chance` is null. */
+    label: string;
+    /** The static combined chance as critBreakdown prints it ("10.53%", "<100%"). */
+    chance: string | null;
+    breath: {
+        /** The perk's name. */
+        label: string;
+        /** Share of a full charge, 0 to 1, for the bar. */
+        share: number;
+        /** Seconds charged over the seconds of a full charge, "1.5 / 3.0 秒" ("3.0" only once it is full). */
+        time: string;
+        /** The charge is full: its time reads "3.0". */
+        full: boolean;
+        /** "目标 37.37%": the combined chance on the enemy the charge holds, or null without one. */
+        target: string | null;
+    } | null;
+}
+/** Null in a classic raid: it has no such rule to show. */
+export function critHud(crit: CritChanceView | null, breath: BreathView | null): CritHud | null {
+    if (!crit) return null;
+    if (crit.rule === 'old') return { label: '本局沿用旧暴击规则', chance: null, breath: null };
+    if (!crit.gun) return { label: NO_GUN, chance: null, breath: null };
+    if (!breath) return { label: '暴击', chance: crit.gun.text, breath: null };
+    // Whole tenths, rounded down so that "3.0" means full; the allowance absorbs frame times summed just short of a tenth.
+    const held = Math.min(breath.seconds, breath.full), tenths = Math.floor(held * 10 + 1e-6) / 10;
+    return { label: '暴击', chance: crit.gun.text, breath: { label: PERK_TEXT['technique-15-a'].name, share: held / breath.full,
+        time: `${tenths.toFixed(1)} / ${breath.full.toFixed(1)} 秒`, full: tenths >= breath.full, target: crit.onTarget && `目标 ${crit.onTarget.text}` } };
 }
 
 /** One candidate card: open (can be previewed), chosen, the other side of a chosen node, or locked below its level. */

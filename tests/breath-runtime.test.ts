@@ -9,7 +9,7 @@ import { createRuntimeTestDriver } from '../src/raid-runtime/test-support';
 import type { BreathView, PublishedView, RaidIntent, StampedEvent } from '../src/raid-runtime/contract';
 import { BUILDING_WORLD } from '../src/building-world';
 import { changeLayer } from '../src/layer-transition';
-import { breathChance } from '../src/breath';
+import { BREATH_FULL, breathChance } from '../src/breath';
 import { characterCritChance, snapshotChance, type CritSnapshot, type PerkId } from '../src/perks';
 import { arm, perkBench, reopen, LANE, type Bench, type Gun } from './fixtures/shooting-bench';
 
@@ -22,7 +22,7 @@ const intent = (patch: Partial<RaidIntent> = {}): RaidIntent => ({ ...emptyInten
 /** The precise aim held on the desktop (the right button). */
 const AIM: Partial<RaidIntent> = { precise: true };
 const FRAME = 1000 / 60;
-const IDLE: BreathView = { target: null, seconds: 0, chance: 0 };
+const IDLE: BreathView = { target: null, seconds: 0, chance: 0, full: BREATH_FULL };
 /** Technique 15 and the carbine: 2.75% and 8% combine to 10.53%; with the full breath it is 37.371% (spec 2.1). */
 const PLAIN = 1 - (1 - characterCritChance(15)) * .92, FULL = 1 - (1 - characterCritChance(15)) * .92 * .7;
 
