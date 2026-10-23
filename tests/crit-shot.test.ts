@@ -63,9 +63,9 @@ function stock(b: Bench, items: Record<string, number>) {
     b.runtime.restore(c);
 }
 /** A click at wall time `at` ms (the shot leaves at the end of that frame), then `frames` frames of 100 ms; the events published. */
-function fire(b: Bench, at: number, frames = 0, patch: Partial<RaidIntent> = {}): StampedEvent[] {
-    const events = [...b.runtime.advance(at, intent({ firePressed: true, ...patch })).events];
-    for (let i = 1; i <= frames; i++) events.push(...b.runtime.advance(at + i * 100, intent(patch)).events);
+function fire(b: Bench, at: number, frames = 0): StampedEvent[] {
+    const events = [...b.runtime.advance(at, intent({ firePressed: true })).events];
+    for (let i = 1; i <= frames; i++) events.push(...b.runtime.advance(at + i * 100, intent()).events);
     return events;
 }
 const hurts = (events: readonly StampedEvent[], uid: string) => events.flatMap(e => e.type === 'hurt' && e.uid === uid ? [e] : []);
