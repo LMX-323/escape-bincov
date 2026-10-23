@@ -81,7 +81,9 @@ function placement(from: D.Inventory, to: D.Inventory, uid: string, x: number, y
     return '原位置放不下交换物品，请腾出空间。';
 }
 
-/** Validate the exact footprint and any reciprocal swap without changing either inventory. */
+/** Validate placement, partial merging or a reciprocal swap without changing either inventory.
+ * null means the operation is allowed, not that the target is empty. Automatic split-to-empty callers must also
+ * use D.fits without excluding the source uid; otherwise a second split can silently merge into the first stack. */
 export function placementError(from: D.Inventory, to: D.Inventory, uid: string, x: number, y: number, rotated?: boolean, quantity?: number): string | null {
     const result = placement(from, to, uid, x, y, rotated, quantity); return typeof result === 'string' ? result : null;
 }
