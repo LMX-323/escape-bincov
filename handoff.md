@@ -1,6 +1,6 @@
 # 任务交接入口
 
-- 2026-10-23 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` / PR #91；十二地区战术地图、两处现有入口可出击、十区暂未开发。追加十二张情报候选图，按维护者要求将视觉深化与接图留给 Opus；[接手说明](docs/tasks/county-map-select.md#交给-opus-的续作入口) 包含素材、五个代码入口、优先级与验收。已正常同步 main `24c18a6`，准确 head / CI 见 PR；额外训练 E4 失败未归因，新增关卡继续归 #82。
+- 2026-10-24 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` / PR #91；十二地区战术地图、两处现有入口可出击、十区暂未开发。[Opus 视觉深化](docs/tasks/county-map-select.md#opus-视觉深化2026-10-24)：先正常合并 main（#89、#90、#92、#93）并重建字体子集与生成物；地图固定 3:2（容器查询单位适配，最多裁 6%），标记钉在地标上、标签放一侧；选中时局部点亮、准星滑动锁定（`CSS.registerProperty`）、路线沿公路绘制；十二张插图接入区域情报；出发按钮常驻底部；出击面板由 `morph.ts` 就地更新，焦点、种子与过渡在重绘中保留。`test:raid-default` R10 扩充、新增 R11 与 `tests/deploy-map.test.ts`。真机与真人观感未验，额外训练 E4 记录见任务文档；准确 head / CI 见 PR，新增关卡继续归 #82。
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
