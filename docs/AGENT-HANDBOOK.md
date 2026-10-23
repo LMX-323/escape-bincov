@@ -41,18 +41,20 @@ git rev-parse HEAD
 
 ## 4. 按风险验证
 
-所有源码改动至少运行 `pnpm test` 和 `pnpm package`。下表按实际改动叠加要求；定向单测帮助定位，不能替代交付基线。现有命令定义以 [package.json](../package.json) 为准。
+所有源码改动至少运行 `pnpm test` 和 `pnpm package`。用[检查导航](CHECKS.md)叠加实际风险，例如 `pnpm checks --risk=save,input`；输出包含基线、相关命令、前置与人工证据要求。定向单测不能替代交付基线。命令以 [package.json](../package.json) 为准，具体风险选择只在[检查元数据](../scripts/check-catalog.mjs)维护。
 
-| 改动范围 | 最少验证 |
+| 改动范围 | 导航风险（可组合） |
 | --- | --- |
-| 纯文字/文档 | 链接、命令、事实、图片路径；无需为文字新增代码测试 |
-| 领域规则、数据、地图 | `pnpm test`、`pnpm package`，以及对应边界/可达性回归 |
-| UI、操作、场景 | 基线＋`pnpm test:browser`、`pnpm test:ui`；1280×720与1920×1080真实截图 |
-| 主界面、全局输入、缩放 | UI行要求＋`pnpm test:title` |
-| 输入、暂停、事务回滚 | 相关行要求＋`pnpm test:desktop-input`、`pnpm test:mobile`、`pnpm test:mobile-ux` |
-| 交易、库存、结算、备份 | 基线＋`pnpm test:save-browser`，包括失败写入、重复重试、旧档、导入覆盖和多窗口；改UI/输入时同时满足对应行 |
-| 打包、依赖或发布 | 基线＋`pnpm test:portable`，检查ZIP内容/哈希及线上普通入口 |
-| 战斗、AI、潮汐、持续负载 | 对应回归＋`pnpm test:play`，另注明真人平衡性是否验证 |
+| 纯文字/文档 | `docs`；核对链接、命令、事实和图片，无需为文字新增代码测试 |
+| 领域规则、数据 / 地图 | `rules` / `world` |
+| UI、操作、场景 | `ui`；保留两档桌面真实截图 |
+| 主界面、全局输入、缩放、暂停 | `input` |
+| 交易、库存、结算、备份 / 迁移 | `save` / `migration`；事务回滚同时选择 `input`，界面改动选择 `ui` |
+| 背包搜刮 / 商店 / 据点成长 | `inventory` / `shop` / `base` |
+| 美术、渲染与生命周期 | `render`；独立诊断不计为回归通过 |
+| 打包、依赖或发布 | `packaging` |
+| 战斗、AI、潮汐、持续负载 / 分层自然行动 | `combat` / `layered`；真人平衡单独记录 |
+| 测试工具与 CI | `ci`；实际受影响套件另跑 |
 
 按任务补足实际入口，避免只凭命令名判断覆盖：
 
@@ -66,7 +68,7 @@ git rev-parse HEAD
 
 ## 5. CI、提交与交付
 
-CI的分组、具体命令、前置条件和制品位置只查 [CI.md](CI.md) 与 [实际工作流](../.github/workflows/ci-pages.yml)，本手册不维护第二份完整清单。新增检查仍按CI说明同步现有覆盖保障：新的 `test:*` 要么排进 CI 组，要么登记为手动套件并写明原因（[browser-suites.mjs](../scripts/ci/browser-suites.mjs)），否则 CI 策略测试失败；其余风险命令尚无统一注册。
+CI的分组、前置和制品位置查 [CI.md](CI.md) 与 [实际工作流](../.github/workflows/ci-pages.yml)。新增检查按[检查导航的维护规则](CHECKS.md#唯一维护位置)更新元数据：新的 `test:*` 要么排进 CI，要么登记为手动套件，否则 CI 策略测试失败；风险、诊断与非 package 脚本也有覆盖检查。导航不改变现行 CI 执行策略。
 
 文档快速通道只在相同非文档内容已有成功主线完整回归证据时复用浏览器结果；本次单测、打包和制品一致性仍运行。策略不足回退全量，手动工作流始终全量。`Build and test` 接受的按策略跳过与异常跳过不同；只有主线验证成功后才能更新Pages，PR不发布，镜像所用检查名和发布契约保留。
 

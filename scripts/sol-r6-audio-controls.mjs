@@ -1,3 +1,6 @@
+// Historical R6 experiment, not a current regression gate. Same-source native output can exceed the old ±20%
+// threshold; the hard-coded baseline/environment and generated death-muted page need a task-specific review.
+// Retained for provenance (docs/CHECKS.md); do not count this result as current audio acceptance.
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
