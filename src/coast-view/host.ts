@@ -635,7 +635,7 @@ export class CoastSampleHost {
   // --- HUD ---
   private hud(b: PublishedView) {
     const f = b.frame, h = f.hud, q = <T extends HTMLElement>(s: string) => this.q<T>(s), dt = this.app.ticker.deltaMS / 1000;
-    this.sound.frame(b, dt);
+    this.sound.frame(b, dt, uid => actorShown(f, uid));
     q('[data-hp]').style.width = `${Math.max(0, h.hp / h.maxHp) * 100}%`; q('[data-hp-text]').textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;
     q('[data-st]').style.width = `${Math.max(0, h.stamina / h.maxStamina) * 100}%`; q('[data-st-text]').textContent = `${Math.round(h.stamina)}`;
     const w = h.weapon;

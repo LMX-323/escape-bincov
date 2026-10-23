@@ -11,8 +11,8 @@
 // F20 run waited on `host.lastBatch` that way, which pinned one PublishedView per cycle and inflated the trend.
 //
 // BINCOV_HEAP_ENTRY=ordinary runs a no-test-hook deploy/abandon control, not the full stairs/extraction workload.
-//   pnpm build && node scripts/coast-sample-heap.mjs
-//   BINCOV_HEAP_CYCLES=30 BINCOV_HEAP_SNAP=10,30 BINCOV_HEAP_KEEP=1 node scripts/coast-sample-heap.mjs
+//   pnpm package && pnpm diagnose:coast-owners
+//   BINCOV_HEAP_CYCLES=30 BINCOV_HEAP_SNAP=10,30 BINCOV_HEAP_KEEP=1 node scripts/sol-r6-heap.mjs
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -21,8 +21,9 @@ import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import { buildGameScript, pagePoolProbe, withGameScript } from './game-bundle.mjs';
+import { diagnosticChecks } from './check-catalog.mjs';
 
-const out = resolve(process.env.BINCOV_HEAP_OUT || 'test-results/coast-sample/heap'); await mkdir(out, { recursive: true });
+const out = resolve(process.env.BINCOV_HEAP_OUT || diagnosticChecks['diagnose:coast-owners'].output); await mkdir(out, { recursive: true });
 const startedAt = new Date().toISOString();
 const ordinary = process.env.BINCOV_HEAP_ENTRY === 'ordinary';
 const CYCLES = Number(process.env.BINCOV_HEAP_CYCLES || 20), SNAP = (process.env.BINCOV_HEAP_SNAP || '6,20').split(',').map(Number);

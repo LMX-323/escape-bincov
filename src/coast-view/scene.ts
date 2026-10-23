@@ -10,6 +10,7 @@ import { Fx } from './fx';
 import { gait, walkFrame } from '../gait';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
+import { enemyMotion } from './enemy-motion';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
@@ -688,17 +689,20 @@ export class CoastView {
     }
     if (g.corpse) { g.corpse.destroy(); g.corpse = null; g.corpseKey = ''; }
     // Dying: the standing frame tips over its feet toward the side the corpse will lie on, then the corpse replaces it.
-    const fall = dying ? Math.min(1, g.deathT / FALL_T) : 0, side = dying ? corpseFacing(a) : 0, tilt = side * 1.25 * fall;
+    const pose = enemyMotion(a, this.opts.reducedMotion);
+    const fall = dying ? Math.min(1, g.deathT / FALL_T) : 0, side = dying ? corpseFacing(a) : 0, tilt = dying ? side * 1.25 * fall : pose.tilt;
     const bx = x - Math.round(side * FALL_SLIDE * fall), by = y + Math.round(4 * fall);
     g.body.texture = this.tex.actor(a.kind, g.dir, frame, a.tactics?.archetype); g.body.position.set(bx, by); g.body.zIndex = a.y; g.body.rotation = tilt;
     if (g.edge) { g.edge.texture = this.tex.actorEdge(a.kind, g.dir, frame, a.tactics?.archetype); g.edge.position.set(bx, by + 1); g.edge.rotation = tilt; g.edge.zIndex = a.y - .002; }
     g.flash.texture = this.tex.actorFlash(a.kind, g.dir, frame, a.tactics?.archetype); g.flash.position.set(bx, by); g.flash.zIndex = a.y + .01; g.flash.visible = shown && (g.flashT > 0 || hit); g.flash.alpha = .5; g.flash.rotation = tilt;
+    for (const sprite of [g.body, g.flash, g.rim]) sprite.scale.set(pose.x, pose.y);
     g.shadow.position.set(x + 2, y - 1);
     // Caught by the tide: the water covers the boots; the shadow drowns. Only for an actor that is drawn at all.
     const wading = shown && !dying && this.tide.wet(a.x, a.y);
     g.wade.visible = wading; g.shadow.visible = shown && !wading;
     if (wading) { g.wade.position.set(x, y - 2); g.wade.zIndex = a.y + .02; g.wade.scale.x = this.opts.reducedMotion ? 1 : 1 + .06 * Math.sin(this.time * 4 + a.x); }
     g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame, a.tactics?.archetype); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
+    g.rim.rotation = tilt;
     const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype);
     const polearm = a.tactics?.archetype === 'tide-ritualist' && a.weapon === 'club';
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;

@@ -17,6 +17,7 @@ import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
+const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
 const report = { scope: 'First three roles deploy natively; other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
@@ -39,7 +40,7 @@ function fixture(phase, role = 'raider-gunner') {
             raid.roster.find(r => r.uid === actor.uid).id = actor.id;
         }
     } else if (phase === 'corpse') damageLayerEnemy(state.expansion, 'coast', e, e.hp * 2);
-    else Object.assign(e.tactics, { phase, phaseLeft: phase === 'windup' ? archetype(role).windup : phase === 'reload' ? 1.8 : .4,
+    else Object.assign(e.tactics, { phase, phaseLeft: phase === 'windup' ? archetype(role).windup / 2 : phase === 'reload' ? 1.8 : .4,
         lockedAim: Math.atan2(p.y - e.y, p.x - e.x), magazine: Math.min(1, spec.magazine), reserve: Math.min(4, spec.reserve), stance: 'hostile', awareness: 1,
         memory: { at: p, time: 0, source: 'sight', target: 'player' } });
     assert.ok(saves.persist(), `${role}/${phase}: ${state.storageError}`);
@@ -77,6 +78,7 @@ try {
                 const held = h.view.tex.weapon(actor.weapon, actor.kind, variant);
                 return { phase: actor.tactics.phase, reloading: !!actor.state.reloading, cue: gfx.telegraph.visible, boundary: actor.tactics.boundary,
                     bodyArt, corpseArt, artStyle: h.view.tex.actorStyle(actor.kind, variant),
+                    bodyPose: { x: gfx.body.scale.x, y: gfx.body.scale.y, tilt: gfx.body.rotation },
                     heldWidth: held.canvas.width, heldArt: gfx.weapon.texture === held.texture, hands: gfx.arms.filter(a => a.visible).length,
                     weapon: actor.weapon, version: JSON.parse(localStorage.getItem('escape-bincov.session.v2')).version };
             }, saved.uid);
@@ -90,6 +92,30 @@ try {
             if (role === 'tide-ritualist' && phase === 'windup') {
                 assert.ok(actual.heldArt && actual.heldWidth >= 40, 'ritualist visibly carries the long fishing tool');
                 assert.equal(actual.hands, 2, 'both hands grip the polearm');
+            }
+            if (motionRoles.includes(role) && phase === 'windup') {
+                assert.notDeepEqual(actual.bodyPose, { x: 1, y: 1, tilt: 0 }, 'preparation is visible on the body');
+                if (viewport.width === 1280) {
+                    const motion = await page.evaluate(uid => {
+                        const h = window.__bincovSample.host, v = h.view, original = h.lastBatch, gfx = v.actors.get(uid);
+                        const pose = () => ({ x: gfx.body.scale.x, y: gfx.body.scale.y, tilt: gfx.body.rotation });
+                        const shown = phase => {
+                            const copy = structuredClone(original), a = copy.frame.actors.find(a => a.uid === uid);
+                            Object.assign(a.tactics, { phase, left: phase === 'recovery' ? .1 : .3, total: 1 });
+                            v.present({ ...copy, events: [] }, 0); return pose();
+                        };
+                        const release = shown('release'), recovered = shown('recovery');
+                        const reduced = v.opts.reducedMotion; v.opts.reducedMotion = true;
+                        v.present({ ...original, events: [] }, 0);
+                        const accessible = { pose: pose(), telegraph: gfx.telegraph.visible };
+                        v.opts.reducedMotion = reduced; v.present({ ...original, events: [] }, 0);
+                        return { release, recovered, accessible };
+                    }, saved.uid);
+                    assert.notDeepEqual(motion.release, actual.bodyPose);
+                    assert.deepEqual(motion.recovered, { x: 1, y: 1, tilt: 0 });
+                    assert.deepEqual(motion.accessible, { pose: { x: 1, y: 1, tilt: 0 }, telegraph: true });
+                    report.cases.push({ viewport, scenario: `${role}-motion-contract`, ...motion });
+                }
             }
             if (phase === 'parley') {
                 assert.equal(actual.boundary.radius, 90);
@@ -106,6 +132,33 @@ try {
             }
             const file = `${viewport.width}x${viewport.height}-${name}.png`;
             await page.screenshot({ path: resolve(out, file) }); report.screenshots.push(file); report.cases.push({ viewport, scenario: name, ...actual });
+            if (viewport.width === 1280 && name === 'windup') {
+                // Render the shipped synthesizer into Web Audio buffers: mapping/visibility are covered separately.
+                // This measures the cue generator, not a natural encounter or subjective audibility over gunfire.
+                const cues = await page.evaluate(async () => {
+                    const Synth = window.__bincovSample.host.sound.out.constructor, results = [];
+                    for (const voice of ['crab', 'dog', 'spit', 'heavy', 'salt', 'polearm', 'raider', 'radio']) {
+                        for (const phase of ['prepare', 'release', 'warning', 'reload']) {
+                            const ctx = new OfflineAudioContext(2, 22050, 44100), audio = new Synth();
+                            audio.context = ctx; audio.master = ctx.createGain(); audio.master.connect(ctx.destination);
+                            audio.noise = ctx.createBuffer(1, 44100 * 4, 44100);
+                            const noise = audio.noise.getChannelData(0);
+                            for (let i = 0; i < noise.length; i++) noise[i] = Math.sin(i * 1.37) * .15;
+                            audio.resumeAt = performance.now(); audio.enemy(voice, phase, { pan: .5, gain: .7 });
+                            const buffer = await ctx.startRendering();
+                            const energy = [0, 1].map(channel => buffer.getChannelData(channel).reduce((sum, x) => sum + x * x, 0));
+                            results.push({ voice, phase, energy });
+                        }
+                    }
+                    return results;
+                });
+                assert.equal(cues.length, 32);
+                for (const cue of cues) {
+                    assert.ok(cue.energy.every(n => Number.isFinite(n) && n > .001), `${cue.voice}/${cue.phase} has real nonzero output`);
+                    assert.ok(cue.energy[1] > cue.energy[0] * 2, 'positional cue pans toward its source');
+                }
+                report.cases.push({ viewport, scenario: 'enemy-synth-output-contract', cues });
+            }
             if (viewport.width === 1280 && role === 'sac-spitter' && phase === 'windup') {
                 // Presentation-only contract probe using the real saved actor. It does not claim a played encounter.
                 const acid = await page.evaluate(uid => {

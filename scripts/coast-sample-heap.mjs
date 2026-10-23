@@ -20,8 +20,9 @@ import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import { buildGameScript, pagePoolProbe, withGameScript } from './game-bundle.mjs';
+import { diagnosticChecks } from './check-catalog.mjs';
 
-const out = resolve(process.env.BINCOV_HEAP_OUT || 'test-results/coast-sample/heap'); await mkdir(out, { recursive: true });
+const out = resolve(process.env.BINCOV_HEAP_OUT || diagnosticChecks['diagnose:coast-heap'].output); await mkdir(out, { recursive: true });
 const startedAt = new Date().toISOString();
 const ordinary = process.env.BINCOV_HEAP_ENTRY === 'ordinary';
 const CYCLES = Number(process.env.BINCOV_HEAP_CYCLES || 20), SNAP = (process.env.BINCOV_HEAP_SNAP || '6,20').split(',').map(Number);
