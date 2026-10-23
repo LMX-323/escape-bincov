@@ -10,7 +10,9 @@
  *      'start-blocked') where an independent grid walk from the body puts it, and a revealed impact shows sparks;
  *   e. a salt firing out of an unrevealed room draws no tracer pixel over that room;
  *   f. fire modes: a held mouse fires a pistol once and the M4A1 every 0.1 s; a held touch stick repeats the pistol; the
- *      inner ring never fires and precise aim stays off on touch.
+ *      inner ring never fires and precise aim stays off on touch;
+ *   g. a blow's flash and kick on an enemy are drawn on at least one frame at 12 and 10 frames a second (#75), and on as
+ *      many frames as before at 60, 30 and 15.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -447,6 +449,55 @@ async function touchModes(page, c) {
   return detail;
 }
 
+/** Frames after the hit's own frame that draw a blow's flash (70 ms) and kick (80 ms): 4 each at 60 Hz, 2 at 30 and 1 at
+ *  15, as before #75. At 12 and 10 Hz (Pixi caps a frame at 100 ms) the first frame used to outlive both and draw neither. */
+const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1] };
+/** g. A blow on slow frames: copies of the live batch, one living enemy 64 px east of the player and hit by a bullet flying
+ *  east, are presented at each rate's fixed delta with the ticker stopped (the Runtime, input and save never see them). */
+async function blowOnSlowFrames(page) {
+  const runs = await page.evaluate(rates => {
+    const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
+    if (!foe) return null;
+    const at = { x: Math.round(p.x) + 64, y: Math.round(p.y) }, moved = { ...foe, ...at, vx: 0, vy: 0, regionId: p.regionId };
+    const batch = events => ({ ...b, events, frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } });
+    // The Runtime's angle for a bullet's hit (layer-transition.ts): atan2(-vy, -vx), toward the shooter.
+    const vx = 1, vy = 0, hit = { type: 'hurt', cause: 'blow', uid: foe.uid, at, damage: 10, critical: false, angle: Math.atan2(-vy, -vx), seq: 0, stamp: b.stamp, durability: 'accepted' };
+    h.app.ticker.stop();
+    try {
+      return rates.map(hz => {
+        const dt = 1 / hz;
+        // Idle frames age any earlier flash or kick away; the body then stands where no kick puts it.
+        for (let i = 0; i < 3; i++) v.present(batch([]), .1);
+        const g = v.actors.get(foe.uid), rest = { x: g.body.x, y: g.body.y };
+        const read = () => ({ body: g.body.visible, flash: g.flash.visible, kick: [g.body.x - rest.x, g.body.y - rest.y] });
+        v.present(batch([hit]), dt);
+        const hitFrame = read(), frames = [];
+        for (let i = 0; i * dt < .25; i++) { v.present(batch([]), dt); frames.push(read()); }
+        return { hz, uid: foe.uid, kind: foe.kind, hitFrame, frames };
+      });
+    } finally { h.app.ticker.start(); }
+  }, Object.keys(BLOW_FRAMES).map(Number).reverse());
+  check(runs, 'no living enemy to hit');
+  const cases = runs.map(r => {
+    const flash = r.frames.map(q => q.flash), kick = r.frames.map(q => q.kick[0] !== 0 || q.kick[1] !== 0);
+    const count = s => s.filter(Boolean).length, leading = s => s.slice(0, count(s)).every(Boolean);
+    return { hz: r.hz, enemy: `${r.kind} ${r.uid}`, flashFrames: count(flash), kickFrames: count(kick), fromFirstFrame: leading(flash) && leading(kick),
+      kicksPx: [...new Set(r.frames.filter((q, i) => kick[i]).map(q => q.kick.join(',')))], drawn: r.frames.every(q => q.body),
+      hitFrame: { flash: r.hitFrame.flash, kickPx: r.hitFrame.kick.join(',') }, flashByFrame: flash.map(Number).join(''), kickByFrame: kick.map(Number).join('') };
+  });
+  const fail = cases.flatMap(c => {
+    const [flash, kick] = BLOW_FRAMES[c.hz], out = [];
+    if (!c.drawn) out.push(`${c.hz} Hz: the enemy was not drawn`);
+    if (c.flashFrames !== flash || c.kickFrames !== kick || !c.fromFirstFrame) out.push(`${c.hz} Hz: flash on ${c.flashFrames} and kick on ${c.kickFrames} frames (want ${flash} and ${kick} from the first frame after the hit)`);
+    // Toward the shooter, as before: whether it should follow the bullet instead is left to the maintainer (#75).
+    if (c.kicksPx.some(k => k !== '-2,0')) out.push(`${c.hz} Hz: kicked ${c.kicksPx.join(' / ')} px (want -2,0)`);
+    return out;
+  });
+  check(!fail.length, fail.join('; '), { cases });
+  await running(page);
+  return { cases };
+}
+
 /* ---------------------------------------------------------------- run ---------------------------------------------------------------- */
 
 let desktop, phone;
@@ -455,6 +506,7 @@ try {
   await step('a', 'a still pointer keeps the aim while the camera eases', desktop, stillPointer);
   await step('b', 'firing with a still pointer keeps the aim', desktop, kickKeepsAim);
   await step('c', 'muzzle flash on the barrel tip; tracers leave the tip', desktop, muzzleAndTracers);
+  await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
   desktop.stallResumes = await stallResumes(desktop.page);
