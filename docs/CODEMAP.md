@@ -70,7 +70,7 @@
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands reach only the first substep`、`blocked panels advance the world`。
 - [shooting.test.ts](../tests/shooting.test.ts)、[shooting-bench.test.ts](../tests/shooting-bench.test.ts)：射击规则的时间切分不变性；固定种子与输入在不同帧率下的弹道、双端开火方式、暂停/面板取消、稳定与后坐。
-- [breath-runtime.test.ts](../tests/breath-runtime.test.ts)：屏息 Perk 在真实帧和开枪中的蓄力、各中断清空与弹丸快照（CP-12～18）；纯规则在 [breath.test.ts](../tests/breath.test.ts)。
+- [breath-runtime.test.ts](../tests/breath-runtime.test.ts)：屏息 Perk 在真实帧和开枪中的蓄力、各中断清空与弹丸快照（CP-12～18）；纯规则在 [breath.test.ts](../tests/breath.test.ts)。行动 HUD 的暴击投影（静态、屏息目标、旧行动、匕首）与开枪快照一致见 [crit-hud.test.ts](../tests/crit-hud.test.ts)，浏览器中的武器卡与截图见 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs) 的 R 步骤。
 - [raid-clock.test.ts](../tests/raid-clock.test.ts)、[bullet-time.test.ts](../tests/bullet-time.test.ts)：子步时间跨追击/涨潮/训练边界和写失败，以及本步晚出生弹丸只推进剩余时长；不能为了调整射击而先把整帧时间发布给所有子步。
 - [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
 
@@ -79,7 +79,7 @@
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
 - 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
-- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`，屏息蓄力在 `hud.breath`（规则在 [breath.ts](../src/breath.ts)，Runtime 在 `step` 逐子步取瞄准目标、在 `runTrigger` 推进，清空点列在 `CoastRaidRuntime.breath` 注释）。
+- 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`，屏息蓄力在 `hud.breath`（规则在 [breath.ts](../src/breath.ts)，Runtime 在 `step` 逐子步取瞄准目标、在 `runTrigger` 推进，清空点列在 `CoastRaidRuntime.breath` 注释）。手中枪械的暴击率在 `hud.crit`，与开枪取同一份 `CoastRaidRuntime.shotCrit` 快照；武器卡底部的文字由 [perk-copy.ts](../src/perk-copy.ts) 的 `critHud` 生成、[coast-view/host.ts](../src/coast-view/host.ts) 的 `critLines` 绘制，界面不再推算概率。
 - 鼠标瞄准与镜头：[coast-view/scene.ts](../src/coast-view/scene.ts) 的 `aimFromClient` 经平滑镜头换算瞄准，镜头前探由 [coast-view/camera.ts](../src/coast-view/camera.ts) 的 `pointerLead` / `stepLead`（鼠标，只在精瞄时）或 `aimLead`（触屏）决定。改前探前先跑 `test:shooting` 的“静止指针不漂”。
 - 试枪场：[range/](../src/range/index.ts)（`?range=1`，内存存档，不碰正式存档）。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。

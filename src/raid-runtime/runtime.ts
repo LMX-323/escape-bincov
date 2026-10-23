@@ -1239,9 +1239,11 @@ export class CoastRaidRuntime implements RaidRuntime {
      * The critical snapshot of a gun shot fired now (docs/tasks/critical-perk-contract.md section 3), in v3 raids only:
      * the effective technique (the technique drug included), the gun fired `w` (a sample gun included), the owned perks
      * and whether the focus drug lasts, all as they are at this instant, plus the breath charge `breath` with the enemy
-     * it rests on (a charge without a target counts nothing). Classic, v1 and v2 raids keep their own rules: undefined.
+     * it rests on (a charge without a target counts nothing). Classic, v1 and v2 raids keep their own rules: undefined;
+     * so does the knife. The HUD (presentation.ts, HudView.crit) reads the same snapshot, so it prints what a shot takes.
+     * Reads only; draws no random number.
      */
-    private shotCrit(w: D.WeaponDef, breath: { chance: number; target: string | null }): CritSnapshot | undefined {
+    shotCrit(w: D.WeaponDef, breath: { chance: number; target: string | null }): CritSnapshot | undefined {
         const state = this.layered;
         if (state?.raid?.version !== 3) return undefined;
         const perks = state.growth.perks ?? [], charge = breath.target === null ? 0 : breath.chance;

@@ -11,6 +11,8 @@ export interface BreathState { target: string | null; seconds: number }
 export const idleBreath = (): BreathState => ({ target: null, seconds: 0 });
 /** The breath source's own chance: 10 points per second aimed, continuous (not per whole second), 30% from 3 s on. */
 export const breathChance = (seconds: number) => Math.min(BREATH_MAX, seconds / 10);
+/** Effective seconds that charge the source in full (BREATH_MAX at 10 points a second): 3. Later seconds add nothing. */
+export const BREATH_FULL = BREATH_MAX * 10;
 /**
  * Advance over one substep of `seconds`. With the perk `owned` and a gun drawn (false with the knife), the precise aim
  * held (shooting.ts preciseHeld) and `sight` the enemy the aim rests on (layer-transition.ts aimTarget), the charge

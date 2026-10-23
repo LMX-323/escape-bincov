@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import type { EnemyState } from '../src/checkpoint';
 import type { LayeredRaid, PursuitState, WorldDefinition } from '../src/expansion-state';
-import { advanceBreath, breathChance, clearBreath, idleBreath, type BreathState } from '../src/breath';
+import { BREATH_FULL, advanceBreath, breathChance, clearBreath, idleBreath, type BreathState } from '../src/breath';
 import { aimTarget, resolveLayerShot } from '../src/layer-transition';
 import { advanceAim, handlingOf, preciseHeld, SWAY, type Motion } from '../src/shooting';
 import { prototypeRaid, prototypeWorld } from './fixtures/layered';
@@ -57,6 +57,8 @@ const chaser = (enemy: EnemyState, sourceMap: string): PursuitState => ({ id: `p
 
 test('CP-12 breath: 0/1/1.5/3/over 3 s give 0/10/15/30/30%, continuous, the same at 30, 60, 144 Hz and uneven substeps', () => {
     assert.deepEqual([0, .5, 1, 1.5, 2.25, 3, 3.5, 60].map(breathChance), [0, .05, .1, .15, .225, .3, .3, .3]);
+    // The progress a view draws runs over the seconds that charge the source in full: exactly 3, where the cap is reached.
+    assert.equal(BREATH_FULL, 3); assert.equal(breathChance(BREATH_FULL), .3); assert.ok(breathChance(BREATH_FULL - 1e-9) < .3);
     for (const [seconds, chance] of [[0, 0], [1, .1], [1.5, .15], [3, .3], [4.5, .3]]) for (const [label, split] of SPLITS) {
         const { breath } = drive(split(seconds));
         assert.ok(close(breath.seconds, seconds) && close(breathChance(breath.seconds), chance), `${seconds} s at ${label}: ${breath.seconds}`);
