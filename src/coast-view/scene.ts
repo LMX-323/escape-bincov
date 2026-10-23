@@ -626,12 +626,13 @@ export class CoastView {
       const t = a.tactics, warning = t.stance === 'warning', windup = t.phase === 'windup';
       const color = warning ? 0xe4c46e : t.phase === 'reload' ? 0x86bed2 : t.stance === 'hostile' ? 0xe38969 : 0x97b7a3;
       g.telegraph.position.set(a.x, a.y); g.telegraph.zIndex = a.y + .09;
+        if (t.boundary) g.telegraph.circle(t.boundary.at.x - a.x, t.boundary.at.y - a.y, t.boundary.radius).stroke({ width: 1.5, color: 0xe4c46e, alpha: .65 });
       if (windup) {
         const length = Math.min(t.range, 90), c = Math.cos(t.aim), s = Math.sin(t.aim);
         g.telegraph.moveTo(0, 0).lineTo(c * length, s * length).stroke({ width: 2, color, alpha: .8 });
       }
       if (t.phase !== 'idle' || warning || t.awareness > 0) {
-        const progress = t.phase === 'idle' ? t.awareness : 1 - Math.min(1, t.left / t.total);
+          const progress = warning ? 1 - t.warningLeft / (t.boundary ? 4 : 1.5) : t.phase === 'idle' ? t.awareness : 1 - Math.min(1, t.left / t.total);
         g.telegraph.rect(-10, -49, 20, 3).fill({ color: 0x171b1b, alpha: .9 });
         g.telegraph.rect(-10, -49, Math.max(1, 20 * progress), 3).fill(color);
       }

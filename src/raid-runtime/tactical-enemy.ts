@@ -1,5 +1,6 @@
 import type { EnemyState } from '../checkpoint';
 import { archetype } from '../enemy-archetypes';
+import { canReceiveReport, enemyRelation } from '../enemy-relations';
 import type { Point } from '../world';
 import type { LegacyEnemyWorld } from './enemy-ai';
 
@@ -9,7 +10,7 @@ interface TacticalWorld extends LegacyEnemyWorld {
 }
 export interface TacticalEffects {
     fire(enemy: EnemyState, angle: number): void;
-    strike(enemy: EnemyState): void;
+    strike(enemy: EnemyState, target: string): void;
     openDoor(enemy: EnemyState, id: string): void;
     notice(enemy: EnemyState, message: string): void;
 }
@@ -17,28 +18,53 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const angle = (a: Point, b: Point) => Math.atan2(b.y - a.y, b.x - a.x);
 const delta = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
+function observedTarget(world: TacticalWorld, e: EnemyState) {
+    const def = archetype(e.id)!, t = e.tactics!;
+    const candidates = [{ uid: 'player', point: world.player, relation: def.stance === 'hostile' ? 'hostile' : 'neutral' },
+        ...world.enemies.filter(other => other !== e && other.hp > 0 && other.tactics)
+            .map(other => ({ uid: other.uid, point: other, relation: enemyRelation(e, other) }))];
+    return candidates.filter(c => c.relation !== 'friendly' && distance(e, c.point) <= def.vision && world.sight(e, c.point)
+        && (!(t.phase === 'windup' || t.phase === 'release') || !t.memory || t.memory.target === c.uid))
+        .map(c => ({ ...c, engaged: t.stance === 'hostile' && t.memory?.target === c.uid,
+            inside: distance(e.home, c.point) < (def.stance === 'conditional' ? 90 : def.territory * .55) }))
+        .filter(c => t.stance !== 'hostile' || !t.memory || world.elapsed - t.memory.time > 7 || c.engaged || c.relation === 'hostile')
+        .filter(c => c.uid === 'player' || c.engaged || c.relation === 'hostile' || def.stance !== 'hostile' && c.inside)
+        .sort((a, b) => Number(b.engaged) - Number(a.engaged) || Number(b.relation === 'hostile') - Number(a.relation === 'hostile')
+            || distance(e, a.point) - distance(e, b.point) || a.uid.localeCompare(b.uid, 'en'))[0];
+}
+
+/** A swing hits the first body along its locked direction. Allies block it, as they block bullets. */
+function meleeContact(world: TacticalWorld, e: EnemyState): string | null {
+    const def = archetype(e.id)!, reach = def.attack === 'pounce' ? 36 : def.range;
+    const bodies = [{ uid: 'player', point: world.player, enemy: null as EnemyState | null },
+        ...world.enemies.filter(other => other !== e && other.hp > 0).map(other => ({ uid: other.uid, point: other, enemy: other }))];
+    const first = bodies.filter(c => distance(e, c.point) <= reach && Math.abs(delta(angle(e, c.point), e.tactics!.lockedAim)) <= .65
+        && world.sight(e, c.point, world.highTide, 10)).sort((a, b) => distance(e, a.point) - distance(e, b.point) || a.uid.localeCompare(b.uid, 'en'))[0];
+    return first?.uid ?? null;
+}
+
 /** v4 controller. Perception writes a value snapshot; locomotion/search never dereference an unseen target.
  * The phase machine consumes at most one release per substep. It keeps its cost and locked direction on restore.
  * All changes live on EnemyState, including limited ammunition, warning and one-use squad reports. */
 export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffects, e: EnemyState, dt: number): void {
     const def = archetype(e.id)!, t = e.tactics!;
-    const sees = distance(e, world.player) <= def.vision && world.sight(e, world.player);
-    const inside = distance(e.home, world.player) < (def.stance === 'conditional' ? 90 : def.territory * .55);
+    const observed = observedTarget(world, e), sees = !!observed, inside = !!observed?.inside;
     e.cooldown = Math.max(0, e.cooldown - dt); e.repath -= dt; e.timer -= dt;
     t.awareness = Math.max(0, Math.min(1, t.awareness + (sees ? dt / def.confirm : -dt * .5)));
-    if (sees) {
-        t.memory = { at: { x: world.player.x, y: world.player.y }, time: world.elapsed, source: 'sight', target: 'player' };
+    if (observed) {
+        if (t.memory && t.memory.target !== observed.uid) { t.awareness = 0; t.warning = 0; if (t.stance !== 'retreat') t.stance = 'idle'; }
+        t.memory = { at: { x: observed.point.x, y: observed.point.y }, time: world.elapsed, source: 'sight', target: observed.uid };
         if (t.stance !== 'hostile' && t.stance !== 'retreat' && t.awareness >= 1) {
-            if (def.stance === 'hostile') t.stance = 'hostile';
+            if (observed.relation === 'hostile') t.stance = 'hostile';
             else if (inside) {
-                if (t.stance !== 'warning') effects.notice(e, def.stance === 'conditional' ? '前方是限制区，请退回公共通道。' : '正在护卫领地，退开可避战。');
+                if (t.stance !== 'warning' && observed.uid === 'player') effects.notice(e, def.stance === 'conditional' ? '前方是限制区，请退回公共通道。' : '正在护卫领地，退开可避战。');
                 t.stance = 'warning'; t.warning = Math.min(5, t.warning + dt);
                 if (t.warning >= (def.stance === 'conditional' ? 4 : 1.5)) t.stance = 'hostile';
             }
         }
-    } else if (world.noiseTime > 0 && world.shotNoise && distance(e, world.shotNoise) <= Math.min(300, world.noiseRadius)) {
+    } else if (t.phase === 'idle' && world.noiseTime > 0 && world.shotNoise && distance(e, world.shotNoise) <= Math.min(300, world.noiseRadius)) {
         // Hearing locates a sound, not the player after they leave it; it alone never authorizes a shot.
-        if (t.memory?.source !== 'sight' || world.elapsed - t.memory.time > 1)
+        if (t.stance !== 'hostile' && (t.memory?.source !== 'sight' || world.elapsed - t.memory.time > 1))
             t.memory = { at: { ...world.shotNoise }, time: world.elapsed, source: 'sound', target: 'player' };
     }
     if (!inside && t.stance === 'warning') {
@@ -49,7 +75,11 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         t.signalUsed = true;
         effects.notice(e, '正在向附近同组报告最后目击位置。');
         for (const ally of world.enemies) {
-            if (ally === e || ally.hp <= 0 || !ally.tactics || ally.tactics.squad !== t.squad || distance(e, ally) > 320) continue;
+            if (ally === e || ally.hp <= 0 || !ally.tactics || !canReceiveReport(e, ally) || distance(e, ally) > 320) continue;
+            if (t.memory.target !== 'player') {
+                const target = world.enemies.find(other => other.uid === t.memory!.target);
+                if (!target || enemyRelation(ally, target) === 'friendly') continue;
+            }
             ally.tactics.memory = { ...structuredClone(t.memory), source: 'report' };
             ally.tactics.stance = 'hostile'; ally.tactics.awareness = 1;
         }
@@ -72,15 +102,14 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         if (t.phase === 'release') {
             if (def.attack === 'pounce') {
                 world.move(e, Math.cos(t.lockedAim) * 300 * dt, Math.sin(t.lockedAim) * 300 * dt);
-                if (distance(e, world.player) > 36 && t.phaseLeft > 0) return;
+                if (!meleeContact(world, e) && t.phaseLeft > 0) return;
             }
             // Effects may restore entity objects. Publish the next phase before invoking them.
             t.phase = 'recovery'; t.phaseLeft = def.recovery;
             if (def.attack === 'projectile') {
                 if (t.magazine > 0) { t.magazine--; effects.fire(e, t.lockedAim); }
             } else if (def.attack === 'spit') effects.fire(e, t.lockedAim);
-            else if (distance(e, world.player) <= (def.attack === 'pounce' ? 36 : def.range)
-                && Math.abs(delta(angle(e, world.player), t.lockedAim)) <= .65 && world.sight(e, world.player, world.highTide, 10)) effects.strike(e);
+            else { const contact = meleeContact(world, e); if (contact) effects.strike(e, contact); }
             return;
         }
         if (t.phaseLeft === 0) {
@@ -92,8 +121,8 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         }
         return;
     }
-    if (!flooded && t.stance === 'hostile' && sees && distance(e, world.player) < def.range && e.cooldown === 0) {
-        t.lockedAim = angle(e, world.player); e.rotation = t.lockedAim;
+    if (!flooded && t.stance === 'hostile' && observed && distance(e, observed.point) < def.range && e.cooldown === 0) {
+        t.lockedAim = angle(e, observed.point); e.rotation = t.lockedAim;
         if (def.magazine && t.magazine === 0) {
             if (t.reserve === 0) t.stance = 'retreat';
             else { t.phase = 'reload'; t.phaseLeft = def.reload; effects.notice(e, '正在换弹。'); }

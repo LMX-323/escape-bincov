@@ -324,7 +324,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
         || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(raid.version === 4 && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)
-        || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0).length) fail();
+        || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0 && (!e.tactics || e.tactics.killedBy === 'player')).length) fail();
     for (const { container: c, mapId } of containers.filter(c => c.container.kind === 'corpse')) {
         const dead = enemies.get(c.id.replace(/^corpse-/, ''));
         if (!c.id.startsWith('corpse-') || !dead || dead.hp > 0 || enemyMaps.get(dead.uid) !== mapId) fail();

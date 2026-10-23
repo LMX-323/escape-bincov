@@ -126,9 +126,23 @@ export class CoastRaidRuntime implements RaidRuntime {
         notice: (enemy, message) => {
             if (distance(this.player, enemy) < 360 && this.sight(this.player, enemy)) this.say(`${enemyDefinition(enemy.id).name}：${message}`, 3);
         },
-        strike: enemy => {
-            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: enemyDefinition(enemy.id).range, hit: 'player' });
-            this.hurt(enemyDefinition(enemy.id).damage, enemy, enemy.uid);
+        strike: (enemy, targetId) => {
+            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: enemyDefinition(enemy.id).range, hit: targetId });
+            if (targetId === 'player') this.hurt(enemyDefinition(enemy.id).damage, enemy, enemy.uid);
+            else {
+                const state = this.snapshotExpansion(), raid = state.raid!, map = raid.currentMap;
+                const target = raid.maps[map].enemies.find(e => e.uid === targetId);
+                if (target) {
+                    const hp = target.hp;
+                    damageLayerEnemy(state, map, target, enemyDefinition(enemy.id).damage, false, { owner: enemy.uid, at: { x: enemy.x, y: enemy.y } });
+                    this.restoreExpansion(state);
+                    if (target.hp < hp) {
+                        this.emit({ type: 'hurt', cause: 'blow', uid: targetId, at: { x: target.x, y: target.y },
+                            damage: hp - target.hp, critical: false, angle: Math.atan2(enemy.y - target.y, enemy.x - target.x) });
+                        if (target.hp <= 0) this.emit({ type: 'death', uid: targetId, killer: enemy.uid, corpseAngle: target.rotation, containerId: `corpse-${targetId}` });
+                    }
+                }
+            }
         },
         fire: (enemy, angle) => {
             const def = archetype(enemy.id)!, speed = def.attack === 'spit' ? 180 : 365;
@@ -1166,7 +1180,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.hurtTimers.set(e.uid, .07);
         this.emit({ type: 'hurt', cause: 'blow', uid: e.uid, at: { x: e.x, y: e.y }, damage: hp - now.hp, critical: false, angle });
         if (now.hp <= 0)
-            this.emit({ type: 'death', uid: e.uid, corpseAngle: now.rotation - (this.layered ? 0 : Math.PI / 2), containerId: `corpse-${e.uid}` });
+            this.emit({ type: 'death', uid: e.uid, ...(this.layered?.raid?.version === 4 ? { killer: 'player' } : {}), corpseAngle: now.rotation - (this.layered ? 0 : Math.PI / 2), containerId: `corpse-${e.uid}` });
     }
     /** Attribute actual aggregate HP loss without changing damage, clock, or RNG. */
     private environmentHurt(damage: number, losses: Partial<Record<HurtCause, number>>) {
@@ -1215,11 +1229,12 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     private observeShot(e: ShotObservation) {
         this.emit({ type: 'impact', bullet: e.bullet.uid, owner: bulletOwner(e.bullet), reason: e.reason, lastFree: e.lastFree, contact: e.contact, normal: e.normal, surface: e.surface, target: e.target });
-        if (e.target) {
+        if (e.target && e.damage > 0) {
             this.emit({ type: 'hurt', cause: 'blow', uid: e.target, at: e.contact ?? e.lastFree, damage: e.damage, critical: e.critical, angle: e.angle });
             if (e.dead) {
                 const enemy = this.enemies.find(a => a.uid === e.target);
-                this.emit({ type: 'death', uid: e.target, corpseAngle: enemy?.rotation ?? this.player.rotation, containerId: e.target === 'player' ? null : `corpse-${e.target}` });
+                const killer = this.layered?.raid?.version === 4 ? bulletOwner(e.bullet) : null;
+                this.emit({ type: 'death', uid: e.target, ...(killer ? { killer } : {}), corpseAngle: enemy?.rotation ?? this.player.rotation, containerId: e.target === 'player' ? null : `corpse-${e.target}` });
             }
         }
     }
@@ -1301,6 +1316,8 @@ export class CoastRaidRuntime implements RaidRuntime {
             ...this.loot.map(l => ({ id: l.uid, kind: 'ground' as const, at: l, label: `拾取 · ${D.ITEMS[l.id].name} × ${l.qty}` })),
             ...this.containers.map(c => ({ id: c.id, kind: 'container' as const, at: c, label: `搜刮 · ${c.name}${c.inventory.items.length ? '' : ' · 已搜空'}` })),
             ...this.mapData.notes.map(n => ({ id: n.title, kind: 'note' as const, at: n, label: `阅读 · ${n.title}` })),
+            ...this.enemies.filter(e => e.hp > 0 && e.tactics && archetype(e.id)?.stance === 'conditional')
+                .map(e => ({ id: e.uid, kind: 'talk' as const, at: e, label: `询问 · ${enemyDefinition(e.id).name}` })),
         ];
         for (const door of this.space.definition.doors) {
             const at = doorAnchor(this.space, door.id, this.player);
@@ -1350,8 +1367,22 @@ export class CoastRaidRuntime implements RaidRuntime {
             this.rejected('interact', 'stale-target');
             return false;
         }
-        if (target.kind === 'entry')
-            return this.layerMutation(state => changeLayer(state, this.layeredWorld!, target.id, e => this.observeShot(e)), true, `entry:${target.id}`);
+        if (target.kind === 'entry') {
+            const previous = new Set(this.layered!.raid!.pursuits.map(p => p.id));
+            return this.layerMutation(state => {
+                const changed = changeLayer(state, this.layeredWorld!, target.id, e => this.observeShot(e));
+                if (changed && state.raid!.pursuits.some(p => p.enemy.tactics && !previous.has(p.id)))
+                    this.say('有人看见你进入楼梯，正在从原入口跟来。', 5);
+                return changed;
+            }, true, `entry:${target.id}`);
+        }
+        if (target.kind === 'talk') {
+            const enemy = this.enemies.find(e => e.uid === target.id)!;
+            const text = enemy.tactics!.stance === 'hostile' ? '正在交火，请远离现场。' :
+                '黄色边界内是限制区，请从外围公共通道绕行。可以在边界外询问；进入后请在四秒警告结束前退出。';
+            // Information only: asking never buys immunity, clears a warning or resets combat on refresh.
+            this.say(`${enemyDefinition(enemy.id).name}：${text}`, 9); return true;
+        }
         if (target.kind === 'door') {
             const open = !this.space!.doors[target.id];
             return this.layerMutation(state => {

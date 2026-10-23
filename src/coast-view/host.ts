@@ -258,7 +258,7 @@ export class CoastSampleHost {
       if (e.owner === 'player' && e.reason === 'hit-actor' && e.target && shown(at) && actorShown(f, e.target)) this.mark(e.target, { x: at.x, y: at.y - AIM_H }, false);
     } else if (e.type === 'melee' && e.attacker === 'player' && e.hit) {
       const a = f.actors.find(x => x.uid === e.hit); if (a && shown(a)) this.mark(a.uid, { x: a.x, y: a.y - AIM_H }, false);
-    } else if (e.type === 'death' && e.uid !== 'player') {
+    } else if (e.type === 'death' && e.uid !== 'player' && (e.killer === undefined || e.killer === 'player')) {
       const at = this.recentHits.get(e.uid), a = f.actors.find(x => x.uid === e.uid);
       if (at !== undefined && performance.now() - at < 500 && a && shown(a)) this.mark(e.uid, { x: a.x, y: a.y - AIM_H }, true);
     } else if (e.type === 'hurt' && e.uid === 'player') {
@@ -847,7 +847,7 @@ export class CoastSampleHost {
     let px = Math.min(innerWidth - half - 8, Math.max(half + 8, p.x));
     if (!above && hitsStatus(px, p.y)) px = Math.min(innerWidth - half - 8, status.right + half + 8);
     el.style.transform = `translate(${Math.round(px)}px, ${Math.round(p.y)}px) translate(-50%, ${above ? -100 : 0}%)`;
-    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' || t.kind === 'entry' ? t.label.split(' · ')[0] : t.kind === 'note' ? '阅读' : '交互';
+    act.textContent = t.kind === 'exit' ? '按住撤离' : t.kind === 'container' ? '搜刮' : t.kind === 'ground' ? '拾取' : t.kind === 'door' || t.kind === 'entry' ? t.label.split(' · ')[0] : t.kind === 'note' ? '阅读' : t.kind === 'talk' ? '询问' : '交互';
     act.setAttribute('aria-label', t.kind === 'exit' ? `${t.label} · 按住撤离` : t.label);
     // 附近 (docs/LOOTING.md): ground items beside the container E opens, or several loose items where E takes the
     // nearest, picked up one by one from the list.

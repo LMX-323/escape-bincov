@@ -1,6 +1,7 @@
 import * as D from './domain';
 import { getLegacyEnemyProfile } from './enemy-profile';
 import { archetype, enemyDefinition } from './enemy-archetypes';
+import { canDamageEnemy } from './enemy-relations';
 import type { BulletState, EnemyState } from './checkpoint';
 import type { ExpansionState, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
@@ -68,21 +69,27 @@ export function shotIntersection(bullet: BulletState, enemy: Point, dx: number, 
 }
 
 /** Actual damage and corpse ownership shared by ordinary and departing shots. */
-export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true): void {
+export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true,
+    source: { owner: string; at: Point } = { owner: 'player', at: state.raid!.player }): void {
     if (enemy.hp <= 0 || amount <= 0) return;
+    if (source.owner !== 'player') {
+        const attacker = [...state.raid!.maps[mapId].enemies, ...state.raid!.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)]
+            .find(e => e.uid === source.owner);
+        if (state.raid!.version !== 4 || !attacker || !canDamageEnemy(attacker, enemy)) return;
+    }
     const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, amount);
     enemy.hp -= actual;
     if (mapId === raid.currentMap) {
-        enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: raid.player.x, y: raid.player.y };
+        enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: source.at.x, y: source.at.y };
         if (enemy.tactics) {
             enemy.tactics.stance = 'hostile'; enemy.tactics.awareness = 1;
-            enemy.tactics.memory = { at: { ...enemy.target }, time: raid.elapsed, source: 'damage', target: 'player' };
+            enemy.tactics.memory = { at: { ...enemy.target }, time: raid.elapsed, source: 'damage', target: source.owner };
         }
     }
-    if (gun) raid.training.quantity.technique += actual / 400 * (raid.version >= 2 ? trainingEfficiency(state) : 1);
+    if (gun && source.owner === 'player') raid.training.quantity.technique += actual / 400 * (raid.version >= 2 ? trainingEfficiency(state) : 1);
     if (enemy.hp > 0) return;
-    raid.kills++;
-    if (enemy.tactics) { enemy.tactics.killedBy = 'player'; enemy.tactics.phase = 'idle'; enemy.tactics.phaseLeft = 0; }
+    if (source.owner === 'player') raid.kills++;
+    if (enemy.tactics) { enemy.tactics.killedBy = source.owner; enemy.tactics.phase = 'idle'; enemy.tactics.phaseLeft = 0; }
     const event = raid.pursuits.find(p => p.enemy.uid === enemy.uid);
     if (event) {
         raid.pursuits = raid.pursuits.filter(p => p !== event);
@@ -114,6 +121,22 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
     const context = { definition: world.maps[mapId], doors: layer.doors, highTide: raid.highTide };
     const stop = shotBarrier(context, bullet, dx, dy);
     if (bullet.enemy) {
+        const actors = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
+        const owner = raid.version === 4 ? actors.find(e => e.uid === bullet.owner && e.tactics) : undefined;
+        if (owner) {
+            const playerDistance = playerPresent ? shotIntersection(bullet, raid.player, dx, dy, 12) : null;
+            const first = actors.filter(e => e.hp > 0 && e.uid !== owner.uid).map(enemy => ({ enemy, distance: shotIntersection(bullet, enemy, dx, dy) }))
+                .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop && h.distance < (playerDistance ?? Infinity))
+                .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'))[0];
+            if (first) {
+                const hp = first.enemy.hp;
+                damageLayerEnemy(state, mapId, first.enemy, bullet.damage, true, { owner: owner.uid, at: { x: bullet.x, y: bullet.y } });
+                const damage = hp - first.enemy.hp;
+                observeShot(observer, context, bullet, first.distance, first.enemy.uid, damage, false, first.enemy.hp <= 0);
+                if (damage > 0) hitFeedback?.(first.enemy.uid, false);
+                return true;
+            }
+        }
         if (playerPresent) {
             const hit = shotIntersection(bullet, raid.player, dx, dy, 12);
             if (hit !== null && hit < stop) {
@@ -189,18 +212,24 @@ export function changeLayer(state: ExpansionState, world: WorldDefinition, entry
     occupied.push(...raid.pursuits.filter(p => p.sourceMap === entry.targetMap && p.enemy.hp > 0).map(p => pursuitPosition(p, raid.elapsed)));
     const landing = findLanding({ definition: targetMap, doors: target.doors, highTide: raid.highTide }, entry.landing, occupied);
     if (!landing) return false; // No damage, RNG draws, entity allocations, or pursuit registration before this point.
-    const witnesses = source.enemies.filter(e => e.hp > 0 && !archetype(e.id) && (e.state === 'chase' || e.state === 'attack') && e.alert > 0 && separation(e, raid.player) <= enemyDefinition(e.id).vision
+    const witnesses = source.enemies.filter(e => e.hp > 0 && (!archetype(e.id) || raid.version === 4 &&
+        ['raider-melee', 'mercenary-assault'].includes(e.id) && e.tactics?.stance === 'hostile' && e.tactics.phase === 'idle'
+        && e.tactics.memory?.target === 'player' && e.tactics.memory.source === 'sight' && raid.elapsed - e.tactics.memory.time <= 1)
+        && (e.state === 'chase' || e.state === 'attack') && e.alert > 0 && separation(e, raid.player) <= enemyDefinition(e.id).vision
         && corridor(sourceContext, e, raid.player, 'sight'));
     raid.player = { ...landing, rotation: raid.player.rotation };
     raid.currentMap = entry.targetMap;
     settleDepartingShots(state, world, fromId, observer);
+    let tacticalBudget = Math.max(0, 2 - raid.pursuits.filter(p => p.enemy.tactics).length);
     for (const enemy of witnesses.filter(e => e.hp > 0).sort((a, b) => a.uid.localeCompare(b.uid, 'en'))) {
+        if (enemy.tactics && tacticalBudget === 0) continue;
         const route = spacePath(sourceContext, enemy, entry.at, true);
         if (!route.length) continue;
         const path = [{ x: enemy.x, y: enemy.y }, ...route, { ...entry.at }];
         const distance = path.slice(1).reduce((sum, point, i) => sum + separation(path[i], point), 0);
         const speed = enemyDefinition(enemy.id).speed;
         if (speed <= 0) continue;
+        if (enemy.tactics) tacticalBudget--;
         source.enemies = source.enemies.filter(e => e.uid !== enemy.uid);
         raid.pursuits.push({ id: `pursuit-${raid.nextEntity++}`, enemy, sourceMap: fromId, targetMap: entry.targetMap, entry: entry.id,
             path, distance, speed, registeredAt: raid.elapsed, arrivalAt: raid.elapsed + distance / speed + 1, waiting: false });

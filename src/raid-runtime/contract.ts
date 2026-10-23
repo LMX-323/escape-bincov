@@ -143,7 +143,8 @@ export type ActorView = Readonly<{
     weapon: WeaponLook;
     /** New encounters only; legacy projections omit this field. Visual phase, not a second combat clock. */
     tactics?: Readonly<{ archetype: string; name: string; phase: 'idle' | 'windup' | 'release' | 'recovery' | 'reload';
-        stance: 'idle' | 'warning' | 'hostile' | 'retreat'; awareness: number; left: number; total: number; range: number; aim: number }>;
+        stance: 'idle' | 'warning' | 'hostile' | 'retreat'; awareness: number; left: number; total: number; range: number; aim: number;
+        warningLeft: number; boundary: Readonly<{ at: Point; radius: number }> | null }>;
     state: Readonly<{
         moving: boolean;
         sprinting: boolean;
@@ -199,7 +200,7 @@ export type TargetRef = Readonly<{
 }>;
 export type Interaction = Readonly<{
     ref: TargetRef;
-    kind: 'exit' | 'entry' | 'door' | 'ground' | 'container' | 'note';
+    kind: 'exit' | 'entry' | 'door' | 'ground' | 'container' | 'note' | 'talk';
     at: Point;
     label: string;
     hold: Readonly<{
@@ -316,6 +317,8 @@ export type ViewEventBody = {
 } | {
     type: 'death';
     uid: string;
+    /** Authored encounters identify the final attacker; older four-ID events omit this field. */
+    killer?: string;
     corpseAngle: number;
     containerId: string | null;
 } | {

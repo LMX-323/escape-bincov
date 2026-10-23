@@ -87,6 +87,8 @@
 
 ## 敌人
 
+组织关系、目标、NPC 伤害与玩家收益归属见 [enemy-relations.ts](../src/enemy-relations.ts) 和[合同](tasks/enemy-relations.md)。条件交涉仍用 `SpatialInteraction` → `targetView/activate` 的单一选择链，询问只发说明事件；跨层新原型职责与两人预算在 `changeLayer`，抵达观察点清理在 `advancePursuits`。对应回归为 `enemy-relations.test.ts`、`enemy-pursuit.test.ts` 和 `test:enemy`，不要给旧四类追加新阵营字段。
+
 **职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 保留旧四类；[enemy-archetypes.ts](../src/enemy-archetypes.ts) 定义新原型与持久战术状态。[enemy-encounters.ts](../src/enemy-encounters.ts) 在新街区出击事务中安装三原型样板，旧活动行动不迁移敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)保留完整设计需求，不是完成清单；当前接入与验证见[街区样板](tasks/enemy-street-encounter.md)。
 
 **首读路径。** [enemy-profile.ts](../src/enemy-profile.ts) 的 `getLegacyEnemyProfile` 提供旧身体、武器、攻击类型与尸体抽取次数；[enemy-ai.ts](../src/raid-runtime/enemy-ai.ts) 的 `advanceLegacyEnemy` 更新旧敌人的感知、状态、冷却、路径和移动。世界碰撞由 `LegacyEnemyWorld` 提供，随机数、发射/近战/开门副作用经 `LegacyEnemyEffects` 同步返回 [Runtime](../src/raid-runtime/runtime.ts)。敌人状态、RNG、UID、伤害、事务和事件仍由 Runtime 所有，AI 模块不增加持久化入口。

@@ -11,6 +11,7 @@ import { createSessionState, SaveSession } from '../src/session.ts';
 import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
+import { initialTactics } from '../src/enemy-archetypes.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const report = { screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
@@ -24,7 +25,12 @@ function fixture(phase) {
         .find(p => traversable(context, p, 'body', 10) && corridor(context, e, p, 'sight'));
     assert.ok(p, 'a visible, safe observation point');
     raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
-    Object.assign(e.tactics, { phase, phaseLeft: phase === 'windup' ? .65 : phase === 'reload' ? 1.8 : .4,
+    if (phase === 'parley') {
+        for (const actor of raid.maps.coast.enemies.filter(a => a.tactics)) {
+            actor.id = 'blockade-sentry'; actor.hp = 85; actor.tactics = initialTactics(actor.id, 'guard-test');
+            raid.roster.find(r => r.uid === actor.uid).id = actor.id;
+        }
+    } else Object.assign(e.tactics, { phase, phaseLeft: phase === 'windup' ? .65 : phase === 'reload' ? 1.8 : .4,
         lockedAim: Math.atan2(p.y - e.y, p.x - e.x), magazine: 1, reserve: 4, stance: 'hostile', awareness: 1,
         memory: { at: p, time: 0, source: 'sight', target: 'player' } });
     assert.ok(saves.persist(), state.storageError);
@@ -33,15 +39,17 @@ function fixture(phase) {
 }
 const browser = await chromium.launch(browserOptions);
 try {
-    for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
-        const context = await browser.newContext({ viewport, offline: true }); await resumeStalls(context);
-        const f = fixture('windup');
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }, { width: 844, height: 390 }]) {
+        const touch = viewport.width < 1000;
+        const context = await browser.newContext({ viewport, offline: true, hasTouch: touch, isMobile: touch }); await resumeStalls(context);
+        const phases = touch ? ['parley'] : ['windup', 'reload', 'recovery', 'parley'];
+        const f = fixture(phases[0]);
         await context.addInitScript(([key, raw]) => { if (!localStorage.getItem(key)) localStorage.setItem(key, raw); }, [SESSION_KEY, f.raw]);
         const page = await context.newPage(); page.setDefaultTimeout(60000);
         page.on('pageerror', e => report.errors.push(String(e))); page.on('request', r => { if (/^https?:/.test(r.url())) report.external.push(r.url()); });
-        for (const phase of ['windup', 'reload', 'recovery']) {
+        for (const phase of phases) {
             const saved = fixture(phase);
-            if (phase !== 'windup') await page.evaluate(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
+            if (phase !== phases[0]) await page.evaluate(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
             await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs', { waitUntil: 'load' });
             await page.locator('[data-action="enter"]').click(); await raidReady(page);
             await drive(page, 'freezeAI', true);
@@ -50,13 +58,26 @@ try {
             await frames(page, 20);
             const actual = await page.evaluate(uid => {
                 const h = window.__bincovSample.host, actor = h.lastBatch.frame.actors.find(a => a.uid === uid), gfx = h.view.actors.get(uid);
-                return { phase: actor.tactics.phase, reloading: !!actor.state.reloading, cue: gfx.telegraph.visible,
+                return { phase: actor.tactics.phase, reloading: !!actor.state.reloading, cue: gfx.telegraph.visible, boundary: actor.tactics.boundary,
                     weapon: actor.weapon, version: JSON.parse(localStorage.getItem('escape-bincov.session.v2')).version };
             }, saved.uid);
-            assert.equal(actual.phase, phase); assert.ok(actual.cue); assert.equal(actual.reloading, phase === 'reload');
-            assert.equal(actual.weapon, 'pistol'); assert.equal(actual.version, 6);
+            assert.equal(actual.phase, phase === 'parley' ? 'idle' : phase); assert.ok(actual.cue); assert.equal(actual.reloading, phase === 'reload');
+            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : 'pistol'); assert.equal(actual.version, 6);
+            if (phase === 'parley') {
+                assert.equal(actual.boundary.radius, 90);
+                if (touch) await page.getByRole('button', { name: '询问 · 检查哨兵', exact: true }).tap();
+                else await page.keyboard.press('e');
+                await frames(page, 10);
+                const result = await page.evaluate(uid => {
+                    const h = window.__bincovSample.host;
+                    return { notices: h.eventLog.filter(e => e.type === 'notice').map(e => e.detail.text),
+                        stance: h.lastBatch.frame.actors.find(a => a.uid === uid).tactics.stance };
+                }, saved.uid);
+                assert.ok(result.notices.some(text => text.includes('外围公共通道')), JSON.stringify(result));
+                assert.equal(result.stance, 'idle');
+            }
             const file = `${viewport.width}x${viewport.height}-${phase}.png`;
-            await page.screenshot({ path: resolve(out, file) }); report.screenshots.push(file); report.cases.push({ viewport, phase, ...actual });
+            await page.screenshot({ path: resolve(out, file) }); report.screenshots.push(file); report.cases.push({ viewport, scenario: phase, ...actual });
         }
         await context.close();
     }
