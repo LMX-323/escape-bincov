@@ -140,7 +140,7 @@
 
 ## Q-B06 诊断 bundle 同源
 
-2026-10-23，分支 `agent/diagnostic-bundle`，起点 main `44494ea`。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
+2026-10-23，分支 `agent/diagnostic-bundle`，起点 main `44494ea`，交付前普通合并 main `76adbd6`（#79）。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
 
 **问题**：`scripts/build.mjs` 一导入就构建并写 `dist/`，诊断只能复制它的 esbuild 参数，复制品只有 PNG loader。源码导入 `range.css`、`station.css`、`opening.css` 后，`coast-sample-heap.mjs`、`sol-r6-heap.mjs` 在浏览器启动前就构建失败（main `44494ea` 实测 exit 1）。
 
@@ -164,20 +164,20 @@
 | `build-coast-runtime.mjs` | 现役构建工具 | 输出无渲染器的 Runtime ES 模块（见 [COAST-RUNTIME-SAMPLE](../COAST-RUNTIME-SAMPLE.md)），格式、平台和 target 本就不同；main 上 exit 0 | 不改 |
 | `art-review.mjs` | 现役 CI 测试（`test:art`） | 只打包绘制函数，不导入 CSS/PNG，不复制游戏脚本配置 | 不改 |
 
-**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）
+**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）。先在 `44494ea` 上做完，合入 main `76adbd6`（#79）后单测、CI 守卫、打包和四个诊断重跑一遍。
 
 | 检查 | 结果 |
 | --- | --- |
 | 改动前 `coast-sample-heap`、`sol-r6-heap` | 均 exit 1：浏览器启动前三处 CSS 导入报错 |
-| `pnpm package`（改动前、改动后） | 均通过；`dist/index.html` SHA-256 均为 `7daee656…1da0`，与已提交制品相同，两份 ZIP 与发布清单无差异 |
-| `pnpm test` | 515/515 |
-| `node --test scripts/ci/*.test.mjs` | 55/56，新增 3 项通过（探针版构建 0.3–0.6 秒）；唯一失败的 shell 门禁用例同 Q-E05（本机 Git 路径） |
-| `coast-sample-heap`（默认 20 轮，跑两次） | 两次都能构建并跑完 20 轮；残留所有者 0，着色器源码 11→11，GPU 纹理每轮 2。两次都在原断言处 exit 1：第 6→20 轮快照间 `HTMLCanvasElement` 7→8；堆趋势 +330,840 / +316,310 B |
-| `sol-r6-heap`（默认 20 轮） | exit 0，`PASS lifecycle ownership checks only`；残留所有者 0，无累积（第 20 轮 canvas 为 7）；堆趋势 +318,998 B，签收 partial |
-| `astra-r7-f20`（`R7_NAMED=1`，20 轮，不是严格 60 轮） | 20 轮资源检查全部通过；16–20 轮比 6–10 轮 +330,586 B，按原条件 PARTIAL、exit 1 |
-| `sol-r6-audio-controls` | exit 0；main 与工作区 `audio.ts` 相同，四个音效都在 0.8–1.2 倍内；负对照页已生成，未接着跑 `coast-audio-test.mjs` |
+| `pnpm package` | 产物与改动前逐字节相同：基于 `44494ea` 时 `dist/index.html` SHA-256 改动前后均为 `7daee656…1da0`；合入后为 `0c2a9059…6e23`，即 main 已提交的制品；两份 ZIP 与发布清单无差异 |
+| `pnpm test` | 515/515；合入后 549/549 |
+| `node --test scripts/ci/*.test.mjs` | 两次均 55/56，新增 3 项通过（探针版构建 0.3–0.6 秒）；唯一失败的 shell 门禁用例同 Q-E05（本机 Git 路径） |
+| `coast-sample-heap`（默认 20 轮，共 3 次） | 都能构建并跑完 20 轮；残留所有者 0，着色器源码 11→11，GPU 纹理每轮 2。3 次都在原断言处 exit 1：第 6→20 轮快照间 `HTMLCanvasElement` 7→8；堆趋势 +316,310 至 +330,840 B |
+| `sol-r6-heap`（默认 20 轮，2 次） | 都 exit 0，`PASS lifecycle ownership checks only`；残留所有者 0，canvas 7→7；堆趋势 +312,436 / +318,998 B，签收 partial |
+| `astra-r7-f20`（`R7_NAMED=1`，20 轮，不是严格 60 轮，2 次） | 20 轮资源检查全部通过；16–20 轮比 6–10 轮 +330,586 / +334,542 B，按原条件 PARTIAL、exit 1 |
+| `sol-r6-audio-controls`（2 次） | 都 exit 0；main 与工作区 `audio.ts` 相同，四个音效都在 0.8–1.2 倍内；负对照页已生成，未接着跑 `coast-audio-test.mjs` |
 
 **未做 / 下一步**
 
-- **F20 仍是 PARTIAL**，归 #32。诊断能进入流程，不等于 F20 总堆通过；本次只跑了默认 20 轮，没有跑严格 60 轮。`coast-sample-heap` 两次出现的 canvas 7→8 尚未归因（同一负载的 `sol-r6-heap` 一次未出现），交 F20 调查，本 PR 不改断言和判定条件。
+- **F20 仍是 PARTIAL**，归 #32。诊断能进入流程，不等于 F20 总堆通过；本次只跑了默认 20 轮，没有跑严格 60 轮。`coast-sample-heap` 3 次都出现的 canvas 7→8 尚未归因（同一负载的 `sol-r6-heap` 2 次都没有），交 F20 调查，本 PR 不改断言和判定条件。
 - 两个堆诊断工作负载相同，默认输出目录都是 `test-results/coast-sample/heap`，后跑的覆盖先跑的；是否合并、`sol-r6-audio-controls` 是否保留，归 Q-E08。全部脚本的用途分类也仍归 Q-E08。
