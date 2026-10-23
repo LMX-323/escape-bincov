@@ -8,7 +8,7 @@ import { localLinks } from './check-docs.mjs';
 
 // WORK-QUEUE is checked up to its archived history (the first <details>).
 const ENTRY = ['AGENTS.md', 'README.md', 'CONTRIBUTING.md', 'docs/CODEMAP.md', 'docs/AGENT-HANDBOOK.md', 'docs/ARCHITECTURE.md',
-  'docs/CI.md', 'docs/WORK-QUEUE.md', 'docs/TASK-HANDOFF-TEMPLATE.md'];
+  'docs/CI.md', 'docs/CHECKS.md', 'docs/WORK-QUEUE.md', 'docs/TASK-HANDOFF-TEMPLATE.md'];
 const root = resolve('.');
 const current = file => { const text = readFileSync(resolve(root, file), 'utf8'); return file === 'docs/WORK-QUEUE.md' ? text.split('<details>')[0] : text; };
 
