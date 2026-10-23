@@ -11,9 +11,11 @@
  *   e. a salt firing out of an unrevealed room draws no tracer pixel over that room;
  *   f. fire modes: a held mouse fires a pistol once and the M4A1 every 0.1 s; a held touch stick repeats the pistol; the
  *      inner ring never fires and precise aim stays off on touch;
- *   g. a blow's flash and kick on an enemy are drawn on at least one frame at 12 and 10 frames a second (#75), and on as
- *      many frames as before at 60, 30 and 15; the kick goes 2 px the way the bullet flew (east and south) and the blood
- *      sprays back toward the shooter.
+ *   g. a blow's flash and kick on an enemy are drawn from the hit's own frame (#75), on as many frames as before at 60,
+ *      30 and 15 frames a second and on one at 12 and 10; the kick goes 2 px the way the bullet flew (east and south) and
+ *      the blood sprays back toward the shooter;
+ *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
+ *      asks for one kill confirm sound.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -450,8 +452,9 @@ async function touchModes(page, c) {
   return detail;
 }
 
-/** Frames after the hit's own frame that draw a blow's flash (70 ms) and kick (80 ms): 4 each at 60 Hz, 2 at 30 and 1 at
- *  15, as before #75. At 12 and 10 Hz (Pixi caps a frame at 100 ms) the first frame used to outlive both and draw neither. */
+/** Frames that draw a blow's flash (70 ms) and kick (80 ms), from the hit's own frame on: 4 each at 60 Hz, 2 at 30 and 1
+ *  at 15, 12 and 10 (Pixi caps a frame at 100 ms). They used to start a frame after the hit, and at 12 and 10 Hz that
+ *  frame outlived both and drew neither (#75). */
 const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1] };
 /** Bullets for g: flying east at every rate in BLOW_FRAMES, and south at 60 Hz so that each axis of the kick is checked. */
 const BLOWS = [...Object.keys(BLOW_FRAMES).map(Number).reverse().map(hz => ({ hz, dir: 'east', vx: 1, vy: 0 })), { hz: 60, dir: 'south', vx: 0, vy: 1 }];
@@ -476,9 +479,10 @@ async function blowOnSlowFrames(page) {
         v.present(batch([hit]), dt);
         // The blow's blood drops, still in the air after one frame: each one's speed along the bullet (px/s).
         const blood = v.fx.live.filter(q => !before.has(q) && q.settle === 'decal').map(q => Math.round(q.vx * vx + q.vy * vy));
-        const hitFrame = read(), frames = [];
-        for (let i = 0; i * dt < .25; i++) { v.present(batch([]), dt); frames.push(read()); }
-        return { hz, dir, bullet: [vx, vy], uid: foe.uid, kind: foe.kind, hitFrame, frames, blood };
+        // The hit's own frame first, then a quarter of a second.
+        const frames = [read()];
+        for (let i = 1; i * dt < .25; i++) { v.present(batch([]), dt); frames.push(read()); }
+        return { hz, dir, bullet: [vx, vy], uid: foe.uid, kind: foe.kind, frames, blood };
       });
     } finally { h.app.ticker.start(); }
   }, BLOWS);
@@ -488,13 +492,13 @@ async function blowOnSlowFrames(page) {
     const count = s => s.filter(Boolean).length, leading = s => s.slice(0, count(s)).every(Boolean);
     return { hz: r.hz, dir: r.dir, enemy: `${r.kind} ${r.uid}`, flashFrames: count(flash), kickFrames: count(kick), fromFirstFrame: leading(flash) && leading(kick),
       kicksPx: [...new Set(r.frames.filter((q, i) => kick[i]).map(q => q.kick.join(',')))], wantPx: r.bullet.map(d => d * 2).join(','), drawn: r.frames.every(q => q.body),
-      hitFrame: { flash: r.hitFrame.flash, kickPx: r.hitFrame.kick.join(',') }, flashByFrame: flash.map(Number).join(''), kickByFrame: kick.map(Number).join(''),
+      hitFrame: { flash: r.frames[0].flash, kickPx: r.frames[0].kick.join(',') }, flashByFrame: flash.map(Number).join(''), kickByFrame: kick.map(Number).join(''),
       bloodAlongBullet: r.blood };
   });
   const fail = cases.flatMap(c => {
     const [flash, kick] = BLOW_FRAMES[c.hz], out = [], at = `${c.hz} Hz ${c.dir}`;
     if (!c.drawn) out.push(`${at}: the enemy was not drawn`);
-    if (c.flashFrames !== flash || c.kickFrames !== kick || !c.fromFirstFrame) out.push(`${at}: flash on ${c.flashFrames} and kick on ${c.kickFrames} frames (want ${flash} and ${kick} from the first frame after the hit)`);
+    if (c.flashFrames !== flash || c.kickFrames !== kick || !c.fromFirstFrame) out.push(`${at}: flash on ${c.flashFrames} and kick on ${c.kickFrames} frames, by frame ${c.flashByFrame} / ${c.kickByFrame} (want ${flash} and ${kick} from the hit's own frame)`);
     // Knocked 2 px the way the bullet flew (#75), while the blood still sprays back toward the shooter.
     if (c.kicksPx.some(k => k !== c.wantPx)) out.push(`${at}: kicked ${c.kicksPx.join(' / ')} px (want ${c.wantPx})`);
     if (!c.bloodAlongBullet.length || c.bloodAlongBullet.some(s => s >= 0)) out.push(`${at}: blood speeds along the bullet ${c.bloodAlongBullet.join(' / ') || 'none'} (want all below 0, back toward the shooter)`);
@@ -503,6 +507,40 @@ async function blowOnSlowFrames(page) {
   check(!fail.length, fail.join('; '), { cases });
   await running(page);
   return { cases };
+}
+
+/** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
+ *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
+ *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
+ *  asks for one confirm sound. The Runtime and the save never see these events. */
+async function hitConfirm(page) {
+  const r = await page.evaluate(() => {
+    const h = window.__bincovSample.host, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
+    if (!foe) return null;
+    const at = { x: Math.round(p.x) + 48, y: Math.round(p.y) }, moved = { ...foe, ...at, vx: 0, vy: 0, regionId: p.regionId };
+    const copy = { ...b, events: [], frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } };
+    const ev = body => ({ ...body, seq: 0, stamp: b.stamp, durability: 'accepted' });
+    const impact = ev({ type: 'impact', bullet: 'probe-bullet', owner: 'player', reason: 'hit-actor', lastFree: at, contact: at, normal: null, surface: 'actor', target: foe.uid });
+    const hurt = critical => ev({ type: 'hurt', cause: 'blow', uid: foe.uid, at, damage: 10, critical, angle: Math.PI });
+    const death = ev({ type: 'death', uid: foe.uid, corpseAngle: 0, containerId: null });
+    const pop = document.querySelector('[data-hitpop]'), out = h.sound.out, kill = out.kill;
+    let kills = 0;
+    out.kill = function (...a) { kills++; return kill.apply(this, a); };
+    const read = () => ({ on: pop.classList.contains('on'), crit: pop.classList.contains('crit'), kill: pop.classList.contains('kill'), markT: Math.round(h.markT * 100) / 100, kills });
+    const feed = (...events) => { for (const e of events) h.feedback(e, copy); return read(); };
+    try {
+      return { plain: feed(impact, hurt(false)), crit: feed(impact, hurt(true)), critKill: feed(death),
+        plainAgain: feed(impact, hurt(false)), plainKill: feed(death) };
+    } finally { out.kill = kill; }
+  });
+  check(r, 'no living enemy to mark');
+  const want = { plain: [false, false, .2, 0], crit: [true, false, .3, 0], critKill: [true, true, .42, 1], plainAgain: [false, false, .2, 1], plainKill: [false, true, .42, 2] };
+  const fail = Object.entries(want).flatMap(([k, [crit, kill, markT, kills]]) => {
+    const s = r[k];
+    return s.on && s.crit === crit && s.kill === kill && s.markT === markT && s.kills === kills ? [] : [`${k}: ${JSON.stringify(s)} (want crit ${crit}, kill ${kill}, ${markT} s, ${kills} confirm sounds)`];
+  });
+  check(!fail.length, fail.join('; '), r);
+  return r;
 }
 
 /* ---------------------------------------------------------------- run ---------------------------------------------------------------- */
@@ -514,6 +552,7 @@ try {
   await step('b', 'firing with a still pointer keeps the aim', desktop, kickKeepsAim);
   await step('c', 'muzzle flash on the barrel tip; tracers leave the tip', desktop, muzzleAndTracers);
   await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);
+  await step('h', 'a critical hit turns the hit marker critical; each kill marker asks for one confirm sound', desktop, hitConfirm);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
   desktop.stallResumes = await stallResumes(desktop.page);
