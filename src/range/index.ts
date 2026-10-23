@@ -9,7 +9,7 @@ import { audio } from '../app';
 import { esc } from '../html';
 import { wrapCoastRuntime } from '../raid-runtime/host';
 import type { RaidIntent, RaidRuntime } from '../raid-runtime/contract';
-import { CoastSampleHost, type CoastHandle } from '../coast-view/host';
+import { CoastSampleHost } from '../coast-view/host';
 import type { ViewOptions } from '../coast-view/scene';
 import { createRangeRaid, ShootingRange } from './raid';
 import { RangePanel } from './panel';
@@ -48,7 +48,7 @@ export async function startRange(): Promise<void> {
             panel?.update(batch);
             return batch;
         } });
-        const host: CoastSampleHost = new CoastSampleHost({ runtime, services: wrapped.services } as unknown as CoastHandle, session, saves, opts,
+        const host: CoastSampleHost = new CoastSampleHost({ runtime, services: wrapped.services }, session, saves, opts,
             () => location.reload(), () => host.toast('试枪场不保存进度，无需备份。'));
         document.documentElement.dataset.coastSample = 'range';
         audio.setVolume(session.save.settings.volume);

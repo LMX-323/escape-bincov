@@ -320,7 +320,8 @@ export class UI {
     if (!item || !src || item.qty < 2) return;
     const qty = Math.floor(item.qty / 2), inv = s.profile[src];
     for (let y = 0; y < inv.h; y++) for (let x = 0; x < inv.w; x++)
-      if (!this.rt.placementError(src, src, item.uid, x, y, !!item.rotated, qty)) { this.result(this.rt.split(src, item.uid, qty, x, y, !!item.rotated), 'drop'); this.render(); return; }
+      // A valid placement may merge into a stack; this automatic split specifically needs a new empty footprint.
+      if (D.fits(inv, item.id, x, y, undefined, !!item.rotated) && !this.rt.placementError(src, src, item.uid, x, y, !!item.rotated, qty)) { this.result(this.rt.split(src, item.uid, qty, x, y, !!item.rotated), 'drop'); this.render(); return; }
     this.toast('没有空格放拆出来的那一份。', 'error'); this.host.sound('error');
   }
   private async importFile(file: File) {
