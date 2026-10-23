@@ -1,9 +1,10 @@
 /**
  * CP-T09 (#77): the base perk UI on the real HideoutRuntime, in the station yard's 身体与成长 panel and on the old tab
- * page (docs/CRITICAL-PERK-DESIGN.md sections 2.3 and 5). Offline packaged build, real session and localStorage, real
- * mouse, keyboard and touch input. ?test=1 only seeds save fixtures through the session's own transaction (the role of
- * another entry writing) and injects a storage fault around one confirm.
- * Usage: node scripts/perk-ui-browser.mjs [--only=Y1,T2,S1] [--shots=<dir>]
+ * page, and the raid HUD's read-only critical lines (docs/CRITICAL-PERK-DESIGN.md sections 2.3 and 5). Offline packaged
+ * build, real session and localStorage, real mouse, keyboard and touch input. ?test=1 only seeds save fixtures through
+ * the session's own transaction (the role of another entry writing), injects a storage fault around one confirm, and in
+ * the raid steps freezes enemies and places the player, an enemy and a full magazine through the raid test driver.
+ * Usage: node scripts/perk-ui-browser.mjs [--only=Y1,T2,S1,R1] [--shots=<dir>]
  *   -> test-results/perk-ui/{report.json, *.png}; --shots=<dir> also copies the reviewed screenshots there.
  */
 import assert from 'node:assert/strict';
@@ -12,6 +13,7 @@ import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 import { reportFilter, stepFilter } from './step-filter.mjs';
+import { resumeStalls, running, stallResumes } from './stall-resume.mjs';
 
 const out = resolve('test-results/perk-ui'); await mkdir(out, { recursive: true });
 const shotsArg = process.argv.find(a => a.startsWith('--shots='))?.slice(8), shots = shotsArg ? resolve(shotsArg) : null;
@@ -19,7 +21,7 @@ if (shots) await mkdir(shots, { recursive: true });
 const html = await readFile('dist/index.html', 'utf8');
 const filter = stepFilter();
 const browser = await chromium.launch(browserOptions);
-const report = { browser: browser.version(), startedAt: new Date().toISOString(), methodology: 'Packaged offline build at https://perk.test/ (routed, no network). Real session/localStorage; real mouse, keyboard and touch input in headless Chrome (phone sizes are viewport/touch emulation). ?test=1 fixtures: permanent levels, perks, cash, weapon, focus and stamina written through SaveSession transactions (as another entry would), and a storage fault around one confirm (yard: set, click and cleared in one task so no five-second checkpoint can take the fault instead). No mock Runtime.', steps: [], errors: [], external: [] };
+const report = { browser: browser.version(), startedAt: new Date().toISOString(), methodology: 'Packaged offline build at https://perk.test/ (routed, no network). Real session/localStorage; real mouse, keyboard and touch input in headless Chrome (phone sizes are viewport/touch emulation). ?test=1 fixtures: permanent levels, perks, cash, weapon, focus and stamina written through SaveSession transactions (as another entry would), and a storage fault around one confirm (yard: set, click and cleared in one task so no five-second checkpoint can take the fault instead). Raid HUD steps: a real v3 raid deployed from the tab page; the raid test driver freezes enemies and places the player, one enemy and a full magazine; the precise aim is the real right button or touch aim stick. No mock Runtime.', steps: [], errors: [], external: [] };
 let ctx = null, page = null, ran = 0;
 
 const KEY = 'escape-bincov.session.v2';
@@ -39,10 +41,12 @@ const SEED = `(fx => {
   if (!t || s.commitExpansionMutation(t) !== 'committed') throw new Error('fixture write failed');
 })`;
 
-async function open({ entry = 'yard', size = [1280, 720], mobile = false, fixture = FX } = {}) {
+/** `raid`: the page will deploy, so a stall pause of a slow software renderer is resumed at once (stall-resume.mjs). */
+async function open({ entry = 'yard', size = [1280, 720], mobile = false, fixture = FX, raid = false } = {}) {
   if (ctx) await ctx.close().catch(() => {});
   ctx = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: mobile ? 2 : 1, hasTouch: mobile, isMobile: mobile });
   await ctx.route('https://perk.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
+  if (raid) await resumeStalls(ctx);
   ctx.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://perk.test/')) report.external.push(r.url()); });
   page = await ctx.newPage(); page.setDefaultTimeout(20000);
   page.on('pageerror', e => report.errors.push(e.stack ?? e.message));
@@ -76,9 +80,10 @@ const fault = on => page.evaluate(on => {
   window.__write ??= Storage.prototype.setItem;
   Storage.prototype.setItem = on ? function (k, v) { if (k === 'escape-bincov.session.v2') throw new DOMException('fixture', 'QuotaExceededError'); return window.__write.call(this, k, v); } : window.__write;
 }, on);
-async function shot(name, evidence = true) {
+/** `clip`: only this rectangle of the page (CSS px). */
+async function shot(name, evidence = true, clip = undefined) {
   const path = resolve(out, `${name}.png`);
-  await page.screenshot({ path, scale: 'css' });
+  await page.screenshot({ path, scale: 'css', ...clip ? { clip } : {} });
   if (evidence && shots) await copyFile(path, resolve(shots, `${name}.png`));
 }
 async function step(name, fn) {
@@ -100,6 +105,101 @@ async function yardBody() { await page.keyboard.press('6'); await y('.panel.k-bo
 /** Card states of the strength board as text: open / chosen / other / locked per card. */
 const yardCards = () => page.evaluate(() => [...document.querySelector('#station-yard').shadowRoot.querySelectorAll('.perks .pcard')].map(c => c.className.replace('pcard', '').trim()));
 const tabCards = () => page.evaluate(() => [...document.querySelectorAll('#ui .rpg-perks .perk-card')].map(c => c.className.replace('perk-card', '').trim()));
+
+/** Raid HUD fixture: technique 15 with 屏息狙击 and the carbine, the spec's example (2.1): 10.53% static, 37.371% on a full charge's target. */
+const RAID_FX = { permanent: { strength: 10, constitution: 10, technique: 15 }, perks: ['technique-15-a'], weapon: 'carbine' };
+/** That chance with `s` seconds of breath (10 points a second, 30% at most), as the sources multiply: 2.75%, 8% and the charge. */
+const chanceText = s => `${((1 - (1 - .0275) * (1 - .08) * (1 - Math.min(.3, s / 10))) * 100).toFixed(2)}%`;
+/** A v3 raid (seed 42, the coast buildings) deployed from the old tab page with RAID_FX, as a player deploys. */
+async function deployRaid({ size, mobile = false }) {
+  await open({ entry: 'tabs', size, mobile, fixture: RAID_FX, raid: true });
+  await page.locator('#run-world').selectOption('buildings'); await page.locator('#seed').fill('42');
+  const deploy = page.locator('[data-action="deploy"]');
+  if (mobile) await deploy.tap(); else await deploy.click();
+  // A phone viewport on a software renderer can take a minute to deploy and draw its first frame.
+  await page.waitForFunction(() => window.__bincovSample?.host?.lastBatch, null, { timeout: 120000 });
+}
+/** Frozen enemies, a full carbine, the player on the open lane (208, 1104) facing east and an elite `distance` px east of him; its uid. */
+async function lane(distance) {
+  await running(page, 60000);
+  const uid = await page.evaluate(d => {
+    const s = window.__bincovSample, drive = s.driver;
+    drive.freezeAI(true); drive.weapon('carbine'); drive.placePlayer({ x: 208, y: 1104 }, 0, 'coast');
+    const elite = s.host.lastBatch.frame.actors.find(a => a.alive && a.kind === 'elite');
+    drive.placeEnemy(elite.uid, { x: 208 + d, y: 1104 }); return elite.uid;
+  }, distance);
+  await running(page);
+  return uid;
+}
+/** The published frame the HUD was last drawn from and what the weapon card prints from it, read in one task. */
+const raidHud = () => page.evaluate(() => {
+  const h = window.__bincovSample.host, f = h.lastBatch.frame, q = s => document.querySelector(`.coast-sample ${s}`), r = q('.cs-arms').getBoundingClientRect();
+  return { panel: h.panel, crit: f.hud.crit, breath: f.hud.breath, card: [r.x, r.y, r.width, r.height].map(Math.round),
+    lines: q('[data-crit]').hidden ? null : [q('[data-crit-label]').textContent, q('[data-crit-chance]').textContent, q('[data-crit-target]').textContent,
+      ...q('[data-breath]').hidden ? [] : [q('[data-breath-label]').textContent, q('[data-breath-time]').textContent]],
+    bar: q('[data-breath-bar]').style.width, full: q('[data-breath]').classList.contains('full') };
+});
+/** The card prints its frame: the static 10.53%, the charge's seconds over 3 and the chance on the enemy it holds. */
+function printed(v, uid) {
+  const s = v.breath.seconds, held = Math.min(3, s), tenths = Math.floor(held * 10 + 1e-6) / 10;
+  assert.equal(v.breath.target, uid, 'the charge holds the enemy on the lane');
+  assert.deepEqual([v.crit.gun.text, v.crit.onTarget.text], ['10.53%', chanceText(s)]);
+  assert.deepEqual(v.lines, ['暴击', '10.53%', `目标 ${chanceText(s)}`, '屏息狙击', `${tenths.toFixed(1)} / 3.0 秒`]);
+  // The bar's width as the browser reads it back ("100%" for "100.0%").
+  assert.ok(Math.abs(parseFloat(v.bar) - held / 3 * 100) <= .05 && v.full === tenths >= 3, `bar ${v.bar} full ${v.full} at ${s} s`);
+}
+const IDLE_LINES = ['暴击', '10.53%', '', '屏息狙击', '0.0 / 3.0 秒'];
+/**
+ * Wait until the published charge reaches `seconds` while `press` holds the precise aim (the right button, the touch aim
+ * stick). A stall pause resumed meanwhile releases held input, as any resume does: the aim is then raised again.
+ */
+async function charge(seconds, press, release) {
+  for (let attempt = 1; ; attempt++) {
+    const stalls = await stallResumes(page) ?? 0;
+    await press();
+    const outcome = await (await page.waitForFunction(([s, n]) => (window.__stallResumes ?? 0) !== n ? 'stalled'
+      : (window.__bincovSample.host.lastBatch.frame.hud.breath?.seconds ?? 0) >= s ? 'done' : false, [seconds, stalls], { polling: 'raf', timeout: 30000 })).jsonValue();
+    if (outcome === 'done') return;
+    await release(); await running(page);
+    assert.ok(attempt < 3, 'stall pauses kept interrupting the charge');
+  }
+}
+/** The right button held with the pointer on the player's chest row, 160 px east: the aim runs straight down the lane. */
+function mouseAim() {
+  let down = false;
+  return {
+    press: async () => {
+      if (down) return;
+      const at = await page.evaluate(() => { const h = window.__bincovSample.host, p = h.lastBatch.frame.player, q = h.view.worldToClient({ x: p.x + 160, y: p.y - 22 }); return { x: Math.round(q.x), y: Math.round(q.y) }; });
+      await page.mouse.move(at.x, at.y); await page.mouse.down({ button: 'right' }); down = true;
+    },
+    release: async () => { if (down) await page.mouse.up({ button: 'right' }); down = false; },
+  };
+}
+/** The touch aim stick held in its inner ring toward the east, standing: the aim raised without firing. */
+async function stickAim() {
+  const cdp = await ctx.newCDPSession(page), touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(p => ({ ...p, radiusX: 2, radiusY: 2, force: 1 })) });
+  // A free canvas point on the right half (the aim side), clear of every HUD card.
+  const o = await page.evaluate(() => { for (let d = 0; d < 200; d += 8) for (const [dx, dy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d]]) {
+    const x = Math.round(innerWidth * .66 + dx), y = Math.round(innerHeight * .4 + dy); if (document.elementFromPoint(x, y)?.tagName === 'CANVAS') return { x, y }; } return null; });
+  assert.ok(o, 'no free canvas point for the aim stick');
+  let down = false;
+  return {
+    press: async () => { if (down) return; await touch('touchStart', [{ id: 1, ...o }]); await touch('touchMove', [{ id: 1, x: o.x + 26, y: o.y }]); down = true; },
+    release: async () => { if (down) await touch('touchEnd', []); down = false; },
+  };
+}
+/** Boxes of the weapon card, the HUD's safe box and the other HUD cards and touch buttons that it must not cover. */
+const cardLayout = () => page.evaluate(() => {
+  const box = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
+  const shown = s => [...document.querySelectorAll(`.coast-sample ${s}`)].filter(el => el.getBoundingClientRect().width > 0);
+  return { card: box(shown('.cs-arms')[0]), hud: box(shown('.cs-hud')[0]), view: { r: innerWidth, b: innerHeight },
+    others: ['.cs-status', '.cs-clock', '.cs-info', '.cs-keys', '.cs-touch button'].flatMap(shown).map(el => ({ name: el.textContent.trim().slice(0, 8), ...box(el) })) };
+});
+function cardFits({ card, hud, others }, label) {
+  assert.ok(card.l >= hud.l - .5 && card.t >= hud.t - .5 && card.r <= hud.r + .5 && card.b <= hud.b + .5, `${label}: the weapon card leaves the safe area ${JSON.stringify(card)}`);
+  for (const o of others) assert.ok(!(card.l < o.r && o.l < card.r && card.t < o.b && o.t < card.b), `${label}: the weapon card covers ${o.name}`);
+}
 
 try {
   await step('Y1 院子：四档两卡与静态暴击；卡片预览后取消不改档，键盘回到卡片；确认写入后才显示成功', async () => {
@@ -339,6 +439,84 @@ try {
       sizes.push(`${size[0]}×${size[1]}`);
     }
     return sizes.join('、');
+  });
+
+  await step('R1 行动 HUD 1280×720：武器卡底部写静态暴击；精瞄锁定敌人时写屏息 0～3 秒进度与目标合并概率，满蓄力 37.37%，这一枪的快照正是它；卡片不移动；匕首写不适用', async () => {
+    await deployRaid({ size: [1280, 720] });
+    const uid = await lane(320), aim = mouseAim(), idle = await raidHud();
+    assert.deepEqual([idle.lines, idle.crit.onTarget, idle.breath], [IDLE_LINES, null, { target: null, seconds: 0, chance: 0, full: 3 }]);
+    await charge(1.5, aim.press, aim.release);
+    const mid = await raidHud(); printed(mid, uid);
+    assert.deepEqual(mid.card, idle.card, 'the card keeps its place and size while charging');
+    cardFits(await cardLayout(), '1280×720');
+    await shot('raid-breath-1280x720');
+    await charge(3.2, aim.press, aim.release);
+    const full = await raidHud(); printed(full, uid);
+    assert.deepEqual([full.lines[2], full.full, full.card], ['目标 37.37%', true, idle.card]);
+    const [x, y, w, h] = full.card;
+    await shot('raid-card-full-1280x720', true, { x: x - 6, y: y - 6, width: w + 12, height: h + 12 });
+    // A click with the charge full: the round in flight, as the next checkpoint saves it, carries the chance the card printed.
+    const seq = await page.evaluate(() => window.__bincovSample.host.eventLog.at(-1)?.seq ?? 0);
+    await page.mouse.down(); await page.mouse.up();
+    const rounds = await (await page.waitForFunction(seq => {
+      const h = window.__bincovSample.host, shot = h.eventLog.find(e => e.seq > seq && e.type === 'shot' && e.detail.shooter === 'player');
+      if (!shot) return false;
+      if (!h.checkpoint()) return [];
+      const raid = JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion.raid, uids = shot.detail.pellets.map(p => p.bullet);
+      return Object.values(raid.maps).flatMap(m => m.bullets).filter(b => uids.includes(b.uid));
+    }, seq, { polling: 'raf', timeout: 20000 })).jsonValue();
+    assert.equal(rounds.length, 1, 'the round is still in flight in the checkpoint');
+    const { sources, target } = rounds[0].crit, chance = 1 - sources.reduce((miss, s) => miss * (1 - s.chance), 1);
+    assert.equal(target, uid); assert.deepEqual(sources.find(s => s.id === 'technique-15-a'), { id: 'technique-15-a', chance: .3 });
+    assert.equal(`${(chance * 100).toFixed(2)}%`, '37.37%');
+    // The knife: not applicable and no charge row; the gun again: the static chance is back.
+    await aim.release(); await page.keyboard.press('2');
+    await page.waitForFunction(() => document.querySelector('.coast-sample [data-crit-label]').textContent === '枪械暴击：不适用');
+    assert.deepEqual((await raidHud()).lines, ['枪械暴击：不适用', '', '']);
+    await page.keyboard.press('1');
+    await page.waitForFunction(() => document.querySelector('.coast-sample [data-crit-chance]').textContent === '10.53%');
+    return `1.5 秒：${mid.lines[2]}；满蓄力：${full.lines[2]}；开枪快照合计 ${(chance * 100).toFixed(3)}%`;
+  });
+
+  await step('R2 行动 HUD 1920×1080：同样的静态暴击、蓄力进度与目标概率，卡片不移动、不压其他卡片', async () => {
+    await deployRaid({ size: [1920, 1080] });
+    const uid = await lane(320), aim = mouseAim(), idle = await raidHud();
+    assert.deepEqual(idle.lines, IDLE_LINES);
+    await charge(1.5, aim.press, aim.release);
+    const mid = await raidHud(); printed(mid, uid);
+    assert.deepEqual(mid.card, idle.card, 'the card keeps its place and size while charging');
+    cardFits(await cardLayout(), '1920×1080');
+    await shot('raid-breath-1920x1080');
+    await aim.release();
+    return mid.lines.join(' ');
+  });
+
+  await step('R3 手机横屏 844×390：触控瞄准摇杆内圈站定蓄力，卡片写进度与目标概率，留在安全区内、不压其他卡片和触控按钮', async () => {
+    await deployRaid({ size: [844, 390], mobile: true });
+    const uid = await lane(320), aim = await stickAim(), idle = await raidHud();
+    assert.deepEqual(idle.lines, IDLE_LINES);
+    await charge(1.5, aim.press, aim.release);
+    const mid = await raidHud(); printed(mid, uid);
+    assert.deepEqual(mid.card, idle.card, 'the card keeps its place and size while charging');
+    cardFits(await cardLayout(), '844×390');
+    await shot('raid-breath-844x390');
+    await aim.release();
+    return mid.lines.join(' ');
+  });
+
+  await step('R4 手机竖屏 390×844：行动按原规则暂停等待横屏（暂停清空蓄力），卡片仍写静态暴击和空的蓄力', async () => {
+    await deployRaid({ size: [390, 844], mobile: true });
+    await page.waitForFunction(() => window.__bincovSample.host.panel === 'pause');
+    assert.match(await page.locator('.coast-sample [data-panel]').innerText(), /横过来，准备出发。/);
+    // A loaded carbine, as on the lane of R1 to R3 (the fixture's gun comes with an empty magazine); the paused host still draws.
+    await page.evaluate(() => window.__bincovSample.driver.weapon('carbine'));
+    await page.waitForFunction(() => document.querySelector('.coast-sample [data-mag]').textContent === '12 / 12');
+    const v = await raidHud();
+    assert.deepEqual([v.lines, v.breath], [IDLE_LINES, { target: null, seconds: 0, chance: 0, full: 3 }]);
+    cardFits(await cardLayout(), '390×844');
+    await page.waitForTimeout(500); // the deploy's fade-in
+    await shot('raid-portrait-390x844');
+    return v.lines.join(' ');
   });
   report.status = report.steps.every(s => s.status === 'passed') ? 'passed' : 'failed';
 } catch (e) { report.status = 'failed'; report.failure = String(e.stack ?? e); process.exitCode = 1; console.error(e); }
