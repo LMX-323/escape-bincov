@@ -1,0 +1,83 @@
+{
+  "baseline": "04736f7d6d23e70a7407200ac7a7ecf3947f76e4",
+  "scope": "Q-E08 diagnostic command/output smoke only; no F20 signoff, unchanged original 20-cycle workloads. No strict60 run.",
+  "platform": "win32",
+  "pnpm": "11.19.0",
+  "artifacts": [
+    {
+      "path": "dist/index.html",
+      "sha256": "340e6a41fe4ce842edaf7cda258cd5674abc8a00972d3ddf9cfe675fa0b12f28",
+      "matchesBaseline": true
+    },
+    {
+      "path": "start the game.html",
+      "sha256": "340e6a41fe4ce842edaf7cda258cd5674abc8a00972d3ddf9cfe675fa0b12f28",
+      "matchesBaseline": true
+    },
+    {
+      "path": "release/Escape-Bincov-portable.zip",
+      "sha256": "91eecd2d5f134a65444e2fc70dd4e25f1ed3c78cded80d87666fd013817bd288",
+      "matchesBaseline": true
+    },
+    {
+      "path": "release/Escape-Bincov-web.zip",
+      "sha256": "909d1407a981c226a759a7a67d3086ec204fa6dd56944b8b76baabae2e2b041b",
+      "matchesBaseline": true
+    },
+    {
+      "path": "docs/release-manifest.json",
+      "sha256": "751f50952aa227fa105e9dea61c58483b3ac040bd859dac358f7d8039e0877ca",
+      "matchesBaseline": true
+    }
+  ],
+  "probes": [
+    {
+      "command": "pnpm diagnose:coast-heap",
+      "reportPath": "test-results/coast-sample/heap/heap-report.json",
+      "reportSha256": "2f351e0e36047d855d76d245ae91b644e8c2f4f6316dfe59d0f48cb7e8cde94a",
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "browser": "155.0.8059.85",
+      "startedAt": "2026-10-23T15:47:12.963Z",
+      "finishedAt": "2026-10-23T15:48:17.268Z",
+      "cycles": 20,
+      "snapshots": [
+        6,
+        20
+      ],
+      "packagedSHA256": "340e6a41fe4ce842edaf7cda258cd5674abc8a00972d3ddf9cfe675fa0b12f28",
+      "remainingOwners": [],
+      "accumulated": [],
+      "memorySignoff": "partial: positive heap trend requires retainer attribution",
+      "growthBytes": 348709.59999999776,
+      "canvasCounts": {
+        "6": 8,
+        "20": 8
+      }
+    },
+    {
+      "command": "pnpm diagnose:coast-owners",
+      "reportPath": "test-results/sol-r6/heap/heap-report.json",
+      "reportSha256": "296821f36f7b5945ecb247993394b9f944a64df9ef6aec083f102c3453f6357c",
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "browser": "155.0.8059.85",
+      "startedAt": "2026-10-23T15:48:33.485Z",
+      "finishedAt": "2026-10-23T15:49:37.766Z",
+      "cycles": 20,
+      "snapshots": [
+        6,
+        20
+      ],
+      "packagedSHA256": "340e6a41fe4ce842edaf7cda258cd5674abc8a00972d3ddf9cfe675fa0b12f28",
+      "remainingOwners": [],
+      "accumulated": [],
+      "memorySignoff": "partial: positive heap trend requires retainer attribution",
+      "growthBytes": 329181.59999999776,
+      "canvasCounts": {
+        "6": 8,
+        "20": 8
+      }
+    }
+  ]
+}
