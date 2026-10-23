@@ -15,12 +15,12 @@
 //   BINCOV_HEAP_CYCLES=30 BINCOV_HEAP_SNAP=10,30 BINCOV_HEAP_KEEP=1 node scripts/coast-sample-heap.mjs
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build } from 'esbuild';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
+import { buildGameScript, pagePoolProbe, withGameScript } from './game-bundle.mjs';
 
 const out = resolve(process.env.BINCOV_HEAP_OUT || 'test-results/coast-sample/heap'); await mkdir(out, { recursive: true });
 const startedAt = new Date().toISOString();
@@ -28,16 +28,11 @@ const ordinary = process.env.BINCOV_HEAP_ENTRY === 'ordinary';
 const CYCLES = Number(process.env.BINCOV_HEAP_CYCLES || 20), SNAP = (process.env.BINCOV_HEAP_SNAP || '6,20').split(',').map(Number);
 const TRACKED = /^_?(CoastSampleHost|CoastView|CoastRaidRuntime|InventoryPanel|Textures|Atlas|Fx|Lighting|Weather|SampleSound|SynthAudio|Scope|Application|WebGLRenderer|Sprite|Container|Graphics|Texture|TextureSource|CanvasSource|ImageSource|RenderTexture|HTMLCanvasElement|WebGL2RenderingContext)\d?$/;
 
-// Unminified copy of dist/index.html: same sources and loaders, only the script is swapped.
+// Unminified copy of dist/index.html: the formal build's sources and options, except minify and the detached read-only
+// page-pool probe; only the script is swapped.
 const packaged = await readFile('dist/index.html', 'utf8');
-const bundle = await build({ entryPoints: ['src/main.ts'], bundle: true, write: false, minify: false, target: 'es2020', format: 'iife', loader: { '.png': 'dataurl' }, define: { 'process.env.NODE_ENV': '"production"' },
-  // Detached probe only: return primitives from the existing page pool, never expose/retain an Application or host.
-  plugins: [{ name: 'read-only-page-pool', setup(b) { b.onLoad({ filter: /[\\/]src[\\/]pixi-app\.ts$/ }, async args => ({ loader: 'ts', resolveDir: dirname(args.path), contents: await readFile(args.path, 'utf8') + `
-;globalThis.__solPagePool = () => ({ parked: !!parked, currentIsParked: current === parked, stageChildren: parked?.stage.children.length ?? null, tickerStarted: parked?.ticker.started ?? null, canvasConnected: parked?.canvas.isConnected ?? null, gpuTextures: gpuTextures() });
-` })); } }] });
-const at = packaged.lastIndexOf('<script>'), end = packaged.lastIndexOf('</script>');
 const pagePath = resolve(out, 'unminified.html');
-await writeFile(pagePath, packaged.slice(0, at + 8) + bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script') + packaged.slice(end));
+await writeFile(pagePath, withGameScript(packaged, await buildGameScript({ minify: false, plugins: [pagePoolProbe] })));
 
 const browser = await chromium.launch({ ...browserOptions, args: [...browserOptions.args, '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });

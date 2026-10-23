@@ -6,7 +6,7 @@
 
 PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略测试、严格类型检查、构建和打包。重新生成的两份 HTML、两份 ZIP 和发布清单必须与提交一致。只构建一次，浏览器任务下载同一制品并校验 SHA-256。
 
-CI 策略测试还守住三件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；其余两件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
+CI 策略测试还守住四件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；其余三件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖；[game-bundle.test.mjs](../scripts/ci/game-bundle.test.mjs) 构建堆诊断换进打包页的未压缩带探针游戏脚本，并拒绝在 [game-bundle.mjs](../scripts/game-bundle.mjs) 之外复制游戏脚本的 esbuild 配置（#60 Q-B06）。它只证明这些诊断能构建，不代表诊断通过。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
 
 `Build and test` 是保持名称不变的必需检查。它在依赖失败或跳过后也运行，只接受：
 
