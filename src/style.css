@@ -370,7 +370,7 @@ html[data-overlay="shop-leave"] .hideout, html[data-overlay="shop-quest"] .hideo
 .production-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #3c4e3b; padding: 12px 0; }
 .mobile .rpg-cards { gap: 6px; margin: 8px 0; }
 .mobile .rpg-cards > div { min-width: 85px; padding: 8px; }
-/* 身体与成长: the perk board of one attribute beside the vitals; the static critical display under them. Bitmap
+/* Body and growth: the perk board of one attribute beside the vitals; the static critical display under them. Bitmap
    glyphs stay on the native 16px grid (tactical.css); small metadata uses the text face. */
 .rpg-layout { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); column-gap: 28px; align-items: start; }
 .rpg-main { grid-column: 1; grid-row: 1; }

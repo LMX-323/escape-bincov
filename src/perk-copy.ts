@@ -45,7 +45,7 @@ const MODIFIER_LABEL: Readonly<Record<keyof PerkModifiers, string>> = {
     recoil: '枪械后坐力', reload: '换弹时间', crit: '独立暴击来源', critMultiplier: '暴击伤害倍率', breath: '屏息狙击蓄力',
 };
 const money = (cash: number) => `¥${cash.toLocaleString('en-US')}`;
-/** Two to four decimals: ×0.88, ×0.68, ×0.7216. */
+/** Two to four decimals: 0.88, 0.68, 0.7216. */
 const factor = (value: number) => value.toFixed(4).replace(/0{1,2}$/, '');
 const limitText = (key: 'hp' | 'stamina' | 'carry', value: number) => key === 'carry' ? `${value.toFixed(1)} kg` : `${Math.round(value)}`;
 /** A perk's own source chance as its copy writes it: 5%, 10%. */
@@ -59,7 +59,7 @@ export function critContext(s: HideoutSnapshot, board: PerkBoard): CritContext {
     return { technique: s.body.attributes.technique.effective, weapon: s.profile.equipment.weapon, focus: s.body.effects.some(e => e.name === 'focus'), perks: chosenPerks(board) };
 }
 export interface CritView {
-    /** "枪械暴击 · <gun>", or "枪械暴击：不适用" for the knife or an empty hand. */
+    /** The gun's name, or the not-applicable line for the knife or an empty hand. */
     title: string;
     /** The combined static chance ("9.84%", "<100%"), or null when not applicable. */
     total: string | null;

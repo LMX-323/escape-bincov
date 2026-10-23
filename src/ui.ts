@@ -44,7 +44,7 @@ let dragToken = 0;
 let pointerDrag: { pointerId: number; drag: InventoryDrag; startX: number; startY: number; x: number; y: number; cell: number; started: boolean } | null = null;
 let dragGhost: HTMLElement | null = null;
 let suppressDragClick = false;
-/** 身体与成长 tab: the perk attribute shown (set on first paint), the open preview, and a change waiting for the retry. */
+/** Body and growth tab: the perk attribute shown (set on first paint), the open preview, and a change waiting for the retry. */
 let perkAttr: Attribute | null = null;
 let perkDialog: { kind: 'choice'; id: string; token: string; view: PerkPreviewView } | { kind: 'reset'; attribute: Attribute; token: string; view: PerkPreviewView } | null = null;
 let perkPending = '';
@@ -244,7 +244,7 @@ function expansionAction(action: (draft: ExpansionDraft) => boolean | void, mess
 const attributeNames = { strength: '力量', constitution: '体质', technique: '技巧' };
 const effectNames = { pain: '疼痛', energized: '精力充沛', analgesia: '镇痛', focus: '专注', strength: '力量增强', constitution: '体质增强', technique: '技巧增强', injectionFatigue: '注射后疲劳', luck: '香包余韵' };
 /**
- * 身体与成长. The perk board, its previews and the static critical display read the shared HideoutRuntime (the same
+ * Body and growth. The perk board, its previews and the static critical display read the shared HideoutRuntime (the same
  * service as the yard); choices and resets go through it too, never through this page's own save writes.
  */
 function propertyPanel() {
@@ -355,7 +355,7 @@ function renderHideout() {
         grid.parentElement!.scrollTop = scrollPositions.get(grid.dataset.grid!) || 0;
     });
     const content = ui().querySelector<HTMLElement>('.content.body-content'); if (content) content.scrollTop = bodyScroll;
-    // Like the title dialogs: the keyboard lands in the perk preview (on 取消; main.ts keeps Tab inside it).
+    // Like the title dialogs: the keyboard lands in the perk preview (on its cancel button; main.ts keeps Tab inside it).
     if (app.overlay === 'perk') ui().querySelector<HTMLElement>('.perk-modal .perk-cancel')?.focus({ preventScroll: true });
 }
 function overlayHtml() {
