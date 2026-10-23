@@ -13,6 +13,8 @@ export function inputKey(e: Pick<KeyboardEvent, 'key' | 'code'>): string {
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return 'shift';
   return e.key;
 }
+/** Whether an InputState key name (see inputKey) is one of the four movement keys: WASD, or ZQSD on AZERTY. */
+export const isMoveKey = (key: string) => key === 'w' || key === 'a' || key === 's' || key === 'd';
 
 export class InputState {
   touch = false;
