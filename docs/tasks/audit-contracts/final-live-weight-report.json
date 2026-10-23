@@ -1,0 +1,25 @@
+{
+  "htmlSHA256": "0c2a9059703b33f677dc206646c7c5889aaad63d7912e8dc6449ab6f8b0a6e23",
+  "cases": [
+    {
+      "size": "1280x720",
+      "status": "passed",
+      "shown": "24.0",
+      "live": 24,
+      "savedEffect": 0.8,
+      "sameGrid": true
+    },
+    {
+      "size": "1920x1080",
+      "status": "passed",
+      "shown": "24.0",
+      "live": 24,
+      "savedEffect": 0.8,
+      "sameGrid": true
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "methodology": "Offline packaged HTML, real menu and Tab input; explicit test hook freezes AI and commits a 0.8 second strength effect. Verify the open panel refreshes 27 to 24 before the next save without replacing the grid. Unmodified browser screenshots.",
+  "status": "passed"
+}

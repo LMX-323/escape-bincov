@@ -134,11 +134,13 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
     return stop <= bullet.left;
 }
 
-/** The finite segment kernel is shared by normal flight and one-time departure settlement. */
-export function advanceLayerShots(state: ExpansionState, world: WorldDefinition, mapId: string, dt: number, hitFeedback?: (uid: string, critical: boolean) => void, playerHitFeedback?: (source: Point) => void, observer?: ShotObserver): void {
+/** The finite segment kernel is shared by normal flight and one-time departure settlement.
+ * flightSeconds optionally shortens this step for newborn rounds (0..dt); older rounds keep dt. Birth timing is
+ * Runtime-local, never added to the saved bullet. Traversal order, collision and RNG remain shared for all rounds. */
+export function advanceLayerShots(state: ExpansionState, world: WorldDefinition, mapId: string, dt: number, hitFeedback?: (uid: string, critical: boolean) => void, playerHitFeedback?: (source: Point) => void, observer?: ShotObserver, flightSeconds?: (bullet: BulletState) => number): void {
     const layer = state.raid!.maps[mapId], survivors: BulletState[] = [];
     for (const bullet of [...layer.bullets].sort((a, b) => a.uid.localeCompare(b.uid, 'en'))) {
-        const speed = Math.hypot(bullet.vx, bullet.vy), length = Math.min(bullet.left, speed * dt);
+        const speed = Math.hypot(bullet.vx, bullet.vy), length = Math.min(bullet.left, speed * (flightSeconds?.(bullet) ?? dt));
         if (speed === 0) continue;
         if (resolveLayerShot(state, world, mapId, { ...bullet, left: length }, true, hitFeedback, playerHitFeedback, observer)) continue;
         const origin = { ...bullet };
