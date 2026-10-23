@@ -7,3 +7,7 @@
 - `manifest.json`：源图和运行时图的 SHA-256、尺寸与转码环境；构建检查哈希。
 
 地图标签、开发状态、路线、扫描效果与点击区都由代码绘制。WebP 经 esbuild 内联为 data URL，游玩无需外部请求。源图只用于维护，不重复塞入 HTML。未采用的草稿保留在本地忽略的 `test-results/county-art-drafts/`。
+
+## 给 Opus 的追加素材
+
+[briefing-concepts/](briefing-concepts/README.md) 提供十二地区的情报插图候选、三张原始图集、逐图裁切/哈希清单与完整提示词。它们供视觉深化选择，尚未被游戏导入；概念插图不表示实际关卡已经实现。[续作交接](../../docs/tasks/county-map-select.md#交给-opus-的续作入口) 说明接入位置、保留的行为及验收入口。

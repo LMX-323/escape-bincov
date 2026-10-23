@@ -4,9 +4,9 @@
  * HUD never registers a second set of gameplay inputs.
  *
  * Panels follow the original split: pause (world frozen, checkpoint written by the Runtime) versus blocking
- * (inventory/loot/map/reading: world keeps running, gameplay input ignored). Every transition suppresses held
- * controls until they are released. Item and save operations go only through the Runtime services, or through
- * SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
+ * (inventory/loot/map/reading: world keeps running, gameplay input ignored; a movement key leaves loot instead). Every
+ * transition suppresses held controls until they are released. Item and save operations go only through the Runtime
+ * services, or through SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
  */
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
@@ -15,7 +15,7 @@ import type { SaveSession, SessionState } from '../session';
 import type { CoastHandle, HurtCause, Interaction, PublishedView, StampedEvent, TargetRef } from '../raid-runtime/contract';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
-import { InputState, inputKey } from './input';
+import { InputState, inputKey, isMoveKey } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
 import { Scope, lifecycle } from './scope';
@@ -355,6 +355,13 @@ export class CoastSampleHost {
       if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') { if (this.guideOpen) this.showPause(); else this.resume(); } else if (!this.panel) this.pause(); return; }
       if (k === 'tab') { if (this.blocking()) this.closePanel(true); else if (!this.panel) this.openInventory(); return; }
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
+      // A movement key leaves the loot window and walks at once (issue #26 F13), so a looter under fire need not reach for
+      // E or Esc. Loot only: the bag, map, note and pause keep their keys. A held key's repeats (above) and browser
+      // shortcuts do not count; a Shift pressed in the window makes the walk a sprint, as it would outside.
+      if (this.panel === 'loot' && isMoveKey(inputKey(e)) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        this.closePanel(true);
+        if (e.shiftKey) this.input.key('shift', true);
+      }
       if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
       this.input.key(inputKey(e), true);
@@ -504,7 +511,7 @@ export class CoastSampleHost {
   }
   /** Controls for this device, the guide the original pause offered. */
   private showGuide() {
-    const keys: [string, string][] = [['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
+    const keys: [string, string][] = [['W A S D', '移动 / 离开搜刮'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
     const body = this.input.touch
       ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
       : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;

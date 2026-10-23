@@ -211,7 +211,9 @@ await check('R10 county map: previews cannot deploy, selections preserve the see
   for (const [width, height] of [[1280, 720], [1920, 1080], [844, 390], [390, 844]]) {
     await page.setViewportSize({ width, height });
     await page.waitForTimeout(300);
-    await root.locator('.county-heading').scrollIntoViewIfNeeded();
+    // Resize can rebuild the panel while Playwright waits for element stability.
+    // Scroll the freshly resolved node synchronously before measuring its layout.
+    await root.locator('.county-heading').evaluate(el => el.scrollIntoView({ block: 'nearest' }));
     const geometry = await root.locator('.county-chart').evaluate(chart => {
       const frame = chart.getBoundingClientRect();
       const nodes = [...chart.querySelectorAll('.county-node')].map(n => ({ name: n.textContent, r: n.getBoundingClientRect() }));
@@ -221,7 +223,7 @@ await check('R10 county map: previews cannot deploy, selections preserve the see
     });
     assert.deepEqual(geometry, { clipped: [], overlapping: [], overflow: false }, `${width}x${height}`);
     await shot(`R10-county-map-${width}x${height}`);
-    await go.scrollIntoViewIfNeeded(); assert.equal(await go.isVisible(), true);
+    await go.evaluate(el => el.scrollIntoView({ block: 'nearest' })); assert.equal(await go.isVisible(), true);
     await go.screenshot({ path: resolve(out, `R10-deploy-${width}x${height}.png`) });
     layout.push({ width, height, ...geometry });
   }
