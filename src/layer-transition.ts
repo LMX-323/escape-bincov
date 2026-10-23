@@ -6,6 +6,7 @@ import { SURVIVAL } from './balance';
 import { criticalChance, enemyDamage, trainingEfficiency } from './rpg';
 import { effectiveAttributes, entityUid, rpgEnabled } from './expansion-state';
 import { luckInventory } from './reputation-luck';
+import { snapshotChance } from './perks';
 import { pursuitPosition } from './pursuit';
 import { corridor, findLanding, separation, spacePath, traversable, type SpaceContext } from './spatial';
 
@@ -137,16 +138,24 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
     } else {
         const hits = enemiesOnRay(raid, mapId, bullet, dx, dy, stop);
         if (hits[0]) {
-            let critical = false;
-            // The old centre-closeness rule is the v2 raids' own, kept until they settle. v1 raids never crit; v3 raids
-            // do not use this formula (their rule is the shot's critical snapshot, contract section 3), so no roll here.
+            let critical = false, multiplier = 1.5;
+            // Each raid keeps the critical rule it was deployed with until it settles (contract sections 1 and 3). v1
+            // never crits. v2 rolls the old centre-closeness formula. v3 rolls the shot's own snapshot for the enemy hit,
+            // so where the round meets the body and how big the body is never change the chance, and a critical hit
+            // multiplies the damage once by the snapshot's multiplier. Either roll draws raid.rng once per hit on a live
+            // enemy; a miss, a wall or a corpse draws nothing. A v3 player round without a snapshot is corrupt and
+            // throws: it never falls back to another rule.
             if (raid.version === 2) {
                 const enemy = hits[0].enemy, perpendicular = Math.abs((enemy.x - bullet.x) * dy - (enemy.y - bullet.y) * dx);
                 const chance = criticalChance(effectiveAttributes(state).technique, 1 - Math.min(1, perpendicular / 14), state.body.effects.focus > 0 ? .05 : 0);
                 const random = D.seededRandom(raid.rng); critical = random() < chance; raid.rng = random.getState();
+            } else if (raid.version === 3) {
+                if (!bullet.crit) throw new Error('命中参数无效。');
+                const chance = snapshotChance(bullet.crit, hits[0].enemy.uid), random = D.seededRandom(raid.rng);
+                critical = random() < chance; raid.rng = random.getState(); multiplier = bullet.crit.multiplier;
             }
             const hp = hits[0].enemy.hp;
-            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? 1.5 : 1));
+            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? multiplier : 1));
             observeShot(observer, context, bullet, hits[0].distance, hits[0].enemy.uid, hp - hits[0].enemy.hp, critical, hits[0].enemy.hp <= 0);
             hitFeedback?.(hits[0].enemy.uid, critical); return true;
         }

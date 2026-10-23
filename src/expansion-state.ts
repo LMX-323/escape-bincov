@@ -1,5 +1,5 @@
 import * as D from './domain';
-import { perkLimitBonus, validPerkSelection, type PerkId } from './perks';
+import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
@@ -155,6 +155,31 @@ function batch(value: ProductionBatch) {
     if (value.workbenchLevel < recipe.level || value.duration !== recipe.seconds * PRODUCTION_SPEED[value.workbenchLevel]
         || value.paidCash !== recipe.cash || !matchingGoods(value.paidItems, recipe.materials) || !matchingGoods(value.result, recipe.result)) fail();
 }
+/**
+ * A v3 player round's critical snapshot (docs/tasks/critical-perk-contract.md section 3), checked as stored: never
+ * completed or reordered. Sources are exact `{ id, chance }` records in CRIT_SOURCE_IDS order, so each id once, and
+ * always hold the character and weapon sources; those two may differ from today's (a dose wore off, another gun was
+ * drawn), so only 0..1 is checked. The perk sources are exactly the owned perks' own, because the selection cannot
+ * change during a raid (`owned` is perkModifiers of it), and so is the multiplier; focus has its fixed chance. The
+ * breath source needs technique-15-a and is there exactly when `target` names an enemy of the roster.
+ */
+function critSnapshot(value: unknown, owned: PerkModifiers, roster: readonly { uid: string }[]) {
+    exactKeys(value, ['sources', 'multiplier', 'target']);
+    const { sources, multiplier, target } = value as CritSnapshot, chances = new Map<CritSourceId, number>();
+    if (!Array.isArray(sources)) fail();
+    let last = -1;
+    for (const source of sources) {
+        exactKeys(source, ['id', 'chance']);
+        const index = CRIT_SOURCE_IDS.indexOf(source.id);
+        if (index <= last || !finite(source.chance, 0, 1)) fail();
+        last = index; chances.set(source.id, source.chance);
+    }
+    const perk = (id: CritSourceId) => owned.crit.find(s => s.id === id)?.chance, breath = chances.get('technique-15-a');
+    if (!chances.has('character') || !chances.has('weapon') || multiplier !== owned.critMultiplier
+        || chances.get('technique-20-a') !== perk('technique-20-a') || chances.get('technique-30-a') !== perk('technique-30-a')
+        || (chances.has('focus') && chances.get('focus') !== FOCUS_CRIT)
+        || (breath === undefined ? target !== null : !owned.breath || !(breath > 0 && breath <= BREATH_MAX) || !roster.some(e => e.uid === target))) fail();
+}
 
 /** Complete validation is shared by imports and the single-record commit, before publishing state. */
 export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
@@ -260,6 +285,8 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (inventoryIdentity(profile.safe) !== inventoryIdentity(raid.loadout.safe)) fail();
     const entities = new Set<string>(), enemies = new Map<string, EnemyState>(), enemyMaps = new Map<string, string>();
     const containers: { container: LootContainer; mapId: string }[] = [];
+    // What the owned perks (checked above) put into every shot snapshot of a v3 raid.
+    const owned = raid.version === 3 ? perkModifiers(growth.perks ?? []) : null;
     const entity = (uid: string) => { if (!identity(uid) || entities.has(uid) || invIds.has(uid)) fail(); allocated(uid); entities.add(uid); };
     const point = (p: Point, map: SpaceDefinition) => { if (!obj(p) || !inSpace(map, p)) fail(); };
     const plainPoint = (p: Point, map: SpaceDefinition) => { exactKeys(p, ['x', 'y']); point(p, map); };
@@ -293,11 +320,14 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             inventory(c.inventory, 6, 5); containers.push({ container: c, mapId });
         }
         for (const b of layer.bullets) {
-            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(rpgEnabled(raid) && b.enemy ? ['owner'] : [])]);
+            // Every player round of a v3 raid carries its shot's critical snapshot; enemy rounds and older raids never do.
+            const snapshot = owned !== null && !b.enemy;
+            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(rpgEnabled(raid) && b.enemy ? ['owner'] : []), ...(snapshot ? ['crit'] : [])]);
             entity(b.uid); point(b, map);
             if (!finite(b.vx, -1000, 1000) || !finite(b.vy, -1000, 1000) || !finite(b.left, 0, 2000) || !finite(b.damage, 0, 1000)
                 || !finite(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
                 || (rpgEnabled(raid) && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
+            if (snapshot) critSnapshot(b.crit, owned, raid.roster);
         }
         if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!finite(layer.noise.radius, 0, 2000) || !finite(layer.noise.remaining, 0, 10)) fail(); }
     }

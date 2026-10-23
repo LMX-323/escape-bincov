@@ -14,6 +14,7 @@ import { checkpointBodyFits, corridor, findLanding, traversable } from '../src/s
 import type { RaidIntent, TargetRef, StampedEvent } from '../src/raid-runtime/contract';
 import type { Point } from '../src/world';
 import { placementError } from '../src/loot';
+import { plainCrit } from './fixtures/layered';
 
 const now = () => 1800000000000;
 const at = (x: number, y: number) => ({ x: (x + .5) * 32, y: (y + .5) * 32 });
@@ -194,7 +195,7 @@ test('L-06/S-02/S-03: departure settles hit/wall/range/enemy bullets once, freez
     edit(f, state => {
         const raid = state.raid!, layer = raid.maps['mall-f1'], enemy = layer.enemies[0];
         Object.assign(enemy, at(60, 13), { hp: 1, home: at(60, 13), target: at(60, 13), path: [], alert: 0 });
-        const bullet = (point: Point, vx: number, left: number, hostile = false) => ({ uid: entityUid(raid, raid.nextEntity++), ...point, rotation: vx < 0 ? Math.PI : 0, vx, vy: 0, left, damage: 100, enemy: hostile, ...(hostile ? { owner: enemy.uid } : {}) });
+        const bullet = (point: Point, vx: number, left: number, hostile = false) => ({ uid: entityUid(raid, raid.nextEntity++), ...point, rotation: vx < 0 ? Math.PI : 0, vx, vy: 0, left, damage: 100, enemy: hostile, ...(hostile ? { owner: enemy.uid } : { crit: plainCrit() }) });
         layer.bullets = [bullet(at(59, 13), 760, 64), bullet(at(62, 8), 760, 200), bullet(at(59, 12), 760, 1), bullet({ x: e.at.x + 20, y: e.at.y }, -760, 80, true)];
     });
     assert.ok(f.r.checkpoint()); const before = f.r.snapshotExpansion(), raw = f.raw, oldHp = f.r.hp;
