@@ -1,18 +1,20 @@
 # 当前任务入口
 
-最近核对：2026-10-22，main `c6ad042`（已合入 #66–#72、#74）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-23，main `b475b1b`（已合入 #39、#40、#65–#74）。本轮为 README 更新补核相关入口；下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
+| README 当前玩法与开发入口 | [README](../README.md) · `docs/readme-20261023` | 按 main `b475b1b` 更新序幕、射击与试枪场、敌人素材和开发边界；补齐文档导航。仅文档交付，验证与准确 head 见本分支 PR |
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) | 首批（#63）、第二批（#68）已合入；Q-E05 存档 codec 去环（[PR #71](https://github.com/xuys2025/escape-bincov/pull/71)）与 Q-E02 路由收敛 A 段（[PR #72](https://github.com/xuys2025/escape-bincov/pull/72)）见摘要 [Q-E05](tasks/quality-entropy.md#q-e05-存档-codec-去环) / [Q-E02](tasks/quality-entropy.md#q-e02-路由收敛)。Q-E02 B 段（行动句柄合同、背包有限服务）与新发现的原型键武器校验问题登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)，B 段依赖 #65。健康扫描缺陷中 D1–D7、D9、D10 已由 #69 修复，余项见 #60 |
-| Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](tasks/runtime-gaps.md#收尾与同步) | `agent/runtime-gaps`；Runtime 接口与前端接入均已完成，2026-10-22 同步 main `c6ad042` 并重新打包，合并状态见 PR。合入后 #60 的 Q-E02 B 段可开工 |
-| 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1。遗留：枪口火光比枪管低 3–4 px，盐民与拾荒者同为棕褐色 |
-| 地图敌人详细设定（纯文档） | [设计提案](ENEMY-DESIGN.md) · [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) | 已合入（`9502bbb`）；五大类/18 原型/十二规划区域。盐枭并入拾荒者头目，守潮人归入盐蚀者相关人群；未接入游戏。与 #66 现有四类素材接入分开，不要求其重做；设计审阅与未来实施另记 |
+| Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](tasks/runtime-gaps.md#收尾与同步) | 已合入（`a6954e5`）；Runtime 接口与前端接入均完成。后续质量修复由 [#79](https://github.com/xuys2025/escape-bincov/pull/79) 承接，剩余收敛见 #60 |
+| 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1；枪口火光对齐随后由 #39 的 S1 完成。旧报告保留当时的素材审阅与真机未验状态 |
+| 地图敌人详细设定与实施 | [设计提案](ENEMY-DESIGN.md) · [#78](https://github.com/xuys2025/escape-bincov/issues/78) · [PR #81](https://github.com/xuys2025/escape-bincov/pull/81) | 设计 #67 已合入（`9502bbb`）；五大类/18 原型/十二规划区域尚未投放正式玩法。#81 为实施草稿，现有四类素材 #66 已接入；后续以 #78 的阶段验收为准 |
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
-| CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡（PR #62）已合入。2026-10-22：浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe，分支 `ci/setup-and-renderer`（承接 PR 见 #61，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)）；之后按新耗时重新分组（长套件的安全拆法已调研），及手动套件是否进 CI 的评估 |
-| 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64 已合入：剩余美术（Sol）、Runtime 缺口（Astra，即 #65）、新封锁区地图数据 |
-| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已实现，维护者 2026-10-22 选定“稳定”参数并试玩认可，决定见同页；#39 合入 main 后 #28 才进改装实现。#28 仍落后 main，续作前先同步 |
-| 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 已排期、功能待实现；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。#39 已合入 `2bac4fb`，战斗基础前置已满足；#40 只交付设计与排期，合并不关闭 #77 |
+| CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
+| 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
+| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [#80](https://github.com/xuys2025/escape-bincov/issues/80) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已合入（`2bac4fb`），采用维护者认可的“稳定”参数。#28 承接规划与排期，代码实施进度见 #80；完整改枪尚未进入 main |
+| 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 设计与排期 #40 已合入（`b475b1b`），功能尚未进入 main；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。射击前置已满足，#77 保持开放 |
+| 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 已登记待排期；文稿合入不代表地图、剧情事件或结局已接入游戏 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
 
 开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
