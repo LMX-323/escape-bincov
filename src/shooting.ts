@@ -106,9 +106,13 @@ export const coneOf = (aim: AimState, w: WeaponDef, h: Handling, body = 1) =>
     (w.spread * h.hip * (1 + (h.precise - 1) * aim.raise) * (1 + h.sway * aim.sway) + h.bloomMax * aim.bloom) * body;
 /** Where the next shot is centred relative to the aim: radians toward the shooter's right. */
 export const driftOf = (aim: AimState, h: Handling, body = 1) => h.kickMax * aim.drift * body;
-/** Recoil of one shot: more bloom and drift, and recovery waits for `settle` again. */
-export function recoil(aim: AimState, h: Handling): void {
-    if (h.bloomMax > 0) aim.bloom = Math.min(1, aim.bloom + h.bloom / h.bloomMax);
-    if (h.kickMax > 0) aim.drift = Math.min(1, aim.drift + h.kick / h.kickMax);
+/**
+ * Recoil of one shot: more bloom and drift, and recovery waits for `settle` again. `scale` multiplies only this shot's
+ * bloom and drift increments (the recoil-control perks technique-15-b and 25-b); the caps, the settle delay, recovery,
+ * the inherent cone and the precise multiplier stay. At 1 the result is bit-identical to having no scale.
+ */
+export function recoil(aim: AimState, h: Handling, scale = 1): void {
+    if (h.bloomMax > 0) aim.bloom = Math.min(1, aim.bloom + h.bloom / h.bloomMax * scale);
+    if (h.kickMax > 0) aim.drift = Math.min(1, aim.drift + h.kick / h.kickMax * scale);
     aim.settle = h.settle;
 }
