@@ -212,7 +212,8 @@ export function initializeMallRaid(state: ExpansionState, loadout: D.RunLoadout,
         for (const source of groupUnits) layer.loot.push({ uid: entityUid({ version: 2, runId: loadout.runId! }, serial++), id: source.id, qty: source.qty, relief: false, ...nextPoint() });
     }
     state.base.location = 'raid'; state.base.restSeconds = 0; state.base.energizedGranted = false;
-    state.raid = { version: 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
+    // As in initializeBuildingRaid: a v3 raid only from a v3 expansion.
+    state.raid = { version: state.version === 3 ? 3 : 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
         currentMap: 'mall-f1', player: { ...spawn, rotation: 0 }, loadout: structuredClone(loadout), elapsed: 0, initialHigh: config.initialHigh, highTide: config.initialHigh, warned: false, tideChanged: false,
         kills: 0, rng: (config.seed + 771) >>> 0, nextEntity: serial, maps, pursuits: [], training: newTraining(), reloadLeft: 0, fireCooldown: 0, knife: false, hitTime: 0,
         roster: Object.values(maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id }))), eventRolled: false, mapEvent: 'none' };

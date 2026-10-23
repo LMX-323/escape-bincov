@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as D from '../src/domain';
 import { PROFILE_MAX_BYTES, decodeProfileDocument, decodeStoredProfile, validInventory } from '../src/profile-codec';
 import { RecoveryStore } from '../src/recovery-store';
-import { newExpansion, upgradeToRpg } from '../src/expansion-state';
+import { newExpansion, upgradeToRpg, type LayeredRaid } from '../src/expansion-state';
 
 const item = (uid: string, id: string, x: number, y: number, extra: Partial<D.Item> = {}): D.Item => ({ uid, id, qty: 1, x, y, ...extra });
 
@@ -48,11 +48,18 @@ test('one inventory check serves every format: rotation and unknown fields are p
   assert.deepEqual(visited, ['c', 'd']);
 });
 
-test('the RPG upgrade is one in-place step and leaves a v2 state alone', () => {
+test('the station upgrade is one in-place step to v3 and leaves a v3 state alone', () => {
   const state = newExpansion(1000); state.base.cursor = 5000;
   upgradeToRpg(state, 3000);
-  assert.equal(state.version, 2); assert.equal(state.charm, null); assert.equal(state.awards!.length, 0); assert.equal(state.base.cursor, 5000);
+  assert.equal(state.version, 3); assert.equal(state.charm, null); assert.equal(state.awards!.length, 0); assert.deepEqual(state.growth.perks, []);
+  assert.equal(state.base.cursor, 5000);
   const behind = newExpansion(1000); upgradeToRpg(behind, 3000); assert.equal(behind.base.cursor, 3000);
   state.awards!.push('first'); upgradeToRpg(state, 9000);
   assert.deepEqual(state.awards, ['first']); assert.equal(state.base.cursor, 5000);
+  // A v2 state gains the empty perk selection and nothing else; one still holding a raid stays v2 until it settles.
+  const v2 = newExpansion(1000); Object.assign(v2, { version: 2, charm: null, awards: ['a'] }); v2.growth.permanent.strength = 25;
+  const before = structuredClone(v2), raiding = structuredClone(v2);
+  upgradeToRpg(v2, 9000); assert.deepEqual(v2, { ...before, version: 3, growth: { ...before.growth, perks: [] } });
+  raiding.raid = structuredClone({ version: 2 }) as LayeredRaid; upgradeToRpg(raiding, 9000);
+  assert.equal(raiding.version, 2); assert.equal('perks' in raiding.growth, false);
 });

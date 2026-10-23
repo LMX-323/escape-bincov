@@ -15,7 +15,9 @@ const settled = (): AimState => ({ raise: 0, sway: 0, bloom: 0, drift: 0, settle
 const aimAt = (log: ReturnType<typeof replay>, t: number) => [...log.aims].reverse().find(a => a.t <= t + 1e-9)!;
 
 test('shooting bench: the same seed and script replay to the same shots, hits and magazine', () => {
-    const run = () => { const b = arm(benchRaid(), 'carbine'), uid = dummy(b, 320); return replay(b, mouse([0, .3, .6, .9, 1.2]), 1.8, 60, uid); };
+    // Close enough that every shot lands whichever critical rule the raid version draws from its RNG (the draws shift
+    // later spreads): v2 rolls the old formula on each hit, a v3 raid without shot snapshots rolls nothing.
+    const run = () => { const b = arm(benchRaid(), 'carbine'), uid = dummy(b, 240); return replay(b, mouse([0, .3, .6, .9, 1.2]), 1.8, 60, uid); };
     const first = run(), second = run();
     assert.deepEqual(second, first);
     assert.equal(first.shots.length, 5); assert.equal(first.hurt.length, 5); assert.equal(first.mag, D.WEAPONS.carbine.magazine - 5);

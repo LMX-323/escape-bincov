@@ -1,4 +1,5 @@
 import * as D from './domain';
+import { perkLimitBonus, validPerkSelection, type PerkId } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
@@ -24,6 +25,8 @@ export interface BodyState {
 }
 export interface GrowthState {
     permanent: Attributes; progress: Attributes; reputation: Record<string, number>; luck: number;
+    /** Required in v3 and absent before it: the chosen perk ids, as validPerkSelection (src/perks.ts) accepts them. */
+    perks?: PerkId[];
 }
 export interface TrainingState {
     quantity: Attributes; credited: Attributes;
@@ -51,8 +54,12 @@ export interface PursuitState {
     id: string; enemy: EnemyState; sourceMap: string; targetMap: string; entry: string;
     path: Point[]; distance: number; speed: number; registeredAt: number; arrivalAt: number; waiting: boolean;
 }
+/**
+ * `version` is the raid's rules identity, kept until it settles: 1 no RPG; 2 RPG with the old critical rule; 3 RPG
+ * with the new critical rules, deployed only from a v3 expansion. v2 and v3 store the same keys.
+ */
 export interface LayeredRaid {
-    version: 1 | 2; worldVersion: string; layoutRevision: string; seed: number; runId: string;
+    version: 1 | 2 | 3; worldVersion: string; layoutRevision: string; seed: number; runId: string;
     currentMap: string; player: ActorState; loadout: D.RunLoadout;
     elapsed: number; initialHigh: boolean; highTide: boolean; warned: boolean; tideChanged: boolean;
     kills: number; rng: number; nextEntity: number; maps: Record<string, LayerState>; pursuits: PursuitState[];
@@ -61,18 +68,23 @@ export interface LayeredRaid {
     roster: { uid: string; id: string }[];
     eventRolled: boolean;
     mapEvent?: 'none' | 'neutral' | 'good' | 'bad';
-    /** v2 RPG checkpoint: last qualifying shock, measured on the global action clock. */
+    /** RPG (v2+) checkpoint: last qualifying shock, measured on the global action clock. */
     shockAt?: number;
 }
-/** v2 generated identities stay unique when loot survives into another action. */
+/** RPG (v2+) generated identities stay unique when loot survives into another action; v2 and v3 share the format. */
 export function entityUid(raid: Pick<LayeredRaid, 'version' | 'runId'>, serial: number): string {
-    return raid.version === 2 ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
+    return rpgEnabled(raid) ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
 }
+/** 1: no RPG. 2: RPG (charm, awards). 3: v2 plus the perk selection (`growth.perks`). */
 export interface ExpansionState {
-    version: 1 | 2; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
+    version: 1 | 2 | 3; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
     charm?: D.Item | null;
     awards?: string[];
 }
+/** RPG is on: an expansion from v2, or a layered raid deployed from one. Any later version keeps meaning this. */
+export function rpgEnabled(value: { version: number } | null | undefined): boolean { return !!value && value.version >= 2; }
+/** The expansion has passed the latest station-boundary upgrade (upgradeToRpg): v3. */
+export const stationUpgraded = (state: Pick<ExpansionState, 'version'> | null | undefined) => state?.version === 3;
 export interface WorldDefinition {
     id: string; revision: string; maps: Record<string, SpaceDefinition>;
     enemyCount: number; spawnMap: string; spawn: Point;
@@ -93,17 +105,24 @@ export function newExpansion(now: number, oldRaid?: RaidCheckpoint | null): Expa
             cursor: now, location: oldRaid ? 'raid' : 'base', restSeconds: 0, energizedGranted: false, extractedPearl: false,
             training: { startedAt: now, quantity: 0, credited: triple(0), activeSeconds: 0, attribute: null } }, raid: null };
 }
-/** The station-boundary RPG upgrade, in place: v2 starts with no charm or awards and base time counts from `now`. v2 is left as is. */
+/**
+ * The station-boundary upgrade to the current version, in place. Callers run it only with no live raid and no pending
+ * settlement. v1 to v2 starts with no charm or awards and base time counts from `now`; v2 to v3 adds an empty perk
+ * selection and nothing else (no pick, no training credit). A v2 state still holding a raid stays v2 until that raid
+ * settles. Idempotent: v3 is left as is.
+ */
 export function upgradeToRpg(state: ExpansionState, now: number): void {
-    if (state.version !== 1) return;
-    state.version = 2; state.charm = null; state.awards = []; state.base.cursor = Math.max(state.base.cursor, now);
+    if (state.version === 1) { state.version = 2; state.charm = null; state.awards = []; state.base.cursor = Math.max(state.base.cursor, now); }
+    if (state.version === 2 && state.raid === null) { state.version = 3; state.growth.perks = []; }
 }
 export function effectiveAttributes(state: ExpansionState): Attributes {
     return Object.fromEntries(ATTRIBUTES.map(a => [a, Math.max(1, Math.min(40, state.growth.permanent[a] + (state.body.effects[a] > 0 ? 5 : 0)))])) as Attributes;
 }
+const NO_BONUS = { hp: 0, stamina: 0, carry: 0 };
+/** Attribute formulas plus, in v3 only, the perks' fixed bonuses (once). The strict validator uses the same limits. */
 export function derivedLimits(state: ExpansionState) {
-    const a = effectiveAttributes(state);
-    return { hp: 100 + 3 * (a.constitution - 10), stamina: 100 + 2 * (a.strength - 10), carry: 24 + .6 * (a.strength - 10) };
+    const a = effectiveAttributes(state), bonus = state.version === 3 ? perkLimitBonus(state.growth.perks ?? []) : NO_BONUS;
+    return { hp: 100 + 3 * (a.constitution - 10) + bonus.hp, stamina: 100 + 2 * (a.strength - 10) + bonus.stamina, carry: 24 + .6 * (a.strength - 10) + bonus.carry };
 }
 
 const fail = (): never => { throw new Error('建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。'); };
@@ -140,10 +159,10 @@ function batch(value: ProductionBatch) {
 /** Complete validation is shared by imports and the single-record commit, before publishing state. */
 export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
     const state = value as ExpansionState;
-    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(state.version === 2 ? ['charm', 'awards'] : [])]);
-    if (![EXPANSION_VERSION, 2].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
+    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(rpgEnabled(state) ? ['charm', 'awards'] : [])]);
+    if (![EXPANSION_VERSION, 2, 3].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
     const { body, growth, base } = state;
-    if (state.version === 2) {
+    if (rpgEnabled(state)) {
         if (!Array.isArray(state.awards) || state.awards.length > 1000 || state.awards.some(id => !identity(id)) || new Set(state.awards).size !== state.awards.length) fail();
         const charm = state.charm;
         if (charm !== null) {
@@ -153,10 +172,12 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         }
     }
     exactKeys(body, ['hp', 'stamina', 'mental', 'water', 'satiety', 'pollution', 'bleeding', 'exhausted', 'effects', 'treatment', 'luckEffect']);
-    exactKeys(growth, ['permanent', 'progress', 'reputation', 'luck']);
+    exactKeys(growth, ['permanent', 'progress', 'reputation', 'luck', ...(state.version === 3 ? ['perks'] : [])]);
     exactKeys(base, ['facilities', 'queue', 'completed', 'nextBatch', 'cursor', 'location', 'restSeconds', 'energizedGranted', 'extractedPearl', 'training']);
     attributes(growth.permanent, 10, 30, true); attributes(growth.progress, 0, 1);
     if (ATTRIBUTES.some(a => growth.progress[a] >= 1 || (growth.permanent[a] === 30 && growth.progress[a] !== 0))) fail();
+    // Checked as stored, before derivedLimits reads it: never reordered, deduplicated or trimmed to fit.
+    if (state.version === 3 && !validPerkSelection(growth.perks, growth.permanent)) fail();
     if (!obj(growth.reputation) || Object.keys(growth.reputation).length > 100 || Object.entries(growth.reputation).some(([id, amount]) => !identity(id) || !whole(amount, -100, 100))
         || !whole(growth.luck, -3, 5)) fail();
     exactKeys(body.effects, EFFECTS);
@@ -195,10 +216,12 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (legacyRaid || base.location !== 'raid') fail();
     const raid = state.raid;
     if (!obj(raid)) return fail();
-    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version === 2 ? ['shockAt', 'mapEvent'] : [])]);
+    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(rpgEnabled(raid) ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    if (![1, 2].includes(raid.version) || (raid.version === 2 && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
+    // Perks and the new critical rules travel together: a v3 expansion holds only a v3 raid, and a v3 raid only a v3 expansion.
+    if (![1, 2, 3].includes(raid.version) || (raid.version === 3) !== (state.version === 3)
+        || (rpgEnabled(raid) && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
@@ -217,11 +240,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     for (const key of ['reloadLeft', 'fireCooldown', 'hitTime'] as const) if (!finite(raid[key], 0, 10)) fail();
     const invIds = new Set<string>(state.charm ? [state.charm.uid] : []);
     const allocated = (id: string) => {
-        const prefix = `entity-${raid.runId}-`;
-        const match = raid.version === 2 && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
+        const prefix = `entity-${raid.runId}-`, rpg = rpgEnabled(raid);
+        const match = rpg && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
             : /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
-        if (raid.version === 2 && id.startsWith(prefix) && !match) fail();
-        if (raid.version === 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
+        if (rpg && id.startsWith(prefix) && !match) fail();
+        if (rpg && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
         if (match && (!whole(Number(match[1]), 1, COUNT_MAX) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
@@ -270,11 +293,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             inventory(c.inventory, 6, 5); containers.push({ container: c, mapId });
         }
         for (const b of layer.bullets) {
-            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version === 2 && b.enemy ? ['owner'] : [])]);
+            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(rpgEnabled(raid) && b.enemy ? ['owner'] : [])]);
             entity(b.uid); point(b, map);
             if (!finite(b.vx, -1000, 1000) || !finite(b.vy, -1000, 1000) || !finite(b.left, 0, 2000) || !finite(b.damage, 0, 1000)
                 || !finite(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
-                || (raid.version === 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
+                || (rpgEnabled(raid) && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
         }
         if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!finite(layer.noise.radius, 0, 2000) || !finite(layer.noise.remaining, 0, 10)) fail(); }
     }
