@@ -1,11 +1,11 @@
 # 当前任务入口
 
-最近核对：2026-10-23，main `8b6192d`（含 #89 旧接口退役、#92 暴击与 Perk）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-23，main `04736f7`（含 #89 旧接口退役、#92 暴击与 Perk、#90 诊断共享构建器）。下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
 | README 当前玩法与开发入口 | [README](../README.md) · [PR #86](https://github.com/xuys2025/escape-bincov/pull/86) | 已合入（`44494ea`）：按 main `b475b1b` 更新序幕、射击与试枪场、敌人素材和开发边界，补齐文档导航 |
-| 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) · [本轮审计 / PR #79](tasks/audit-contracts.md) | #63/#68/#69/#71/#72 已合入；本轮 `agent/audit-contracts` 修复非法 ID 校验、负重上限、自动拆分、子步计时和新生弹飞行时间，补强服务类型和代码注释。Q-D02 剩余旧接口 `buy`/`sell`/`reload` 的退役与测试迁移见 [PR #89](https://github.com/xuys2025/escape-bincov/pull/89) 与摘要 [Q-D02](tasks/quality-entropy.md#q-d02-旧交易与装弹接口退役)。Q-E02 B 段的背包有限服务仍待处理，#65 前置已满足；其他余项及验证边界见审计摘要和 #60 |
+| 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) · [本轮审计 / PR #79](tasks/audit-contracts.md) | #63/#68/#69/#71/#72 已合入；本轮 `agent/audit-contracts` 修复非法 ID 校验、负重上限、自动拆分、子步计时和新生弹飞行时间，补强服务类型和代码注释。Q-D02 剩余旧接口 `buy`/`sell`/`reload` 的退役与测试迁移见 [PR #89](https://github.com/xuys2025/escape-bincov/pull/89) 与摘要 [Q-D02](tasks/quality-entropy.md#q-d02-旧交易与装弹接口退役)。Q-B06 诊断 bundle 同源见 [PR #90](https://github.com/xuys2025/escape-bincov/pull/90) 与摘要 [Q-B06](tasks/quality-entropy.md#q-b06-诊断-bundle-同源)：诊断能构建，#32 F20 仍 PARTIAL。Q-E02 B 段的背包有限服务仍待处理，#65 前置已满足；其他余项及验证边界见审计摘要和 #60 |
 | Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](tasks/runtime-gaps.md#收尾与同步) | 已合入（`a6954e5`）；Runtime 接口与前端接入均完成。后续质量修复由 [#79](https://github.com/xuys2025/escape-bincov/pull/79) 承接，剩余收敛见 #60 |
 | 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1；枪口火光对齐随后由 #39 的 S1 完成。旧报告保留当时的素材审阅与真机未验状态 |
 | 地图敌人详细设定与实施 | [设计提案](ENEMY-DESIGN.md) · [#78](https://github.com/xuys2025/escape-bincov/issues/78) · [PR #81](https://github.com/xuys2025/escape-bincov/pull/81) · [街区样板](tasks/enemy-street-encounter.md) | 新街区三原型、跨势力归属/交涉、两名成员沿已见入口跟随、方向壳甲/有限压制/扑击边界及首三类 78 张角色图已实现。同步 #92 后采用组合 session 7 / expansion 3 / raid 5；历史敌人和 Perk 行动保留原规则，双备份见[合同](tasks/enemy-save-contract.md)。其余十五类正式素材/场景、十二规划区域及整体验收仍开放；本批准确 head 与 CI 见原 PR |

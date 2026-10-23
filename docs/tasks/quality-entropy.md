@@ -173,3 +173,47 @@ CI 自测失败的 1 项是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/b
 
 - Q-D03 的测试入口分层（常规门禁、按风险检查、定期长测）本批未改，仍按 #60/#61 的归属。
 - 本批不改 `settleCartResult` 的规则。它在行动中（`activeRun`）拒绝结算的分支，新旧测试都没有断言，本批也未补。
+
+## Q-B06 诊断 bundle 同源
+
+2026-10-23，[PR #90](https://github.com/xuys2025/escape-bincov/pull/90)，分支 `agent/diagnostic-bundle`，起点 main `44494ea`；交付前普通合并 main `76adbd6`（#79），开 PR 后为解决冲突又合并 `b38f23d`（#88）、`24c18a6`（#87）、`160c6f3`（#89）、`8b6192d`（#92）。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
+
+**问题**：`scripts/build.mjs` 一导入就构建并写 `dist/`，诊断只能复制它的 esbuild 参数，复制品只有 PNG loader。源码导入 `range.css`、`station.css`、`opening.css` 后，`coast-sample-heap.mjs`、`sol-r6-heap.mjs` 在浏览器启动前就构建失败（main `44494ea` 实测 exit 1）。
+
+**有效决定**
+
+- 新模块 `scripts/game-bundle.mjs`，导入时不构建、不写文件。`buildGameScript(overrides)` 用正式构建的入口、loader、target、define、format 和 legalComments 在内存里构建游戏脚本；覆盖项替换整个顶层选项，诊断只在调用处写差异（`minify: false`、探针插件）。`withGameScript`/`inlineScript` 统一把脚本换进打包页时的拼接与转义。两个堆诊断各抄一份的只读页面池探针移到这里（`pagePoolProbe`），它读 `src/pixi-app.ts` 的私有 `parked`、`current` 和 `gpuTextures`，那边改名要同步。
+- 页面模板与资源清单校验仍在 `build.mjs`，ZIP 仍在 `package.mjs`；`build.mjs` 改调 `buildGameScript()`。
+- 诊断与原复制参数相比只多了正式构建的 `.css` loader 和 `legalComments: 'inline'`：原参数补上这两项后，与新模块的探针版、未压缩版产物逐字节相同。
+- CI 新增 `scripts/ci/game-bundle.test.mjs`：构建堆诊断用的未压缩带探针游戏脚本并确认探针注入；`scripts/` 下除共享模块外不许再写 `entryPoints: ['src/main.ts']`（用 main 上的脚本做负对照，正好标出 5 处复制品）；另测换脚本的拼接与转义。它只证明能构建。
+
+**脚本分类**（只含调用 esbuild 的脚本；其余脚本的用途仍归 Q-E08）
+
+| 脚本 | 分类 | 依据 | 本次 |
+| --- | --- | --- | --- |
+| `build.mjs` | 正式构建 | `pnpm build`、`package`、`dev` 的入口 | 改调共享模块 |
+| `coast-sample-heap.mjs` | 现役诊断 | 针对当前打包页的 F20 生命周期/堆诊断；Q-E02 已把它的探针改到 `pixi-app.ts` | 用共享配置，CI 构建其 bundle |
+| `sol-r6-heap.mjs` | 现役诊断 | 同一工作负载，另跟踪 `Weather`、`SampleSound`、`SynthAudio`（三者仍在源码）；Q-E02 同样维护过 | 同上 |
+| `astra-r7-f20.mjs` | 现役诊断 | F20 严格 60 轮的判定工具；默认直接读正式包，`R7_NAMED=1` 才构建未压缩脚本 | named 分支用共享配置 |
+| `sol-r6-audio-controls.mjs` | 待确认 | R6 验收套件：比较 origin/main 与工作区 `SynthAudio` 的四个音效，并生成只静音 death() 的负对照页给 `coast-audio-test.mjs`；输出目录和 `safe.directory` 写死 R6 环境；main 上两侧相同，比较只在改音频的分支有意义 | 不删；负对照的游戏脚本改用共享配置（它要的正是“正式包只去掉 death()”），不进 CI |
+| `mall-runtime-compat.mjs` | 归档 | 第一步要求基线 main 新建一版商场行动，只在传入 `7df2d22` 等历史基线时成立；打包的是存档夹具，不是游戏脚本 | 不改 |
+| `build-coast-runtime.mjs` | 现役构建工具 | 输出无渲染器的 Runtime ES 模块（见 [COAST-RUNTIME-SAMPLE](../COAST-RUNTIME-SAMPLE.md)），格式、平台和 target 本就不同；main 上 exit 0 | 不改 |
+| `art-review.mjs` | 现役 CI 测试（`test:art`） | 只打包绘制函数，不导入 CSS/PNG，不复制游戏脚本配置 | 不改 |
+
+**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）。先在 `44494ea` 上做完；此后每次合并 main，冲突都只在文档，每次都重跑单测、CI 守卫和打包。四个诊断在 `44494ea` 上、合并 `76adbd6` 后、合并 `8b6192d`（#92 改了存档与出击流程）后各跑一轮，`coast-sample-heap` 在 `44494ea` 上多跑一次核对复现。
+
+| 检查 | 结果 |
+| --- | --- |
+| 改动前 `coast-sample-heap`、`sol-r6-heap` | 均 exit 1：浏览器启动前三处 CSS 导入报错 |
+| `pnpm package` | 产物与改动前逐字节相同：基于 `44494ea` 时 `dist/index.html` SHA-256 改动前后均为 `7daee656…1da0`；每次合并 main 后重新打包，都等于当时 main 已提交的制品（合并 `8b6192d` 后为 `340e6a41…2f28`）；两份 ZIP 与发布清单无差异 |
+| `pnpm test` | `44494ea` 上 515/515；五次合并后依次为 549、549、550、552、647 项，全部通过 |
+| `node --test scripts/ci/*.test.mjs` | 每次都是 55/56，新增 3 项通过（探针版构建 0.3–0.7 秒）；唯一失败的 shell 门禁用例同 Q-E05（本机 Git 路径） |
+| `coast-sample-heap`（默认 20 轮，4 次） | 都能构建并跑完 20 轮；残留所有者 0，着色器源码 11→11，GPU 纹理每轮 2。前 3 次在原断言处 exit 1：第 6→20 轮快照间 `HTMLCanvasElement` 7→8；合并 #92 后的一次是 7→7，exit 0。堆趋势 +316,310 至 +330,840 B |
+| `sol-r6-heap`（默认 20 轮，3 次） | 前 2 次 exit 0（`PASS lifecycle ownership checks only`，canvas 7→7）；合并 #92 后的一次 canvas 7→8，exit 1。残留所有者 0；堆趋势 +312,436 至 +322,834 B，签收 partial |
+| `astra-r7-f20`（`R7_NAMED=1`，20 轮，不是严格 60 轮，3 次） | 20 轮资源检查全部通过；16–20 轮比 6–10 轮 +330,586 至 +334,542 B，按原条件 PARTIAL、exit 1 |
+| `sol-r6-audio-controls`（3 次） | 负对照页每次都生成，未接着跑 `coast-audio-test.mjs`。main 与工作区 `audio.ts` 相同：前 2 次四个音效都在 0.8–1.2 倍内、exit 0；合并 #92 后的一次 `hit` 测得 1.227 倍、exit 1，同一份源码的测量波动就会越过门槛 |
+
+**未做 / 下一步**
+
+- **F20 仍是 PARTIAL**，归 #32。诊断能进入流程，不等于 F20 总堆通过；本次只跑了默认 20 轮，没有跑严格 60 轮。`HTMLCanvasElement` 7→8 是间歇出现的，两个堆诊断都会遇到（7 次里 4 次），原因未归因，交 F20 调查；本 PR 不改断言和判定条件。
+- 两个堆诊断工作负载相同，默认输出目录都是 `test-results/coast-sample/heap`，后跑的覆盖先跑的；两者是否合并、`sol-r6-audio-controls` 是否保留（它对同一份源码也会越过 ±20% 门槛），归 Q-E08。全部脚本的用途分类也仍归 Q-E08。
