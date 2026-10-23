@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { InputState, inputKey } from '../src/coast-view/input';
+import { InputState, inputKey, isMoveKey } from '../src/coast-view/input';
 
 // InputState reads innerWidth/innerHeight in a field initializer; Node has no window.
 Object.assign(globalThis, { innerWidth: 1280, innerHeight: 720 });
@@ -68,4 +68,12 @@ test('keys go by physical key: Shift+2 picks the knife, a 1 released under Shift
   assert.deepEqual(r.commands, ['knife']); assert.equal(r.move.y, -1);
   // Keys outside letters, digits and Shift (or events without a code) keep their key value.
   assert.equal(inputKey({ key: 'Escape', code: 'Escape' }), 'Escape'); assert.equal(inputKey({ key: 'd', code: '' }), 'd');
+});
+
+test('movement keys that leave the loot window go by physical key: WASD, ZQSD on AZERTY, with Shift too (issue #26 F13)', () => {
+  const move = (key: string, code: string) => isMoveKey(inputKey({ key, code }));
+  assert.deepEqual([move('w', 'KeyW'), move('A', 'KeyA'), move('s', 'KeyS'), move('D', 'KeyD')], [true, true, true, true]);
+  assert.deepEqual([move('z', 'KeyW'), move('q', 'KeyA')], [true, true], 'AZERTY ZQSD');
+  // AZERTY's A sits where Q heals; E, Shift, arrows and Tab never leave loot.
+  assert.deepEqual([move('a', 'KeyQ'), move('e', 'KeyE'), move('Shift', 'ShiftLeft'), move('ArrowUp', 'ArrowUp'), move('Tab', 'Tab')], [false, false, false, false, false]);
 });

@@ -1,6 +1,6 @@
 # 当前任务入口
 
-最近核对：2026-10-23，main `b38f23d`（已合入 #39、#40、#65–#74、#79、#86、#88）。本轮为 #77 暴击与 Perk 实现补核相关入口；下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-23，main `24c18a6`（已合入 #39、#40、#65–#74、#79、#86–#88）。本轮为 #77 暴击与 Perk 实现补核相关入口；下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@
 | 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · `fix/hurt-flash-slow-frames` | 研究已登记，实施未排期。P0 第一项的慢帧时序由该分支 PR 处理：命中后的第一帧至少画一次受击闪白和抖动，60 帧/秒逐帧不变；抖动方向（现朝射手）待维护者决定，其余 P0–P2 未开工 |
 | 暴击与三属性 Perk | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [实现契约与记录](tasks/critical-perk-contract.md) · 分支 `agent/critical-perk` | 设计 #40 已合入（`b475b1b`）；实现在 `agent/critical-perk`：存档 v5/行动 v3、开枪暴击快照、24 项 Perk、屏息、基地选择与 500 重置、院子与旧页签界面已完成，行动 HUD 与集成验收进行中；未合并，#77 保持开放 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 已登记待排期；文稿合入不代表地图、剧情事件或结局已接入游戏 |
-| 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
+| 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
 
 开始修改前 fetch 并查看本地改动、同目标 PR 最新 head/讨论；多人约定文件所有权。当前需求由维护者明确指令决定，下面历史中的排期、冻结或“未合并”描述只代表记录时点。开发路径见 [CODEMAP](CODEMAP.md)，续作使用[短摘要模板](TASK-HANDOFF-TEMPLATE.md)。
 
