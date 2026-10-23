@@ -113,8 +113,9 @@ test('station upgrades legacy bytes atomically, preserves progress and is idempo
     const profile = D.newSave(); profile.cash = 4321; profile.stats.runs = 7;
     const old = JSON.stringify(profile), f = fixture(old, false), v3 = f.raw;
     assert.equal(f.runtime.enter().ok, true); const record = decodeSession(f.raw);
-    assert.deepEqual(record.profile, profile); assert.equal(record.expansion?.version, 2);
-    assert.equal(record.legacyBackup, old); assert.equal(record.systemsBackup, v3);
+    assert.deepEqual(record.profile, profile); assert.equal(record.version, 5); assert.equal(record.expansion?.version, 3);
+    // Straight from a record without an expansion to v5: the pre-v4 bytes are kept once, and there is no v4 record to keep.
+    assert.equal(record.legacyBackup, old); assert.equal(record.systemsBackup, v3); assert.equal(record.perksBackup, null);
     const rev = record.revision; assert.equal(f.runtime.enter().ok, true); assert.equal(f.saves.revision, rev);
 });
 test('failed upgrade preserves v3 raw and profile; retry succeeds once', () => {
@@ -387,9 +388,13 @@ test('failed full-backup import preserves profile, growth, queue and confirmatio
 });
 test('v1 expansion upgrade preserves body, facilities and growth without double upgrade', () => {
     const f = fixture(); const record = decodeSession(f.raw); record.expansion!.version = 1; delete record.expansion!.charm; delete record.expansion!.awards;
+    record.version = 4; delete record.perksBackup; delete record.expansion!.growth.perks;
     record.expansion!.body.hp = 47; record.expansion!.growth.permanent.technique = 13; record.expansion!.base.facilities.rest = 2;
-    const g = fixture(JSON.stringify(record)); assert.equal(g.state.expansion!.version, 2); assert.equal(g.state.expansion!.body.hp, 47);
+    const g = fixture(JSON.stringify(record)); assert.equal(g.state.expansion!.version, 3); assert.equal(g.state.expansion!.body.hp, 47);
+    assert.deepEqual(g.state.expansion!.growth.perks, []);
     assert.equal(g.state.expansion!.growth.permanent.technique, 13); assert.equal(g.state.expansion!.base.facilities.rest, 2); assert.equal(g.saves.currentRecord()!.systemsBackup, record.systemsBackup);
+    const v4 = JSON.parse(g.saves.currentRecord()!.perksBackup!);
+    assert.equal(v4.version, 4); assert.equal(v4.expansion.version, 1); assert.equal('perksBackup' in v4, false);
 });
 test('offline production remains finite and cannot bank blocked time; offline movement is never credited', () => {
     const f = fixture(); f.setup(d => { d.profile.cash = 100000; d.expansion.base.facilities.workbench = 3; d.expansion.base.facilities.training = 1; D.addItem(d.profile.stash, 'cloth', 20); });

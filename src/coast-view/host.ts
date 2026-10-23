@@ -11,7 +11,7 @@
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
 import { SURVIVAL } from '../balance';
-import { derivedLimits } from '../expansion-state';
+import { derivedLimits, rpgEnabled } from '../expansion-state';
 import { exitBearing, questProgress } from '../qol';
 import type { MutationResult, SaveSession, SessionState } from '../session';
 import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, TargetRef } from '../raid-runtime/contract';
@@ -190,7 +190,7 @@ export class CoastSampleHost {
         lootRef: () => this.lootRef(), touch: () => this.input.touch, toast: (t, bad) => this.toast(t, bad),
         saveFailed: () => { if (!this.services.checkpoint()) this.lastRejected = 'checkpoint'; },
         close: () => this.closePanel(true),
-        carryLimit: () => this.session.expansion?.version === 2 ? derivedLimits(this.session.expansion).carry : SURVIVAL.carryLimit,
+        carryLimit: () => rpgEnabled(this.session.expansion) ? derivedLimits(this.session.expansion!).carry : SURVIVAL.carryLimit,
         magazine: () => this.last?.frame.hud.weapon.mag ?? 0,
         used: () => this.sound.used(),
       });

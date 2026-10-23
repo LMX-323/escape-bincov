@@ -1,5 +1,5 @@
 import * as D from './domain';
-import { entityUid, type Attribute, type ExpansionState } from './expansion-state';
+import { entityUid, rpgEnabled, type Attribute, type ExpansionState } from './expansion-state';
 import { payMaterials } from './base';
 import { rewardAttribute } from './rpg';
 
@@ -19,7 +19,7 @@ export interface AwardDefinition {
     reputation: Record<string, number>; attributes: Attribute[]; luck: -1 | 0 | 1;
 }
 export function applyAward(profile: D.SaveDataV1, state: ExpansionState, award: AwardDefinition): boolean {
-    if (state.version !== 2 || profile.activeRun || state.base.location !== 'base' || state.awards!.includes(award.id)) return false;
+    if (!rpgEnabled(state) || profile.activeRun || state.base.location !== 'base' || state.awards!.includes(award.id)) return false;
     if (!payMaterials(profile, { cash: 0, items: award.needs })) return false;
     profile.cash += award.cash;
     for (const [faction, delta] of Object.entries(award.reputation)) state.growth.reputation[faction] = Math.max(-100, Math.min(100, (state.growth.reputation[faction] ?? 0) + delta));
@@ -35,7 +35,7 @@ function returnCharm(item: D.Item, inventory: D.Inventory): boolean {
     return false;
 }
 export function equipCharm(profile: D.SaveDataV1, state: ExpansionState, uid: string, source: 'stash' | 'bag' | 'safe'): boolean {
-    if (state.version !== 2 || !['stash', 'bag', 'safe'].includes(source) || state.raid && source === 'stash') return false;
+    if (!rpgEnabled(state) || !['stash', 'bag', 'safe'].includes(source) || state.raid && source === 'stash') return false;
     const inventory = state.raid ? state.raid.loadout[source as 'bag' | 'safe'] : profile[source];
     const item = inventory.items.find(i => i.uid === uid && D.ITEMS[i.id].kind === 'accessory' && !i.relief);
     if (!item) return false;

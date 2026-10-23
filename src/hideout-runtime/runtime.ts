@@ -4,7 +4,7 @@ import * as B from '../base';
 import * as Shop from '../shop';
 import { moveQuantity, placementError } from '../loot';
 import { organizeStash, transferBagToStash } from '../inventory-actions';
-import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, upgradeToRpg, type ExpansionState } from '../expansion-state';
+import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, rpgEnabled, stationUpgraded, upgradeToRpg, type ExpansionState } from '../expansion-state';
 import { useRpgItemResult } from '../rpg';
 import { equipCharm, unequipCharm } from '../reputation-luck';
 import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
@@ -72,7 +72,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         if (this.state.conflict || !this.saves.ownsStorage) return fail('conflict', '存档已由另一窗口接管，本页不能写入。');
         if (!retry && (!this.state.storageOK || this.pending)) return fail('storage', '请先重试保存或导出备份。');
         if (this.state.pendingSettlement) return fail('locked', '结算尚未保存。');
-        if (base && (this.state.state !== 'hideout' || this.state.save.activeRun || this.state.expansion?.version !== 2)) return fail('locked');
+        if (base && (this.state.state !== 'hideout' || this.state.save.activeRun || !rpgEnabled(this.state.expansion))) return fail('locked');
         return null;
     }
     private failed(action: string): C.Result {
@@ -124,7 +124,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
                 effects: Object.entries(e.body.effects).filter(([, seconds]) => seconds > 0).map(([name, seconds]) => ({ name, seconds })),
                 attributes: Object.fromEntries(ATTRIBUTES.map(a => [a, { base: e.growth.permanent[a], effective: effective[a], progress: e.growth.progress[a] }])) as C.BodyView['attributes'] },
             power: s.save.quests.repair ? 'restored' : 'emergency',
-            storage: { ok: s.storageOK, conflict: s.conflict || !this.saves.ownsStorage, pendingSettlement: !!s.pendingSettlement, pendingBase: !!this.pending || !!this.samples.length, upgradeRequired: s.expansion?.version !== 2 },
+            storage: { ok: s.storageOK, conflict: s.conflict || !this.saves.ownsStorage, pendingSettlement: !!s.pendingSettlement, pendingBase: !!this.pending || !!this.samples.length, upgradeRequired: !stationUpgraded(s.expansion) },
             day: s.save.stats.runs + 1, phase: s.state === 'hideout' && this.preparedRun && s.save.activeRun?.runId === this.preparedRun ? 'departing' : s.state, arrival: this.arrival });
     }
     trainingProgress(): C.TrainingProgress {
@@ -290,7 +290,8 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         // Existing v4 protection: never silently discard facilities or a live legacy checkpoint.
         if (data.kind === 'settled' || !data.record.expansion) return fail('locked', '当前成长存档不接受降级覆盖；请在旧版入口恢复旧备份后升级。');
         const record = structuredClone(data.record);
-        if (!record.profile.activeRun && record.expansion?.version === 1) upgradeToRpg(record.expansion, this.now());
+        // A settled import is at the station boundary: it upgrades here. A live raid keeps its version until it settles.
+        if (!record.profile.activeRun && record.expansion) upgradeToRpg(record.expansion, this.now());
         if (!this.saves.importRecord(record)) return this.failed('import');
         this.importPreview = null; this.samples = []; this.arrival = null; this.preparedRun = null;
         if (this.state.save.activeRun) this.state.state = 'menu';

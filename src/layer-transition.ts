@@ -4,7 +4,7 @@ import type { ExpansionState, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
 import { SURVIVAL } from './balance';
 import { criticalChance, enemyDamage, trainingEfficiency } from './rpg';
-import { effectiveAttributes, entityUid } from './expansion-state';
+import { effectiveAttributes, entityUid, rpgEnabled } from './expansion-state';
 import { luckInventory } from './reputation-luck';
 import { pursuitPosition } from './pursuit';
 import { corridor, findLanding, separation, spacePath, traversable, type SpaceContext } from './spatial';
@@ -71,7 +71,7 @@ export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: En
     const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, amount);
     enemy.hp -= actual;
     if (mapId === raid.currentMap) { enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: raid.player.x, y: raid.player.y }; }
-    if (gun) raid.training.quantity.technique += actual / 400 * (raid.version === 2 ? trainingEfficiency(state) : 1);
+    if (gun) raid.training.quantity.technique += actual / 400 * (rpgEnabled(raid) ? trainingEfficiency(state) : 1);
     if (enemy.hp > 0) return;
     raid.kills++;
     const event = raid.pursuits.find(p => p.enemy.uid === enemy.uid);
@@ -87,7 +87,7 @@ export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: En
         random(); random();
     }
     raid.rng = random.getState();
-    if (raid.version === 2) luckInventory(state, mapId, inventory, enemy);
+    if (rpgEnabled(raid)) luckInventory(state, mapId, inventory, enemy);
     layer.containers.push({ id: `corpse-${enemy.uid}`, runId: raid.runId, kind: 'corpse',
         name: `${D.ENEMIES[enemy.id].name}遗体`, x: enemy.x, y: enemy.y, inventory });
 }
@@ -104,7 +104,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
             if (hit !== null && hit < stop) {
                 const hp = state.body.hp;
                 const random = D.seededRandom(raid.rng);
-                if (raid.version === 2) enemyDamage(state, bullet.damage, bullet.owner, random());
+                if (rpgEnabled(raid)) enemyDamage(state, bullet.damage, bullet.owner, random());
                 else { state.body.hp = Math.max(0, state.body.hp - bullet.damage); raid.hitTime = .25; if (random() < SURVIVAL.bleedChance) state.body.bleeding = true; }
                 raid.rng = random.getState();
                 observeShot(observer, context, bullet, hit, 'player', hp - state.body.hp, false, state.body.hp <= 0);
@@ -119,6 +119,8 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
             .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
         if (hits[0]) {
             let critical = false;
+            // The old centre-closeness rule is the v2 raids' own, kept until they settle. v1 raids never crit; v3 raids
+            // do not use this formula (their rule is the shot's critical snapshot, contract section 3), so no roll here.
             if (raid.version === 2) {
                 const enemy = hits[0].enemy, perpendicular = Math.abs((enemy.x - bullet.x) * dy - (enemy.y - bullet.y) * dx);
                 const chance = criticalChance(effectiveAttributes(state).technique, 1 - Math.min(1, perpendicular / 14), state.body.effects.focus > 0 ? .05 : 0);
