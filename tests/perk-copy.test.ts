@@ -5,7 +5,7 @@ import { SaveSession, createSessionState, type ExpansionDraft } from '../src/ses
 import { RealHideoutRuntime, type PerkBoard, type Result } from '../src/hideout-runtime';
 import { derivedLimits, type Attribute } from '../src/expansion-state';
 import { BREATH_MAX, PERK_IDS, perkModifiers, type PerkId, type PerkModifiers } from '../src/perks';
-import { ATTRIBUTE_NAMES, PERK_TEXT, choicePreview, critContext, critView, defaultPerkAttribute, perkFailure, perkPanel, resetPreview, type CritContext } from '../src/perk-copy';
+import { ATTRIBUTE_NAMES, PERK_TEXT, choicePreview, critContext, critView, defaultPerkAttribute, perkDone, perkFailure, perkPanel, perkPendingName, perkRetried, perkWaiting, resetPreview, type CritContext } from '../src/perk-copy';
 
 // CP-T09 (#77): the perk copy and the view models both base screens draw (docs/CRITICAL-PERK-DESIGN.md sections 2.3,
 // 3 and 5). The names are the spec's; every number in an effect line must be the rule's number from perkModifiers.
@@ -175,6 +175,10 @@ test('failure messages never claim success; a storage failure says whether this 
     assert.equal(perkFailure('storage', 'choice', true), '存档没有写入：这次选择保留在本页，重试保存成功后才生效。');
     assert.equal(perkFailure('storage', 'reset', true), '存档没有写入：重置保留在本页，重试保存成功后才扣款并生效。');
     assert.equal(perkFailure('storage', 'choice'), '上次的更改还没写入存档，这次没有生效。请先重试保存或导出备份。');
+    // The waiting change is named until the retry writes it; only then is it reported as in effect.
+    assert.equal(perkWaiting(perkPendingName('choice', 'strength-15-b')), '「长途奔袭」没能写入存档，还没有生效；它保留在本页，重试保存成功后才生效，导出的备份也包含它。');
+    assert.equal(perkRetried(perkPendingName('reset', 'strength')), '已重新保存，力量 Perk 重置已生效。');
+    assert.equal(perkDone('choice', 'strength-15-b'), '已选择「长途奔袭」，已写入存档。');
     // A real refusal from the Runtime maps to its message.
     const s = station(levels(20, 10, 10), [], 1200), refused: Result = s.runtime.previewPerkReset('strength');
     assert.ok(!refused.ok); assert.equal(perkFailure(refused.reason, 'reset'), '本属性没有已选的 Perk，没有扣款。');

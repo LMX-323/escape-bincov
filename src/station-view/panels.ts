@@ -1,6 +1,6 @@
 import * as D from '../domain';
 import type { Attribute, CartView, FacilityInfo, HideoutSnapshot, PerkBoard, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
-import { ATTRIBUTE_NAMES, critContext, critView, perkPanel, type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from '../perk-copy';
+import { ATTRIBUTE_NAMES, PERK_UI, critContext, critView, perkPanel, perkWaiting, type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from '../perk-copy';
 import { RECIPES } from '../expansion-state';
 import { shopQuote, type ShopQuote, type ShopSource } from '../shop';
 import { itemArt } from './items';
@@ -209,9 +209,9 @@ const perkCard = (c: PerkCardView) => {
 };
 function perksHtml(v: PerkPanelView) {
   const tabs = v.tabs.map(t => btn(`${t.name} <small>${esc(t.detail)}</small>`, `perk-attr:${t.attribute}`, t.attribute === v.attribute ? 'on' : '', `aria-pressed="${t.attribute === v.attribute}"`)).join('');
-  return `<section class="perks"><h4>Perk 选择 <small>永久等级 15、20、25、30 各开一档，每档二选一</small></h4><nav class="seg perk-tabs" aria-label="Perk 属性">${tabs}</nav>
+  return `<section class="perks"><h4>${PERK_UI.title} <small>${PERK_UI.hint}</small></h4><nav class="seg perk-tabs" aria-label="${PERK_UI.switcher}">${tabs}</nav>
   ${v.blocked ? `<p class="warn" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="ptier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCard).join('')}</div>`).join('')}
-  <div class="preset">${btn(esc(v.reset.label), `perk-reset:${v.attribute}`, 'danger', v.reset.enabled ? '' : 'disabled')}<small>${esc(v.reset.reason ?? '不降低等级；已解锁的档位可以重新选择。')}</small></div></section>`;
+  <div class="preset">${btn(esc(v.reset.label), `perk-reset:${v.attribute}`, 'danger', v.reset.enabled ? '' : 'disabled')}<small>${esc(v.reset.reason ?? PERK_UI.resetHint)}</small></div></section>`;
 }
 function critHtml(c: CritView) {
   return `<section class="crit"><h4>${esc(c.title)}${c.total ? ` <b>${esc(c.total)}</b>` : ''}</h4>${c.rows.length ? `<ul>${c.rows.map(r => `<li><span>${esc(r.label)}</span><b>${esc(r.text)}</b></li>`).join('')}</ul>` : ''}${c.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}</section>`;
@@ -220,7 +220,7 @@ function critHtml(c: CritView) {
 export function perkConfirmHtml(v: PerkPreviewView, reset: boolean) {
   return `<div class="confirm perk-confirm"><p class="ptitle"><b>${esc(v.title)}</b><small>${esc(v.subtitle)}</small></p>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}
   ${v.changes.length ? `<ul class="pchanges">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}
-  <div class="acts">${btn(esc(v.confirm), 'perk-ok', reset ? 'danger' : 'primary')}${btn('取消', 'close', 'perk-cancel')}</div></div>`;
+  <div class="acts">${btn(esc(v.confirm), 'perk-ok', reset ? 'danger' : 'primary')}${btn(PERK_UI.cancel, 'close', 'perk-cancel')}</div></div>`;
 }
 
 export function boardHtml() {
@@ -258,7 +258,7 @@ export function resetConfirmHtml() {
  */
 export function storageHtml(s: HideoutSnapshot, pending = '') {
   const conflict = s.storage.conflict;
-  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : pending ? `${esc(pending)}没能写入浏览器存档，还没有生效；它和训练进度都保留在本页，重试保存成功后才生效，导出的备份也包含它。` : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
+  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : pending ? esc(perkWaiting(pending)) : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
   <div class="acts">${conflict ? '' : btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export')}${conflict ? btn('刷新页面', 'reload') : ''}</div>
   <p class="muted">${conflict ? '刷新后会读取最新的存档。' : '也可以先导出备份，再检查浏览器存储空间或隐私设置。'}</p></div>`;
 }

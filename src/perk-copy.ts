@@ -9,6 +9,11 @@ import { addPerk, critBreakdown, critSources, perkModifiers, perkNode, removeAtt
 import type { Attribute, FailReason, HideoutSnapshot, PerkBlock, PerkBoard, PerkChoicePreview, PerkResetPreview } from './hideout-runtime/contract';
 
 export const ATTRIBUTE_NAMES: Readonly<Record<Attribute, string>> = { strength: '力量', constitution: '体质', technique: '技巧' };
+/** The fixed lines of the board and of the preview dialogs, the same on both screens. */
+export const PERK_UI = {
+    title: 'Perk 选择', hint: '永久等级 15、20、25、30 各开一档，每档二选一', switcher: 'Perk 属性', resetHint: '不降低等级；已解锁的档位可以重新选择。',
+    choiceDialog: '选择 Perk', resetDialog: '重置 Perk', cancel: '取消',
+} as const;
 
 /** Name, one short effect line with the design number, and what the perk leaves alone (shown before confirming). */
 export const PERK_TEXT: Readonly<Record<PerkId, { name: string; effect: string; note?: string }>> = {
@@ -190,3 +195,6 @@ export function perkFailure(reason: FailReason, kind: 'choice' | 'reset', kept =
 /** The toast after a successful write, and the name a waiting retry reports once it has written the change. */
 export const perkDone = (kind: 'choice' | 'reset', subject: string) => kind === 'choice' ? `已选择「${PERK_TEXT[subject as PerkId].name}」，已写入存档。` : `已重置${ATTRIBUTE_NAMES[subject as Attribute]} Perk，支付 ¥500。`;
 export const perkPendingName = (kind: 'choice' | 'reset', subject: string) => kind === 'choice' ? `「${PERK_TEXT[subject as PerkId].name}」` : `${ATTRIBUTE_NAMES[subject as Attribute]} Perk 重置`;
+/** The storage dialog or alarm while that change waits, and the toast once the retry wrote it. */
+export const perkWaiting = (pending: string) => `${pending}没能写入存档，还没有生效；它保留在本页，重试保存成功后才生效，导出的备份也包含它。`;
+export const perkRetried = (pending: string) => `已重新保存，${pending}已生效。`;

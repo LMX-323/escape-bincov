@@ -17,7 +17,7 @@ import { mallRunConfig } from './mall-world';
 import { useRpgItem } from './rpg';
 import type { ExpansionDraft } from './session';
 import type { Attribute, Result } from './hideout-runtime/contract';
-import { choicePreview, critContext, critView, defaultPerkAttribute, perkDone, perkFailure, perkPanel, perkPendingName, resetPreview,
+import { PERK_UI, choicePreview, critContext, critView, defaultPerkAttribute, perkDone, perkFailure, perkPanel, perkPendingName, perkRetried, perkWaiting, resetPreview,
     type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from './perk-copy';
 import { paintItem } from './art/items';
 import { artId, itemArtwork, painted } from './art/item-images';
@@ -261,14 +261,14 @@ function perkCardHtml(c: PerkCardView) {
 }
 function perkBoardHtml(v: PerkPanelView) {
     const tabs = v.tabs.map(t => btn(`${t.name}<small>${esc(t.detail)}</small>`, 'perk-attr', t.attribute === v.attribute ? 'active' : '', `data-id="${t.attribute}" aria-pressed="${t.attribute === v.attribute}"`)).join('');
-    return `<section class="rpg-perks"><h4>Perk 选择 <span>永久等级 15、20、25、30 各开一档，每档二选一</span></h4><div class="perk-tabs" role="group" aria-label="Perk 属性">${tabs}</div>${v.blocked ? `<p class="orange small" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="perk-tier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCardHtml).join('')}</div>`).join('')}<div class="perk-reset">${btn(esc(v.reset.label), 'perk-reset', 'danger', `data-id="${v.attribute}" ${v.reset.enabled ? '' : 'disabled'}`)}<span class="perk-note">${esc(v.reset.reason ?? '不降低等级；已解锁的档位可以重新选择。')}</span></div></section>`;
+    return `<section class="rpg-perks"><h4>${PERK_UI.title} <span>${PERK_UI.hint}</span></h4><div class="perk-tabs" role="group" aria-label="${PERK_UI.switcher}">${tabs}</div>${v.blocked ? `<p class="orange small" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="perk-tier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCardHtml).join('')}</div>`).join('')}<div class="perk-reset">${btn(esc(v.reset.label), 'perk-reset', 'danger', `data-id="${v.attribute}" ${v.reset.enabled ? '' : 'disabled'}`)}<span class="perk-note">${esc(v.reset.reason ?? PERK_UI.resetHint)}</span></div></section>`;
 }
 function critHtml(c: CritView) {
     return `<div class="rpg-crit"><h4>${esc(c.title)}${c.total ? `<strong>${esc(c.total)}</strong>` : ''}</h4>${c.rows.length ? `<dl>${c.rows.map(r => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.text)}</dd></div>`).join('')}</dl>` : ''}${c.notes.map(n => `<p>${esc(n)}</p>`).join('')}</div>`;
 }
 function perkOverlayHtml(d: NonNullable<typeof perkDialog>) {
     const v = d.view;
-    return `<div class="overlay"><section class="panel modal perk-modal" role="dialog" aria-modal="true" aria-label="${d.kind === 'choice' ? '选择 Perk' : '重置 Perk'}"><div class="section-label">${esc(v.subtitle)}</div><h2>${esc(v.title)}</h2>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}${v.changes.length ? `<ul class="perk-changes">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}<div class="actions">${btn(esc(v.confirm), 'perk-confirm', d.kind === 'choice' ? 'primary' : 'danger')}${btn('取消', 'close', 'perk-cancel')}</div></section></div>`;
+    return `<div class="overlay"><section class="panel modal perk-modal" role="dialog" aria-modal="true" aria-label="${d.kind === 'choice' ? PERK_UI.choiceDialog : PERK_UI.resetDialog}"><div class="section-label">${esc(v.subtitle)}</div><h2>${esc(v.title)}</h2>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}${v.changes.length ? `<ul class="perk-changes">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}<div class="actions">${btn(esc(v.confirm), 'perk-confirm', d.kind === 'choice' ? 'primary' : 'danger')}${btn(PERK_UI.cancel, 'close', 'perk-cancel')}</div></section></div>`;
 }
 /** Card or reset button: the Runtime previews or refuses; nothing is written before the confirm. */
 function previewPerkTab(kind: 'choice' | 'reset', subject: string) {
@@ -298,7 +298,7 @@ function perkRefused(r: Result, kind: 'choice' | 'reset', kept = false) { if (!r
 /** The tab page's storage retry for base writes: only the HideoutRuntime commits a change it keeps after a failed write. */
 function retryBaseSave() {
     const pending = perkPending, r = hideoutRuntime.retrySave();
-    if (r.ok) { toast(pending ? `已重新保存，${pending}已生效。` : '已重新保存。', 'success'); perkPending = ''; }
+    if (r.ok) { toast(pending ? perkRetried(pending) : '已重新保存。', 'success'); perkPending = ''; }
     else toast(r.message);
     render();
 }
@@ -309,7 +309,7 @@ function storageAlarm() {
     if (storage.conflict) return `<div class="save-alarm" role="alert"><span>存档已被另一个窗口接管，本页不能写入。请先导出需要保留的进度，再刷新本页。</span>${btn('导出存档', 'export-save')}${btn('刷新页面', 'refresh')}</div>`;
     // A kept candidate always comes with a failed write (storage not ok) until retrySave commits it.
     if (storage.ok) { perkPending = ''; return ''; }
-    return `<div class="save-alarm" role="alert"><span>${perkPending ? `${esc(perkPending)}没能写入存档，还没有生效；重试保存成功后才生效，导出的备份也包含它。` : '最近一次操作没能写入存档。请重试保存，或先导出备份。'}</span>${btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export-save')}</div>`;
+    return `<div class="save-alarm" role="alert"><span>${perkPending ? esc(perkWaiting(perkPending)) : '最近一次操作没能写入存档。请重试保存，或先导出备份。'}</span>${btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export-save')}</div>`;
 }
 function facilityPanel() {
     const state = app.expansion;

@@ -7,7 +7,7 @@ import { GridDrag, type DragHooks } from './grid';
 import { esc } from '../html';
 import * as P from './panels';
 import { confirmImport, readResetCopy, startOver } from '../fresh-start';
-import { choicePreview, critContext, defaultPerkAttribute, perkDone, perkFailure, perkPendingName, resetPreview, type PerkPreviewView } from '../perk-copy';
+import { PERK_UI, choicePreview, critContext, defaultPerkAttribute, perkDone, perkFailure, perkPendingName, perkRetried, resetPreview, type PerkPreviewView } from '../perk-copy';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -54,7 +54,7 @@ const TITLES: Partial<Record<PanelKind, [string, string]>> = {
   generator: ['发电机', '发电机房'], deploy: ['出击准备', '院门'], body: ['身体与成长', '在站里休息会慢慢恢复'], menu: ['暂停', '滨科夫水产站'], help: ['操作说明', ''],
   board: ['寻人板', '食堂门口'], chat: ['食堂', '炊事员'], report: ['行动报告', ''],
 };
-const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入', perk: '选择 Perk', 'perk-reset': '重置 Perk' };
+const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入', perk: PERK_UI.choiceDialog, 'perk-reset': PERK_UI.resetDialog };
 /** Browser storage for the pre-reset copy; even reading the localStorage property can throw. */
 const browserStorage = () => localStorage;
 
@@ -469,7 +469,7 @@ export class UI {
       case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
       case 'reset-restore': this.restoreCopy(); break;
       // The retry's own commit event syncs the storage state (clearing perkPending) before it returns.
-      case 'retry-save': { const pending = this.perkPending, r = this.rt.retrySave(); if (r.ok) { this.toast(pending ? `已重新保存，${pending}已生效。` : '已重新保存。', 'ok'); this.perkPending = ''; this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
+      case 'retry-save': { const pending = this.perkPending, r = this.rt.retrySave(); if (r.ok) { this.toast(pending ? perkRetried(pending) : '已重新保存。', 'ok'); this.perkPending = ''; this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
       case 'reload': location.reload(); break;
       case 'fac': { this.facility = a1 as Facility; this.station = STATIONS.find(q => q.facility === a1) ?? this.station; this.render(); this.host.panelChanged(this.kind, this.station); break; }
     }

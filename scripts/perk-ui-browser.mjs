@@ -182,7 +182,7 @@ try {
       try { root.querySelector('.dialog [data-act="perk-ok"]').click(); } finally { Storage.prototype.setItem = write; }
     });
     await y('.dialog.k-storage').waitFor();
-    assert.match(await y('.dialog').innerText(), /「长途奔袭」没能写入浏览器存档，还没有生效/);
+    assert.match(await y('.dialog').innerText(), /「长途奔袭」没能写入存档，还没有生效/);
     const toasts = await yardToasts();
     assert.ok(toasts.some(x => x.tone === 'error' && x.text === '存档没有写入：这次选择保留在本页，重试保存成功后才生效。'), JSON.stringify(toasts));
     assert.ok(!toasts.some(x => x.tone === 'ok'), 'no success toast');
