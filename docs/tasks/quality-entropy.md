@@ -138,6 +138,42 @@
 
 - B 段：`CoastServices`/`CoastHandle` 移入 Runtime 合同，工厂显式返回，去掉 `as unknown as CoastHandle`；背包面板的背包/安全箱移动改走有限服务，不再持有 `SaveSession`/`SessionState`；顺带把 `Scope`/`renderer-lifetime.ts` 移出 `coast-view/`。具体位置与验收登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)，依赖 PR #65。
 
+## Q-D02 旧交易与装弹接口退役
+
+2026-10-23，[PR #89](https://github.com/xuys2025/escape-bincov/pull/89)，分支 `agent/q-d02-legacy-api`，起点 main `44494ea`；之后 #79、#88、#87 先后合入 main，本分支每次都普通合并同步，冲突只在任务清单和 handoff，都是双方各自新增的内容；准确基线以 PR 为准。承接 #60 的 Q-D02 剩余部分：`writeSave`/`readSave` 已在第二批退役，本批删去 `domain.ts` 的 `buy`、`sell`、`reload`，把仍有意义的断言迁到正式路径。玩法、存档格式、界面行为和打包产物都不变。
+
+**有效决定**
+
+- 引用核对：用与 `source-health` 相同的程序范围（src、tests、scripts）做 TypeScript 符号引用分析，三个函数在生产代码里的引用为 0，只有 `tests/domain.test.ts` 和 `tests/save-flow.test.ts` 调用。打包产物本来就不含它们（esbuild 摇树已剔除），删除后 HTML、两个 ZIP 和清单与基线字节一致，无生成物需要提交。
+- 正式路径已覆盖、随旧接口删除：旧商店测试里的按包计价、出售付款、仓库满整笔拒绝（`shop.test.ts` 的净额结算与现金/空间拒绝，`hideout-runtime.test.ts` 的配额失败与满仓拒绝）；救济测试里几处 `sell(...) === false`，所在测试已断言救济标记，“救济品不能卖”由下面的新断言负责。
+- 迁到正式路径：
+  - 修理铺卖急救包（跨商人进货）→ `shop.test.ts`：别家商人的货硬塞进待买，整单按 `rule` 拒绝；同一件在卫生所能买。
+  - 救济枪/弹不能卖 → `shop.test.ts`：硬塞进待卖时 `settleCartResult` 整单拒绝（原测试只测了放置提示）；`hideout-runtime.test.ts`：站内商店 `place` 拒绝上架救济品且不写存档。
+  - 混装弹匣卸下后的可售性 → 整条移到 `shop.test.ts`，经购物车卖出普通弹，救济弹和救济枪不能上架。
+  - S3 卖掉最后一把普通枪到 ¥210 → 出售步骤改走 `settleCartResult`，其余断言不变；集成版本已有站内 S3 测试。
+  - 旧页签购买的写入失败回滚 → `save-flow.test.ts` 改为点「统一结算」驱动真实的 `checkout` → `mutate`：失败回滚并保留购物车，重试只写一次。原来调用的 `D.buy` 并不是旧页签的实际调用链。
+- 装弹：旧 `reload` 不返回救济弹来源，与正式路径不同；正式路径是 `reloadMagazine`（出击时装满弹匣、行动中 Runtime 换弹）。原“只取缺的发数、不凭空造弹”测试改测 `reloadMagazine`，补上弹药不足、空包、口径不符和匕首四种情况。
+- 原样保留：`migrateSave`、旧键 `SAVE_KEY` 读取与各版本迁移有生产调用。
+- 历史证据 `docs/issue26-20261014/relief/relief-outcomes.mts` 的 S3 用例调用旧 `sell`：用法改为把“改后”一侧固定到当时的提交 `5cb0597`，重跑输出与已提交的 md/json 一致；拿当前 `src/domain.ts` 跑会报 `d.sell is not a function`。
+- 反向验证：临时去掉结算的救济检查、商人货单检查、放置的救济检查、`reloadMagazine` 的口径检查与发数上限、旧页签结算的保留购物车与 `mutate` 回滚，共 7 处，每处都有新/改后的测试变红；还原后全绿。
+
+**实际验证**（Windows、Node 24.22.1、pnpm 11.19.0、本机 Chrome）
+
+| 检查 | 起点 `44494ea` 上 | 每次同步 main 后 |
+| --- | --- | --- |
+| 严格类型检查（含未用变量/参数） | 通过 | 通过 |
+| `pnpm test` | 517/517（main 515；删 1 项旧商店测试，新增 3 项） | 全部通过，比当时的 main 多 2 项（如同步 `24c18a6` 后 552/552，main 550） |
+| `node --test scripts/ci/*.test.mjs` | 52/53，`source-health` 3/3 | 52/53 |
+| `pnpm package` | 通过；HTML、两个 ZIP、清单与 main 字节一致 | 通过；与当时 main 已提交的产物字节一致 |
+| `pnpm test:save-browser` | 9/9 | 9/9 |
+
+CI 自测失败的 1 项是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/bin/bash.exe`，本机 Git 不在该路径；CI 在 Linux 上执行。
+
+**未做 / 下一步**
+
+- Q-D03 的测试入口分层（常规门禁、按风险检查、定期长测）本批未改，仍按 #60/#61 的归属。
+- 本批不改 `settleCartResult` 的规则。它在行动中（`activeRun`）拒绝结算的分支，新旧测试都没有断言，本批也未补。
+
 ## Q-B06 诊断 bundle 同源
 
 2026-10-23，[PR #90](https://github.com/xuys2025/escape-bincov/pull/90)，分支 `agent/diagnostic-bundle`，起点 main `44494ea`；交付前普通合并 main `76adbd6`（#79），开 PR 后为解决冲突又合并 `b38f23d`（#88）、`24c18a6`（#87）。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。

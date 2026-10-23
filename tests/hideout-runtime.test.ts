@@ -268,6 +268,17 @@ test('quest sale requires confirmation bound to the cart and quest need', () => 
     const second = shop.settle(!first.ok ? first.confirmation!.token : ''); assert.ok(!second.ok && second.confirmation);
     assert.ok(shop.settle(!second.ok ? second.confirmation!.token : '').ok);
 });
+test('the station shop refuses to list relief guns or rounds for sale', () => {
+    const f = fixture(); f.setup(d => { D.addItem(d.profile.stash, 'pistol', 1, true); D.addItem(d.profile.stash, 'ammo9', 12, true); });
+    const shop = f.runtime.openShop('arms'), raw = f.raw;
+    for (const id of ['pistol', 'ammo9']) {
+        const item = shop.view().stash.items.find(i => i.id === id && i.relief)!;
+        assert.match(shop.placementError('stash', 'sell', item.uid, 0, 0)!, /不可出售/, id);
+        const result = shop.place('stash', 'sell', item.uid, 0, 0);
+        assert.equal(reason(result), 'rule'); assert.match(!result.ok ? result.message : '', /不可出售/, id);
+    }
+    assert.equal(shop.view().sell.items.length, 0); assert.equal(reason(shop.settle()), 'rule'); assert.equal(f.raw, raw);
+});
 test('facilities enforce power, non-relief materials and three-level cap', () => {
     const f = fixture(); assert.equal(reason(f.runtime.build('training')), 'locked');
     f.setup(d => { d.profile.cash = 5000; d.profile.stash = D.createInventory(10, 6); D.addItem(d.profile.stash, 'scrap', 10, true); });

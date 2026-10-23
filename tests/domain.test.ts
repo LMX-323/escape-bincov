@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import {
   ITEMS, SAVE_KEY, QUESTS, STASH_UPGRADE_COST, createInventory, addItem, moveItem, transferItem,
   removeItem, count, weight, fits, newSave, migrateSave, beginRun,
-  checkpointSafe, settleRun, recoverInterrupted, grantRelief, liquidValue, buy, buyQuantity, sell, equip, unequip, equipRun,
-  submitQuest, upgradeStash, reload, reloadMagazine, applyDamage, seededRandom, rollLoot,
+  checkpointSafe, settleRun, recoverInterrupted, grantRelief, liquidValue, buyQuantity, equip, unequip, equipRun,
+  submitQuest, upgradeStash, reloadMagazine, applyDamage, seededRandom, rollLoot,
 } from '../src/domain';
+import * as S from '../src/shop';
 
 test('20 original items plus production/RPG items have coherent footprints, stacks and prices', () => {
   const original = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'];
@@ -65,23 +66,6 @@ test('moving a complete stack onto a compatible stack merges it', () => {
   assert.equal(inv.items[0].qty, 3);
 });
 
-test('merchant stock, payment and full storage are transaction-safe', () => {
-  const save = newSave();
-  assert.equal(buy(save, 'medkit', 'arms'), false);
-  const cash = save.cash;
-  assert.equal(buy(save, 'ammo9', 'arms'), true);
-  assert.equal(save.cash, cash - 12 * ITEMS.ammo9.buy);
-  const purchased = save.stash.items.find(i => i.id === 'ammo9')!;
-  const saleQty = purchased.qty;
-  assert.equal(sell(save, purchased.uid), true);
-  assert.equal(save.cash, cash - 84 + saleQty * ITEMS.ammo9.sell);
-  save.stash = createInventory(1, 1);
-  addItem(save.stash, 'watch', 2);
-  const before = JSON.stringify(save);
-  assert.equal(buy(save, 'pistol', 'arms'), false);
-  assert.equal(JSON.stringify(save), before);
-});
-
 test('equipping swaps safely and returns the gun to storage on unequip', () => {
   const save = newSave();
   addItem(save.stash, 'shotgun');
@@ -97,13 +81,18 @@ test('equipping swaps safely and returns the gun to storage on unequip', () => {
 test('reload consumes exactly missing rounds and never invents ammunition', () => {
   const bag = createInventory(6, 5);
   addItem(bag, 'ammo9', 10);
-  assert.equal(reload('pistol', 3, bag), 8);
+  assert.deepEqual(reloadMagazine('pistol', 3, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.equal(reload('pistol', 8, bag), 8);
+  assert.deepEqual(reloadMagazine('pistol', 8, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.equal(reload('pistol', 0, bag), 5);
-  assert.equal(reload('pistol', 0, bag), 0);
-  assert.equal(reload('knife', 0, bag), 0);
+  assert.deepEqual(reloadMagazine('pistol', 0, 0, bag), { ammo: 5, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine('pistol', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(bag.items, []);
+  // Only the gun's own ammunition is taken; the knife has none.
+  addItem(bag, 'ammo9', 4);
+  assert.deepEqual(reloadMagazine('shotgun', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine('knife', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.equal(count(bag, 'ammo9'), 4);
 });
 
 test('damage respects armor and clamps at zero without healing', () => {
@@ -209,10 +198,10 @@ test('relief is conditional, cannot be repeatedly claimed and cannot be sold', (
   assert.equal(count(save.bag, 'ammo9'), 12);
   assert.equal(count(save.bag, 'bandage'), 1);
   assert.equal(grantRelief(save), false);
-  assert.equal(sell(save, save.bag.items[0].uid), false);
+  assert.ok(save.bag.items.every(i => i.relief));
   assert.equal(unequip(save), true);
   const pistol = save.stash.items.find(i => i.id === 'pistol')!;
-  assert.equal(sell(save, pistol.uid), false);
+  assert.match(S.shopPlacementError(S.createCart(save, 'arms'), 'stash', 'sell', pistol.uid, 0, 0)!, /不可出售/);
   assert.equal(grantRelief(save), false);
   assert.equal(equip(save, pistol.uid), true);
   assert.equal(save.equipment.relief, true);
@@ -236,7 +225,6 @@ test('a gun inside the safe prevents relief duplication after save recovery', ()
   assert.equal(save.equipment.weapon, null);
   assert.equal(count(save.bag, 'ammo9'), 0);
   assert.equal(grantRelief(save), false);
-  assert.equal(sell(save, save.safe.items[0].uid), false);
   assert.equal(settleRun(save, run, 'extract', 9), null);
 });
 
@@ -352,21 +340,6 @@ test('a full bag and full stash do not lose loaded rounds on extraction or refre
   settleRun(save, next, 'death', 0);
   assert.equal(save.equipment.ammo, 0);
   assert.equal(save.equipment.ammoRelief, 0);
-});
-
-test('unloading a mixed magazine preserves saleability independently of a relief gun', () => {
-  const save = newSave();
-  save.stash = createInventory(10, 6);
-  save.equipment = { weapon: 'pistol', relief: true, ammo: 7, ammoRelief: 3 };
-  assert.equal(unequip(save), true);
-  const ordinary = save.stash.items.find(i => i.id === 'ammo9' && !i.relief)!;
-  const relief = save.stash.items.find(i => i.id === 'ammo9' && i.relief)!;
-  assert.equal(ordinary.qty, 4);
-  assert.equal(relief.qty, 3);
-  const cash = save.cash;
-  assert.equal(sell(save, ordinary.uid), true);
-  assert.equal(save.cash, cash + 4 * ITEMS.ammo9.sell);
-  assert.equal(sell(save, relief.uid), false);
 });
 
 test('equipment swaps reject insufficient unloading space without losing gun or ammo', () => {
@@ -508,7 +481,6 @@ test('S2: a broke player with only a relief pistol and no 9mm anywhere gets 12 r
   assert.equal(count(save.bag, 'bandage'), 0);
   assert.equal(save.bag.items.every(i => i.relief), true);
   assert.equal(save.reliefSupplies, undefined);
-  assert.equal(sell(save, save.bag.items[0].uid), false);
   assert.equal(save.cash, 50);
   assert.equal(grantRelief(save), false);
   assert.equal(count(save.bag, 'ammo9'), 12);
@@ -584,7 +556,9 @@ test('S3: selling the last ordinary gun to reach ¥210 grants the kit', () => {
   assert.equal(grantRelief(save), false);
   const gun = save.stash.items.find(i => i.id === 'pistol')!;
   assert.equal(gun.relief, undefined);
-  assert.equal(sell(save, gun.uid), true);
+  const cart = S.createCart(save, 'arms');
+  assert.ok(S.moveShopItem(cart, 'stash', 'sell', gun.uid, 0, 0));
+  assert.deepEqual(S.settleCartResult(save, cart), { ok: true });
   assert.equal(save.cash, 60 + ITEMS.pistol.sell);
   assert.equal(save.cash, 210);
   assert.equal(grantRelief(save), true);
