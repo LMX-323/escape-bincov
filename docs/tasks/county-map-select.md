@@ -2,6 +2,8 @@
 
 2026-10-23（UTC+8），基线 `76adbd627f582d063cc6f80a4551e8b8cbe2dddd`，任务分支 `feat/county-map-select`。维护者授权先完成选图界面，未开发地区标「暂未开发」。本次交付不关闭 [#82](https://github.com/xuys2025/escape-bincov/issues/82) 的真实地图、路线、剧情及版本接入待办。
 
+承接 [PR #91](https://github.com/xuys2025/escape-bincov/pull/91)。创建 PR 期间主线合入 #88，随后正常合并 `b38f23d`；源码自动合并，HTML、ZIP 和发布清单由 `pnpm package` 重建解决冲突。同步后 549 单测与 package 再次通过。
+
 ## 玩家可见变化
 
 院门 / G / 出击快捷键打开县域战术地图：手绘地形底图、十二个区域标记、出发路线、区域情报与整备检查。沿海街区、滨湾商场可出击；其余十个区域可以查看规划，出击按钮禁用。现有沿海街区占用老城规划位置，情报明确说明完整老城仍待扩展。
@@ -34,7 +36,8 @@
 | `pnpm test:raid-default` | 10/10；R10 覆盖十个未开发区域拦截（含强行启用 DOM 按钮）、保留种子、键盘切换、四尺寸标记无重叠/裁切；原两图出击和旧档恢复仍通过 |
 | `pnpm test:browser`、`pnpm test:ui` | 通过；两档桌面实际行动与 UI 回归 |
 | `node --test scripts/ci/*.test.mjs` | 53/53 |
-| 院子、桌面输入、触屏、移动 UX、便携包 | 本地运行中，最终结果及 CI 链接见承接 PR |
+| `test:desktop-input`、`test:mobile`、`test:mobile-ux`、`test:portable` | 全部通过；移动 UX 未提供固定旧客户端的可选验证，其他断言保留 |
+| `test:station` | 77/78；E4「真实有效120秒」的有效训练时长断言失败，单项重跑仍失败。当前未改训练逻辑，正在用同机 main `b38f23d` 原始包做负对照，最终归因与 CI 见 PR；其余 77 项通过，无页面错误或外部请求 |
 
 真实界面截图（新档，无资源/进度修改）：[1280×720](county-map-select/1280x720.png)、[1920×1080](county-map-select/1920x1080.png)、[手机竖屏](county-map-select/390x844.png)。地图底图本身是示意美术，截图中的界面、标签与操作为实际实现。
 
