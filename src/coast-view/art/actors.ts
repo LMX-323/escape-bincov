@@ -121,6 +121,7 @@ export function paintArm(kind: ActorKind, variant?: string): HTMLCanvasElement {
     'raider-melee': ['#28231e', '#a58a64', '#796145'],
     'raider-gunner': ['#242321', '#5b5854', '#3e3d3d'],
     'raider-lookout': ['#252729', '#747c82', '#505b65'],
+    'raider-boss': ['#242321', '#6b6651', '#454435'],
   };
   const [ink, light, base] = sleeves[variant ?? ''] ?? (kind === 'player' ? ['#242321', '#59604a', '#41443a'] : [P.ink, LOOKS[kind === 'creature' ? 'scav' : kind].coatL, LOOKS[kind === 'creature' ? 'scav' : kind].coat]);
   const { c, g } = canvas(1, 4);

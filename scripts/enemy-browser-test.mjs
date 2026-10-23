@@ -1,4 +1,4 @@
-/** Actual offline v6 saves in the shipped 2.5D host. Fixed phases are valid saved states, not concept images. */
+/** Actual offline v7 saves in the shipped 2.5D host. Extra roles are saved fixtures, not native encounter claims. */
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -15,12 +15,18 @@ import { archetype, initialTactics } from '../src/enemy-archetypes.ts';
 import { damageLayerEnemy } from '../src/layer-transition.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
-const report = { screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const artRoles = ['raider-melee', 'raider-gunner', 'raider-lookout', 'raider-boss', 'tidal-crab', 'saltback-dog', 'sac-spitter'];
+const report = { scope: 'First three roles deploy natively; other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
     assert.ok(saves.initialize(), state.storageError); state.state = 'hideout'; assert.ok(saves.beginRun(42, true), state.storageError);
-    const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === role);
+    const raid = state.expansion.raid, spec = archetype(role);
+    const e = raid.maps.coast.enemies.find(e => e.id === role) ?? raid.maps.coast.enemies.find(e => e.id === 'raider-gunner');
+    if (e.id !== role) {
+        e.id = role; e.hp = spec.hp; e.tactics = initialTactics(role, 'art-review');
+        raid.roster.find(r => r.uid === e.uid).id = role;
+    }
     const context = { definition: BUILDING_WORLD.maps.coast, doors: raid.maps.coast.doors, highTide: raid.highTide };
     const p = [0, Math.PI / 2, Math.PI, -Math.PI / 2].map(a => ({ x: e.x + Math.cos(a) * 96, y: e.y + Math.sin(a) * 96 }))
         .find(p => traversable(context, p, 'body', 10) && corridor(context, e, p, 'sight'));
@@ -33,7 +39,7 @@ function fixture(phase, role = 'raider-gunner') {
         }
     } else if (phase === 'corpse') damageLayerEnemy(state.expansion, 'coast', e, e.hp * 2);
     else Object.assign(e.tactics, { phase, phaseLeft: phase === 'windup' ? archetype(role).windup : phase === 'reload' ? 1.8 : .4,
-        lockedAim: Math.atan2(p.y - e.y, p.x - e.x), magazine: role === 'raider-melee' ? 0 : 1, reserve: role === 'raider-melee' ? 0 : 4, stance: 'hostile', awareness: 1,
+        lockedAim: Math.atan2(p.y - e.y, p.x - e.x), magazine: Math.min(1, spec.magazine), reserve: Math.min(4, spec.reserve), stance: 'hostile', awareness: 1,
         memory: { at: p, time: 0, source: 'sight', target: 'player' } });
     assert.ok(saves.persist(), `${role}/${phase}: ${state.storageError}`);
     const raw = data.get(SESSION_KEY); decodeSession(raw);
@@ -45,7 +51,7 @@ try {
         const touch = viewport.width < 1000;
         const context = await browser.newContext({ viewport, offline: true, hasTouch: touch, isMobile: touch }); await resumeStalls(context);
         const scenarios = (touch ? ['parley'] : ['windup', 'reload', 'recovery', 'parley']).map(phase => ({ phase, role: 'raider-gunner', name: phase }));
-        for (const role of ['raider-melee', 'raider-gunner', 'raider-lookout']) {
+        for (const role of artRoles) {
             if (touch || role !== 'raider-gunner') scenarios.push({ phase: 'windup', role, name: `${role}-windup` });
             if (!touch) scenarios.push({ phase: 'corpse', role, name: `${role}-corpse` });
         }
@@ -74,7 +80,7 @@ try {
             assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase);
             if (phase !== 'corpse') assert.ok(actual.cue);
             assert.equal(actual.reloading, phase === 'reload');
-            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : role === 'raider-melee' ? 'club' : 'pistol'); assert.equal(actual.version, 7);
+            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : archetype(role).weapon); assert.equal(actual.version, 7);
             if (phase !== 'parley') {
                 assert.equal(actual.artStyle, role); assert.ok(phase === 'corpse' ? actual.corpseArt : actual.bodyArt);
             }

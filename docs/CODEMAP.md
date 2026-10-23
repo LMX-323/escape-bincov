@@ -97,9 +97,9 @@
 
 展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
 
-新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。`SessionRecord` v6 / `LayeredRaid` v4 的严格校验和原始备份见[存档合同](tasks/enemy-save-contract.md)；旧行为 A/B 夹具明确使用旧敌人部署。
+新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。三类街区角色由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts) 的身体/尸体/轮廓；素材来源、尺寸和确定性导出见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
+方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。七类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；仅首三类在街区正式投放。素材来源、尺寸和确定性导出见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
 **验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 

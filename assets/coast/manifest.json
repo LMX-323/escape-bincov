@@ -4885,6 +4885,2278 @@
       "muzzle": null,
       "sha256": "baae150f358645488078b2ecb835dda665d4782bee9cfa56bddf91042245d380",
       "revision": 1
+    },
+    {
+      "id": "coast-raider-boss-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c7e2e1680534bc98ac177882261e91c79b15c8900af7ea011ba2085d40297126",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c544f551df89ad529d08723dfe33e67d16755c637d8caf47cc82ba51e3955f5f",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "543e5241cf2eb320475a3a7c69aadca68e392d9a6efa40198d8f69abdf2b370a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e92c3c12d7b47b68d013d9c237caad7496287ab3245c0fca669888b6eab3a4de",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "f42498cd0e5e1cf0825c9c11f9d03ccf2432da4a61e968ec0eb63d99561f6870",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "85d7320fcfab11ac389992337e55d98ab08dccadb0fa0305d5c0e148fc637228",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "60754ce998a9fd64c02dd55609464ab9a7b03e42d630b64efbbc7df1883a5a85",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "95c127670802ad34eb94d561c633f318c8c16102da256a1aec56cc0207c0cba8",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "d2d6b6cfb0b7a87707b96b30ea64254c78f59462863d49d7d06ea520b62b564d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "869079b0403abbdf02b9e3a1b419b54b6174c2aa1ab58ae540c663e683ee3e1d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4266b6c1b7c065a2ea2d6376b2fba68ee06b47a7eb89e89d074de6b502e654b7",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "51c8b92b0c2aeab1e1087451856f42e4a048d545ad000ca0f3d38cdb4eccd8f0",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "57a278e62b05daca86370f5043b9fc7c046ac1b88c20971f4e82fce7c3e8c726",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4aba8df8ee275f56ab2b219cc3d4ca97f1e3c9710dd915bbaca5b55e63186f10",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ab5152e7dc5d5350bea1ee0e1cdf9151bc4d5947a259b7858dad2b45fea50b5a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "02f31373cf92c5bc18fb4d2ac17cd2394c64ab4169afbee5e42f4b63713d0995",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8917d4a7961a337caa1c84c246058773772da0691c87733bdbfc5a7a7e325d08",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8537027bd188537b2582378b5184ce08934cf95fd105194cb2679a75bd6233c0",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "0260a3925eb4a5f826e2a81a3324b8ed13b9d700725270e14639115a7c253940",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "3cd00824433ea0e27f06ca6ac3416d2740240fcaf52e19e580e2af61e9c2cde6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "858015c51e701092357fe5368c3c6d88018c576a3b14b2d0d5119f8b0e9e7c28",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "166ab33e5206660ef4f3fe47b50328a925313820e46821922c405bf775d65ccc",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6508ee5260b91fa5c9d4828ec8424ad1d69e4f8c468dc5aad799c7cff7c502f9",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "04626afdc9d9946ba1bd0e360dda80f3c5c9356c89c35e4c317c9e27d9b9ea75",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "raider-boss",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7d34a24145e8016850560c45996ff942577975d6edd8fc96ea959674a7cbd394",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-raider-boss-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-raider-boss-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "raider-boss",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-raider-boss",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a65985d6b4af8958c56a4f62f75cc9d55ef56ebd7939a4a34d937fc9343deb7a",
+      "revision": 1
+    },
+    {
+      "id": "coast-tidal-crab-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b52f7ce6e6e2532d47e443c0fa08c17b9f440380404b617ac03fe3dd9480ffac",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "765edda0969e8f8633764496c6c7d5a88000050a3e0dc1570082e554f14b5a75",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a41baf767d0d2d6b3cb13de6b1296c0d20cf2e13584a70ededdb9a473a5d4350",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ac516553f232979d9033d813d3a0da5da881451fc1cd995d27ebe469c27b6ba2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "74ab5ff368ed3333baea5821414e977bd6ef8437edcc289883c362f76036db78",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "5f8dab601a31b60a3f5e72c1cee168befb3ba6260422cb8e8f10877f1b6e233b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "73adae23add808910e7bf0ab6833d537d3c55dece37200d716becdea4efebbc3",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "bcd59c9f92d8a8fc13e8b30dac47bd215501d2aaacd5f406e0f92ec4fdd95428",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6833656a0112cd8f3692c73549879ba8f33f0a231209b37d173894d2c3ae74db",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "089c17a8491f87a9fddff9648523ed041357e3647466733c0d55e45525de0c0f",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "49d36cf04400a59d9ba30a500ed2d84ad484a50ce7c188ceb02adaa294d96fdf",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "480b1a8d60ca847acc0f716db29378bcfaddff8b2b1400d2d89d53318b96f7ad",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "50eba772071d76c35f4c86dc159393c7026846f4e11afdb3a51e58448f6e9bb1",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4610b8197a63a24fe2248f96743f5cc861232e37412f56947bc89de8d5488ce0",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b19934564a52fae426398ca12ed032ae2e611a1082460acf4f8edc189db40b36",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "369019ac8334598dc0b80308c3cced2a8609578667d7f3a8c92a46df4e02d5be",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4c3d4f7b305d28dedad8468a8e427302a793a4292b116d53b47c26e43bf201a7",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a68db4b9b511c41f47632e98e0c455f30bc3ab6880a7f02b534644b849955446",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "732667582fc783d6626516e92baaf5c3133b1764bd068834ce7d1688a1eb5bd7",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a00a86cf6ac07157f7b1f9e3c75fa6813933ecce72e3c5992edb68859f4a5047",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "bc165556cf453aa1ceb4d40ff3711af872977e73ed53e53f9589b32c35946bb4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8a11dfc3e9db5b6920a25cb314008fe0be355984e6b2062964e53fa0ff728719",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c1d7114c0a60327c3a08d5f71b4def4c7899f1b74a6dc1bc822f61f8c6be900b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "1893b1ce17251b8fcbc85106b1649a94ee12edeb197457944843c0ad8145df4b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "tidal-crab",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "643b1566acc5841e9320510e55f05b08f244470dd16eeb1d62b947ec04ffe28b",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-tidal-crab-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-tidal-crab-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "tidal-crab",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-tidal-crab",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a8be501a44630a13711c5a313b886c322dcfe879c0f656141b47fb1b86a652a9",
+      "revision": 1
+    },
+    {
+      "id": "coast-saltback-dog-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "5c85397989bfbe1aa1a7d8782cb81ade9d87054f79244c91c2aa0ecfcd701768",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "df6dd37a14f01a8203eb083a973bf9c5fcb91b0119ca26d3f38b8caaaa6c6ec9",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b1ce2352374e2550e3b310f4c176e6b6de178405be692e91a351ac716644fc7d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7a91115f6aa9bcc1d1a3c1a013300eadb4432393cffeb9d8b16289c0fc9ca2ae",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "f2d42129ef973fdba250fcbc9beab0a15fcd4e44f348387c52f3d5360867f8d6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "74be30e529e6a2483a5fd7d4c6659c3c33b7281e52a2f11fa790010df6d98543",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "aa2f9c7c45e0b2285acbf862a66712df930711b996237458ebf9c760e05fba1f",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e0d4dabd755a931b40b4b02ff07deb1dc06ef9ba163881b7f03b659f9e22eb48",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c54296c52d46a696a2cffd924ae4fa8ca1fa73e68ba2827ced0289055280c6a4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "34ab1ed194d174006eb147a3a97d1b659fbd8956c328aa3e40d8d9b05c228642",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "d9cf51d96a4e71dfe79e7eb08e06c916ea03fc188ee30381693bf90fcb90e7a2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "60b4b802a5fd8591bacc69b7fa1da62d9485fb7ad0f493496ced3c13c105f905",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "fe1e1d323117763dec51b05144c256e6bb160341a263e8f9701a1b4f5a16492a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b2d6feb45c11c7e9e80b4f5d00dd6783cb4e93f894e9b51516f1a320feb5a03c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e28595b115f4399ba6c5470aaaf063aaa1822df7df6ebdbf5f448ddac4db8142",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e8a0273290ece5031247e660167af18f43b038a1a955e748200adab1d6131d0e",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "adb64bd9606ce6bb3d7042cf3d0d74a1056f79daba1b855b155dfc157565b246",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a857de381b072834ebce5055205b509b1179c502d996073ae8a0751b2d2ca764",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "fffb439abb8f0a2eedd71e6cde11a968a710a9acccdb6c1b356a0b7695fa1c18",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "df4773eb58a1e071779816b7d410776948ad18c10c84fa58c5c95c2016fb8931",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6c2207c26e1df3b26e93bc0cb9bec613606be5bff3778d3cb5a0c8b108f1efca",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8e6e03bcd4a74685e7f0074649a2aafc1cf4d68c65a22f2a19b32a05d25150d4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "9959eca7fa4448344e9be84d571e45cf01065618b0433dbb342b04c7a34f58b4",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4cf49029528a28b00820a719c17bfba8caa0b309ab71a51c890989c4fe759c5a",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "saltback-dog",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "4d3fbf0338006d42b173f35a893d9d15c9b4fad5c92732216717d5cbcf70a9ab",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-saltback-dog-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-saltback-dog-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "saltback-dog",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-saltback-dog",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "c58bf16dcba521d1e0db487d46242067e655589de7bb92bddef8a09ef464eb32",
+      "revision": 1
+    },
+    {
+      "id": "coast-sac-spitter-body-e-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-e-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a86e0e32bb90d12d55d732d84809ff370ee80cf45b8bf88b77cf5372020228de",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-e-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-e-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 1,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "2fd553e9d77b86e9a68a9110a2725f929b191a1b082f79a212f5a87aa3a9ea7d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-e-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-e-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 2,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e40a34d5e1794853ed1b71b4aca6ae1d0ab382c49d7e59f0deb28bf6f1c4f7e7",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-e-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-e-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 3,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "048941df6d4530a74dbe95ea8fce3f952f6a3c119bed8158d9b7bafc64f22336",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-e-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-e-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 4,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "7c6287c7ee57efcaa0fd0f6002f0fe383da05f1f322b84be73ebc1f77ef98458",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-se-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-se-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "SE",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "dc52e401d4f26a66cfb76afe0a4875e7a774cdd40e88d4d4fe2a8c6c182a12b2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-se-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-se-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "SE",
+      "frameIndex": 1,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "a8ab438b2b76ba15b9e0c1167fb4fadd6254a711122135fcb25b569b800be4d2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-se-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-se-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "SE",
+      "frameIndex": 2,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "1de38311f87c69d9e01d0375223ef468ba01d1124fe0f641d1d6ac4a81e75854",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-se-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-se-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "SE",
+      "frameIndex": 3,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "5024ad7e647aa8851ee1696f543fb019b1b29acbdde25e389d8774a5a48fd90d",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-se-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-se-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "SE",
+      "frameIndex": 4,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "682a09ddc5fe2858a69d01f9ccc08d8d0da25177f51c2626e805de6d7a154e62",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-s-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-s-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "S",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "e9927f14a623fd190d49a2d393fd1728b0fb3a3e9604717a1d4143c9c1008af2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-s-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-s-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "S",
+      "frameIndex": 1,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "608a0d1b8e8ad835607e4213348b5943323033493bdef6d4cd701c4d5b6101f2",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-s-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-s-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "S",
+      "frameIndex": 2,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "6cce43a762a2f1df3502594451652f2ee6685ca4f7ad4763518619b9028b3b2e",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-s-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-s-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "S",
+      "frameIndex": 3,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "59ff2181ecc5cdfb3bc3099505cd859570536d67e8d4546b8d387e091396a025",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-s-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-s-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "S",
+      "frameIndex": 4,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "07db17f21a31be0c07fb3f483bf373f43faa8a3b8fed2ab20d14d9f90f0850ed",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-ne-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-ne-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "NE",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "b967f6e2e48e2336001f4084f23595619166f31870db2747b8510dba82266fa6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-ne-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-ne-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "NE",
+      "frameIndex": 1,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "8c410f1ff3e1ec220a06fe03807d237e527b4aff3eccc5736892f7c220ac33f8",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-ne-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-ne-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "NE",
+      "frameIndex": 2,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "2d0daafb77d3a020dd17ad82280ae972f69668e50d659a9f070a6c294fd1d350",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-ne-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-ne-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "NE",
+      "frameIndex": 3,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ff53a87e691d0b1ea9d61b34bf096ea6d4895f7e77deac1bdc526860645a8bbf",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-ne-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-ne-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "NE",
+      "frameIndex": 4,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "ec5d21bc84cc22829f2b72ddf03ba21f2ace765c407eb1e82aa703ef2723450c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-n-f0-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-n-f0-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "N",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "5be21fbd6c95f6a843108ec0878eaa907f3509c4af41a86ba4a9902273c7119f",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-n-f1-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-n-f1-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "N",
+      "frameIndex": 1,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "9205c6cff86d0ad92e9862a5cd858553d4332fb6f890063fd77f67fd6fb22b0c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-n-f2-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-n-f2-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "N",
+      "frameIndex": 2,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "1231b4f22d510f569a988a8d2aaa29a739b8e5c738d7987754b61e352d06b4bc",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-n-f3-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-n-f3-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "N",
+      "frameIndex": 3,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "51fb0eda1a54087869aa79d31e6380332ed48f7205afa0ed2a65c58b0c230a6c",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-body-n-f4-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-body-n-f4-v1.png",
+      "w": 32,
+      "h": 48,
+      "anchor": [
+        16,
+        48
+      ],
+      "kind": "sac-spitter",
+      "dir": "N",
+      "frameIndex": 4,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "05185a028c63b3b46fa5707a527108944e7bfa582cdddb60084fe6e87cbdf2e6",
+      "revision": 1,
+      "heldGripLocal": [
+        16,
+        26
+      ]
+    },
+    {
+      "id": "coast-sac-spitter-corpse-e-v1",
+      "file": "assets/coast/enemy-v1/coast-sac-spitter-corpse-e-v1.png",
+      "w": 48,
+      "h": 32,
+      "anchor": [
+        24,
+        16
+      ],
+      "kind": "sac-spitter",
+      "dir": "E",
+      "frameIndex": 0,
+      "part": "coast-sac-spitter",
+      "grip": null,
+      "muzzle": null,
+      "sha256": "14fae82070e00a3274d99209933a8cd3c480c34d83a574f59ebb33ac00aec612",
+      "revision": 1
     }
   ]
 }
