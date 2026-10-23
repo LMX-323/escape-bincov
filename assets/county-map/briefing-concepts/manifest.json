@@ -42,7 +42,7 @@
       "height": 512,
       "bytes": 57408,
       "sha256": "b44c17754606098bb818267e27491e4d5e49b08adcd0ea4edee0a9ce2c6f780d",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "mall",
@@ -59,7 +59,7 @@
       "height": 512,
       "bytes": 54224,
       "sha256": "709e7a35d119a6746052853f180de93084cb98e0ca17170bdd3d07ba8e681d45",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "hospital",
@@ -76,7 +76,7 @@
       "height": 512,
       "bytes": 55154,
       "sha256": "50040d0014697b1d46da443e6a9becfb164a0c974ac531ce65a1845cfbbb7113",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "old-hospital",
@@ -93,7 +93,7 @@
       "height": 512,
       "bytes": 50544,
       "sha256": "7defdc121f2ed178da998371b44ccc1d483ee2c526d3ae4031848d48b7b7a2c3",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "factory",
@@ -110,7 +110,7 @@
       "height": 512,
       "bytes": 56622,
       "sha256": "3d269020046b6b0001db7ae896267fe2e6a5ff99c09248350b9d851026171b3b",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "laboratory",
@@ -127,7 +127,7 @@
       "height": 512,
       "bytes": 60282,
       "sha256": "1ee1507533e03b6a7ab8f84d06beac8cac0f3be6aefd81b03c1957669826a0fc",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "highway",
@@ -144,7 +144,7 @@
       "height": 512,
       "bytes": 55658,
       "sha256": "f0dd1dccc087ee8c6130721fd250d00752dc40755f4757b84932801c6d491604",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "market",
@@ -161,7 +161,7 @@
       "height": 512,
       "bytes": 58718,
       "sha256": "352341545553623a3fb4b0e135a4c277bf5dc896be75143f350a5e70237ace9e",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "observatory",
@@ -178,7 +178,7 @@
       "height": 512,
       "bytes": 60972,
       "sha256": "33a730a222f2bae57f61732412249b18ffc1c5e49f11f65d1034da8db4261928",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "lighthouse",
@@ -195,7 +195,7 @@
       "height": 512,
       "bytes": 54692,
       "sha256": "b55bd9dc36d49a1fcb411ed61d82ff05c3694412fc1a060e028c38102f563307",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "harbor",
@@ -212,7 +212,7 @@
       "height": 512,
       "bytes": 67806,
       "sha256": "87f4b18494355b5a01ba88026de39540a51c3bde3a7764b75ab5d7623e080994",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     },
     {
       "id": "freighter",
@@ -229,7 +229,7 @@
       "height": 512,
       "bytes": 64098,
       "sha256": "81d60ce72b89fca2150f8b6e7e8277434280af009ada867923a72706c4efeba4",
-      "status": "concept-not-integrated"
+      "status": "briefing-art"
     }
   ]
 }

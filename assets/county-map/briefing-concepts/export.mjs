@@ -41,7 +41,7 @@ try {
       const id = group.ids[index], file = `${id}.webp`;
       await writeFile(new URL(file, root), output);
       assets.push({ id, name: names[assets.length], file, source: group.file, crop: crop.rect,
-        width: crop.rect[2], height: crop.rect[3], bytes: output.length, sha256: hash(output), status: 'concept-not-integrated' });
+        width: crop.rect[2], height: crop.rect[3], bytes: output.length, sha256: hash(output), status: 'briefing-art' });
     }
   }
   const manifest = { generator: 'OpenAI built-in image_gen', use: 'Region briefing concepts, not gameplay screenshots or implemented levels',
