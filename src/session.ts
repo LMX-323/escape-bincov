@@ -62,10 +62,10 @@ export class SaveSession {
     private raid: { capture(): RaidCheckpoint; restore(value: RaidCheckpoint): void } | null = null;
     private layered: { capture(): ExpansionState; restore(value: ExpansionState): void } | null = null;
     private owned = true;
-    private deferred: ExpansionTransaction | null = null;
-    private committingDeferred = false;
     /** Set only around importRecord's commit: a confirmed import may write an older record version (RecoveryStore.commit). */
     private importing = false;
+    private deferred: ExpansionTransaction | null = null;
+    private committingDeferred = false;
     private prepared = new WeakMap<ExpansionTransaction, { revision: number; before: string; draft: ExpansionDraft }>();
     constructor(
         private readonly session: SessionState,
