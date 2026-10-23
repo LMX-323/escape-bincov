@@ -405,7 +405,8 @@ button.perk-card { border-color: #646653; background: #2b3025; }
 .rpg-crit p { margin: 2px 0 0; }
 .save-alarm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 8px 20px 0; padding: 8px 12px; border: 1px solid #835746; background: #302721; color: #f0c7b1; }
 .save-alarm span { flex: 1; min-width: 200px; }
-.perk-modal { width: 560px; }
+/* The preview lists every change before the confirm: it may use the screen's height, so the buttons stay in view. */
+.perk-modal { width: 560px; max-height: calc(100% - 32px); }
 .perk-modal .perk-changes { margin: 6px 0 12px; padding-left: 20px; font: 16px/1.6 var(--pixel); color: var(--ink); }
 .mobile .rpg-layout { display: block; }
 .mobile .rpg-perks { margin: 14px 0; }
