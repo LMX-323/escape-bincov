@@ -1,0 +1,62 @@
+[
+  {
+    "suite": "save-browser",
+    "exitCode": 0,
+    "seconds": 15.8
+  },
+  {
+    "suite": "issue26-station",
+    "exitCode": 0,
+    "seconds": 47.7
+  },
+  {
+    "suite": "issue26-inventory",
+    "exitCode": 0,
+    "seconds": 24.8
+  },
+  {
+    "suite": "buildings",
+    "exitCode": 0,
+    "seconds": 24.2
+  },
+  {
+    "suite": "desktop-input",
+    "exitCode": 0,
+    "seconds": 24.7
+  },
+  {
+    "suite": "mobile",
+    "exitCode": 0,
+    "seconds": 20.9
+  },
+  {
+    "suite": "mobile-ux",
+    "exitCode": 0,
+    "seconds": 83.2
+  },
+  {
+    "suite": "browser",
+    "exitCode": 0,
+    "seconds": 70.6
+  },
+  {
+    "suite": "ui",
+    "exitCode": 0,
+    "seconds": 18.4
+  },
+  {
+    "suite": "portable",
+    "exitCode": 0,
+    "seconds": 10.5
+  },
+  {
+    "suite": "raid-default",
+    "exitCode": 0,
+    "seconds": 47.0
+  },
+  {
+    "suite": "loot",
+    "exitCode": 0,
+    "seconds": 64.8
+  }
+]
