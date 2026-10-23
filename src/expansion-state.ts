@@ -118,10 +118,11 @@ export function upgradeToRpg(state: ExpansionState, now: number): void {
 export function effectiveAttributes(state: ExpansionState): Attributes {
     return Object.fromEntries(ATTRIBUTES.map(a => [a, Math.max(1, Math.min(40, state.growth.permanent[a] + (state.body.effects[a] > 0 ? 5 : 0)))])) as Attributes;
 }
-const NO_BONUS = { hp: 0, stamina: 0, carry: 0 };
+/** The perks in force: a v3 expansion's selection. v1 and v2 hold none, so no perk ever reaches their raids. */
+export const activePerks = (state: Pick<ExpansionState, 'version' | 'growth'>): readonly PerkId[] => state.version === 3 ? state.growth.perks ?? [] : [];
 /** Attribute formulas plus, in v3 only, the perks' fixed bonuses (once). The strict validator uses the same limits. */
 export function derivedLimits(state: ExpansionState) {
-    const a = effectiveAttributes(state), bonus = state.version === 3 ? perkLimitBonus(state.growth.perks ?? []) : NO_BONUS;
+    const a = effectiveAttributes(state), bonus = perkLimitBonus(activePerks(state));
     return { hp: 100 + 3 * (a.constitution - 10) + bonus.hp, stamina: 100 + 2 * (a.strength - 10) + bonus.stamina, carry: 24 + .6 * (a.strength - 10) + bonus.carry };
 }
 
