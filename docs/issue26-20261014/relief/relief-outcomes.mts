@@ -1,7 +1,9 @@
 // Issue #26 F12 part B / F04: run the same relief scenarios through two copies of src/domain.ts.
-// Usage (from the repo root):
+// Usage (from the repo root; "after" is pinned to this evidence's commit, because the S3 case calls the old
+// `sell`, which src/domain.ts no longer exports since #60 Q-D02):
 //   git show e9cbaa5:src/domain.ts > test-results/relief-old/domain-e9cbaa5.ts
-//   node --import tsx docs/issue26-20261014/relief/relief-outcomes.mts test-results/relief-old/domain-e9cbaa5.ts src/domain.ts
+//   git show 5cb0597:src/domain.ts > test-results/relief-old/domain-5cb0597.ts
+//   node --import tsx docs/issue26-20261014/relief/relief-outcomes.mts test-results/relief-old/domain-e9cbaa5.ts test-results/relief-old/domain-5cb0597.ts
 // Writes relief-outcomes.json and relief-outcomes.md next to this file.
 import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';

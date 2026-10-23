@@ -2,6 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-23 · [#60 Q-D02 旧交易与装弹接口退役](docs/tasks/quality-entropy.md#q-d02-旧交易与装弹接口退役)（`agent/q-d02-legacy-api`，起点 main `44494ea`）：删去 `domain.ts` 只被测试使用的 `buy`/`sell`/`reload`，仍有意义的断言迁到正式路径：别家商人的货、硬塞进待卖的救济品由 `settleCartResult` 整单拒绝；站内商店拒绝上架救济品；旧页签「统一结算」写入失败回滚并保留购物车；装弹改测 `reloadMagazine`（补弹药不足、空包、口径不符）。玩法、存档与打包产物不变（HTML/ZIP/清单字节一致）。本地 517 单测、`test:save-browser` 9/9；准确 head 与 CI 见承接 PR。
 - 2026-10-23 · README 更新（`docs/readme-20261023`）：按 main `b475b1b76a71af5223dc63971c75074547e390f6` 和开放 PR/issue 核对现状，补序幕、射击规则、独立试枪场、敌人素材、后续剧情/地图入口，区分已合入玩法与开发中的设计；同步任务清单顶部，历史原文保留。Node 24.21.0 / pnpm 11.19.0：515 单测、3 项入口文档检查、47 个 README 本地链接、1 个 HTML 图片路径和 22 个 package 命令均通过；`pnpm package` 通过且 HTML/ZIP/清单与基线字节一致。仅三份 Markdown，未改游戏或存档，未新增浏览器/真机验收结论。维护者已授权推送并在 CI 通过后合并；准确 head、CI 与合并状态见本分支 PR。
 - 2026-10-22 · [PR #40 暴击与 Perk 排期](docs/tasks/critical-perk-plan.md)：初核 main `8ef783f`，交付前同步 #39 已合入的 `2bac4fb`；[Issue #77](https://github.com/xuys2025/escape-bincov/issues/77) 承接 CP-T01～T10。可实施，最高风险为严格迁移、旧行动和弹丸快照；控枪/屏息接口仍待接入。沿用原 fork 分支并正常合入 main，保留双方历史；仅六份文档，功能/迁移/真人平衡待实施。维护者授权检查通过后合并设计稿；准确 head、静态检查及 CI 见 PR，#77 保持开放。
 - 2026-10-22 · [PR #39 射击系统改造](docs/SHOOTING-SYSTEM-REWORK.md)：S0–S5 与试枪场都已实现（规则 `src/shooting.ts`，扳机在 `CoastRaidRuntime.pull` / `runTrigger`，表现在 `hud.aim` 与宿主准星，试枪场 `src/range/`）；实验台 `tests/shooting-bench.test.ts`，浏览器 `test:shooting`、`test:range`。维护者的决定（含选定“稳定”参数以突出改枪）、阶段状态、S1 测量与兼容方案见任务页；维护者 2026-10-22 试玩认可。

@@ -37,7 +37,7 @@
 
 事务回调为同步规则操作；不得在其中发网络请求、换场景或修改未参与回滚的外部对象。`MutationResult` 区分 `committed`、`rejected`、`blocked`、`save-failed`。UI 只在 `committed` 后发成功反馈，冲突与待结算状态不能当一般失败强行重试。
 
-现有商店有两条适配路径，但共用 `Shop.settleCartResult`：水产站 `RealHideoutRuntime.openShop` → `transaction`，旧页签 `checkout` → `SaveSession.mutate`。购物车 `place` 只改临时清单，`settle` 才提交；新增交易规则应放纯规则层，并检查两个调用端。不能把旧 `D.buy` 的简例当作所有新交易的接线模板。
+现有商店有两条适配路径，但共用 `Shop.settleCartResult`：水产站 `RealHideoutRuntime.openShop` → `transaction`，旧页签 `checkout` → `SaveSession.mutate`。购物车 `place` 只改临时清单，`settle` 才提交；新增交易规则应放纯规则层，并检查两个调用端。领域层没有绕过购物车的单件买卖函数，新交易也不要另开结算路径。
 
 `RealHideoutRuntime.retrySave` 对保留的基地检查点重试原票据；普通库存/购物失败已回滚，不会因点击“重试保存”自动重做购买。`backupRecord` 和据点 `exportBackup` 保留完整待保存状态，而非只导出库存。
 
