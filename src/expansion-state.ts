@@ -1,4 +1,5 @@
 import * as D from './domain';
+import { archetype, enemyDefinition, initialTactics } from './enemy-archetypes';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
@@ -52,7 +53,7 @@ export interface PursuitState {
     path: Point[]; distance: number; speed: number; registeredAt: number; arrivalAt: number; waiting: boolean;
 }
 export interface LayeredRaid {
-    version: 1 | 2; worldVersion: string; layoutRevision: string; seed: number; runId: string;
+    version: 1 | 2 | 4; worldVersion: string; layoutRevision: string; seed: number; runId: string;
     currentMap: string; player: ActorState; loadout: D.RunLoadout;
     elapsed: number; initialHigh: boolean; highTide: boolean; warned: boolean; tideChanged: boolean;
     kills: number; rng: number; nextEntity: number; maps: Record<string, LayerState>; pursuits: PursuitState[];
@@ -66,7 +67,7 @@ export interface LayeredRaid {
 }
 /** v2 generated identities stay unique when loot survives into another action. */
 export function entityUid(raid: Pick<LayeredRaid, 'version' | 'runId'>, serial: number): string {
-    return raid.version === 2 ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
+    return raid.version >= 2 ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
 }
 export interface ExpansionState {
     version: 1 | 2; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
@@ -195,10 +196,10 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (legacyRaid || base.location !== 'raid') fail();
     const raid = state.raid;
     if (!obj(raid)) return fail();
-    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version === 2 ? ['shockAt', 'mapEvent'] : [])]);
+    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version >= 2 ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    if (![1, 2].includes(raid.version) || (raid.version === 2 && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
+    if (![1, 2, 4].includes(raid.version) || (raid.version >= 2 && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
@@ -218,10 +219,10 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     const invIds = new Set<string>(state.charm ? [state.charm.uid] : []);
     const allocated = (id: string) => {
         const prefix = `entity-${raid.runId}-`;
-        const match = raid.version === 2 && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
+        const match = raid.version >= 2 && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
             : /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
-        if (raid.version === 2 && id.startsWith(prefix) && !match) fail();
-        if (raid.version === 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
+        if (raid.version >= 2 && id.startsWith(prefix) && !match) fail();
+        if (raid.version >= 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
         if (match && (!whole(Number(match[1]), 1, COUNT_MAX) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
@@ -242,13 +243,39 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     const plainPoint = (p: Point, map: SpaceDefinition) => { exactKeys(p, ['x', 'y']); point(p, map); };
     const enemy = (e: EnemyState, map: SpaceDefinition) => {
         if (!obj(e)) return fail();
-        exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert']);
+        const spec = raid.version === 4 ? archetype(e.id) : undefined;
+        exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert', ...(spec ? ['tactics'] : [])]);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
-        if (!hasOwnStringKey(D.ENEMIES, e.id) || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !finite(e.rotation, -100, 100)
+        if ((!spec && !hasOwnStringKey(D.ENEMIES, e.id)) || !finite(e.hp, 0, enemyDefinition(e.id).hp) || !finite(e.rotation, -100, 100)
             || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state) || !Array.isArray(e.path) || e.path.length > 4000) fail();
         if (e.hp > 0 && !bodyFits(map.id, e)) fail();
         e.path.forEach(p => plainPoint(p, map));
         for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();
+        if (spec) {
+            const t = e.tactics!;
+            exactKeys(t, ['version', 'squad', 'awareness', 'stance', 'warning', 'memory', 'phase', 'phaseLeft', 'lockedAim', 'magazine', 'reserve', 'signalUsed', 'equipment', 'supplies', 'killedBy']);
+            if (t.version !== 1 || !identity(t.squad) || !finite(t.awareness, 0, 1) || !finite(t.warning, 0, 5)
+                || !['idle', 'warning', 'hostile', 'retreat'].includes(t.stance)
+                || !['idle', 'windup', 'release', 'recovery', 'reload'].includes(t.phase) || !finite(t.phaseLeft, 0, 10)
+                || !finite(t.lockedAim, -100, 100) || !whole(t.magazine, 0, spec.magazine) || !whole(t.reserve, 0, spec.reserve)
+                || typeof t.signalUsed !== 'boolean' || t.equipment !== initialTactics(e.id, t.squad).equipment
+                || !Array.isArray(t.supplies) || t.supplies.length > 4
+                || (e.hp > 0 ? t.killedBy !== null : t.killedBy !== 'player' && !raid.roster.some(r => r.uid === t.killedBy && r.uid !== e.uid))) fail();
+            goods(t.supplies);
+            const carried = initialTactics(e.id, t.squad).supplies;
+            if (new Set(t.supplies.map(s => s.id)).size !== t.supplies.length
+                || t.supplies.some(s => !carried.some(c => c.id === s.id && s.qty <= c.qty))) fail();
+            const phaseLimit = t.phase === 'windup' ? spec.windup : t.phase === 'reload' ? spec.reload : spec.recovery;
+            if (t.phase !== 'release' && t.phaseLeft > phaseLimit) fail();
+            if (t.phase === 'idle' && t.phaseLeft !== 0) fail();
+            if (t.phase === 'release' && (spec.attack !== 'pounce' ? t.phaseLeft !== 0 : t.phaseLeft > .3)) fail();
+            if (t.phase === 'reload' && (spec.magazine === 0 || t.reserve === 0 || t.magazine === spec.magazine)) fail();
+            if (t.memory !== null) {
+                exactKeys(t.memory, ['at', 'time', 'source', 'target']); plainPoint(t.memory.at, map);
+                if (!finite(t.memory.time, 0, raid.elapsed) || !['sight', 'sound', 'report', 'damage'].includes(t.memory.source)
+                    || (t.memory.target !== 'player' && !raid.roster.some(r => r.uid === t.memory!.target && r.uid !== e.uid))) fail();
+            }
+        }
         enemies.set(e.uid, e);
         enemyMaps.set(e.uid, map.id);
     };
@@ -270,11 +297,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             inventory(c.inventory, 6, 5); containers.push({ container: c, mapId });
         }
         for (const b of layer.bullets) {
-            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version === 2 && b.enemy ? ['owner'] : [])]);
+            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version >= 2 && b.enemy ? ['owner'] : [])]);
             entity(b.uid); point(b, map);
             if (!finite(b.vx, -1000, 1000) || !finite(b.vy, -1000, 1000) || !finite(b.left, 0, 2000) || !finite(b.damage, 0, 1000)
                 || !finite(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
-                || (raid.version === 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
+                || (raid.version >= 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
         }
         if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!finite(layer.noise.radius, 0, 2000) || !finite(layer.noise.remaining, 0, 10)) fail(); }
     }
@@ -296,7 +323,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if ([...invIds].some(id => entities.has(id) || events.has(id))) fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
-        || raid.roster.some(e => !identity(e.uid) || !hasOwnStringKey(D.ENEMIES, e.id) || enemies.get(e.uid)?.id !== e.id)
+        || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(raid.version === 4 && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)
         || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0).length) fail();
     for (const { container: c, mapId } of containers.filter(c => c.container.kind === 'corpse')) {
         const dead = enemies.get(c.id.replace(/^corpse-/, ''));

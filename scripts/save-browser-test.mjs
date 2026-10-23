@@ -163,7 +163,7 @@ try {
     const downloadPromise = page.waitForEvent('download'); await page.locator('.coast-sample [data-do="backup"]').click();
     backupPath = resolve(out, 'pending-settlement-backup.json'); await (await downloadPromise).saveAs(backupPath);
     const envelope = JSON.parse(await readFile(backupPath, 'utf8'));
-    assert.equal(envelope.formatVersion, 4); assert.equal(envelope.record.expansion.base.location, 'settlement');
+    assert.equal(envelope.formatVersion, 6); assert.equal(envelope.record.expansion.base.location, 'settlement');
     const backup = envelope.record.profile;
     assert.equal(backup.activeRun, null); assert.ok(backup.bag.items.some(i => i.id === 'sample'));
     await page.screenshot({ path: resolve(out, 'save-failure.png') });
@@ -243,7 +243,7 @@ try {
       const file = resolve(out, 'conflict-settlement-backup.json');
       await (await downloadPromise).saveAs(file);
       const backup = JSON.parse(await readFile(file, 'utf8'));
-      assert.equal(backup.formatVersion, 4); assert.deepEqual(backup.record.profile, pending);
+      assert.equal(backup.formatVersion, 6); assert.deepEqual(backup.record.profile, pending);
     } finally { await shared.close(); }
   });
   report.status = 'passed';

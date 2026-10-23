@@ -66,7 +66,7 @@ export function runBenchmarkCase(modules: BenchmarkModules, sample: BenchmarkCas
   const saves = new SaveSession(state, () => memory.storage, undefined, () => NOW);
   assert.ok(saves.initialize(), state.storageError);
   state.state = 'hideout';
-  assert.ok(saves.beginRun(sample.seed, sample.world === 'mall' ? 'mall' : sample.world === 'building', { mallLayout: 3 }), state.storageError);
+  assert.ok(saves.beginRun(sample.seed, sample.world === 'mall' ? 'mall' : sample.world === 'building', { mallLayout: 3, legacyEnemies: true }), state.storageError);
   state.state = 'run';
   const r = new modules.runtime.CoastRaidRuntime(state, saves);
   const runId = state.loadout!.runId!;

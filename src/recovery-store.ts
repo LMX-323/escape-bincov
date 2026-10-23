@@ -8,17 +8,19 @@ import { resolveExpansionWorld } from './expansion-worlds';
 export const SESSION_KEY = 'escape-bincov.session.v2';
 export const SESSION_MAX_BYTES = 2 * 1024 * 1024;
 export interface SessionRecord {
-  format: 'escape-bincov-session'; version: 3 | 4; revision: number; savedAt: number;
+  format: 'escape-bincov-session'; version: 3 | 4 | 6; revision: number; savedAt: number;
   profile: D.SaveDataV1; raid: RaidCheckpoint | null;
   terminal: { runId: string; outcome: D.Outcome; reason?: EndReason } | null;
   /** Exact pre-migration bytes. Retained even if an old tab later changes the old key. */
   legacyBackup: string | null;
   /** Exact v2 session bytes retained on the first rotation-format migration. */
   migrationBackup: string | null;
-  /** Present only in v4. It is part of this same atomic record, never a second key. */
+  /** Present in extension records (v4/v6), part of this same atomic record, never a second key. */
   expansion?: ExpansionState;
   /** Exact pre-v4 main-record bytes, retained once rather than recursively nesting v4. */
   systemsBackup?: string | null;
+  /** Exact bytes before the first enemy-system action, retained once in v6. */
+  enemyBackup?: string | null;
 }
 const failure = (): never => { throw new Error('无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。'); };
 function canonical(value: unknown): string {
@@ -30,14 +32,15 @@ export function decodeSession(text: string, resolveWorld: WorldResolver = resolv
   if (utf8Bytes(text) > SESSION_MAX_BYTES) return failure();
   let r: any;
   try { r = JSON.parse(text); } catch { return failure(); }
-  if (!r || r.format !== 'escape-bincov-session' || ![2, 3, 4].includes(r.version) || !Number.isSafeInteger(r.revision)
+  if (!r || r.format !== 'escape-bincov-session' || ![2, 3, 4, 6].includes(r.version) || !Number.isSafeInteger(r.revision)
       || r.revision < 1 || !Number.isSafeInteger(r.savedAt) || r.savedAt < 0
       || (r.legacyBackup !== null && typeof r.legacyBackup !== 'string') || !r.profile || r.profile.version !== (r.version === 2 ? 1 : 2)
       || (r.version >= 3 && r.migrationBackup !== null && typeof r.migrationBackup !== 'string')
-      || (r.version === 4 && (r.systemsBackup !== null && typeof r.systemsBackup !== 'string'))
-      || (r.version !== 4 && (r.expansion !== undefined || r.systemsBackup !== undefined))) return failure();
-  if (r.version === 4) {
-    const keys = ['format', 'version', 'revision', 'savedAt', 'profile', 'raid', 'terminal', 'legacyBackup', 'migrationBackup', 'expansion', 'systemsBackup'];
+      || (r.version >= 4 && (r.systemsBackup !== null && typeof r.systemsBackup !== 'string'))
+      || (r.version < 4 && (r.expansion !== undefined || r.systemsBackup !== undefined))
+      || (r.version === 6 ? r.enemyBackup !== null && typeof r.enemyBackup !== 'string' : r.enemyBackup !== undefined)) return failure();
+  if (r.version >= 4) {
+    const keys = ['format', 'version', 'revision', 'savedAt', 'profile', 'raid', 'terminal', 'legacyBackup', 'migrationBackup', 'expansion', 'systemsBackup', ...(r.version === 6 ? ['enemyBackup'] : [])];
     if (Object.keys(r).length !== keys.length || keys.some(key => !Object.hasOwn(r, key))) return failure();
     if (!r.profile.activeRun && r.expansion?.base?.location === 'settlement' && r.terminal === null) return failure();
   }
@@ -52,17 +55,18 @@ export function decodeSession(text: string, resolveWorld: WorldResolver = resolv
   if (active) {
     if (!identity(active.runId) || r.terminal !== null) return failure();
     if (legacy && r.raid?.loadout && [...r.raid.loadout.bag.items, ...r.raid.loadout.safe.items].some((i: D.Item) => i.rotated !== undefined)) return failure();
-    if (r.version === 4 && r.expansion?.raid !== null && r.raid === null) {
+    if (r.version >= 4 && r.expansion?.raid !== null && r.raid === null) {
       // Layered worlds have their own complete, strictly validated checkpoint.
       if (!r.expansion?.raid) return failure();
     } else r.raid = validateCheckpoint(r.raid, r.profile, legacy);
   } else if (r.raid !== null) return failure();
   if (r.terminal !== null && (!r.terminal || !identity(r.terminal.runId)
       || !['death', 'timeout', 'extract'].includes(r.terminal.outcome) || r.profile.lastResult?.outcome !== r.terminal.outcome)) return failure();
-  if (r.terminal?.reason !== undefined && (r.version !== 4 || !['death', 'timeout', 'extract', 'abandon'].includes(r.terminal.reason)
+  if (r.terminal?.reason !== undefined && (r.version < 4 || !['death', 'timeout', 'extract', 'abandon'].includes(r.terminal.reason)
       || (r.terminal.reason === 'abandon' ? r.terminal.outcome !== 'death' : r.terminal.reason !== r.terminal.outcome))) return failure();
-  if (r.version === 4) r.expansion = validateExpansion(r.expansion, r.profile, r.raid, resolveWorld);
-  return { ...structuredClone(r), version: r.version === 4 ? 4 : 3, migrationBackup: legacy ? text : r.migrationBackup };
+  if (r.version < 6 && r.expansion?.raid?.version === 4) return failure();
+  if (r.version >= 4) r.expansion = validateExpansion(r.expansion, r.profile, r.raid, resolveWorld);
+  return { ...structuredClone(r), version: Math.max(3, r.version), migrationBackup: legacy ? text : r.migrationBackup };
 }
 
 /** A real compare/write ownership failure, distinct from quota or serialization errors. */
@@ -111,13 +115,15 @@ export class RecoveryStore {
     if (!this.loaded || !this.writable) throw new Error('存档未就绪或另一窗口正在使用。');
     if (this.storage.getItem(SESSION_KEY) !== this.expected) throw new StorageConflictError('另一窗口已修改存档，请刷新以加载新进度。');
     // Once v4 has been enabled, imports cannot downgrade and silently discard its state.
-    if (this.record?.version === 4 && expansion === null) throw new Error('请导入包含角色与基地状态的完整备份，不能降级覆盖当前存档。');
-    const systems = this.systems ?? (expansion && this.record?.version !== 4 ? this.expected : null);
-    const candidate: SessionRecord = { format: 'escape-bincov-session', version: expansion ? 4 : 3, revision: (this.record?.revision ?? 0) + 1,
+    if ((this.record?.version ?? 0) >= 4 && expansion === null) throw new Error('请导入包含角色与基地状态的完整备份，不能降级覆盖当前存档。');
+    const systems = this.systems ?? (expansion && (this.record?.version ?? 0) < 4 ? this.expected : null);
+    const enemies = this.record?.version === 6 || expansion?.raid?.version === 4;
+    const candidate: SessionRecord = { format: 'escape-bincov-session', version: enemies ? 6 : expansion ? 4 : 3, revision: (this.record?.revision ?? 0) + 1,
       savedAt: this.now(), profile: structuredClone(profile), raid: structuredClone(raid),
       terminal: terminal === undefined ? (profile.activeRun ? null : this.record?.terminal ?? null) : terminal,
       legacyBackup: this.legacy, migrationBackup: this.migration,
-      ...(expansion ? { expansion: structuredClone(expansion), systemsBackup: systems } : {}) };
+      ...(expansion ? { expansion: structuredClone(expansion), systemsBackup: systems } : {}),
+      ...(enemies ? { enemyBackup: this.record?.version === 6 ? this.record.enemyBackup! : this.expected } : {}) };
     const text = JSON.stringify(candidate);
     decodeSession(text, this.resolveWorld);
     this.storage.setItem(SESSION_KEY, text);

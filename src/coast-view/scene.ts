@@ -69,6 +69,7 @@ interface ActorGfx {
   arms: [Sprite, Sprite];
   /** Water band at the feet while the actor stands in a flooded tide cell. */
   wade: Sprite;
+  telegraph: Graphics;
   /** Player only: faint warm outline so the player separates from dark asphalt (not the occlusion rim). */
   edge: Sprite | null;
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
@@ -611,13 +612,33 @@ export class CoastView {
       const mk = () => { const s = new Sprite(); s.anchor.set(.5, 1); return s; };
       const arm = () => { const s = new Sprite(this.tex.arm(a.kind)); s.anchor.set(0, .5); return s; };
       g = { kind: a.kind, body: mk(), weapon: new Sprite(), flash: mk(), rim: new Sprite(), wrim: new Sprite(), shadow: new Sprite(this.tex.blob(20, 7)), corpse: null, corpseKey: '',
-        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, hit: false, step: 0, sense: 1 };
+        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), telegraph: new Graphics(), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, hit: false, step: 0, sense: 1 };
       g.flash.blendMode = 'add'; g.rim.anchor.set(.5, (48 + 1) / 50); g.shadow.anchor.set(.5); g.wade.anchor.set(.5, .5); g.wade.visible = false;
       this.sorted.addChild(g.body, ...g.arms, g.weapon, g.flash, g.wade); this.xray.addChild(g.rim, g.wrim);
+      this.sorted.addChild(g.telegraph);
       if (g.edge) { g.edge.anchor.set(.5, (48 + 1) / 50); g.edge.tint = 0xf3dfa8; g.edge.alpha = .38; this.sorted.addChild(g.edge); } this.shadows.addChild(g.shadow);
       this.actors.set(a.uid, g);
     }
     g.kind = a.kind;
+    // The same room visibility as the body owns every cue. Never reveal an attack in a hidden room.
+    g.telegraph.clear(); g.telegraph.visible = shown && a.alive && !!a.tactics;
+    if (a.tactics && shown && a.alive) {
+      const t = a.tactics, warning = t.stance === 'warning', windup = t.phase === 'windup';
+      const color = warning ? 0xe4c46e : t.phase === 'reload' ? 0x86bed2 : t.stance === 'hostile' ? 0xe38969 : 0x97b7a3;
+      g.telegraph.position.set(a.x, a.y); g.telegraph.zIndex = a.y + .09;
+      if (windup) {
+        const length = Math.min(t.range, 90), c = Math.cos(t.aim), s = Math.sin(t.aim);
+        g.telegraph.moveTo(0, 0).lineTo(c * length, s * length).stroke({ width: 2, color, alpha: .8 });
+      }
+      if (t.phase !== 'idle' || warning || t.awareness > 0) {
+        const progress = t.phase === 'idle' ? t.awareness : 1 - Math.min(1, t.left / t.total);
+        g.telegraph.rect(-10, -49, 20, 3).fill({ color: 0x171b1b, alpha: .9 });
+        g.telegraph.rect(-10, -49, Math.max(1, 20 * progress), 3).fill(color);
+      }
+      // Temporary role badges make the three prototype roles distinct while their formal art is produced.
+      const marks = t.archetype === 'raider-lookout' ? 3 : t.archetype === 'raider-gunner' ? 2 : 1;
+      for (let i = 0; i < marks; i++) g.telegraph.rect(-marks * 3 + i * 6, -54, 3, 2).fill(color);
+    }
     const speed = Math.hypot(a.vx, a.vy);
     g.walk = speed > 5 ? (g.walk + dt * speed / 22) % 4 : 0;
     const step = Math.floor(g.walk / 2);
@@ -675,7 +696,7 @@ export class CoastView {
     g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
     const art = this.tex.weapon(a.weapon, a.kind);
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;
-    const swing = g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
+    const swing = a.tactics?.phase === 'windup' ? -.6 * Math.sign(Math.cos(a.aim) || 1) : g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
     // The player's gun turns with recoil (hud.aim.drift): it points where the next shot is centred, not at the pointer.
     const drift = a.uid === 'player' ? this.last?.hud.aim.drift ?? 0 : 0;
     const angle = a.aim + reload + swing + drift, c = Math.cos(angle), s = Math.sin(angle);
@@ -715,7 +736,7 @@ export class CoastView {
     // Arms share the weapon's depth, just under it so the painted gloves cover the sleeve ends.
     for (const arm of g.arms) { arm.zIndex = g.weapon.zIndex - .001; arm.tint = g.weapon.tint; }
   }
-  private dropActor(g: ActorGfx) { for (const s of [g.body, g.weapon, g.flash, g.rim, g.wrim, g.shadow, g.wade, g.corpse, g.edge, ...g.arms]) s?.destroy(); }
+  private dropActor(g: ActorGfx) { for (const s of [g.body, g.weapon, g.flash, g.rim, g.wrim, g.shadow, g.wade, g.telegraph, g.corpse, g.edge, ...g.arms]) s?.destroy(); }
 
   private syncCrates(f: ViewFrame, visible: (r: string | null) => boolean) {
     const seen = new Set<string>();

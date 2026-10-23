@@ -1,5 +1,6 @@
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
+import { archetype, enemyDefinition } from '../enemy-archetypes';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
@@ -107,12 +108,17 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
     const actor = (e: typeof r.player | typeof r.enemies[number], player: boolean): ActorView => {
         const enemy = player ? null : e as typeof r.enemies[number], hp = enemy?.hp ?? r.hp;
         const uid = enemy?.uid ?? 'player', velocity = velocities.get(uid) ?? { x: 0, y: 0 };
-        const containerId = `corpse-${uid}`, profile = enemy ? getLegacyEnemyProfile(enemy.id) : null;
+        const spec = enemy ? archetype(enemy.id) : undefined;
+        const containerId = `corpse-${uid}`, profile = spec ? { bodyKind: spec.body, weapon: spec.weapon } : enemy ? getLegacyEnemyProfile(enemy.id) : null;
         return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
-            vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? D.ENEMIES[enemy.id].hp : limits.hp, alive: hp > 0,
+            vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? enemyDefinition(enemy.id).hp : limits.hp, alive: hp > 0,
             weapon: profile?.weapon ?? r.weaponLook,
+            ...(enemy?.tactics && spec ? { tactics: { archetype: enemy.id, name: spec.name, phase: enemy.tactics.phase,
+                stance: enemy.tactics.stance, awareness: enemy.tactics.awareness, left: enemy.tactics.phaseLeft,
+                total: enemy.tactics.phase === 'windup' ? spec.windup : enemy.tactics.phase === 'reload' ? spec.reload : spec.recovery,
+                range: spec.range, aim: enemy.tactics.lockedAim } } : {}),
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
-                reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
+                reloading: enemy?.tactics?.phase === 'reload' ? { left: enemy.tactics.phaseLeft, total: spec!.reload } : player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },
             regionId: regionAt(e), corpse: hp > 0 ? null : { angle: e.rotation - (enemy && !r.layered ? Math.PI / 2 : 0),
                 containerId: r.containers.some(c => c.id === containerId) ? containerId : null } };

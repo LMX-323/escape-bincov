@@ -56,7 +56,7 @@
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
 5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。
-6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）。
+6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）；搜刮面板里移动键（`isMoveKey`）直接离开并开始移动（#26 F13），回归在 [loot-browser-test.mjs](../scripts/loot-browser-test.mjs)。
 
 画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。
 
@@ -87,11 +87,13 @@
 
 ## 敌人
 
-**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 和世界生成器仍定义正式四类敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)是未实现的设计数据，不进入游戏包和存档；可用 `pnpm enemy:catalog` 查看。
+**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 保留旧四类；[enemy-archetypes.ts](../src/enemy-archetypes.ts) 定义新原型与持久战术状态。[enemy-encounters.ts](../src/enemy-encounters.ts) 在新街区出击事务中安装三原型样板，旧活动行动不迁移敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)保留完整设计需求，不是完成清单；当前接入与验证见[街区样板](tasks/enemy-street-encounter.md)。
 
 **首读路径。** [enemy-profile.ts](../src/enemy-profile.ts) 的 `getLegacyEnemyProfile` 提供旧身体、武器、攻击类型与尸体抽取次数；[enemy-ai.ts](../src/raid-runtime/enemy-ai.ts) 的 `advanceLegacyEnemy` 更新旧敌人的感知、状态、冷却、路径和移动。世界碰撞由 `LegacyEnemyWorld` 提供，随机数、发射/近战/开门副作用经 `LegacyEnemyEffects` 同步返回 [Runtime](../src/raid-runtime/runtime.ts)。敌人状态、RNG、UID、伤害、事务和事件仍由 Runtime 所有，AI 模块不增加持久化入口。
 
 展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
+
+新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。`SessionRecord` v6 / `LayeredRaid` v4 的严格校验和原始备份见[存档合同](tasks/enemy-save-contract.md)；旧行为 A/B 夹具明确使用旧敌人部署。
 
 **验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 

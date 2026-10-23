@@ -141,6 +141,9 @@ export type ActorView = Readonly<{
     maxHp: number;
     alive: boolean;
     weapon: WeaponLook;
+    /** New encounters only; legacy projections omit this field. Visual phase, not a second combat clock. */
+    tactics?: Readonly<{ archetype: string; name: string; phase: 'idle' | 'windup' | 'release' | 'recovery' | 'reload';
+        stance: 'idle' | 'warning' | 'hostile' | 'retreat'; awareness: number; left: number; total: number; range: number; aim: number }>;
     state: Readonly<{
         moving: boolean;
         sprinting: boolean;

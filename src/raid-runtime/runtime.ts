@@ -1,6 +1,8 @@
 /** Headless coastal raid. Rules transplanted from RaidScene at f144147; no renderer/DOM imports. */
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
+import { archetype, enemyDefinition } from '../enemy-archetypes';
+import { advanceTacticalEnemy, type TacticalEffects } from './tactical-enemy';
 import { advanceLegacyEnemy, type LegacyEnemyEffects } from './enemy-ai';
 import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
@@ -117,6 +119,23 @@ export class CoastRaidRuntime implements RaidRuntime {
         openDoor: (enemy, id) => {
             this.layerMutation(state => { state.raid!.maps[state.raid!.currentMap].doors[id] = true; }, false,
                 'door', [{ type: 'door', id, open: true, by: enemy.uid }]);
+        },
+    };
+    private readonly tacticalEffects: TacticalEffects = {
+        openDoor: (enemy, id) => this.enemyEffects.openDoor(enemy, id),
+        notice: (enemy, message) => {
+            if (distance(this.player, enemy) < 360 && this.sight(this.player, enemy)) this.say(`${enemyDefinition(enemy.id).name}：${message}`, 3);
+        },
+        strike: enemy => {
+            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: enemyDefinition(enemy.id).range, hit: 'player' });
+            this.hurt(enemyDefinition(enemy.id).damage, enemy, enemy.uid);
+        },
+        fire: (enemy, angle) => {
+            const def = archetype(enemy.id)!, speed = def.attack === 'spit' ? 180 : 365;
+            // Start at the body: the normal segment collision cannot shoot through a wall beside a muzzle.
+            const bullet: BulletState = { uid: this.allocateEntityUid(), x: enemy.x, y: enemy.y, rotation: angle,
+                vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, left: def.range, damage: def.damage, enemy: true, owner: enemy.uid };
+            this.bullets.push(bullet); this.shotEvent(enemy.uid, def.weapon, [bullet], [angle]);
         },
     };
     private checkpointAt = 0;
@@ -934,7 +953,10 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.session.state !== 'run' || this.locked)
             return;
     }
-    updateEnemy(e: Enemy, dt: number) { advanceLegacyEnemy(this, this.enemyEffects, e, dt); }
+    updateEnemy(e: Enemy, dt: number) {
+        if (this.layered?.raid?.version === 4 && e.tactics) advanceTacticalEnemy(this, this.tacticalEffects, e, dt);
+        else advanceLegacyEnemy(this, this.enemyEffects, e, dt);
+    }
     private layerMutation(action: (state: ExpansionState) => boolean | void | 'unreachable' | 'occupied', suppress = false, name = 'world', events: ViewEventBody[] = []): boolean {
         const mark = this.queue.length, from = this.worldKey().mapId;
         let ticket: ExpansionTransaction | null;

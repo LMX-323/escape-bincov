@@ -1,4 +1,4 @@
-/** EN-01 content planning data. These IDs are not EnemyState IDs, spawn rules, or save migrations. */
+/** EN-01 design requirements and delivery status. Runtime rules live in src/enemy-archetypes.ts. */
 export const ENEMY_FACTIONS = Object.freeze({
     raiders: '拾荒者团伙', tidalFauna: '潮蚀生物', saltAffected: '盐蚀者',
     mercenaries: '雇佣兵', coastalBlockade: '沿海封锁队',
@@ -10,7 +10,7 @@ export interface EnemyArchetype {
     readonly designNumber: string;
     readonly name: string;
     readonly faction: EnemyFactionId;
-    readonly implementation: 'design-only';
+    readonly implementation: 'design-only' | 'street-prototype';
     readonly defaultStance: 'hostile' | 'territorial' | 'conditional';
     readonly engagementRule: string;
     readonly disengageRule: string;
@@ -28,15 +28,15 @@ function entry<const T extends EnemyArchetype>(value: T): Readonly<T> {
 
 /** All eighteen cards from ENEMY-DESIGN. No entry grants runtime support or numeric combat balance. */
 export const ENEMY_CATALOG = Object.freeze([
-    entry({ id: 'raider-melee', designNumber: '01', name: '近身掠夺者', faction: 'raiders', implementation: 'design-only',
+    entry({ id: 'raider-melee', designNumber: '01', name: '近身掠夺者', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '仅暴力抢夺团伙成员；确认目标后喊话或借遮挡接近。', disengageRule: '失去目标后检查近处拐角，受伤退向同伴。',
         behavior: { idle: '翻废料、撬箱与搬运', alert: '喊话并寻找接近路线', combat: '试探后挥击，打空恢复站姿', search: '搜索最近拐角，不沿未知路线追踪' },
         weaponCategories: ['tool-melee'], assets: { status: 'not-produced', silhouette: '前倾的旧连帽外套与单肩编织袋', equipment: '可辨的铁棍、短工具或砍刀', animations: ['搬运', '喊话', '试探', '抬肩挥击', '挥空恢复'] } }),
-    entry({ id: 'raider-gunner', designNumber: '02', name: '拾荒枪手', faction: 'raiders', implementation: 'design-only',
+    entry({ id: 'raider-gunner', designNumber: '02', name: '拾荒枪手', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '守住抢夺物资的武装团伙成员，确认威胁后射击。', disengageRule: '遭侧击转移，缺少支援时退守。',
         behavior: { idle: '清点弹药、守货堆', alert: '从固定掩体观察', combat: '单发射击后缩回遮挡，换弹依赖同伴', search: '在据点掩体间重新观察' },
         weaponCategories: ['pistol', 'shotgun', 'rifle'], assets: { status: 'not-produced', silhouette: '褐夹克、弹袋和高耸包口', equipment: '短枪、霰弹枪和长枪需分别可辨', animations: ['清点弹药', '举枪', '单发射击', '翻找弹药换弹', '退守'] } }),
-    entry({ id: 'raider-lookout', designNumber: '03', name: '望风者', faction: 'raiders', implementation: 'design-only',
+    entry({ id: 'raider-lookout', designNumber: '03', name: '望风者', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '为暴力团伙望风，先确认再通知附近同伴。', disengageRule: '失联或近身受威胁时后撤。',
         behavior: { idle: '观察门窗与路口、记录人数', alert: '确认动静后发出有限范围信号', combat: '侧面牵制，不持续正面交火', search: '带同伴检查最后目击位置' },
         weaponCategories: ['pistol', 'tool-melee'], assets: { status: 'not-produced', silhouette: '轻瘦、贴身小包和频繁转头', equipment: '望远镜、对讲机或哨子及短武器', animations: ['侧身观察', '发信号', '转头确认', '后撤'] } }),

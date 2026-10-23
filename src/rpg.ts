@@ -91,7 +91,7 @@ export function enemyDamage(state: ExpansionState, amount: number, enemyUid?: st
     if (actual >= 20) {
         if (body.effects.pain === 0) body.treatment.pain = 0;
         body.effects.pain = 60;
-        if (raid.version === 2 && raid.elapsed - raid.shockAt! >= 10) { body.mental = Math.max(0, body.mental - 4); raid.shockAt = raid.elapsed; }
+        if (raid.version >= 2 && raid.elapsed - raid.shockAt! >= 10) { body.mental = Math.max(0, body.mental - 4); raid.shockAt = raid.elapsed; }
     }
     if (enemyUid) raid.training.eligibleDamage[enemyUid] = Math.min(50 - (raid.training.healedByEnemy[enemyUid] ?? 0), (raid.training.eligibleDamage[enemyUid] ?? 0) + actual);
 }

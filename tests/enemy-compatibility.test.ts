@@ -26,7 +26,7 @@ function fixture(route?: Route, initial?: string) {
     assert.ok(saves.initialize(), state.storageError); state.state = 'hideout';
     if (route !== undefined) {
         assert.ok(saves.beginRun(42, route === 'classic' ? false : route === 'buildings' ? true : 'mall',
-            typeof route === 'number' ? { mallLayout: route } : {}));
+            typeof route === 'number' ? { mallLayout: route } : { legacyEnemies: true }));
         state.state = 'run';
     }
     return { data, storage, state, saves, deny: (value: boolean) => { denied = value; },

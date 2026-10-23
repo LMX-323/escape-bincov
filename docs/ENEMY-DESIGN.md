@@ -1,6 +1,6 @@
 # 《逃离滨科夫》地图敌人详细设定
 
-> **状态：设计已由 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) 合入；[Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 已拆分排期并开始[基础能力实施](tasks/enemy-foundation.md)。新增兵种、行为与地图遭遇尚未接入游戏。** 本稿用于后续角色美术、地图布置与战斗制作，不是当前游玩指南。
+> **状态：设计已由 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) 合入；[Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 已拆分排期。[PR #81](https://github.com/xuys2025/escape-bincov/pull/81) 正在实现新街区三原型样板，范围及验证见[实施记录](tasks/enemy-street-encounter.md)。其余原型、正式素材和十二规划区域仍开放。** 本稿是整体设计，不是全部已上线的游玩指南。
 
 日期：2026-10-17。核对基线：main `345aff4fefaf64a5c40e7f0204e1eab5827662ce`。
 

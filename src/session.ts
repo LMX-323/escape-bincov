@@ -1,4 +1,5 @@
 import * as D from './domain';
+import { installStreetEncounter } from './enemy-encounters';
 import { moveQuantity, placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
@@ -94,7 +95,7 @@ export class SaveSession {
             const liveExpansion = expansion === this.session.expansion;
             if (expansion === this.session.expansion && this.layered) expansion = this.layered.capture();
             if (liveExpansion && expansion?.version === 2) { expansion = structuredClone(expansion); advanceRealTime(expansion, this.now()); }
-            if (expansion?.raid?.version === 2) { expansion = structuredClone(expansion); creditTraining(expansion, expansion.raid!.training); }
+            if (expansion?.raid && expansion.raid.version >= 2) { expansion = structuredClone(expansion); creditTraining(expansion, expansion.raid!.training); }
             const checkpoint = save.activeRun ? structuredClone(snapshot === undefined ? this.raid?.capture() ?? this.session.checkpoint : snapshot) : null;
             if (checkpoint && snapshot === undefined && this.session.loadout) checkpoint.loadout = structuredClone(this.session.loadout);
             if (checkpoint) D.checkpointSafe(save, checkpoint.loadout.safe, checkpoint.runId);
@@ -211,7 +212,8 @@ export class SaveSession {
         if (action(draft) === false) return null;
         const raid = draft.expansion.raid ?? draft.legacyRaid;
         if (raid) D.checkpointSafe(draft.profile, raid.loadout.safe, raid.runId);
-        decodeSession(JSON.stringify({ ...record, version: 4, profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion,
+        const enemies = record.version === 6 || draft.expansion.raid?.version === 4;
+        decodeSession(JSON.stringify({ ...record, version: enemies ? 6 : 4, ...(enemies ? { enemyBackup: record.enemyBackup ?? this.store!.original() } : {}), profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion,
             terminal: draft.profile.activeRun ? null : record.terminal }), this.resolveWorld);
         const ticket: ExpansionTransaction = Object.freeze({ kind: 'expansion-transaction' });
         this.prepared.set(ticket, { revision: record.revision, before, draft: structuredClone(draft) });
@@ -252,7 +254,7 @@ export class SaveSession {
     }
 
     /** Layout is chosen only on deployment; active raids restore their saved world/revision. */
-    beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 | 3 } = {}): boolean {
+    beginRun(seed: number, buildings: boolean | 'mall' = false, options: { mallLayout?: 1 | 2 | 3; legacyEnemies?: boolean } = {}): boolean {
         const s = this.session;
         if (s.state !== 'hideout' || s.conflict || s.pendingSettlement || s.save.activeRun) return false;
         // Layered raids store seeds 1..0xffffffff (older pages reject 0), so seed 0 deploys as seed 1; the coast keeps 0.
@@ -268,6 +270,7 @@ export class SaveSession {
             Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
             if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
+            if (buildings === true && !options.legacyEnemies) installStreetEncounter(expansion!.raid!, this.resolveWorld(expansion!.raid!.worldVersion)!);
         }
         if (expansion) expansion.base.location = 'raid';
         if (!this.persist(candidate, checkpoint, null, expansion)) return false;
@@ -309,7 +312,7 @@ export class SaveSession {
         s.pendingExpansion = structuredClone(this.layered?.capture() ?? s.expansion);
         if (s.pendingExpansion) {
             if (s.pendingExpansion.version === 2) advanceRealTime(s.pendingExpansion, this.now());
-            if (s.pendingExpansion.raid?.version === 2) {
+            if (s.pendingExpansion.raid && s.pendingExpansion.raid.version >= 2) {
                 creditTraining(s.pendingExpansion, s.pendingExpansion.raid.training);
                 if (reason === 'death') Object.assign(s.pendingExpansion.body, { hp: 1, stamina: 0, mental: 20, water: 40, satiety: 40, pollution: 50 });
                 if (reason !== 'extract') s.pendingExpansion.charm = null;
