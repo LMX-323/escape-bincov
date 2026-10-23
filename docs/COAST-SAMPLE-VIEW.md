@@ -2,6 +2,8 @@
 
 > **2026-10-15 更新：** 2.5D 画面已是沿海街区和滨湾商场的默认画面，`?sample=village` 只用于预选区域、挑街口种子和标出未精修区域。见[任务清单](WORK-QUEUE.md)当天条目。下文是样板阶段的历史记录。
 
+> **当前接手提示（2026-10-22）：** 下方初版“没有格子背包/负重”等限制已经过后续实现，不是当前待办；Phaser 已删除，所有行动只走一个 Runtime。当前实现从 [CODEMAP](CODEMAP.md) 和 [ARCHITECTURE](ARCHITECTURE.md) 定位，本轮边界核对见[审计记录](tasks/audit-contracts.md)。
+
 2026-10-08（UTC+8）。承接 [PR #22](https://github.com/xuys2025/escape-bincov/pull/22) 原分支 `docs/coast-2-5d-art-design`，续作本地提交 `4d89f27`（[Runtime 交付](COAST-RUNTIME-SAMPLE.md)）。
 
 > **第三轮（Sol 验收返修）已在本分支本地完成。** 内容包括：

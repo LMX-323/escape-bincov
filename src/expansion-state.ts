@@ -4,7 +4,7 @@ import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } f
 import type { LootContainer } from './loot';
 import type { Point } from './world';
 import { inSpace, separation, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
-import { finite, hasExactKeys, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { finite, hasExactKeys, hasOwnStringKey, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 
 export const EXPANSION_VERSION = 1;
 export const ATTRIBUTES = ['strength', 'constitution', 'technique'] as const;
@@ -137,7 +137,7 @@ function dictionary(value: unknown, max: number) {
     if (!obj(value) || Object.keys(value).length > 1000 || Object.entries(value).some(([id, amount]) => !identity(id) || !finite(amount, 0, max))) fail();
 }
 function goods(value: unknown) {
-    if (!Array.isArray(value) || value.length > 30 || value.some(i => !obj(i) || Object.keys(i).length !== 2 || !Object.hasOwn(D.ITEMS, i.id) || !whole(i.qty, 1, 300))) fail();
+    if (!Array.isArray(value) || value.length > 30 || value.some(i => !obj(i) || Object.keys(i).length !== 2 || !hasOwnStringKey(D.ITEMS, i.id) || !whole(i.qty, 1, 300))) fail();
 }
 export const RECIPES = {
     bandage: { level: 1, medical: 0, seconds: 600, cash: 35, materials: [{ id: 'cloth', qty: 2 }], result: [{ id: 'bandage', qty: 2 }] },
@@ -227,7 +227,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
     exactKeys(raid.player, ['x', 'y', 'rotation']);
-    if (!Object.hasOwn(raid.maps, raid.currentMap) || !inSpace(world.maps[raid.currentMap], raid.player, 10) || !finite(raid.player.rotation, -100, 100)
+    if (!hasOwnStringKey(raid.maps, raid.currentMap) || !inSpace(world.maps[raid.currentMap], raid.player, 10) || !finite(raid.player.rotation, -100, 100)
         || !finite(raid.elapsed, 0, 600) || !whole(raid.rng, 0, UINT32_MAX) || !whole(raid.nextEntity, 1, COUNT_MAX)
         || !whole(raid.kills, 0, world.enemyCount) || !Array.isArray(raid.roster) || raid.roster.length !== world.enemyCount
         || !Array.isArray(raid.pursuits) || raid.pursuits.length > world.enemyCount) fail();
@@ -253,7 +253,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     };
     inventory(profile.stash, 10, profile.upgraded ? 9 : 6); inventory(raid.loadout.bag, 6, 5); inventory(raid.loadout.safe, 2, 2);
     exactKeys(raid.loadout, ['bag', 'safe', 'weapon', 'ammo', 'ammoRelief', 'relief', 'runId']);
-    const magazine = raid.loadout, gun = magazine.weapon === null ? null : D.WEAPONS[magazine.weapon];
+    const magazine = raid.loadout, gun = magazine.weapon === null ? null : hasOwnStringKey(D.WEAPONS, magazine.weapon) ? D.WEAPONS[magazine.weapon] : undefined;
     if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !whole(magazine.ammo, 0, gun?.magazine ?? 0)
         || !whole(magazine.ammoRelief, 0, magazine.ammo) || typeof magazine.relief !== 'boolean'
         || profile.bag.items.length || profile.equipment.weapon !== null) fail();
@@ -268,7 +268,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         if (!obj(e)) return fail();
         exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert']);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
-        if (!Object.hasOwn(D.ENEMIES, e.id) || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !finite(e.rotation, -100, 100)
+        if (!hasOwnStringKey(D.ENEMIES, e.id) || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !finite(e.rotation, -100, 100)
             || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state) || !Array.isArray(e.path) || e.path.length > 4000) fail();
         if (e.hp > 0 && !bodyFits(map.id, e)) fail();
         e.path.forEach(p => plainPoint(p, map));
@@ -286,7 +286,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             || !Array.isArray(layer.containers) || layer.containers.length > 100 || !Array.isArray(layer.bullets) || layer.bullets.length > 1000
             || (mapId !== raid.currentMap && layer.bullets.length > 0)) fail();
         layer.enemies.forEach(e => enemy(e, map));
-        for (const l of layer.loot) { exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y']); entity(l.uid); point(l, map); if (!Object.hasOwn(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail(); }
+        for (const l of layer.loot) { exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y']); entity(l.uid); point(l, map); if (!hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail(); }
         for (const c of layer.containers) {
             exactKeys(c, ['id', 'runId', 'kind', 'name', 'x', 'y', 'inventory']);
             entity(c.id); point(c, map);
@@ -320,7 +320,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if ([...invIds].some(id => entities.has(id) || events.has(id))) fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
-        || raid.roster.some(e => !identity(e.uid) || !Object.hasOwn(D.ENEMIES, e.id) || enemies.get(e.uid)?.id !== e.id)
+        || raid.roster.some(e => !identity(e.uid) || !hasOwnStringKey(D.ENEMIES, e.id) || enemies.get(e.uid)?.id !== e.id)
         || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0).length) fail();
     for (const { container: c, mapId } of containers.filter(c => c.container.kind === 'corpse')) {
         const dead = enemies.get(c.id.replace(/^corpse-/, ''));
