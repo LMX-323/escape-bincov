@@ -8,7 +8,7 @@ import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
 import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
 import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
-import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
+import { advanceRaidBody, enemyDamage, perkEffects, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
 import { advancePursuits } from '../pursuit';
@@ -751,6 +751,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.walkable(sprite.x, sprite.y + dy, high, 10))
             sprite.y += dy;
     }
+    /** Seconds a reload of the held weapon takes: the reload perks (technique-20-b, 30-b) shorten it in a v3 raid. */
+    get reloadTime() { return this.currentWeapon.reload * perkEffects(this.layered).reload; }
     startReload() {
         const w = this.currentWeapon;
         if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
@@ -758,7 +760,7 @@ export class CoastRaidRuntime implements RaidRuntime {
                 this.say('背包中没有适用的备用弹药。');
                 return;
             }
-            this.reloadLeft = w.reload;
+            this.reloadLeft = this.reloadTime;
         }
     }
     step(dt: number) {
@@ -825,7 +827,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const limits = this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit };
         const moving = !!(dx || dy), over = Math.max(0, this.carriedWeight() - limits.carry), sprint = input && frame.sprint && moving && !this.exhausted;
         this.sprinting = sprint;
-        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg) * (this.layered ? rpgMultipliers(this.layered).movement : 1);
+        // The heavy-stride perk (strength-20-a) scales only this slowdown, never the overweight stamina cost.
+        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg * perkEffects(this.layered).overweight) * (this.layered ? rpgMultipliers(this.layered).movement : 1);
         if (moving) {
             const len = Math.max(1, Math.hypot(dx, dy));
             this.move(this.player, dx / len * speed * dt, dy / len * speed * dt, true);
@@ -1142,7 +1145,7 @@ export class CoastRaidRuntime implements RaidRuntime {
                 && this.sight(at, e, this.highTide, this.space ? 10 : 0));
             this.emit({ type: 'melee', attacker: 'player', angle: this.player.rotation, range: w.range, hit: hit?.uid ?? null });
             if (hit)
-                this.damageEnemy(hit, w.damage);
+                this.damageEnemy(hit, w.damage * perkEffects(this.layered).knifeDamage);
             return true;
         }
         this.mag--;
@@ -1164,7 +1167,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             pellets.push(b);
             angles.push(angle);
         }
-        recoil(this.handling, h);
+        recoil(this.handling, h, perkEffects(this.layered).recoil);
         this.shotEvent('player', this.weaponLook, pellets, angles);
         return true;
     }

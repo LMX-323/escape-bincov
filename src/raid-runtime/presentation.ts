@@ -111,7 +111,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? D.ENEMIES[enemy.id].hp : limits.hp, alive: hp > 0,
             weapon: enemy ? enemy.id === 'scav' ? 'club' : enemy.id === 'creature' ? 'claw' : 'rifle' : r.weaponLook,
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
-                reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
+                reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.reloadTime } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },
             regionId: regionAt(e), corpse: hp > 0 ? null : { angle: e.rotation - (enemy && !r.layered ? Math.PI / 2 : 0),
                 containerId: r.containers.some(c => c.id === containerId) ? containerId : null } };
