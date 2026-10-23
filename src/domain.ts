@@ -386,29 +386,6 @@ export function grantRelief(save: SaveDataV1): boolean {
 }
 /** Purchases enter the stash. Ammo is bought in packs; prices are still per round. */
 export function buyQuantity(id: string): number { return id === 'ammo9' ? 12 : id === 'shell' ? 4 : id === 'ammoR' ? 10 : 1; }
-export function buy(save: SaveDataV1, id: string, merchant: 'arms' | 'med'): boolean {
-  const def = Object.hasOwn(ITEMS, id) ? ITEMS[id] : undefined;
-  if (save.activeRun || !def || !MERCHANTS[merchant]?.stock.includes(id) || def.buy <= 0) return false;
-  const qty = buyQuantity(id), cost = def.buy * qty;
-  if (save.cash < cost) return false;
-  const stash = clone(save.stash);
-  if (addItem(stash, id, qty) > 0) return false;
-  save.stash = stash;
-  save.cash -= cost;
-  return true;
-}
-export function sell(save: SaveDataV1, itemUid: string): boolean {
-  if (save.activeRun) return false;
-  for (const inv of [save.stash, save.bag, save.safe]) {
-    const entry = inv.items.find(i => i.uid === itemUid);
-    if (!entry) continue;
-    if (entry.relief || ITEMS[entry.id].sell <= 0) return false;
-    save.cash += ITEMS[entry.id].sell * entry.qty;
-    inv.items.splice(inv.items.indexOf(entry), 1);
-    return true;
-  }
-  return false;
-}
 export function equip(save: SaveDataV1, itemUid: string): boolean {
   if (save.activeRun) return false;
   for (const inv of [save.bag, save.stash]) {
@@ -479,16 +456,10 @@ export function upgradeStash(save: SaveDataV1): boolean {
   save.stash.h = 9;
   return true;
 }
-/** Returns total loaded rounds after consuming exactly the missing reserve ammunition. */
-export function reload(weaponId: string, current: number, bag: Inventory): number {
-  const weapon = Object.hasOwn(WEAPONS, weaponId) ? WEAPONS[weaponId] : undefined;
-  if (!weapon || !weapon.ammo) return 0;
-  const loaded = Math.min(weapon.magazine, integer(current));
-  const taken = Math.min(weapon.magazine - loaded, count(bag, weapon.ammo));
-  removeItem(bag, weapon.ammo, taken);
-  return loaded + taken;
-}
-/** Relief rounds are loaded first and retain their identity, independently of the gun's origin. */
+/**
+ * Takes exactly the missing rounds of the gun's own ammunition out of `bag` (edited in place). Relief rounds are
+ * loaded first and retain their identity, independently of the gun's origin.
+ */
 export function reloadMagazine(weaponId: string, current: number, currentRelief: number, bag: Inventory): Magazine {
   const magazine = cleanMagazine(weaponId, current, currentRelief);
   if (!isGun(weaponId)) return magazine;
