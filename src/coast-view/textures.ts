@@ -59,7 +59,9 @@ export class Textures {
     return this.art && (solCorpse(this.art, this.actorStyle(kind, variant), 1) || solCorpse(this.art, kind, 1)) ? .5 : 14 / 24;
   }
 
-  weapon(id: string, kind: ActorKind): WeaponArt & { texture: Texture; rim: Texture } {
+  weapon(id: string, kind: ActorKind, variant?: string): WeaponArt & { texture: Texture; rim: Texture } {
+    // The ritualist's existing long-reach melee rule has a two-handed fishing tool; this is a view style, not a new item.
+    if (id === 'club' && variant === 'tide-ritualist') id = 'polearm';
     const glove = kind === 'player' ? '#4a463c' : kind === 'salt' ? '#7f7a6b' : '#3e3a33';
     const key = `weapon:${id}:${kind === 'salt' || kind === 'elite' ? kind : glove}`;
     let art = this.weapons.get(key);

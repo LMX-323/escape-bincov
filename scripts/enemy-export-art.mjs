@@ -11,6 +11,13 @@ const roles = [
   { id: 'tidal-crab', width: 29, height: 23, corpseVersion: 2, looseGrid: true },
   { id: 'saltback-dog', width: 30, height: 27, sheetVersion: 2, looseGrid: true },
   { id: 'sac-spitter', width: 30, height: 26, sheetVersion: 3, corpseVersion: 3, looseGrid: true },
+  { id: 'salt-dazed', width: 28, height: 39, sheetVersion: 2, looseGrid: true },
+  { id: 'tide-chaser', width: 30, height: 39, sheetVersion: 2, looseGrid: true },
+  { id: 'tide-ritualist', width: 30, height: 39, sheetVersion: 2, looseGrid: true },
+  { id: 'salt-hulk', width: 28, height: 43, looseGrid: true },
+  ...['mercenary-scout', 'mercenary-assault', 'mercenary-support', 'recovery-leader',
+    'blockade-sentry', 'blockade-patrol', 'blockade-sergeant'].map(id => ({ id, width: id === 'mercenary-scout' ? 28 : 30, height: 39,
+      sheetVersion: ['mercenary-scout', 'blockade-sentry'].includes(id) ? 1 : 2, looseGrid: true })),
 ];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const browser = await chromium.launch(browserOptions);
@@ -103,12 +110,14 @@ try {
     }
   }
 } finally { await browser.close(); }
-for (const file of ['prompts-v1.json', 'prompts-v2.json', 'prompts-v4.json', 'saltback-dog-sheet-v1.png', 'sac-spitter-sheet-v2.png', 'raider-boss-sheet-v1.png', 'tidal-crab-corpse-v1.png']) {
+for (const file of ['prompts-v1.json', 'prompts-v2.json', 'prompts-v4.json', 'prompts-v5.json', 'prompts-v6.json', 'prompts-v7.json',
+  ...['salt-dazed', 'tide-ritualist', 'mercenary-assault', 'mercenary-support', 'recovery-leader', 'blockade-patrol', 'blockade-sergeant'].map(id => `${id}-sheet-v1.png`),
+  'tide-chaser-sheet-v1.png', 'saltback-dog-sheet-v1.png', 'sac-spitter-sheet-v2.png', 'raider-boss-sheet-v1.png', 'tidal-crab-corpse-v1.png']) {
   const path = `assets/enemies/sources/${file}`; sources[path] = sha(await readFile(path));
 }
 await writeFile('assets/enemies/manifest.json', JSON.stringify({ schema: 1, mode: 'built-in image_gen', exportBrowser,
   provenance: 'Original generated game assets; prompts and source PNGs retained. No external downloaded art.',
-  prompts: ['prompts-v1.json', 'prompts-v2.json', 'prompts-v4.json'].map(p => `assets/enemies/sources/${p}`), sources, assets }, null, 2) + '\n');
+  prompts: ['prompts-v1.json', 'prompts-v2.json', 'prompts-v4.json', 'prompts-v5.json', 'prompts-v6.json', 'prompts-v7.json'].map(p => `assets/enemies/sources/${p}`), sources, assets }, null, 2) + '\n');
 const coast = JSON.parse(await readFile('assets/coast/manifest.json', 'utf8'));
 coast.assets = [...coast.assets.filter(a => !a.file.startsWith('assets/coast/enemy-v1/')), ...assets];
 await writeFile('assets/coast/manifest.json', JSON.stringify(coast, null, 2) + '\n');

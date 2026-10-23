@@ -13,9 +13,10 @@ import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
 import { archetype, initialTactics } from '../src/enemy-archetypes.ts';
 import { damageLayerEnemy } from '../src/layer-transition.ts';
+import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
-const artRoles = ['raider-melee', 'raider-gunner', 'raider-lookout', 'raider-boss', 'tidal-crab', 'saltback-dog', 'sac-spitter'];
+const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const report = { scope: 'First three roles deploy natively; other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
@@ -55,13 +56,13 @@ try {
             if (touch || role !== 'raider-gunner') scenarios.push({ phase: 'windup', role, name: `${role}-windup` });
             if (!touch) scenarios.push({ phase: 'corpse', role, name: `${role}-corpse` });
         }
-        const f = fixture(scenarios[0].phase);
-        await context.addInitScript(([key, raw]) => { if (!localStorage.getItem(key)) localStorage.setItem(key, raw); }, [SESSION_KEY, f.raw]);
-        const page = await context.newPage(); page.setDefaultTimeout(60000);
-        page.on('pageerror', e => report.errors.push(String(e))); page.on('request', r => { if (/^https?:/.test(r.url())) report.external.push(r.url()); });
         for (const { phase, role, name } of scenarios) {
             const saved = fixture(phase, role);
-            if (name !== scenarios[0].name) await page.evaluate(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
+            // A previous host can autosave between a storage write and navigation. Close each case first,
+            // then install the next save before application startup, without another live writer.
+            const page = await context.newPage(); page.setDefaultTimeout(60000);
+            await page.addInitScript(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
+            page.on('pageerror', e => report.errors.push(String(e))); page.on('request', r => { if (/^https?:/.test(r.url())) report.external.push(r.url()); });
             await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs&freezeAI=1', { waitUntil: 'load' });
             await page.locator('[data-action="enter"]').click(); await raidReady(page);
             await drive(page, 'freezeAI', true);
@@ -73,8 +74,10 @@ try {
                 const variant = actor.tactics.archetype;
                 const bodyArt = Array.from({ length: 5 }, (_, f) => h.view.tex.actor(actor.kind, gfx.dir, f, variant)).includes(gfx.body.texture);
                 const corpseArt = !actor.alive && [1, -1].some(face => h.view.tex.corpse(actor.kind, face, variant) === gfx.corpse?.texture);
+                const held = h.view.tex.weapon(actor.weapon, actor.kind, variant);
                 return { phase: actor.tactics.phase, reloading: !!actor.state.reloading, cue: gfx.telegraph.visible, boundary: actor.tactics.boundary,
                     bodyArt, corpseArt, artStyle: h.view.tex.actorStyle(actor.kind, variant),
+                    heldWidth: held.canvas.width, heldArt: gfx.weapon.texture === held.texture, hands: gfx.arms.filter(a => a.visible).length,
                     weapon: actor.weapon, version: JSON.parse(localStorage.getItem('escape-bincov.session.v2')).version };
             }, saved.uid);
             assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase, `${viewport.width}/${name}: saved phase survives mount`);
@@ -83,6 +86,10 @@ try {
             assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : archetype(role).weapon); assert.equal(actual.version, 7);
             if (phase !== 'parley') {
                 assert.equal(actual.artStyle, role); assert.ok(phase === 'corpse' ? actual.corpseArt : actual.bodyArt);
+            }
+            if (role === 'tide-ritualist' && phase === 'windup') {
+                assert.ok(actual.heldArt && actual.heldWidth >= 40, 'ritualist visibly carries the long fishing tool');
+                assert.equal(actual.hands, 2, 'both hands grip the polearm');
             }
             if (phase === 'parley') {
                 assert.equal(actual.boundary.radius, 90);
@@ -136,6 +143,7 @@ try {
                 assert.equal(acid.hiddenParticles, 0);
                 report.cases.push({ viewport, scenario: 'spit-presentation-contract', ...acid });
             }
+            await page.close();
         }
         await context.close();
     }

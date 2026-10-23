@@ -334,6 +334,292 @@ import acoast_sac_spitter_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-s
 import acoast_sac_spitter_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-sac-spitter-body-n-f3-v1.png';
 import acoast_sac_spitter_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-sac-spitter-body-n-f4-v1.png';
 import acoast_sac_spitter_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-sac-spitter-corpse-e-v1.png';
+import acoast_salt_dazed_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-e-f0-v1.png';
+import acoast_salt_dazed_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-e-f1-v1.png';
+import acoast_salt_dazed_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-e-f2-v1.png';
+import acoast_salt_dazed_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-e-f3-v1.png';
+import acoast_salt_dazed_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-e-f4-v1.png';
+import acoast_salt_dazed_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-se-f0-v1.png';
+import acoast_salt_dazed_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-se-f1-v1.png';
+import acoast_salt_dazed_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-se-f2-v1.png';
+import acoast_salt_dazed_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-se-f3-v1.png';
+import acoast_salt_dazed_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-se-f4-v1.png';
+import acoast_salt_dazed_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-s-f0-v1.png';
+import acoast_salt_dazed_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-s-f1-v1.png';
+import acoast_salt_dazed_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-s-f2-v1.png';
+import acoast_salt_dazed_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-s-f3-v1.png';
+import acoast_salt_dazed_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-s-f4-v1.png';
+import acoast_salt_dazed_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-ne-f0-v1.png';
+import acoast_salt_dazed_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-ne-f1-v1.png';
+import acoast_salt_dazed_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-ne-f2-v1.png';
+import acoast_salt_dazed_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-ne-f3-v1.png';
+import acoast_salt_dazed_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-ne-f4-v1.png';
+import acoast_salt_dazed_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-n-f0-v1.png';
+import acoast_salt_dazed_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-n-f1-v1.png';
+import acoast_salt_dazed_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-n-f2-v1.png';
+import acoast_salt_dazed_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-n-f3-v1.png';
+import acoast_salt_dazed_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-body-n-f4-v1.png';
+import acoast_salt_dazed_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-salt-dazed-corpse-e-v1.png';
+import acoast_tide_chaser_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-e-f0-v1.png';
+import acoast_tide_chaser_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-e-f1-v1.png';
+import acoast_tide_chaser_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-e-f2-v1.png';
+import acoast_tide_chaser_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-e-f3-v1.png';
+import acoast_tide_chaser_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-e-f4-v1.png';
+import acoast_tide_chaser_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-se-f0-v1.png';
+import acoast_tide_chaser_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-se-f1-v1.png';
+import acoast_tide_chaser_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-se-f2-v1.png';
+import acoast_tide_chaser_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-se-f3-v1.png';
+import acoast_tide_chaser_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-se-f4-v1.png';
+import acoast_tide_chaser_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-s-f0-v1.png';
+import acoast_tide_chaser_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-s-f1-v1.png';
+import acoast_tide_chaser_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-s-f2-v1.png';
+import acoast_tide_chaser_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-s-f3-v1.png';
+import acoast_tide_chaser_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-s-f4-v1.png';
+import acoast_tide_chaser_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-ne-f0-v1.png';
+import acoast_tide_chaser_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-ne-f1-v1.png';
+import acoast_tide_chaser_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-ne-f2-v1.png';
+import acoast_tide_chaser_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-ne-f3-v1.png';
+import acoast_tide_chaser_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-ne-f4-v1.png';
+import acoast_tide_chaser_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-n-f0-v1.png';
+import acoast_tide_chaser_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-n-f1-v1.png';
+import acoast_tide_chaser_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-n-f2-v1.png';
+import acoast_tide_chaser_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-n-f3-v1.png';
+import acoast_tide_chaser_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-body-n-f4-v1.png';
+import acoast_tide_chaser_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-tide-chaser-corpse-e-v1.png';
+import acoast_tide_ritualist_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-e-f0-v1.png';
+import acoast_tide_ritualist_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-e-f1-v1.png';
+import acoast_tide_ritualist_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-e-f2-v1.png';
+import acoast_tide_ritualist_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-e-f3-v1.png';
+import acoast_tide_ritualist_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-e-f4-v1.png';
+import acoast_tide_ritualist_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-se-f0-v1.png';
+import acoast_tide_ritualist_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-se-f1-v1.png';
+import acoast_tide_ritualist_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-se-f2-v1.png';
+import acoast_tide_ritualist_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-se-f3-v1.png';
+import acoast_tide_ritualist_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-se-f4-v1.png';
+import acoast_tide_ritualist_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-s-f0-v1.png';
+import acoast_tide_ritualist_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-s-f1-v1.png';
+import acoast_tide_ritualist_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-s-f2-v1.png';
+import acoast_tide_ritualist_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-s-f3-v1.png';
+import acoast_tide_ritualist_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-s-f4-v1.png';
+import acoast_tide_ritualist_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-ne-f0-v1.png';
+import acoast_tide_ritualist_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-ne-f1-v1.png';
+import acoast_tide_ritualist_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-ne-f2-v1.png';
+import acoast_tide_ritualist_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-ne-f3-v1.png';
+import acoast_tide_ritualist_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-ne-f4-v1.png';
+import acoast_tide_ritualist_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-n-f0-v1.png';
+import acoast_tide_ritualist_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-n-f1-v1.png';
+import acoast_tide_ritualist_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-n-f2-v1.png';
+import acoast_tide_ritualist_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-n-f3-v1.png';
+import acoast_tide_ritualist_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-body-n-f4-v1.png';
+import acoast_tide_ritualist_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-tide-ritualist-corpse-e-v1.png';
+import acoast_salt_hulk_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-e-f0-v1.png';
+import acoast_salt_hulk_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-e-f1-v1.png';
+import acoast_salt_hulk_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-e-f2-v1.png';
+import acoast_salt_hulk_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-e-f3-v1.png';
+import acoast_salt_hulk_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-e-f4-v1.png';
+import acoast_salt_hulk_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-se-f0-v1.png';
+import acoast_salt_hulk_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-se-f1-v1.png';
+import acoast_salt_hulk_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-se-f2-v1.png';
+import acoast_salt_hulk_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-se-f3-v1.png';
+import acoast_salt_hulk_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-se-f4-v1.png';
+import acoast_salt_hulk_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-s-f0-v1.png';
+import acoast_salt_hulk_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-s-f1-v1.png';
+import acoast_salt_hulk_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-s-f2-v1.png';
+import acoast_salt_hulk_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-s-f3-v1.png';
+import acoast_salt_hulk_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-s-f4-v1.png';
+import acoast_salt_hulk_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-ne-f0-v1.png';
+import acoast_salt_hulk_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-ne-f1-v1.png';
+import acoast_salt_hulk_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-ne-f2-v1.png';
+import acoast_salt_hulk_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-ne-f3-v1.png';
+import acoast_salt_hulk_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-ne-f4-v1.png';
+import acoast_salt_hulk_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-n-f0-v1.png';
+import acoast_salt_hulk_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-n-f1-v1.png';
+import acoast_salt_hulk_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-n-f2-v1.png';
+import acoast_salt_hulk_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-n-f3-v1.png';
+import acoast_salt_hulk_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-body-n-f4-v1.png';
+import acoast_salt_hulk_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-salt-hulk-corpse-e-v1.png';
+import acoast_mercenary_scout_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-e-f0-v1.png';
+import acoast_mercenary_scout_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-e-f1-v1.png';
+import acoast_mercenary_scout_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-e-f2-v1.png';
+import acoast_mercenary_scout_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-e-f3-v1.png';
+import acoast_mercenary_scout_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-e-f4-v1.png';
+import acoast_mercenary_scout_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-se-f0-v1.png';
+import acoast_mercenary_scout_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-se-f1-v1.png';
+import acoast_mercenary_scout_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-se-f2-v1.png';
+import acoast_mercenary_scout_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-se-f3-v1.png';
+import acoast_mercenary_scout_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-se-f4-v1.png';
+import acoast_mercenary_scout_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-s-f0-v1.png';
+import acoast_mercenary_scout_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-s-f1-v1.png';
+import acoast_mercenary_scout_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-s-f2-v1.png';
+import acoast_mercenary_scout_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-s-f3-v1.png';
+import acoast_mercenary_scout_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-s-f4-v1.png';
+import acoast_mercenary_scout_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-ne-f0-v1.png';
+import acoast_mercenary_scout_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-ne-f1-v1.png';
+import acoast_mercenary_scout_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-ne-f2-v1.png';
+import acoast_mercenary_scout_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-ne-f3-v1.png';
+import acoast_mercenary_scout_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-ne-f4-v1.png';
+import acoast_mercenary_scout_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-n-f0-v1.png';
+import acoast_mercenary_scout_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-n-f1-v1.png';
+import acoast_mercenary_scout_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-n-f2-v1.png';
+import acoast_mercenary_scout_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-n-f3-v1.png';
+import acoast_mercenary_scout_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-body-n-f4-v1.png';
+import acoast_mercenary_scout_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-mercenary-scout-corpse-e-v1.png';
+import acoast_mercenary_assault_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-e-f0-v1.png';
+import acoast_mercenary_assault_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-e-f1-v1.png';
+import acoast_mercenary_assault_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-e-f2-v1.png';
+import acoast_mercenary_assault_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-e-f3-v1.png';
+import acoast_mercenary_assault_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-e-f4-v1.png';
+import acoast_mercenary_assault_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-se-f0-v1.png';
+import acoast_mercenary_assault_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-se-f1-v1.png';
+import acoast_mercenary_assault_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-se-f2-v1.png';
+import acoast_mercenary_assault_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-se-f3-v1.png';
+import acoast_mercenary_assault_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-se-f4-v1.png';
+import acoast_mercenary_assault_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-s-f0-v1.png';
+import acoast_mercenary_assault_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-s-f1-v1.png';
+import acoast_mercenary_assault_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-s-f2-v1.png';
+import acoast_mercenary_assault_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-s-f3-v1.png';
+import acoast_mercenary_assault_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-s-f4-v1.png';
+import acoast_mercenary_assault_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-ne-f0-v1.png';
+import acoast_mercenary_assault_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-ne-f1-v1.png';
+import acoast_mercenary_assault_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-ne-f2-v1.png';
+import acoast_mercenary_assault_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-ne-f3-v1.png';
+import acoast_mercenary_assault_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-ne-f4-v1.png';
+import acoast_mercenary_assault_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-n-f0-v1.png';
+import acoast_mercenary_assault_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-n-f1-v1.png';
+import acoast_mercenary_assault_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-n-f2-v1.png';
+import acoast_mercenary_assault_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-n-f3-v1.png';
+import acoast_mercenary_assault_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-body-n-f4-v1.png';
+import acoast_mercenary_assault_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-mercenary-assault-corpse-e-v1.png';
+import acoast_mercenary_support_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-e-f0-v1.png';
+import acoast_mercenary_support_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-e-f1-v1.png';
+import acoast_mercenary_support_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-e-f2-v1.png';
+import acoast_mercenary_support_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-e-f3-v1.png';
+import acoast_mercenary_support_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-e-f4-v1.png';
+import acoast_mercenary_support_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-se-f0-v1.png';
+import acoast_mercenary_support_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-se-f1-v1.png';
+import acoast_mercenary_support_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-se-f2-v1.png';
+import acoast_mercenary_support_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-se-f3-v1.png';
+import acoast_mercenary_support_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-se-f4-v1.png';
+import acoast_mercenary_support_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-s-f0-v1.png';
+import acoast_mercenary_support_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-s-f1-v1.png';
+import acoast_mercenary_support_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-s-f2-v1.png';
+import acoast_mercenary_support_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-s-f3-v1.png';
+import acoast_mercenary_support_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-s-f4-v1.png';
+import acoast_mercenary_support_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-ne-f0-v1.png';
+import acoast_mercenary_support_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-ne-f1-v1.png';
+import acoast_mercenary_support_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-ne-f2-v1.png';
+import acoast_mercenary_support_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-ne-f3-v1.png';
+import acoast_mercenary_support_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-ne-f4-v1.png';
+import acoast_mercenary_support_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-n-f0-v1.png';
+import acoast_mercenary_support_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-n-f1-v1.png';
+import acoast_mercenary_support_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-n-f2-v1.png';
+import acoast_mercenary_support_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-n-f3-v1.png';
+import acoast_mercenary_support_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-body-n-f4-v1.png';
+import acoast_mercenary_support_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-mercenary-support-corpse-e-v1.png';
+import acoast_recovery_leader_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-e-f0-v1.png';
+import acoast_recovery_leader_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-e-f1-v1.png';
+import acoast_recovery_leader_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-e-f2-v1.png';
+import acoast_recovery_leader_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-e-f3-v1.png';
+import acoast_recovery_leader_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-e-f4-v1.png';
+import acoast_recovery_leader_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-se-f0-v1.png';
+import acoast_recovery_leader_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-se-f1-v1.png';
+import acoast_recovery_leader_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-se-f2-v1.png';
+import acoast_recovery_leader_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-se-f3-v1.png';
+import acoast_recovery_leader_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-se-f4-v1.png';
+import acoast_recovery_leader_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-s-f0-v1.png';
+import acoast_recovery_leader_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-s-f1-v1.png';
+import acoast_recovery_leader_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-s-f2-v1.png';
+import acoast_recovery_leader_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-s-f3-v1.png';
+import acoast_recovery_leader_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-s-f4-v1.png';
+import acoast_recovery_leader_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-ne-f0-v1.png';
+import acoast_recovery_leader_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-ne-f1-v1.png';
+import acoast_recovery_leader_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-ne-f2-v1.png';
+import acoast_recovery_leader_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-ne-f3-v1.png';
+import acoast_recovery_leader_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-ne-f4-v1.png';
+import acoast_recovery_leader_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-n-f0-v1.png';
+import acoast_recovery_leader_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-n-f1-v1.png';
+import acoast_recovery_leader_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-n-f2-v1.png';
+import acoast_recovery_leader_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-n-f3-v1.png';
+import acoast_recovery_leader_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-body-n-f4-v1.png';
+import acoast_recovery_leader_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-recovery-leader-corpse-e-v1.png';
+import acoast_blockade_sentry_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-e-f0-v1.png';
+import acoast_blockade_sentry_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-e-f1-v1.png';
+import acoast_blockade_sentry_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-e-f2-v1.png';
+import acoast_blockade_sentry_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-e-f3-v1.png';
+import acoast_blockade_sentry_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-e-f4-v1.png';
+import acoast_blockade_sentry_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-se-f0-v1.png';
+import acoast_blockade_sentry_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-se-f1-v1.png';
+import acoast_blockade_sentry_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-se-f2-v1.png';
+import acoast_blockade_sentry_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-se-f3-v1.png';
+import acoast_blockade_sentry_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-se-f4-v1.png';
+import acoast_blockade_sentry_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-s-f0-v1.png';
+import acoast_blockade_sentry_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-s-f1-v1.png';
+import acoast_blockade_sentry_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-s-f2-v1.png';
+import acoast_blockade_sentry_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-s-f3-v1.png';
+import acoast_blockade_sentry_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-s-f4-v1.png';
+import acoast_blockade_sentry_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-ne-f0-v1.png';
+import acoast_blockade_sentry_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-ne-f1-v1.png';
+import acoast_blockade_sentry_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-ne-f2-v1.png';
+import acoast_blockade_sentry_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-ne-f3-v1.png';
+import acoast_blockade_sentry_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-ne-f4-v1.png';
+import acoast_blockade_sentry_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-n-f0-v1.png';
+import acoast_blockade_sentry_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-n-f1-v1.png';
+import acoast_blockade_sentry_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-n-f2-v1.png';
+import acoast_blockade_sentry_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-n-f3-v1.png';
+import acoast_blockade_sentry_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-body-n-f4-v1.png';
+import acoast_blockade_sentry_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-blockade-sentry-corpse-e-v1.png';
+import acoast_blockade_patrol_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-e-f0-v1.png';
+import acoast_blockade_patrol_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-e-f1-v1.png';
+import acoast_blockade_patrol_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-e-f2-v1.png';
+import acoast_blockade_patrol_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-e-f3-v1.png';
+import acoast_blockade_patrol_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-e-f4-v1.png';
+import acoast_blockade_patrol_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-se-f0-v1.png';
+import acoast_blockade_patrol_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-se-f1-v1.png';
+import acoast_blockade_patrol_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-se-f2-v1.png';
+import acoast_blockade_patrol_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-se-f3-v1.png';
+import acoast_blockade_patrol_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-se-f4-v1.png';
+import acoast_blockade_patrol_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-s-f0-v1.png';
+import acoast_blockade_patrol_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-s-f1-v1.png';
+import acoast_blockade_patrol_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-s-f2-v1.png';
+import acoast_blockade_patrol_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-s-f3-v1.png';
+import acoast_blockade_patrol_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-s-f4-v1.png';
+import acoast_blockade_patrol_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-ne-f0-v1.png';
+import acoast_blockade_patrol_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-ne-f1-v1.png';
+import acoast_blockade_patrol_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-ne-f2-v1.png';
+import acoast_blockade_patrol_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-ne-f3-v1.png';
+import acoast_blockade_patrol_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-ne-f4-v1.png';
+import acoast_blockade_patrol_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-n-f0-v1.png';
+import acoast_blockade_patrol_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-n-f1-v1.png';
+import acoast_blockade_patrol_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-n-f2-v1.png';
+import acoast_blockade_patrol_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-n-f3-v1.png';
+import acoast_blockade_patrol_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-body-n-f4-v1.png';
+import acoast_blockade_patrol_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-blockade-patrol-corpse-e-v1.png';
+import acoast_blockade_sergeant_body_e_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-e-f0-v1.png';
+import acoast_blockade_sergeant_body_e_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-e-f1-v1.png';
+import acoast_blockade_sergeant_body_e_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-e-f2-v1.png';
+import acoast_blockade_sergeant_body_e_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-e-f3-v1.png';
+import acoast_blockade_sergeant_body_e_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-e-f4-v1.png';
+import acoast_blockade_sergeant_body_se_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-se-f0-v1.png';
+import acoast_blockade_sergeant_body_se_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-se-f1-v1.png';
+import acoast_blockade_sergeant_body_se_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-se-f2-v1.png';
+import acoast_blockade_sergeant_body_se_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-se-f3-v1.png';
+import acoast_blockade_sergeant_body_se_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-se-f4-v1.png';
+import acoast_blockade_sergeant_body_s_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-s-f0-v1.png';
+import acoast_blockade_sergeant_body_s_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-s-f1-v1.png';
+import acoast_blockade_sergeant_body_s_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-s-f2-v1.png';
+import acoast_blockade_sergeant_body_s_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-s-f3-v1.png';
+import acoast_blockade_sergeant_body_s_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-s-f4-v1.png';
+import acoast_blockade_sergeant_body_ne_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-ne-f0-v1.png';
+import acoast_blockade_sergeant_body_ne_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-ne-f1-v1.png';
+import acoast_blockade_sergeant_body_ne_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-ne-f2-v1.png';
+import acoast_blockade_sergeant_body_ne_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-ne-f3-v1.png';
+import acoast_blockade_sergeant_body_ne_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-ne-f4-v1.png';
+import acoast_blockade_sergeant_body_n_f0_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-n-f0-v1.png';
+import acoast_blockade_sergeant_body_n_f1_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-n-f1-v1.png';
+import acoast_blockade_sergeant_body_n_f2_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-n-f2-v1.png';
+import acoast_blockade_sergeant_body_n_f3_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-n-f3-v1.png';
+import acoast_blockade_sergeant_body_n_f4_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-body-n-f4-v1.png';
+import acoast_blockade_sergeant_corpse_e_v1 from '../../assets/coast/enemy-v1/coast-blockade-sergeant-corpse-e-v1.png';
 
 export const COAST_ASSET_URLS: Readonly<Record<string, string>> = {
   'coast-player-body-e-f0-v1': acoast_player_body_e_f0_v1,
@@ -671,6 +957,292 @@ export const COAST_ASSET_URLS: Readonly<Record<string, string>> = {
   'coast-sac-spitter-body-n-f3-v1': acoast_sac_spitter_body_n_f3_v1,
   'coast-sac-spitter-body-n-f4-v1': acoast_sac_spitter_body_n_f4_v1,
   'coast-sac-spitter-corpse-e-v1': acoast_sac_spitter_corpse_e_v1,
+  'coast-salt-dazed-body-e-f0-v1': acoast_salt_dazed_body_e_f0_v1,
+  'coast-salt-dazed-body-e-f1-v1': acoast_salt_dazed_body_e_f1_v1,
+  'coast-salt-dazed-body-e-f2-v1': acoast_salt_dazed_body_e_f2_v1,
+  'coast-salt-dazed-body-e-f3-v1': acoast_salt_dazed_body_e_f3_v1,
+  'coast-salt-dazed-body-e-f4-v1': acoast_salt_dazed_body_e_f4_v1,
+  'coast-salt-dazed-body-se-f0-v1': acoast_salt_dazed_body_se_f0_v1,
+  'coast-salt-dazed-body-se-f1-v1': acoast_salt_dazed_body_se_f1_v1,
+  'coast-salt-dazed-body-se-f2-v1': acoast_salt_dazed_body_se_f2_v1,
+  'coast-salt-dazed-body-se-f3-v1': acoast_salt_dazed_body_se_f3_v1,
+  'coast-salt-dazed-body-se-f4-v1': acoast_salt_dazed_body_se_f4_v1,
+  'coast-salt-dazed-body-s-f0-v1': acoast_salt_dazed_body_s_f0_v1,
+  'coast-salt-dazed-body-s-f1-v1': acoast_salt_dazed_body_s_f1_v1,
+  'coast-salt-dazed-body-s-f2-v1': acoast_salt_dazed_body_s_f2_v1,
+  'coast-salt-dazed-body-s-f3-v1': acoast_salt_dazed_body_s_f3_v1,
+  'coast-salt-dazed-body-s-f4-v1': acoast_salt_dazed_body_s_f4_v1,
+  'coast-salt-dazed-body-ne-f0-v1': acoast_salt_dazed_body_ne_f0_v1,
+  'coast-salt-dazed-body-ne-f1-v1': acoast_salt_dazed_body_ne_f1_v1,
+  'coast-salt-dazed-body-ne-f2-v1': acoast_salt_dazed_body_ne_f2_v1,
+  'coast-salt-dazed-body-ne-f3-v1': acoast_salt_dazed_body_ne_f3_v1,
+  'coast-salt-dazed-body-ne-f4-v1': acoast_salt_dazed_body_ne_f4_v1,
+  'coast-salt-dazed-body-n-f0-v1': acoast_salt_dazed_body_n_f0_v1,
+  'coast-salt-dazed-body-n-f1-v1': acoast_salt_dazed_body_n_f1_v1,
+  'coast-salt-dazed-body-n-f2-v1': acoast_salt_dazed_body_n_f2_v1,
+  'coast-salt-dazed-body-n-f3-v1': acoast_salt_dazed_body_n_f3_v1,
+  'coast-salt-dazed-body-n-f4-v1': acoast_salt_dazed_body_n_f4_v1,
+  'coast-salt-dazed-corpse-e-v1': acoast_salt_dazed_corpse_e_v1,
+  'coast-tide-chaser-body-e-f0-v1': acoast_tide_chaser_body_e_f0_v1,
+  'coast-tide-chaser-body-e-f1-v1': acoast_tide_chaser_body_e_f1_v1,
+  'coast-tide-chaser-body-e-f2-v1': acoast_tide_chaser_body_e_f2_v1,
+  'coast-tide-chaser-body-e-f3-v1': acoast_tide_chaser_body_e_f3_v1,
+  'coast-tide-chaser-body-e-f4-v1': acoast_tide_chaser_body_e_f4_v1,
+  'coast-tide-chaser-body-se-f0-v1': acoast_tide_chaser_body_se_f0_v1,
+  'coast-tide-chaser-body-se-f1-v1': acoast_tide_chaser_body_se_f1_v1,
+  'coast-tide-chaser-body-se-f2-v1': acoast_tide_chaser_body_se_f2_v1,
+  'coast-tide-chaser-body-se-f3-v1': acoast_tide_chaser_body_se_f3_v1,
+  'coast-tide-chaser-body-se-f4-v1': acoast_tide_chaser_body_se_f4_v1,
+  'coast-tide-chaser-body-s-f0-v1': acoast_tide_chaser_body_s_f0_v1,
+  'coast-tide-chaser-body-s-f1-v1': acoast_tide_chaser_body_s_f1_v1,
+  'coast-tide-chaser-body-s-f2-v1': acoast_tide_chaser_body_s_f2_v1,
+  'coast-tide-chaser-body-s-f3-v1': acoast_tide_chaser_body_s_f3_v1,
+  'coast-tide-chaser-body-s-f4-v1': acoast_tide_chaser_body_s_f4_v1,
+  'coast-tide-chaser-body-ne-f0-v1': acoast_tide_chaser_body_ne_f0_v1,
+  'coast-tide-chaser-body-ne-f1-v1': acoast_tide_chaser_body_ne_f1_v1,
+  'coast-tide-chaser-body-ne-f2-v1': acoast_tide_chaser_body_ne_f2_v1,
+  'coast-tide-chaser-body-ne-f3-v1': acoast_tide_chaser_body_ne_f3_v1,
+  'coast-tide-chaser-body-ne-f4-v1': acoast_tide_chaser_body_ne_f4_v1,
+  'coast-tide-chaser-body-n-f0-v1': acoast_tide_chaser_body_n_f0_v1,
+  'coast-tide-chaser-body-n-f1-v1': acoast_tide_chaser_body_n_f1_v1,
+  'coast-tide-chaser-body-n-f2-v1': acoast_tide_chaser_body_n_f2_v1,
+  'coast-tide-chaser-body-n-f3-v1': acoast_tide_chaser_body_n_f3_v1,
+  'coast-tide-chaser-body-n-f4-v1': acoast_tide_chaser_body_n_f4_v1,
+  'coast-tide-chaser-corpse-e-v1': acoast_tide_chaser_corpse_e_v1,
+  'coast-tide-ritualist-body-e-f0-v1': acoast_tide_ritualist_body_e_f0_v1,
+  'coast-tide-ritualist-body-e-f1-v1': acoast_tide_ritualist_body_e_f1_v1,
+  'coast-tide-ritualist-body-e-f2-v1': acoast_tide_ritualist_body_e_f2_v1,
+  'coast-tide-ritualist-body-e-f3-v1': acoast_tide_ritualist_body_e_f3_v1,
+  'coast-tide-ritualist-body-e-f4-v1': acoast_tide_ritualist_body_e_f4_v1,
+  'coast-tide-ritualist-body-se-f0-v1': acoast_tide_ritualist_body_se_f0_v1,
+  'coast-tide-ritualist-body-se-f1-v1': acoast_tide_ritualist_body_se_f1_v1,
+  'coast-tide-ritualist-body-se-f2-v1': acoast_tide_ritualist_body_se_f2_v1,
+  'coast-tide-ritualist-body-se-f3-v1': acoast_tide_ritualist_body_se_f3_v1,
+  'coast-tide-ritualist-body-se-f4-v1': acoast_tide_ritualist_body_se_f4_v1,
+  'coast-tide-ritualist-body-s-f0-v1': acoast_tide_ritualist_body_s_f0_v1,
+  'coast-tide-ritualist-body-s-f1-v1': acoast_tide_ritualist_body_s_f1_v1,
+  'coast-tide-ritualist-body-s-f2-v1': acoast_tide_ritualist_body_s_f2_v1,
+  'coast-tide-ritualist-body-s-f3-v1': acoast_tide_ritualist_body_s_f3_v1,
+  'coast-tide-ritualist-body-s-f4-v1': acoast_tide_ritualist_body_s_f4_v1,
+  'coast-tide-ritualist-body-ne-f0-v1': acoast_tide_ritualist_body_ne_f0_v1,
+  'coast-tide-ritualist-body-ne-f1-v1': acoast_tide_ritualist_body_ne_f1_v1,
+  'coast-tide-ritualist-body-ne-f2-v1': acoast_tide_ritualist_body_ne_f2_v1,
+  'coast-tide-ritualist-body-ne-f3-v1': acoast_tide_ritualist_body_ne_f3_v1,
+  'coast-tide-ritualist-body-ne-f4-v1': acoast_tide_ritualist_body_ne_f4_v1,
+  'coast-tide-ritualist-body-n-f0-v1': acoast_tide_ritualist_body_n_f0_v1,
+  'coast-tide-ritualist-body-n-f1-v1': acoast_tide_ritualist_body_n_f1_v1,
+  'coast-tide-ritualist-body-n-f2-v1': acoast_tide_ritualist_body_n_f2_v1,
+  'coast-tide-ritualist-body-n-f3-v1': acoast_tide_ritualist_body_n_f3_v1,
+  'coast-tide-ritualist-body-n-f4-v1': acoast_tide_ritualist_body_n_f4_v1,
+  'coast-tide-ritualist-corpse-e-v1': acoast_tide_ritualist_corpse_e_v1,
+  'coast-salt-hulk-body-e-f0-v1': acoast_salt_hulk_body_e_f0_v1,
+  'coast-salt-hulk-body-e-f1-v1': acoast_salt_hulk_body_e_f1_v1,
+  'coast-salt-hulk-body-e-f2-v1': acoast_salt_hulk_body_e_f2_v1,
+  'coast-salt-hulk-body-e-f3-v1': acoast_salt_hulk_body_e_f3_v1,
+  'coast-salt-hulk-body-e-f4-v1': acoast_salt_hulk_body_e_f4_v1,
+  'coast-salt-hulk-body-se-f0-v1': acoast_salt_hulk_body_se_f0_v1,
+  'coast-salt-hulk-body-se-f1-v1': acoast_salt_hulk_body_se_f1_v1,
+  'coast-salt-hulk-body-se-f2-v1': acoast_salt_hulk_body_se_f2_v1,
+  'coast-salt-hulk-body-se-f3-v1': acoast_salt_hulk_body_se_f3_v1,
+  'coast-salt-hulk-body-se-f4-v1': acoast_salt_hulk_body_se_f4_v1,
+  'coast-salt-hulk-body-s-f0-v1': acoast_salt_hulk_body_s_f0_v1,
+  'coast-salt-hulk-body-s-f1-v1': acoast_salt_hulk_body_s_f1_v1,
+  'coast-salt-hulk-body-s-f2-v1': acoast_salt_hulk_body_s_f2_v1,
+  'coast-salt-hulk-body-s-f3-v1': acoast_salt_hulk_body_s_f3_v1,
+  'coast-salt-hulk-body-s-f4-v1': acoast_salt_hulk_body_s_f4_v1,
+  'coast-salt-hulk-body-ne-f0-v1': acoast_salt_hulk_body_ne_f0_v1,
+  'coast-salt-hulk-body-ne-f1-v1': acoast_salt_hulk_body_ne_f1_v1,
+  'coast-salt-hulk-body-ne-f2-v1': acoast_salt_hulk_body_ne_f2_v1,
+  'coast-salt-hulk-body-ne-f3-v1': acoast_salt_hulk_body_ne_f3_v1,
+  'coast-salt-hulk-body-ne-f4-v1': acoast_salt_hulk_body_ne_f4_v1,
+  'coast-salt-hulk-body-n-f0-v1': acoast_salt_hulk_body_n_f0_v1,
+  'coast-salt-hulk-body-n-f1-v1': acoast_salt_hulk_body_n_f1_v1,
+  'coast-salt-hulk-body-n-f2-v1': acoast_salt_hulk_body_n_f2_v1,
+  'coast-salt-hulk-body-n-f3-v1': acoast_salt_hulk_body_n_f3_v1,
+  'coast-salt-hulk-body-n-f4-v1': acoast_salt_hulk_body_n_f4_v1,
+  'coast-salt-hulk-corpse-e-v1': acoast_salt_hulk_corpse_e_v1,
+  'coast-mercenary-scout-body-e-f0-v1': acoast_mercenary_scout_body_e_f0_v1,
+  'coast-mercenary-scout-body-e-f1-v1': acoast_mercenary_scout_body_e_f1_v1,
+  'coast-mercenary-scout-body-e-f2-v1': acoast_mercenary_scout_body_e_f2_v1,
+  'coast-mercenary-scout-body-e-f3-v1': acoast_mercenary_scout_body_e_f3_v1,
+  'coast-mercenary-scout-body-e-f4-v1': acoast_mercenary_scout_body_e_f4_v1,
+  'coast-mercenary-scout-body-se-f0-v1': acoast_mercenary_scout_body_se_f0_v1,
+  'coast-mercenary-scout-body-se-f1-v1': acoast_mercenary_scout_body_se_f1_v1,
+  'coast-mercenary-scout-body-se-f2-v1': acoast_mercenary_scout_body_se_f2_v1,
+  'coast-mercenary-scout-body-se-f3-v1': acoast_mercenary_scout_body_se_f3_v1,
+  'coast-mercenary-scout-body-se-f4-v1': acoast_mercenary_scout_body_se_f4_v1,
+  'coast-mercenary-scout-body-s-f0-v1': acoast_mercenary_scout_body_s_f0_v1,
+  'coast-mercenary-scout-body-s-f1-v1': acoast_mercenary_scout_body_s_f1_v1,
+  'coast-mercenary-scout-body-s-f2-v1': acoast_mercenary_scout_body_s_f2_v1,
+  'coast-mercenary-scout-body-s-f3-v1': acoast_mercenary_scout_body_s_f3_v1,
+  'coast-mercenary-scout-body-s-f4-v1': acoast_mercenary_scout_body_s_f4_v1,
+  'coast-mercenary-scout-body-ne-f0-v1': acoast_mercenary_scout_body_ne_f0_v1,
+  'coast-mercenary-scout-body-ne-f1-v1': acoast_mercenary_scout_body_ne_f1_v1,
+  'coast-mercenary-scout-body-ne-f2-v1': acoast_mercenary_scout_body_ne_f2_v1,
+  'coast-mercenary-scout-body-ne-f3-v1': acoast_mercenary_scout_body_ne_f3_v1,
+  'coast-mercenary-scout-body-ne-f4-v1': acoast_mercenary_scout_body_ne_f4_v1,
+  'coast-mercenary-scout-body-n-f0-v1': acoast_mercenary_scout_body_n_f0_v1,
+  'coast-mercenary-scout-body-n-f1-v1': acoast_mercenary_scout_body_n_f1_v1,
+  'coast-mercenary-scout-body-n-f2-v1': acoast_mercenary_scout_body_n_f2_v1,
+  'coast-mercenary-scout-body-n-f3-v1': acoast_mercenary_scout_body_n_f3_v1,
+  'coast-mercenary-scout-body-n-f4-v1': acoast_mercenary_scout_body_n_f4_v1,
+  'coast-mercenary-scout-corpse-e-v1': acoast_mercenary_scout_corpse_e_v1,
+  'coast-mercenary-assault-body-e-f0-v1': acoast_mercenary_assault_body_e_f0_v1,
+  'coast-mercenary-assault-body-e-f1-v1': acoast_mercenary_assault_body_e_f1_v1,
+  'coast-mercenary-assault-body-e-f2-v1': acoast_mercenary_assault_body_e_f2_v1,
+  'coast-mercenary-assault-body-e-f3-v1': acoast_mercenary_assault_body_e_f3_v1,
+  'coast-mercenary-assault-body-e-f4-v1': acoast_mercenary_assault_body_e_f4_v1,
+  'coast-mercenary-assault-body-se-f0-v1': acoast_mercenary_assault_body_se_f0_v1,
+  'coast-mercenary-assault-body-se-f1-v1': acoast_mercenary_assault_body_se_f1_v1,
+  'coast-mercenary-assault-body-se-f2-v1': acoast_mercenary_assault_body_se_f2_v1,
+  'coast-mercenary-assault-body-se-f3-v1': acoast_mercenary_assault_body_se_f3_v1,
+  'coast-mercenary-assault-body-se-f4-v1': acoast_mercenary_assault_body_se_f4_v1,
+  'coast-mercenary-assault-body-s-f0-v1': acoast_mercenary_assault_body_s_f0_v1,
+  'coast-mercenary-assault-body-s-f1-v1': acoast_mercenary_assault_body_s_f1_v1,
+  'coast-mercenary-assault-body-s-f2-v1': acoast_mercenary_assault_body_s_f2_v1,
+  'coast-mercenary-assault-body-s-f3-v1': acoast_mercenary_assault_body_s_f3_v1,
+  'coast-mercenary-assault-body-s-f4-v1': acoast_mercenary_assault_body_s_f4_v1,
+  'coast-mercenary-assault-body-ne-f0-v1': acoast_mercenary_assault_body_ne_f0_v1,
+  'coast-mercenary-assault-body-ne-f1-v1': acoast_mercenary_assault_body_ne_f1_v1,
+  'coast-mercenary-assault-body-ne-f2-v1': acoast_mercenary_assault_body_ne_f2_v1,
+  'coast-mercenary-assault-body-ne-f3-v1': acoast_mercenary_assault_body_ne_f3_v1,
+  'coast-mercenary-assault-body-ne-f4-v1': acoast_mercenary_assault_body_ne_f4_v1,
+  'coast-mercenary-assault-body-n-f0-v1': acoast_mercenary_assault_body_n_f0_v1,
+  'coast-mercenary-assault-body-n-f1-v1': acoast_mercenary_assault_body_n_f1_v1,
+  'coast-mercenary-assault-body-n-f2-v1': acoast_mercenary_assault_body_n_f2_v1,
+  'coast-mercenary-assault-body-n-f3-v1': acoast_mercenary_assault_body_n_f3_v1,
+  'coast-mercenary-assault-body-n-f4-v1': acoast_mercenary_assault_body_n_f4_v1,
+  'coast-mercenary-assault-corpse-e-v1': acoast_mercenary_assault_corpse_e_v1,
+  'coast-mercenary-support-body-e-f0-v1': acoast_mercenary_support_body_e_f0_v1,
+  'coast-mercenary-support-body-e-f1-v1': acoast_mercenary_support_body_e_f1_v1,
+  'coast-mercenary-support-body-e-f2-v1': acoast_mercenary_support_body_e_f2_v1,
+  'coast-mercenary-support-body-e-f3-v1': acoast_mercenary_support_body_e_f3_v1,
+  'coast-mercenary-support-body-e-f4-v1': acoast_mercenary_support_body_e_f4_v1,
+  'coast-mercenary-support-body-se-f0-v1': acoast_mercenary_support_body_se_f0_v1,
+  'coast-mercenary-support-body-se-f1-v1': acoast_mercenary_support_body_se_f1_v1,
+  'coast-mercenary-support-body-se-f2-v1': acoast_mercenary_support_body_se_f2_v1,
+  'coast-mercenary-support-body-se-f3-v1': acoast_mercenary_support_body_se_f3_v1,
+  'coast-mercenary-support-body-se-f4-v1': acoast_mercenary_support_body_se_f4_v1,
+  'coast-mercenary-support-body-s-f0-v1': acoast_mercenary_support_body_s_f0_v1,
+  'coast-mercenary-support-body-s-f1-v1': acoast_mercenary_support_body_s_f1_v1,
+  'coast-mercenary-support-body-s-f2-v1': acoast_mercenary_support_body_s_f2_v1,
+  'coast-mercenary-support-body-s-f3-v1': acoast_mercenary_support_body_s_f3_v1,
+  'coast-mercenary-support-body-s-f4-v1': acoast_mercenary_support_body_s_f4_v1,
+  'coast-mercenary-support-body-ne-f0-v1': acoast_mercenary_support_body_ne_f0_v1,
+  'coast-mercenary-support-body-ne-f1-v1': acoast_mercenary_support_body_ne_f1_v1,
+  'coast-mercenary-support-body-ne-f2-v1': acoast_mercenary_support_body_ne_f2_v1,
+  'coast-mercenary-support-body-ne-f3-v1': acoast_mercenary_support_body_ne_f3_v1,
+  'coast-mercenary-support-body-ne-f4-v1': acoast_mercenary_support_body_ne_f4_v1,
+  'coast-mercenary-support-body-n-f0-v1': acoast_mercenary_support_body_n_f0_v1,
+  'coast-mercenary-support-body-n-f1-v1': acoast_mercenary_support_body_n_f1_v1,
+  'coast-mercenary-support-body-n-f2-v1': acoast_mercenary_support_body_n_f2_v1,
+  'coast-mercenary-support-body-n-f3-v1': acoast_mercenary_support_body_n_f3_v1,
+  'coast-mercenary-support-body-n-f4-v1': acoast_mercenary_support_body_n_f4_v1,
+  'coast-mercenary-support-corpse-e-v1': acoast_mercenary_support_corpse_e_v1,
+  'coast-recovery-leader-body-e-f0-v1': acoast_recovery_leader_body_e_f0_v1,
+  'coast-recovery-leader-body-e-f1-v1': acoast_recovery_leader_body_e_f1_v1,
+  'coast-recovery-leader-body-e-f2-v1': acoast_recovery_leader_body_e_f2_v1,
+  'coast-recovery-leader-body-e-f3-v1': acoast_recovery_leader_body_e_f3_v1,
+  'coast-recovery-leader-body-e-f4-v1': acoast_recovery_leader_body_e_f4_v1,
+  'coast-recovery-leader-body-se-f0-v1': acoast_recovery_leader_body_se_f0_v1,
+  'coast-recovery-leader-body-se-f1-v1': acoast_recovery_leader_body_se_f1_v1,
+  'coast-recovery-leader-body-se-f2-v1': acoast_recovery_leader_body_se_f2_v1,
+  'coast-recovery-leader-body-se-f3-v1': acoast_recovery_leader_body_se_f3_v1,
+  'coast-recovery-leader-body-se-f4-v1': acoast_recovery_leader_body_se_f4_v1,
+  'coast-recovery-leader-body-s-f0-v1': acoast_recovery_leader_body_s_f0_v1,
+  'coast-recovery-leader-body-s-f1-v1': acoast_recovery_leader_body_s_f1_v1,
+  'coast-recovery-leader-body-s-f2-v1': acoast_recovery_leader_body_s_f2_v1,
+  'coast-recovery-leader-body-s-f3-v1': acoast_recovery_leader_body_s_f3_v1,
+  'coast-recovery-leader-body-s-f4-v1': acoast_recovery_leader_body_s_f4_v1,
+  'coast-recovery-leader-body-ne-f0-v1': acoast_recovery_leader_body_ne_f0_v1,
+  'coast-recovery-leader-body-ne-f1-v1': acoast_recovery_leader_body_ne_f1_v1,
+  'coast-recovery-leader-body-ne-f2-v1': acoast_recovery_leader_body_ne_f2_v1,
+  'coast-recovery-leader-body-ne-f3-v1': acoast_recovery_leader_body_ne_f3_v1,
+  'coast-recovery-leader-body-ne-f4-v1': acoast_recovery_leader_body_ne_f4_v1,
+  'coast-recovery-leader-body-n-f0-v1': acoast_recovery_leader_body_n_f0_v1,
+  'coast-recovery-leader-body-n-f1-v1': acoast_recovery_leader_body_n_f1_v1,
+  'coast-recovery-leader-body-n-f2-v1': acoast_recovery_leader_body_n_f2_v1,
+  'coast-recovery-leader-body-n-f3-v1': acoast_recovery_leader_body_n_f3_v1,
+  'coast-recovery-leader-body-n-f4-v1': acoast_recovery_leader_body_n_f4_v1,
+  'coast-recovery-leader-corpse-e-v1': acoast_recovery_leader_corpse_e_v1,
+  'coast-blockade-sentry-body-e-f0-v1': acoast_blockade_sentry_body_e_f0_v1,
+  'coast-blockade-sentry-body-e-f1-v1': acoast_blockade_sentry_body_e_f1_v1,
+  'coast-blockade-sentry-body-e-f2-v1': acoast_blockade_sentry_body_e_f2_v1,
+  'coast-blockade-sentry-body-e-f3-v1': acoast_blockade_sentry_body_e_f3_v1,
+  'coast-blockade-sentry-body-e-f4-v1': acoast_blockade_sentry_body_e_f4_v1,
+  'coast-blockade-sentry-body-se-f0-v1': acoast_blockade_sentry_body_se_f0_v1,
+  'coast-blockade-sentry-body-se-f1-v1': acoast_blockade_sentry_body_se_f1_v1,
+  'coast-blockade-sentry-body-se-f2-v1': acoast_blockade_sentry_body_se_f2_v1,
+  'coast-blockade-sentry-body-se-f3-v1': acoast_blockade_sentry_body_se_f3_v1,
+  'coast-blockade-sentry-body-se-f4-v1': acoast_blockade_sentry_body_se_f4_v1,
+  'coast-blockade-sentry-body-s-f0-v1': acoast_blockade_sentry_body_s_f0_v1,
+  'coast-blockade-sentry-body-s-f1-v1': acoast_blockade_sentry_body_s_f1_v1,
+  'coast-blockade-sentry-body-s-f2-v1': acoast_blockade_sentry_body_s_f2_v1,
+  'coast-blockade-sentry-body-s-f3-v1': acoast_blockade_sentry_body_s_f3_v1,
+  'coast-blockade-sentry-body-s-f4-v1': acoast_blockade_sentry_body_s_f4_v1,
+  'coast-blockade-sentry-body-ne-f0-v1': acoast_blockade_sentry_body_ne_f0_v1,
+  'coast-blockade-sentry-body-ne-f1-v1': acoast_blockade_sentry_body_ne_f1_v1,
+  'coast-blockade-sentry-body-ne-f2-v1': acoast_blockade_sentry_body_ne_f2_v1,
+  'coast-blockade-sentry-body-ne-f3-v1': acoast_blockade_sentry_body_ne_f3_v1,
+  'coast-blockade-sentry-body-ne-f4-v1': acoast_blockade_sentry_body_ne_f4_v1,
+  'coast-blockade-sentry-body-n-f0-v1': acoast_blockade_sentry_body_n_f0_v1,
+  'coast-blockade-sentry-body-n-f1-v1': acoast_blockade_sentry_body_n_f1_v1,
+  'coast-blockade-sentry-body-n-f2-v1': acoast_blockade_sentry_body_n_f2_v1,
+  'coast-blockade-sentry-body-n-f3-v1': acoast_blockade_sentry_body_n_f3_v1,
+  'coast-blockade-sentry-body-n-f4-v1': acoast_blockade_sentry_body_n_f4_v1,
+  'coast-blockade-sentry-corpse-e-v1': acoast_blockade_sentry_corpse_e_v1,
+  'coast-blockade-patrol-body-e-f0-v1': acoast_blockade_patrol_body_e_f0_v1,
+  'coast-blockade-patrol-body-e-f1-v1': acoast_blockade_patrol_body_e_f1_v1,
+  'coast-blockade-patrol-body-e-f2-v1': acoast_blockade_patrol_body_e_f2_v1,
+  'coast-blockade-patrol-body-e-f3-v1': acoast_blockade_patrol_body_e_f3_v1,
+  'coast-blockade-patrol-body-e-f4-v1': acoast_blockade_patrol_body_e_f4_v1,
+  'coast-blockade-patrol-body-se-f0-v1': acoast_blockade_patrol_body_se_f0_v1,
+  'coast-blockade-patrol-body-se-f1-v1': acoast_blockade_patrol_body_se_f1_v1,
+  'coast-blockade-patrol-body-se-f2-v1': acoast_blockade_patrol_body_se_f2_v1,
+  'coast-blockade-patrol-body-se-f3-v1': acoast_blockade_patrol_body_se_f3_v1,
+  'coast-blockade-patrol-body-se-f4-v1': acoast_blockade_patrol_body_se_f4_v1,
+  'coast-blockade-patrol-body-s-f0-v1': acoast_blockade_patrol_body_s_f0_v1,
+  'coast-blockade-patrol-body-s-f1-v1': acoast_blockade_patrol_body_s_f1_v1,
+  'coast-blockade-patrol-body-s-f2-v1': acoast_blockade_patrol_body_s_f2_v1,
+  'coast-blockade-patrol-body-s-f3-v1': acoast_blockade_patrol_body_s_f3_v1,
+  'coast-blockade-patrol-body-s-f4-v1': acoast_blockade_patrol_body_s_f4_v1,
+  'coast-blockade-patrol-body-ne-f0-v1': acoast_blockade_patrol_body_ne_f0_v1,
+  'coast-blockade-patrol-body-ne-f1-v1': acoast_blockade_patrol_body_ne_f1_v1,
+  'coast-blockade-patrol-body-ne-f2-v1': acoast_blockade_patrol_body_ne_f2_v1,
+  'coast-blockade-patrol-body-ne-f3-v1': acoast_blockade_patrol_body_ne_f3_v1,
+  'coast-blockade-patrol-body-ne-f4-v1': acoast_blockade_patrol_body_ne_f4_v1,
+  'coast-blockade-patrol-body-n-f0-v1': acoast_blockade_patrol_body_n_f0_v1,
+  'coast-blockade-patrol-body-n-f1-v1': acoast_blockade_patrol_body_n_f1_v1,
+  'coast-blockade-patrol-body-n-f2-v1': acoast_blockade_patrol_body_n_f2_v1,
+  'coast-blockade-patrol-body-n-f3-v1': acoast_blockade_patrol_body_n_f3_v1,
+  'coast-blockade-patrol-body-n-f4-v1': acoast_blockade_patrol_body_n_f4_v1,
+  'coast-blockade-patrol-corpse-e-v1': acoast_blockade_patrol_corpse_e_v1,
+  'coast-blockade-sergeant-body-e-f0-v1': acoast_blockade_sergeant_body_e_f0_v1,
+  'coast-blockade-sergeant-body-e-f1-v1': acoast_blockade_sergeant_body_e_f1_v1,
+  'coast-blockade-sergeant-body-e-f2-v1': acoast_blockade_sergeant_body_e_f2_v1,
+  'coast-blockade-sergeant-body-e-f3-v1': acoast_blockade_sergeant_body_e_f3_v1,
+  'coast-blockade-sergeant-body-e-f4-v1': acoast_blockade_sergeant_body_e_f4_v1,
+  'coast-blockade-sergeant-body-se-f0-v1': acoast_blockade_sergeant_body_se_f0_v1,
+  'coast-blockade-sergeant-body-se-f1-v1': acoast_blockade_sergeant_body_se_f1_v1,
+  'coast-blockade-sergeant-body-se-f2-v1': acoast_blockade_sergeant_body_se_f2_v1,
+  'coast-blockade-sergeant-body-se-f3-v1': acoast_blockade_sergeant_body_se_f3_v1,
+  'coast-blockade-sergeant-body-se-f4-v1': acoast_blockade_sergeant_body_se_f4_v1,
+  'coast-blockade-sergeant-body-s-f0-v1': acoast_blockade_sergeant_body_s_f0_v1,
+  'coast-blockade-sergeant-body-s-f1-v1': acoast_blockade_sergeant_body_s_f1_v1,
+  'coast-blockade-sergeant-body-s-f2-v1': acoast_blockade_sergeant_body_s_f2_v1,
+  'coast-blockade-sergeant-body-s-f3-v1': acoast_blockade_sergeant_body_s_f3_v1,
+  'coast-blockade-sergeant-body-s-f4-v1': acoast_blockade_sergeant_body_s_f4_v1,
+  'coast-blockade-sergeant-body-ne-f0-v1': acoast_blockade_sergeant_body_ne_f0_v1,
+  'coast-blockade-sergeant-body-ne-f1-v1': acoast_blockade_sergeant_body_ne_f1_v1,
+  'coast-blockade-sergeant-body-ne-f2-v1': acoast_blockade_sergeant_body_ne_f2_v1,
+  'coast-blockade-sergeant-body-ne-f3-v1': acoast_blockade_sergeant_body_ne_f3_v1,
+  'coast-blockade-sergeant-body-ne-f4-v1': acoast_blockade_sergeant_body_ne_f4_v1,
+  'coast-blockade-sergeant-body-n-f0-v1': acoast_blockade_sergeant_body_n_f0_v1,
+  'coast-blockade-sergeant-body-n-f1-v1': acoast_blockade_sergeant_body_n_f1_v1,
+  'coast-blockade-sergeant-body-n-f2-v1': acoast_blockade_sergeant_body_n_f2_v1,
+  'coast-blockade-sergeant-body-n-f3-v1': acoast_blockade_sergeant_body_n_f3_v1,
+  'coast-blockade-sergeant-body-n-f4-v1': acoast_blockade_sergeant_body_n_f4_v1,
+  'coast-blockade-sergeant-corpse-e-v1': acoast_blockade_sergeant_corpse_e_v1,
 };
 
 let loaded: Promise<Map<string, HTMLCanvasElement>> | null = null;

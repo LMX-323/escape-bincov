@@ -122,6 +122,14 @@ export function paintArm(kind: ActorKind, variant?: string): HTMLCanvasElement {
     'raider-gunner': ['#242321', '#5b5854', '#3e3d3d'],
     'raider-lookout': ['#252729', '#747c82', '#505b65'],
     'raider-boss': ['#242321', '#6b6651', '#454435'],
+    'tide-ritualist': ['#24272b', '#687486', '#394454'],
+    'mercenary-scout': ['#24272a', '#6b705d', '#41463e'],
+    'mercenary-assault': ['#24272a', '#626658', '#3e423b'],
+    'mercenary-support': ['#232629', '#64675b', '#3c413b'],
+    'recovery-leader': ['#24272a', '#68705a', '#41493d'],
+    'blockade-sentry': ['#24272d', '#7b8a9b', '#4b5a6c'],
+    'blockade-patrol': ['#24272d', '#718095', '#46576b'],
+    'blockade-sergeant': ['#24272d', '#78889c', '#42556c'],
   };
   const [ink, light, base] = sleeves[variant ?? ''] ?? (kind === 'player' ? ['#242321', '#59604a', '#41443a'] : [P.ink, LOOKS[kind === 'creature' ? 'scav' : kind].coatL, LOOKS[kind === 'creature' ? 'scav' : kind].coat]);
   const { c, g } = canvas(1, 4);
@@ -133,6 +141,14 @@ export function paintArm(kind: ActorKind, variant?: string): HTMLCanvasElement {
 export interface WeaponArt { canvas: HTMLCanvasElement; pivotX: number; pivotY: number; forward: number; muzzle: number; support?: number; oneHanded?: boolean }
 export function paintWeapon(id: string, glove: string): WeaponArt {
   if (id === 'claw') { const { c } = canvas(2, 2); return { canvas: c, pivotX: 0, pivotY: 0, forward: 0, muzzle: 14 }; }
+  if (id === 'polearm') {
+    const { c, g } = canvas(46, 9);
+    rect(g, '#5c4937', 2, 4, 37, 2); rect(g, '#8a7458', 2, 4, 35, 1);
+    rect(g, '#778b8c', 36, 2, 2, 5); rect(g, '#b5c3bf', 37, 1, 7, 1);
+    rect(g, '#b5c3bf', 37, 4, 8, 1); rect(g, '#778b8c', 37, 7, 7, 1);
+    rect(g, glove, 11, 3, 3, 3); rect(g, glove, 23, 3, 3, 3);
+    outline(c); return { canvas: c, pivotX: 12, pivotY: 4, forward: 2, muzzle: 34, support: 12 };
+  }
   if (id === 'pistol') {
     const { c, g } = canvas(16, 8);
     rect(g, '#2c2c29', 3, 3, 11, 2); rect(g, '#4a4a45', 3, 3, 11, 1); rect(g, '#2c2c29', 3, 4, 3, 3); rect(g, glove, 2, 4, 3, 3); dot(g, '#6a6a62', 13, 2);
