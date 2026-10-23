@@ -5,6 +5,7 @@ import { tideFlooded } from '../spatial';
 import { isMallWorld } from '../mall-world';
 import { rpgMultipliers } from '../rpg';
 import { coneOf, driftOf } from '../shooting';
+import { breathChance } from '../breath';
 import type { CoastRaidRuntime } from './runtime';
 import type { ActorView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
 
@@ -130,6 +131,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
             weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: r.sampleGun ? 999 : w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
             aim: { mode: grip.mode, cone: coneOf(r.handling, w, grip, body), drift: driftOf(r.handling, grip, body),
                 raise: r.handling.raise, sway: r.handling.sway, bloom: r.handling.bloom },
+            breath: r.breathOwned ? { target: r.breath.target, seconds: r.breath.seconds, chance: breathChance(r.breath.seconds) } : null,
             heals: D.count(loadout.bag, 'bandage') + D.count(loadout.bag, 'medkit'), hitDirections: r.hitDirections.map(h => ({ angle: h.angle, left: h.left })) },
         phase: r.ending ? 'ending' : r.paused ? 'paused' : r.overlay ? 'blocked' : 'running',
     };

@@ -231,6 +231,18 @@ export type AimView = Readonly<{
     sway: number;
     bloom: number;
 }>;
+/**
+ * The breath charge (technique-15-a, src/breath.ts) as the next shot would snapshot it. Display only: the Runtime times
+ * the charge and decides every shot, and a view shows these numbers without deriving them again.
+ */
+export type BreathView = Readonly<{
+    /** Enemy uid the precise aim rests on, or null: no charge. */
+    target: string | null;
+    /** Effective seconds aimed at `target`, uncapped (0 without one). */
+    seconds: number;
+    /** The breath source's own chance, 0 to 0.3: 0.1 per second, full from 3 s on. It counts only on a hit on `target`. */
+    chance: number;
+}>;
 export type HudView = Readonly<{
     hp: number;
     maxHp: number;
@@ -250,6 +262,8 @@ export type HudView = Readonly<{
         reloading: boolean;
     }>;
     aim: AimView;
+    /** Null unless this raid owns technique-15-a (a v3 raid). With the knife drawn the charge stays empty. */
+    breath: BreathView | null;
     heals: number;
     hitDirections: readonly Readonly<{
         angle: number | null;
