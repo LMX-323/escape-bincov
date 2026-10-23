@@ -552,6 +552,7 @@ export class CoastView {
         }
         if (!shown(a)) break;
         const angle = tip?.angle ?? e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
+        if (a.tactics?.archetype === 'sac-spitter') { this.fx.acid(a.x, a.y, angle, this.rnd); break; }
         const art = this.tex.weapon(a.weapon, a.kind), c = Math.cos(angle), s = Math.sin(angle);
         const sp = new Sprite(this.tex.muzzle(0)); sp.anchor.set(.5); sp.blendMode = 'add';
         const reach = art.muzzle * heldLength(angle);
@@ -580,6 +581,9 @@ export class CoastView {
       }
       case 'impact': {
         if (!shown(e.lastFree)) break;
+        if (e.owner && actor(e.owner)?.tactics?.archetype === 'sac-spitter') {
+          this.fx.acid(e.lastFree.x, e.lastFree.y, 0, this.rnd, true); break;
+        }
         if (e.reason === 'blocked') {
           const b = this.bullets.get(e.bullet), v = b ? Math.hypot(b.vx, b.vy) || 1 : 1;
           const n = e.normal ?? (b ? { x: -b.vx / v, y: -b.vy / v } : { x: 0, y: 1 });
@@ -772,8 +776,10 @@ export class CoastView {
   }
   private syncBullets(f: ViewFrame) {
     const seen = new Set<string>();
+    const spitters = new Set(f.actors.filter(a => a.tactics?.archetype === 'sac-spitter').map(a => a.uid));
     for (const b of f.bullets) {
       seen.add(b.uid);
+      const acid = spitters.has(b.owner ?? ''), height = acid ? 7 : AIM_H;
       let e = this.bullets.get(b.uid);
       if (!e) { e = { g: new Graphics(), born: { x: b.x, y: b.y }, vx: b.vx, vy: b.vy, from: null, seen: null, off: { x: 0, y: 0 } }; this.sorted.addChild(e.g); this.bullets.set(b.uid, e); }
       e.vx = b.vx; e.vy = b.vy;
@@ -781,18 +787,21 @@ export class CoastView {
       const v = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / v, uy = b.vy / v;
       // The tracer runs parallel to the bullet's own path, shifted by `off` so it leaves the drawn muzzle (a pellet's spread
       // carries it at most a few px from the gun's line there); hits and impacts stay on the bullet itself.
-      const headX = b.x + e.off.x, headY = b.y - AIM_H + e.off.y, hx = Math.round(headX), hy = Math.round(headY);
+      const headX = b.x + e.off.x, headY = b.y - height + e.off.y, hx = Math.round(headX), hy = Math.round(headY);
       if (show && !e.seen) e.seen = { x: headX, y: headY };
       // A tracer leaves the drawn muzzle: inside the barrel nothing shows, and the tail never reaches back past the muzzle
       // or past where the head was first shown. Without a known muzzle (a bullet already flying at load) it starts where
       // it was first published.
-      const start = e.from ?? { x: e.born.x, y: e.born.y - AIM_H };
+      const start = e.from ?? { x: e.born.x, y: e.born.y - height };
       const out = (headX - start.x) * ux + (headY - start.y) * uy - (e.from ? 0 : 3);
       const back = e.seen ? (headX - e.seen.x) * ux + (headY - e.seen.y) * uy : 0;
       const len = Math.min(b.enemy ? 8 : 14, out, back);
       e.g.clear();
-      if (len > 0) e.g.moveTo(hx - ux * len, hy - uy * len).lineTo(hx, hy).stroke({ width: 1, color: b.enemy ? 0xe48c64 : 0xffe6a8, alpha: .55 });
-      if (out > 0) e.g.rect(hx, hy, 1, 1).fill(b.enemy ? 0xffc29a : 0xfff6d8);
+      if (len > 0) e.g.moveTo(hx - ux * len, hy - uy * len).lineTo(hx, hy).stroke({ width: acid ? 2 : 1, color: acid ? 0x9da758 : b.enemy ? 0xe48c64 : 0xffe6a8, alpha: .55 });
+      if (out > 0) {
+        if (acid) e.g.circle(hx, hy, 2).fill(0xb6c16e);
+        else e.g.rect(hx, hy, 1, 1).fill(b.enemy ? 0xffc29a : 0xfff6d8);
+      }
       e.g.zIndex = b.y + .1; e.g.visible = show;
     }
     for (const [uid, e] of this.bullets) if (!seen.has(uid)) { e.g.visible = false; queueMicrotask(() => { if (this.bullets.get(uid) === e) { e.g.destroy(); this.bullets.delete(uid); } }); }

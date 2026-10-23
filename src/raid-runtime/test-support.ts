@@ -126,5 +126,7 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
 export function createTestCoastHost(session: SessionState, saves: SaveSession, search: string) {
     if (new URLSearchParams(search).get('test') !== '1') throw new Error('Runtime fixtures require ?test=1.');
     const core = new CoastRaidRuntime(session, saves);
+    // Art fixtures must freeze before the host's first tick, not after an asynchronous browser round trip.
+    core.freezeAI = new URLSearchParams(search).get('freezeAI') === '1';
     return { ...wrapCoastRuntime(core, session, saves), driver: createRuntimeTestDriver(core, search) };
 }

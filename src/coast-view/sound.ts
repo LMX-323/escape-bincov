@@ -30,6 +30,7 @@ export class SampleSound {
   private beatLeft = 0;
   private listener = { x: 0, y: 0 };
   private where = new Map<string, { x: number; y: number }>();
+  private spitters = new Set<string>();
   private trail = new Map<string, { x: number; y: number }>();
   private whizzed = new Set<string>();
   private ambience = '';
@@ -53,7 +54,9 @@ export class SampleSound {
     const p = f.player, w = f.hud.weapon;
     this.listener = { x: p.x, y: p.y };
     this.where.clear();
+    this.spitters.clear();
     for (const a of f.actors ?? []) this.where.set(a.uid, { x: a.x, y: a.y });
+    for (const a of f.actors ?? []) if (a.tactics?.archetype === 'sac-spitter') this.spitters.add(a.uid);
     if (!live || f.phase === 'ending') { this.stepLeft = 0; this.reloading = w.reloading; this.heals = f.hud.heals; return; }
     // Room tone: indoors (a revealed room or a layered floor) the sea closes in. A mall floor is indoors inside the
     // building's footprint only: its plaza and terrace are open air.
@@ -73,7 +76,7 @@ export class SampleSound {
     // Near misses: an enemy round whose path this frame passes within 30 px of the player.
     const seen = new Set<string>();
     for (const bl of f.bullets ?? []) {
-      if (!bl.enemy) continue;
+      if (!bl.enemy || this.spitters.has(bl.owner ?? '')) continue;
       seen.add(bl.uid);
       const from = this.trail.get(bl.uid) ?? { x: bl.x - bl.vx * dt, y: bl.y - bl.vy * dt };
       this.trail.set(bl.uid, { x: bl.x, y: bl.y });
@@ -97,6 +100,7 @@ export class SampleSound {
       case 'shot': {
         if (e.shooter === 'player') { this.out.shot(e.weapon); break; }
         const s = at(e.shooter) ?? (e.pellets[0] ? this.spot(e.pellets[0].origin.x, e.pellets[0].origin.y) : undefined);
+        if (this.spitters.has(e.shooter)) { if (actorShown(e.shooter)) this.out.shot('spit', s); break; }
         if (s) this.out.shot('enemy', s); else this.out.shot('enemy');
         break;
       }
@@ -110,7 +114,13 @@ export class SampleSound {
         else if (shown(e.at) && actorShown(e.uid)) this.out.hit(this.spot(e.at.x, e.at.y));
         break;
       }
-      case 'impact': if (e.reason === 'blocked' && (e.surface === 'wall' || e.surface === 'door') && shown(e.lastFree)) { const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s); } break;
+      case 'impact':
+        if (this.spitters.has(e.owner ?? '')) {
+          if (shown(e.lastFree)) this.out.shot('acid-hit', this.spot(e.lastFree.x, e.lastFree.y));
+        } else if (e.reason === 'blocked' && (e.surface === 'wall' || e.surface === 'door') && shown(e.lastFree)) {
+          const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s);
+        }
+        break;
       case 'looted': this.out.stow(); break;
       case 'door': { const s = e.by === 'player' ? undefined : at(e.by); if (s) this.out.click(s); else this.out.click(); break; }
       default: break;

@@ -62,7 +62,7 @@ try {
         for (const { phase, role, name } of scenarios) {
             const saved = fixture(phase, role);
             if (name !== scenarios[0].name) await page.evaluate(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
-            await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs', { waitUntil: 'load' });
+            await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs&freezeAI=1', { waitUntil: 'load' });
             await page.locator('[data-action="enter"]').click(); await raidReady(page);
             await drive(page, 'freezeAI', true);
             const resume = page.locator('.coast-sample [data-do="resume"]');
@@ -77,7 +77,7 @@ try {
                     bodyArt, corpseArt, artStyle: h.view.tex.actorStyle(actor.kind, variant),
                     weapon: actor.weapon, version: JSON.parse(localStorage.getItem('escape-bincov.session.v2')).version };
             }, saved.uid);
-            assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase);
+            assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase, `${viewport.width}/${name}: saved phase survives mount`);
             if (phase !== 'corpse') assert.ok(actual.cue);
             assert.equal(actual.reloading, phase === 'reload');
             assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : archetype(role).weapon); assert.equal(actual.version, 7);
@@ -99,6 +99,43 @@ try {
             }
             const file = `${viewport.width}x${viewport.height}-${name}.png`;
             await page.screenshot({ path: resolve(out, file) }); report.screenshots.push(file); report.cases.push({ viewport, scenario: name, ...actual });
+            if (viewport.width === 1280 && role === 'sac-spitter' && phase === 'windup') {
+                // Presentation-only contract probe using the real saved actor. It does not claim a played encounter.
+                const acid = await page.evaluate(uid => {
+                    const h = window.__bincovSample.host, v = h.view, original = h.lastBatch;
+                    const a = original.frame.actors.find(a => a.uid === uid), p = { x: a.x + 30, y: a.y };
+                    const bullet = { uid: 'art-acid', owner: uid, enemy: true, x: a.x, y: a.y, vx: 180, vy: 0 };
+                    const publish = (events, bullets = []) => v.present({ ...original, events, frame: { ...original.frame, bullets } }, 0);
+                    const event = detail => ({ ...detail, stamp: original.stamp });
+                    const shot = event({ type: 'shot', shooter: uid, weapon: 'claw', shotId: 'art-acid',
+                        pellets: [{ bullet: 'art-acid', origin: { x: a.x, y: a.y }, angle: 0 }] });
+                    const impact = event({ type: 'impact', bullet: 'art-acid', owner: uid, reason: 'range', lastFree: p,
+                        contact: null, normal: null, surface: null, target: null });
+                    v.fx.clear(); const muzzleBefore = v.muzzles.length;
+                    publish([], [bullet]); publish([shot], [{ ...bullet, x: p.x }]);
+                    const box = v.bullets.get('art-acid').g.getLocalBounds();
+                    const fired = { particles: v.fx.live.length, muzzles: v.muzzles.length - muzzleBefore, projectileHeight: box.height, projectileY: box.y - a.y };
+                    v.fx.clear(); publish([impact]);
+                    const landed = { particles: v.fx.live.length, permanent: v.fx.decals.length };
+                    v.fx.update(2); landed.remaining = v.fx.count;
+                    // Diagnostic unrevealed room around the saved actor: exercise the real visibility predicate.
+                    // This temporary view map never enters Runtime or storage.
+                    const hidden = structuredClone(original), map = v.map;
+                    const room = { id: 'art-hidden', name: 'probe', x: a.x - 60, y: a.y - 60, w: 150, h: 120, inside: true, sealed: true, buildingId: null };
+                    v.map = { ...map, regions: [...map.regions, room] };
+                    hidden.frame.actors = hidden.frame.actors.map(actor => actor.uid === uid ? { ...actor, regionId: room.id } : actor);
+                    v.present({ ...hidden, events: [shot, impact] }, 0);
+                    const hiddenParticles = v.fx.count;
+                    v.map = map;
+                    v.present({ ...original, events: [] }, 0);
+                    return { fired, landed, hiddenParticles };
+                }, saved.uid);
+                assert.equal(acid.fired.muzzles, 0); assert.equal(acid.fired.particles, 4);
+                assert.ok(acid.fired.projectileHeight >= 4 && acid.fired.projectileY >= -10 && acid.fired.projectileY <= -6);
+                assert.deepEqual(acid.landed, { particles: 7, permanent: 0, remaining: 0 });
+                assert.equal(acid.hiddenParticles, 0);
+                report.cases.push({ viewport, scenario: 'spit-presentation-contract', ...acid });
+            }
         }
         await context.close();
     }

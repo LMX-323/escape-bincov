@@ -172,6 +172,11 @@ export class SynthAudio {
   }
 
   shot(kind = 'pistol', spot?: Spot): void {
+    if (kind === 'spit') {
+      this.hiss(.22, .28, 180, 0, spot); this.hiss(.12, .2, 260, .09, spot);
+      this.tone(150, .18, .12, 'triangle', 48, 0, spot); return;
+    }
+    if (kind === 'acid-hit') { this.hiss(.2, .16, 240, 0, spot); this.tone(100, .09, .05, 'sine', 38, 0, spot); return; }
     if (kind === 'knife') { this.hiss(0.12, 0.35, 900, 0, spot); this.tone(320, 0.08, 0.05, 'triangle', 90, 0, spot); return; }
     const shotgun = kind === 'shotgun';
     const level = kind === 'enemy' ? 0.55 : 1;
