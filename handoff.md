@@ -2,6 +2,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击抖动方向（`fix/hurt-kick-direction`，起点 main `04736f7`，已同步 #93 `98c69b4`）：维护者决定受击抖动改为顺着子弹方向被打退，血迹返溅和来弹方向提示不变。`hurt` 事件的 `angle` 不变，仍从受击者指回打击来源（逆着子弹、指向近战攻击者），契约里补了这句说明；`CoastView.onEvent` 只把 2 像素抖动取反。血迹仍按 `angle` 朝来源喷，HUD 来弹方向由 Runtime 另算，都没动；玩家自己中弹也改为顺弹道后移。`test:shooting` 检查 g 改为断言东向子弹抖 2,0、南向子弹抖 0,2，且这次命中的血滴全部朝射手；main 构建上实测只在方向一项失败（[报告与裁图](docs/evidence/issue75-kick-direction/README.md)）。命中当帧不闪白（60 帧/秒晚一帧）和 #75 其余 P0–P2 未动。准确 head、验证结果与 CI 见本分支 PR。
 - 2026-10-23 · [#60 Q-E08 检查导航](docs/tasks/check-navigation.md)（`agent/quality-checks`，起点 main `04736f7`）：按风险列出最少检查、前置与人工证据；脚本分类明确现役/诊断/历史/待确认，两个行动堆报告默认分目录。单测 647 项、CI 守卫 62 项、Perk 手动入口 14 项通过，打包产物与基线字节一致。原有两个 20 轮堆探针均完成，生命周期通过、堆趋势仍 PARTIAL，未跑 strict60，未替 #32 签收。使用与维护见 [CHECKS](docs/CHECKS.md)，等待承接 PR 的 CI 与维护者审阅。
 
 - 2026-10-23 · [#60 Q-B06 诊断 bundle 同源](docs/tasks/quality-entropy.md#q-b06-诊断-bundle-同源)（[PR #90](https://github.com/xuys2025/escape-bincov/pull/90)，`agent/diagnostic-bundle`）：游戏脚本的 esbuild 配置抽到导入无副作用的 `scripts/game-bundle.mjs`，正式构建与现役堆/F20 诊断共用 loader、target、define，诊断只在调用处覆盖压缩和探针；`pnpm package` 产物逐字节不变。调用 esbuild 的 8 个脚本已分现役/待确认/归档，CI 新增 `scripts/ci/game-bundle.test.mjs`。三个诊断现在能进入流程，#32 F20 仍 PARTIAL；两个堆诊断间歇出现 canvas 7→8（7 次里 4 次），未归因。

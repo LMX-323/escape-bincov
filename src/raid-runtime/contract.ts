@@ -344,6 +344,10 @@ export type ViewEventBody = {
     at: Point;
     damage: number;
     critical: boolean;
+    /**
+     * Radians from the hurt actor back toward the blow's source: against a bullet's flight, toward a melee attacker. Null
+     * when the source is unknown. The view sprays blood this way and knocks the body the opposite way.
+     */
     angle: number | null;
 } | {
     type: 'death';
