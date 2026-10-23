@@ -423,7 +423,9 @@ button.pcard:hover:not(:disabled) { border-color: var(--amber); background: #2b3
 .k-deploy .pbody { padding: 0; display: flex; min-height: 0; }
 .county-deploy { --brief: 340px; display: grid; grid-template-columns: minmax(0, 1fr) var(--brief); width: 100%; height: 100%; min-height: 0; }
 .county-survey { position: relative; display: grid; grid-template: 'chart' minmax(0, 1fr) / minmax(0, 1fr); min-width: 0; min-height: 0; background: #08100f; }
-.county-chart { grid-area: chart; position: relative; min-height: 0; overflow: hidden; isolation: isolate; container-type: size; }
+/* clip, not hidden: a hidden-overflow chart is still a scroll container, so focus or scrollIntoView could slide the map
+   (the ambient copy overflows it) and a kept element would keep that offset across repaints. */
+.county-chart { grid-area: chart; position: relative; min-height: 0; overflow: hidden; overflow: clip; isolation: isolate; container-type: size; }
 .county-heading, .county-legend, .county-legacy { grid-area: chart; z-index: 4; }
 .county-ambient { position: absolute; inset: -6%; background: var(--county-terrain) center / cover no-repeat; filter: blur(14px) saturate(.4) brightness(.36); }
 .county-stage { --lock: 64px; position: absolute; left: 50%; top: 50%; width: 100%; width: min(max(100cqw, 150cqh), 106cqw, 159cqh); aspect-ratio: 3 / 2; translate: -50% -50%; container-type: size;
@@ -514,7 +516,7 @@ button.pcard:hover:not(:disabled) { border-color: var(--amber); background: #2b3
 .region-eyebrow { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; color: #8fa395; font-size: 10px; letter-spacing: 2px; }
 .region-eyebrow strong { font-size: 11px; font-weight: 400; letter-spacing: 1px; color: var(--amber); }
 .region-brief.unbuilt .region-eyebrow strong { color: #d3d9cf; }
-.region-art { position: relative; margin: 0; aspect-ratio: 3 / 2; overflow: hidden; background: #0c1514; border: 1px solid #ffffff1f; scroll-margin-bottom: 128px;
+.region-art { position: relative; margin: 0; aspect-ratio: 3 / 2; overflow: hidden; overflow: clip; background: #0c1514; border: 1px solid #ffffff1f; scroll-margin-bottom: 128px;
   animation: art-in .42s cubic-bezier(.2, .7, .2, 1) backwards; }
 .region-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% var(--focus); filter: saturate(.86) brightness(.95); }
 .region-brief.unbuilt .region-art img { filter: grayscale(.7) brightness(.8) contrast(.95); }

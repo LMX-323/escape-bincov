@@ -150,6 +150,12 @@
 
 `test:raid-default`、`test:ui`、`test:title`、`test:systems`、`check:perk-ui`、`test:station` 跑在最终构建上。其余套件跑在最终构建之前的一版上；之后源码只加了 Chrome 不会生效的 `@supports not` 回退，并把路线字符串改为只算一次，在 Chrome 中行为不变。
 
+### CI 发现并修复的问题
+
+第一次推送（`657a099`）的完整 CI 中，batch-7 的 `test:raid-default` R10 在 390×844 失败：县医院、县医院旧址的标签越出地图左缘。CI 证据显示整张地图（底图与标记一起）向左平移了 23 px。原因是 `.county-chart` 用 `overflow: hidden`，它仍是可以被程序滚动的滚动容器；模糊填充层 `inset: -6%` 让它在右侧多出约 6% 的可滚动区域（390 px 宽时正好 23 px）。测试流程里的点击/聚焦在 Linux 上把它滚到了最右，而就地更新会保留同一个元素，这个偏移就一直留着。玩家用 Tab 聚焦边缘的标记时同样可能触发。
+
+修复：地图容器和情报插图改为 `overflow: clip`（只裁切、不可滚动；不支持的旧浏览器退回原来的 `hidden`）。R10 在测量前先把地图强行滚到最大，再检查舞台仍与边框居中（`offCentre`）。负对照：未修复的包在新断言下本机 1280×720 即失败；修复后本机 Chrome 155 与 CI 同版本的 Playwright Chromium 153.0.8010.12 均 11/11，`test:ui`、`test:mobile-ux`、`pnpm test`（651/651）、`pnpm check:ci`（62/62）复跑通过。修复后 head 的完整 CI 见 PR。
+
 实际截图（新档，无资源/进度修改；界面、标签与操作为实际实现，地图底图与插图本身是示意美术）：[1280×720](county-map-select/1280x720.png)、[1280×720 暂未开发区域](county-map-select/1280x720-unbuilt.png)、[1920×1080 滨湾商场](county-map-select/1920x1080.png)、[844×390 手机横屏](county-map-select/844x390.png)、[390×844 手机竖屏](county-map-select/390x844.png)。
 
 ### 仍未验证 / 留给后续

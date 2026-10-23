@@ -216,6 +216,8 @@ await check('R10 county map: previews cannot deploy, selections preserve the see
     // Scroll the freshly resolved node synchronously before measuring its layout.
     await root.locator('.county-heading').evaluate(el => el.scrollIntoView({ block: 'nearest' }));
     const geometry = await root.locator('.county-chart').evaluate(chart => {
+      // Focus and scrollIntoView scroll any scroll container; the chart must not be one, or the map slides off its frame.
+      chart.scrollLeft = chart.scrollTop = 999;
       const box = r => ({ left: r.left, right: r.right, top: r.top, bottom: r.bottom });
       const meet = (a, b) => Math.min(a.right, b.right) > Math.max(a.left, b.left) && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
       const frame = chart.getBoundingClientRect(), stage = chart.querySelector('.county-stage').getBoundingClientRect(), shadow = chart.getRootNode();
@@ -232,11 +234,12 @@ await check('R10 county map: previews cannot deploy, selections preserve the see
         // The pin centre is the landmark on the art, and a click there reaches that region's control.
         misplaced: marks.filter(m => m.off > 1.5).map(m => [m.name, Math.round(m.off * 10) / 10]),
         missed: marks.filter(m => m.el.matches('.county-node') && !m.el.contains(shadow.elementFromPoint(...m.pin))).map(m => m.name),
-        // The art keeps its 3:2 proportions and is cropped by at most 6% per axis to fill the chart.
+        // The art keeps its 3:2 proportions, is centred and is cropped by at most 6% per axis to fill the chart.
         stretched: Math.abs(stage.width / stage.height - 1.5) > .01, cropped: Math.max(1 - frame.width / stage.width, 1 - frame.height / stage.height) > .065,
+        offCentre: Math.abs(stage.left + stage.right - frame.left - frame.right) > 2 || Math.abs(stage.top + stage.bottom - frame.top - frame.bottom) > 2,
         overflow: chart.closest('.pbody').scrollWidth > chart.closest('.pbody').clientWidth + 1 };
     });
-    assert.deepEqual(geometry, { clipped: [], overlapping: [], covered: [], misplaced: [], missed: [], stretched: false, cropped: false, overflow: false }, `${width}x${height}`);
+    assert.deepEqual(geometry, { clipped: [], overlapping: [], covered: [], misplaced: [], missed: [], stretched: false, cropped: false, offCentre: false, overflow: false }, `${width}x${height}`);
     await shot(`R10-county-map-${width}x${height}`);
     // An unbuilt pick shows its briefing art without hiding the 暂未开发 status or the planning note.
     await root.locator('[data-region="lighthouse"]').click();
