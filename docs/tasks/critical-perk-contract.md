@@ -1,0 +1,59 @@
+# 暴击与 Perk 实现契约（#77 CP-T01）
+
+**状态：契约已定，实现进行中（分支 `agent/critical-perk`）。** 数值与玩法以[专项规格](../CRITICAL-PERK-DESIGN.md)为准，本页只定实现必须共用的数据形状、版本、时序和归属；勾选进度只在 [#77](https://github.com/xuys2025/escape-bincov/issues/77)。基线 main `44494ea`（含 #39 射击、#40 设计）。
+
+共用纯规则在 [src/perks.ts](../../src/perks.ts)：24 个稳定 ID、选择校验、上限加成、暴击来源与 `1 − Π(1 − p)` 合并、弹丸快照的命中概率。它只 `import type` 存档模块，避免和校验器形成运行时环。
+
+## 1. 版本与规则身份
+
+| 记录 | 现有 | 新增 | 含义 |
+| --- | --- | --- | --- |
+| `ExpansionState.version` | 1 无 RPG；2 RPG | **3** | v2 + `growth.perks`（必填）。只在基地边界升级：无进行中行动、无待结算，和 `upgradeToRpg` 同一路径（`SaveSession.enableRpg/ensureRpg`、hideout 导入路径、`fresh-start`） |
+| `LayeredRaid.version` | 1 无暴击；2 旧暴击（中心接近度相加，上限 25%） | **3** | 新暴击规则：来源相乘，玩家弹丸带快照。只由 v3 存档出击产生 |
+| `SessionRecord.version` | 3 无扩展；4 带扩展 | **5** | `expansion` 为 v3 时写 5，否则仍写 4。新增 `perksBackup`：首次写 v5 时保留当时 v4 记录原文，只存一次 |
+| 恢复备份封套 `formatVersion` | 2/3/4 | **5** | 与记录版本一致 |
+
+- 约束：expansion v3 ⇒ `raid` 为 null 或 v3；raid v3 ⇒ expansion v3。v1/v2 存档维持原约束。Perk 只存在于 v3，所以进行中的 v1/v2 行动不会受 Perk 或新暴击影响，结算回基地后才升级。
+- 经典 `RaidCheckpoint` 行动（只在 `?test=1` 可出击或来自旧档）不变：无暴击、无 Perk。
+- 旧客户端：`decodeSession` 只认 2/3/4，遇到 5 走原有“无法读取…当前进度未被覆盖”的拒绝路径，不覆盖原字节；旧封套解码同理拒绝 5。
+- 现有约 35 处 `version === 2` 判断的意思是“已启用 RPG”或“RPG 行动”，一律改为 `>= 2`；只有暴击结算按 raid 1/2/3 分三支，`entityUid` v2/v3 同格式。
+- 普通提交不得把 v5 降写为 v4（同现有 v4 降级保护）。显式导入旧备份走原有导入确认；结算态的 v4 导入在下次基地边界照常升级，带进行中 v2 行动的导入保持 v4 至结算。
+- 版本号协调：#78 敌人体系、#80 改枪若也需升级存档，先合并者占用这些编号，后合并者顺延，并各自补旧客户端拒绝测试。
+
+## 2. Perk 记录
+
+- `growth.perks: PerkId[]`，ID 形如 `strength-15-a`。v3 必须有，v1/v2 不得有（TS 类型可选，和 v2 的 `charm/awards` 一样由校验器按版本强制）。
+- 校验 `validPerkSelection`：按目录顺序（力量、体质、技巧；档位升序；a 在 b 前）、无重复、每档最多一项、`growth.permanent[属性] >= 档位`；最多 12 项。乱序、未知 ID、原型属性名、NaN 都拒绝，不做修正。
+- v2→v3 升级只初始化 `perks: []`，不代选、不补训练，其他字段原样保留。
+- `derivedLimits` 加上 `perkLimitBonus`（生命/耐力/负重固定加成相加，只应用一次）；严格校验用同一函数，所以合法新上限不会被拒。
+
+## 3. 暴击
+
+- 来源 `character | weapon | technique-15-a | technique-20-a | technique-30-a | focus`，每项 `{ id, chance }`，chance 为 0～1 有限数；同 ID 同值只算一次，同 ID 不同值、未知 ID、越界值抛错。
+- `WeaponDef` 增加必填 `crit`：手枪 0.05、霰弹 0.03、卡宾 0.08、匕首 0（匕首不走暴击），试枪场样本 M4A1 0.05（维护者 2026-10-23 确认）。新武器必须显式填写。
+- 快照 `BulletState.crit: { sources, multiplier, target }`：v3 行动的玩家弹丸必有；敌人弹丸及 v1/v2 行动不得有。`multiplier` 只能是 1.5 或 1.7（technique-25-a）；`target` 为 null 或敌人 UID；有 technique-15-a 来源当且仅当 `target` 非空。
+- 开枪顺序（`CoastRaidRuntime.shoot`）：确认能开火并扣弹 → 生成快照（开枪时的有效技巧、武器、已选 Perk、专注、屏息蓄力及目标）→ 每颗弹丸复制同一快照 → 清空屏息 → 后坐。冷却中点击、空仓不算成功开枪。
+- 命中（`resolveLayerShot`，常规飞行与离层结算共用）：先按原规则找到最近存活敌人，v3 才用 `snapshotChance(snapshot, 命中UID)` 抽一次 `raid.rng`，伤害乘一次倍率；miss、墙、尸体不抽。v2 保持旧公式，v1 不暴击。训练、击杀、掉落沿用原事务。
+
+## 4. 屏息（technique-15-a）
+
+- 状态 `{ target, seconds }` 只放在 Runtime 字段，像 `handling` 一样不进档。构造 Runtime 和 `reloadCommitted` 这类真正恢复清零；每帧内部的 `restoreExpansion` 同步不清零。
+- 有效精瞄沿用 #39：桌面 `precise` 且非冲刺（走动可蓄）；触屏站定且摇杆在内环瞄准或外环开火，走动即失效并清零（不改已批准手感）。
+- 目标射线：起点身体中心（与子弹一致），方向 `player.rotation`（不含漂移和散布），长度为射程加枪口距离；墙用 `shotBarrier`（窗户透过、关门阻挡），敌人用 `shotIntersection` 半径 14；候选与 `resolveLayerShot` 相同（本层敌人及 sourceMap 为本层的追击敌人），同距按 UID `localeCompare(..., 'en')`。
+- 概率 `min(0.30, 0.10 × 秒)`，按有效时间连续累计；目标变化从零开始。清空事件见规格 §4.2，持续损血也算实际受损。
+
+## 5. 其他接入归属
+
+- 控枪（T06）：`recoil(aim, h, scale)` 只缩放 bloom/kick 增量，technique-15-b 0.80、25-b 0.85，合计 0.68；`coneOf` 的 body 倍率不变。
+- 被动效果（T05）：力量 8、体质 8、技巧装填 2 项按规格 §3 的作用范围接入，每项有“作用点＋不作用范围”测试。
+- 基地（T08）：HideoutRuntime 增加只读 Perk 面板、选择、500 现金重置（预览确认），走 `prepareExpansionMutation/commitExpansionMutation`；准备阶段先按旧 Perk 推进基地实时时间，再在同一候选里扣费、清选、裁切。院子与旧页签共用这一服务。
+- 界面（T09）：新增中文需在字体子集内或按流程重建子集；源码注释保持英文。
+
+## 6. 契约夹具（CP-15/18/22/23）
+
+| 验收 | 夹具 |
+| --- | --- |
+| CP-15 | 蓄力中暂停、开面板、失焦、换层、刷新（重建 Runtime）后蓄力为 0；内部 `restoreExpansion` 不清零 |
+| CP-18 | v3 在途弹丸写入检查点再恢复，快照、`raid.rng`、伤害一致；离层立即结算与常规飞行结果相同；同一检查点重复恢复不重复伤害、掉落、训练 |
+| CP-22 | v4 记录含进行中 v2 行动：读档后仍按旧公式结算，弹丸无快照；结算回基地后升级为 v5，下次出击为 v3 |
+| CP-23 | v5 记录交给固定旧客户端：拒绝且原字节不变；多窗口冲突；未知/重复/越级 Perk、坏快照的导入被拒，原进度和备份保留 |
