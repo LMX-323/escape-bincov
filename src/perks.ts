@@ -159,7 +159,7 @@ export const snapshotChance = (snapshot: CritSnapshot, uid: string) =>
     critChance(snapshot.target === uid ? snapshot.sources : snapshot.sources.filter(s => s.id !== 'technique-15-a'));
 
 /** The focus drug's source while it lasts; another dose refreshes its timer and never adds a second source. */
-const FOCUS_CRIT = .05;
+export const FOCUS_CRIT = .05;
 /** What a shot fired now draws on (spec 2.1). */
 export interface CritInput {
     /** Effective technique (the permanent level plus the technique drug); the drug thus moves only the character source. */

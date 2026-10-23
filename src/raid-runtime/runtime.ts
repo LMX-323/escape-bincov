@@ -6,11 +6,12 @@ import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as
 import { mapPresentation, buildingRunConfig } from '../building-world';
 import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
-import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
+import { derivedLimits, effectiveAttributes, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
 import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
 import { advanceRaidBody, enemyDamage, perkEffects, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
 import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
+import { critMultiplier, critSources, type CritSnapshot } from '../perks';
 import { advancePursuits } from '../pursuit';
 import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
@@ -1165,6 +1166,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.magRelief > 0)
             this.magRelief--;
         this.syncMagazine();
+        // The round is spent: the shot's one critical snapshot is taken now, and every pellet carries its own copy.
+        const crit = this.shotCrit(w);
         this.shotNoise = { x: at.x, y: at.y };
         this.noiseRadius = B.gunNoiseRange;
         this.noiseTime = .6;
@@ -1175,7 +1178,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         for (let i = 0; i < w.pellets; i++) {
             const angle = centre + (this.random() - .5) * cone;
             const b = { uid: this.allocateEntityUid(), x: at.x, y: at.y,
-                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false };
+                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false,
+                ...(crit ? { crit: structuredClone(crit) } : {}) };
             this.bullets.push(b);
             if (flightSeconds !== undefined) this.newbornFlight?.set(b.uid, flightSeconds);
             pellets.push(b);
@@ -1184,6 +1188,19 @@ export class CoastRaidRuntime implements RaidRuntime {
         recoil(this.handling, h, perkEffects(this.layered).recoil);
         this.shotEvent('player', this.weaponLook, pellets, angles);
         return true;
+    }
+    /**
+     * The critical snapshot of a gun shot fired now (docs/tasks/critical-perk-contract.md section 3), in v3 raids only:
+     * the effective technique (the technique drug included), the gun fired `w` (a sample gun included), the owned perks
+     * and whether the focus drug lasts, all as they are at this instant, plus the breath charge `breath` with the enemy
+     * it rests on (a charge without a target counts nothing). Classic, v1 and v2 raids keep their own rules: undefined.
+     */
+    private shotCrit(w: D.WeaponDef, breath: { chance: number; target: string | null } = { chance: 0, target: null }): CritSnapshot | undefined {
+        const state = this.layered;
+        if (state?.raid?.version !== 3) return undefined;
+        const perks = state.growth.perks ?? [], charge = breath.target === null ? 0 : breath.chance;
+        const sources = critSources({ technique: effectiveAttributes(state).technique, weapon: w, perks, focus: state.body.effects.focus > 0, breath: charge });
+        return sources ? { sources, multiplier: critMultiplier(perks), target: sources.some(s => s.id === 'technique-15-a') ? breath.target : null } : undefined;
     }
     damageEnemy(e: Enemy, damage: number, incomingAngle = Math.atan2(this.player.y - e.y, this.player.x - e.x)) {
         if (e.hp <= 0)

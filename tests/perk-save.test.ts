@@ -10,7 +10,8 @@ import { derivedLimits, newExpansion, upgradeToRpg, validateExpansion, type Expa
 import { resolveExpansionWorld } from '../src/expansion-worlds';
 import { resolveLayerShot } from '../src/layer-transition';
 import { isPristine, startOver } from '../src/fresh-start';
-import type { PerkId } from '../src/perks';
+import type { CritSnapshot, PerkId } from '../src/perks';
+import { plainCrit } from './fixtures/layered';
 
 // Save format of the perk work (#77, docs/tasks/critical-perk-contract.md sections 1, 2 and 6): session v5 with
 // expansion v3 and raid v3, the station-boundary upgrade, and the CP-08/CP-22/CP-23 fixtures.
@@ -46,10 +47,12 @@ const envelope = (text: string) => JSON.stringify({ format: 'escape-bincov-recov
 function importText(p: Page, text: string) { const preview = p.runtime.previewImport(text); assert.ok(preview.ok && preview.token); return p.runtime.importBackup(text, preview.token!); }
 /** An RNG state whose next draw is below 2%: a critical hit under the old v2 rule at any closeness and technique. */
 function lowDraw() { let s = 1; while (D.seededRandom(s)() >= .02) s++; return s; }
-/** A player round fired at point blank into a live enemy of the current layer; never lethal. */
-function fire(state: ExpansionState) {
+/** An RNG state whose next draw falls in [lo, hi). */
+function drawIn(lo: number, hi: number) { let s = 1; while (!(D.seededRandom(s)() >= lo && D.seededRandom(s)() < hi)) s++; return s; }
+/** A player round fired at point blank into a live enemy of the current layer, with its shot snapshot in a v3 raid; never lethal. */
+function fire(state: ExpansionState, crit?: CritSnapshot) {
     const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20)!;
-    const bullet: BulletState = { uid: 'probe', x: enemy.x, y: enemy.y, rotation: 0, vx: 900, vy: 0, left: 40, damage: 10, enemy: false };
+    const bullet: BulletState = { uid: 'probe', x: enemy.x, y: enemy.y, rotation: 0, vx: 900, vy: 0, left: 40, damage: 10, enemy: false, ...(crit ? { crit } : {}) };
     const hp = enemy.hp, rng = raid.rng;
     let critical: boolean | null = null;
     assert.ok(resolveLayerShot(state, world, raid.currentMap, bullet, true, (_uid, value) => { critical = value; }));
@@ -66,10 +69,13 @@ test('CP-22: a v4 record with a live v2 raid keeps the old rules and v4 until it
     // The station boundary stays closed while the raid is live: no upgrade and no write.
     const live = p.raw; assert.equal(reason(p.runtime.enter()), 'locked'); assert.equal(p.saves.ensureRpg(), false); assert.equal(p.raw, live);
     assert.ok(p.saves.resumeRun()); p.state.state = 'run';
-    // The old centre-closeness rule rolls once on each hit: at point blank a low draw is a critical hit (x1.5).
+    // The old centre-closeness rule rolls once on each hit: at point blank (10% at technique 10) a low draw and a draw
+    // between 7% and 10% are both critical hits (x1.5).
     const low = lowDraw();
     let hit: ReturnType<typeof fire> | null = null;
     p.setup(d => { d.expansion.raid!.rng = low; hit = fire(d.expansion); });
+    assert.deepEqual(hit, { critical: true, damage: 15, rolled: true });
+    p.setup(d => { d.expansion.raid!.rng = drawIn(.07, .1); hit = fire(d.expansion); });
     assert.deepEqual(hit, { critical: true, damage: 15, rolled: true });
     assert.equal(p.record.version, 4); assert.equal(p.record.expansion!.raid!.version, 2);
     // A v2 raid's rounds carry no shot snapshot: such a field is rejected, not ignored.
@@ -88,10 +94,12 @@ test('CP-22: a v4 record with a live v2 raid keeps the old rules and v4 until it
     const upgraded = p.record;
     assert.equal(upgraded.version, 5); assert.equal(upgraded.perksBackup, settled);
     assert.equal(upgraded.expansion!.version, 3); assert.deepEqual(upgraded.expansion!.growth.perks, []);
-    // The next deployment is v3: the old formula no longer rolls (the v3 rule is the shot snapshot, not this formula).
+    // The next deployment is v3: a round rolls its shot snapshot once (a pistol at technique 10: 6.9%), never the old
+    // formula, which gives 10% at point blank; a draw between the two crits only under the old rule.
     assert.ok(p.runtime.deploy({ world: 'buildings', seed: 'cp-22-next' }).ok);
     const next = structuredClone(p.state.expansion!); assert.equal(next.raid!.version, 3); assert.equal(p.record.perksBackup, settled);
-    next.raid!.rng = low; assert.deepEqual(fire(next), { critical: false, damage: 10, rolled: false });
+    next.raid!.rng = drawIn(.07, .1); assert.deepEqual(fire(next, plainCrit()), { critical: false, damage: 10, rolled: true });
+    next.raid!.rng = low; assert.deepEqual(fire(next, plainCrit()), { critical: true, damage: 15, rolled: true });
 });
 
 test('CP-22: a classic checkpoint raid in a v4 record also stays v4 until it settles', () => {

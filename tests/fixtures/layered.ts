@@ -1,7 +1,16 @@
 import * as D from '../../src/domain';
 import type { EnemyState } from '../../src/checkpoint';
 import { newExpansion, newTraining, RECIPES, PRODUCTION_SPEED, type LayeredRaid, type ProductionBatch, type WorldDefinition, type ExpansionState } from '../../src/expansion-state';
+import { critMultiplier, critSources, type CritSnapshot } from '../../src/perks';
 import type { Cell, SpaceDefinition } from '../../src/spatial';
+
+/**
+ * The critical snapshot a pistol shot takes in a v3 raid at technique 10 with no perk, drug or breath charge (6.9%,
+ * x1.5). Every player round of a v3 raid carries one; hand-made rounds of such raids use this.
+ */
+export function plainCrit(): CritSnapshot {
+    return { sources: critSources({ technique: 10, weapon: D.WEAPONS.pistol, perks: [], focus: false, breath: 0 })!, multiplier: critMultiplier([]), target: null };
+}
 
 function map(id: string, cols: number, rows: number): SpaceDefinition {
     return { id, name: id, floor: id, tile: 32, doors: [], entries: [], cells: Array.from({ length: rows }, (_, y) =>
