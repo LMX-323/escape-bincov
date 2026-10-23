@@ -205,8 +205,8 @@ try {
     await openContext([1280, 720]); page = await openPage('?test=1&entry=tabs');
     await page.locator('[data-action="enter"]').click(); await page.locator('#ui .panel.hideout').waitFor();
     assert.equal(await page.locator('#ui').evaluate(el => el.innerText.includes('清空存档')), false, 'legacy tab page');
-    // A record from a newer build: the strict decoder refuses it and the title keeps the raw bytes.
-    const record = await stored(page); record.version = 5; const future = JSON.stringify(record);
+    // A record from a newer build (one version past this one): the strict decoder refuses it and the title keeps the raw bytes.
+    const record = await stored(page); record.version += 1; const future = JSON.stringify(record);
     await page.evaluate(([key, text]) => localStorage.setItem(key, text), [SESSION, future]);
     await page.goto(`${ORIGIN}?test=1`); await page.waitForFunction(() => window.__bincov?.hideoutRuntime);
     await page.getByRole('heading', { name: '暂时无法打开存档' }).waitFor();
