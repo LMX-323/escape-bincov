@@ -48,7 +48,11 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Opening asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Opening asset size mismatch: ${a.file}`);
   }
-  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl','.css':'text'},define:{'process.env.NODE_ENV':'"production"'}});
+  const county = JSON.parse(await readFile('assets/county-map/manifest.json', 'utf8'));
+  for (const [file, hash] of [[county.source, county.sourceSha256], [county.output, county.sha256]]) {
+    if (createHash('sha256').update(await readFile(file)).digest('hex') !== hash) throw new Error(`County map hash mismatch: ${file}`);
+  }
+  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl','.webp':'dataurl','.css':'text'},define:{'process.env.NODE_ENV':'"production"'}});
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
   if (createHash('sha256').update(font).digest('hex') !== manifest.sha256) throw new Error('Font manifest hash mismatch');

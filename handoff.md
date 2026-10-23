@@ -1,5 +1,7 @@
 # 任务交接入口
 
+- 2026-10-23 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` 从 main `76adbd6` 开始；十二地区战术地图、两处现有入口可出击、十区暂未开发，预览不创建行动。重绘简洁手绘底图并内联 WebP；存档与旧行动路径保持原服务。验证与实际截图见摘要及承接 PR，新增关卡继续归 #82。
+
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
 - 2026-10-23 · README 更新（`docs/readme-20261023`）：按 main `b475b1b76a71af5223dc63971c75074547e390f6` 和开放 PR/issue 核对现状，补序幕、射击规则、独立试枪场、敌人素材、后续剧情/地图入口，区分已合入玩法与开发中的设计；同步任务清单顶部，历史原文保留。Node 24.21.0 / pnpm 11.19.0：515 单测、3 项入口文档检查、47 个 README 本地链接、1 个 HTML 图片路径和 22 个 package 命令均通过；`pnpm package` 通过且 HTML/ZIP/清单与基线字节一致。仅三份 Markdown，未改游戏或存档，未新增浏览器/真机验收结论。维护者已授权推送并在 CI 通过后合并；准确 head、CI 与合并状态见本分支 PR。

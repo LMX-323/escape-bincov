@@ -183,6 +183,52 @@ await check('R7 the view follows the raid, not the playtest flag: ?sample=villag
   return r;
 });
 
+await check('R10 county map: previews cannot deploy, selections preserve the seed, and desktop/phone layouts remain reachable', async () => {
+  await yard(); await yardWorlds();
+  const root = page.locator('#station-yard'), go = root.locator('[data-act="deploy"]');
+  assert.equal(await root.locator('.county-node').count(), 12);
+  assert.equal(await root.locator('.county-node.unbuilt').count(), 10);
+  await root.locator('#seed').fill('county-82');
+  for (const id of ['hospital', 'old-hospital', 'factory', 'laboratory', 'highway', 'market', 'observatory', 'lighthouse', 'harbor', 'freighter']) {
+    await root.locator(`[data-region="${id}"]`).click();
+    assert.equal(await go.isDisabled(), true, id);
+    assert.match(await root.locator('.region-development').innerText(), /暂未开发/);
+    assert.equal(await root.locator('input[name="world"]:checked').count(), 0);
+    assert.equal(await root.locator('#seed').inputValue(), 'county-82');
+    // Even if a stale/modified DOM enables the button, a preview must never deploy the previous playable world.
+    await go.evaluate(b => { b.disabled = false; b.click(); });
+    assert.equal(await root.count(), 1, 'unbuilt region stays in the yard');
+    assert.deepEqual(await stored(), [], 'preview must not create an active raid');
+  }
+  await root.locator('input[value="mall"]').check();
+  assert.equal(await go.isDisabled(), false);
+  assert.equal(await root.locator('#seed').inputValue(), 'county-82');
+  assert.equal(await root.locator('.region-brief h3').innerText(), '滨湾商场');
+  // Radio keyboard navigation survives rendering the new briefing, rather than losing focus to the page.
+  await root.locator('input[value="mall"]').focus(); await page.keyboard.press('ArrowLeft');
+  assert.equal(await root.locator('input[value="buildings"]').isChecked(), true);
+  const layout = [];
+  for (const [width, height] of [[1280, 720], [1920, 1080], [844, 390], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    await page.waitForTimeout(300);
+    await root.locator('.county-heading').scrollIntoViewIfNeeded();
+    const geometry = await root.locator('.county-chart').evaluate(chart => {
+      const frame = chart.getBoundingClientRect();
+      const nodes = [...chart.querySelectorAll('.county-node')].map(n => ({ name: n.textContent, r: n.getBoundingClientRect() }));
+      return { clipped: nodes.filter(({ r }) => r.left < frame.left - 1 || r.right > frame.right + 1 || r.top < frame.top - 1 || r.bottom > frame.bottom + 1).map(n => n.name),
+        overlapping: nodes.flatMap((a, i) => nodes.slice(i + 1).filter(b => Math.min(a.r.right, b.r.right) > Math.max(a.r.left, b.r.left) && Math.min(a.r.bottom, b.r.bottom) > Math.max(a.r.top, b.r.top)).map(b => [a.name, b.name])),
+        overflow: chart.closest('.pbody').scrollWidth > chart.closest('.pbody').clientWidth + 1 };
+    });
+    assert.deepEqual(geometry, { clipped: [], overlapping: [], overflow: false }, `${width}x${height}`);
+    await shot(`R10-county-map-${width}x${height}`);
+    await go.scrollIntoViewIfNeeded(); assert.equal(await go.isVisible(), true);
+    await go.screenshot({ path: resolve(out, `R10-deploy-${width}x${height}.png`) });
+    layout.push({ width, height, ...geometry });
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
+  return layout;
+});
+
 await check('R8 without WebGL the page shows the notice instead of the game and leaves the save untouched', async () => {
   await title();
   const before = await storage();

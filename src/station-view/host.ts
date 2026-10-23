@@ -1,4 +1,5 @@
 import type { Application } from 'pixi.js';
+import countyMapImage from '../../assets/county-map/county-terrain.webp';
 import * as D from '../domain';
 import type { HideoutEvent, HideoutRuntime, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
 import { trainingHint, trainingSeconds } from './panels';
@@ -111,7 +112,7 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds });
+    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds, mapImage: countyMapImage });
     this.ui.volume = opts.volume;
     this.ui.setTouch(opts.touch);
     const unsubscribe = rt.subscribe(e => this.event(e));
