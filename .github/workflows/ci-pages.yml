@@ -41,7 +41,7 @@ jobs:
       - name: Domain, world and save tests
         run: pnpm test
       - name: CI selection and coverage safeguards
-        run: node --test scripts/ci/*.test.mjs
+        run: pnpm check:ci
       - name: Build and package
         run: pnpm package
       - name: Verify committed game matches source
