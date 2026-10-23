@@ -176,7 +176,7 @@ CI 自测失败的 1 项是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/b
 
 ## Q-B06 诊断 bundle 同源
 
-2026-10-23，[PR #90](https://github.com/xuys2025/escape-bincov/pull/90)，分支 `agent/diagnostic-bundle`，起点 main `44494ea`；交付前普通合并 main `76adbd6`（#79），开 PR 后为解决冲突又合并 `b38f23d`（#88）、`24c18a6`（#87）。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
+2026-10-23，[PR #90](https://github.com/xuys2025/escape-bincov/pull/90)，分支 `agent/diagnostic-bundle`，起点 main `44494ea`；交付前普通合并 main `76adbd6`（#79），开 PR 后为解决冲突又合并 `b38f23d`（#88）、`24c18a6`（#87）、`160c6f3`（#89）。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
 
 **问题**：`scripts/build.mjs` 一导入就构建并写 `dist/`，诊断只能复制它的 esbuild 参数，复制品只有 PNG loader。源码导入 `range.css`、`station.css`、`opening.css` 后，`coast-sample-heap.mjs`、`sol-r6-heap.mjs` 在浏览器启动前就构建失败（main `44494ea` 实测 exit 1）。
 
@@ -200,7 +200,7 @@ CI 自测失败的 1 项是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/b
 | `build-coast-runtime.mjs` | 现役构建工具 | 输出无渲染器的 Runtime ES 模块（见 [COAST-RUNTIME-SAMPLE](../COAST-RUNTIME-SAMPLE.md)），格式、平台和 target 本就不同；main 上 exit 0 | 不改 |
 | `art-review.mjs` | 现役 CI 测试（`test:art`） | 只打包绘制函数，不导入 CSS/PNG，不复制游戏脚本配置 | 不改 |
 
-**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）。先在 `44494ea` 上做完，合入 main `76adbd6`（#79）后单测、CI 守卫、打包和四个诊断重跑一遍。之后两次合并 main 都只有文档冲突，每次都重跑单测（549/549、550/550）、CI 守卫（55/56，同下）和打包（`dist/index.html` 与当时 main 已提交的制品相同），四个诊断未再重跑。
+**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）。先在 `44494ea` 上做完，合入 main `76adbd6`（#79）后单测、CI 守卫、打包和四个诊断重跑一遍。之后三次合并 main 都只有文档冲突，每次都重跑单测（549/549、550/550、552/552）、CI 守卫（55/56，同下）和打包（`dist/index.html` 与当时 main 已提交的制品相同），四个诊断未再重跑。
 
 | 检查 | 结果 |
 | --- | --- |
