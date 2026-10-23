@@ -48,6 +48,37 @@ test('relief, malformed pack and changed stash cannot be sold or settled', () =>
     assert.equal(S.settleCartResult(save, c).ok, false); assert.deepEqual(save, before);
     c.buy.items[0].qty = 12; D.addItem(save.stash, 'water'); assert.equal(S.settleCartResult(save, c).ok, false);
 });
+test('a relief gun or round forced into the sell list still refuses the whole settlement', () => {
+    const save = fixture(); D.addItem(save.stash, 'pistol', 1, true); D.addItem(save.stash, 'ammo9', 12, true); D.addItem(save.stash, 'watch');
+    for (const id of ['pistol', 'ammo9']) {
+        const c = S.createCart(save, 'arms'), relief = c.stash.items.find(i => i.id === id)!;
+        assert.equal(S.moveShopItem(c, 'stash', 'sell', relief.uid, 0, 0), false);
+        sell(c, 'watch', 2, 0); c.stash.items.splice(c.stash.items.indexOf(relief), 1); c.sell.items.push({ ...relief, x: 0, y: 0 });
+        const before = structuredClone(save);
+        assert.deepEqual(S.settleCartResult(save, c), { ok: false, reason: 'rule' }, id); assert.deepEqual(save, before);
+    }
+});
+test('each merchant settles only its own stock; a pack from the other counter is refused with the whole cart', () => {
+    const save = fixture(); D.addItem(save.stash, 'watch'); const arms = S.createCart(save, 'arms');
+    assert.equal(arms.catalog.items.some(i => i.id === 'medkit'), false);
+    sell(arms, 'watch'); arms.buy.items.push({ uid: 'other-counter', id: 'medkit', qty: D.buyQuantity('medkit'), x: 0, y: 0 });
+    const before = structuredClone(save);
+    assert.deepEqual(S.settleCartResult(save, arms), { ok: false, reason: 'rule' }); assert.deepEqual(save, before);
+    const med = S.createCart(save, 'med'); buy(med, 'medkit');
+    assert.equal(S.settleCartResult(save, med).ok, true); assert.equal(save.cash, before.cash - D.ITEMS.medkit.buy); assert.equal(D.count(save.stash, 'medkit'), 1);
+});
+test('unloading a mixed magazine preserves saleability independently of a relief gun', () => {
+    const save = fixture(); save.stash = D.createInventory(10, 6);
+    save.equipment = { weapon: 'pistol', relief: true, ammo: 7, ammoRelief: 3 };
+    assert.equal(D.unequip(save), true);
+    const ordinary = save.stash.items.find(i => i.id === 'ammo9' && !i.relief)!, relief = save.stash.items.find(i => i.id === 'ammo9' && i.relief)!;
+    assert.equal(ordinary.qty, 4); assert.equal(relief.qty, 3);
+    const c = S.createCart(save, 'arms'), cash = save.cash;
+    for (const id of ['pistol', 'ammo9']) assert.match(S.shopPlacementError(c, 'stash', 'sell', save.stash.items.find(i => i.id === id && i.relief)!.uid, 0, 0)!, /不可出售/, id);
+    assert.ok(S.moveShopItem(c, 'stash', 'sell', ordinary.uid, 0, 0));
+    assert.equal(S.settleCartResult(save, c).ok, true); assert.equal(save.cash, cash + 4 * D.ITEMS.ammo9.sell);
+    assert.deepEqual(save.stash.items.map(i => [i.id, i.qty, !!i.relief]).sort(), [['ammo9', 3, true], ['pistol', 1, true]]);
+});
 test('shopQuote prices the trading side by whole pack or stack and agrees with cart totals', () => {
     const save = fixture(); D.addItem(save.stash, 'watch'); D.addItem(save.stash, 'pistol'); D.addItem(save.stash, 'ammo9', 12, true); D.addItem(save.stash, 'knife');
     const c = S.createCart(save, 'arms'), inStash = (id: string, relief = false) => c.stash.items.find(i => i.id === id && !!i.relief === relief)!;
