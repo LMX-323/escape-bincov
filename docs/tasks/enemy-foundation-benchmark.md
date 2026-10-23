@@ -1,6 +1,6 @@
 # 敌人基础能力 EN-04：可重复 Runtime 测量
 
-承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。初始接受基线 `8ef783f02b867c520e2a4e8f03e48e6a8cc7d02c`；同步射击系统 #39 后改用 `2bac4fb54ab48742bb7c5ebeaf9761372c4cc06d`。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
+承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。当前接受基线为 main `76adbd6`（含 #79）；初始 `8ef783f` 和射击 #39 后的 `2bac4fb` 测量作为历史保留。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
 
 这是有界、离线、无 DOM 的 Node 测量，运行真实 `CoastRaidRuntime`、真实敌人 AI、内存 `SaveSession`，包含 Runtime 的发布与定期存档开销。它不测浏览器绘制、纹理、GPU、真实帧率或自然游玩表现；不替代验证矩阵中的 `pnpm test:play`，也没有缩短该套件约 10 分钟和训练真实 120 秒要求。
 
@@ -17,8 +17,8 @@
 在依赖已安装的任务工作树运行；不需要浏览器或服务器，也不增加依赖：
 
 ```powershell
-pnpm bench:enemy --source-root=../enemy-baseline-2bac4fb --out=test-results/enemy-baseline-2bac4fb.json
-pnpm bench:enemy --out=test-results/enemy-main-head.json --compare=test-results/enemy-baseline-2bac4fb.json
+pnpm bench:enemy --source-root=../enemy-baseline-76adbd6 --out=test-results/enemy-baseline-76adbd6.json
+pnpm bench:enemy --out=test-results/enemy-main-76adbd6.json --compare=test-results/enemy-baseline-76adbd6.json
 node --import tsx --test tests/enemy-benchmark.test.ts
 ```
 
@@ -28,7 +28,13 @@ JSON 记录源码 commit、工作树脏状态、Node/OS/CPU、种子、初始活
 
 本工具为手动 Node 测量入口，未新增 `test:*` 命令或浏览器 CI 套件。短单测只验证夹具 ID 归一化不吞掉数值/引用变化，以及三个正式世界的重复和恢复；完整 12 秒矩阵由上述命令执行。
 
-## 同步射击系统后的实测
+## 当前基线实测：2026-10-23
+
+同一 Node 24.19.0、设备与协议，顺序运行干净 `76adbd6` 和整合后的工作树：两端各 18 次全部重复稳定、中点恢复成功，9/9 的行为与末态完整哈希一致，退出 0。证据为 `enemy-baseline-76adbd6.json` / `enemy-main-76adbd6.json`；后者如实记录合并中状态，提交后的干净 head 对照另行写入 PR。
+
+#79 修复逐子步计时与玩家持续射击新生弹的有效飞行时间，因此本轮只与 `76adbd6` 比较，不要求匹配旧基线的历史哈希。运行时另有浏览器回归并发，耗时不能用于签收性能预算；本轮结论限于相同输入的行为、持久状态与恢复一致。
+
+## 同步射击系统后的历史实测
 
 2026-10-22，使用下述同一 Node/设备及输入协议，干净主线 `2bac4fb` 与集成后的工作树分别运行十八次：全部重复稳定、全部中点恢复成功，9/9 的行为与末态完整哈希相同，退出 0。JSON 为 `test-results/enemy-baseline-2bac4fb.json` 和 `test-results/enemy-main-head.json`。后者明确记录合并中工作树状态，准确提交证据在最终提交后重跑并更新 PR。
 

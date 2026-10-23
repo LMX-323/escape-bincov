@@ -74,6 +74,8 @@ export class CoastRaidRuntime implements RaidRuntime {
     private trigger = { held: false, touch: false };
     /** Seconds a click that found the gun busy may still fire: one click, never a queue. */
     private clickLeft = 0;
+    /** Remaining flight time for rounds born in this substep. Consumed before flight, never part of a checkpoint. */
+    private newbornFlight: Map<string, number> | null = null;
     /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
     private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
     extractTime = 0;
@@ -205,6 +207,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.suppressInteract ||= this.intent.interactHeld;
         this.trigger = { held: false, touch: false };
         this.clickLeft = 0;
+        this.newbornFlight = null;
         this.intent = emptyIntent();
         this.inputFrame = idleFrame();
         this.clock.reset();
@@ -300,8 +303,11 @@ export class CoastRaidRuntime implements RaidRuntime {
                 }
                 else {
                     seconds = tick.seconds;
-                    this.elapsed += seconds;
-                    if (this.elapsed >= this.config.duration) {
+                    const startedAt = this.elapsed, endsAt = startedAt + seconds;
+                    // Timeout wins over this frame's input. Otherwise each substep sees its own time: using endsAt
+                    // throughout would let a late-arriving pursuit attack for the whole frame and advance tides early.
+                    if (endsAt >= this.config.duration) {
+                        this.elapsed = endsAt;
                         this.extracted = true;
                         this.finish('timeout');
                     }
@@ -324,6 +330,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                         for (let i = 0; i < tick.steps; i++) {
                             if (this.session.state !== 'run' || this.paused || this.ending)
                                 break;
+                            // Derive from the frame origin rather than accumulating rounding error. A failed commit
+                            // can pause mid-frame; the snapshot then retains exactly the substeps that ran.
+                            this.elapsed = startedAt + seconds * ((i + 1) / tick.steps);
                             this.inputFrame = i === 0 ? frame : { ...frame, actions: new Set(), firePressed: false, fireHeld: false };
                             if (this.inputSuppressed)
                                 this.inputFrame = { ...this.inputFrame, x: 0, y: 0, sprint: false, aim: null, firePressed: false, fireHeld: false, interactHeld: false, actions: new Set() };
@@ -410,6 +419,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const sync = <T extends {
             uid: string;
         }>(old: T[], values: T[]) => values.map(v => Object.assign(old.find(e => e.uid === v.uid) ?? {} as T, structuredClone(v)));
+        // Layered simulation may restore during an AI iteration (for example an enemy opening a door). Preserve
+        // actor identity by uid so the iterator keeps updating the live actor, not a detached pre-transaction copy.
         this.enemies = this.layered ? sync(this.enemies, c.enemies) : structuredClone(c.enemies);
         this.loot = this.layered ? sync(this.loot, c.loot) : structuredClone(c.loot);
         this.bullets = this.layered ? sync(this.bullets, c.bullets) : structuredClone(c.bullets);
@@ -785,6 +796,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
     }
     step(dt: number) {
+        this.newbornFlight = new Map();
         const tideFlipped = !this.tideChanged && this.elapsed >= this.config.tideAt;
         if (this.layered?.raid) {
             const layer = this.layered.raid.maps[this.layered.raid.currentMap];
@@ -1026,7 +1038,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             pass(Math.min(due, dt - t));
             this.fireCooldown = 0;
             const k = dt > 0 ? t / dt : 1;
-            if (!this.shoot({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }))
+            if (!this.shoot({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }, Math.max(0, dt - t)))
                 break;
         }
         pass(dt - t);
@@ -1055,8 +1067,9 @@ export class CoastRaidRuntime implements RaidRuntime {
     /**
      * One shot or knife swing from `at` (default: where the body stands); false when the magazine is empty, which starts
      * a reload if the bag has rounds and otherwise waits for a new pull. The caller decides that the gun is ready.
+     * runTrigger supplies this substep's remaining flight seconds; a frame-end pull has no active flight batch.
      */
-    shoot(at: Point = this.player): boolean {
+    shoot(at: Point = this.player, flightSeconds?: number): boolean {
         const w = this.currentWeapon, h = this.grip;
         this.clickLeft = 0;
         if (w.ammo && this.mag <= 0) {
@@ -1091,6 +1104,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             const b = { uid: this.allocateEntityUid(), x: at.x, y: at.y,
                 rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false };
             this.bullets.push(b);
+            if (flightSeconds !== undefined) this.newbornFlight?.set(b.uid, flightSeconds);
             pellets.push(b);
             angles.push(angle);
         }
@@ -1188,9 +1202,12 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
     }
     updateBullets(dt: number) {
+        const newborn = this.newbornFlight;
+        this.newbornFlight = null;
+        const flightSeconds = (bullet: BulletState) => newborn?.get(bullet.uid) ?? dt;
         if (this.layered) {
             const state = this.snapshotExpansion();
-            advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, undefined, source => { this.showIncomingHit(source); this.extractTime = 0; }, e => this.observeShot(e));
+            advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, undefined, source => { this.showIncomingHit(source); this.extractTime = 0; }, e => this.observeShot(e), flightSeconds);
             this.restoreExpansion(state);
             if (this.hp <= 0)
                 this.finish('death');
@@ -1198,13 +1215,13 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         // Classic sampling, reverse bullet order and first live array hit are deliberately retained.
         for (let i = this.bullets.length - 1; i >= 0; i--) {
-            const b = this.bullets[i], speed = Math.hypot(b.vx, b.vy), steps = Math.ceil(speed * dt / 7);
+            const b = this.bullets[i], seconds = flightSeconds(b), speed = Math.hypot(b.vx, b.vy), steps = Math.ceil(speed * seconds / 7);
             let remove = false;
             for (let j = 0; j < steps; j++) {
                 const previous = { x: b.x, y: b.y }, previousTile = this.mapData.tiles[Math.floor(b.y / TILE)]?.[Math.floor(b.x / TILE)];
-                b.x += b.vx * dt / steps;
-                b.y += b.vy * dt / steps;
-                b.left -= speed * dt / steps;
+                b.x += b.vx * seconds / steps;
+                b.y += b.vy * seconds / steps;
+                b.left -= speed * seconds / steps;
                 const x = Math.floor(b.x / TILE), y = Math.floor(b.y / TILE), tile = this.mapData.tiles[y]?.[x];
                 if (tile === 3 || tile === undefined || b.left <= 0) {
                     const startBlocked = previousTile === 3 || previousTile === undefined;

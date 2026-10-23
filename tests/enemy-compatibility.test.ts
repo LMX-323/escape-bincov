@@ -87,18 +87,22 @@ for (const route of ['classic', 'buildings', 1, 2, 3] as const) {
 
     test(`enemy compatibility ${route}: unknown IDs cannot enter old records or overwrite corrupt source bytes`, () => {
         const source = fixture(route), valid = source.saves.currentRecord()!;
+        assert.deepEqual(decodeSession(JSON.stringify(valid)), valid, 'the unchanged source must decode before testing a forged ID');
+        assert.deepEqual(decodePortableBackup(encodeRecoveryBackup(valid)), { kind: 'session', record: valid });
+        const rejection = { name: 'Error', message: route === 'classic'
+            ? /行动检查点损坏或版本不兼容/ : /建筑、角色或基地存档损坏或版本不兼容/ };
         for (const id of [...ENEMY_CATALOG.map(e => e.id), 'future-enemy-prototype', '__proto__', 'constructor']) {
             const bad = structuredClone(valid), enemy = enemies(bad)[0]; enemy.id = id;
             const roster = bad.expansion?.raid?.roster.find(e => e.uid === enemy.uid);
             if (roster) roster.id = id; // Consistent forgery must still fail the allowed-prototype check.
             const raw = JSON.stringify(bad, null, 2) + '\n';
-            assert.throws(() => decodeSession(raw));
-            assert.throws(() => decodePortableBackup(JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: bad.version, record: bad })));
+            assert.throws(() => decodeSession(raw), rejection, id);
+            assert.throws(() => decodePortableBackup(JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: bad.version, record: bad })), rejection, id);
             const target = fixture(), bytes = target.bytes, writes = target.writes;
             assert.equal(target.saves.importRecord(bad), false); assert.equal(target.bytes, bytes); assert.equal(target.writes, writes);
             target.data.set(SESSION_KEY, raw);
             const store = new RecoveryStore(target.storage, () => NOW);
-            assert.throws(() => store.load()); assert.equal(store.original(), raw);
+            assert.throws(() => store.load(), rejection, id); assert.equal(store.original(), raw);
             const state = createSessionState(), saves = new SaveSession(state, () => target.storage, undefined, () => NOW);
             assert.equal(saves.initialize(), false); assert.equal(saves.persist(), false);
             assert.equal(saves.original(), raw); assert.equal(target.bytes, raw); assert.equal(target.writes, writes);
@@ -140,6 +144,6 @@ test('enemy compatibility: real building pursuit has one persistent owner throug
         if (fault === 'duplicate-owner') r.maps.coast.enemies.push(structuredClone(e));
         if (fault === 'missing-roster') r.roster = r.roster.filter(item => item.uid !== e.uid);
         if (fault === 'future-state') Object.assign(e, { prototypeId: 'future-enemy-prototype' });
-        assert.throws(() => decodeSession(JSON.stringify(bad)), fault);
+        assert.throws(() => decodeSession(JSON.stringify(bad)), { name: 'Error', message: /建筑、角色或基地存档损坏或版本不兼容/ }, fault);
     }
 });

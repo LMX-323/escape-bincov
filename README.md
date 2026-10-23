@@ -11,7 +11,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-77a79d?style=flat-square&labelColor=142323)
 ![PixiJS](https://img.shields.io/badge/PixiJS-8.22.0-cb906b?style=flat-square&labelColor=142323)
 
-### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)
+### [▶️ 在线试玩](https://xuys2025.github.io/escape-bincov/) · [🎯 试枪场](https://xuys2025.github.io/escape-bincov/?range=1) · [📦 下载离线版](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)
 
 <a href="https://xuys2025.github.io/escape-bincov/">
   <img src="docs/station-relief-20261011/evidence/entry-1920x1080.png" alt="水产站雨夜院子：院门、火桶、居民与整备快捷入口" width="100%">
@@ -27,16 +27,19 @@
 
 游戏采用俯视角像素画面，**水产站院子和行动都使用 2.5D 画面**。项目仍在开发中，已有完整的「整备 → 出击 → 搜刮与交战 → 撤离或失败 → 回站」单人循环。
 
-> 本页于 **2026-10-12** 按已合并至 `main` 的内容整理，核对基线为 [`1dbacb4`](https://github.com/xuys2025/escape-bincov/commit/1dbacb41eccf5441b5f2e403fe284a6eca9f67f0)；**2026-10-15** 更新了区域、2.5D 画面与 WebGL 要求。包版本号仍为 `0.2.0`；[v0.2.0 公告](docs/releases/v0.2.0.md)记录的是早期发版，后续已合并功能见下文。最新构建与上线状态以 [Actions](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml) 为准。
+> 本页于 **2026-10-23** 按已合并至 `main` 的内容核对，基线为 [`b475b1b`](https://github.com/xuys2025/escape-bincov/commit/b475b1b76a71af5223dc63971c75074547e390f6)。包版本号仍为 `0.2.0`；[v0.2.0 公告](docs/releases/v0.2.0.md)记录的是早期发版，后续已合并功能见下文。最新构建与上线状态以 [Actions](https://github.com/xuys2025/escape-bincov/actions/workflows/ci-pages.yml) 为准。
 
 ## 🏚️ 现在可以玩什么
 
 | 内容 | 已接入的玩法 |
 | --- | --- |
+| 序幕 | 新档首次进站前播放开场动画，可暂停、跳过，也可从标题页「序幕」重看。 |
 | 水产站院子 | 雨夜院落、进屋揭顶、人物互动、修复供电；可步行、点击寻路，也可用快捷栏直接打开功能。 |
 | 整备与交易 | 仓库、背包、安全箱、武器与护符；拖放、旋转、拆分物品；修理铺和卫生所先加入购物车，再统一结算。 |
 | 据点成长 | 电台任务、仓库扩建、身体与成长，以及休息区、医疗区、训练区、工作台、黑市五项设施；支持生产、领取与实际走动训练。 |
 | 行动 | 两个区域入口、枪械与近战、箱子和尸体搜刮、地图与撤离指引；每局限时 10 分钟，撤离需要停稳并按住交互键 3 秒。 |
+| 射击 | 精瞄举枪、移动与急转带来的晃动、连续射击的散布和后坐；准星与武器卡显示当前状态。另有独立试枪场。 |
+| 搜刮与交互 | 「附近」列表可逐件拾取地面物品；治疗被拒、门被占用时显示原因，搜刮面板保留危险提示。 |
 | 潮汐与生存 | 行动第 4 分 30 秒预警、第 5 分钟潮位变化；留意污染、流血、水分、饱食与携行重量。 |
 | 存档与恢复 | 浏览器本地保存、检查点续局、JSON 备份迁移；交易与结算写入失败可重试，多窗口冲突有保护。 |
 
@@ -63,12 +66,18 @@
 
 **离线：** 下载 [便携 ZIP](https://github.com/xuys2025/escape-bincov/raw/refs/heads/main/release/Escape-Bincov-portable.zip)，解压到固定目录，双击 `start the game.html`。游玩无需 Node.js 或联网；若打开了编辑器，请右键选择 Chrome 或 Edge。
 
-1. **进站整备**：标题页点击「进入」到院子，按 `Tab` 打开整备，检查主武器、备用弹药和药品。购买的物资结算后进入仓库，需要自行整理到背包。
+1. **进站整备**：标题页点击「进入」，新档会先播放序幕，可点「跳过」或按 `Esc`。进入院子后按 `Tab` 打开整备，检查主武器、备用弹药和药品。购买的物资结算后进入仓库，需要自行整理到背包。
 2. **选择区域**：走到院门互动，或按 `G` 打开「出击准备」，选区域后出击。第一次可将行动种子留空。
 3. **搜刮与交战**：`M` 看地图与撤离点，`E` 拾取或打开箱子、尸体，`Tab` 整理背包。背包、搜刮和地图打开时，行动仍继续。
 4. **及时撤离**：到达本局启用的撤离区，停稳并按住 `E` 满 3 秒。成功保存结算后，在结果页返回水产站。
 
 成功撤离会保留带回的物资；死亡、超时或放弃会失去背包物资与主武器，安全箱物品和水手匕首保留。负重上限会受成长等状态影响，以界面显示为准。
+
+### 🎯 先试试枪
+
+打开 [试枪场](https://xuys2025.github.io/escape-bincov/?range=1)，可切换手枪、卡宾枪、霰弹枪、匕首与 M4A1 自动枪样本，对固定靶和移动靶练习。面板显示命中数、散布、后坐偏移与举枪进度；试枪场使用内存中的临时进度，**不读取或改写正式存档**，刷新后重置。
+
+本地源码仓库可双击 `试枪场.html`；下载的便携版则打开 `start the game.html`，在浏览器地址末尾加 `?range=1`。M4A1 目前仅供试枪场和显式样板/测试入口使用，尚未加入正式商店、搜刮或存档；二十枪、一百配件的完整改枪系统仍在开发。
 
 ### 样板入口（看美术进度用）
 
@@ -102,7 +111,7 @@
 | 输入 | 动作 |
 | --- | --- |
 | `W A S D` / `Shift` | 移动 / 冲刺 |
-| 鼠标 / 左键 / 右键 | 瞄准 / 攻击 / 精瞄 |
+| 鼠标 / 左键 / 按住右键 | 瞄准 / 攻击（单发枪每次点击一枪，自动枪按住连发）/ 逐渐举枪精瞄 |
 | `R` / `1` / `2` | 换弹 / 主武器 / 水手匕首 |
 | `E` | 拾取、搜刮、开门或阅读；有效撤离区内按住 3 秒撤离 |
 | 滚轮 | 切换附近箱子、尸体目标 |
@@ -110,21 +119,24 @@
 | `Tab` / `M` | 背包 / 地图，均不暂停 |
 | `Esc` | 关闭面板；没有面板时暂停，点击「继续」恢复 |
 
+目前正式行动中的枪械均为单发。停步、举枪后射击更准；走动、急转和连续射击会增加晃动、散布或后坐，停火后逐渐恢复。切枪、换层不会立即消除这些代价，读档后也需重新稳定瞄准。
+
 整理库存可拖放或点选格位；拖动物品时 `R` 旋转、`Esc` 取消。商店购物车不支持旋转，物品加入待买或待卖后仍需点击「结算」。首次进入请点击游戏以启动声音，音量可在院子菜单或局内暂停面板调整。
 
 ### 📱 手机触控
 
-院子支持摇杆移动和点击互动，窄屏通过「功能」按钮打开整备、商店等面板；行动中使用双摇杆与屏幕按钮，推荐横屏。库存支持点选物品与格位。切到后台后，行动会暂停，回来需点击「继续」。
+院子支持摇杆移动和点击互动，窄屏通过「功能」按钮打开整备、商店等面板；行动中使用双摇杆与屏幕按钮，推荐横屏。站定并把瞄准摇杆停在内圈会逐渐举枪，推到外圈开火：单发枪按自身射速重复射击，自动枪持续连发。库存支持点选物品与格位。切到后台后，行动会暂停，回来需点击「继续」。
 
 移动端目前通过的主要是 Chromium 视口与触控仿真；iPhone、Android 真机手感和性能仍待验收。没有手柄支持。
 
 ## 🚧 当前边界与反馈
 
-- **美术仍在补齐**：院子四位主要人物和关键道具、城中村首批素材已接入；居民、敌人及部分环境仍有占位画面、缺帧或画风差异。全沿海精修、院子昼夜变化尚未完成。
-- **长期稳定性仍需验证**：资源释放已有专项修复与回归，总堆增长的归因和长期内存验收仍为 `PARTIAL`；历史偶发存档、音频异常尚未确认根因。
+- **美术仍在补齐**：院子四位主要人物、关键道具、城中村首批素材，以及现有四类敌人的行走、尸体和持握图已接入。其余居民、环境与动画仍有占位或画风差异；全沿海精修、商场其余区域和院子昼夜变化尚未完成。
+- **设计与可玩内容有区别**：十二地区地图、市场剧情与后续主线/人物结局尚未落地；十八敌人原型、完整改枪系统及新暴击/三属性 Perk 正在规划或开发，尚未进入当前正式玩法。进度见下方文档导航与任务清单。
+- **长期稳定性仍需验证**：资源释放、行动恢复、交易与结算已有修复和回归；长期内存验收仍未完成。历史未签收项与后续缺陷分别见 [#32](https://github.com/xuys2025/escape-bincov/issues/32) 和 [#60](https://github.com/xuys2025/escape-bincov/issues/60)。
 - **自动通过不等于真人验收**：真机、实际 GPU 性能、长时间手感与平衡性仍需试玩反馈。多人联机、云存档未实现。
 
-玩家遇到的问题请补到 [玩家反馈 #26](https://github.com/xuys2025/escape-bincov/issues/26)，写明入口、浏览器/设备、操作步骤和截图；开发与自动验收留下的事项集中在 [AI 遗留清单 #32](https://github.com/xuys2025/escape-bincov/issues/32)。
+玩家遇到的问题请补到 [玩家反馈 #26](https://github.com/xuys2025/escape-bincov/issues/26)，写明入口、浏览器/设备、操作步骤和截图；开发任务从 [统一任务清单](docs/WORK-QUEUE.md) 查找，按各 issue/PR 的最新状态接手。
 
 ## 🛠️ 本地开发
 
@@ -148,20 +160,23 @@ pnpm dev
 | `pnpm test:station` / `pnpm test:hideout` | 院子交互与宿主切换 / 据点接口浏览器回归 |
 | `pnpm test:station-tier1` / `pnpm test:station-tier2` / `pnpm test:station-relief` | 计数与护符 / 训练与补给 / 进站救济专项 |
 | `pnpm test:raid-default` | 普通入口：两个区域、街区和商场走 2.5D、旧行动续玩、无 WebGL 提示 |
-| `node scripts/coast-sample-test.mjs` | 真实 Runtime 上的城中村样板门禁 |
+| `pnpm test:coast-sample` | 真实 Runtime 上的完整城中村样板门禁（手动套件） |
 | `node scripts/coast-audio-test.mjs` | 样板实际音频输出、暂停与恢复 |
 | `pnpm test:shop-drag` / `pnpm test:save-browser` | 商店拖放及触控 / 存档失败、导入导出与回滚 |
 | `pnpm test:browser` / `pnpm test:desktop-input` | 基础浏览器流程 / 桌面输入 |
-| `pnpm test:shooting` | 射击对齐：瞄准、枪口火光、曳光、贴墙挡弹、隐藏房间与开火方式 |
+| `pnpm test:shooting` / `pnpm test:range` | 射击对齐、遮挡与开火方式 / 试枪场、靶标与正式存档隔离 |
+| `pnpm test:opening` | 序幕首播、重看、跳过、暂停与存档隔离 |
 | `pnpm test:mobile` / `pnpm test:mobile-ux` | 手机视口、触控与面板操作 |
 | `pnpm test:portable` | 实际解压离线 ZIP 并验证启动与操作 |
 | `pnpm test:play` | 约 10 分钟真实计时自动行动，不能替代真人试玩 |
 
-浏览器检查前先执行 `pnpm package` 和 `pnpm exec playwright install chromium`；Linux CI 使用 `--with-deps`。已有 Chrome 可通过环境变量 `BINCOV_CHROME` 指定路径。Linux/macOS 便携包检查还需要 Python 3。完整命令见 [package.json](package.json)，测试选取与环境见 [开发手册](docs/AGENT-HANDBOOK.md)。
+浏览器检查前先执行 `pnpm package` 和 `pnpm exec playwright install chromium`；本地 Linux 缺少系统库时可用 `--with-deps`。已有 Chrome 可通过环境变量 `BINCOV_CHROME` 指定路径。Linux/macOS 便携包检查还需要 Python 3。完整命令见 [package.json](package.json)，测试选取与环境见 [开发手册](docs/AGENT-HANDBOOK.md)；CI 的浏览器分组、主机包缓存与 lavapipe 渲染器见 [CI 说明](docs/CI.md)。
 
 ## 🤝 协作与发布
 
 本仓库是项目权威来源，`main` 是已接受版本。接手先读 [AGENTS.md](AGENTS.md)，从[代码导航](docs/CODEMAP.md)选择任务、定位契约和测试，再核对[任务清单当前入口](docs/WORK-QUEUE.md)与相关 PR 的实时状态。[开发手册](docs/AGENT-HANDBOOK.md)按相关流程/风险小节读取；[handoff.md](handoff.md)及历史报告按任务需要查证，不再要求每次全文加载。
+
+当前只有一个行动 Runtime，兼容经典与分层两类存档；界面展示、实时模拟和最近检查点不是同一个状态。修改前先沿 [架构中的状态边界](docs/ARCHITECTURE.md) 确认权威值和提交入口。新增外部 ID、库存自动落格或计时逻辑时，保留非法输入、失败回滚和时间边界反例；本次审计及剩余风险见 [审计记录](docs/tasks/audit-contracts.md)。
 
 同一交付目标继续原分支与 PR，独立任务才另开分支；不得覆盖他人工作或直接推送 `main`。源码、打包脚本或游玩说明变化后按仓库要求重新打包。存档兼容、写入失败回滚与单文件离线能力必须保留。
 
@@ -173,14 +188,16 @@ PR 经 CI 验证、维护者确认合并后，`main` 的 CI 成功才会更新 G
 | --- | --- |
 | 剧情转化制作流程、十八事件卡与市场样板（内容规格，待接入） | [工作方案](docs/NARRATIVE-ADAPTATION-PLAN.md) · [事件与线索登记](docs/story/CONTENT-REGISTER.md) · [市场与回站样板](docs/story/CH01-MARKET-SLICE.md) |
 | 市场剧情首批实施范围、缺项与验收（草稿准备，未接入） | [实施任务书](docs/STORY-MARKET-IMPLEMENTATION.md) |
-| 开场动画分镜与制作方案（已定稿，制作中） | [分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md) · [制作方案](docs/OPENING-CUTSCENE-PLAN.md) |
+| 开场动画（已接入；方案与截图记录各自制作阶段） | [分镜稿](docs/OPENING-CUTSCENE-SCRIPT.md) · [制作方案](docs/OPENING-CUTSCENE-PLAN.md) · [实际画面](docs/opening-cutscene-p0-20261015/README.md) |
+| 射击手感与试枪场（已接入）、改枪系统（开发中） | [射击实现与决定](docs/SHOOTING-SYSTEM-REWORK.md) · [改枪排期 PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [实施进度 #80](https://github.com/xuys2025/escape-bincov/issues/80) |
 | 院子与城中村整合范围、发布边界 | [整合说明](docs/IMPLEMENTATION-RELEASE.md) |
 | 水产站院子实现、快捷入口与真实接口 | [院子接线说明](docs/station-yard/README.md) · [HideoutRuntime](docs/hideout-runtime/README.md) |
 | 城中村逻辑与样板接线历史 | [Coast Runtime](docs/COAST-RUNTIME-SAMPLE.md) · [样板接线](docs/COAST-SAMPLE-VIEW.md) |
 | 游戏规则、物品与搜刮 | [游玩手册](docs/PLAYING.md) · [搜刮说明](docs/LOOTING.md) |
-| 成长、基地、建筑与商场设计 | [RPG 系统](docs/RPG-SYSTEM-DESIGN.md) · [建筑逻辑](docs/BUILDING-LOGIC.md) · [商场地图](docs/MALL-VALIDATION-MAP.md) |
-| 地图敌人体系重组：五大类、18 原型、十二规划区域（设计提案，未实现） | [敌人详细设定](docs/ENEMY-DESIGN.md) |
-| 世界观与长线故事，含待实现内容 | [世界与主线](docs/WORLD-REGIONS-STORY.md) · [《等海退去》](docs/MAIN-STORY.md) · [文学再修订候选](docs/story/GEMINI-REWRITE-20261014.md) |
+| 成长、基地、建筑与商场设计 | [RPG 系统](docs/RPG-SYSTEM-DESIGN.md) · [暴击与 Perk（已排期，待实现）](docs/CRITICAL-PERK-DESIGN.md) · [可行性与实施安排](docs/tasks/critical-perk-plan.md) · [建筑逻辑](docs/BUILDING-LOGIC.md) · [商场地图](docs/MALL-VALIDATION-MAP.md) |
+| 现有四类敌人素材（已接入）、十八原型体系（开发中） | [素材与验收](docs/enemy-art/README.md) · [敌人详细设定](docs/ENEMY-DESIGN.md) · [实施进度 #78](https://github.com/xuys2025/escape-bincov/issues/78) |
+| 世界观与长线故事（文稿已合入，后续玩法待开发） | [世界与主线](docs/WORLD-REGIONS-STORY.md) · [《等海退去》](docs/MAIN-STORY.md) · [文学改写记录](docs/story/GEMINI-REWRITE-20261014.md) |
+| 地图、主线与人物结局的后续实施 | [十二地区 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场首批 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [后续主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物与结局 #85](https://github.com/xuys2025/escape-bincov/issues/85) |
 | 技术架构与贡献流程 | [架构](docs/ARCHITECTURE.md) · [贡献指南](CONTRIBUTING.md) · [任务清单](docs/WORK-QUEUE.md) |
 | 历史版本与验收记录 | [更新记录](CHANGELOG.md) · [历史证据归档](docs/IMPLEMENTATION-ARCHIVE.md) · [交接记录](handoff.md) |
 

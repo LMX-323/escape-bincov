@@ -5,6 +5,7 @@ import { ENEMY_CATALOG, ENEMY_FACTIONS,
 import { LEGACY_ENEMY_PROFILES, getLegacyEnemyProfile, type LegacyEnemyId } from '../src/enemy-profile';
 import { ENEMIES } from '../src/domain';
 import { BUILDING_WORLD } from '../src/building-world';
+import { WORLD } from '../src/world';
 
 test('the eighteen design identities stay stable and separate from legacy save IDs', () => {
     const expected: readonly EnemyArchetypeId[] = ['raider-melee', 'raider-gunner', 'raider-lookout', 'raider-boss',
@@ -86,6 +87,7 @@ test('the documented first street sample sites are real outdoor floor cells clea
         assert.equal(coast.cells[y][x], 'floor', `sample (${x},${y})`);
         const point = { x: (x + .5) * coast.tile, y: (y + .5) * coast.tile };
         assert.ok(!coast.entries.some(entry => Math.hypot(entry.at.x - point.x, entry.at.y - point.y) < coast.tile * 2));
-        assert.ok(Math.hypot(BUILDING_WORLD.spawn.x - point.x, BUILDING_WORLD.spawn.y - point.y) > coast.tile * 10);
+        for (const spawn of WORLD.spawns)
+            assert.ok(Math.hypot(spawn.x - point.x, spawn.y - point.y) > coast.tile * 10, `sample (${x},${y}) near spawn (${spawn.x},${spawn.y})`);
     }
 });
