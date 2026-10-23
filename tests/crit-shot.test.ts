@@ -14,13 +14,13 @@ import type { ExpansionState } from '../src/expansion-state';
 import { characterCritChance, critChance, critMultiplier, critSources, snapshotChance, type CritInput, type CritSnapshot, type PerkId } from '../src/perks';
 import { SAMPLE_GUNS } from '../src/shooting';
 import type { Cell } from '../src/spatial';
-import { arm, reopen, LANE, type Bench } from './fixtures/shooting-bench';
+import { arm, perkBench, reopen, LANE, type Bench } from './fixtures/shooting-bench';
 import { plainCrit, prototypeRaid, prototypeWorld } from './fixtures/layered';
 
 // CP-T04 of #77 (docs/CRITICAL-PERK-DESIGN.md sections 2 and 4.2, docs/tasks/critical-perk-contract.md section 3): a
 // gun shot in a v3 raid snapshots its critical sources once, every pellet keeps its own copy, and each hit on a live
-// enemy rolls that snapshot once from the raid's RNG. v2 raids keep the old formula and v1 raids never crit. The breath
-// charge (technique-15-a) is not wired into shots yet, so real shots here carry no breath source and no target.
+// enemy rolls that snapshot once from the raid's RNG. v2 raids keep the old formula and v1 raids never crit. Shots here
+// are fired without a held precise aim, so they carry no breath charge (technique-15-a): breath-runtime.test.ts has it.
 
 const near = (a: number, b: number) => Math.abs(a - b) < 1e-12;
 const intent = (patch: Partial<RaidIntent> = {}): RaidIntent => ({ ...emptyIntent(), aim: LANE.aim, ...patch });
@@ -34,20 +34,6 @@ const drawn = (state: number, count: number) => { const random = D.seededRandom(
 const input = (patch: Partial<CritInput> = {}): CritInput => ({ technique: 10, weapon: D.WEAPONS.pistol, perks: [], focus: false, breath: 0, ...patch });
 const snapshotOf = (patch: Partial<CritInput> = {}): CritSnapshot => ({ sources: critSources(input(patch))!, multiplier: critMultiplier(patch.perks ?? []), target: null });
 
-/**
- * The shooting bench's raid (a v3 building raid, seed 42) deployed from a v3 expansion holding `perks` at permanent
- * technique `technique`: the perks are chosen at the base before deploying, the only time the game allows it.
- */
-function perkBench(perks: PerkId[] = [], technique = 10): Bench {
-    const state = createSessionState(), data = new Map<string, string>(), quota = { full: false };
-    const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (quota.full) throw Error('test quota'); data.set(k, v); } };
-    const saves = new SaveSession(state, () => storage); assert.equal(saves.initialize(), true); assert.equal(saves.enableRpg(), true);
-    const ticket = saves.prepareExpansionMutation(d => { d.expansion.growth.permanent.technique = technique; d.expansion.growth.perks = [...perks]; });
-    assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
-    state.state = 'hideout'; assert.equal(saves.beginRun(42, true), true); state.state = 'run';
-    const runtime = new CoastRaidRuntime(state, saves), driver = createRuntimeTestDriver(runtime, '?test=1');
-    return { state, saves, runtime, driver, storage, data, fail(full: boolean) { quota.full = full; } };
-}
 /** Stand the first live enemy of `kind` `distance` px east of the player on the bench lane, calm; returns its uid. */
 function target(b: Bench, distance: number, kind = 'elite', hp?: number): string {
     const uid = b.runtime.enemies.find(e => e.hp > 0 && e.id === kind)!.uid;
