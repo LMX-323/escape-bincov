@@ -85,7 +85,7 @@
 
 **首读路径：增加持久字段或修改恢复行为。**
 
-1. [expansion-state.ts](../src/expansion-state.ts)：字段所属类型、`newExpansion` 与唯一的 v1→v2 升级 `upgradeToRpg`、`validateExpansion` / `exactKeys`。纯派生显示值无需自动入档。
+1. [expansion-state.ts](../src/expansion-state.ts)：字段所属类型、`newExpansion` 与唯一的据点边界升级 `upgradeToRpg`（v1→v2→v3）、`rpgEnabled`、`validateExpansion` / `exactKeys`。纯派生显示值无需自动入档。
 2. [session.ts](../src/session.ts)：`ensureRpg` / `enableRpg`、`enableExpansion`、`beginRun` → [building-world.ts](../src/building-world.ts) 的 `initializeBuildingRaid` / [mall-world.ts](../src/mall-world.ts) 的 `initializeMallRaid`；读取 `persist` 的完整写入链，而非只搜字段名。
 3. 同文件继续按操作读：`prepareExpansionMutation` / `commitExpansionMutation`、`prepareSettlement` / `retrySettlement`、`backupRecord`、`importRecord`。
 4. [profile-codec.ts](../src/profile-codec.ts)：各格式共用的严格 profile 与物品栏规则（`decodeStoredProfile`、`validInventory`）；[recovery-store.ts](../src/recovery-store.ts)：`SessionRecord`、`decodeSession`、`RecoveryStore.commit`；[save-backup.ts](../src/save-backup.ts)：`encodeRecoveryBackup` / `decodePortableBackup`。
@@ -98,6 +98,7 @@
 **验证入口。**
 
 - [expansion-recovery.test.ts](../tests/expansion-recovery.test.ts)：原子升级、严格导入拒绝、完整备份与待保存候选。
+- [perk-save.test.ts](../tests/perk-save.test.ts)：session v5/Perk 选择、进行中的旧行动保持 v4 至结算、旧备份导入、降级保护与 `perksBackup`。
 - [systems-session.test.ts](../tests/systems-session.test.ts)、[recovery.test.ts](../tests/recovery.test.ts)：重试不重复奖励、未知字段、原字节保留、修订栅栏。
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
