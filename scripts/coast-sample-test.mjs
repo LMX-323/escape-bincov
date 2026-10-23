@@ -145,7 +145,8 @@ if (!group) { // Desktop flow: one run through every wiring point, ending in a s
     const target = (await now(page)).interaction; assert.equal(target?.kind, 'container');
     await clearEvents(page); await page.keyboard.press('e'); await frames(page, 4);
     const t0 = await now(page); assert.equal(t0.panel, 'loot'); assert.equal(t0.phase, 'blocked');
-    await page.keyboard.down('w'); await wait(400); const t1 = await now(page); await page.keyboard.up('w');
+    // Shift stands for the gameplay keys here: a movement key would leave the loot window (issue #26 F13, test:loot).
+    await page.keyboard.down('Shift'); await wait(400); const t1 = await now(page); await page.keyboard.up('Shift');
     assert.ok(t1.stamp.simulationTime > t0.stamp.simulationTime); assert.ok(Math.abs(t1.player.y - t0.player.y) < .5);
     await page.locator('[data-panel] [data-grid="container"] .item').first().click(); await page.locator('[data-do="inv-quick"]').click(); await frames(page, 4);
     const looted = (await events(page, 'looted')).filter(e => e.durability === 'committed');
