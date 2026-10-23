@@ -14,7 +14,7 @@ import { gpuTextures, managedSlots } from '../pixi-app';
 import { sampleEnabled } from '../raid-areas';
 import { exportSave } from '../save-export';
 import { toast } from '../toast';
-import { CoastSampleHost, type CoastHandle } from './host';
+import { CoastSampleHost } from './host';
 import { CoastView, type ViewOptions } from './scene';
 import { lifecycle } from './scope';
 import { isMallWorld } from '../mall-world';
@@ -53,7 +53,7 @@ export async function startCoastSample(paused = false): Promise<boolean> {
       isMallWorld(app.expansion?.raid?.worldVersion) ? import('./mall-art-load').then(m => m.loadMallAssets()).catch(error => { console.error(error); return null; }) : null,
     ]);
     created = test ? createTestCoastHost(app, saveSession, location.search) : createCoastRaidHost(app, saveSession);
-    const host: CoastSampleHost = new CoastSampleHost(created as unknown as CoastHandle, app, saveSession, opts, () => finish(host), exportSave);
+    const host: CoastSampleHost = new CoastSampleHost(created, app, saveSession, opts, () => finish(host), exportSave);
     app.coastSample = host;
     document.documentElement.dataset.coastSample = 'run';
     await host.mount(document.body);

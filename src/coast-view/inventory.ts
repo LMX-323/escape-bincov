@@ -11,8 +11,7 @@
 import * as D from '../domain';
 import { firstAvailableSlot, moveQuantity, placementError, type LootEndpoint } from '../loot';
 import type { MutationResult, SaveSession, SessionState } from '../session';
-import type { TargetRef } from '../raid-runtime/contract';
-import type { CoastServices } from './host';
+import type { CoastServices, TargetRef } from '../raid-runtime/contract';
 import { itemArtwork } from '../art/item-images';
 import { esc } from '../html';
 import { SUPPLY_IDS } from '../rpg';
@@ -33,7 +32,6 @@ export interface InventoryHost {
   /** A write failed and was rolled back: let the host surface the original save-error flow. */
   saveFailed(): void;
   close(): void;
-  carryLimit(): number;
   magazine(): number;
   /** A supply use committed (sound cue). */
   used?(): void;
@@ -73,10 +71,10 @@ export class InventoryPanel {
     const ref = this.mode === 'loot' ? this.host.lootRef() : null, box = ref ? this.host.services.lootInventory(ref) : null;
     if (this.mode === 'loot' && !box) { this.host.close(); return; }
     if (this.selected && !this.item()) { this.selected = null; this.placement = null; }
-    const weight = this.host.services.carriedWeight(), limit = this.host.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
+    const weight = this.host.services.carriedWeight(), limit = this.host.services.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
     const container = this.mode === 'loot' && box ? `<section class="cs-inv-src"><h3>${esc(this.containerName())} <span>${box.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${this.grid(box, 'container')}<p class="cs-help">留在这里的物资仅保留至本局结束。</p></section>` : '';
     // docs/LOOTING.md: on a desktop your own gear is on the left and the source on the right; a phone keeps the source first.
-    const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / ${limit.toFixed(1)} kg · 含装备</p></section>
+    const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / <span data-carry-limit>${limit.toFixed(1)}</span> kg · 含装备</p></section>
         <section><h3>安全箱 <span>撤离失败保留</span></h3>${this.grid(l.safe, 'safe')}<p class="cs-help">主武器 ${esc(w?.name ?? '水手匕首')}${w?.magazine ? ` · 弹匣 ${this.host.magazine()} / ${w.magazine}` : ''}</p></section>`;
     // The loot window keeps a danger line (health, time, condition, a blow), filled by the host each frame.
     this.el.innerHTML = `<header class="cs-inv-head"><div><h2>${this.mode === 'loot' ? '搜刮物资' : '随身物资'}</h2><span class="cs-sub">世界仍在运行，请留意周围</span></div>${this.mode === 'loot' ? '<div class="cs-risk" data-risk></div>' : ''}<button type="button" data-do="close">关闭（${this.mode === 'loot' ? 'E / ' : ''}Tab / Esc）</button></header>
@@ -84,6 +82,14 @@ export class InventoryPanel {
         <aside class="cs-details">${this.details()}</aside>
       </div>
       <footer class="cs-inv-foot" role="status">${esc(this.status || this.hint())}</footer>`;
+  }
+  /** Inventory/loot do not pause simulation. Refresh derived numbers without rebuilding the grid or losing a drag. */
+  refreshWeight() {
+    if (!this.host.session.loadout) return;
+    for (const [selector, value] of [['[data-weight]', this.host.services.carriedWeight()], ['[data-carry-limit]', this.host.services.carryLimit()]] as const) {
+      const el = this.el.querySelector<HTMLElement>(selector), text = value.toFixed(1);
+      if (el && el.textContent !== text) el.textContent = text;
+    }
   }
   /** While placing: rotate the preview and cancel as buttons too (a phone has no R or Esc), as the original panel did. */
   private placementBar() {

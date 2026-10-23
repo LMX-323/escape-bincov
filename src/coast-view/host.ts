@@ -10,12 +10,9 @@
  */
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
-import { SURVIVAL } from '../balance';
-import { derivedLimits, rpgEnabled } from '../expansion-state';
 import { exitBearing, questProgress } from '../qol';
-import type { MutationResult, SaveSession, SessionState } from '../session';
-import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, TargetRef } from '../raid-runtime/contract';
-import type { LootTransfer } from '../loot';
+import type { SaveSession, SessionState } from '../session';
+import type { CoastHandle, HurtCause, Interaction, PublishedView, StampedEvent, TargetRef } from '../raid-runtime/contract';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
 import { InputState, inputKey } from './input';
@@ -29,30 +26,6 @@ import { SampleSound } from './sound';
 import { playtestMarks } from '../shooting';
 import { esc } from '../html';
 
-export interface CoastServices {
-  cancelStart(): void;
-  activate(ref: TargetRef): boolean;
-  transferLoot(ref: TargetRef, request: LootTransfer): MutationResult;
-  useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
-  equipItem(uid: string): MutationResult;
-  dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
-  /**
-   * Carried kg, live, as the Runtime uses it for movement, overload and stamina (worn charm and loaded rounds
-   * included). The HUD and the inventory only format this value; they never re-derive it.
-   */
-  carriedWeight(): number;
-  retrySave(): boolean;
-  retrySettlement(): boolean;
-  settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
-  abandon(): void;
-  checkpoint(): boolean;
-  lootContext(): { containerId: string; runId: string } | null;
-  lootInventory(ref: TargetRef): D.Inventory | null;
-  /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
-  sampleGun(id: 'm4a1' | null): void;
-}
-
-export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
 export type SampleExit = { kind: 'settled' };
 type Panel = null | 'pause' | 'inventory' | 'loot' | 'map' | 'reading' | 'ending';
 
@@ -190,7 +163,6 @@ export class CoastSampleHost {
         lootRef: () => this.lootRef(), touch: () => this.input.touch, toast: (t, bad) => this.toast(t, bad),
         saveFailed: () => { if (!this.services.checkpoint()) this.lastRejected = 'checkpoint'; },
         close: () => this.closePanel(true),
-        carryLimit: () => rpgEnabled(this.session.expansion) ? derivedLimits(this.session.expansion!).carry : SURVIVAL.carryLimit,
         magazine: () => this.last?.frame.hud.weapon.mag ?? 0,
         used: () => this.sound.used(),
       });
@@ -818,6 +790,7 @@ export class CoastSampleHost {
   /** Lower-rate HUD: status, carried weight, exit bearing and quests (the original refreshes these every 0.1 s). */
   private slowHud(b: PublishedView) {
     this.placeRadio(); // the task card may have opened or the screen turned since the line came up
+    if (this.panel === 'inventory' || this.panel === 'loot') this.inv.refreshWeight();
     const h = b.frame.hud, l = this.session.loadout, body = this.session.expansion?.body;
     const status = [h.bleeding ? '流血' : '', h.pollution > 10 ? `污染 ${Math.round(h.pollution)}%` : '',
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';

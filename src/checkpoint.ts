@@ -1,7 +1,7 @@
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
-import { decodeStoredProfile, finite, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 import type { LootContainer } from './loot';
 
 export const WORLD_VERSION = 'coast-v2';
@@ -93,7 +93,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   if (!Array.isArray(c.loot) || c.loot.length > 4000 || !Array.isArray(c.bullets) || c.bullets.length > 1000) fail();
   for (const l of c.loot) {
     id(l.uid);
-    if (!point(l) || !Object.hasOwn(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
+    if (!point(l) || !hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
   }
   for (const b of c.bullets) {
     id(b.uid);

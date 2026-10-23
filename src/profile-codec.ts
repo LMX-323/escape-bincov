@@ -18,6 +18,11 @@ export function finite(value: unknown, min: number, max: number): value is numbe
 export function whole(value: unknown, min: number, max: number): value is number { return finite(value, min, max) && Number.isSafeInteger(value); }
 /** Item uids and run ids. */
 export function identity(value: unknown): value is string { return typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value); }
+/** JSON IDs must be strings as well as own keys: hasOwn alone coerces ['pistol'], while a truthy lookup accepts
+ * Object.prototype names. Validate before indexing or migrating; migration may otherwise silently drop gear. */
+export function hasOwnStringKey<T extends object>(table: T, value: unknown): value is keyof T & string {
+  return typeof value === 'string' && Object.hasOwn(table, value);
+}
 export function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, any> {
   return !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every(k => Object.hasOwn(value, k));
 }
@@ -38,7 +43,7 @@ export function validInventory(value: unknown, w: number, h: number, seen: Set<s
     if (!item || typeof item !== 'object') return false;
     const i = item as Item;
     if (rules.exact && !hasExactKeys(i, ['uid', 'id', 'qty', 'x', 'y', ...('relief' in i ? ['relief'] : []), ...('rotated' in i ? ['rotated'] : [])])) return false;
-    if (!Object.hasOwn(ITEMS, i.id) || !whole(i.qty, 1, ITEMS[i.id].stack) || !identity(i.uid) || seen.has(i.uid)
+    if (!hasOwnStringKey(ITEMS, i.id) || !whole(i.qty, 1, ITEMS[i.id].stack) || !identity(i.uid) || seen.has(i.uid)
       || (i.relief !== undefined && typeof i.relief !== 'boolean')
       || (i.rotated !== undefined && (!rules.rotation || typeof i.rotated !== 'boolean'))
       || !fits(placed, i.id, i.x, i.y, undefined, !!i.rotated)) return false;
@@ -49,7 +54,7 @@ export function validInventory(value: unknown, w: number, h: number, seen: Set<s
 }
 function validEquipment(value: any): boolean {
   if (!value || typeof value.relief !== 'boolean' || !whole(value.ammo, 0, COUNT_MAX) || !whole(value.ammoRelief, 0, COUNT_MAX)) return false;
-  const gun = value.weapon === null ? null : Object.hasOwn(WEAPONS, value.weapon) && value.weapon !== 'knife' ? WEAPONS[value.weapon] : undefined;
+  const gun = value.weapon === null ? null : hasOwnStringKey(WEAPONS, value.weapon) && value.weapon !== 'knife' ? WEAPONS[value.weapon] : undefined;
   return gun !== undefined && value.ammo <= (gun?.magazine ?? 0) && value.ammoRelief <= value.ammo;
 }
 
