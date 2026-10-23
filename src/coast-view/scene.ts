@@ -597,8 +597,10 @@ export class CoastView {
         // Only blows (any size) flash, kick and spray blood; bleeding, pollution, thirst, hunger and a lowered health
         // limit are shown by the host's HUD, not on the body.
         const g = this.actors.get(e.uid); if (!g || e.cause !== 'blow') break;
+        // The angle points back at the blow's source: blood sprays that way, while the body is knocked 2 px the way the
+        // blow travelled, along the bullet or away from the attacker (#75).
         const ang = e.angle ?? 0;
-        g.flashT = .07; g.kick = e.angle === null ? { x: 0, y: 0 } : { x: Math.cos(ang) * 2, y: Math.sin(ang) * 2 }; g.kickT = .08; g.hit = true;
+        g.flashT = .07; g.kick = e.angle === null ? { x: 0, y: 0 } : { x: -Math.cos(ang) * 2, y: -Math.sin(ang) * 2 }; g.kickT = .08; g.hit = true;
         const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, ang, this.rnd);
         break;
       }

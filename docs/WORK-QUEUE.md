@@ -1,6 +1,6 @@
 # 当前任务入口
 
-最近核对：2026-10-24，main `98c69b4`（含 #89、#92、#90 与 #93 检查导航）。当前实现、准确 head 与 CI 以相关 PR 实时状态为准，旧快照不作为当前指令。
+最近核对：2026-10-24，main `edb02f2`（含 #89、#92、#90 与 #93 检查导航）。当前实现、准确 head 与 CI 以相关 PR 实时状态为准，旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
@@ -14,7 +14,7 @@
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [#80](https://github.com/xuys2025/escape-bincov/issues/80) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已合入（`2bac4fb`），采用维护者认可的“稳定”参数。#28 承接规划与排期，代码实施进度见 #80；完整改枪尚未进入 main |
-| 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · `fix/hurt-flash-slow-frames` | 研究已登记，实施未排期。P0 第一项的慢帧时序由该分支 PR 处理：命中后的第一帧至少画一次受击闪白和抖动，60 帧/秒逐帧不变；抖动方向（现朝射手）待维护者决定，其余 P0–P2 未开工 |
+| 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · `fix/hurt-flash-slow-frames` | 研究已登记，实施未排期。P0 第一项的慢帧时序由该分支 PR 处理：命中后的第一帧至少画一次受击闪白和抖动，60 帧/秒逐帧不变；抖动方向已由 #94（edb02f2）按维护者决定改为顺着子弹被打退，血迹返溅和方向提示保留；其余 P0–P2 未开工 |
 | 暴击与三属性 Perk | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [实现契约与记录](tasks/critical-perk-contract.md) · [PR #92](https://github.com/xuys2025/escape-bincov/pull/92) | #92 已合入（`8b6192d`）：存档 5/行动 3、暴击快照、24 项 Perk、屏息、基地选择与 500 重置、院子/旧页签及行动 HUD。敌人 #81 继续在此基线上整合，历史格式不被替换 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 已登记待排期；文稿合入不代表地图、剧情事件或结局已接入游戏 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
