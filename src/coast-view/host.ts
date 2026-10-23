@@ -12,7 +12,8 @@ import type { Application } from 'pixi.js';
 import * as D from '../domain';
 import { exitBearing, questProgress } from '../qol';
 import type { SaveSession, SessionState } from '../session';
-import type { CoastHandle, HurtCause, Interaction, PublishedView, StampedEvent, TargetRef } from '../raid-runtime/contract';
+import type { CoastHandle, HudView, HurtCause, Interaction, PublishedView, StampedEvent, TargetRef } from '../raid-runtime/contract';
+import { critHud } from '../perk-copy';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
 import { InputState, inputKey, isMoveKey } from './input';
@@ -84,7 +85,8 @@ const HTML = `
     <div data-where class="cs-where"></div>
   </section>
   <section class="cs-clock"><b data-time></b><small data-tide></small></section>
-  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div></section>
+  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div>
+    <div class="cs-crit" data-crit hidden><div><span data-crit-label></span><b data-crit-chance></b><em data-crit-target aria-hidden="true"></em></div><div class="cs-breath" data-breath hidden aria-hidden="true"><span data-breath-label></span><i><b data-breath-bar></b></i><small data-breath-time></small></div></div></section>
   <div data-radio class="cs-radio" hidden></div>
   <section class="cs-info">
     <button type="button" data-do="map" data-exit-nav>选择撤离点</button>
@@ -644,6 +646,7 @@ export class CoastSampleHost {
     q('[data-weapon]').classList.toggle('empty', !!w.magSize && w.mag === 0 && !w.reloading);
     q('[data-weapon]').classList.toggle('reloading', w.reloading);
     q('[data-heals]').textContent = String(h.heals);
+    this.critLines(h);
     q('.cs-status').classList.toggle('low', h.hp / h.maxHp < .35);
     if ((this.stats.frames & 7) === 0) this.slowHud(b);
     const region = this.view.regionName();
@@ -704,6 +707,30 @@ export class CoastSampleHost {
       fan.style.transform = `translate(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px) rotate(${(p.aim + a.drift).toFixed(4)}rad)`;
       fan.style.setProperty('--half', `${(a.cone / 2).toFixed(4)}rad`);
     }
+  }
+  /** The critical lines and the breath bar as last written (critLines rewrites them only when they change). */
+  private critShown = '';
+  private critBar = '';
+  /**
+   * The gun in hand's critical chance at the foot of the weapon card (CP-T09, docs/CRITICAL-PERK-DESIGN.md 2.3): the
+   * static chance, the knife's or an old raid's note, and with the breath perk the charge's progress and the chance on
+   * the enemy it holds. Read-only and in place: it never opens, moves or covers anything while a fight goes on. The
+   * numbers are the Runtime's own (HudView.crit and .breath, through perk-copy's critHud); nothing here derives a chance.
+   */
+  private critLines(h: HudView) {
+    const c = critHud(h.crit, h.breath), box = this.q('[data-crit]'), breath = this.q('[data-breath]');
+    const text = c ? [c.label, c.chance, c.breath?.label, c.breath?.time, c.breath?.target].join('|') : '';
+    if (text !== this.critShown) {
+      this.critShown = text; box.hidden = !c;
+      if (c) {
+        this.q('[data-crit-label]').textContent = c.label; this.q('[data-crit-chance]').textContent = c.chance ?? '';
+        this.q('[data-crit-target]').textContent = c.breath?.target ?? ''; breath.hidden = !c.breath; box.classList.toggle('breath', !!c.breath);
+        if (c.breath) { this.q('[data-breath-label]').textContent = c.breath.label; this.q('[data-breath-time]').textContent = c.breath.time; }
+      }
+    }
+    const charge = c?.breath ?? null, bar = charge ? `${(charge.share * 100).toFixed(1)}%` : '', key = charge ? `${bar}|${charge.full}` : '';
+    if (charge && key !== this.critBar) { this.q('[data-breath-bar]').style.width = bar; breath.classList.toggle('full', charge.full); }
+    this.critBar = key;
   }
   /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
   private lootHitT = 0;

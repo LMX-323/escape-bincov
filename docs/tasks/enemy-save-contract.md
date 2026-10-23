@@ -1,5 +1,29 @@
 # EN-02/03：十八原型行动的持久化边界
 
+## 当前实现：与已合入的 Perk #92 整合
+
+基线 main `8b6192d`。记录同时读取历史 3/4/5/6 和组合格式 **7**；`ExpansionState` 仍为 1/2/3。行动版本是能力身份，不能用大小比较代替功能判断：
+
+| 行动 | 角色状态 | 敌人规则 | 玩家弹丸规则 | 可承载记录 |
+| --- | --- | --- | --- | --- |
+| classic | 保持原状态 | 原四类 | 无 Perk 暴击 | 按现有记录 |
+| LayeredRaid 1/2 | ExpansionState 1/2 | 原四类 | 无暴击 / 原中心接近度公式 | 4/6 |
+| LayeredRaid 3 | ExpansionState 3 | 原四类 | Perk 开枪快照 | 5/7 |
+| LayeredRaid 4 | ExpansionState 2 | 新敌人 | 原中心接近度公式 | 6 |
+| LayeredRaid 5 | ExpansionState 3 | 新敌人 | Perk 开枪快照 | 7 |
+
+新街区出击由初始化的 Perk 行动 3 升为组合行动 5，在同一原子候选里写记录 7。商场仍生成行动 3。恢复正在进行的 3/4 行动不改变敌人、弹丸、名册或规则；敌人旧行动 4 结算后，基地边界才升级角色到 3。源码入口是 `enemyRules`、`perkRaidRules`、`recordVersion` 和 `recordUpgradeFields`。
+
+- `enemyBackup` 保存首次启用新敌人时被替换主档的精确原文，历史记录 6 的副本升 7 后保持不变。
+- `perksBackup` 保留已有 5/7 的原值，包括 null；首次由 4 或 6 启用 Perk 时保存被替换主档原文。不把组合记录再次嵌入自身。
+- 记录 7 同时要求两字段，只允许字符串或 null。外层/角色/行动版本组合、弹丸 owner、玩家暴击快照及新敌人战术字段都严格校验。
+- 候选验证、持久提交和待提交事务导出共用版本字段构造。失败不发布版本、备份或奖励；超过 2 MiB 时仍整笔拒绝。
+- 普通写入不降级。明确导入旧角色格式可以开始新升级周期；导入当前 Perk 格式或重新开始保留本地已有副本，新来源则保留导入记录的敌人/Perk 副本。
+
+验证入口：[组合兼容回归](../../tests/enemy-perk-compatibility.test.ts)、[Perk 存档回归](../../tests/perk-save.test.ts)、[固定历史端探针](../../scripts/enemy-old-client-probe.ts)。本地完整单测 **701/701**、CI 规则 **53/53**；固定端 `35b3a38`、`76adbd6`、敌人 `dc14ad5`、Perk `8b6192d` 共 **80/80** 正反例通过，包含实际合法组合行动档 7。各端公开导入解码、主档初始化及失败后写入尝试均拒绝新档且保留原字节。浏览器、十分钟计时和准确 head CI 另记集成交付结果。
+
+## 历史方案与探针记录（下文版本号不是当前格式）
+
 对应 [#78](https://github.com/xuys2025/escape-bincov/issues/78)、[实施 PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。2026-10-23 以任务 head `35b3a38223a7bb0020db25e9b2d0bb5476caa993` 检查源码。本文是**下一批实现的合同与已执行的历史端探针**；不把拟议字段描述成已实现，也不替代[既有兼容基线](enemy-foundation-compatibility.md)或源码类型/严格校验器。
 
 ## 版本与旧行动

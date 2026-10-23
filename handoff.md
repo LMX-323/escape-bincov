@@ -1,5 +1,7 @@
 # 任务交接入口
 
+2026-10-23 · PR #81 正常同步 Perk #92（main `8b6192d`），组合新行动采用 session 7 / expansion 3 / raid 5，历史敌人 6/2/4 与 Perk 5/3/3 按保存规则继续；双备份、严格版本矩阵和失败原子性见[存档合同](docs/tasks/enemy-save-contract.md)。本批 701 项单测、53 项 CI 规则、四固定客户端 80 项正反例、旧世界 9/9 A/B、package、22 个敌人场景、save-browser/buildings/mobile/portable 与 4 个桌面/触屏 Perk HUD 场景通过。HTML SHA-256 `aa2763118603ad38f5a2e60c93751405e4ab33106410265237dfde32266ddaf9` 的真实输入游玩于 14:33:10～14:43:15 UTC 完成 10 分 4 秒，24 撤离/12 死亡、零脚本错误和外部请求；这是自动流程回归，不代表真人平衡。准确提交与 CI 见原 PR。其余原型美术与正式场景继续推进，未合并、未上线。
+
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
 - 2026-10-23 · PR #81 本批代码/素材已保存为 `fc56573`，随后正常同步已接受 main `160c6f3`（#89 退役旧测试接口）。唯一冲突在本文件，同时保留双方记录；合入后 601 单测及 package 通过，HTML/ZIP/清单与 `fc56573` 逐字节一致，所以下方 22 场景、UI/便携和 10 分 4 秒实际游玩仍对应最终运行制品。当前准确提交和 CI 见原 PR，不自行合并或部署。
@@ -12,6 +14,8 @@
 
 - 2026-10-23 · [#78 敌人体系实施 / 草稿 PR #81](docs/tasks/enemy-foundation.md)：`feat/enemy-foundation` 从 `8ef783f` 开始，停电前保存为 `b679737`，恢复后正常同步含 #79/#88 的 main `b38f23d`。十八原型目录仅供制作；旧四类 AI 提取、表现/尸体映射、兼容回归与 A/B 工具已完成，本轮补强全部出生点隔离与解码拒绝对照。新 schema、三人遭遇及正式原型仍按 #78 推进，EN-01～04 未整项核销；准确 head、实际测试与后续边界见摘要及原实施 PR。
 
+
+- 2026-10-23 · [暴击与三属性 Perk 实现（#77）](docs/tasks/critical-perk-contract.md)：分支 `agent/critical-perk`，基于 main `44494ea`，已同步 #79（`76adbd6`）与 #88（`b38f23d`）。CP-T01～T09 分阶段实现并逐段合入：共用纯规则 `src/perks.ts`、`src/breath.ts`；存档 session v5 / expansion v3 / raid v3，固定旧客户端拒绝新档；开枪暴击快照与 v3 命中；18 项被动效果与控枪；屏息接入 Runtime；基地选择与 500 现金重置服务；院子与旧页签界面（字体子集重建）。实现取舍见契约第 7 节；真人平衡、真机未验。
 - 2026-10-23 · [#60 Q-D02 旧交易与装弹接口退役](docs/tasks/quality-entropy.md#q-d02-旧交易与装弹接口退役)（[PR #89](https://github.com/xuys2025/escape-bincov/pull/89)，`agent/q-d02-legacy-api`，起点 main `44494ea`，交付前已同步最新 main）：删去 `domain.ts` 只被测试使用的 `buy`/`sell`/`reload`，仍有意义的断言迁到正式路径：别家商人的货、硬塞进待卖的救济品由 `settleCartResult` 整单拒绝；站内商店拒绝上架救济品；旧页签「统一结算」写入失败回滚并保留购物车；装弹改测 `reloadMagazine`（补弹药不足、空包、口径不符）。玩法、存档与打包产物不变（HTML/ZIP/清单字节一致）。同步后本地单测全过（比 main 多 2 项）、`test:save-browser` 9/9；准确基线、head 与 CI 见承接 PR。
 
 - 2026-10-23 · [#26 F13 搜刮时按 WASD 离开](https://github.com/xuys2025/escape-bincov/issues/26#issuecomment-6186494212)：分支 `fix/issue26-wasd-leaves-loot`，起点 main `b475b1b`。`coast-view/host.ts` 的 keydown 在搜刮面板打开时把移动键（`input.ts:isMoveKey`，按物理键）当作离开：关面板（拖动随之取消，不落格）后交给 `InputState` 立即移动；连发、Ctrl/Alt/⌘ 组合和输入框打字不算，搜刮时按住的 Shift 直接冲刺；背包、地图、阅读、暂停面板不变。桌面搜刮面板副标题和行动指南写明 WASD，`LOOTING.md`、README、游玩说明同步。`test:loot` 新增一步、改了原“搜刮时按 D 不动”一步，coast-sample W06 改用 Shift；main 构建在新步骤的面板关闭等待处失败（负对照）。

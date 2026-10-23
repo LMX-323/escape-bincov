@@ -6,7 +6,7 @@ import { WORLD } from './world';
 /** Authored street encounter, away from every deployment, extraction and stair landing.
  * Replaces three birth-roster members before the single deployment commit. No extra population or RNG draws. */
 export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition): void {
-    if (raid.elapsed !== 0 || raid.version !== 2 || world.id !== 'coast-buildings-v1') throw new Error('遭遇只能在新街区行动初始化。');
+    if (raid.elapsed !== 0 || ![2, 3].includes(raid.version) || world.id !== 'coast-buildings-v1') throw new Error('遭遇只能在新街区行动初始化。');
     const members: { id: ArchetypeId; x: number; y: number }[] = [
         { id: 'raider-melee', x: 20, y: 18 }, { id: 'raider-gunner', x: 28, y: 22 }, { id: 'raider-lookout', x: 25, y: 13 },
     ];
@@ -24,6 +24,6 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
             tactics: initialTactics(member.id, 'street-salvage') });
         used.add(enemy.uid);
     }
-    raid.version = 4;
+    raid.version = raid.version === 3 ? 5 : 4;
     raid.roster = Object.values(raid.maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id })));
 }

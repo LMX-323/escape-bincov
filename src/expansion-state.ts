@@ -1,5 +1,6 @@
 import * as D from './domain';
 import { archetype, enemyDefinition, initialTactics } from './enemy-archetypes';
+import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
@@ -25,6 +26,8 @@ export interface BodyState {
 }
 export interface GrowthState {
     permanent: Attributes; progress: Attributes; reputation: Record<string, number>; luck: number;
+    /** Required in v3 and absent before it: the chosen perk ids, as validPerkSelection (src/perks.ts) accepts them. */
+    perks?: PerkId[];
 }
 export interface TrainingState {
     quantity: Attributes; credited: Attributes;
@@ -52,8 +55,13 @@ export interface PursuitState {
     id: string; enemy: EnemyState; sourceMap: string; targetMap: string; entry: string;
     path: Point[]; distance: number; speed: number; registeredAt: number; arrivalAt: number; waiting: boolean;
 }
+/**
+ * `version` is the raid's rules identity, kept until it settles: 1 no RPG; 2 RPG with the old critical rule; 3 RPG
+ * with Perk critical snapshots; 4 enemy tactics with the old critical rule; 5 both systems.
+ * Only 3 and 5 belong to a v3 expansion. Restoring never changes a live raid's rules.
+ */
 export interface LayeredRaid {
-    version: 1 | 2 | 4; worldVersion: string; layoutRevision: string; seed: number; runId: string;
+    version: 1 | 2 | 3 | 4 | 5; worldVersion: string; layoutRevision: string; seed: number; runId: string;
     currentMap: string; player: ActorState; loadout: D.RunLoadout;
     elapsed: number; initialHigh: boolean; highTide: boolean; warned: boolean; tideChanged: boolean;
     kills: number; rng: number; nextEntity: number; maps: Record<string, LayerState>; pursuits: PursuitState[];
@@ -62,18 +70,26 @@ export interface LayeredRaid {
     roster: { uid: string; id: string }[];
     eventRolled: boolean;
     mapEvent?: 'none' | 'neutral' | 'good' | 'bad';
-    /** v2 RPG checkpoint: last qualifying shock, measured on the global action clock. */
+    /** RPG (v2+) checkpoint: last qualifying shock, measured on the global action clock. */
     shockAt?: number;
 }
-/** v2 generated identities stay unique when loot survives into another action. */
+/** RPG (v2+) generated identities stay unique when loot survives into another action; v2 and v3 share the format. */
 export function entityUid(raid: Pick<LayeredRaid, 'version' | 'runId'>, serial: number): string {
-    return raid.version >= 2 ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
+    return rpgEnabled(raid) ? `entity-${raid.runId}-${serial}` : `entity-${serial}`;
 }
+/** 1: no RPG. 2: RPG (charm, awards). 3: v2 plus the perk selection (`growth.perks`). */
 export interface ExpansionState {
-    version: 1 | 2; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
+    version: 1 | 2 | 3; body: BodyState; growth: GrowthState; base: BaseState; raid: LayeredRaid | null;
     charm?: D.Item | null;
     awards?: string[];
 }
+/** RPG is on: an expansion from v2, or a layered raid deployed from one. Any later version keeps meaning this. */
+export function rpgEnabled(value: { version: number } | null | undefined): boolean { return !!value && value.version >= 2; }
+/** Raid identities are independent capabilities, not an ordered feature ladder. */
+export const enemyRules = (raid: { version: number } | null | undefined): boolean => raid?.version === 4 || raid?.version === 5;
+export const perkRaidRules = (raid: { version: number } | null | undefined): boolean => raid?.version === 3 || raid?.version === 5;
+/** The expansion has passed the latest station-boundary upgrade (upgradeToRpg): v3. */
+export const stationUpgraded = (state: Pick<ExpansionState, 'version'> | null | undefined) => state?.version === 3;
 export interface WorldDefinition {
     id: string; revision: string; maps: Record<string, SpaceDefinition>;
     enemyCount: number; spawnMap: string; spawn: Point;
@@ -94,17 +110,25 @@ export function newExpansion(now: number, oldRaid?: RaidCheckpoint | null): Expa
             cursor: now, location: oldRaid ? 'raid' : 'base', restSeconds: 0, energizedGranted: false, extractedPearl: false,
             training: { startedAt: now, quantity: 0, credited: triple(0), activeSeconds: 0, attribute: null } }, raid: null };
 }
-/** The station-boundary RPG upgrade, in place: v2 starts with no charm or awards and base time counts from `now`. v2 is left as is. */
+/**
+ * The station-boundary upgrade to the current version, in place. Callers run it only with no live raid and no pending
+ * settlement. v1 to v2 starts with no charm or awards and base time counts from `now`; v2 to v3 adds an empty perk
+ * selection and nothing else (no pick, no training credit). A v2 state still holding a raid stays v2 until that raid
+ * settles. Idempotent: v3 is left as is.
+ */
 export function upgradeToRpg(state: ExpansionState, now: number): void {
-    if (state.version !== 1) return;
-    state.version = 2; state.charm = null; state.awards = []; state.base.cursor = Math.max(state.base.cursor, now);
+    if (state.version === 1) { state.version = 2; state.charm = null; state.awards = []; state.base.cursor = Math.max(state.base.cursor, now); }
+    if (state.version === 2 && state.raid === null) { state.version = 3; state.growth.perks = []; }
 }
 export function effectiveAttributes(state: ExpansionState): Attributes {
     return Object.fromEntries(ATTRIBUTES.map(a => [a, Math.max(1, Math.min(40, state.growth.permanent[a] + (state.body.effects[a] > 0 ? 5 : 0)))])) as Attributes;
 }
+/** The perks in force: a v3 expansion's selection. v1 and v2 hold none, so no perk ever reaches their raids. */
+export const activePerks = (state: Pick<ExpansionState, 'version' | 'growth'>): readonly PerkId[] => state.version === 3 ? state.growth.perks ?? [] : [];
+/** Attribute formulas plus, in v3 only, the perks' fixed bonuses (once). The strict validator uses the same limits. */
 export function derivedLimits(state: ExpansionState) {
-    const a = effectiveAttributes(state);
-    return { hp: 100 + 3 * (a.constitution - 10), stamina: 100 + 2 * (a.strength - 10), carry: 24 + .6 * (a.strength - 10) };
+    const a = effectiveAttributes(state), bonus = perkLimitBonus(activePerks(state));
+    return { hp: 100 + 3 * (a.constitution - 10) + bonus.hp, stamina: 100 + 2 * (a.strength - 10) + bonus.stamina, carry: 24 + .6 * (a.strength - 10) + bonus.carry };
 }
 
 const fail = (): never => { throw new Error('建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。'); };
@@ -137,14 +161,39 @@ function batch(value: ProductionBatch) {
     if (value.workbenchLevel < recipe.level || value.duration !== recipe.seconds * PRODUCTION_SPEED[value.workbenchLevel]
         || value.paidCash !== recipe.cash || !matchingGoods(value.paidItems, recipe.materials) || !matchingGoods(value.result, recipe.result)) fail();
 }
+/**
+ * A v3 player round's critical snapshot (docs/tasks/critical-perk-contract.md section 3), checked as stored: never
+ * completed or reordered. Sources are exact `{ id, chance }` records in CRIT_SOURCE_IDS order, so each id once, and
+ * always hold the character and weapon sources; those two may differ from today's (a dose wore off, another gun was
+ * drawn), so only 0..1 is checked. The perk sources are exactly the owned perks' own, because the selection cannot
+ * change during a raid (`owned` is perkModifiers of it), and so is the multiplier; focus has its fixed chance. The
+ * breath source needs technique-15-a and is there exactly when `target` names an enemy of the roster.
+ */
+function critSnapshot(value: unknown, owned: PerkModifiers, roster: readonly { uid: string }[]) {
+    exactKeys(value, ['sources', 'multiplier', 'target']);
+    const { sources, multiplier, target } = value as CritSnapshot, chances = new Map<CritSourceId, number>();
+    if (!Array.isArray(sources)) fail();
+    let last = -1;
+    for (const source of sources) {
+        exactKeys(source, ['id', 'chance']);
+        const index = CRIT_SOURCE_IDS.indexOf(source.id);
+        if (index <= last || !finite(source.chance, 0, 1)) fail();
+        last = index; chances.set(source.id, source.chance);
+    }
+    const perk = (id: CritSourceId) => owned.crit.find(s => s.id === id)?.chance, breath = chances.get('technique-15-a');
+    if (!chances.has('character') || !chances.has('weapon') || multiplier !== owned.critMultiplier
+        || chances.get('technique-20-a') !== perk('technique-20-a') || chances.get('technique-30-a') !== perk('technique-30-a')
+        || (chances.has('focus') && chances.get('focus') !== FOCUS_CRIT)
+        || (breath === undefined ? target !== null : !owned.breath || !(breath > 0 && breath <= BREATH_MAX) || !roster.some(e => e.uid === target))) fail();
+}
 
 /** Complete validation is shared by imports and the single-record commit, before publishing state. */
 export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
     const state = value as ExpansionState;
-    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(state.version === 2 ? ['charm', 'awards'] : [])]);
-    if (![EXPANSION_VERSION, 2].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
+    exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(rpgEnabled(state) ? ['charm', 'awards'] : [])]);
+    if (![EXPANSION_VERSION, 2, 3].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
     const { body, growth, base } = state;
-    if (state.version === 2) {
+    if (rpgEnabled(state)) {
         if (!Array.isArray(state.awards) || state.awards.length > 1000 || state.awards.some(id => !identity(id)) || new Set(state.awards).size !== state.awards.length) fail();
         const charm = state.charm;
         if (charm !== null) {
@@ -154,10 +203,12 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         }
     }
     exactKeys(body, ['hp', 'stamina', 'mental', 'water', 'satiety', 'pollution', 'bleeding', 'exhausted', 'effects', 'treatment', 'luckEffect']);
-    exactKeys(growth, ['permanent', 'progress', 'reputation', 'luck']);
+    exactKeys(growth, ['permanent', 'progress', 'reputation', 'luck', ...(state.version === 3 ? ['perks'] : [])]);
     exactKeys(base, ['facilities', 'queue', 'completed', 'nextBatch', 'cursor', 'location', 'restSeconds', 'energizedGranted', 'extractedPearl', 'training']);
     attributes(growth.permanent, 10, 30, true); attributes(growth.progress, 0, 1);
     if (ATTRIBUTES.some(a => growth.progress[a] >= 1 || (growth.permanent[a] === 30 && growth.progress[a] !== 0))) fail();
+    // Checked as stored, before derivedLimits reads it: never reordered, deduplicated or trimmed to fit.
+    if (state.version === 3 && !validPerkSelection(growth.perks, growth.permanent)) fail();
     if (!obj(growth.reputation) || Object.keys(growth.reputation).length > 100 || Object.entries(growth.reputation).some(([id, amount]) => !identity(id) || !whole(amount, -100, 100))
         || !whole(growth.luck, -3, 5)) fail();
     exactKeys(body.effects, EFFECTS);
@@ -196,10 +247,12 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (legacyRaid || base.location !== 'raid') fail();
     const raid = state.raid;
     if (!obj(raid)) return fail();
-    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(raid.version >= 2 ? ['shockAt', 'mapEvent'] : [])]);
+    exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(rpgEnabled(raid) ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    if (![1, 2, 4].includes(raid.version) || (raid.version >= 2 && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
+    // Perks and critical snapshots travel together; enemy-only v4 keeps its original v2 expansion.
+    if (![1, 2, 3, 4, 5].includes(raid.version) || perkRaidRules(raid) !== (state.version === 3)
+        || (rpgEnabled(raid) && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
     exactKeys(raid.maps, Object.keys(world.maps));
@@ -218,11 +271,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     for (const key of ['reloadLeft', 'fireCooldown', 'hitTime'] as const) if (!finite(raid[key], 0, 10)) fail();
     const invIds = new Set<string>(state.charm ? [state.charm.uid] : []);
     const allocated = (id: string) => {
-        const prefix = `entity-${raid.runId}-`;
-        const match = raid.version >= 2 && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
+        const prefix = `entity-${raid.runId}-`, rpg = rpgEnabled(raid);
+        const match = rpg && id.startsWith(prefix) ? /^([0-9]+)$/.exec(id.slice(prefix.length))
             : /^(?:entity|pursuit)-([0-9]+)$/.exec(id);
-        if (raid.version >= 2 && id.startsWith(prefix) && !match) fail();
-        if (raid.version >= 2 && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
+        if (rpg && id.startsWith(prefix) && !match) fail();
+        if (rpg && id.startsWith('entity-') && !id.startsWith(prefix)) return; // Retained loot from an older action.
         if (match && (!whole(Number(match[1]), 1, COUNT_MAX) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
@@ -238,12 +291,14 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if (inventoryIdentity(profile.safe) !== inventoryIdentity(raid.loadout.safe)) fail();
     const entities = new Set<string>(), enemies = new Map<string, EnemyState>(), enemyMaps = new Map<string, string>();
     const containers: { container: LootContainer; mapId: string }[] = [];
+    // What the owned perks (checked above) put into every shot snapshot of a v3 raid.
+    const owned = perkRaidRules(raid) ? perkModifiers(growth.perks ?? []) : null;
     const entity = (uid: string) => { if (!identity(uid) || entities.has(uid) || invIds.has(uid)) fail(); allocated(uid); entities.add(uid); };
     const point = (p: Point, map: SpaceDefinition) => { if (!obj(p) || !inSpace(map, p)) fail(); };
     const plainPoint = (p: Point, map: SpaceDefinition) => { exactKeys(p, ['x', 'y']); point(p, map); };
     const enemy = (e: EnemyState, map: SpaceDefinition) => {
         if (!obj(e)) return fail();
-        const spec = raid.version === 4 ? archetype(e.id) : undefined;
+        const spec = enemyRules(raid) ? archetype(e.id) : undefined;
         exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert', ...(spec ? ['tactics'] : [])]);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
         if ((!spec && !hasOwnStringKey(D.ENEMIES, e.id)) || !finite(e.hp, 0, enemyDefinition(e.id).hp) || !finite(e.rotation, -100, 100)
@@ -297,11 +352,14 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             inventory(c.inventory, 6, 5); containers.push({ container: c, mapId });
         }
         for (const b of layer.bullets) {
-            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(raid.version >= 2 && b.enemy ? ['owner'] : [])]);
+            // Every player round of a v3 raid carries its shot's critical snapshot; enemy rounds and older raids never do.
+            const snapshot = owned !== null && !b.enemy;
+            exactKeys(b, ['uid', 'x', 'y', 'rotation', 'vx', 'vy', 'left', 'damage', 'enemy', ...(rpgEnabled(raid) && b.enemy ? ['owner'] : []), ...(snapshot ? ['crit'] : [])]);
             entity(b.uid); point(b, map);
             if (!finite(b.vx, -1000, 1000) || !finite(b.vy, -1000, 1000) || !finite(b.left, 0, 2000) || !finite(b.damage, 0, 1000)
                 || !finite(b.rotation, -100, 100) || typeof b.enemy !== 'boolean'
-                || (raid.version >= 2 && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
+                || (rpgEnabled(raid) && b.enemy && !raid.roster.some(e => e.uid === b.owner))) fail();
+            if (snapshot) critSnapshot(b.crit, owned, raid.roster);
         }
         if (layer.noise !== null) { exactKeys(layer.noise, ['at', 'radius', 'remaining']); plainPoint(layer.noise.at, map); if (!finite(layer.noise.radius, 0, 2000) || !finite(layer.noise.remaining, 0, 10)) fail(); }
     }
@@ -323,7 +381,7 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     if ([...invIds].some(id => entities.has(id) || events.has(id))) fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
-        || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(raid.version === 4 && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)
+        || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(enemyRules(raid) && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)
         || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0 && (!e.tactics || e.tactics.killedBy === 'player')).length) fail();
     for (const { container: c, mapId } of containers.filter(c => c.container.kind === 'corpse')) {
         const dead = enemies.get(c.id.replace(/^corpse-/, ''));

@@ -73,7 +73,8 @@ async function boot() {
     addEventListener('keydown', e => {
         if (/INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement).tagName)) return;
         if (app.coastSample || app.station) return;
-        const modal = app.state === 'menu' ? document.querySelector<HTMLElement>('#ui [aria-modal="true"]') : null;
+        // Title dialogs and the tab page's perk preview keep Tab inside themselves.
+        const modal = app.state === 'menu' || app.state === 'hideout' ? document.querySelector<HTMLElement>('#ui [aria-modal="true"]') : null;
         if (modal && e.key === 'Tab') {
             const targets = Array.from(modal.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
             const index = targets.indexOf(document.activeElement as HTMLButtonElement);

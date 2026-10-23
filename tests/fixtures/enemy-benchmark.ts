@@ -67,6 +67,14 @@ export function runBenchmarkCase(modules: BenchmarkModules, sample: BenchmarkCas
   assert.ok(saves.initialize(), state.storageError);
   state.state = 'hideout';
   assert.ok(saves.beginRun(sample.seed, sample.world === 'mall' ? 'mall' : sample.world === 'building', { mallLayout: 3, legacyEnemies: true }), state.storageError);
+  // Compare the historical RPG rules, not a new Perk deployment. Keep all identities, population and RNG.
+  const record = saves.currentRecord();
+  if (record?.expansion?.version === 3 && record.expansion.raid) {
+    record.version = 4; delete record.perksBackup; delete record.enemyBackup;
+    record.expansion.version = 2; delete record.expansion.growth.perks; record.expansion.raid.version = 2;
+    memory.storage.setItem('escape-bincov.session.v2', JSON.stringify(record));
+    assert.ok(saves.initialize(), state.storageError);
+  }
   state.state = 'run';
   const r = new modules.runtime.CoastRaidRuntime(state, saves);
   const runId = state.loadout!.runId!;

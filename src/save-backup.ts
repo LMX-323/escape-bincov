@@ -26,7 +26,7 @@ export function decodePortableBackup(text: string, resolveWorld?: WorldResolver)
   let parsed: any;
   try { parsed = JSON.parse(text); } catch { throw new Error('无法读取存档：文件不是有效的 JSON。'); }
   if (parsed?.format === 'escape-bincov-recovery-backup') {
-    if (![2, 3, 4, 6].includes(parsed.formatVersion) || parsed.record?.version !== parsed.formatVersion) throw new Error('此备份来自不兼容的版本，请使用兼容版本导入。');
+    if (![2, 3, 4, 5, 6, 7].includes(parsed.formatVersion) || parsed.record?.version !== parsed.formatVersion) throw new Error('此备份来自不兼容的版本，请使用兼容版本导入。');
     return { kind: 'session', record: decodeSession(JSON.stringify(parsed.record), resolveWorld) };
   }
   if (parsed?.format === 'escape-bincov-session') return { kind: 'session', record: decodeSession(text, resolveWorld) };

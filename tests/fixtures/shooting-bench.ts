@@ -10,6 +10,7 @@ import { createSessionState, SaveSession } from '../../src/session';
 import { CoastRaidRuntime, emptyIntent } from '../../src/raid-runtime/runtime';
 import { createRuntimeTestDriver } from '../../src/raid-runtime/test-support';
 import type { AimView, RaidIntent } from '../../src/raid-runtime/contract';
+import type { PerkId } from '../../src/perks';
 import type { Point } from '../../src/world';
 
 export type Gun = 'pistol' | 'carbine' | 'shotgun' | 'm4a1';
@@ -27,6 +28,20 @@ export function benchRaid(seed = 42) {
     const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (quota.full) throw Error('test quota'); data.set(k, v); } };
     const saves = new SaveSession(state, () => storage); assert.equal(saves.initialize(), true);
     state.state = 'hideout'; assert.equal(saves.beginRun(seed, true), true); state.state = 'run';
+    const runtime = new CoastRaidRuntime(state, saves), driver = createRuntimeTestDriver(runtime, '?test=1');
+    return { state, saves, runtime, driver, storage, data, fail(full: boolean) { quota.full = full; } };
+}
+/**
+ * The same raid (a v3 building raid, seed 42) deployed from a v3 expansion holding `perks` at permanent technique
+ * `technique`: the perks are chosen at the base before deploying, the only time the game allows it.
+ */
+export function perkBench(perks: PerkId[] = [], technique = 10): Bench {
+    const state = createSessionState(), data = new Map<string, string>(), quota = { full: false };
+    const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (quota.full) throw Error('test quota'); data.set(k, v); } };
+    const saves = new SaveSession(state, () => storage); assert.equal(saves.initialize(), true); assert.equal(saves.enableRpg(), true);
+    const ticket = saves.prepareExpansionMutation(d => { d.expansion.growth.permanent.technique = technique; d.expansion.growth.perks = [...perks]; });
+    assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
+    state.state = 'hideout'; assert.equal(saves.beginRun(42, true, { legacyEnemies: true }), true); state.state = 'run';
     const runtime = new CoastRaidRuntime(state, saves), driver = createRuntimeTestDriver(runtime, '?test=1');
     return { state, saves, runtime, driver, storage, data, fail(full: boolean) { quota.full = full; } };
 }

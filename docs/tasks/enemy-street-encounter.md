@@ -1,5 +1,7 @@
 # 街区三原型样板：当前实现与验证
 
+**2026-10-23 整合更新：** 正常合入 Perk #92 / main `8b6192d`。新街区行动改为 session 7 / expansion 3 / raid 5，同时启用新敌人和 Perk 弹丸快照；原敌人 6/2/4 与 Perk 5/3/3 活动行动保持原规则直到结算。双备份与版本矩阵见[当前存档合同](enemy-save-contract.md)，下文旧版本号和验证是各批历史记录。
+
 承接 [#78](https://github.com/xuys2025/escape-bincov/issues/78) / [PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。这是 EN-05～09 的首批实现，不代表十八原型、十二规划区域或正式美术全部完成。
 
 ## 正式入口与范围

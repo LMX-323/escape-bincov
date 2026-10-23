@@ -74,7 +74,7 @@ try {
             assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase);
             if (phase !== 'corpse') assert.ok(actual.cue);
             assert.equal(actual.reloading, phase === 'reload');
-            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : role === 'raider-melee' ? 'club' : 'pistol'); assert.equal(actual.version, 6);
+            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : role === 'raider-melee' ? 'club' : 'pistol'); assert.equal(actual.version, 7);
             if (phase !== 'parley') {
                 assert.equal(actual.artStyle, role); assert.ok(phase === 'corpse' ? actual.corpseArt : actual.bodyArt);
             }

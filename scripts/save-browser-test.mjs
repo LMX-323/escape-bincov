@@ -95,8 +95,8 @@ try {
     const download = await downloadPromise;
     backupPath = resolve(out, 'save-roundtrip.json'); await download.saveAs(backupPath);
     const exported = JSON.parse(await readFile(backupPath, 'utf8'));
-    assert.equal(exported.format, 'escape-bincov-recovery-backup'); assert.equal(exported.formatVersion, 4);
-    assert.equal(exported.record.expansion.version, 2); assert.deepEqual(exported.record.profile, expected);
+    assert.equal(exported.format, 'escape-bincov-recovery-backup'); assert.equal(exported.formatVersion, 5);
+    assert.equal(exported.record.expansion.version, 3); assert.deepEqual(exported.record.profile, expected);
     await page.evaluate(() => { window.__bincov.app.save.cash = 123; window.__bincov.persist(); });
     await page.locator('#backup-file').setInputFiles(backupPath);
     await action('confirm-import').waitFor(); await failStorage(true); await action('confirm-import').click();
@@ -163,7 +163,7 @@ try {
     const downloadPromise = page.waitForEvent('download'); await page.locator('.coast-sample [data-do="backup"]').click();
     backupPath = resolve(out, 'pending-settlement-backup.json'); await (await downloadPromise).saveAs(backupPath);
     const envelope = JSON.parse(await readFile(backupPath, 'utf8'));
-    assert.equal(envelope.formatVersion, 6); assert.equal(envelope.record.expansion.base.location, 'settlement');
+    assert.equal(envelope.formatVersion, 7); assert.equal(envelope.record.expansion.base.location, 'settlement');
     const backup = envelope.record.profile;
     assert.equal(backup.activeRun, null); assert.ok(backup.bag.items.some(i => i.id === 'sample'));
     await page.screenshot({ path: resolve(out, 'save-failure.png') });
@@ -243,7 +243,7 @@ try {
       const file = resolve(out, 'conflict-settlement-backup.json');
       await (await downloadPromise).saveAs(file);
       const backup = JSON.parse(await readFile(file, 'utf8'));
-      assert.equal(backup.formatVersion, 6); assert.deepEqual(backup.record.profile, pending);
+      assert.equal(backup.formatVersion, 7); assert.deepEqual(backup.record.profile, pending);
     } finally { await shared.close(); }
   });
   report.status = 'passed';
