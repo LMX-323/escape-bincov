@@ -1,10 +1,10 @@
 import * as D from './domain';
+import { perkLimitBonus, validPerkSelection, type PerkId } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
 import type { Point } from './world';
 import { inSpace, separation, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
 import { finite, hasExactKeys, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
-import { perkLimitBonus, validPerkSelection, type PerkId } from './perks';
 
 export const EXPANSION_VERSION = 1;
 export const ATTRIBUTES = ['strength', 'constitution', 'technique'] as const;
