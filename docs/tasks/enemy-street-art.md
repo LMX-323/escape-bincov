@@ -26,6 +26,8 @@
 
 同一最终 HTML（SHA-256 `acec21fe0d82c654e3bce99fdc7af4a733512fe2d73d1d355bf0a2f1ecc63aeb`）于 2026-10-23 13:47:10～13:57:14 UTC 完成 10 分 4 秒新街区实际输入游玩：前摇、恢复与枪手换弹均有观测，零页面错误/外部请求。脚本在低生命情况下也继续出击，包含多次短撤离与死亡，不能据此证明数值平衡；完整 JSON 留在 `test-results/enemy-art-natural-play.json`。旧世界固定输入 9/9 A/B 与 `76adbd6` 相同。本批制品 HTML 5,973,711 字节、便携 ZIP 3,761,720 字节。
 
+本批先存为 `fc56573`，再正常合入 main `160c6f3`（#89）。合入后 601 单测、package 通过，HTML、两份 ZIP 与清单字节完全不变；前述实际运行证据仍对应同一制品。
+
 ![新旧角色整数倍对照](../enemy-street/three-role-contact.png)
 
 ![1280×720 近战前摇](../enemy-street/1280x720-raider-melee-windup.png)
