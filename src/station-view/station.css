@@ -283,6 +283,40 @@ button.on { border-color: var(--amber); color: var(--amber2); }
 .attrs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
 .attrs div { padding: 8px; background: #161c1b; border: 1px solid var(--line); text-align: center; }
 .attrs span { display: block; color: var(--dim); font-size: 12px; } .attrs b { font: 32px/34px var(--px); } .attrs small { display: block; color: var(--mute); font-size: 11px; }
+/* perk board (one attribute at a time: four tiers, two cards each) and the static critical display */
+.perks h4 { margin-top: 12px; }
+.perk-tabs button small { color: var(--mute); font-size: 11px; margin-left: 4px; }
+.perk-tabs button.on small { color: var(--amber); }
+.ptier { display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-bottom: 6px; }
+.ptier > b { align-self: center; text-align: center; font: 16px/20px var(--px); color: var(--amber); }
+.ptier > b small { display: block; font: 11px var(--sys); color: var(--mute); }
+.pcard { display: flex; flex-direction: column; gap: 1px; min-height: 52px; padding: 6px 9px; background: #161c1b; border: 1px solid var(--line); text-align: left; }
+button.pcard { padding: 6px 9px; background: #1f2826; border-color: var(--line2); cursor: pointer; }
+button.pcard:hover:not(:disabled) { border-color: var(--amber); background: #2b302a; }
+.pcard b { font: 16px/20px var(--px); color: var(--ink); }
+.pcard span { font-size: 12px; line-height: 1.4; color: var(--dim); }
+.pcard em { font-style: normal; font-size: 11px; color: var(--mute); }
+.pcard.chosen { border-color: var(--amber); background: #221f15; }
+.pcard.chosen b { color: var(--amber2); } .pcard.chosen em { color: var(--ok); }
+.pcard.other, .pcard.locked { opacity: .55; }
+.preset { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
+.preset small { flex: 1; min-width: 160px; color: var(--mute); font-size: 11px; }
+.crit { margin-top: 12px; padding: 8px 10px; background: #161c1b; border: 1px solid var(--line); }
+.crit h4 { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 4px; }
+.crit h4 b { font: 16px var(--px); color: var(--amber2); }
+.crit ul { list-style: none; margin: 0 0 4px; padding: 0; display: grid; gap: 2px; }
+.crit li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--dim); }
+.crit li b { font-weight: normal; color: var(--ink); }
+.crit p { margin: 2px 0 0; font-size: 11px; }
+.perk-confirm .ptitle { display: flex; flex-direction: column; }
+.perk-confirm .ptitle b { font: 16px/20px var(--px); color: var(--amber2); }
+.perk-confirm .ptitle small { color: var(--dim); font-size: 12px; }
+.perk-confirm .muted { margin: 0 0 6px; font-size: 12px; }
+.pchanges { margin: 0 0 10px; padding-left: 18px; font-size: 12px; }
+.panel.compact .pcard, .panel.compact .perk-tabs button, .panel.compact .preset button { min-height: 44px; }
+.panel.compact .perk-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.panel.compact .perk-tabs button { padding: 4px 6px; }
+.panel.compact .perk-tabs button small { display: block; margin: 0; }
 
 .board ul { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; }
 .board li { padding: 8px 10px; background: #d8d0b4; color: #2b2a24; transform: rotate(-.4deg); }
@@ -364,6 +398,9 @@ button.on { border-color: var(--amber); color: var(--amber2); }
 /* confirmation and save-failure dialogs over the open panel */
 .modal.dialog { z-index: 20; width: min(460px, calc(100vw - 24px)); border-color: var(--amber); }
 .modal.dialog.k-storage { border-color: var(--bad); }
+.modal.dialog.k-perk-reset { border-color: #8a4a3a; }
+.perk-confirm .acts button { min-height: 36px; }
+.ui.touch .perk-confirm .acts button { min-height: 44px; }
 .has-dialog .panel, .has-dialog .modal:not(.dialog) { filter: brightness(.55); pointer-events: none; }
 .confirm p, .storage p { margin: 0 0 10px; }
 .confirm .acts, .storage .acts { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }

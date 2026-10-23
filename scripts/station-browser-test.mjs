@@ -132,7 +132,7 @@ try {
     await page.waitForTimeout(1200);
     const g = await page.evaluate(() => ({ bincov: '__bincov' in window, station: '__station' in window, frame: getComputedStyle(document.querySelector('#frame')).visibility, quick: !!document.querySelector('#station-yard').shadowRoot.querySelector('[data-quick="gear"]') }));
     assert.deepEqual(g, { bincov: false, station: false, frame: 'hidden', quick: true });
-    const r = await record(); assert.equal(r.version, 4); assert.equal(r.expansion.version, 2); assert.equal(r.profile.cash, 700);
+    const r = await record(); assert.equal(r.version, 5); assert.equal(r.expansion.version, 3); assert.equal(r.profile.cash, 700);
     await shot('A1-yard-1280x720');
     return `院子挂载，#frame 隐藏；存档 v${r.version}，扩展 v${r.expansion.version}，现金 ${r.profile.cash}`;
   });
@@ -143,7 +143,7 @@ try {
     await page.goto('https://station.test/?test=1'); await page.locator('[data-action="enter"]').click(); await yardReady();
     const x = await snap(), r = await record();
     assert.equal(x.profile.cash, 1842); assert.equal(x.profile.quests.repair, true); assert.deepEqual(x.profile.stats, s.stats); assert.equal(x.power, 'restored');
-    assert.ok(x.profile.stash.items.some(i => i.id === 'watch')); assert.equal(x.storage.upgradeRequired, false); assert.equal(r.expansion.version, 2);
+    assert.ok(x.profile.stash.items.some(i => i.id === 'watch')); assert.equal(x.storage.upgradeRequired, false); assert.equal(r.expansion.version, 3);
     assert.equal(r.legacyBackup, bytes);
     await page.waitForTimeout(600); await shot('A2-legacy-save-restored-power');
     return `现金 1842、修好电源（院子灯亮）、出击 3 次保留；第 ${x.day} 天；legacyBackup 为原始字节`;
@@ -168,7 +168,7 @@ try {
     const g = await page.evaluate(() => ({ station: !!window.__bincov.app.station, roots: document.querySelectorAll('#station-yard').length, state: window.__bincov.app.state, toast: document.querySelector('#toast')?.textContent ?? '', backdrop: [...document.querySelectorAll('#game canvas')].map(c => c.className) }));
     assert.deepEqual({ ...g, toast: undefined }, { station: false, roots: 0, state: 'hideout', toast: undefined, backdrop: ['backdrop'] });
     assert.match(g.toast, /院子画面启动失败/);
-    const r = await record(); assert.equal(r.expansion.version, 2);
+    const r = await record(); assert.equal(r.expansion.version, 3);
     await shot('A4-webgl-fallback-tabs');
     // The yard reports its own startup failure on the console; that one expected line is not a page error.
     const expected = assertFallback(report.errors.slice()); report.expectedLogs.push({ step: 'A4', lines: expected });

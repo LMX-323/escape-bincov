@@ -9,6 +9,7 @@ import { checkpointBodyFits, traversable } from '../src/spatial';
 import { advanceRaidBody } from '../src/rpg';
 import { entityUid } from '../src/expansion-state';
 import type { EndReason } from '../src/expansion-state';
+import { plainCrit } from './fixtures/layered';
 
 function fixture(layered = true) {
     const state = createSessionState(), data = new Map<string, string>(); let fail = false, writes = 0;
@@ -137,7 +138,7 @@ test('R6-L3 actual player and enemy hits carry ownership after restored bullets'
         Object.assign(enemy, p, { home: { ...p }, target: { ...p }, path: [] });
         const origin = enemyShot ? s.player : p;
         s.bullets = [{ uid: layered ? entityUid({ version: 2, runId: s.runId }, s.nextEntity++) : 'entity-' + s.nextEntity++, x: origin.x, y: origin.y,
-            rotation: 0, vx: 100, vy: 0, damage: 1, left: 100, enemy: enemyShot, ...(enemyShot ? { owner: enemy.uid } : {}) }];
+            rotation: 0, vx: 100, vy: 0, damage: 1, left: 100, enemy: enemyShot, ...(enemyShot ? { owner: enemy.uid } : layered ? { crit: plainCrit() } : {}) }];
         r.restore(s); const expectedOwner = enemyShot ? enemy.uid : 'player';
         assert.equal(r.current().frame.bullets[0].owner, expectedOwner); r.updateBullets(.02);
         const hit = r.current().events.find(e => e.type === 'impact');

@@ -8,6 +8,7 @@ import { esc } from '../html';
 import * as P from './panels';
 import { confirmImport, readResetCopy, startOver } from '../fresh-start';
 import { deploymentRegion, deploymentWorld } from './deploy-map';
+import { PERK_UI, choicePreview, critContext, defaultPerkAttribute, perkDone, perkFailure, perkPendingName, perkRetried, resetPreview, type PerkPreviewView } from '../perk-copy';
 
 export type PanelKind = 'gear' | 'arms' | 'med' | 'radio' | 'generator' | 'deploy' | 'facility' | 'board' | 'chat' | 'body' | 'menu' | 'help' | 'report';
 export type Cue = 'ok' | 'error' | 'open' | 'close' | 'pick' | 'drop' | 'coins' | 'build' | 'deliver';
@@ -31,7 +32,10 @@ type Dialog =
   // No preview token is kept: base checkpoints stale it while the dialog is open, so confirming previews again (confirmImport).
   | { kind: 'import'; text: string; name: string }
   | { kind: 'reset' }
-  | { kind: 'storage' };
+  | { kind: 'storage' }
+  // A perk preview keeps its token: base checkpoints do not stale it (HideoutRuntime.previewPerk). `from` refocuses the card.
+  | { kind: 'perk'; id: string; token: string; view: PerkPreviewView; from: string }
+  | { kind: 'perk-reset'; attribute: Attribute; token: string; view: PerkPreviewView; from: string };
 
 const WIDE: PanelKind[] = ['gear', 'arms', 'med'];
 const CENTER: PanelKind[] = ['report', 'menu', 'help'];
@@ -51,7 +55,7 @@ const TITLES: Partial<Record<PanelKind, [string, string]>> = {
   generator: ['发电机', '发电机房'], deploy: ['出击准备', '院门'], body: ['身体与成长', '在站里休息会慢慢恢复'], menu: ['暂停', '滨科夫水产站'], help: ['操作说明', ''],
   board: ['寻人板', '食堂门口'], chat: ['食堂', '炊事员'], report: ['行动报告', ''],
 };
-const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入' };
+const DIALOG_TITLES: Record<Dialog['kind'], string> = { sale: '确认出售', import: '导入存档', reset: '清空存档', storage: '存档没有写入', perk: PERK_UI.choiceDialog, 'perk-reset': PERK_UI.resetDialog };
 /** Browser storage for the pre-reset copy; even reading the localStorage property can throw. */
 const browserStorage = () => localStorage;
 
@@ -71,6 +75,10 @@ export class UI {
   private regionPreview: string | null = null;
   private mapImage: string;
   private dialog: Dialog | null = null;
+  /** The body panel's perk attribute; chosen on first paint (the first with a node to choose). */
+  private perkAttr: Attribute | null = null;
+  /** A perk change whose write failed and waits for the retry (its name for the storage dialog), or ''. */
+  private perkPending = '';
   summary: D.RunSummary | null = null;
   private drag: GridDrag;
   private lastSnapshotRev = -1;
@@ -196,7 +204,7 @@ export class UI {
       case 'generator': body = P.generatorHtml(s); break;
       case 'deploy': body = P.deployHtml(s, this.rt.departure(), this.world, this.seed, this.worlds, this.regionPreview, this.mapImage); break;
       case 'facility': body = `<nav class="seg facs">${FACILITY_ORDER.map(f => P.btn(`${FACILITY_LABEL[f]}${s.base.facilities[f] ? ` <small>${s.base.facilities[f]} 级</small>` : ''}`, `fac:${f}`, f === this.facility ? 'on' : '')).join('')}</nav>` + P.facilityHtml(this.rt.facility(this.facility), s, this.rt.trainingProgress()); break;
-      case 'body': body = P.bodyHtml(s); break;
+      case 'body': { const board = this.rt.perkBoard(); this.perkAttr ??= defaultPerkAttribute(board); body = P.bodyHtml(s, board, this.perkAttr); break; }
       case 'board': body = P.boardHtml(); break;
       case 'chat': body = `<p class="muted">长桌上摆着碗。灶上那锅粥一直温着，谁回来谁盛。</p>`; break;
       case 'menu': body = P.menuHtml(this.volume, readResetCopy(browserStorage) !== null); break;
@@ -210,9 +218,12 @@ export class UI {
     const tabbed = SHORTCUTS.some(q => q.kind === kind) || kind === 'generator';
     const tabs = tabbed ? `<nav class="ptabs" aria-label="水产站功能">${SHORTCUTS.map(q => `<button data-tab="${q.kind}" class="${q.kind === kind ? 'on' : ''}" ${q.kind === kind ? 'aria-current="page"' : ''}>${q.label}<kbd>${q.key}</kbd></button>`).join('')}</nav>` : '';
     const heading = this.compact && tabbed ? `<button class="tabmenu" data-tabmenu aria-label="切换功能"><h2>${esc(title)}</h2><i class="caret" aria-hidden="true"></i></button>` : `<h2>${esc(title)}</h2>`;
+    // Repaints (five-second checkpoints, events) keep the keyboard on the same control, e.g. a perk card.
+    const active = (this.root.getRootNode() as ShadowRoot).activeElement as HTMLElement | null, focused = active && el.contains(active) ? active.dataset.act : undefined;
     el.innerHTML = `<header class="phead"><div>${heading}${sub ? `<small>${esc(sub)}</small>` : ''}</div>${cash}${kind === 'gear' && !this.compact ? P.gearActions(s.profile, false) : ''}${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header>${tabs}${line ? `<p class="line">“${esc(line)}”</p>` : ''}<div class="pbody">${body}</div>`;
     el.querySelector('.pbody')!.scrollTop = scroll;
     el.hidden = false;
+    if (focused) el.querySelector<HTMLElement>(`[data-act="${focused}"]`)?.focus({ preventScroll: true });
     (center ? this.panel : this.modal).hidden = true;
     this.root.classList.toggle('has-panel', !center); this.root.classList.toggle('has-modal', center);
   }
@@ -221,18 +232,29 @@ export class UI {
     this.dialogEl.hidden = !d; this.root.classList.toggle('has-dialog', !!d);
     if (!d) { this.dialogEl.innerHTML = ''; return; }
     const s = this.rt.snapshot();
-    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : d.kind === 'reset' ? P.resetConfirmHtml() : P.storageHtml(s);
+    const body = d.kind === 'sale' ? P.saleConfirmHtml(d.warnings) : d.kind === 'import' ? P.importConfirmHtml(d.name) : d.kind === 'reset' ? P.resetConfirmHtml()
+      : d.kind === 'perk' || d.kind === 'perk-reset' ? P.perkConfirmHtml(d.view, d.kind === 'perk-reset') : P.storageHtml(s, this.perkPending);
     this.dialogEl.className = `modal dialog k-${d.kind}`;
     const title = d.kind === 'storage' && s.storage.conflict ? '存档已被另一个窗口接管' : DIALOG_TITLES[d.kind];
     this.dialogEl.setAttribute('aria-label', title);
+    // Panel refreshes (five-second checkpoints) paint the dialog again: keep the keyboard on the same button.
+    const buttons = () => Array.from(this.dialogEl.querySelectorAll<HTMLElement>('button'));
+    const focused = buttons().indexOf((this.root.getRootNode() as ShadowRoot).activeElement as HTMLElement);
     this.dialogEl.innerHTML = `<header class="phead"><div><h2>${title}</h2></div>${P.btn('关闭 <kbd>Esc</kbd>', 'close', 'x')}</header><div class="pbody">${body}</div>`;
+    if (focused >= 0) buttons()[focused]?.focus({ preventScroll: true });
   }
   /** A dialog (a failed write too) ends a drag at once: the grids under it take no drop until it closes. */
   private openDialog(d: Dialog) { const was = this.open; this.drag.cancel(); this.dialog = d; this.renderDialog(); if (!was) this.host.panelChanged(this.kind, this.station); }
-  private closeDialog() { this.dialog = null; this.renderDialog(); this.host.sound('close'); if (!this.kind) this.host.panelChanged(null, null); }
+  private closeDialog() {
+    const from = this.dialog && 'from' in this.dialog ? this.dialog.from : null;
+    this.dialog = null; this.renderDialog(); this.host.sound('close'); if (!this.kind) this.host.panelChanged(null, null);
+    // A cancelled perk preview hands the keyboard back to the card or reset button it came from.
+    if (from) this.panel.querySelector<HTMLElement>(`[data-act="${from}"]`)?.focus({ preventScroll: true });
+  }
   /** The storage dialog follows the Runtime: it opens when a write fails and closes once a retry succeeded. */
   syncStorage(s: HideoutSnapshot) {
     const broken = !s.storage.ok || s.storage.conflict;
+    if (!broken && !s.storage.pendingBase) this.perkPending = '';
     this.alarm.hidden = !broken || this.dialog?.kind === 'storage';
     if (broken) this.alarm.textContent = s.storage.conflict ? '存档已被另一个窗口接管 · 点这里处理' : '存档没有写入 · 点这里处理';
     if (!broken && this.dialog?.kind === 'storage') { this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); }
@@ -335,6 +357,46 @@ export class UI {
     if (!preview.ok || !preview.token) { this.result(preview); return; }
     this.openDialog({ kind: 'import', text, name: file.name });
   }
+  // ---------- perks (docs/CRITICAL-PERK-DESIGN.md section 5): the shared HideoutRuntime service, never the save itself ----------
+  /** A card: the Runtime previews (or refuses) and nothing is written until the dialog's confirm. */
+  private previewPerk(id: string) {
+    if (this.dialog) return;
+    const r = this.rt.previewPerk(id);
+    if (!r.ok || !r.token || !r.preview) { this.perkRefused(r, 'choice'); return; }
+    this.openPerkDialog({ kind: 'perk', id, token: r.token, view: choicePreview(r.preview, critContext(this.rt.snapshot(), this.rt.perkBoard())), from: `perk:${id}` });
+  }
+  private previewPerkReset(attribute: Attribute) {
+    if (this.dialog) return;
+    const r = this.rt.previewPerkReset(attribute);
+    if (!r.ok || !r.token || !r.preview) { this.perkRefused(r, 'reset'); return; }
+    this.openPerkDialog({ kind: 'perk-reset', attribute, token: r.token, view: resetPreview(r.preview, critContext(this.rt.snapshot(), this.rt.perkBoard())), from: `perk-reset:${attribute}` });
+  }
+  private openPerkDialog(d: Extract<Dialog, { kind: 'perk' | 'perk-reset' }>) {
+    this.openDialog(d); this.host.sound('open');
+    // The keyboard lands in the dialog (Enter cancels), never on the card under it.
+    this.dialogEl.querySelector<HTMLElement>('.perk-cancel')?.focus({ preventScroll: true });
+  }
+  /** Success is shown only after the Runtime wrote the change; a failed write keeps it for the storage dialog's retry. */
+  private confirmPerk() {
+    const d = this.dialog; if (d?.kind !== 'perk' && d?.kind !== 'perk-reset') return;
+    this.dialog = null; this.renderDialog();
+    const kind = d.kind === 'perk' ? 'choice' : 'reset', subject = d.kind === 'perk' ? d.id : d.attribute, unsaved = !this.rt.snapshot().storage.ok;
+    const r = d.kind === 'perk' ? this.rt.choosePerk(d.id, d.token) : this.rt.resetPerks(d.attribute, d.token);
+    if (r.ok) { this.toast(perkDone(kind, subject), 'ok'); this.host.sound(kind === 'reset' ? 'coins' : 'ok'); }
+    else {
+      // With storage fine before, a storage answer means this change's own write failed: the Runtime keeps it for the
+      // retry. Otherwise an earlier unsaved write refused it and nothing of it was kept.
+      const kept = r.reason === 'storage' && !unsaved;
+      if (kept) this.perkPending = perkPendingName(kind, subject);
+      this.perkRefused(r, kind, kept);
+    }
+    this.render();
+  }
+  private perkRefused(r: Result, kind: 'choice' | 'reset', kept = false) {
+    if (r.ok) return;
+    this.toast(perkFailure(r.reason, kind, kept), 'error'); this.host.sound('error');
+    if (r.reason === 'storage' || r.reason === 'conflict') this.showStorage();
+  }
   /** Confirmed fresh start. A refused or failed write leaves the save as it was; success resyncs like an import. */
   private startOver() {
     this.dialog = null; this.renderDialog();
@@ -403,6 +465,10 @@ export class UI {
       case 'cancel': this.result(this.rt.cancel(a1)); this.render(); break;
       case 'claim': this.result(this.rt.claim(a1, a2 as Source), 'drop'); this.render(); break;
       case 'practice': this.result(this.rt.selectPractice(a1 as Attribute)); this.render(); break;
+      case 'perk-attr': this.perkAttr = a1 as Attribute; this.render(); break;
+      case 'perk': this.previewPerk(a1); break;
+      case 'perk-reset': this.previewPerkReset(a1 as Attribute); break;
+      case 'perk-ok': this.confirmPerk(); break;
       case 'deploy': {
         const world = deploymentWorld(deploymentRegion(this.worlds, this.world, this.regionPreview), this.worlds);
         if (world) this.host.deploy(world, this.seed);
@@ -418,7 +484,8 @@ export class UI {
       case 'reset': this.openDialog({ kind: 'reset' }); this.host.sound('open'); break;
       case 'reset-confirm': if (this.dialog?.kind === 'reset') this.startOver(); break;
       case 'reset-restore': this.restoreCopy(); break;
-      case 'retry-save': { const r = this.rt.retrySave(); if (r.ok) { this.toast('已重新保存。', 'ok'); this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
+      // The retry's own commit event syncs the storage state (clearing perkPending) before it returns.
+      case 'retry-save': { const pending = this.perkPending, r = this.rt.retrySave(); if (r.ok) { this.toast(pending ? perkRetried(pending) : '已重新保存。', 'ok'); this.perkPending = ''; this.host.sound('ok'); this.dialog = null; this.renderDialog(); if (!this.kind) this.host.panelChanged(null, null); } else { this.toast(r.message, 'error'); this.host.sound('error'); this.renderDialog(); } break; }
       case 'reload': location.reload(); break;
       case 'fac': { this.facility = a1 as Facility; this.station = STATIONS.find(q => q.facility === a1) ?? this.station; this.render(); this.host.panelChanged(this.kind, this.station); break; }
     }

@@ -255,7 +255,8 @@ export class StationHost {
     if (e.type === 'facility-built') this.colKey = '';
     if (e.type === 'production-complete') { this.ui.toast('工作台：一批成品可以领取了。', 'ok'); this.audio.cue('ok'); }
     if (e.type === 'practice-credited') { this.ui.toast(`练习收益 +${(e.amount * 100).toFixed(1)}% 成长`, 'ok'); this.audio.cue('credit'); this.trainingFlash = 1; }
-    if (e.type === 'save-failed') { this.ui.toast('存档没有写入，操作已撤销。', 'error'); this.ui.showStorage(); }
+    // A failed perk write is kept for the retry, not undone: the body panel reports it itself.
+    if (e.type === 'save-failed') { if (!e.action.startsWith('perk-')) this.ui.toast('存档没有写入，操作已撤销。', 'error'); this.ui.showStorage(); }
     this.ui.updateHud(this.snap);
     if (e.type === 'committed' && this.ui.open) this.ui.refresh();
   }

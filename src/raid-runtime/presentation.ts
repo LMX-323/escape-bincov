@@ -5,8 +5,10 @@ import { tideFlooded } from '../spatial';
 import { isMallWorld } from '../mall-world';
 import { rpgMultipliers } from '../rpg';
 import { coneOf, driftOf } from '../shooting';
+import { BREATH_FULL, breathChance } from '../breath';
+import { critBreakdown } from '../perks';
 import type { CoastRaidRuntime } from './runtime';
-import type { ActorView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
+import type { ActorView, CritChanceView, MapDef, RegionDef, TerrainCode, ViewFrame, WorldKey } from './contract';
 
 /** Explicit definition keys survive array reordering; these IDs never enter a save. */
 const regionKeys: Record<string, string> = {
@@ -97,6 +99,20 @@ function floodedCells(map: MapDef, high: boolean): readonly number[] {
 }
 const EMPTY_FLOOD: readonly number[] = Object.freeze([]);
 
+/**
+ * HudView.crit: the snapshot a shot fired now would take (CoastRaidRuntime.shotCrit), once without the breath charge and,
+ * while the charge holds a target, once with it, each as critBreakdown prints it. One derivation for the shot and the
+ * HUD; nothing here rolls. A v1 or v2 raid gets only its old-rule mark, a classic raid nothing.
+ */
+function critChanceView(r: CoastRaidRuntime): CritChanceView | null {
+    const version = r.layered?.raid?.version;
+    if (version === undefined) return null;
+    if (version !== 3) return { rule: 'old', gun: null, onTarget: null };
+    const w = r.currentWeapon, { target, seconds } = r.breath, plain = r.shotCrit(w, { chance: 0, target: null });
+    const aimed = plain && target !== null ? r.shotCrit(w, { chance: breathChance(seconds), target }) : undefined;
+    return { rule: 'v3', gun: plain ? critBreakdown(plain.sources) : null, onTarget: aimed ? critBreakdown(aimed.sources) : null };
+}
+
 export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: ReadonlyMap<string, Point>): ViewFrame {
     const revealed = r.revelation.read(r, map);
     // Overlap fails closed: a containing unrevealed room wins; deterministic ties by stable ID.
@@ -111,7 +127,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? D.ENEMIES[enemy.id].hp : limits.hp, alive: hp > 0,
             weapon: enemy ? enemy.id === 'scav' ? 'club' : enemy.id === 'creature' ? 'claw' : 'rifle' : r.weaponLook,
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
-                reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.currentWeapon.reload } : null,
+                reloading: player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.reloadTime } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },
             regionId: regionAt(e), corpse: hp > 0 ? null : { angle: e.rotation - (enemy && !r.layered ? Math.PI / 2 : 0),
                 containerId: r.containers.some(c => c.id === containerId) ? containerId : null } };
@@ -130,6 +146,8 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
             weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: r.sampleGun ? 999 : w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
             aim: { mode: grip.mode, cone: coneOf(r.handling, w, grip, body), drift: driftOf(r.handling, grip, body),
                 raise: r.handling.raise, sway: r.handling.sway, bloom: r.handling.bloom },
+            breath: r.breathOwned ? { target: r.breath.target, seconds: r.breath.seconds, chance: breathChance(r.breath.seconds), full: BREATH_FULL } : null,
+            crit: critChanceView(r),
             heals: D.count(loadout.bag, 'bandage') + D.count(loadout.bag, 'medkit'), hitDirections: r.hitDirections.map(h => ({ angle: h.angle, left: h.left })) },
         phase: r.ending ? 'ending' : r.paused ? 'paused' : r.overlay ? 'blocked' : 'running',
     };
