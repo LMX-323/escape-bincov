@@ -1,10 +1,10 @@
 # 当前任务入口
 
-最近核对：2026-10-23，main `b475b1b`（已合入 #39、#40、#65–#74）。本轮为 README 更新补核相关入口；下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
+最近核对：2026-10-23，main `76adbd6`（已合入 #39、#40、#65–#74、#79、#86）。本轮为 #75 受击慢帧修复补核相关入口；下表用于找到承接入口，合并状态、head 与检查结果以对应 GitHub 页面实时信息为准；旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
-| README 当前玩法与开发入口 | [README](../README.md) · `docs/readme-20261023` | 按 main `b475b1b` 更新序幕、射击与试枪场、敌人素材和开发边界；补齐文档导航。仅文档交付，验证与准确 head 见本分支 PR |
+| README 当前玩法与开发入口 | [README](../README.md) · [PR #86](https://github.com/xuys2025/escape-bincov/pull/86) | 已合入（`44494ea`）：按 main `b475b1b` 更新序幕、射击与试枪场、敌人素材和开发边界，补齐文档导航 |
 | 代码质量与低上下文 AI 接手 | [#60](https://github.com/xuys2025/escape-bincov/issues/60) · [实施摘要](tasks/quality-entropy.md) · [本轮审计 / PR #79](tasks/audit-contracts.md) | #63/#68/#69/#71/#72 已合入；本轮 `agent/audit-contracts` 修复非法 ID 校验、负重上限、自动拆分、子步计时和新生弹飞行时间，补强服务类型和代码注释。Q-D02 剩余旧接口 `buy`/`sell`/`reload` 的退役与测试迁移见 [PR #89](https://github.com/xuys2025/escape-bincov/pull/89) 与摘要 [Q-D02](tasks/quality-entropy.md#q-d02-旧交易与装弹接口退役)。Q-E02 B 段的背包有限服务仍待处理，#65 前置已满足；其他余项及验证边界见审计摘要和 #60 |
 | Runtime 缺口：治疗拒绝原因、附近逐件拾取、门拒绝、重对时 | [PR #65](https://github.com/xuys2025/escape-bincov/pull/65) · [任务记录](tasks/runtime-gaps.md#收尾与同步) | 已合入（`a6954e5`）；Runtime 接口与前端接入均完成。后续质量修复由 [#79](https://github.com/xuys2025/escape-bincov/pull/79) 承接，剩余收敛见 #60 |
 | 敌人与尸体 2.5D 角色图 | [PR #66](https://github.com/xuys2025/escape-bincov/pull/66) · [说明](enemy-art/README.md) | 已合入（`d62603d`），Sol P0+P1；枪口火光对齐随后由 #39 的 S1 完成。旧报告保留当时的素材审阅与真机未验状态 |
@@ -13,6 +13,7 @@
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [#80](https://github.com/xuys2025/escape-bincov/issues/80) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已合入（`2bac4fb`），采用维护者认可的“稳定”参数。#28 承接规划与排期，代码实施进度见 #80；完整改枪尚未进入 main |
+| 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · `fix/hurt-flash-slow-frames` | 研究已登记，实施未排期。P0 第一项的慢帧时序由该分支 PR 处理：命中后的第一帧至少画一次受击闪白和抖动，60 帧/秒逐帧不变；抖动方向（现朝射手）待维护者决定，其余 P0–P2 未开工 |
 | 暴击/Perk 开发排期 | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [PR #40](https://github.com/xuys2025/escape-bincov/pull/40) · [可行性与安排](tasks/critical-perk-plan.md) | 设计与排期 #40 已合入（`b475b1b`），功能尚未进入 main；CP-T01～T10 按契约/迁移→战斗及基地→界面→验收推进。射击前置已满足，#77 保持开放 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 已登记待排期；文稿合入不代表地图、剧情事件或结局已接入游戏 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复 |
