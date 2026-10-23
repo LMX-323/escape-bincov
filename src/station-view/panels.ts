@@ -1,5 +1,6 @@
 import * as D from '../domain';
-import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
+import type { Attribute, CartView, FacilityInfo, HideoutSnapshot, PerkBoard, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
+import { ATTRIBUTE_NAMES, critContext, critView, perkPanel, type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from '../perk-copy';
 import { RECIPES } from '../expansion-state';
 import { shopQuote, type ShopQuote, type ShopSource } from '../shop';
 import { itemArt } from './items';
@@ -190,13 +191,36 @@ export function facilityHtml(f: FacilityInfo, s: HideoutSnapshot, training: Trai
 }
 const fmt = (sec: number) => sec >= 60 ? `${Math.floor(sec / 60)} 分 ${Math.floor(sec % 60)} 秒` : `${Math.ceil(sec)} 秒`;
 
-export function bodyHtml(s: HideoutSnapshot) {
-  const b = s.body, names = { strength: '力量', constitution: '体质', technique: '技巧' } as const;
+const EFFECT_NAMES: Record<string, string> = { pain: '疼痛', energized: '精力充沛', analgesia: '镇痛', focus: '专注', strength: '力量增强', constitution: '体质增强', technique: '技巧增强', injectionFatigue: '注射后疲劳', luck: '香包余韵' };
+/** Body and growth: vitals, attributes, the perk board of one attribute (spec 5) and the static critical display (spec 2.3). */
+export function bodyHtml(s: HideoutSnapshot, board: PerkBoard, attribute: Attribute) {
+  const b = s.body;
   const bar = (label: string, v: number, max: number, cls = '') => `<div class="stat ${cls}"><span>${label}</span><b>${v.toFixed(0)}${max !== 100 || label === '生命' || label === '耐力' ? ` / ${max}` : ''}</b><i style="width:${Math.min(100, v / max * 100)}%"></i></div>`;
   return `<div class="body"><div class="stats2">${bar('生命', b.hp, b.hpMax, 'hp')}${bar('耐力', b.stamina, b.staminaMax)}${bar('精神', b.mental, 100)}${bar('水分', b.water, 100)}${bar('饱食', b.satiety, 100)}${bar('污染', b.pollution, 100, 'pol')}</div>
-  <div class="attrs">${(Object.keys(names) as (keyof typeof names)[]).map(a => `<div><span>${names[a]}</span><b>${b.attributes[a].effective}</b><small>成长 ${(b.attributes[a].progress * 100).toFixed(1)}%</small></div>`).join('')}</div>
-  ${b.effects.length ? `<p class="muted">状态：${b.effects.map(e => `${esc(e.name)} ${Math.ceil(e.seconds / 60)} 分`).join(' · ')}</p>` : ''}
+  <div class="attrs">${(Object.keys(ATTRIBUTE_NAMES) as Attribute[]).map(a => `<div><span>${ATTRIBUTE_NAMES[a]}</span><b>${b.attributes[a].effective}</b><small>成长 ${(b.attributes[a].progress * 100).toFixed(1)}%</small></div>`).join('')}</div>
+  ${perksHtml(perkPanel(board, attribute))}${critHtml(critView(critContext(s, board)))}
+  ${b.effects.length ? `<p class="muted">状态：${b.effects.map(e => `${esc(EFFECT_NAMES[e.name] ?? e.name)} ${Math.ceil(e.seconds / 60)} 分`).join(' · ')}</p>` : ''}
   <p class="muted">负重上限 ${b.carry.toFixed(1)} kg。在站里休息会慢慢恢复，休息区和医疗区的等级越高恢复越快。</p></div>`;
+}
+/** Only an open card on an unblocked board is a button; chosen, other-side and locked cards are plain text. */
+const perkCard = (c: PerkCardView) => {
+  const inner = `<b>${esc(c.name)}</b><span>${esc(c.effect)}</span>${c.status ? `<em>${esc(c.status)}</em>` : ''}`;
+  return c.state === 'open' ? `<button class="pcard open" data-act="perk:${c.id}" ${c.enabled ? '' : 'disabled'}>${inner}</button>` : `<div class="pcard ${c.state}">${inner}</div>`;
+};
+function perksHtml(v: PerkPanelView) {
+  const tabs = v.tabs.map(t => btn(`${t.name} <small>${esc(t.detail)}</small>`, `perk-attr:${t.attribute}`, t.attribute === v.attribute ? 'on' : '', `aria-pressed="${t.attribute === v.attribute}"`)).join('');
+  return `<section class="perks"><h4>Perk 选择 <small>永久等级 15、20、25、30 各开一档，每档二选一</small></h4><nav class="seg perk-tabs" aria-label="Perk 属性">${tabs}</nav>
+  ${v.blocked ? `<p class="warn" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="ptier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCard).join('')}</div>`).join('')}
+  <div class="preset">${btn(esc(v.reset.label), `perk-reset:${v.attribute}`, 'danger', v.reset.enabled ? '' : 'disabled')}<small>${esc(v.reset.reason ?? '不降低等级；已解锁的档位可以重新选择。')}</small></div></section>`;
+}
+function critHtml(c: CritView) {
+  return `<section class="crit"><h4>${esc(c.title)}${c.total ? ` <b>${esc(c.total)}</b>` : ''}</h4>${c.rows.length ? `<ul>${c.rows.map(r => `<li><span>${esc(r.label)}</span><b>${esc(r.text)}</b></li>`).join('')}</ul>` : ''}${c.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}</section>`;
+}
+/** Choice or reset preview from the Runtime; the confirm commits exactly what it shows (token). */
+export function perkConfirmHtml(v: PerkPreviewView, reset: boolean) {
+  return `<div class="confirm perk-confirm"><p class="ptitle"><b>${esc(v.title)}</b><small>${esc(v.subtitle)}</small></p>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}
+  ${v.changes.length ? `<ul class="pchanges">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}
+  <div class="acts">${btn(esc(v.confirm), 'perk-ok', reset ? 'danger' : 'primary')}${btn('取消', 'close', 'perk-cancel')}</div></div>`;
 }
 
 export function boardHtml() {
@@ -228,10 +252,13 @@ export function resetConfirmHtml() {
   return `<div class="confirm"><p>除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。</p><p class="muted">确认后会先下载一份当前存档的备份，本机也会另存一份，需要时可在菜单「恢复清空前的存档」找回。本机只保存一份；当前存档如果还是没动过的新开局，就不另存，原来那一份保留。</p><div class="acts">${btn('下载备份并清空', 'reset-confirm', 'danger')}${btn('再想想', 'close')}</div></div>`;
 }
 
-/** Save failed or another window took the save over: nothing else can be done until it is resolved. */
-export function storageHtml(s: HideoutSnapshot) {
+/**
+ * Save failed or another window took the save over: nothing else can be done until it is resolved. `pending` names a
+ * perk change whose write failed: the Runtime keeps it, and only the retry writes it (once).
+ */
+export function storageHtml(s: HideoutSnapshot, pending = '') {
   const conflict = s.storage.conflict;
-  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
+  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : pending ? `${esc(pending)}没能写入浏览器存档，还没有生效；它和训练进度都保留在本页，重试保存成功后才生效，导出的备份也包含它。` : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
   <div class="acts">${conflict ? '' : btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export')}${conflict ? btn('刷新页面', 'reload') : ''}</div>
   <p class="muted">${conflict ? '刷新后会读取最新的存档。' : '也可以先导出备份，再检查浏览器存储空间或隐私设置。'}</p></div>`;
 }
