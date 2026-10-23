@@ -1,6 +1,6 @@
 import * as D from './domain';
 import type { BulletState, EnemyState } from './checkpoint';
-import type { ExpansionState, WorldDefinition } from './expansion-state';
+import type { ExpansionState, LayeredRaid, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
 import { SURVIVAL } from './balance';
 import { criticalChance, enemyDamage, trainingEfficiency } from './rpg';
@@ -65,6 +65,28 @@ export function shotIntersection(bullet: BulletState, enemy: Point, dx: number, 
     return distance <= bullet.left ? distance : null;
 }
 
+/** Live enemies a ray meets before `stop`, nearest first and ties by uid: the layer's own and the pursuers it still owns. */
+function enemiesOnRay(raid: LayeredRaid, mapId: string, ray: BulletState, dx: number, dy: number, stop: number) {
+    const actors = [...raid.maps[mapId].enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
+    return actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(ray, enemy, dx, dy) }))
+        .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
+        .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
+}
+
+/**
+ * The enemy a precise aim rests on, for the breath charge (technique-15-a): the one a bullet flying straight along
+ * `raid.player.rotation` from the body centre would meet (no drift, no cone), `reach` px long (pass the bullet's range,
+ * weapon range plus the muzzle offset). Walls and closed doors stop the ray, windows pass it; the candidates, the hit
+ * radius and the tie order are resolveLayerShot's. Read-only.
+ */
+export function aimTarget(raid: LayeredRaid, world: WorldDefinition, reach: number): string | null {
+    if (!(reach > 0)) return null;
+    const mapId = raid.currentMap, { x, y, rotation } = raid.player, dx = Math.cos(rotation), dy = Math.sin(rotation);
+    const ray = { uid: 'aim', x, y, rotation, vx: dx, vy: dy, left: reach, damage: 0, enemy: false }; // a probe, never stored
+    const stop = shotBarrier({ definition: world.maps[mapId], doors: raid.maps[mapId].doors, highTide: raid.highTide }, ray, dx, dy);
+    return enemiesOnRay(raid, mapId, ray, dx, dy, stop)[0]?.enemy.uid ?? null;
+}
+
 /** Actual damage and corpse ownership shared by ordinary and departing shots. */
 export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true): void {
     if (enemy.hp <= 0 || amount <= 0) return;
@@ -113,10 +135,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
             }
         }
     } else {
-        const actors = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
-        const hits = actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(bullet, enemy, dx, dy) }))
-            .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
-            .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
+        const hits = enemiesOnRay(raid, mapId, bullet, dx, dy, stop);
         if (hits[0]) {
             let critical = false;
             if (raid.version === 2) {

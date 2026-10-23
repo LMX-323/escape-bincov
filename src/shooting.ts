@@ -82,14 +82,26 @@ export function playtestMarks(search: string): { gun: 'm4a1' | null } {
     return { gun: p.has('sample') && p.get('gun') === 'm4a1' ? 'm4a1' : null };
 }
 
+/**
+ * What `motion` does to a precise aim: the precise button raises it unless sprinting. On touch, standing with the aim
+ * stick inside the fire ring raises it and firing past the ring keeps it; walking lowers it (maintainer, 2026-10-22).
+ */
+function stance(motion: Motion): 'up' | 'keep' | 'down' {
+    const standing = motion.pace < STILL && !motion.sprint;
+    return !motion.sprint && (motion.precise || standing && motion.hold === 'aim') ? 'up' : standing && motion.hold === 'fire' ? 'keep' : 'down';
+}
+/**
+ * The precise aim is held over `motion` (raised or kept, as advanceAim moves it): the effective precise aim the breath
+ * charge (technique-15-a) needs. Read from the input, never from a raise left over from earlier.
+ */
+export const preciseHeld = (motion: Motion) => stance(motion) !== 'down';
+
 /** Advance an aim over `seconds` of unchanged motion. Mutates and returns `aim`. */
 export function advanceAim(aim: AimState, h: Handling, rules: SwayRules, seconds: number, motion: Motion): AimState {
     if (seconds <= 0) return aim;
-    // A precise aim rises over `raise` seconds and drops twice as fast; sprinting lowers it. On touch, standing with the
-    // aim stick inside the fire ring raises it and firing past the ring holds it; walking lowers it (maintainer, 2026-10-22).
-    const standing = motion.pace < STILL && !motion.sprint;
-    const up = !motion.sprint && (motion.precise || standing && motion.hold === 'aim'), keep = standing && motion.hold === 'fire';
-    aim.raise = up ? Math.min(1, aim.raise + seconds / h.raise) : keep ? aim.raise : Math.max(0, aim.raise - 2 * seconds / h.raise);
+    // A precise aim rises over `raise` seconds and drops twice as fast.
+    const lift = stance(motion);
+    aim.raise = lift === 'up' ? Math.min(1, aim.raise + seconds / h.raise) : lift === 'keep' ? aim.raise : Math.max(0, aim.raise - 2 * seconds / h.raise);
     const target = Math.min(1, Math.min(1, motion.pace) * rules.walk + (motion.sprint ? rules.sprint : 0));
     aim.sway = target + (aim.sway - target) * Math.exp(-(aim.sway < target ? rules.up : rules.down) * seconds);
     const quiet = Math.max(0, seconds - aim.settle);
@@ -106,9 +118,13 @@ export const coneOf = (aim: AimState, w: WeaponDef, h: Handling, body = 1) =>
     (w.spread * h.hip * (1 + (h.precise - 1) * aim.raise) * (1 + h.sway * aim.sway) + h.bloomMax * aim.bloom) * body;
 /** Where the next shot is centred relative to the aim: radians toward the shooter's right. */
 export const driftOf = (aim: AimState, h: Handling, body = 1) => h.kickMax * aim.drift * body;
-/** Recoil of one shot: more bloom and drift, and recovery waits for `settle` again. */
-export function recoil(aim: AimState, h: Handling): void {
-    if (h.bloomMax > 0) aim.bloom = Math.min(1, aim.bloom + h.bloom / h.bloomMax);
-    if (h.kickMax > 0) aim.drift = Math.min(1, aim.drift + h.kick / h.kickMax);
+/**
+ * Recoil of one shot: more bloom and drift, and recovery waits for `settle` again. `scale` multiplies only this shot's
+ * bloom and drift increments (the recoil-control perks technique-15-b and 25-b); the caps, the settle delay, recovery,
+ * the inherent cone and the precise multiplier stay. At 1 the result is bit-identical to having no scale.
+ */
+export function recoil(aim: AimState, h: Handling, scale = 1): void {
+    if (h.bloomMax > 0) aim.bloom = Math.min(1, aim.bloom + h.bloom / h.bloomMax * scale);
+    if (h.kickMax > 0) aim.drift = Math.min(1, aim.drift + h.kick / h.kickMax * scale);
     aim.settle = h.settle;
 }
