@@ -140,7 +140,7 @@
 
 ## Q-D02 旧交易与装弹接口退役
 
-2026-10-23，分支 `agent/q-d02-legacy-api`，起点 main `44494ea`；交付前普通合并同步 #79 合入后的 main `76adbd6`，冲突只在任务清单。承接 #60 的 Q-D02 剩余部分：`writeSave`/`readSave` 已在第二批退役，本批删去 `domain.ts` 的 `buy`、`sell`、`reload`，把仍有意义的断言迁到正式路径。玩法、存档格式、界面行为和打包产物都不变。
+2026-10-23，[PR #89](https://github.com/xuys2025/escape-bincov/pull/89)，分支 `agent/q-d02-legacy-api`，起点 main `44494ea`；交付前普通合并同步 #79 合入后的 main `76adbd6`，冲突只在任务清单。承接 #60 的 Q-D02 剩余部分：`writeSave`/`readSave` 已在第二批退役，本批删去 `domain.ts` 的 `buy`、`sell`、`reload`，把仍有意义的断言迁到正式路径。玩法、存档格式、界面行为和打包产物都不变。
 
 **有效决定**
 
