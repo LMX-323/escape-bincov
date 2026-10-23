@@ -1,11 +1,12 @@
 import * as D from './domain';
 import type { BulletState, EnemyState } from './checkpoint';
-import type { ExpansionState, WorldDefinition } from './expansion-state';
+import type { ExpansionState, LayeredRaid, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
 import { SURVIVAL } from './balance';
 import { criticalChance, enemyDamage, trainingEfficiency } from './rpg';
-import { effectiveAttributes, entityUid } from './expansion-state';
+import { effectiveAttributes, entityUid, rpgEnabled } from './expansion-state';
 import { luckInventory } from './reputation-luck';
+import { snapshotChance } from './perks';
 import { pursuitPosition } from './pursuit';
 import { corridor, findLanding, separation, spacePath, traversable, type SpaceContext } from './spatial';
 
@@ -65,13 +66,35 @@ export function shotIntersection(bullet: BulletState, enemy: Point, dx: number, 
     return distance <= bullet.left ? distance : null;
 }
 
+/** Live enemies a ray meets before `stop`, nearest first and ties by uid: the layer's own and the pursuers it still owns. */
+function enemiesOnRay(raid: LayeredRaid, mapId: string, ray: BulletState, dx: number, dy: number, stop: number) {
+    const actors = [...raid.maps[mapId].enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
+    return actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(ray, enemy, dx, dy) }))
+        .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
+        .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
+}
+
+/**
+ * The enemy a precise aim rests on, for the breath charge (technique-15-a): the one a bullet flying straight along
+ * `raid.player.rotation` from the body centre would meet (no drift, no cone), `reach` px long (pass the bullet's range,
+ * weapon range plus the muzzle offset). Walls and closed doors stop the ray, windows pass it; the candidates, the hit
+ * radius and the tie order are resolveLayerShot's. Read-only.
+ */
+export function aimTarget(raid: LayeredRaid, world: WorldDefinition, reach: number): string | null {
+    if (!(reach > 0)) return null;
+    const mapId = raid.currentMap, { x, y, rotation } = raid.player, dx = Math.cos(rotation), dy = Math.sin(rotation);
+    const ray = { uid: 'aim', x, y, rotation, vx: dx, vy: dy, left: reach, damage: 0, enemy: false }; // a probe, never stored
+    const stop = shotBarrier({ definition: world.maps[mapId], doors: raid.maps[mapId].doors, highTide: raid.highTide }, ray, dx, dy);
+    return enemiesOnRay(raid, mapId, ray, dx, dy, stop)[0]?.enemy.uid ?? null;
+}
+
 /** Actual damage and corpse ownership shared by ordinary and departing shots. */
 export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: EnemyState, amount: number, gun = true): void {
     if (enemy.hp <= 0 || amount <= 0) return;
     const raid = state.raid!, layer = raid.maps[mapId], actual = Math.min(enemy.hp, amount);
     enemy.hp -= actual;
     if (mapId === raid.currentMap) { enemy.state = 'chase'; enemy.alert = 6; enemy.target = { x: raid.player.x, y: raid.player.y }; }
-    if (gun) raid.training.quantity.technique += actual / 400 * (raid.version === 2 ? trainingEfficiency(state) : 1);
+    if (gun) raid.training.quantity.technique += actual / 400 * (rpgEnabled(raid) ? trainingEfficiency(state) : 1);
     if (enemy.hp > 0) return;
     raid.kills++;
     const event = raid.pursuits.find(p => p.enemy.uid === enemy.uid);
@@ -87,7 +110,7 @@ export function damageLayerEnemy(state: ExpansionState, mapId: string, enemy: En
         random(); random();
     }
     raid.rng = random.getState();
-    if (raid.version === 2) luckInventory(state, mapId, inventory, enemy);
+    if (rpgEnabled(raid)) luckInventory(state, mapId, inventory, enemy);
     layer.containers.push({ id: `corpse-${enemy.uid}`, runId: raid.runId, kind: 'corpse',
         name: `${D.ENEMIES[enemy.id].name}遗体`, x: enemy.x, y: enemy.y, inventory });
 }
@@ -104,7 +127,7 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
             if (hit !== null && hit < stop) {
                 const hp = state.body.hp;
                 const random = D.seededRandom(raid.rng);
-                if (raid.version === 2) enemyDamage(state, bullet.damage, bullet.owner, random());
+                if (rpgEnabled(raid)) enemyDamage(state, bullet.damage, bullet.owner, random());
                 else { state.body.hp = Math.max(0, state.body.hp - bullet.damage); raid.hitTime = .25; if (random() < SURVIVAL.bleedChance) state.body.bleeding = true; }
                 raid.rng = random.getState();
                 observeShot(observer, context, bullet, hit, 'player', hp - state.body.hp, false, state.body.hp <= 0);
@@ -113,19 +136,26 @@ export function resolveLayerShot(state: ExpansionState, world: WorldDefinition, 
             }
         }
     } else {
-        const actors = [...layer.enemies, ...raid.pursuits.filter(p => p.sourceMap === mapId).map(p => p.enemy)];
-        const hits = actors.filter(e => e.hp > 0).map(enemy => ({ enemy, distance: shotIntersection(bullet, enemy, dx, dy) }))
-            .filter((h): h is { enemy: EnemyState; distance: number } => h.distance !== null && h.distance < stop)
-            .sort((a, b) => a.distance - b.distance || a.enemy.uid.localeCompare(b.enemy.uid, 'en'));
+        const hits = enemiesOnRay(raid, mapId, bullet, dx, dy, stop);
         if (hits[0]) {
-            let critical = false;
+            let critical = false, multiplier = 1.5;
+            // Each raid keeps the critical rule it was deployed with until it settles (contract sections 1 and 3). v1
+            // never crits. v2 rolls the old centre-closeness formula. v3 rolls the shot's own snapshot for the enemy hit,
+            // so where the round meets the body and how big the body is never change the chance, and a critical hit
+            // multiplies the damage once by the snapshot's multiplier. Either roll draws raid.rng once per hit on a live
+            // enemy; a miss, a wall or a corpse draws nothing. A v3 player round without a snapshot is corrupt and
+            // throws: it never falls back to another rule.
             if (raid.version === 2) {
                 const enemy = hits[0].enemy, perpendicular = Math.abs((enemy.x - bullet.x) * dy - (enemy.y - bullet.y) * dx);
                 const chance = criticalChance(effectiveAttributes(state).technique, 1 - Math.min(1, perpendicular / 14), state.body.effects.focus > 0 ? .05 : 0);
                 const random = D.seededRandom(raid.rng); critical = random() < chance; raid.rng = random.getState();
+            } else if (raid.version === 3) {
+                if (!bullet.crit) throw new Error('命中参数无效。');
+                const chance = snapshotChance(bullet.crit, hits[0].enemy.uid), random = D.seededRandom(raid.rng);
+                critical = random() < chance; raid.rng = random.getState(); multiplier = bullet.crit.multiplier;
             }
             const hp = hits[0].enemy.hp;
-            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? 1.5 : 1));
+            damageLayerEnemy(state, mapId, hits[0].enemy, bullet.damage * (critical ? multiplier : 1));
             observeShot(observer, context, bullet, hits[0].distance, hits[0].enemy.uid, hp - hits[0].enemy.hp, critical, hits[0].enemy.hp <= 0);
             hitFeedback?.(hits[0].enemy.uid, critical); return true;
         }

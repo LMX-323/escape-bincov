@@ -49,11 +49,12 @@ function assertFresh(f: Page, volume: number) {
     assert.equal(s.body.hp, 100); assert.equal(f.state.state, 'hideout'); assert.ok(isPristine(decodeSession(f.raw!)));
 }
 
-test('fresh start record is a strict v4 session with the starter kit and the old volume only', () => {
+test('fresh start record is a strict v5 session with the starter kit and the old volume only', () => {
     const data = decodePortableBackup(freshStartText(.6, NOW));
     assert.equal(data.kind, 'session'); if (data.kind !== 'session') return;
     const r = data.record, p = r.profile, e = r.expansion!;
-    assert.equal(r.version, 4); assert.equal(e.version, 2); assert.equal(e.charm, null); assert.deepEqual(e.awards, []); assert.equal(e.raid, null);
+    assert.equal(r.version, 5); assert.equal(r.perksBackup, null); assert.equal(e.version, 3); assert.deepEqual(e.growth.perks, []);
+    assert.equal(e.charm, null); assert.deepEqual(e.awards, []); assert.equal(e.raid, null);
     assert.equal(r.raid, null); assert.equal(r.terminal, null); assert.equal(p.activeRun, null);
     assert.equal(p.cash, 700); assert.deepEqual(p.stats, { runs: 0, extracts: 0, kills: 0 }); assert.equal(p.settings.volume, .6);
     assert.deepEqual(p.equipment, { weapon: 'pistol', relief: false, ammo: 0, ammoRelief: 0 });
@@ -96,9 +97,10 @@ test('reset from a long-played profile wipes it, keeps volume, downloads the old
     assert.deepEqual(f.downloads, [expected]); assert.equal(f.copy, expected);
     const copy = decodePortableBackup(f.copy!); assert.equal(copy.kind, 'session');
     if (copy.kind === 'session') { assert.equal(copy.record.profile.cash, 4321); assert.equal(copy.record.expansion!.base.facilities.rest, 2); }
-    // Commit keeps the invisible recovery bytes of the record (legacy/migration/pre-v4) exactly as before.
+    // Commit keeps the invisible recovery bytes of the record (legacy/migration/pre-v4/pre-v5) exactly as before.
     const after = decodeSession(f.raw!);
-    assert.deepEqual([after.legacyBackup, after.migrationBackup, after.systemsBackup], [before.legacyBackup, before.migrationBackup, before.systemsBackup]);
+    assert.deepEqual([after.legacyBackup, after.migrationBackup, after.systemsBackup, after.perksBackup],
+        [before.legacyBackup, before.migrationBackup, before.systemsBackup, before.perksBackup]);
     // A later page load on the same origin reads the fresh start.
     const reload = page(f.o); assert.equal(reload.state.save.stats.runs, 0); assert.equal(reload.state.save.cash, 700);
 });

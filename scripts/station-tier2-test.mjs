@@ -9,7 +9,7 @@ import { skipOpening, throughYard } from './yard-entry.mjs';
 import { reportFilter, stepFilter } from './step-filter.mjs';
 import * as D from '../src/domain.ts';
 import { validPractice } from '../src/hideout-runtime/training.ts';
-import { newExpansion, derivedLimits } from '../src/expansion-state.ts';
+import { newExpansion, derivedLimits, upgradeToRpg } from '../src/expansion-state.ts';
 import { decodeSession } from '../src/recovery-store.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
@@ -42,7 +42,8 @@ async function open(size = [1280, 720], fixed = false, ordinary = false) {
   if (ordinary) { await skipOpening(page); await yard('#hud-sub').waitFor(); } else await ready();
 }
 async function seed({ training = true, seconds = 0, quantity = 0, body = {} } = {}) {
-  const p = D.newSave(), e = newExpansion(Date.now()), l = derivedLimits(e);
+  // Upgraded as the station boundary does, so the growth it hands the live save carries its (empty) perk selection.
+  const p = D.newSave(), e = newExpansion(Date.now()); upgradeToRpg(e, Date.now()); const l = derivedLimits(e);
   p.stash = D.createInventory(10, 6); p.bag = D.createInventory(6, 5); p.safe = D.createInventory(2, 2); p.quests.repair = true; p.cash = 6000;
   for (const id of ['water', 'food', 'bandage', 'medkit', 'antidote', 'focus', 'luckySachet', 'unluckySachet', 'scrap']) assert.equal(D.addItem(p.bag, id, 2), 0);
   e.base.facilities.training = training ? 1 : 0; e.base.training.attribute = training ? 'technique' : null;
