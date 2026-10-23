@@ -3,7 +3,9 @@
  */
 import type { Inventory, Item, RunSummary, SaveDataV1 } from '../domain';
 import type { Attribute, Facility } from '../expansion-state';
+import type { PerkId, PerkModifiers, PerkTier } from '../perks';
 export type { Attribute, Facility } from '../expansion-state';
+export type { PerkId, PerkModifiers, PerkTier } from '../perks';
 export type Recipe = 'bandage' | 'medkit' | 'antidote';
 export type Source = 'stash' | 'bag' | 'safe';
 export type ShopSource = 'merchant' | 'buy' | 'sell' | 'stash';
@@ -68,6 +70,48 @@ export interface FacilityInfo {
     id: Facility; name: string; level: number; maxLevel: number; explanation: string;
     cost: { cash: number; items: { id: string; qty: number; have: number }[] } | null; locked: string | null;
 }
+/** Why a perk action cannot run now: the reason and message its call would answer. */
+export interface PerkBlock { reason: FailReason; message: string }
+/**
+ * One node of the base perk board (docs/CRITICAL-PERK-DESIGN.md section 5), with both candidates in every state:
+ * locked below its permanent level, open, or chosen. A chosen node changes only through the reset of its attribute.
+ */
+export type PerkNodeView = { attribute: Attribute; tier: PerkTier; options: readonly [PerkId, PerkId] }
+    & ({ status: 'locked'; requires: number } | { status: 'open' } | { status: 'chosen'; id: PerkId });
+export interface PerkAttributeView {
+    /** The permanent integer level. Only it unlocks a node: never a training fraction or a dose. */
+    permanent: number;
+    /** Tiers 15, 20, 25 and 30, ascending. */
+    nodes: PerkNodeView[];
+    /** The reset of this attribute: its fee, the cash now, the perks it would remove, and why it cannot run now (or null). */
+    reset: { cost: number; cash: number; chosen: PerkId[]; blocked: PerkBlock | null };
+}
+/** Detached and read-only: reading it writes nothing, emits nothing and issues no confirmation, also from an event listener. */
+export interface PerkBoard {
+    /** Why nothing can be chosen or reset now (raid, pending settlement, failed or pending base write, another window, station not yet upgraded), or null. */
+    blocked: PerkBlock | null;
+    attributes: Record<Attribute, PerkAttributeView>;
+}
+export interface PerkDelta { before: number; after: number }
+/** What a choice or a reset changes. Its confirm commits exactly this, hp and stamina taken as they are at the commit. */
+export interface PerkChange {
+    /** The modifiers that change: the scope. */
+    scope: (keyof PerkModifiers)[];
+    /** perkModifiers of the whole selection before and after. */
+    modifiers: { before: PerkModifiers; after: PerkModifiers };
+    /** derivedLimits: hp, stamina and carry kg. */
+    limits: Record<'hp' | 'stamina' | 'carry', PerkDelta>;
+    /** hp and stamina now and after: a higher limit never refills them; a lower one cuts them to it, which is neither damage nor training. */
+    body: Record<'hp' | 'stamina', PerkDelta>;
+}
+export interface PerkChoicePreview extends PerkChange { kind: 'choice'; id: PerkId; attribute: Attribute; tier: PerkTier }
+export interface PerkResetPreview extends PerkChange {
+    kind: 'reset'; attribute: Attribute;
+    /** The fee and the cash it leaves. */
+    cost: number; cash: PerkDelta;
+    /** This attribute's perks, in catalog order; the other attributes keep theirs. */
+    removed: PerkId[];
+}
 export type HideoutEvent =
     | { type: 'committed'; rev: number; action: string }
     | { type: 'power-restored' }
@@ -112,6 +156,27 @@ export interface HideoutRuntime {
     claim(batchId: string, target: Source): Result;
     selectPractice(attribute: Attribute): Result;
     practice(sample: PracticeSample): void;
+    /** The perk board of the committed state, as the base would act on it now. */
+    perkBoard(): PerkBoard;
+    /**
+     * Preview choosing perk `id`: the refusal choosePerk would give now, or what it changes and a one-use token. The
+     * token binds the request, the profile and the perk facts shown (selection, permanent levels, limits), not what
+     * base time moves: the five-second checkpoints between preview and confirm do not stale it. Only the latest perk
+     * preview, of either kind, can be confirmed. A preview writes nothing.
+     */
+    previewPerk(id: string): Result & { token?: string; preview?: PerkChoicePreview };
+    /**
+     * Commit the previewed choice: free, base only, no hp or stamina refill, in effect once written. Refusals of the
+     * page (raid, settlement, storage, another window) come first and keep the token; otherwise the attempt uses up the
+     * token of this request. A used, replaced or outdated token answers `stale` and changes nothing. A failed write
+     * keeps this exact candidate for retrySave, which commits it once; until then other writes wait and exportBackup
+     * carries the candidate.
+     */
+    choosePerk(id: string, token: string): Result;
+    /** Preview the 500-cash reset of one attribute's perks; as previewPerk. */
+    previewPerkReset(attribute: Attribute): Result & { token?: string; preview?: PerkResetPreview };
+    /** Pay, remove the attribute's perks and cut hp and stamina to the lower limits in one commit; otherwise as choosePerk. */
+    resetPerks(attribute: Attribute, token: string): Result;
     retrySave(): Result;
     exportBackup(): string;
     /** Explicit confirmation binds the exact file text; no import is committed by a preview. */
