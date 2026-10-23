@@ -14,8 +14,11 @@ import { ATTRIBUTES, EFFECTS, FACILITIES, RECIPES, derivedLimits, effectiveAttri
 import { FACILITY_COSTS, FACILITY_NAMES, buildFacility, enqueueProduction, claimProduction, cancelProduction } from './base';
 import { equipCharm, unequipCharm, reputationTier } from './reputation-luck';
 import { mallRunConfig } from './mall-world';
-import { criticalChance, useRpgItem } from './rpg';
+import { useRpgItem } from './rpg';
 import type { ExpansionDraft } from './session';
+import type { Attribute, Result } from './hideout-runtime/contract';
+import { PERK_UI, choicePreview, critContext, critView, defaultPerkAttribute, perkDone, perkFailure, perkPanel, perkPendingName, perkRetried, perkWaiting, resetPreview,
+    type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from './perk-copy';
 import { paintItem } from './art/items';
 import { artId, itemArtwork, painted } from './art/item-images';
 import { paintPortrait } from './art/portraits';
@@ -41,6 +44,10 @@ let dragToken = 0;
 let pointerDrag: { pointerId: number; drag: InventoryDrag; startX: number; startY: number; x: number; y: number; cell: number; started: boolean } | null = null;
 let dragGhost: HTMLElement | null = null;
 let suppressDragClick = false;
+/** Body and growth tab: the perk attribute shown (set on first paint), the open preview, and a change waiting for the retry. */
+let perkAttr: Attribute | null = null;
+let perkDialog: { kind: 'choice'; id: string; token: string; view: PerkPreviewView } | { kind: 'reset'; attribute: Attribute; token: string; view: PerkPreviewView } | null = null;
+let perkPending = '';
 const ui = () => document.getElementById('ui')!;
 function clearSelection() { app.selected = ''; app.placement = false; app.placementRotated = undefined; app.placementQuantity = undefined; }
 function saved(ok: boolean): boolean {
@@ -236,11 +243,73 @@ function expansionAction(action: (draft: ExpansionDraft) => boolean | void, mess
 }
 const attributeNames = { strength: '力量', constitution: '体质', technique: '技巧' };
 const effectNames = { pain: '疼痛', energized: '精力充沛', analgesia: '镇痛', focus: '专注', strength: '力量增强', constitution: '体质增强', technique: '技巧增强', injectionFatigue: '注射后疲劳', luck: '香包余韵' };
+/**
+ * Body and growth. The perk board, its previews and the static critical display read the shared HideoutRuntime (the same
+ * service as the yard); choices and resets go through it too, never through this page's own save writes.
+ */
 function propertyPanel() {
     const state = app.expansion;
     if (!state) return '';
-    const a = effectiveAttributes(state), limits = derivedLimits(state), b = state.body;
-    return `<section class="rpg-property"><h3>身体与成长</h3><div class="rpg-cards">${[['生命', `${b.hp.toFixed(0)} / ${limits.hp}`], ['耐力', `${b.stamina.toFixed(0)} / ${limits.stamina}`], ['精神', b.mental.toFixed(0)], ['水分', b.water.toFixed(0)], ['饱食', b.satiety.toFixed(0)], ['污染', b.pollution.toFixed(0)]].map(([name,value]) => `<div><span>${name}</span><strong>${value}</strong></div>`).join('')}</div><div class="rpg-cards">${ATTRIBUTES.map(key => `<div><span>${attributeNames[key]}</span><strong>${state.growth.permanent[key]}${a[key] !== state.growth.permanent[key] ? ` + ${a[key] - state.growth.permanent[key]}` : ''}</strong><small>成长 ${(state.growth.progress[key] * 100).toFixed(1)}%</small></div>`).join('')}</div><p>负重上限 ${limits.carry.toFixed(1)} kg · 基础暴击 ${(criticalChance(a.technique, 0, b.effects.focus ? .05 : 0) * 100).toFixed(1)}% · 中心命中最多额外 +8 个百分点</p><p>${b.bleeding ? '流血 · ' : ''}${EFFECTS.filter(e => b.effects[e] > 0).map(e => `${effectNames[e]} ${Math.ceil(b.effects[e])}秒`).join(' · ') || '没有限时状态'}</p><h4>护符</h4><p>${state.charm ? `${itemIcon(state.charm.id)} ${D.ITEMS[state.charm.id].name} ${btn('收起护符', 'charm-unequip')}` : '未佩戴 · 在物品详情中选择护符佩戴'}</p>${Object.entries(state.growth.reputation).map(([faction,value]) => `<p>${esc(faction)} · ${reputationTier(value)}（${value}）</p>`).join('')}<p class="muted">行动中的有效负重移动、耐力消耗和射击伤害会积累成长。基地恢复不会产生训练收益。</p></section>`;
+    const a = effectiveAttributes(state), limits = derivedLimits(state), b = state.body, board = hideoutRuntime.perkBoard();
+    perkAttr ??= defaultPerkAttribute(board);
+    return `<section class="rpg-property"><div class="rpg-layout"><div class="rpg-main"><h3>身体与成长</h3><div class="rpg-cards">${[['生命', `${b.hp.toFixed(0)} / ${limits.hp}`], ['耐力', `${b.stamina.toFixed(0)} / ${limits.stamina}`], ['精神', b.mental.toFixed(0)], ['水分', b.water.toFixed(0)], ['饱食', b.satiety.toFixed(0)], ['污染', b.pollution.toFixed(0)]].map(([name,value]) => `<div><span>${name}</span><strong>${value}</strong></div>`).join('')}</div><div class="rpg-cards">${ATTRIBUTES.map(key => `<div><span>${attributeNames[key]}</span><strong>${state.growth.permanent[key]}${a[key] !== state.growth.permanent[key] ? ` + ${a[key] - state.growth.permanent[key]}` : ''}</strong><small>成长 ${(state.growth.progress[key] * 100).toFixed(1)}%</small></div>`).join('')}</div></div>${perkBoardHtml(perkPanel(board, perkAttr))}<div class="rpg-side">${critHtml(critView(critContext(hideoutRuntime.snapshot(), board)))}<p>负重上限 ${limits.carry.toFixed(1)} kg</p><p>${b.bleeding ? '流血 · ' : ''}${EFFECTS.filter(e => b.effects[e] > 0).map(e => `${effectNames[e]} ${Math.ceil(b.effects[e])}秒`).join(' · ') || '没有限时状态'}</p><h4>护符</h4><p>${state.charm ? `${itemIcon(state.charm.id)} ${D.ITEMS[state.charm.id].name} ${btn('收起护符', 'charm-unequip')}` : '未佩戴 · 在物品详情中选择护符佩戴'}</p>${Object.entries(state.growth.reputation).map(([faction,value]) => `<p>${esc(faction)} · ${reputationTier(value)}（${value}）</p>`).join('')}<p class="muted">行动中的有效负重移动、耐力消耗和射击伤害会积累成长。基地恢复不会产生训练收益。</p></div></div></section>`;
+}
+/** Only an open card on an unblocked board is a button; chosen, other-side and locked cards are plain text. */
+function perkCardHtml(c: PerkCardView) {
+    const inner = `<strong>${esc(c.name)}</strong><span>${esc(c.effect)}</span>${c.status ? `<em>${esc(c.status)}</em>` : ''}`;
+    return c.state === 'open' ? btn(inner, 'perk-pick', 'perk-card open', `data-id="${c.id}" ${c.enabled ? '' : 'disabled'}`) : `<div class="perk-card ${c.state}">${inner}</div>`;
+}
+function perkBoardHtml(v: PerkPanelView) {
+    const tabs = v.tabs.map(t => btn(`${t.name}<small>${esc(t.detail)}</small>`, 'perk-attr', t.attribute === v.attribute ? 'active' : '', `data-id="${t.attribute}" aria-pressed="${t.attribute === v.attribute}"`)).join('');
+    return `<section class="rpg-perks"><h4>${PERK_UI.title} <span>${PERK_UI.hint}</span></h4><div class="perk-tabs" role="group" aria-label="${PERK_UI.switcher}">${tabs}</div>${v.blocked ? `<p class="orange small" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="perk-tier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCardHtml).join('')}</div>`).join('')}<div class="perk-reset">${btn(esc(v.reset.label), 'perk-reset', 'danger', `data-id="${v.attribute}" ${v.reset.enabled ? '' : 'disabled'}`)}<span class="perk-note">${esc(v.reset.reason ?? PERK_UI.resetHint)}</span></div></section>`;
+}
+function critHtml(c: CritView) {
+    return `<div class="rpg-crit"><h4>${esc(c.title)}${c.total ? `<strong>${esc(c.total)}</strong>` : ''}</h4>${c.rows.length ? `<dl>${c.rows.map(r => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.text)}</dd></div>`).join('')}</dl>` : ''}${c.notes.map(n => `<p>${esc(n)}</p>`).join('')}</div>`;
+}
+function perkOverlayHtml(d: NonNullable<typeof perkDialog>) {
+    const v = d.view;
+    return `<div class="overlay"><section class="panel modal perk-modal" role="dialog" aria-modal="true" aria-label="${d.kind === 'choice' ? PERK_UI.choiceDialog : PERK_UI.resetDialog}"><div class="section-label">${esc(v.subtitle)}</div><h2>${esc(v.title)}</h2>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}${v.changes.length ? `<ul class="perk-changes">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}<div class="actions">${btn(esc(v.confirm), 'perk-confirm', d.kind === 'choice' ? 'primary' : 'danger')}${btn(PERK_UI.cancel, 'close', 'perk-cancel')}</div></section></div>`;
+}
+/** Card or reset button: the Runtime previews or refuses; nothing is written before the confirm. */
+function previewPerkTab(kind: 'choice' | 'reset', subject: string) {
+    const r = kind === 'choice' ? hideoutRuntime.previewPerk(subject) : hideoutRuntime.previewPerkReset(subject as Attribute);
+    if (!r.ok || !r.token || !r.preview) { perkRefused(r, kind); render(); return; }
+    const ctx = critContext(hideoutRuntime.snapshot(), hideoutRuntime.perkBoard());
+    perkDialog = r.preview.kind === 'choice' ? { kind: 'choice', id: subject, token: r.token, view: choicePreview(r.preview, ctx) }
+        : { kind: 'reset', attribute: subject as Attribute, token: r.token, view: resetPreview(r.preview, ctx) };
+    setOverlay('perk');
+}
+/** Success is shown only after the Runtime wrote the change; a failed write stays in the Runtime for retrySave. */
+function confirmPerkTab() {
+    const d = perkDialog; if (!d || app.overlay !== 'perk') return;
+    perkDialog = null; app.overlay = '';
+    const subject = d.kind === 'choice' ? d.id : d.attribute, unsaved = !hideoutRuntime.snapshot().storage.ok;
+    const r = d.kind === 'choice' ? hideoutRuntime.choosePerk(d.id, d.token) : hideoutRuntime.resetPerks(d.attribute, d.token);
+    if (r.ok) toast(perkDone(d.kind, subject), 'success');
+    else {
+        // With storage fine before, a storage answer means this change's own write failed and waits for the retry.
+        const kept = r.reason === 'storage' && !unsaved;
+        if (kept) perkPending = perkPendingName(d.kind, subject);
+        perkRefused(r, d.kind, kept);
+    }
+    clearSelection(); render();
+}
+function perkRefused(r: Result, kind: 'choice' | 'reset', kept = false) { if (!r.ok) toast(perkFailure(r.reason, kind, kept)); }
+/** The tab page's storage retry for base writes: only the HideoutRuntime commits a change it keeps after a failed write. */
+function retryBaseSave() {
+    const pending = perkPending, r = hideoutRuntime.retrySave();
+    if (r.ok) { toast(pending ? perkRetried(pending) : '已重新保存。', 'success'); perkPending = ''; }
+    else toast(r.message);
+    render();
+}
+/** A failed or blocked base write: say so and offer the retry and the export (both through the HideoutRuntime). */
+function storageAlarm() {
+    if (app.pendingSettlement) return '';
+    const { storage } = hideoutRuntime.snapshot();
+    if (storage.conflict) return `<div class="save-alarm" role="alert"><span>存档已被另一个窗口接管，本页不能写入。请先导出需要保留的进度，再刷新本页。</span>${btn('导出存档', 'export-save')}${btn('刷新页面', 'refresh')}</div>`;
+    // A kept candidate always comes with a failed write (storage not ok) until retrySave commits it.
+    if (storage.ok) { perkPending = ''; return ''; }
+    return `<div class="save-alarm" role="alert"><span>${perkPending ? esc(perkWaiting(perkPending)) : '最近一次操作没能写入存档。请重试保存，或先导出备份。'}</span>${btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export-save')}</div>`;
 }
 function facilityPanel() {
     const state = app.expansion;
@@ -255,6 +324,8 @@ function renderHideout() {
     ui().querySelectorAll<HTMLElement>(`.shop-layout[data-merchant="${app.tab}"] [data-grid]`).forEach(grid => {
         scrollPositions.set(grid.dataset.grid!, grid.parentElement!.scrollTop);
     });
+    // The body tab keeps its scroll while a perk preview opens and closes (the perk board sits below the vitals on phones).
+    const bodyScroll = app.tab === 'body' ? ui().querySelector<HTMLElement>('.content.body-content')?.scrollTop ?? 0 : 0;
     const s = app.save;
     const inventoryTools = `<div class="inventory-tools">${btn('背包全部入库', 'stash-all', '', 'title="整包入库，空间不足则全部保留；装备与安全箱不变"')}${btn('整理仓库', 'sort-stash', '', 'title="同类合堆、大件优先，排不下则保持原样"')}</div>`;
     let body = '';
@@ -278,11 +349,14 @@ function renderHideout() {
     } else {
         body = `<div class="station-layout"><section class="station-log"><div class="section-label">水产站值守记录 · 累计出击 ${s.stats.runs} 次</div><h3>${s.quests.repair ? '供电已恢复。' : '目前靠应急电源供电。'}</h3><p class="station-copy">出击前查好路线，涉水会积累污染。<br>以下时间从出击开始计算。</p><dl class="tide-notes"><div><dt>04:30</dt><dd>电台预警，离开浅滩。</dd></div><div><dt>05:00</dt><dd>潮位变化，高架路与海堤仍可通行。</dd></div></dl><div class="station-upgrade">${btn(s.upgraded ? '仓库已扩建' : `扩建仓库 · ¥ ${D.STASH_UPGRADE_COST}`, 'upgrade', '', s.upgraded ? 'disabled' : '')}<p class="inv-help">${s.upgraded ? '仓库容量已增至 90 格。' : `完成「${D.QUESTS.repair.name}」后可扩建至 90 格。`}</p></div></section><section class="station-controls"><div class="station-stats"><div><strong>${s.stats.runs}</strong><span>累计出击</span></div><div><strong>${s.stats.extracts}</strong><span>成功撤离</span></div><div><strong>${s.stats.kills}</strong><span>击败敌人</span></div></div><label class="volume-control"><span>游戏音量 <span id="volume-label">${Math.round(s.settings.volume * 100)}%</span></span><input aria-label="游戏音量" id="volume" type="range" min="0" max="1" step="0.05" value="${s.settings.volume}"></label><div class="save-controls"><div><h3>本地存档</h3><p>更换浏览器或游玩地址前，请先导出备份。</p></div><div class="save-actions">${btn('导出存档', 'export-save')}${btn('导入存档', 'import-save')}</div><input id="backup-file" type="file" accept=".json,application/json" hidden></div><div class="station-links">${btn('行动指南', 'help', 'text-button')}${btn('返回主菜单', 'menu', 'text-button')}${btn(walkInLabel(), 'base-enter')}</div></section></div>`;
     }
-    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(rpgEnabled(app.expansion) ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}${app.tab === 'gear' && !touchLayout() ? inventoryTools : ''}</nav><div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>行动规则 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域">${raidWorlds().map(w => `<option value="${w}" ${app.runWorld === w ? 'selected' : ''}>${WORLD_OPTION[w]}</option>`).join('')}</select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
+    ui().innerHTML = `<div class="panel hideout ${shopping() ? 'shopping' : ''}"><header class="topbar"><div class="station-identity"><span class="section-label">滨科夫 · 沿海避难点</span><h2>滨科夫水产站</h2></div><div class="right"><span class="station-signal"><i></i>${s.quests.repair ? '供电已恢复 · 信号稳定' : '应急供电 · 信号微弱'}</span><div class="cash"><span>可用现金</span><strong>¥ ${s.cash.toLocaleString()}</strong></div></div></header><nav class="tabs" aria-label="水产站功能">${[['gear', '整备'], ['arms', '修理铺'], ['med', '卫生所'], ['quests', '电台任务'], ['home', '水产站'], ...(rpgEnabled(app.expansion) ? [['body', '身体与成长'], ['facilities', '基地设施']] : [])].map(([id, name]) => btn(name, 'tab', app.tab === id ? 'active' : '', `data-id="${id}" ${app.tab === id ? 'aria-current="page"' : ''}`)).join('')}${app.tab === 'gear' && !touchLayout() ? inventoryTools : ''}</nav>${storageAlarm()}<div class="content ${shopping() ? 'shop-content' : app.tab === 'gear' ? 'gear-content' : app.tab === 'body' ? 'body-content' : ''}">${body}</div><footer class="bottom-bar">${shopping() ? shopCheckout() : `<div class="departure-note"><strong>行动规则 <span>每局限时 10 分钟</span></strong><p>撤离失败会丢失背包物资和主武器，安全箱保留。</p></div>`}<label class="seed-label">行动区域<select id="run-world" aria-label="行动区域">${raidWorlds().map(w => `<option value="${w}" ${app.runWorld === w ? 'selected' : ''}>${WORLD_OPTION[w]}</option>`).join('')}</select></label><label class="seed-label">行动种子 <input class="seed" aria-label="行动种子" title="留空随机生成；输入相同的数字或文字，可重现本局初始配置。" id="seed" placeholder="留空随机" value="${esc(app.seed)}" maxlength="16"></label>${btn(walkInLabel(), 'base-enter')}<div class="departure-check"><p id="departure-warnings">${departureWarnings(s).join(' · ') || '装备与快捷补给已备齐'}</p>${btn('出击 <span aria-hidden="true">→</span>', 'deploy', 'primary')}</div></footer></div>${overlayHtml()}`;
     bind();
     ui().querySelectorAll<HTMLElement>('.shop-layout [data-grid]').forEach(grid => {
         grid.parentElement!.scrollTop = scrollPositions.get(grid.dataset.grid!) || 0;
     });
+    const content = ui().querySelector<HTMLElement>('.content.body-content'); if (content) content.scrollTop = bodyScroll;
+    // Like the title dialogs: the keyboard lands in the perk preview (on its cancel button; main.ts keeps Tab inside it).
+    if (app.overlay === 'perk') ui().querySelector<HTMLElement>('.perk-modal .perk-cancel')?.focus({ preventScroll: true });
 }
 function overlayHtml() {
     if (!app.storageOK && app.state === 'menu')
@@ -294,6 +368,7 @@ function overlayHtml() {
     if (!app.overlay)
         return '';
     if (app.overlay === 'shop-leave') return `<div class="overlay"><section class="panel modal"><h2>放弃未结算的清单？</h2><p>待买、待卖和仓库位置会恢复。现金与物资尚未改变。</p><div class="actions">${btn('继续挑选', 'close')}${btn('放弃清单并离开', 'shop-leave-confirm', 'danger')}</div></section></div>`;
+    if (app.overlay === 'perk') return perkDialog ? perkOverlayHtml(perkDialog) : '';
     if (app.overlay === 'shop-quest') return `<div class="overlay"><section class="panel modal"><h2>这些任务物资会不够交付</h2><ul>${Shop.saleWarnings(app.save, cart()).map(w => `<li>「${w.quest}」需要 ${D.ITEMS[w.id].name} ${w.needed} 件；本次卖出 ${w.sold} 件，整笔交易后剩 ${w.remaining} 件。</li>`).join('')}</ul><div class="actions">${btn('取消，继续挑选', 'close')}${btn('仍要结算', 'checkout-confirm', 'danger')}</div></section></div>`;
     return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">${touchLayout() ? '手机触控操作' : '键盘与鼠标操作'}</div><h2>行动指南</h2>${touchLayout() ? '<p class="touch-guide">左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>每局限时 10 分钟。备用弹药放在背包中，${touchLayout() ? '靠近物资点击拾取，打开地图查看本局撤离点。在绿色圈内站稳，按住撤离按钮满 3 秒。' : '靠近箱子或尸体后，用滚轮切换高亮目标，按 E 打开双栏；关闭后可再选其他目标。散落物按 E 拾取。物品可拖入背包、安全箱或放回。搜刮不暂停。按 M 查看本局撤离点，在绿色圈内站稳，按住 E 满 3 秒撤离。'}</p><p>出击 4 分 30 秒后电台预警，5 分钟时潮位变化。涉水会积累污染；在背包中使用除藻药剂可降低污染。${touchLayout() ? '治疗按钮' : 'Q'}使用背包中的绷带或急救包。</p><p>行动中死亡、超时或放弃均按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。刷新可恢复最近成功保存的进度。</p>${btn('关闭指南', 'close', 'primary')}</div></div>`;
 }
@@ -508,7 +583,8 @@ function bind() {
                 titleScene()?.setMotion(app.menuMotion);
                 render();
                 break;
-            case 'retry-save': retrySettlement(); break;
+            // The staged settlement keeps its own retry; any other failed base write retries through the HideoutRuntime.
+            case 'retry-save': if (app.pendingSettlement) retrySettlement(); else retryBaseSave(); break;
             case 'export-save': exportSave(); break;
             case 'import-save': document.getElementById('backup-file')?.click(); break;
             case 'confirm-import':
@@ -588,6 +664,10 @@ function bind() {
             }
             case 'base-enter': walkIn(); break;
             case 'facility-select': app.baseFacility = id; render(); break;
+            case 'perk-attr': perkAttr = id as Attribute; render(); break;
+            case 'perk-pick': previewPerkTab('choice', id); break;
+            case 'perk-reset': previewPerkTab('reset', id); break;
+            case 'perk-confirm': confirmPerkTab(); break;
             case 'facility-build': expansionAction(draft => buildFacility(draft.profile, draft.expansion, app.baseFacility as Facility), '设施已修建。'); break;
             case 'production-enqueue': expansionAction(draft => enqueueProduction(draft.profile, draft.expansion, id as keyof typeof RECIPES), '材料已支付，生产已排入队列。'); break;
             case 'production-claim': expansionAction(draft => claimProduction(draft.profile, draft.expansion, id, 'stash'), '整批物资已放入仓库。'); break;
