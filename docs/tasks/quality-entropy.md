@@ -140,7 +140,7 @@
 
 ## Q-D02 旧交易与装弹接口退役
 
-2026-10-23，分支 `agent/q-d02-legacy-api`，起点 main `44494ea`。承接 #60 的 Q-D02 剩余部分：`writeSave`/`readSave` 已在第二批退役，本批删去 `domain.ts` 的 `buy`、`sell`、`reload`，把仍有意义的断言迁到正式路径。玩法、存档格式、界面行为和打包产物都不变。
+2026-10-23，分支 `agent/q-d02-legacy-api`，起点 main `44494ea`；交付前普通合并同步 #79 合入后的 main `76adbd6`，冲突只在任务清单。承接 #60 的 Q-D02 剩余部分：`writeSave`/`readSave` 已在第二批退役，本批删去 `domain.ts` 的 `buy`、`sell`、`reload`，把仍有意义的断言迁到正式路径。玩法、存档格式、界面行为和打包产物都不变。
 
 **有效决定**
 
@@ -159,13 +159,15 @@
 
 **实际验证**（Windows、Node 24.22.1、pnpm 11.19.0、本机 Chrome）
 
-| 检查 | 结果 |
-| --- | --- |
-| 严格类型检查（含未用变量/参数） | 通过 |
-| `pnpm test` | 517/517（基线 515：删 1 项旧商店测试，新增 3 项） |
-| `node --test scripts/ci/*.test.mjs` | 52/53；`source-health` 3/3。失败的是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/bin/bash.exe`，本机 Git 不在该路径，CI 在 Linux 上执行 |
-| `pnpm package` | 通过；HTML、两个 ZIP 与清单和基线字节一致 |
-| `pnpm test:save-browser` | 9/9 |
+| 检查 | 起点 `44494ea` 上 | 同步 `76adbd6` 后 |
+| --- | --- | --- |
+| 严格类型检查（含未用变量/参数） | 通过 | 通过 |
+| `pnpm test` | 517/517（main 515；删 1 项旧商店测试，新增 3 项） | 551/551（main 549，同样净增 2 项） |
+| `node --test scripts/ci/*.test.mjs` | 52/53，`source-health` 3/3 | 52/53 |
+| `pnpm package` | 通过；HTML、两个 ZIP、清单与 main 字节一致 | 通过；与 main `76adbd6` 已提交的产物字节一致 |
+| `pnpm test:save-browser` | 9/9 | 9/9 |
+
+CI 自测失败的 1 项是 `policy.test.mjs:199` 写死 `C:/Program Files/Git/bin/bash.exe`，本机 Git 不在该路径；CI 在 Linux 上执行。
 
 **未做 / 下一步**
 
