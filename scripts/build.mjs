@@ -1,8 +1,8 @@
-import { build } from 'esbuild';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { fontCharacters } from './font-characters.mjs';
+import { buildGameScript, inlineScript } from './game-bundle.mjs';
 
 async function compile() {
   const titleManifest = JSON.parse(await readFile('assets/title/manifest.json','utf8'));
@@ -48,7 +48,7 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Opening asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Opening asset size mismatch: ${a.file}`);
   }
-  const result = await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',legalComments:'inline',loader:{'.png':'dataurl','.css':'text'},define:{'process.env.NODE_ENV':'"production"'}});
+  const js = inlineScript(await buildGameScript());
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
   if (createHash('sha256').update(font).digest('hex') !== manifest.sha256) throw new Error('Font manifest hash mismatch');
@@ -57,7 +57,6 @@ async function compile() {
   const fontCss = `@font-face{font-family:"Bincov Text";src:url(data:font/woff2;base64,${font.toString('base64')}) format("woff2");font-weight:400;font-style:normal;font-display:swap;}\n`;
   const css = fontCss + (await Promise.all(['src/style.css', 'src/title.css', 'src/tactical.css', 'src/coast-view/coast.css'].map(path => readFile(path, 'utf8')))).join('\n');
   const notices = (await readFile('THIRD_PARTY_NOTICES.md','utf8')).replace(/-->/g,'--&gt;');
-  const js = result.outputFiles[0].text.replace(/<\/script/gi,'<\\/script');
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><!--\n${notices}\n--><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10272b"><title>逃离滨科夫 · Escape Bincov</title><style>${css}</style></head><body><main id="frame"><div id="game"></div><div id="ui"></div></main><div id="toast" role="status"></div><script>${js}</script></body></html>`;
   await mkdir('dist',{recursive:true});
   await writeFile('dist/index.html',html);

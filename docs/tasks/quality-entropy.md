@@ -137,3 +137,47 @@
 **未做 / 下一步**
 
 - B 段：`CoastServices`/`CoastHandle` 移入 Runtime 合同，工厂显式返回，去掉 `as unknown as CoastHandle`；背包面板的背包/安全箱移动改走有限服务，不再持有 `SaveSession`/`SessionState`；顺带把 `Scope`/`renderer-lifetime.ts` 移出 `coast-view/`。具体位置与验收登记在 [#60](https://github.com/xuys2025/escape-bincov/issues/60#issuecomment-6338855038)，依赖 PR #65。
+
+## Q-B06 诊断 bundle 同源
+
+2026-10-23，分支 `agent/diagnostic-bundle`，起点 main `44494ea`。承接 #60 的 Q-B06，脚本用途沿用 Q-E08 的口径。只改构建工具：`pnpm package` 产物逐字节不变，游戏、存档和测试断言不变。
+
+**问题**：`scripts/build.mjs` 一导入就构建并写 `dist/`，诊断只能复制它的 esbuild 参数，复制品只有 PNG loader。源码导入 `range.css`、`station.css`、`opening.css` 后，`coast-sample-heap.mjs`、`sol-r6-heap.mjs` 在浏览器启动前就构建失败（main `44494ea` 实测 exit 1）。
+
+**有效决定**
+
+- 新模块 `scripts/game-bundle.mjs`，导入时不构建、不写文件。`buildGameScript(overrides)` 用正式构建的入口、loader、target、define、format 和 legalComments 在内存里构建游戏脚本；覆盖项替换整个顶层选项，诊断只在调用处写差异（`minify: false`、探针插件）。`withGameScript`/`inlineScript` 统一把脚本换进打包页时的拼接与转义。两个堆诊断各抄一份的只读页面池探针移到这里（`pagePoolProbe`），它读 `src/pixi-app.ts` 的私有 `parked`、`current` 和 `gpuTextures`，那边改名要同步。
+- 页面模板与资源清单校验仍在 `build.mjs`，ZIP 仍在 `package.mjs`；`build.mjs` 改调 `buildGameScript()`。
+- 诊断与原复制参数相比只多了正式构建的 `.css` loader 和 `legalComments: 'inline'`：原参数补上这两项后，与新模块的探针版、未压缩版产物逐字节相同。
+- CI 新增 `scripts/ci/game-bundle.test.mjs`：构建堆诊断用的未压缩带探针游戏脚本并确认探针注入；`scripts/` 下除共享模块外不许再写 `entryPoints: ['src/main.ts']`（用 main 上的脚本做负对照，正好标出 5 处复制品）；另测换脚本的拼接与转义。它只证明能构建。
+
+**脚本分类**（只含调用 esbuild 的脚本；其余脚本的用途仍归 Q-E08）
+
+| 脚本 | 分类 | 依据 | 本次 |
+| --- | --- | --- | --- |
+| `build.mjs` | 正式构建 | `pnpm build`、`package`、`dev` 的入口 | 改调共享模块 |
+| `coast-sample-heap.mjs` | 现役诊断 | 针对当前打包页的 F20 生命周期/堆诊断；Q-E02 已把它的探针改到 `pixi-app.ts` | 用共享配置，CI 构建其 bundle |
+| `sol-r6-heap.mjs` | 现役诊断 | 同一工作负载，另跟踪 `Weather`、`SampleSound`、`SynthAudio`（三者仍在源码）；Q-E02 同样维护过 | 同上 |
+| `astra-r7-f20.mjs` | 现役诊断 | F20 严格 60 轮的判定工具；默认直接读正式包，`R7_NAMED=1` 才构建未压缩脚本 | named 分支用共享配置 |
+| `sol-r6-audio-controls.mjs` | 待确认 | R6 验收套件：比较 origin/main 与工作区 `SynthAudio` 的四个音效，并生成只静音 death() 的负对照页给 `coast-audio-test.mjs`；输出目录和 `safe.directory` 写死 R6 环境；main 上两侧相同，比较只在改音频的分支有意义 | 不删；负对照的游戏脚本改用共享配置（它要的正是“正式包只去掉 death()”），不进 CI |
+| `mall-runtime-compat.mjs` | 归档 | 第一步要求基线 main 新建一版商场行动，只在传入 `7df2d22` 等历史基线时成立；打包的是存档夹具，不是游戏脚本 | 不改 |
+| `build-coast-runtime.mjs` | 现役构建工具 | 输出无渲染器的 Runtime ES 模块（见 [COAST-RUNTIME-SAMPLE](../COAST-RUNTIME-SAMPLE.md)），格式、平台和 target 本就不同；main 上 exit 0 | 不改 |
+| `art-review.mjs` | 现役 CI 测试（`test:art`） | 只打包绘制函数，不导入 CSS/PNG，不复制游戏脚本配置 | 不改 |
+
+**实际验证**（Windows 10、Node 24.22.1、pnpm 11.19.0、本机 Chrome 156）
+
+| 检查 | 结果 |
+| --- | --- |
+| 改动前 `coast-sample-heap`、`sol-r6-heap` | 均 exit 1：浏览器启动前三处 CSS 导入报错 |
+| `pnpm package`（改动前、改动后） | 均通过；`dist/index.html` SHA-256 均为 `7daee656…1da0`，与已提交制品相同，两份 ZIP 与发布清单无差异 |
+| `pnpm test` | 515/515 |
+| `node --test scripts/ci/*.test.mjs` | 55/56，新增 3 项通过（探针版构建 0.3–0.6 秒）；唯一失败的 shell 门禁用例同 Q-E05（本机 Git 路径） |
+| `coast-sample-heap`（默认 20 轮，跑两次） | 两次都能构建并跑完 20 轮；残留所有者 0，着色器源码 11→11，GPU 纹理每轮 2。两次都在原断言处 exit 1：第 6→20 轮快照间 `HTMLCanvasElement` 7→8；堆趋势 +330,840 / +316,310 B |
+| `sol-r6-heap`（默认 20 轮） | exit 0，`PASS lifecycle ownership checks only`；残留所有者 0，无累积（第 20 轮 canvas 为 7）；堆趋势 +318,998 B，签收 partial |
+| `astra-r7-f20`（`R7_NAMED=1`，20 轮，不是严格 60 轮） | 20 轮资源检查全部通过；16–20 轮比 6–10 轮 +330,586 B，按原条件 PARTIAL、exit 1 |
+| `sol-r6-audio-controls` | exit 0；main 与工作区 `audio.ts` 相同，四个音效都在 0.8–1.2 倍内；负对照页已生成，未接着跑 `coast-audio-test.mjs` |
+
+**未做 / 下一步**
+
+- **F20 仍是 PARTIAL**，归 #32。诊断能进入流程，不等于 F20 总堆通过；本次只跑了默认 20 轮，没有跑严格 60 轮。`coast-sample-heap` 两次出现的 canvas 7→8 尚未归因（同一负载的 `sol-r6-heap` 一次未出现），交 F20 调查，本 PR 不改断言和判定条件。
+- 两个堆诊断工作负载相同，默认输出目录都是 `test-results/coast-sample/heap`，后跑的覆盖先跑的；是否合并、`sol-r6-audio-controls` 是否保留，归 Q-E08。全部脚本的用途分类也仍归 Q-E08。
