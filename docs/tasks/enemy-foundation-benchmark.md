@@ -1,6 +1,6 @@
 # 敌人基础能力 EN-04：可重复 Runtime 测量
 
-承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。当前接受基线为 main `76adbd6`（含 #79）；初始 `8ef783f` 和射击 #39 后的 `2bac4fb` 测量作为历史保留。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
+承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)。当前 headless 行为基线为 main `76adbd6`（含 #79）；随后整合的 `b38f23d`（#88）只改视图及其回归，不改变本工具加载的规则与 Runtime。初始 `8ef783f` 和射击 #39 后的 `2bac4fb` 测量作为历史保留。入口：[脚本](../../scripts/enemy-benchmark.ts)、[输入与内存存档夹具](../../tests/fixtures/enemy-benchmark.ts)、[夹具回归](../../tests/enemy-benchmark.test.ts)。
 
 这是有界、离线、无 DOM 的 Node 测量，运行真实 `CoastRaidRuntime`、真实敌人 AI、内存 `SaveSession`，包含 Runtime 的发布与定期存档开销。它不测浏览器绘制、纹理、GPU、真实帧率或自然游玩表现；不替代验证矩阵中的 `pnpm test:play`，也没有缩短该套件约 10 分钟和训练真实 120 秒要求。
 

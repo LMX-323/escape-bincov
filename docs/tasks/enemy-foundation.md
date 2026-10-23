@@ -1,6 +1,6 @@
 # 敌人体系实施：首批基础能力
 
-承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 和已合入的设计 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67)。实施分支 `feat/enemy-foundation`，续作[草稿 PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。起点为 main `8ef783f`；2026-10-23 已正常合入 `76adbd6`，包含射击 #39、Perk 设计 #40、README #86 与契约审计 #79。准确提交与 CI 以 PR 为准。
+承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 和已合入的设计 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67)。实施分支 `feat/enemy-foundation`，续作[草稿 PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。起点为 main `8ef783f`；2026-10-23 正常合入 `76adbd6`，随后同步 `b38f23d`，包含射击 #39、Perk 设计 #40、README #86、契约审计 #79 与受击慢帧修复 #88。准确提交与 CI 以 PR 为准。
 
 ## 当前交付
 
@@ -49,7 +49,9 @@
 
 已恢复停电前提交 `b679737`，正常整合 main `76adbd6`，保留双方任务清单和交接记录，生成物通过 `pnpm package` 重建。采纳协作复核的两项测试补强：候选点逐一检查 `WORLD.spawns` 全部出生点；非法敌人存档用有效档作正对照，并断言解码拒绝的错误类别和信息。
 
-Node 24.19.0 / pnpm 11.25.0 下，570/570 单测、53/53 CI 规则和打包通过；与干净 `76adbd6` 的 9/9 行为及末态完整哈希一致，两端各 18 次重复与中点恢复全部通过。`test:browser`（两分辨率）、`test:save-browser`、`test:art`（134 纹理、14 实景）、`test:portable`、`test:shooting` 和 `test:range` 均通过。新 HTML 为 5,722,387 字节；准确哈希见制品清单。完整真实计时游玩、干净提交 A/B 与准确 head 的远端 CI 统一记录在 #81，全部完成前不签收。历史基线结果不替代本轮验证。
+Node 24.19.0 / pnpm 11.25.0 下，570/570 单测、53/53 CI 规则和打包通过；与干净 `76adbd6` 的 9/9 行为及末态完整哈希一致，两端各 18 次重复与中点恢复全部通过。`test:browser`（两分辨率）、`test:save-browser`、`test:art`（134 纹理、14 实景）、`test:portable`、`test:shooting` 和 `test:range` 均通过。完整 `test:play` 约 10 分 28 秒通过，10 次行动结果、0 浏览器错误/外部请求；报告记录当轮 HTML 哈希，保存在 `test-results/enemy-natural-play-76adbd6.json`。
+
+上述验证结束后主线合入 #88，因此继续正常整合 `b38f23d`。该变更只改视图的受击闪白/抖动时序和对应射击回归，没有改变 headless Runtime、规则、存档与依赖，Node A/B 仍以 `76adbd6` 为行为基线。生成物重新打包；新增慢帧场景、新构建的完整真实计时游玩、干净提交 A/B 与准确 head 的远端 CI 统一记录在 #81，全部完成前不签收。准确 HTML 字节与哈希见制品清单，历史基线结果不替代本轮验证。
 
 ## 断电前恢复点（历史）
 
