@@ -3,6 +3,7 @@ import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
 import { decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 import type { LootContainer } from './loot';
+import type { CritSnapshot } from './perks';
 
 export const WORLD_VERSION = 'coast-v2';
 export interface ActorState extends Point { rotation: number }
@@ -12,7 +13,14 @@ export interface EnemyState extends ActorState {
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
 }
 export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean }
-export interface BulletState extends ActorState { uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string }
+export interface BulletState extends ActorState {
+  uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string;
+  /**
+   * The shot's critical snapshot (src/perks.ts): on every player round of a v3 layered raid, taken when the shot was
+   * fired and never changed in flight. Enemy rounds, classic raids and v1/v2 raids never carry it.
+   */
+  crit?: CritSnapshot;
+}
 export interface RaidCheckpoint {
   version: 2; worldVersion: typeof WORLD_VERSION; seed: number; runId: string;
   loadout: D.RunLoadout; player: ActorState;

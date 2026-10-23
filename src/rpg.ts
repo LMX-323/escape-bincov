@@ -1,8 +1,14 @@
-import { ATTRIBUTES, derivedLimits, effectiveAttributes, type Attribute, type ExpansionState, type TrainingState } from './expansion-state';
+import { ATTRIBUTES, activePerks, derivedLimits, effectiveAttributes, rpgEnabled, type Attribute, type ExpansionState, type TrainingState } from './expansion-state';
+import { perkModifiers, type PerkModifiers } from './perks';
 import { separation } from './spatial';
 import type { Point } from './world';
 
 const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+/**
+ * The perk effects in force (spec section 3): a v3 expansion's selection. v1 and v2 expansions and a classic raid
+ * (null) have none, so every factor is 1 and their rules stay bit for bit as they were.
+ */
+export const perkEffects = (state: ExpansionState | null): PerkModifiers => perkModifiers(state ? activePerks(state) : []);
 export const shortage = (value: number) => value >= 30 ? 0 : value >= 10 ? (30 - value) / 20 : 1 + (10 - value) / 10;
 export const trainingYield = (quantity: number) => quantity <= 1 ? .2 * quantity : quantity <= 3 ? .2 + .1 * (quantity - 1) : Math.min(.45, .4 + .01 * (quantity - 3));
 export const trainingEfficiency = (state: ExpansionState) => 1 + Math.min(.2, .05 * state.base.facilities.training);
@@ -26,14 +32,15 @@ export function rewardAttribute(state: ExpansionState, attribute: Attribute, poi
     if (state.growth.permanent[attribute] === 30) state.growth.progress[attribute] = 0;
 }
 export function rpgMultipliers(state: ExpansionState) {
-    const body = state.body, attributes = effectiveAttributes(state), pain = body.effects.pain > 0 && body.effects.analgesia === 0;
+    const body = state.body, attributes = effectiveAttributes(state), pain = body.effects.pain > 0 && body.effects.analgesia === 0, perks = perkEffects(state);
     const pollution = body.pollution <= 40 ? 1 : body.pollution <= 70 ? 1 - (body.pollution - 40) / 150 : .8 - (body.pollution - 70) / 150;
+    // Natural recovery and the sprint drain: state, buff and perk factors multiply first, then the one 0.25..2 clamp (spec 3.4).
     return { deterioration: clamp(1 - .01 * (attributes.constitution - 10), .8, 1.09),
         recoil: clamp(1 - .01 * (attributes.technique - 10), .8, 1.09) * (1 + .1 * shortage(body.mental)) * (pain ? 1.15 : 1),
         movement: pain ? .9 : 1,
         recovery: clamp((1 - .1 * shortage(body.mental)) * (1 - .2 * shortage(body.water)) * (1 - .1 * shortage(body.satiety))
-            * pollution * (body.effects.energized > 0 ? 1.15 : 1) * (body.effects.injectionFatigue > 0 ? .8 : 1), .25, 2),
-        drain: clamp((1 + .05 * shortage(body.satiety)) * (body.effects.energized > 0 ? .9 : 1), .25, 2) };
+            * pollution * (body.effects.energized > 0 ? 1.15 : 1) * (body.effects.injectionFatigue > 0 ? .8 : 1) * perks.staminaRecovery, .25, 2),
+        drain: clamp((1 + .05 * shortage(body.satiety)) * (body.effects.energized > 0 ? .9 : 1) * perks.sprintCost, .25, 2) };
 }
 /** Expirations are discrete boundaries; increasing a limit never fills the resource. */
 export function advanceEffects(state: ExpansionState, seconds: number): void {
@@ -51,11 +58,12 @@ export function advanceEffects(state: ExpansionState, seconds: number): void {
     state.body.hp = Math.min(state.body.hp, limits.hp); state.body.stamina = Math.min(state.body.stamina, limits.stamina);
 }
 export function advanceRaidBody(state: ExpansionState, seconds: number, sprint: boolean, weight: number, flooded: boolean, observeDamage?: (loss: { bleed: number; dehydration: number; starvation: number; pollution: number; 'limit-change': number }) => void): number {
-    const body = state.body, limits = derivedLimits(state), m = rpgMultipliers(state), oldStamina = body.stamina;
-    body.mental = clamp(body.mental - .015 * m.deterioration * seconds);
+    const body = state.body, limits = derivedLimits(state), m = rpgMultipliers(state), perks = perkEffects(state), oldStamina = body.stamina;
+    body.mental = clamp(body.mental - .015 * m.deterioration * perks.mentalLoss * seconds);
     body.water = clamp(body.water - (.04 + (sprint ? .04 : 0)) * m.deterioration * seconds);
     body.satiety = clamp(body.satiety - (.025 + (sprint ? .015 : 0)) * m.deterioration * seconds);
-    body.pollution = clamp(body.pollution + (flooded ? (state.raid!.highTide ? 7 : 2.5) * m.deterioration : -.2) * seconds);
+    // The pollution perk scales only the gain in the water; leaving it still cleans 0.2 per second.
+    body.pollution = clamp(body.pollution + (flooded ? (state.raid!.highTide ? 7 : 2.5) * m.deterioration * perks.pollutionGain : -.2) * seconds);
     body.stamina = clamp(body.stamina + (sprint ? -(24 + Math.max(0, weight - limits.carry)) * m.drain : 15 * m.recovery) * seconds, 0, limits.stamina);
     if (body.stamina <= 5) body.exhausted = true; if (body.stamina >= 25) body.exhausted = false;
     const beforeDamage = body.hp;
@@ -84,14 +92,18 @@ export function recordMotion(state: ExpansionState, before: Point, after: Point,
     if (weight >= derivedLimits(state).carry * .75) training.quantity.strength += valid / 180 * trainingEfficiency(state);
     if (seconds > 0) training.quantity.constitution += staminaSpent * valid / seconds / 600 * trainingEfficiency(state);
 }
+/**
+ * A direct enemy blow or round. The tough-body perk reduces it before the hit rules, so pain, the shock and the training
+ * record all see the reduced damage; the clotting perk lowers the bleeding chance, the steady-mind perk the shock.
+ */
 export function enemyDamage(state: ExpansionState, amount: number, enemyUid?: string, random = .99): void {
-    const body = state.body, raid = state.raid!, actual = Math.min(body.hp, Math.max(0, amount));
+    const body = state.body, raid = state.raid!, perks = perkEffects(state), actual = Math.min(body.hp, Math.max(0, amount) * perks.enemyDamage);
     body.hp -= actual; raid.hitTime = .25;
-    if (random < .18) { if (!body.bleeding) body.treatment.bleeding = 0; body.bleeding = true; }
+    if (random < .18 * perks.bleedChance) { if (!body.bleeding) body.treatment.bleeding = 0; body.bleeding = true; }
     if (actual >= 20) {
         if (body.effects.pain === 0) body.treatment.pain = 0;
         body.effects.pain = 60;
-        if (raid.version === 2 && raid.elapsed - raid.shockAt! >= 10) { body.mental = Math.max(0, body.mental - 4); raid.shockAt = raid.elapsed; }
+        if (rpgEnabled(raid) && raid.elapsed - raid.shockAt! >= 10) { body.mental = Math.max(0, body.mental - 4 * perks.mentalLoss); raid.shockAt = raid.elapsed; }
     }
     if (enemyUid) raid.training.eligibleDamage[enemyUid] = Math.min(50 - (raid.training.healedByEnemy[enemyUid] ?? 0), (raid.training.eligibleDamage[enemyUid] ?? 0) + actual);
 }
@@ -109,12 +121,15 @@ export function healingTraining(state: ExpansionState, actual: number): void {
 /** Items a player can use from an inventory; useRpgItemResult applies each of them and rejects every other id. */
 export const SUPPLY_IDS: readonly string[] = ['bandage', 'medkit', 'antidote', 'water', 'food', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckySachet', 'unluckySachet'];
 export type RpgItemResult = { ok: true } | { ok: false; reason: 'not-supply' | 'no-effect'; message: string };
-/** The same effect application serves every caller; full resources alone cannot reject a compound supply. */
+/**
+ * The same effect application serves every caller; full resources alone cannot reject a compound supply. The medical
+ * perks scale only bandage and medkit hp, the absorption perk only the water and satiety restored.
+ */
 export function useRpgItemResult(state: ExpansionState, id: string): RpgItemResult {
-    const body = state.body, limits = derivedLimits(state), before = JSON.stringify(body), oldHp = body.hp;
-    if (id === 'bandage' || id === 'medkit') { body.hp = Math.min(limits.hp, body.hp + (id === 'bandage' ? 16 : 55)); body.bleeding = false; }
-    else if (id === 'water') { body.stamina = limits.stamina; body.pollution = Math.max(0, body.pollution - 12); body.water = Math.min(100, body.water + 40); }
-    else if (id === 'food') { body.hp = Math.min(limits.hp, body.hp + 12); body.stamina = Math.min(limits.stamina, body.stamina + 50); body.satiety = Math.min(100, body.satiety + 35); }
+    const body = state.body, limits = derivedLimits(state), perks = perkEffects(state), before = JSON.stringify(body), oldHp = body.hp;
+    if (id === 'bandage' || id === 'medkit') { body.hp = Math.min(limits.hp, body.hp + (id === 'bandage' ? 16 : 55) * perks.heal); body.bleeding = false; }
+    else if (id === 'water') { body.stamina = limits.stamina; body.pollution = Math.max(0, body.pollution - 12); body.water = Math.min(100, body.water + 40 * perks.absorption); }
+    else if (id === 'food') { body.hp = Math.min(limits.hp, body.hp + 12); body.stamina = Math.min(limits.stamina, body.stamina + 50); body.satiety = Math.min(100, body.satiety + 35 * perks.absorption); }
     else if (id === 'antidote') body.pollution = Math.max(0, body.pollution - 55);
     else if (id === 'analgesic') body.effects.analgesia = 180;
     else if (id === 'focus') body.effects.focus = 120;

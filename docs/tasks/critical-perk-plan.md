@@ -1,6 +1,6 @@
 # 暴击与三属性 Perk：可行性与实施安排
 
-**状态：已排期，功能待实现。** 2026-10-22，维护者要求将可行性分析、任务拆分补入 [PR #40](https://github.com/xuys2025/escape-bincov/pull/40)，检查通过后合并设计稿。开发清单的唯一勾选入口为 [Issue #77](https://github.com/xuys2025/escape-bincov/issues/77)，设计合并不关闭该 Issue。
+**状态：实现中（分支 `agent/critical-perk`，见[实现契约](critical-perk-contract.md)），未合并。** 2026-10-22，维护者要求将可行性分析、任务拆分补入 [PR #40](https://github.com/xuys2025/escape-bincov/pull/40)，检查通过后合并设计稿。开发清单的唯一勾选入口为 [Issue #77](https://github.com/xuys2025/escape-bincov/issues/77)，设计合并不关闭该 Issue。
 
 初次核对 main `8ef783f02b867c520e2a4e8f03e48e6a8cc7d02c`；原设计 head `cbfc829af29b93e297914ffd3451d7535919a696`。射击 [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) 核对 head `422312eb702ea6579bc789030545094c5c375daf`，初核时仍开放。交付期间 #39 已以 `2bac4fb54ab48742bb7c5ebeaf9761372c4cc06d` 合入 main，本分支已正常同步该基线；其最终 head `5a6e498` 与初核 `422312e` 的 shooting/Runtime/意图契约没有差异，射击基础前置已满足。开始实现仍须再次核对 head、主线和相关讨论。
 
