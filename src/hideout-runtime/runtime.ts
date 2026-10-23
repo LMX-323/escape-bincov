@@ -5,6 +5,7 @@ import * as Shop from '../shop';
 import { moveQuantity, placementError } from '../loot';
 import { organizeStash, transferBagToStash } from '../inventory-actions';
 import { ATTRIBUTES, FACILITIES, RECIPES, derivedLimits, effectiveAttributes, newExpansion, rpgEnabled, stationUpgraded, upgradeToRpg, type ExpansionState } from '../expansion-state';
+import { addPerk, canChoosePerk, isPerkId, perkModifiers, perkNode, perkNodes, removeAttributePerks, type PerkId, type PerkModifiers, type PerkNodeStatus } from '../perks';
 import { useRpgItemResult } from '../rpg';
 import { equipCharm, unequipCharm } from '../reputation-luck';
 import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
@@ -15,6 +16,56 @@ import type * as C from './contract';
 const ok = (): C.Result => ({ ok: true });
 const fail = (reason: C.FailReason, message = '操作未完成，请检查条件后重试。'): C.Result => ({ ok: false, reason, message });
 const source = (s: string): s is C.Source => ['stash', 'bag', 'safe'].includes(s);
+
+/** The fee for resetting one attribute's perks (docs/CRITICAL-PERK-DESIGN.md section 5). */
+const PERK_RESET_COST = 500;
+type PerkState = Pick<ExpansionDraft, 'profile' | 'expansion'>;
+/** A perk change on one candidate: the selection and fee it commits, and its preview. */
+interface PerkPlan<P extends C.PerkChange> { perks: PerkId[]; cost: number; preview: P }
+const delta = (before: number, after: number): C.PerkDelta => ({ before, after });
+/** Perks change only at the upgraded station base: no raid, settlement or other location. */
+const perkStation = ({ profile, expansion: e }: PerkState) => !stationUpgraded(e) || e.raid || e.base.location !== 'base' || profile.activeRun ? fail('locked') : null;
+function perkChange(e: ExpansionState, after: PerkId[]): C.PerkChange {
+    const was = derivedLimits(e), next = derivedLimits({ ...e, growth: { ...e.growth, perks: after } });
+    const from = perkModifiers(e.growth.perks ?? []), to = perkModifiers(after);
+    return { scope: (Object.keys(from) as (keyof PerkModifiers)[]).filter(k => JSON.stringify(from[k]) !== JSON.stringify(to[k])),
+        modifiers: { before: from, after: to },
+        limits: { hp: delta(was.hp, next.hp), stamina: delta(was.stamina, next.stamina), carry: delta(was.carry, next.carry) },
+        body: { hp: delta(e.body.hp, Math.min(e.body.hp, next.hp)), stamina: delta(e.body.stamina, Math.min(e.body.stamina, next.stamina)) } };
+}
+/**
+ * What a confirmation binds: the request, the whole profile and the perk facts with the limits shown. It leaves out
+ * what base time moves (hp, stamina, effect timers, production), which the five-second checkpoints commit while a
+ * dialog is open, unless a dose running out moves a limit. The confirm cuts hp and stamina as they are then.
+ */
+const perkKey = (request: string, { profile, expansion: e }: PerkState, { limits }: C.PerkChange) =>
+    JSON.stringify([request, profile, e.growth.perks ?? [], e.growth.permanent, limits]);
+/** The rules shared by the board, the previews and the confirms, on a state at the current time. */
+function choicePlan(state: PerkState, id: string): PerkPlan<C.PerkChoicePreview> | C.Result {
+    const refused = perkStation(state); if (refused) return refused;
+    const perks = state.expansion.growth.perks ?? [], permanent = state.expansion.growth.permanent;
+    if (!isPerkId(id)) return fail('rule');
+    const { attribute, tier } = perkNode(id);
+    if (!(permanent[attribute] >= tier)) return fail('locked');
+    if (!canChoosePerk(perks, permanent, id)) return fail('rule');
+    const after = addPerk(perks, id);
+    return { perks: after, cost: 0, preview: { kind: 'choice', id, attribute, tier, ...perkChange(state.expansion, after) } };
+}
+function resetPlan(state: PerkState, attribute: C.Attribute): PerkPlan<C.PerkResetPreview> | C.Result {
+    const refused = perkStation(state); if (refused) return refused;
+    const { profile: { cash }, expansion: e } = state, perks = e.growth.perks ?? [];
+    if (!ATTRIBUTES.includes(attribute)) return fail('rule');
+    const after = removeAttributePerks(perks, attribute);
+    if (after.length === perks.length) return fail('no-effect');
+    if (cash < PERK_RESET_COST) return fail('funds');
+    return { perks: after, cost: PERK_RESET_COST, preview: { kind: 'reset', attribute, cost: PERK_RESET_COST, cash: delta(cash, cash - PERK_RESET_COST),
+        removed: perks.filter(id => !after.includes(id)), ...perkChange(e, after) } };
+}
+const perkBlock = (result: C.Result | PerkPlan<C.PerkChange> | null): C.PerkBlock | null => result && 'ok' in result && !result.ok ? { reason: result.reason, message: result.message } : null;
+function perkNodeView(node: PerkNodeStatus): C.PerkNodeView {
+    const shown = { attribute: node.attribute, tier: node.tier, options: [`${node.attribute}-${node.tier}-a`, `${node.attribute}-${node.tier}-b`] as const };
+    return node.status === 'chosen' ? { ...shown, status: 'chosen', id: node.id } : node.status === 'open' ? { ...shown, status: 'open' } : { ...shown, status: 'locked', requires: node.tier };
+}
 /** One facade over the existing session. No second profile, renderer, RNG or timer is created. */
 export class RealHideoutRuntime implements C.HideoutRuntime {
     private listeners = new Set<(event: C.HideoutEvent) => void>();
@@ -33,6 +84,8 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     private preparedRun: string | null = null;
     private arrival: C.HideoutSnapshot['arrival'] = null;
     private importPreview: { text: string; token: string; rev: number } | null = null;
+    /** The latest perk preview: confirmable once, for the same request on the same facts (perkKey). */
+    private perkPreview: { token: string; request: string; key: string } | null = null;
     private serial = 0;
     constructor(private readonly state: SessionState, private readonly saves: SaveSession, private readonly now = () => Date.now(), private readonly activityAllowed = () => true) {
         this.observed = saves.revision; this.previous = this.capture(); this.lastTick = now();
@@ -67,8 +120,9 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
             }
         } finally { this.publishing = false; }
     }
-    private guard(base = true, retry = false): C.Result | null {
-        if (this.disposed || this.publishing) return fail('locked');
+    /** `reading`: a read-only view asks, which an event listener may do while this Runtime publishes. */
+    private guard(base = true, retry = false, reading = false): C.Result | null {
+        if (this.disposed || this.publishing && !reading) return fail('locked');
         if (this.state.conflict || !this.saves.ownsStorage) return fail('conflict', '存档已由另一窗口接管，本页不能写入。');
         if (!retry && (!this.state.storageOK || this.pending)) return fail('storage', '请先重试保存或导出备份。');
         if (this.state.pendingSettlement) return fail('locked', '结算尚未保存。');
@@ -262,6 +316,54 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         }
         this.samples.push({ ...structuredClone(sample), attribute }); this.acceptedMilliseconds += sample.seconds * 1000; this.lastInput = sample.now; this.lastPosition = { ...sample.to };
     }
+    /**
+     * The committed state as a transaction would prepare it now: base time advanced under the current perks (with
+     * `advance`), then the accepted practice samples. Detached; building it changes nothing.
+     */
+    private perkState(advance: boolean): PerkState {
+        const state = { profile: structuredClone(this.state.save), expansion: this.saves.captureExpansion() ?? newExpansion(this.now()) };
+        if (advance && rpgEnabled(state.expansion)) B.advanceRealTime(state.expansion, this.now());
+        this.applySamples(state);
+        return state;
+    }
+    perkBoard(): C.PerkBoard {
+        // Nothing the board shows depends on base time, so it skips that advance.
+        const state = this.perkState(false), { perks = [], permanent } = state.expansion.growth;
+        const blocked = perkBlock(this.guard(true, false, true) ?? perkStation(state)), nodes = perkNodes(perks, permanent);
+        return structuredClone({ blocked, attributes: Object.fromEntries(ATTRIBUTES.map(attribute => [attribute, {
+            permanent: permanent[attribute], nodes: nodes.filter(n => n.attribute === attribute).map(perkNodeView),
+            reset: { cost: PERK_RESET_COST, cash: state.profile.cash, chosen: perks.filter(id => perkNode(id).attribute === attribute),
+                blocked: blocked ?? perkBlock(resetPlan(state, attribute)) } }])) as Record<C.Attribute, C.PerkAttributeView> });
+    }
+    private previewPerkPlan<P extends C.PerkChange>(request: string, plan: (state: PerkState) => PerkPlan<P> | C.Result): C.Result & { token?: string; preview?: P } {
+        const blocked = this.guard(); if (blocked) return blocked;
+        let state: PerkState, planned: PerkPlan<P> | C.Result;
+        try { state = this.perkState(true); planned = plan(state); } catch { return fail('rule'); }
+        if (!('preview' in planned)) return planned;
+        const token = `perk-${++this.serial}`; this.perkPreview = { token, request, key: perkKey(request, state, planned.preview) };
+        return { ok: true, token, preview: structuredClone(planned.preview) };
+    }
+    /**
+     * Consumes a matching token, then plans again on the transaction's own candidate (base time already advanced under
+     * the old perks): only the previewed change on the same facts commits, as one candidate with fee, selection and cut.
+     */
+    private confirmPerkPlan<P extends C.PerkChange>(action: string, request: string, token: string, plan: (state: PerkState) => PerkPlan<P> | C.Result): C.Result {
+        this.sync(); const blocked = this.guard(); if (blocked) return blocked;
+        const previewed = this.perkPreview;
+        if (!previewed || previewed.token !== token || previewed.request !== request) return fail('stale');
+        this.perkPreview = null;
+        return this.transaction(action, draft => {
+            const planned = plan(draft);
+            if (!('preview' in planned) || perkKey(request, draft, planned.preview) !== previewed.key) return fail('stale');
+            const { body } = draft.expansion, { hp, stamina } = planned.preview.body;
+            draft.profile.cash -= planned.cost; draft.expansion.growth.perks = planned.perks; body.hp = hp.after; body.stamina = stamina.after;
+            return true;
+        }, true);
+    }
+    previewPerk(id: string) { return this.previewPerkPlan(`choice:${id}`, state => choicePlan(state, id)); }
+    choosePerk(id: string, token: string) { return this.confirmPerkPlan('perk-choice', `choice:${id}`, token, state => choicePlan(state, id)); }
+    previewPerkReset(attribute: C.Attribute) { return this.previewPerkPlan(`reset:${attribute}`, state => resetPlan(state, attribute)); }
+    resetPerks(attribute: C.Attribute, token: string) { return this.confirmPerkPlan('perk-reset', `reset:${attribute}`, token, state => resetPlan(state, attribute)); }
     retrySave(): C.Result {
         const blocked = this.guard(false, true); if (blocked) return blocked;
         if (this.pending) {
