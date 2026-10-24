@@ -413,6 +413,8 @@ test('a v8 record breaking the gun or record rules is refused before anything tr
         ['a classic ground gun without its state', classic, r => { delete r.raid.loot.find((l: any) => l.uid === 'loot-900').gun; }],
         ['a classic item uid equal to a ground uid', classic, r => { r.raid.loadout.bag.items[0].uid = r.raid.loot[0].uid; r.profile.stash.items = r.profile.stash.items.filter((i: any) => i.uid !== r.raid.loot[0].uid); }],
         ['a classic crate gun without its state', classic, r => { delete r.raid.containers.flatMap((c: any) => c.inventory.items).find((i: any) => i.id === 'shotgun').gun; }],
+        // A dropped gun keeps its item uid on the ground (M1-04), so it could name a crate; every pickup write then failed (M1-08 review).
+        ['a classic ground gun uid equal to a crate id', classic, r => { r.raid.loot.find((l: any) => l.uid === 'loot-900').uid = r.raid.containers[0].id; }],
         ['a v8 record without gunsBackup', v8, r => { delete r.gunsBackup; }],
         ['a v8 record with a v2 profile', v8, r => { r.profile.version = 2; }],
         ['a v3 expansion without perksBackup', v8, r => { delete r.perksBackup; }],
@@ -428,4 +430,7 @@ test('a v8 record breaking the gun or record rules is refused before anything tr
         const p = page(o, false); assert.equal(p.initialized, false, why); assert.equal(o.data.get(SESSION_KEY), corrupt, why);
     }
     assert.doesNotThrow(() => decodeSession(JSON.stringify(v8))); assert.doesNotThrow(() => decodeSession(JSON.stringify(classic)));
+    // The controls: the same ground gun under an item uid nobody else holds is fine.
+    const renamed = structuredClone(classic) as any; renamed.raid.loot.find((l: any) => l.uid === 'loot-900').uid = 'dropped-carbine';
+    assert.doesNotThrow(() => decodeSession(JSON.stringify(renamed)));
 });

@@ -149,7 +149,9 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | Profi
     }
   }
   // The gun format keeps items and the world apart (M0 review): no item, gun or part uid is a ground, enemy, round or
-  // container uid. The old format never checked this; real old raids pass it, and decodeSession checks them again as v8.
-  if (guns && [...itemIds].some(uid => ids.has(uid) || containers.has(uid))) fail();
+  // container uid. Nor is a ground uid a container id: a dropped gun keeps its item uid on the ground (M1-04), which
+  // could name a crate, and picking it up would then fail every write. The old format never checked this (its ground
+  // uids are raid counters); real old raids pass it, and decodeSession checks them again as v8.
+  if (guns && ([...itemIds].some(uid => ids.has(uid) || containers.has(uid)) || [...ids].some(uid => containers.has(uid)))) fail();
   return { ...structuredClone(c), version: 2, worldVersion: WORLD_VERSION, containers: structuredClone(c.containers ?? []) };
 }
