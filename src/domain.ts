@@ -304,7 +304,14 @@ export function transferItem(from: Inventory, to: Inventory, itemUid: string, x?
   return true;
 }
 export const count = (inv: Inventory, id: string): number => inv.items.reduce((sum, i) => sum + (i.id === id ? i.qty : 0), 0);
-export const weight = (inv: Inventory): number => Math.round(inv.items.reduce((sum, i) => sum + ITEMS[i.id].weight * i.qty, 0) * 1000) / 1000;
+/**
+ * Kg of one inventory entry. A gun weighs with its installed parts (gunsmith gunWeight), as it does equipped
+ * (equippedWeight), so moving it between a container and the slot never changes a carried total; a factory gun is
+ * exactly its ITEMS weight. Anything else is its ITEMS weight times the quantity.
+ */
+export const itemWeight = (item: Pick<Item, 'id' | 'qty' | 'gun'>): number =>
+  item.gun && isGunId(item.id) ? gunWeight({ id: item.id, parts: item.gun.parts }) * item.qty : ITEMS[item.id].weight * item.qty;
+export const weight = (inv: Inventory): number => Math.round(inv.items.reduce((sum, i) => sum + itemWeight(i), 0) * 1000) / 1000;
 export function removeItem(inv: Inventory, id: string, qty: number): boolean {
   if (!Number.isInteger(qty) || qty < 0 || count(inv, id) < qty) return false;
   let left = qty;

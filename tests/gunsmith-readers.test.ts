@@ -8,6 +8,7 @@ import type { PerkId } from '../src/perks';
 import { createRangeRaid, ShootingRange } from '../src/range/raid';
 import { SaveSession, createSessionState } from '../src/session';
 import { RealHideoutRuntime } from '../src/hideout-runtime';
+import { CoastRaidRuntime } from '../src/raid-runtime/runtime';
 import { arm, benchRaid, perkBench, type Bench } from './fixtures/shooting-bench';
 import { decodeStoredProfile } from '../src/profile-codec';
 import { effectiveWeapon } from '../src/gunsmith/stats';
@@ -213,6 +214,59 @@ test('the base departure weight weighs the equipped gun through the gunsmith ent
         const old =D.weight(p.bag) + D.weight(p.safe) + D.ITEMS.knife.weight + (p.equipment.weapon ? D.ITEMS[p.equipment.weapon].weight : 0)
             + (w.ammo ? D.ITEMS[w.ammo].weight * p.equipment.ammo : 0) + (charm ? D.ITEMS[charm.id].weight : 0);
         assert.equal(hideout.departure().weight, old, String(weapon));
+    }
+});
+
+test('a gun weighs the same in a container as in the slot: its parts count in the bag, safe and stash, and every total agrees', () => {
+    const can: PartNode = { uid: 'w-can', id: 'M07', slot: 'muzzle', relief: false, children: [] };
+    const suppressed = () => ({ parts: [structuredClone(can)], devices: { laser: false, light: false } });
+    // The review case: a carbine with the compact suppressor weighed 2.4 kg in a container and 2.75 kg equipped.
+    const carbine: D.Item = { uid: 'w-carbine', id: 'carbine', qty: 1, x: 0, y: 0, gun: suppressed() };
+    assert.deepEqual([gunWeight({ id: 'carbine', parts: [can] }), D.itemWeight(carbine)], [2.75, 2.75]);
+    const bag = D.createInventory(6, 5); bag.items.push(carbine); D.addItem(bag, 'ammoR', 7);
+    assert.equal(D.weight(bag), Math.round((2.75 + 7 * D.ITEMS.ammoR.weight) * 1000) / 1000);
+    // Factory guns and everything else weigh exactly as before, bit for bit (the old formula read ITEMS for every item).
+    const old = (inv: D.Inventory) => Math.round(inv.items.reduce((sum, i) => sum + D.ITEMS[i.id].weight * i.qty, 0) * 1000) / 1000;
+    const random = D.seededRandom(707);
+    for (let n = 0; n < 200; n++) {
+        const inv = D.createInventory(10, 9);
+        for (const id of Object.keys(D.ITEMS)) if (random() < .4) D.addItem(inv, id, 1 + Math.floor(random() * D.ITEMS[id].stack), random() < .3);
+        assert.ok(Object.is(D.weight(inv), old(inv)), `inventory ${n}`);
+        for (const i of inv.items) assert.ok(Object.is(D.itemWeight(i), D.ITEMS[i.id].weight * i.qty), i.id);
+    }
+    // The yard departure weight (the old tabs' preparedWeight adds the same terms): the fitted carbine in the bag or equipped.
+    const now = 1800000000000, data = new Map<string, string>();
+    const state = createSessionState(), saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }), undefined, () => now);
+    assert.ok(saves.initialize());
+    const yard = new RealHideoutRuntime(state, saves, () => now, () => true); assert.ok(yard.enter().ok);
+    const ticket = saves.prepareExpansionMutation(d => {
+        d.profile.bag.items = [{ ...carbine, gun: suppressed() }]; d.profile.safe.items = [];
+        d.profile.equipment = { weapon: null, weaponUid: null, gun: null, relief: false, ammo: 0, ammoRelief: 0 };
+    });
+    assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
+    const inBag = yard.departure().weight;
+    assert.ok(Math.abs(inBag - (2.75 + D.ITEMS.knife.weight)) < 1e-9, String(inBag));
+    assert.ok(yard.equip('bag', 'w-carbine').ok);
+    assert.equal(state.save.equipment.weaponUid, 'w-carbine');
+    assert.ok(Math.abs(yard.departure().weight - inBag) < 1e-9, 'equipping it moves no weight');
+    // The raid carried weight: the same kit with the fitted carbine in hand, or in the bag after a swap to a pistol.
+    const deploy = yard.deploy({ world: 'buildings', seed: 'weight' }); assert.ok(deploy.ok); assert.ok(yard.startRaid(deploy.runId!).ok);
+    const armed = saves.prepareExpansionMutation(d => { assert.equal(D.addItem(d.expansion.raid!.loadout.bag, 'pistol'), 0); });
+    assert.ok(armed); assert.equal(saves.commitExpansionMutation(armed), 'committed');
+    const raid = new CoastRaidRuntime(state, saves); raid.freezeAI = true;
+    const held = raid.carriedWeight(), pistol = state.loadout!.bag.items.find(i => i.id === 'pistol')!;
+    assert.equal(raid.equipItem(pistol.uid), 'committed');
+    assert.deepEqual(state.loadout!.bag.items.find(i => i.uid === 'w-carbine')?.gun, suppressed());
+    assert.ok(Math.abs(raid.carriedWeight() - held) < 1e-9, `${raid.carriedWeight()} vs ${held}`);
+});
+
+test('item weights are shown through the one item reader, so a gun\'s parts count in every panel', () => {
+    // The raid inventory, the yard detail panel and the old tabs (rows, tiles, details, shop details) used ITEMS weight
+    // times the quantity, which leaves a gun's parts out. They read D.itemWeight now; the prices beside them are M2-08's.
+    for (const file of ['src/ui.ts', 'src/coast-view/inventory.ts', 'src/station-view/panels.ts']) {
+        const text = readFileSync(file, 'utf8');
+        assert.deepEqual(text.match(/\.weight \* (?:i|item)\.qty/g) ?? [], [], file);
+        assert.ok(text.includes('D.itemWeight('), file);
     }
 });
 

@@ -36,7 +36,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
     d.w !== d.h ? btn('旋转', 'rotate') : '',
     item.qty > 1 ? btn('拆分一半', 'split') : '',
   ].join('') : '';
-  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small${usesText ? ` title="${usesText.slice(3)}"` : ''}>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}${usesText}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${(d.weight * item.qty).toFixed(2)} kg</dd></div><div>${price}</div></dl><div class="dacts">${acts}</div>${mode === 'gear' && gun && source === 'safe' ? '<p class="equip-note">安全箱里的枪械请先移回背包，再装备主武器。</p>' : ''}</aside>`;
+  return `<aside class="details"><img class="dico" alt="" src="${itemArt(item.id)}"><div class="dtext"><small${usesText ? ` title="${usesText.slice(3)}"` : ''}>${kindName[d.kind]}${item.relief ? ' · 救济 · 不可出售' : ''}${usesText}</small><b>${esc(d.name)}${item.qty > 1 ? ` × ${item.qty}` : ''}</b><span>${esc(d.description)}</span></div><dl><div><dt>占用</dt><dd>${size.w} × ${size.h}</dd></div><div><dt>重量</dt><dd>${D.itemWeight(item).toFixed(2)} kg</dd></div><div>${price}</div></dl><div class="dacts">${acts}</div>${mode === 'gear' && gun && source === 'safe' ? '<p class="equip-note">安全箱里的枪械请先移回背包，再装备主武器。</p>' : ''}</aside>`;
 }
 
 const charmRow = (charm: string | null) => charm ? `<div class="charm">${icon(charm, 20)}<span>护符 · ${esc(D.ITEMS[charm]?.name ?? charm)}</span>${btn('取下', 'charm-unequip', 'mini')}</div>` : '';

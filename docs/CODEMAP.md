@@ -42,6 +42,7 @@
 
 - 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
 - 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
+- 物品重量只经 `D.itemWeight`（枪按 `gunWeight` 连配件算，和装备时一样）：`D.weight`、行动负重、出发负重和各面板的重量显示都读它。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
 - 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - Perk 选择与 500 现金重置：据点 Runtime 的 `perkBoard`、`previewPerk` → `choosePerk`、`previewPerkReset` → `resetPerks` → `transaction`，院子与旧页签共用。确认票据绑定的内容和失败重试写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，选择规则在 [perks.ts](../src/perks.ts)；验证见 [perk-base.test.ts](../tests/perk-base.test.ts)。界面入口是院子 [station-view/ui.ts](../src/station-view/ui.ts) 的 `confirmPerk` 和旧页签 [ui.ts](../src/ui.ts) 的 `confirmPerkTab`（写入失败只经 `retrySave` 重试）；Perk 名称、效果文案、预览行和静态暴击显示都在 [perk-copy.ts](../src/perk-copy.ts)，验证见 [perk-copy.test.ts](../tests/perk-copy.test.ts) 与 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs)。
