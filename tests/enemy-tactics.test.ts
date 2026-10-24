@@ -12,6 +12,7 @@ import { decodeSession, RecoveryStore, SESSION_KEY } from '../src/recovery-store
 import { encodeRecoveryBackup, decodePortableBackup } from '../src/save-backup';
 import { canonicalBehavior } from './fixtures/enemy-benchmark';
 import { oldRecord } from './fixtures/old-saves';
+import { factoryState, validateGun } from '../src/gunsmith/instance';
 
 function fixture(raw?: string) {
     const data = new Map<string, string>(raw ? [[SESSION_KEY, raw]] : []);
@@ -160,6 +161,9 @@ test('corpse contains carried equipment and exactly remaining ammo; repeated dea
     damageLayerEnemy(state, 'coast', enemy, 1000);
     const corpse = raid.maps.coast.containers.find(c => c.id === `corpse-${enemy.uid}`)!;
     assert.equal(D.count(corpse.inventory, 'ammo9'), 6); assert.equal(D.count(corpse.inventory, 'pistol'), 1);
+    // The carried gun drops as a gun instance (gunsmith record v8): a factory state under its own entity uid.
+    const pistol = corpse.inventory.items.find(i => i.id === 'pistol')!;
+    assert.deepEqual(pistol.gun, factoryState()); assert.deepEqual(validateGun(pistol.id, pistol.uid, pistol.gun), { ok: true });
     const before = structuredClone(state); damageLayerEnemy(state, 'coast', enemy, 1000); assert.deepEqual(state, before);
     const store = new RecoveryStore(f.storage); store.load();
     assert.doesNotThrow(() => store.commit(f.state.save, null, null, state));
