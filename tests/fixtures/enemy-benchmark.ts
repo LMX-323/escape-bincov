@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import type * as Session from '../../src/session';
 import type * as Runtime from '../../src/raid-runtime/runtime';
 import type { RaidIntent } from '../../src/raid-runtime/contract';
+import { makeV4 } from './old-saves';
 
 export type BenchmarkModules = { session: typeof Session; runtime: typeof Runtime };
 export type BenchmarkCase = { world: 'classic' | 'building' | 'mall'; seed: number; hz: number; seconds: number };
@@ -68,10 +69,10 @@ export function runBenchmarkCase(modules: BenchmarkModules, sample: BenchmarkCas
   state.state = 'hideout';
   assert.ok(saves.beginRun(sample.seed, sample.world === 'mall' ? 'mall' : sample.world === 'building', { mallLayout: 3, legacyEnemies: true }), state.storageError);
   // Compare the historical RPG rules, not a new Perk deployment. Keep all identities, population and RNG.
-  const record = saves.currentRecord();
+  // makeV4 also takes away the gun instance fields, so the record is the v4 one the client before perks wrote.
+  const record: any = saves.currentRecord();
   if (record?.expansion?.version === 3 && record.expansion.raid) {
-    record.version = 4; delete record.perksBackup; delete record.enemyBackup;
-    record.expansion.version = 2; delete record.expansion.growth.perks; record.expansion.raid.version = 2;
+    makeV4(record);
     memory.storage.setItem('escape-bincov.session.v2', JSON.stringify(record));
     assert.ok(saves.initialize(), state.storageError);
   }

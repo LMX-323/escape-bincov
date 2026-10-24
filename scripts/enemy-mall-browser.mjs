@@ -7,7 +7,7 @@ import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
 import { MALL_RAIDERS } from '../src/enemy-mall.ts';
 
 /** Native deployment, real stair activation and paid phases; only observation positions use test fixtures. */
-export async function runMallEnemyCases(browser, report, out, { priorClient } = {}) {
+export async function runMallEnemyCases(browser, report, out, { priorClient, priorClientCommit = '67a7468' } = {}) {
     const entry = pathToFileURL(resolve('dist/index.html')).href;
     for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }, { width: 844, height: 390 }]) {
         const touch = viewport.width < 1000;
@@ -60,7 +60,7 @@ export async function runMallEnemyCases(browser, report, out, { priorClient } = 
             await page.reload(); await page.locator('[data-action="enter"]').click(); await raidReady(page);
             const restored = decodeSession(await page.evaluate(key => localStorage.getItem(key), SESSION_KEY));
             assert.deepEqual(restored.expansion.raid, paid.expansion.raid, 'paid phase, finite ammo, crates and full floors survive real reload');
-            assert.equal(restored.enemyBackup, paid.enemyBackup); assert.equal(restored.perksBackup, paid.perksBackup);
+            for (const key of ['gunsBackup', 'systemsBackup', 'perksBackup', 'enemyBackup']) assert.equal(restored[key], paid[key]);
             report.cases.push({ viewport, scenario: 'native-mall-art-and-paid-restore', screenshot: image, art, exactRaidRestored: true, backupByteIdentity: true });
             if (priorClient && !touch && viewport.width === 1280) {
                 // Test the actual accepted previous HTML, never a rewritten copy of its decoder.
@@ -72,9 +72,9 @@ export async function runMallEnemyCases(browser, report, out, { priorClient } = 
                     await p.locator('[data-action="enter"]').click(); await raidReady(p);
                     const read = decodeSession(await p.evaluate(key => localStorage.getItem(key), SESSION_KEY));
                     assert.deepEqual(read.expansion.raid, paid.expansion.raid);
-                    assert.equal(read.enemyBackup, paid.enemyBackup); assert.equal(read.perksBackup, paid.perksBackup);
+                    for (const key of ['gunsBackup', 'systemsBackup', 'perksBackup', 'enemyBackup']) assert.equal(read[key], paid[key]);
                     assert.equal(await p.evaluate(() => window.__bincov.app.storageError), '');
-                    report.cases.push({ viewport, scenario: 'native-mall-prior-67a7468-client', exactRaidRestored: true, backupByteIdentity: true });
+                    report.cases.push({ viewport, scenario: `native-mall-prior-${priorClientCommit}-client`, exactRaidRestored: true, backupByteIdentity: true });
                 } finally { await old.close(); }
             }
             console.log(`PASS native mall ${viewport.width}: deployment, hidden F1, real stair, own art, paid phase and exact refresh`);

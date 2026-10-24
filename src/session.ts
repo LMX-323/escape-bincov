@@ -217,9 +217,10 @@ export class SaveSession {
         if (action(draft) === false) return null;
         const raid = draft.expansion.raid ?? draft.legacyRaid;
         if (raid) D.checkpointSafe(draft.profile, raid.loadout.safe, raid.runId);
-        // Use exactly the same format and one-time backup fields as the eventual commit.
+        // Use exactly the same format and one-time backup fields as the eventual commit (v8: perksBackup beside a v3
+        // expansion, enemyBackup once enemy rules are on), and the systemsBackup key every record with an expansion has.
         decodeSession(JSON.stringify({ ...record, ...recordUpgradeFields(draft.expansion, record, this.original()),
-            profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion,
+            systemsBackup: record.systemsBackup ?? null, profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion,
             terminal: draft.profile.activeRun ? null : record.terminal }), this.resolveWorld);
         const ticket: ExpansionTransaction = Object.freeze({ kind: 'expansion-transaction' });
         this.prepared.set(ticket, { revision: record.revision, before, draft: structuredClone(draft) });
@@ -274,7 +275,7 @@ export class SaveSession {
         if (buildings) {
             // Deploying is a station boundary: an older expansion upgrades in this same candidate, so the raid is v3.
             upgradeToRpg(expansion!, this.now());
-            Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
+            Object.assign(loadout, D.reloadMagazine(loadout, loadout.ammo, loadout.ammoRelief, loadout.bag));
             if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
             if (buildings === true && !options.legacyEnemies) installStreetEncounter(expansion!.raid!, this.resolveWorld(expansion!.raid!.worldVersion)!);
@@ -364,8 +365,10 @@ export class SaveSession {
         return true;
     }
     /**
-     * A confirmed full-record import. An older record stays in its version (a v4 backup with a live v2 raid stays v4
-     * until that raid settles); the next station boundary (ensureRpg) upgrades it.
+     * A confirmed full-record import. An older expansion stays as it is (a v4 backup with a live v2 raid keeps
+     * expansion v2 until that raid settles); the next station boundary (ensureRpg) upgrades it. The record keeps the
+     * imported gunsBackup, perksBackup and enemyBackup, unless both it and this origin hold a v3 (perk) expansion: then
+     * the origin keeps its own (RecoveryStore.commit).
      */
     importRecord(record: SessionRecord): boolean {
         const s = this.session;

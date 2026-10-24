@@ -47,15 +47,17 @@ test('new layout3 mall uses three existing upstairs slots, one existing crate an
     }
 });
 
-test('mall deployment quota failure keeps prior exact bytes and profile; retry commits 7/3/5 with original backups', () => {
+test('mall deployment quota failure keeps prior exact bytes and profile; retry commits 8/3/5 with original backups', () => {
     const f = fixture(), before = f.raw, save = structuredClone(f.state.save), writes = f.writes;
     f.deny(true); assert.equal(f.saves.beginRun(42, 'mall', { mallLayout: 3 }), false);
     assert.equal(f.raw, before); assert.deepEqual(f.state.save, save); assert.equal(f.state.expansion, null); assert.equal(f.writes, writes);
     f.deny(false); assert.ok(f.saves.beginRun(42, 'mall', { mallLayout: 3 }), f.state.storageError);
     const r = decodeSession(f.raw);
-    assert.equal(r.version, 7); assert.equal(r.expansion!.version, 3); assert.equal(r.expansion!.raid!.version, 5);
+    assert.equal(r.version, 8); assert.equal(r.expansion!.version, 3); assert.equal(r.expansion!.raid!.version, 5);
     assert.equal(r.enemyBackup, before); assert.ok(f.saves.persist());
-    assert.equal(decodeSession(f.raw).enemyBackup, before);
+    const saved = decodeSession(f.raw);
+    assert.equal(saved.enemyBackup, before); assert.equal(saved.gunsBackup, r.gunsBackup);
+    assert.equal(saved.systemsBackup, r.systemsBackup); assert.equal(saved.perksBackup, r.perksBackup);
 });
 
 test('old active mall layouts 1/2/3 restore the saved roster, ammunition and RNG without installing new encounters', () => {
@@ -78,6 +80,10 @@ test('mall tactical phases and original backups survive reload and portable impo
     const backup = decodePortableBackup(encodeRecoveryBackup(original));
     assert.equal(backup.kind, 'session');
     if (backup.kind === 'session') assert.deepEqual(backup.record.expansion!.raid, original.expansion!.raid);
+    for (const key of ['gunsBackup', 'systemsBackup', 'perksBackup', 'enemyBackup'] as const) {
+        assert.equal(decodeSession(reloaded.raw)[key], original[key]);
+        if (backup.kind === 'session') assert.equal(backup.record[key], original[key]);
+    }
     const bad = structuredClone(original); bad.expansion!.raid!.maps['mall-f2'].enemies.find(e => e.uid === gunner.uid)!.tactics!.equipment = 'rifle';
     assert.throws(() => decodeSession(JSON.stringify(bad)), /存档|行动/);
     assert.doesNotThrow(() => decodeSession(JSON.stringify(original)));

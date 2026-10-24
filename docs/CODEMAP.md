@@ -41,6 +41,8 @@
 **按需继续。**
 
 - 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
+- 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
+- 物品重量只经 `D.itemWeight`（枪按 `gunWeight` 连配件算，和装备时一样）：`D.weight`、行动负重、出发负重和各面板的重量显示都读它。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
 - 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - Perk 选择与 500 现金重置：据点 Runtime 的 `perkBoard`、`previewPerk` → `choosePerk`、`previewPerkReset` → `resetPerks` → `transaction`，院子与旧页签共用。确认票据绑定的内容和失败重试写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，选择规则在 [perks.ts](../src/perks.ts)；验证见 [perk-base.test.ts](../tests/perk-base.test.ts)。界面入口是院子 [station-view/ui.ts](../src/station-view/ui.ts) 的 `confirmPerk` 和旧页签 [ui.ts](../src/ui.ts) 的 `confirmPerkTab`（写入失败只经 `retrySave` 重试）；Perk 名称、效果文案、预览行和静态暴击显示都在 [perk-copy.ts](../src/perk-copy.ts)，验证见 [perk-copy.test.ts](../tests/perk-copy.test.ts) 与 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs)。
@@ -58,7 +60,7 @@
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
-5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。
+5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
 6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）；搜刮面板里移动键（`isMoveKey`）直接离开并开始移动（#26 F13），回归在 [loot-browser-test.mjs](../scripts/loot-browser-test.mjs)。
 
 画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。
@@ -72,7 +74,7 @@
 - [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands reach only the first substep`、`blocked panels advance the world`。
-- [shooting.test.ts](../tests/shooting.test.ts)、[shooting-bench.test.ts](../tests/shooting-bench.test.ts)：射击规则的时间切分不变性；固定种子与输入在不同帧率下的弹道、双端开火方式、暂停/面板取消、稳定与后坐。
+- [shooting.test.ts](../tests/shooting.test.ts)、[shooting-bench.test.ts](../tests/shooting-bench.test.ts)：射击规则的时间切分不变性；固定种子与输入在不同帧率下的弹道、双端开火方式、暂停/面板取消、稳定与后坐。装备枪经改枪有效属性的各处读法与旧查表逐项相同见 [gunsmith-readers.test.ts](../tests/gunsmith-readers.test.ts)。
 - [breath-runtime.test.ts](../tests/breath-runtime.test.ts)：屏息 Perk 在真实帧和开枪中的蓄力、各中断清空与弹丸快照（CP-12～18）；纯规则在 [breath.test.ts](../tests/breath.test.ts)。行动 HUD 的暴击投影（静态、屏息目标、旧行动、匕首）与开枪快照一致见 [crit-hud.test.ts](../tests/crit-hud.test.ts)，浏览器中的武器卡与截图见 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs) 的 R 步骤。
 - [raid-clock.test.ts](../tests/raid-clock.test.ts)、[bullet-time.test.ts](../tests/bullet-time.test.ts)：子步时间跨追击/涨潮/训练边界和写失败，以及本步晚出生弹丸只推进剩余时长；不能为了调整射击而先把整帧时间发布给所有子步。
 - [coast-sample-test.mjs](../scripts/coast-sample-test.mjs)、[desktop-input-test.mjs](../scripts/desktop-input-test.mjs)、[mobile-test.mjs](../scripts/mobile-test.mjs)：真实输入在 2.5D 宿主上的浏览器断言。
@@ -100,9 +102,9 @@
 
 展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
 
-新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
+新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `LayeredRaid` v5，同时保留历史敌人 v4 和 Perk v3 的规则；记录层 #81 原用 `SessionRecord` 6/7，改枪后统一为 v8，敌人规则以 `enemyBackup` 键表示（[记录版本 v8 与敌人规则](gunsmith/CONTRACTS.md#记录版本-v8-与敌人规则与-81-合并)）；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1 与 7/3/5；活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
+[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
 
 方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
@@ -135,12 +137,17 @@
 **验证入口。**
 
 - [expansion-recovery.test.ts](../tests/expansion-recovery.test.ts)：原子升级、严格导入拒绝、完整备份与待保存候选。
-- [perk-save.test.ts](../tests/perk-save.test.ts)：session v5/Perk 选择、进行中的旧行动保持 v4 至结算、旧备份导入、降级保护与 `perksBackup`。
+- [perk-save.test.ts](../tests/perk-save.test.ts)：扩展 v3/Perk 选择、进行中的旧行动保持扩展 v2 至结算、旧备份导入、降级保护与 `perksBackup`。
+- [gunsmith-migrate.test.ts](../tests/gunsmith-migrate.test.ts)：v5 客户端真实写下的 v3–v5 记录和备份（冻结在 [fixtures/gunsmith-v5-saves.json](../tests/fixtures/gunsmith-v5-saves.json)）经真实 `decodeSession` 迁移到 v8、写回、重读和继续行动，`gunsBackup` 与拒读；[gunsmith-enemy-records.test.ts](../tests/gunsmith-enemy-records.test.ts)：v6/v7 迁移后敌人规则（`enemyBackup`）保持，v4/v5 到第一次敌人行动才开启，坏的 v8 记录拒读；旧客户端拒读 v8 用 `test:expansion` 的四个真实固定旧包验证。
+- [gunsmith-carry.test.ts](../tests/gunsmith-carry.test.ts)、[gunsmith-value.test.ts](../tests/gunsmith-value.test.ts)：装卸、转移、丢下拾取、跨层、结算时搬的是同一把枪；按组成估值和出售。
+- [gunsmith-conservation.test.ts](../tests/gunsmith-conservation.test.ts)、[gunsmith-conservation-2.test.ts](../tests/gunsmith-conservation-2.test.ts)（逻辑在 [fixtures/conservation.ts](../tests/fixtures/conservation.ts)）：固定种子随机走 200 × 30 步合法操作（院子、商店、出击、行动、跨层、结算、导出导入、写入失败后重试），每步解码存档，查 UID 唯一、每把枪连配件不变、两种弹药与现金守恒、负重一致；失败时打印种子和步骤，`GUNSMITH_SEEDS` 在第一个文件里单独重放。
 - [systems-session.test.ts](../tests/systems-session.test.ts)、[recovery.test.ts](../tests/recovery.test.ts)：重试不重复奖励、未知字段、原字节保留、修订栅栏。
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
 - [save-validation-audit.test.ts](../tests/save-validation-audit.test.ts)：原型键、数组伪装 ID 的拒绝与原字节保留，及正常基地/经典/分层记录对照。外部 ID 必须先用 `hasOwnStringKey` 检查字符串类型和自身键，不能只做真值查表或 `Object.hasOwn`。
+
+**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
 
 **按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 

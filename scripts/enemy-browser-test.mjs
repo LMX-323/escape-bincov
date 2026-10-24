@@ -1,4 +1,4 @@
-/** Actual offline v7 saves in the shipped 2.5D host. Extra roles are saved fixtures, not native encounter claims. */
+/** Actual offline v8 saves in the shipped 2.5D host. Extra roles are saved fixtures, not native encounter claims. */
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -86,12 +86,13 @@ try {
                     bodyArt, corpseArt, artStyle: h.view.tex.actorStyle(actor.kind, variant),
                     bodyPose: { x: gfx.body.scale.x, y: gfx.body.scale.y, tilt: gfx.body.rotation },
                     heldWidth: held.canvas.width, heldArt: gfx.weapon.texture === held.texture, hands: gfx.arms.filter(a => a.visible).length,
-                    weapon: actor.weapon, version: JSON.parse(localStorage.getItem('escape-bincov.session.v2')).version };
+                    weapon: actor.weapon, record: (({ version, enemyBackup }) => ({ version, enemyRules: enemyBackup !== undefined }))(JSON.parse(localStorage.getItem('escape-bincov.session.v2'))) };
             }, saved.uid);
             assert.equal(actual.phase, ['parley', 'corpse'].includes(phase) ? 'idle' : phase, `${viewport.width}/${name}: saved phase survives mount`);
             if (phase !== 'corpse') assert.ok(actual.cue);
             assert.equal(actual.reloading, phase === 'reload');
-            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : archetype(role).weapon); assert.equal(actual.version, 7);
+            // Record v8 (gun instances) with enemy rules on, which the record says by holding enemyBackup.
+            assert.equal(actual.weapon, phase === 'parley' ? 'rifle' : archetype(role).weapon); assert.deepEqual(actual.record, { version: 8, enemyRules: true });
             if (phase !== 'parley') {
                 assert.equal(actual.artStyle, role); assert.ok(phase === 'corpse' ? actual.corpseArt : actual.bodyArt);
             }
