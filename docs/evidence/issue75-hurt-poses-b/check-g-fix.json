@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-10-24T10:12:46.003Z",
+  "startedAt": "2026-10-24T13:13:47.112Z",
   "browser": "156.0.8078.48",
   "entry": "dist/index.html",
   "method": "Offline Chromium, real CDP mouse (1280x720) and multi-touch (844x390, DPR 2) on the 2.5D raid host, seed 42, layered coast map. Fixtures place the player and enemies, hand weapons and freeze AI.",
@@ -319,6 +319,6 @@
     "desktop": 0,
     "phone": 0
   },
-  "finishedAt": "2026-10-24T10:12:49.303Z",
+  "finishedAt": "2026-10-24T13:13:50.613Z",
   "status": "passed"
 }

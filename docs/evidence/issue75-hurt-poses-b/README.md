@@ -2,6 +2,8 @@
 
 分支 `feat/hurt-poses-b`，基于 main `67a7468`（#81 已合入），2026-10-24 本地实测（Windows，本机 Chrome 156.0.8078.48）。本分支构建为 `dist/index.html` blob `84a39de`；对照的 main 构建为 blob `111ea67`。
 
+之后同步了 main（含 #102，合并提交 `5aeaf82`），构建变为 blob `ad22104`。检查 g 在新构建上复测通过，`check-g-fix.json` 是新构建的报告。裁图和实景截图仍是在 `84a39de` 上拍的：#102 只改了贴近地图边时按右键的镜头前探，不影响这些画面。
+
 | 文件 | 内容 |
 | --- | --- |
 | [check-g-main.json](check-g-main.json) | 加了 B 组断言的 `test:shooting` 检查 g，在 main 构建上的报告：闪白、后退、血迹和 A 组姿态都通过，只有三类原型的姿态失败，身体全程是自身的普通帧（`---…`） |
