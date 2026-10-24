@@ -98,13 +98,20 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 main 即便走文档快速通道，也从本次重新构建并校验的制品正常执行 `Deploy Pages` 和离线包发布。相同游戏字节已有完整 main 回归证据，本次单测与构建仍需通过。
 
-镜像对 `Build and test`、`Deploy Pages` 的成功要求和检查名不变。提交里已经没有 HTML 和发布清单，镜像要核对 Pages 字节时，读 `main-latest` 发布页的 `release-manifest.json`，并核对该发布的标签指向本次运行的提交（服务器脚本不在本仓库）。PR 不部署，main 新代码必须完整回归；浏览器首次采用本策略的 PR 和合并后主线都需要全量通过。
+镜像对 `Build and test`、`Deploy Pages` 的成功要求和检查名不变。提交里已经没有 HTML 和发布清单，镜像（服务器脚本不在本仓库）改读 `main-latest` 发布页的清单 `https://github.com/xuys2025/escape-bincov/releases/download/main-latest/release-manifest.json`：
+
+1. 清单的 `commit` 是构建这些文件的 main 提交，`run` 是那次 CI 运行。用 `run` 照旧核对运行（main push、成功、必需 job 齐全），并要求运行的 `head_sha` 等于 `commit`。
+2. 要同步的 HTML（Pages 上的，或发布页 `Escape-Bincov-web.zip` 里的 `index.html`）SHA-256 等于 `htmlSha256`。
+3. 不一致时本轮不同步，下次再试。Pages 部署和发布是两个并行的 job，期间又有新的 main 合入时会短暂不一致；不要退回去读旧提交里的文件。
+
+PR 不部署，main 新代码必须完整回归；浏览器首次采用本策略的 PR 和合并后主线都需要全量通过。
 
 ## 构建与离线包发布
 
 `pnpm build` 和 `pnpm package` 写出的 `dist/index.html`、`start the game.html`、`release/` 下的两个 ZIP 与 `release-manifest.json` 都是生成物：不入库，由 `.gitignore` 忽略，[generated-files.test.mjs](../scripts/ci/generated-files.test.mjs) 拒绝提交。本地浏览器测试、`test:portable` 和根目录的三个试玩跳转页（`试枪场.html`、`城中村试玩.html`、`商场试玩.html`）都读本地生成的文件，所以要先打包。2026-10-24 以前这些文件随源码提交，任意两个改游戏代码的 PR 都会在它们上冲突，只能合并后重新打包、再跑一轮 CI。
 
 - 每次运行由 build job 打包一次，上传为 `built-game` 制品（保留 1 天），浏览器组与发布都用它并先核对 SHA-256。PR 不发布任何东西。
+- CI 打包时设置 `BINCOV_BUILD_COMMIT`、`BINCOV_BUILD_RUN`，清单因此多出 `commit` 和 `run` 两项；本地打包没有这两项。发布 job 在清单的 `commit` 不是本次提交时拒绝发布。
 - main 的 `Build and test` 通过后，`Deploy Pages` 部署 `dist/`，`Publish offline release` 用 [publish-release.sh](../scripts/ci/publish-release.sh) 更新滚动预发布 [`main-latest`](https://github.com/xuys2025/escape-bincov/releases/tag/main-latest)：标签移到本次提交，两个 ZIP 和清单按同名替换，所以 [README](../README.md) 的下载地址不变；发布说明写明提交和运行。`main-latest` 是预发布，不抢正式版本（v0.2.0）的 Latest 标记。只有这一个 job 有 `contents: write`。
 - 发布 job 失败会让这次 main 运行失败，它也就不能作为文档快速通道的复用证据。一天内只重跑失败的 job 即可（`built-game` 只保留 1 天，过期后整体重跑）。较新的 main push 会取消还在跑的旧运行；万一恰好取消在替换文件的几秒里，缺的文件要等较新的运行发布后才补上。
 - 旧客户端：batch-8 下载的四份旧 HTML 来自历史提交里的 `dist/index.html`，历史保留，固定链接仍然有效。以后的提交里没有 HTML，新增固定旧客户端时，要么从该提交的源码重新构建（构建可复现，脚本照样核对哈希），要么在 `main-latest` 被替换前保存它的文件；用哪种由新增固定的 PR 一并定下。

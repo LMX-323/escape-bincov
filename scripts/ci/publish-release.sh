@@ -14,6 +14,10 @@ assets=(release/Escape-Bincov-portable.zip release/Escape-Bincov-web.zip release
 for file in "${assets[@]}"; do
   [ -s "$file" ] || { echo "::error::Missing release file $file" >&2; exit 1; }
 done
+# The build job stamps the manifest with the commit it built; publishing another commit's files under this tag would
+# break the one binding the mirror relies on.
+built=$(jq -r '.commit // ""' release/release-manifest.json)
+[ "$built" = "$sha" ] || { echo "::error::The manifest describes commit '$built', not $sha" >&2; exit 1; }
 
 title='main 最新验证版'
 notes=$(mktemp)
@@ -22,7 +26,7 @@ notes=$(mktemp)
   echo
   echo '- `Escape-Bincov-portable.zip`：离线便携版，解压到固定文件夹后双击 `start the game.html`。'
   echo '- `Escape-Bincov-web.zip`：根目录只有 `index.html`，用于其他静态托管。'
-  echo '- `release-manifest.json`：两个 ZIP 与 HTML 的大小和 SHA-256，内容如下。'
+  echo '- `release-manifest.json`：两个 ZIP 与 HTML 的大小和 SHA-256，以及构建它们的提交（`commit`）和 CI 运行（`run`），内容如下。'
   echo
   echo '```json'
   cat release/release-manifest.json

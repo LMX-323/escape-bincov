@@ -45,6 +45,10 @@ jobs:
       # The game files are not committed (check:ci rejects them): this build is the one every job tests, Pages
       # deploys and the release job publishes.
       - name: Build and package
+        env:
+          # Recorded in release/release-manifest.json; on main this is the commit the release job publishes.
+          BINCOV_BUILD_COMMIT: ${{ github.sha }}
+          BINCOV_BUILD_RUN: ${{ github.run_id }}
         run: pnpm package
       - name: Record shared artifact checksums
         run: |
