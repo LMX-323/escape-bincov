@@ -73,9 +73,16 @@ function fixture(highTide) {
 function routeStep(context, player, destination) {
   if (Math.hypot(destination.x-player.x,destination.y-player.y)<10) return null;
   const path=spacePath(context,player,destination);assert.ok(path.length,'retreat body path remains reachable');
-  const next=[...path].reverse().find(p=>corridor(context,player,p,'body',10));
-  assert.ok(next,'retreat has a visible body waypoint');
-  return {angle:Math.atan2(next.y-player.y,next.x-player.x),distance:Math.hypot(next.x-player.x,next.y-player.y)};
+  // Follow the next tile centre, like layered-play. A far visible waypoint can
+  // have a shallow diagonal that WASD quantization turns into walking into a wall.
+  // The first cell centre can be behind a player already leaving that cell;
+  // never backtrack toward it while following the route.
+  const forward=path.slice(1).find(p=>Math.hypot(p.x-player.x,p.y-player.y)>10)??destination;
+  // At an inside corner the next cell can require finishing the current cell's
+  // centre first; unlike straight travel, that alignment is not backtracking.
+  const next=corridor(context,player,forward,'body',10)?forward:path[0];
+  assert.ok(corridor(context,player,next,'body',10),'retreat has a clear next body waypoint');
+  return {angle:Math.atan2(next.y-player.y,next.x-player.x),dx:next.x-player.x,dy:next.y-player.y,distance:Math.hypot(next.x-player.x,next.y-player.y)};
 }
 if(options.has('fixture-out')) {
   const path=resolve(options.get('fixture-out'));await mkdir(resolve(path,'..'),{recursive:true});await writeFile(path,fixture(false).raw);
@@ -118,7 +125,7 @@ try {
       for (const a of batch.frame.actors) if (a.tactics && f.nativeUids.includes(a.uid)) (nativePhases[a.uid] ??= new Set()).add(a.tactics.phase);
       for (const e of batch.events) if (e.type === 'shot' && f.nativeUids.includes(e.shooter) || e.type === 'melee' && f.nativeUids.includes(e.attacker)) nativeAttackEvents.set(e.seq, e);
     }
-    const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending,
+    const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending, endPlayer:{...r.player}, endHp:r.hp,
       nativePhases: Object.fromEntries(Object.entries(nativePhases).map(([uid,p]) => [uid,[...p]])), nativeAttackEvents: [...nativeAttackEvents.values()] };
     report.runtime.push(row); r.path = originalPath;
     if (r.elapsed < 11.9) report.failures.push({ name: `runtime/${highTide}/${hz}/${repeat}/short-sample`, seconds: r.elapsed });
@@ -179,6 +186,7 @@ try {
           clearTimeout(timeout);
           const canvas = document.querySelector('.coast-sample canvas'), gl = canvas?.getContext('webgl2') ?? canvas?.getContext('webgl'), debug = gl?.getExtension('WEBGL_debug_renderer_info');
           resolve({ gap, advance, present, seconds: (now - started) / 1000, phases: [...phases], attackPhases: [...attackPhases],
+            endPlayer:{x:batch.frame.player.x,y:batch.frame.player.y}, endHp:batch.frame.hud.hp,
             nativePhases: Object.fromEntries(Object.entries(nativePhases).map(([uid,p]) => [uid,[...p]])), nativeAttackEvents: [...nativeAttackEvents.values()],
             counts: window.__bincovSample.counts(), atlas: { ...h.view.tex.atlas.stats }, estimatedTextureBytes: h.view.textureBytes(),
             activeEnemies: batch.frame.actors.filter(a => a.kind !== 'player').length,
@@ -212,13 +220,15 @@ try {
             ...(movementOrigin ? [{id:2,x:movementOrigin.x+(moving?Math.cos(bearing)*40:0),y:movementOrigin.y+(moving?Math.sin(bearing)*40:0)}]:[])] });
         } else if (aim) { await page.mouse.move(aim.x, aim.y); if (!preparing && !observeRetreat) await page.mouse.click(aim.x, aim.y); }
         if (!touch) {
-          const next = moving ? [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean) : [];
+          const next = moving ? (step
+            ? [Math.abs(step.dx)>1?step.dx>0?'d':'a':null,Math.abs(step.dy)>1?step.dy>0?'s':'w':null]
+            : [Math.abs(Math.cos(bearing))>.3?Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing))>.3?Math.sin(bearing)>0?'s':'w':null]).filter(Boolean) : [];
           for(const key of held) if(!next.includes(key)) await page.keyboard.up(key);
           for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
         }
         if (!observeRetreat && performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
         if(heal&&performance.now()-lastHeal>2000&&await page.evaluate(()=>{const h=window.__bincovSample?.host;return h?.lastBatch?.frame.phase==='running'&&(h.lastBatch.frame.hud.hp<70||h.lastBatch.frame.hud.bleeding);})){await page.keyboard.press('q');lastHeal=performance.now();}
-        await page.waitForTimeout(step && moving ? Math.max(16,Math.min(250,step.distance/260*1000)) : 250);
+        await page.waitForTimeout(step && moving ? Math.max(16,Math.min(80,step.distance/260*1000)) : 250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       for(const key of held) await page.keyboard.up(key); if(!touch) await page.mouse.up({button:'right'});
