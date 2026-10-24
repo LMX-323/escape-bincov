@@ -164,7 +164,7 @@ test('attachments live in bags, on the ground, in crates and in the shop like an
     const crate = r.containers.find(x => x.kind === 'crate')!;
     b.driver.container(crate.id, [{ id: 'O08', qty: 1 }, { id: 'T05', qty: 1 }]);
     assert.ok(r.checkpoint());
-    // The shop buys them back at their sell price (stocking them is M2-13's).
+    // The shop buys them back at their sell price (what it stocks is M2-13's, gunsmith-acquire.test.ts).
     const save = D.newSave(); assert.equal(D.addItem(save.stash, 'S02'), 0);
     const cart = Shop.createCart(save, 'arms'), s02 = cart.stash.items.find(i => i.id === 'S02')!;
     assert.equal(Shop.shopQuote('stash', s02).total, ATTACHMENTS.S02.sell);
@@ -172,7 +172,7 @@ test('attachments live in bags, on the ground, in crates and in the shop like an
     const cash = save.cash;
     assert.deepEqual(Shop.settleCartResult(save, cart), { ok: true });
     assert.equal(save.cash, cash + ATTACHMENTS.S02.sell); assert.equal(D.count(save.stash, 'S02'), 0);
-    assert.ok(!Shop.merchantStock('arms', true).some(id => D.isAttachment(id) || id === 'gb17' || id === 'mb4a1'), 'no stock before M2-13');
+    assert.ok(!Shop.merchantStock('arms', true).includes('S02'), 'a common part is found, not sold (M2-13)');
 });
 
 test('nothing but the workbench (M2-04) installs an attachment: equipping refuses one, and nothing else writes a gun\'s parts', () => {
