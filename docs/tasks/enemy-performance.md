@@ -57,3 +57,24 @@ node --import tsx scripts/enemy-performance.mjs --seed=45 --policy=strafe --out=
 ```
 
 `--seed` 为 1..UINT32_MAX，默认42；`--policy` 为 stationary/strafe，默认stationary；`--out` 指定独立证据目录。参数、种子、策略、源码/制品及环境写入报告；无效参数/非有限测值、短样本、不同输入、CPU、浏览器或 renderer/DPR 对照直接失败。
+## 动物食源样板扩量后的实测
+
+动物批制品SHA `a7aa5f6f6afb7a2c56cbc3a62c92c11c66d71456c603f8c4485452fc83d988e4`，HTML7,299,350字节、便携ZIP4,693,930字节。同一设备/Chrome155/RTX3070 ANGLE D3D11，以下三组独占执行，各12 Node＋六浏览器样本均PASS，绝对门槛未变：
+
+| 组别 | 玩家观察输入 | browser advance p95最高 | present p95最高 | 纹理最高 |
+| --- | --- | --- | --- | --- |
+| [标准同比](../enemy-street/performance-fauna-regression.json) | seed42、枪手240像素、站定/正常射击 | 2.7ms | 3.2ms | 39.9MiB |
+| [七人配置](../enemy-street/performance-fauna-density.json) | seed46、枪手240像素、正常侧移射击 | 2.7ms | 3.8ms | 39.9MiB |
+| [动物近距](../enemy-street/performance-fauna-combat-heal.json) | seed46、喷吐兽64像素、正常侧移射击及Q | 3.0ms | 3.7ms | 40.9MiB |
+
+标准同输入p95同比最大+14.3%，低于预先固定20%门槛；负变化不作为提速结论。七人配置与近距组仅以绝对门槛判定，不与不同输入/观察点作同比。近距Q只使用已有随身补给，没有增物、改生命或无敌。
+
+不使用Q的近距补充样本有四个5Hz Runtime及两个触屏例在十二秒内死亡，结果BUDGET_BLOCKED并保留于本地 `enemy-performance-fauna-combat`；它们未签收，失败原因是样本中断。脚本增加显式`--focus`（现有正式原型）、`--radius=32..300`和`--heal=true/false`；默认仍枪手/240/false，旧报告缺字段按原默认解释。对照必须具有相同种子、策略、焦点、距离和治疗输入。
+
+```powershell
+node --import tsx scripts/enemy-performance.mjs --baseline=docs/enemy-street/performance-baseline-92cff64.json --out=test-results/enemy-performance-fauna-regression
+node --import tsx scripts/enemy-performance.mjs --seed=46 --policy=strafe --out=test-results/enemy-performance-fauna-density
+node --import tsx scripts/enemy-performance.mjs --seed=46 --policy=strafe --focus=sac-spitter --radius=64 --heal=true --out=test-results/enemy-performance-fauna-combat-heal
+```
+
+这些是实际输入轨迹，正常射击可能提前击杀部分敌人；不代表全员持续同时释放攻击的极限、GPU完成帧率或真机/真人平衡。三种动物的真实释放物理及保存恢复另由生态、扫掠碰撞和酸液反例覆盖。

@@ -132,7 +132,8 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
             weapon: profile?.weapon ?? r.weaponLook,
             ...(enemy?.tactics && spec ? { tactics: { archetype: enemy.id, name: spec.name, phase: enemy.tactics.phase,
                 stance: enemy.tactics.stance, awareness: enemy.tactics.awareness, left: enemy.tactics.phaseLeft,
-                total: enemy.tactics.phase === 'windup' ? spec.windup : enemy.tactics.phase === 'reload' ? spec.reload : spec.recovery,
+                total: enemy.tactics.phase === 'windup' ? spec.windup : enemy.tactics.phase === 'reload' ? spec.reload
+                    : enemy.tactics.phase === 'recovery' ? spec.recovery : enemy.tactics.phase === 'release' && spec.attack === 'pounce' ? .3 : 0,
                 range: spec.range, aim: enemy.tactics.lockedAim,
                 warningLeft: Math.max(0, (spec.stance === 'conditional' ? 4 : 1.5) - enemy.tactics.warning),
                 boundary: spec.stance === 'conditional' ? { at: { ...enemy.home }, radius: 90 } : null } } : {}),

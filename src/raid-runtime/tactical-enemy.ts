@@ -161,6 +161,17 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
             const bearing = angle(e, target), flank = { x: target.x - Math.sin(bearing) * 24 * side, y: target.y + Math.cos(bearing) * 24 * side };
             if (world.walkable(flank.x, flank.y, world.highTide, 10)) target = flank;
         }
+        else if (observed && e.id === 'saltback-dog') {
+            // A dog only uses a companion it can actually see; no radio or shared target coordinates.
+            // The lower identity approaches head-on, the other takes a small reachable side angle.
+            const companion = world.enemies.filter(other => other !== e && other.hp > 0 && other.id === e.id
+                && other.tactics?.squad === t.squad && distance(e,other) <= def.vision && world.sight(e,other))
+                .sort((a,b)=>a.uid.localeCompare(b.uid,'en'))[0];
+            if (companion && e.uid.localeCompare(companion.uid,'en') > 0) {
+                const bearing=angle(e,target),flank={x:target.x-Math.sin(bearing)*24,y:target.y+Math.cos(bearing)*24};
+                if(world.walkable(flank.x,flank.y,world.highTide,10))target=flank;
+            }
+        }
     } else { target = e.home; e.state = 'patrol'; }
     const post = enemyPost(e);
     if (post && !flooded) {

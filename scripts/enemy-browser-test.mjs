@@ -15,11 +15,12 @@ import { archetype, initialTactics } from '../src/enemy-archetypes.ts';
 import { damageLayerEnemy } from '../src/layer-transition.ts';
 import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
 import { MARKET_RAIDERS, MARKET_STORES } from '../src/enemy-posts.ts';
+import { FAUNA_SITES, FAUNA_SQUAD } from '../src/enemy-fauna.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
-const report = { scope: 'First three roles deploy natively; seed multiples of five add the native boss compound. Fourteen other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const report = { scope: 'First three roles deploy natively; seed mod 5 = 0 adds the boss compound, mod 5 = 1 the four-animal ecology. Eleven other art roles use valid saved fixtures until authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
@@ -231,6 +232,44 @@ try {
             squad: team.map(e => ({ uid:e.uid,id:e.id })), saveVersion:loaded.version, screenshot:file });
         console.log(`PASS native-market ${viewport.width}: ordinary deployment, attack and checkpoint restore`);
         await nativeContext.close();
+        for(const focus of ['tidal-crab','saltback-dog','sac-spitter']){
+            const ecologyContext=await browser.newContext({viewport,offline:true,hasTouch:touch,isMobile:touch});await resumeStalls(ecologyContext);
+            const ecology=await ecologyContext.newPage();ecology.setDefaultTimeout(60000);
+            ecology.on('pageerror',e=>report.errors.push(String(e)));ecology.on('request',r=>{if(/^https?:/.test(r.url()))report.external.push(r.url());});
+            await ecology.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');
+            await ecology.locator('[data-action="enter"]').click();await ecology.locator('#seed').fill('46');await ecology.locator('[data-action="deploy"]').click();await raidReady(ecology);
+            const initial=decodeSession(await ecology.evaluate(key=>localStorage.getItem(key),SESSION_KEY)),raid=initial.expansion.raid;
+            const fauna=raid.maps.coast.enemies.filter(e=>e.tactics?.squad===FAUNA_SQUAD),actor=fauna.find(e=>e.id===focus);
+            assert.equal(raid.roster.length,25);assert.equal(fauna.length,4);assert.ok(actor);
+            const site=FAUNA_SITES.find(s=>s.id===focus&&s.foodX!==undefined),source=raid.maps.coast.loot.find(l=>l.id==='food'&&l.x===(site.foodX+.5)*32&&l.y===(site.y+.5)*32);
+            assert.ok(source);const context={definition:BUILDING_WORLD.maps.coast,doors:raid.maps.coast.doors,highTide:raid.highTide};
+            const radius=focus==='tidal-crab'?48:96;
+            const observer=Array.from({length:16},(_,i)=>({x:actor.home.x+Math.cos(i*Math.PI/8)*radius,y:actor.home.y+Math.sin(i*Math.PI/8)*radius}))
+                .filter(p=>traversable(context,p,'body',10)&&corridor(context,actor,p,'sight')&&raid.maps.coast.enemies.every(e=>Math.hypot(p.x-e.x,p.y-e.y)>=24))
+                .sort((a,b)=>Math.min(...fauna.filter(e=>e!==actor).map(e=>Math.hypot(b.x-e.x,b.y-e.y)))-Math.min(...fauna.filter(e=>e!==actor).map(e=>Math.hypot(a.x-e.x,a.y-e.y))))[0];
+            assert.ok(observer);let collected=false;
+            if(focus==='tidal-crab'){
+                await drive(ecology,'placePlayer',{x:source.x,y:source.y},Math.PI,'coast');
+                const before=await ecology.evaluate(()=>window.__bincov.app.loadout.bag.items.filter(i=>i.id==='food').reduce((n,i)=>n+i.qty,0));
+                if(touch)await ecology.locator('.coast-sample [data-act]').tap();else await ecology.keyboard.press('e');
+                await ecology.waitForFunction(uid=>!window.__bincovSample.host.lastBatch.frame.loot.some(l=>l.uid===uid),source.uid);
+                const after=await ecology.evaluate(()=>window.__bincov.app.loadout.bag.items.filter(i=>i.id==='food').reduce((n,i)=>n+i.qty,0));
+                assert.equal(after,before+1);collected=true;
+            }else await drive(ecology,'placePlayer',observer,Math.atan2(actor.y-observer.y,actor.x-observer.x),'coast');
+            await ecology.waitForFunction(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return a?.tactics&&['windup','release','recovery'].includes(a.tactics.phase);},actor.uid);
+            const image=`native-fauna-${focus}-${viewport.width}.png`;await ecology.screenshot({path:resolve(out,image)});report.screenshots.push(image);
+            if(touch)await ecology.locator('.coast-sample [data-pause]').tap();else await ecology.keyboard.press('Escape');
+            await ecology.waitForFunction(()=>window.__bincovSample.host.panel==='pause');
+            const saved=decodeSession(await ecology.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            await ecology.reload();await ecology.locator('[data-action="enter"]').click();await raidReady(ecology);
+            const restored=decodeSession(await ecology.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            const members=r=>r.expansion.raid.maps.coast.enemies.filter(e=>e.tactics?.squad===FAUNA_SQUAD);
+            assert.deepEqual(members(restored),members(saved));
+            assert.deepEqual(restored.expansion.raid.maps.coast.loot,saved.expansion.raid.maps.coast.loot);
+            if(collected)assert.equal(restored.expansion.raid.maps.coast.loot.some(l=>l.uid===source.uid),false,'collected nest food never respawns on refresh');
+            report.cases.push({viewport,scenario:`native-fauna-${focus}`,population:25,animals:4,collected,screenshot:image});
+            console.log(`PASS native-fauna ${focus} ${viewport.width}: ordinary deployment, attack, food and restore`);await ecologyContext.close();
+        }
     }
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';
 } finally {

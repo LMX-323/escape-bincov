@@ -3,10 +3,11 @@ import type { LayeredRaid, WorldDefinition } from './expansion-state';
 import { separation, traversable } from './spatial';
 import { WORLD } from './world';
 import { MARKET_POSTS, MARKET_RAIDERS, MARKET_STORES } from './enemy-posts';
+import { FAUNA_SITES, FAUNA_SQUAD, installFaunaFood } from './enemy-fauna';
 
 /** Authored street encounter, away from every deployment, extraction and stair landing.
- * Replaces three, or six on the authored market seed variant, before the single deployment commit.
- * No extra population, loot or RNG draws. */
+ * Replaces three, six on the market seed variant, or seven on the fauna variant before one deployment commit.
+ * No extra population or RNG draws; fauna floor food comes from its carried supply budget. */
 export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition): void {
     if (raid.elapsed !== 0 || ![2, 3].includes(raid.version) || world.id !== 'coast-buildings-v1') throw new Error('遭遇只能在新街区行动初始化。');
     const members: { id: ArchetypeId; x: number; y: number; squad: string }[] = [
@@ -15,6 +16,8 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
     // One bounded authored variant in every fifth seed; reuse existing birth-roster slots.
     const market = raid.seed % 5 === 0;
     if (market) members.push(...MARKET_POSTS.map(post => ({ id: post.id, x: post.home.x / 32 - .5, y: post.home.y / 32 - .5, squad: MARKET_RAIDERS })));
+    const fauna = raid.seed % 5 === 1;
+    if (fauna) members.push(...FAUNA_SITES.map(site => ({ id:site.id,x:site.x,y:site.y,squad:FAUNA_SQUAD })));
     const layer = raid.maps.coast, map = world.maps.coast;
     const used = new Set<string>();
     for (const member of members) {
@@ -36,6 +39,7 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
         // Reposition one existing supply crate, preserving its identity, contents and economy.
         Object.assign(crate, MARKET_STORES);
     }
+    if (fauna) installFaunaFood(raid);
     raid.version = raid.version === 3 ? 5 : 4;
     raid.roster = Object.values(raid.maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id })));
 }

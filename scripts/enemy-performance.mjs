@@ -17,12 +17,16 @@ import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
 import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime.ts';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
+import { archetype } from '../src/enemy-archetypes.ts';
 
 const options = new Map(process.argv.slice(2).map(arg => {
-  const match = /^--(seed|baseline|out|policy)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
+  const match = /^--(seed|baseline|out|policy|focus|radius|heal)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
 }));
 const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
 const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe'].includes(policy));
+const focus = options.get('focus') ?? 'raider-gunner',radius=Number(options.get('radius')??240);
+assert.ok(archetype(focus));assert.ok(Number.isFinite(radius)&&radius>=32&&radius<=300);
+assert.ok(['true','false'].includes(options.get('heal')??'false'));const heal=options.get('heal')==='true';
 const out = resolve(options.get('out') ?? 'test-results/enemy-performance'); await mkdir(out, { recursive: true });
 // Provisional expansion ceilings, declared before the first measurement. Device-specific;
 // passing is necessary for this desktop expansion, not sufficient for phone/balance signoff.
@@ -39,12 +43,12 @@ function fixture(highTide) {
   const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }), undefined, () => 1800000000000);
   assert.ok(saves.initialize(), state.storageError); state.state = 'hideout';
   assert.ok(saves.beginRun(seed, true), state.storageError);
-  const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === 'raider-gunner');
+  const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === focus);
   assert.ok(e); assert.equal(raid.version, 5);
   raid.initialHigh = raid.highTide = highTide;
   const context = { definition: BUILDING_WORLD.maps.coast, doors: raid.maps.coast.doors, highTide };
   const p = Array.from({ length: 24 }, (_, i) => i * Math.PI / 12)
-    .map(a => ({ x: e.x + Math.cos(a) * 240, y: e.y + Math.sin(a) * 240 }))
+    .map(a => ({ x: e.x + Math.cos(a) * radius, y: e.y + Math.sin(a) * radius }))
     .filter(p => traversable(context, p, 'body', 10) && corridor(context, e, p, 'sight'))
     .sort((a, b) => Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - b.x, o.y - b.y)))
       - Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
@@ -52,7 +56,7 @@ function fixture(highTide) {
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
   return { raw, state, saves, target: { x: e.x, y: e.y } };
 }
-const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), seed, policy, budgets,
+const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), seed, policy, focus, radius, heal, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
   scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
   environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
@@ -65,6 +69,7 @@ try {
     r.path = function (...args) { const start = performance.now(); try { return originalPath.apply(this, args); } finally { paths.push(performance.now() - start); } };
     r.advance(0, emptyIntent());
     const initialEnemies = r.enemies.length, worldEnemies = r.layered.raid.roster.length;
+    let lastHeal=-Infinity;
     for (let frame = 1; frame <= 12 * hz && !r.ending; frame++) {
       const target = r.enemies.filter(e => e.hp > 0 && r.sight(r.player, e)).sort((a, b) => Math.hypot(a.x-r.player.x,a.y-r.player.y)-Math.hypot(b.x-r.player.x,b.y-r.player.y))[0];
       const intent = { ...emptyIntent(), aim: target ? Math.atan2(target.y-r.player.y,target.x-r.player.x) : 0,
@@ -74,6 +79,7 @@ try {
         const bearing = intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
         intent.move = { x: Math.cos(bearing), y: Math.sin(bearing), sprint: false };
       }
+      if(heal&&(r.hp<70||r.bleeding)&&frame/hz-lastHeal>=2){intent.commands.push('heal');lastHeal=frame/hz;}
       const start = performance.now(); r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
     }
     const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending };
@@ -139,7 +145,7 @@ try {
       // Attach a handler immediately while normal input is sent on the same page.
       const result = measurement.then(value => ({ value }), error => ({ error: String(error) }));
       const started = performance.now();
-      let held = [];
+      let held = [],lastHeal=-Infinity;
       while (performance.now() - started < 12200) {
         const aim = await page.evaluate(() => {
           const h = window.__bincovSample.host, b = h?.lastBatch; if (!b || b.frame.phase !== 'running') return null;
@@ -157,6 +163,7 @@ try {
           for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
         }
         if (performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
+        if(heal&&performance.now()-lastHeal>2000&&await page.evaluate(()=>{const h=window.__bincovSample?.host;return h?.lastBatch?.frame.phase==='running'&&(h.lastBatch.frame.hud.hp<70||h.lastBatch.frame.hud.bleeding);})){await page.keyboard.press('q');lastHeal=performance.now();}
         await page.waitForTimeout(250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -181,6 +188,8 @@ try {
     const old = JSON.parse(await readFile(resolve(options.get('baseline')), 'utf8'));
     assert.equal(old.protocol, report.protocol); assert.equal(old.status,'PASS'); assert.equal(old.seed ?? 42,seed);
     assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
+    assert.equal(old.focus ?? 'raider-gunner',focus);assert.equal(old.radius ?? 240,radius,'identical observation geometry for comparison');
+    assert.equal(old.heal??false,heal,'identical carried-supply input for comparison');
     assert.equal(old.environment.cpu,report.environment.cpu); assert.equal(old.environment.browser,report.environment.browser);
     assert.equal(old.browser.length,report.browser.length); assert.equal(old.runtime.length,report.runtime.length);
     report.comparison = { baselineArtifact: old.artifact.sha256, baselineHead: old.source.head, p95: [] };

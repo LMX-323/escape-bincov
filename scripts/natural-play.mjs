@@ -14,10 +14,11 @@ import { buyAffordable } from './inventory-actions.mjs';
 const minutes = Number(process.env.BINCOV_PLAY_MINUTES || 10);
 assert.ok(minutes >= 1 && minutes <= 60);
 const world = process.env.BINCOV_PLAY_WORLD || 'coast';
+const entry = resolve(process.env.BINCOV_PLAY_ENTRY || 'dist/index.html');
 assert.ok(['coast', 'buildings'].includes(world), 'BINCOV_PLAY_WORLD must be coast or buildings');
-const report = { htmlSha256: createHash('sha256').update(await readFile('dist/index.html')).digest('hex'), startedAt: new Date().toISOString(), minutes, world,
+const report = { htmlSha256: createHash('sha256').update(await readFile(entry)).digest('hex'), entry, startedAt: new Date().toISOString(), minutes, world,
   methodology: `Automated real-time session on ${world === 'coast' ? 'the classic coast' : 'the layered street with new enemy encounters'} (2.5D view). Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.`, enemyPhases: {}, containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
-const out = resolve('test-results'); await mkdir(out, { recursive: true });
+const out = resolve(process.env.BINCOV_PLAY_OUT || 'test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, offline: true });
 const page = await context.newPage();
@@ -28,7 +29,9 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const space = s => ({ definition: s.map, doors: s.doors, highTide: s.high });
 const route = (s, to) => world === 'coast' ? findPath(s, to, s.high) : spacePath(space(s), s, to);
 const sight = (s, to) => world === 'coast' ? lineOfSight(s, to) : corridor(space(s), s, to, 'sight');
-let held = new Set(), runNumber = 0, goal = null, path = [], repathAt = 0, lastSample = 0;
+let held = new Set(), runNumber = 0, goal = null, path = [], repathAt = 0, lastSample = 0, streetStep = 0;
+const streetApproach = [{ x:6.5*32,y:24.5*32 },{ x:20.5*32,y:24.5*32 }];
+report.observationPolicy = 'Before the first street windup: walk the authored public west/cross street, approach a visible new enemy, and wait for its real preparation before shooting it. No game-state mutations.';
 let visited = new Set(), lastPosition, stuckAt = Date.now(), lastHeal = 0;
 async function keys(next) {
   for (const key of held) if (!next.has(key)) await page.keyboard.up(key);
@@ -96,7 +99,7 @@ async function lootOpenContainer(s) {
   else { visited.add(`${container.x},${container.y}`); goal = null; await page.keyboard.press('Escape'); }
 }
 try {
-  await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
+  await page.goto(pathToFileURL(entry).href + '?test=1&entry=tabs');
   await action('enter').click();
   const start = Date.now(), deadline = start + minutes * 60000;
   while (Date.now() < deadline || (await snapshot()).state === 'run') {
@@ -129,7 +132,7 @@ try {
       await page.locator('#run-world').selectOption(world);
       await page.locator('#seed').fill(String(42 + runNumber++)); await action('deploy').click();
       await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 30000 });
-      goal = null; path = []; visited = new Set(); lastPosition = null; stuckAt = now;
+      goal = null; path = []; visited = new Set(); lastPosition = null; stuckAt = now; streetStep = 0;
       continue;
     }
     if (s.state !== 'run') throw new Error('Unexpected state ' + s.state);
@@ -158,7 +161,9 @@ try {
     if (now - lastHeal > 1500 && s.medical && (s.hp < 70 || s.bleeding)) { await page.keyboard.press('q'); lastHeal = now; }
     if (s.mag === 0 && s.ammo && !s.reload) await page.keyboard.press('r');
     const target = s.enemies.filter(e => dist(e, s) < 430 && sight(s, e)).sort((a, b) => dist(a, s) - dist(b, s))[0];
-    if (target && s.mag && !s.reload && s.cooldown <= 0) {
+    const observedWindup = Object.keys(report.enemyPhases).some(key => key.endsWith('/windup'));
+    const waitingForTell = world === 'buildings' && !observedWindup;
+    if (target && !(waitingForTell && target.tactics) && s.mag && !s.reload && s.cooldown <= 0) {
       const { x, y } = await screenOf(target);
       if (x > 0 && x < 1280 && y > 0 && y < 720) await page.mouse.click(x, y, { delay: 40 });
     }
@@ -168,6 +173,14 @@ try {
       if (dist(goal, s) < 43) {
         await keys(new Set()); await page.keyboard.down('e'); await page.waitForTimeout(3300); await page.keyboard.up('e'); continue;
       }
+    } else if (waitingForTell && s.map.id === 'coast' && streetStep < streetApproach.length) {
+      if(dist(streetApproach[streetStep],s)<35)streetStep++;
+      goal=streetApproach[Math.min(streetStep,streetApproach.length-1)];
+    } else if (waitingForTell && s.map.id === 'coast' && target?.tactics) {
+      const radius=Math.min(160,Math.max(28,target.tactics.range*.75)),bearing=Math.atan2(s.y-target.y,s.x-target.x);
+      const candidates=Array.from({length:8},(_,i)=>({x:target.x+Math.cos(bearing+i*Math.PI/4)*radius,y:target.y+Math.sin(bearing+i*Math.PI/4)*radius}));
+      goal=candidates.filter(p=>route(s,p).length).sort((a,b)=>dist(a,s)-dist(b,s))[0]??target;
+      if(dist(goal,s)<12){await keys(new Set());await page.waitForTimeout(120);continue;}
     } else if (!goal || dist(goal, s) < 35) {
       if (goal) {
         await keys(new Set()); await page.keyboard.press('e', { delay: 70 });
