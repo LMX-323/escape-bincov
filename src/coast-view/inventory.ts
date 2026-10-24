@@ -71,7 +71,7 @@ export class InventoryPanel {
     const ref = this.mode === 'loot' ? this.host.lootRef() : null, box = ref ? this.host.services.lootInventory(ref) : null;
     if (this.mode === 'loot' && !box) { this.host.close(); return; }
     if (this.selected && !this.item()) { this.selected = null; this.placement = null; }
-    const weight = this.host.services.carriedWeight(), limit = this.host.services.carryLimit(), w = D.WEAPONS[l.weapon || 'knife'];
+    const weight = this.host.services.carriedWeight(), limit = this.host.services.carryLimit(), w = D.equippedWeapon(l);
     const container = this.mode === 'loot' && box ? `<section class="cs-inv-src"><h3>${esc(this.containerName())} <span>${box.items.length ? '可取出 · 可放回' : '已搜空'}</span></h3>${this.grid(box, 'container')}<p class="cs-help">留在这里的物资仅保留至本局结束。</p></section>` : '';
     // docs/LOOTING.md: on a desktop your own gear is on the left and the source on the right; a phone keeps the source first.
     const own = `<section><h3>背包 <span>${l.bag.w} × ${l.bag.h}</span></h3>${this.grid(l.bag, 'bag')}<p class="cs-help">负重 <b data-weight>${weight.toFixed(1)}</b> / <span data-carry-limit>${limit.toFixed(1)}</span> kg · 含装备</p></section>

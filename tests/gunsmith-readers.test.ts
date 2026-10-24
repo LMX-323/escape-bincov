@@ -6,6 +6,8 @@ import { coneOf, driftOf, handlingOf, SAMPLE_GUNS } from '../src/shooting';
 import { perkEffects, rpgMultipliers } from '../src/rpg';
 import type { PerkId } from '../src/perks';
 import { createRangeRaid, ShootingRange } from '../src/range/raid';
+import { SaveSession, createSessionState } from '../src/session';
+import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { arm, benchRaid, perkBench, type Bench } from './fixtures/shooting-bench';
 
 // #28 M1-05: every reader of the equipped gun's numbers goes through the gunsmith entry (D.equippedGun and the
@@ -134,6 +136,23 @@ test('the range hands each gun a full magazine of its effective capacity', () =>
         assert.deepEqual([raid.core.currentWeapon, raid.core.mag], [D.WEAPONS[id], D.WEAPONS[id].magazine], id);
     }
     assert.equal(raid.saves.persist(), true, 'the armed range still checkpoints');
+});
+
+test('the base departure weight weighs the equipped gun through the gunsmith entry, exactly as ITEMS did', () => {
+    const now = 1800000000000, data = new Map<string, string>();
+    const state = createSessionState(), saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => { data.set(k, v); } }), undefined, () => now);
+    assert.ok(saves.initialize());
+    const hideout = new RealHideoutRuntime(state, saves, () => now, () => true);
+    assert.equal(hideout.enter().ok, true);
+    for (const weapon of [...FACTORY, null]) {
+        const ticket = saves.prepareExpansionMutation(d => { d.profile.equipment = { weapon, relief: false, ammo: weapon ? D.WEAPONS[weapon].magazine : 0, ammoRelief: 0 }; });
+        assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
+        const p = hideout.snapshot().profile, w = D.WEAPONS[p.equipment.weapon || 'knife'], charm = state.expansion?.charm;
+        assert.equal(p.equipment.weapon, weapon);
+        const old =D.weight(p.bag) + D.weight(p.safe) + D.ITEMS.knife.weight + (p.equipment.weapon ? D.ITEMS[p.equipment.weapon].weight : 0)
+            + (w.ammo ? D.ITEMS[w.ammo].weight * p.equipment.ammo : 0) + (charm ? D.ITEMS[charm.id].weight : 0);
+        assert.equal(hideout.departure().weight, old, String(weapon));
+    }
 });
 
 test('the raid readers no longer look the held gun up by id', () => {

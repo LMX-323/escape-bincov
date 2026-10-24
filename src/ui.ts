@@ -90,7 +90,7 @@ export function changeState(state: Exclude<typeof app.state, 'run'>) {
     showScreen(state, app.menuMotion); render();
 }
 const btn = (label: string, action: string, cls = '', extra = '') => `<button class="${cls}" data-action="${action}" ${extra}>${label}</button>`;
-function preparedWeight(){const s=app.save,w=D.WEAPONS[s.equipment.weapon||'knife'];return D.weight(s.bag)+D.weight(s.safe)+D.ITEMS.knife.weight+(s.equipment.weapon?D.ITEMS[s.equipment.weapon].weight:0)+(w.ammo?D.ITEMS[w.ammo].weight*s.equipment.ammo:0)+(app.expansion?.charm ? D.ITEMS[app.expansion.charm.id].weight : 0);}
+function preparedWeight(){const s=app.save,w=D.equippedWeapon(s.equipment);return D.weight(s.bag)+D.weight(s.safe)+D.ITEMS.knife.weight+D.equippedWeight(s.equipment)+(w.ammo?D.ITEMS[w.ammo].weight*s.equipment.ammo:0)+(app.expansion?.charm ? D.ITEMS[app.expansion.charm.id].weight : 0);}
 function inventoryCell() { return !touchLayout() && innerWidth >= 1700 && innerHeight >= 900 ? 80 : 54; }
 function itemIcon(id: string, small = false) {
     const size = small ? 24 : 32, art = artId(id), url = art ? painted(`item-${small ? 'small-' : ''}${art}`, size, size, c => paintItem(c, art, size)) : '';
@@ -118,7 +118,7 @@ function occupied(inv: D.Inventory) {
     return inv.items.reduce((sum, item) => sum + D.ITEMS[item.id].w * D.ITEMS[item.id].h, 0);
 }
 function equipmentPanel(equipment: D.Equipment, bag: D.Inventory, safe: D.Inventory) {
-    const weapon = D.WEAPONS[equipment.weapon || 'knife'];
+    const weapon = D.equippedWeapon(equipment);
     const ammo = equipment.ammo;
     return `<section class="safe-section equipment-section"><h3 class="section-title"><b class="section-number">01</b>随身装备 <span>携行</span></h3><div class="equip"><div class="equipment-caption"><span>${equipment.weapon ? '主武器' : '随身匕首'}</span>${equipment.relief ? '<span class="orange">救济</span>' : ''}</div><div class="equipped-icon">${itemArtwork(weapon.id, inventoryCell() === 80 ? 312 : 204, inventoryCell() === 80 ? 102 : 52)}</div><div class="equipment-name"><strong>${weapon.name}</strong>${equipment.weapon ? `<span id="equipped-ammo">${ammo} / ${weapon.magazine}</span>` : '<span>始终保留</span>'}</div>${equipment.weapon ? btn('卸下主武器', 'unequip', 'text-button') : ''}</div>${weapon.ammo ? `<p class="reserve-ammo">背包备用弹药 <span>${D.ITEMS[weapon.ammo].name} · ${D.count(bag, weapon.ammo)} 发</span></p>` : '<p class="reserve-ammo">装备枪械后，备用弹药放在背包。</p>'}<h3 class="section-title secure-heading">安全箱 <span>失败也保留</span></h3><div class="secure-kit">${grid(safe, 'safe')}<div class="knife-card">${itemIcon('knife')}<strong>水手匕首</strong><span>随身携带<br>始终保留</span></div></div></section>`;
 }

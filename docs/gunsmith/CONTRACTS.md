@@ -326,7 +326,8 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
   - `carriedWeight` 里枪的重量来自 `gunWeight`。
   - 画面的 `hud.weapon`（含 `magSize`）、准星锥和 HUD 武器卡读的就是 `currentWeapon` 和 `grip`，不另查表。
 - 试枪场 `arm()` 和测试驱动的 `weapon()`、`magazine()` 按有效弹量装满和校验。
-- 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，以及试枪场装弹。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。
+- 院子和旧页签：出发负重（`RealHideoutRuntime.departure`、旧页签的 `preparedWeight`）里枪的重量用 `equippedWeight`；院子装备卡、旧页签装备区和行动背包面板显示的弹量用 `equippedWeapon`。只读名称、弹药种类或暴击的地方（出发检查、Perk 文案、救济规则等）照旧查 `WEAPONS`，配件不改这些。
+- 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，试枪场装弹，以及院子的出发负重。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。
 - 还没接的：
   - 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定；开着的设备也要进缓存键。
   - 枪声半径是 `SURVIVAL.gunNoiseRange × noise`，M2-11 接入敌人听觉。
