@@ -58,6 +58,13 @@ async function compile() {
   const countyImports = [...(await readFile('src/station-view/county-art.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/county-map\/[^']+\.webp)'/g)].map(m => m[1]).sort();
   if (JSON.stringify(countyImports) !== JSON.stringify([county.output, ...briefing.assets.map(briefingFile)].sort())) throw new Error('County art imports do not match the county map manifests.');
   for (const a of briefing.assets) if (createHash('sha256').update(await readFile(briefingFile(a))).digest('hex') !== a.sha256) throw new Error(`County briefing art hash mismatch: ${a.file}`);
+  // Hurt and recovery body frames (#75): the importer covers exactly the pose manifest, and every frame and source sheet
+  // matches its hash (node --import tsx scripts/export-hurt-poses.ts writes them; --check compares the pixels).
+  const poses = JSON.parse(await readFile('assets/coast/poses/manifest.json', 'utf8'));
+  const poseImports = [...(await readFile('src/coast-view/pose-assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/coast\/poses\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  if (JSON.stringify(poseImports) !== JSON.stringify(poses.assets.map(a => a.file).sort())) throw new Error('Pose frame imports do not match assets/coast/poses/manifest.json. Run node --import tsx scripts/export-hurt-poses.ts.');
+  for (const [file, hash] of [...Object.entries(poses.sources), ...poses.assets.map(a => [a.file, a.sha256])])
+    if (createHash('sha256').update(await readFile(file)).digest('hex') !== hash) throw new Error(`Pose frame hash mismatch: ${file}`);
   const js = inlineScript(await buildGameScript());
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));
