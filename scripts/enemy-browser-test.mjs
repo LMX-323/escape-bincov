@@ -1,4 +1,4 @@
-/** Actual offline v7 saves in the shipped 2.5D host. Extra roles are saved fixtures, not native encounter claims. */
+/** Actual offline v8 saves in the shipped 2.5D host. Extra roles are saved fixtures, not native encounter claims. */
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -19,6 +19,7 @@ import { FAUNA_SITES, FAUNA_SQUAD } from '../src/enemy-fauna.ts';
 import { AFFECTED_SQUAD } from '../src/enemy-affected.ts';
 import { RECOVERY_SQUAD, RECOVERY_POSTS, RECOVERY_PICKUP } from '../src/enemy-recovery.ts';
 import { BLOCKADE_SQUAD, BLOCKADE_WAIT_POINT } from '../src/enemy-blockade.ts';
+import { runMallEnemyCases } from './enemy-mall-browser.mjs';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
@@ -403,6 +404,7 @@ try {
             console.log(`PASS native-blockade ${focus} ${viewport.width}: ordinary registration/patrol, paid trespass reaction and restore`);await ctx.close();
         }
     }
+    await runMallEnemyCases(browser, report, out);
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';
 } finally {
     await browser.close(); await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2));

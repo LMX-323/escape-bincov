@@ -1,8 +1,18 @@
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
-维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
+维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104，生成物冲突按本规则保留删除）。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
 
 本地 867 单测、`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）、`pnpm package`、`test:portable` 通过；游戏 HTML 与 main 提交的逐字节相同，便携 ZIP 只因游玩说明一句话变化。发布 job 只能在 main 上运行，本地只用假 gh 走过首次创建与替换两条路径。仓库外的服务器镜像若从提交读清单/HTML，需改读发布页；以后新增固定旧客户端的取法待定。准确 head、CI 与维护者确认见 [PR #105](https://github.com/xuys2025/escape-bincov/pull/105)。
+
+## 2026-10-24 EN-19商场二层遭遇续作
+
+原PR104、feat/enemy-mall-r06；维护者已明确“授权104”，检查通过后可正常合并，不反复索取授权。执行合并时#98刚合入，已正常同步main49894e9（含#102），双方源码自动合并，生成物经正式package重建；没有强推、推main或绕过检查。
+
+本批现有mall-v3二层服装区三人及一只既有周转箱，25人口、16/9分层、一层原状态及两精英保持。[商场任务记录](docs/tasks/enemy-mall.md)为范围/空间/兼容入口，[验证摘要](docs/enemy-mall/validation.json)顶层为7d25ceb3制品（8,056,122字节，portable5,266,798），preGunsmithSync保留132c/更早c35原证据，不改写旧通过记录。
+
+873单测、62守卫/package、三尺寸及实际旧端11案例通过：真实649b791/v7原生商场档迁移v8后完整行动一致，gunsBackup保留原文，其他三备份保持；实际49894e9/v8旧端可读取本批新档。actor v1、expansion3 / raid5保持，外层统一遵守#98的session8，不重投活动旧商场。完整敌人、射击、便携、两项自然输入、干净head独占固定退避矩阵及准确CI按原PR104后续实际结果记录，未完成不签通过。自然并行负载不作性能。
+
+EN19～22、R06其余卸货/配给、#47四版/全图、其余地区与真机/真人/整体签收继续开放；Issue78保持18/22和十二地区，开发已排期。只有既定退避路线性能，不签站定/近距极限、同比或真机真人。保留密钥检查及正常hooks；不读私钥、不向其他聊天发消息，不手动服务器部署。准确最终head、合并SHA与主线CI/Pages见原PR，不能用本历史记录代替实时状态。
 
 ## 2026-10-24 等候方交付与新主线同步
 
