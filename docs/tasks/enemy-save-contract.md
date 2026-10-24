@@ -14,7 +14,7 @@
 | LayeredRaid 4 | ExpansionState 2 | 新敌人 | 原中心接近度公式 | 6 |
 | LayeredRaid 5 | ExpansionState 3 | 新敌人 | Perk 开枪快照 | 7 |
 
-新街区出击由初始化的 Perk 行动 3 升为组合行动 5，在同一原子候选里写记录 7。商场仍生成行动 3。恢复正在进行的 3/4 行动不改变敌人、弹丸、名册或规则；敌人旧行动 4 结算后，基地边界才升级角色到 3。源码入口是 `enemyRules`、`perkRaidRules`、`recordVersion` 和 `recordUpgradeFields`。
+新街区和新三版商场出击由初始化的 Perk 行动 3 升为组合行动 5，在同一原子候选里写记录；#98合入前为7，当前统一为8。[商场二层遭遇](enemy-mall.md)复用 actor v1，不新增会话/世界版本；新一/二版商场仍生成行动 3，活动旧三版也不重投。恢复正在进行的 3/4 行动不改变敌人、弹丸、名册或规则；敌人旧行动 4 结算后，基地边界才升级角色到 3。当前源码入口是 `enemyRules`、`perkRaidRules`、`enemyRecord` 和 `recordUpgradeFields`；下列6/7规则为历史读取规则，当前写入字段按上方v8合同。
 
 - `enemyBackup` 保存首次启用新敌人时被替换主档的精确原文，历史记录 6 的副本升 7 后保持不变。
 - `perksBackup` 保留已有 5/7 的原值，包括 null；首次由 4 或 6 启用 Perk 时保存被替换主档原文。不把组合记录再次嵌入自身。
