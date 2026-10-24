@@ -3,6 +3,8 @@
  * hand weapons and freeze enemies. Each step reads the host's published batches through a wrapped frame() and the
  * view's own drawing (weapon sprite transform, muzzle-flash sprites, tracer Graphics instructions, spark particles).
  *   a. a still pointer keeps the published aim while the camera eases (45 and 90 degree moves, 100 and 300 px, hip and precise);
+ *      a-edge: the same with precise aim at the map's west edge (#80), at 1280x720 and 1920x1080, where the look-ahead
+ *      must stop on the edge (the range's firing line, where the follow camera is held, and 24 px inside the edge);
  *   b. firing with a still pointer does not move the aim (pistol, shotgun, carbine);
  *   c. eight directions x pistol, shotgun, carbine, sample M4A1: the flash sits on the barrel tip read from the weapon art
  *      through the sprite's transform, and tracers leave that tip (their line passes it, they never start behind it);
@@ -66,6 +68,7 @@ function install() {
     if (!P.rec) return;
     const ptr = this.input.pointer;
     const row = { t: P.t, rev: b.stamp.revision, phase: f.phase, stalls: window.__stallResumes ?? 0, ptr: { x: ptr.x, y: ptr.y },
+      cam: { x: v.cam.x, y: v.cam.y }, lead: v.camF.lead?.m ?? 0,
       p: { x: p.x, y: p.y, aim: p.aim, precise: p.state.precise, weapon: p.weapon }, hudAim: f.hud.aim ? { ...f.hud.aim } : null, revealed: { ...f.revealed },
       ev: b.events.filter(e => e.type === 'shot' || e.type === 'impact').map(e => { const { stamp, ...rest } = e; return JSON.parse(JSON.stringify(rest)); }),
       bl: f.bullets.map(q => ({ uid: q.uid, x: q.x, y: q.y, vx: q.vx, vy: q.vy, enemy: q.enemy })) };
@@ -188,33 +191,77 @@ const save = () => writeFile(resolve(out, 'report.json'), JSON.stringify(report,
 
 /* ---------------------------------------------------------------- the steps ---------------------------------------------------------------- */
 
+/** Step a's moves: the pointer `radius` css px from the chest at theta0, then turned 45 and 90 degrees more, with the right
+ *  button held for precise aim. After each turn the published aim is recorded for 1.2 s of raid time from the first frame
+ *  that read the new pointer; each case ends with the camera and the look-ahead (world px) its last frame drew. */
+async function turnsAt(page, precise, radius, theta0 = 0) {
+  const cases = [];
+  if (precise) await page.mouse.down({ button: 'right' });
+  let theta = theta0;
+  for (const turn of [0, 45, 90]) {
+    theta += turn * Math.PI / 180;
+    const before = await state(page), target = { x: Math.round(before.chest.x + Math.cos(theta) * radius), y: Math.round(before.chest.y + Math.sin(theta) * radius) };
+    assert.ok(await onCanvas(page, target), `pointer target covered: ${JSON.stringify(target)}`);
+    if (turn) await rec(page);
+    await page.mouse.move(target.x, target.y);
+    if (turn) {
+      await page.waitForFunction(([x, y]) => window.__shoot.log.some(r => Math.abs(r.ptr.x - x) < .01 && Math.abs(r.ptr.y - y) < .01), [target.x, target.y], { polling: 'raf' });
+      const t0 = await page.evaluate(([x, y]) => window.__shoot.log.find(r => Math.abs(r.ptr.x - x) < .01 && Math.abs(r.ptr.y - y) < .01).t, [target.x, target.y]);
+      await waitRaid(page, 1.2, t0);
+      const log = (await stop(page)).filter(r => Math.abs(r.ptr.x - target.x) < .01 && Math.abs(r.ptr.y - target.y) < .01);
+      const drift = max(log.map(r => Math.abs(wrap(r.p.aim - log[0].p.aim))));
+      cases.push({ precise, radius, turnDeg: turn, toDeg: r3(theta * 180 / Math.PI, 1), aimAtStopDeg: r3(log[0].p.aim * 180 / Math.PI, 3), seconds: r3(log.at(-1).t - log[0].t, 3),
+        maxDriftRad: r3(drift, 5), maxDriftDeg: r3(drift * 180 / Math.PI, 2), camEnd: log.at(-1).cam, leadEnd: r3(log.at(-1).lead, 2) });
+    }
+    await settle(page);
+  }
+  if (precise) { await page.mouse.up({ button: 'right' }); await settle(page); }
+  return cases;
+}
+
 /** a. A still pointer: the camera eases after the move, the published aim must not. */
 async function stillPointer(page) {
   const cases = [];
-  for (const precise of [false, true]) for (const radius of [100, 300]) {
-    if (precise) await page.mouse.down({ button: 'right' });
-    let theta = 0;
-    for (const turn of [0, 45, 90]) {
-      theta += turn * Math.PI / 180;
-      const before = await state(page), target = { x: Math.round(before.chest.x + Math.cos(theta) * radius), y: Math.round(before.chest.y + Math.sin(theta) * radius) };
-      assert.ok(await onCanvas(page, target), `pointer target covered: ${JSON.stringify(target)}`);
-      if (turn) await rec(page);
-      await page.mouse.move(target.x, target.y);
-      if (turn) {
-        await page.waitForFunction(([x, y]) => window.__shoot.log.some(r => Math.abs(r.ptr.x - x) < .01 && Math.abs(r.ptr.y - y) < .01), [target.x, target.y], { polling: 'raf' });
-        const t0 = await page.evaluate(([x, y]) => window.__shoot.log.find(r => Math.abs(r.ptr.x - x) < .01 && Math.abs(r.ptr.y - y) < .01).t, [target.x, target.y]);
-        await waitRaid(page, 1.2, t0);
-        const log = (await stop(page)).filter(r => Math.abs(r.ptr.x - target.x) < .01 && Math.abs(r.ptr.y - target.y) < .01);
-        const drift = max(log.map(r => Math.abs(wrap(r.p.aim - log[0].p.aim))));
-        cases.push({ precise, radius, turnDeg: turn, toDeg: r3(theta * 180 / Math.PI, 1), aimAtStopDeg: r3(log[0].p.aim * 180 / Math.PI, 3), seconds: r3(log.at(-1).t - log[0].t, 3),
-          maxDriftRad: r3(drift, 5), maxDriftDeg: r3(drift * 180 / Math.PI, 2) });
-      }
-      await settle(page);
-    }
-    if (precise) { await page.mouse.up({ button: 'right' }); await settle(page); }
-  }
+  for (const precise of [false, true]) for (const radius of [100, 300]) cases.push(...await turnsAt(page, precise, radius));
   const worst = cases.reduce((m, c) => c.maxDriftRad > m.maxDriftRad ? c : m);
   check(worst.maxDriftRad <= .01, `aim turned ${worst.maxDriftRad} rad (${worst.maxDriftDeg} deg) under a still pointer`, { cases });
+  return { cases };
+}
+
+/**
+ * a-edge. Step a's precise moves where the camera meets the map's west edge (#80, found by the gunsmith M0-07 prototype).
+ * There the clamp held one axis of the look-ahead while the other kept easing and turned the aim under a still pointer
+ * (main f73e9de on the range's firing line: 8.47 degrees at 1280x720, 3.6-3.7 at 1920x1080); the look-ahead now stops on
+ * the edge. Both desktop sizes, step a's 300 px moves (the 100 px ones turned the aim by at most 2.9 degrees there), on two
+ * spots of the range's street: the firing line, where the follow camera is already held by the edge (no room, so no
+ * look-ahead), and 24 px inside the edge, where the moves toward it must carry the camera onto the edge and stop there.
+ * Without the right button there is no look-ahead, so hip aim is step a's alone.
+ */
+async function stillPointerAtEdge(page) {
+  const cases = [], line = { x: 208, y: 1104 }; // FIRING_LINE in src/range/raid.ts: the same seed 42 coast map
+  try {
+    for (const [width, height] of [[1280, 720], [1920, 1080]]) {
+      await page.setViewportSize({ width, height });
+      await page.waitForFunction(w => window.__bincovSample.host.view.view.W === w, width);
+      await running(page);
+      const w = await page.evaluate(() => window.__bincovSample.host.view.view.w);
+      for (const spot of [{ name: 'firing line', at: line, theta0: 0 }, { name: '24 px inside the edge', at: { x: w / 2 + 24, y: line.y }, theta0: Math.PI / 2 }]) {
+        await place(page, spot.at, 0); await settle(page);
+        // The follow camera's left edge against the map's (CoastView.camBounds): negative while the edge holds it.
+        const followX = await page.evaluate(() => { const v = window.__bincovSample.host.view; return v.camF.x - v.camBounds().x0; });
+        for (const c of await turnsAt(page, true, 300, spot.theta0)) cases.push({ size: `${width}x${height}`, spot: spot.name, followX: r3(followX, 2), ...c });
+      }
+    }
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForFunction(() => window.__bincovSample.host.view.view.W === 1280);
+    await place(page, HOME); await settle(page);
+  }
+  const worst = cases.reduce((m, c) => c.maxDriftRad > m.maxDriftRad ? c : m);
+  check(worst.maxDriftRad <= .01, `aim turned ${worst.maxDriftRad} rad (${worst.maxDriftDeg} deg) under a still pointer at the edge (${worst.size} ${worst.spot}, ${worst.radius} px to ${worst.toDeg} deg)`, { cases });
+  // The spots must stay where the edge holds the camera, or this would pass in open ground.
+  const off = cases.filter(c => c.spot === 'firing line' ? !(c.followX < -100 && c.camEnd.x === 0) : !(c.followX > 20 && c.followX < 28 && c.camEnd.x === 0 && c.leadEnd > 10));
+  check(!off.length, `${off.length} cases not at the edge (firing line: follow camera beyond it, camera on it; 24 px inside: the moves end on it with a look-ahead)`, { cases, off });
   return { cases };
 }
 
@@ -554,6 +601,7 @@ let desktop, phone;
 try {
   desktop = await context('desktop', {});
   await step('a', 'a still pointer keeps the aim while the camera eases', desktop, stillPointer);
+  await step('a-edge', 'at the map edge a still pointer keeps the aim too: the look-ahead stops on the edge', desktop, stillPointerAtEdge);
   await step('b', 'firing with a still pointer keeps the aim', desktop, kickKeepsAim);
   await step('c', 'muzzle flash on the barrel tip; tracers leave the tip', desktop, muzzleAndTracers);
   await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);

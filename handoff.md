@@ -80,6 +80,12 @@ EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人�
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · 地图边瞄准偏转（`fix/aim-map-edge`，起点 main `f73e9de`；改枪 M0-07 原型发现，见 [#80](https://github.com/xuys2025/escape-bincov/issues/80)，M0 评审决定单独修）：
+  - **问题**：按住右键精瞄、镜头被地图边挡住时，夹紧只卡住前探的一个轴，另一个轴照常缓动，光标不动瞄准也转约 1 秒。主线上试枪场射击线 1280×720 测得 8.47°，1920×1080 3.6–3.7°；居民楼楼层比画面窄，同样会转。#39 的检查都在空地上。
+  - **修法**：`camera.ts` 的 `leadRoom` 给前探长度封顶，到镜头沿光标方向碰边为止；跟随镜头已被地图边挡住时没有前探；离边界不到 27 像素时再按距离的 3 倍收窄（`EDGE_FADE`），走向地图边时前探平滑收完，不会一帧跳回 64 像素。`stepLead` 多一个 `room` 参数，`scene.ts` 的 `camera()` 和 `aimFromClient` 用同一上限。空地上逐位不变，触屏不变。
+  - **测试**：`tests/coast-camera.test.ts` 回放镜头和瞄准换算（射击线、离边 24 像素、居民楼楼层、空地，两种尺寸）；`test:shooting` 新增检查 a-edge，主线构建失败（8.47°），修复后 0。走向地图边不跳的检查只在单测回放里。
+  - 代价：射击线一带（跟随镜头被挡住的范围）按右键不再前探。真人手感未试；准确 head 与 CI 见承接 PR。
+
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击姿态接入 A 组（`feat/hurt-poses`，基于 #96 的 `17613b6`）：
   - **切帧**：`scripts/export-hurt-poses.ts` 复用 `title-art/png.ts`，从 pixel-v2 图集切出拾荒者、盐枭、守潮人、潮蚀生物各五朝向的受击帧（帧号 5）和恢复帧（帧号 6），共 40 张、15 KB，放在 `assets/coast/poses`。
   - **加载**：`src/coast-view/pose-assets.ts` 在海岸素材加载后并入同一张素材表。`assets.ts`、`textures.ts` 都没动，因为 #81 已把它们改成打包图集。
