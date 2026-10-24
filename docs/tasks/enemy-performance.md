@@ -23,6 +23,8 @@ node --import tsx scripts/enemy-performance.mjs --world=mall --policy=observe-re
 
 `1f4207f`的独占矩阵六浏览器全为running、实际原生出手及原预算通过，但四个5Hz Runtime行在8.88秒死亡，整轮仍是BUDGET_BLOCKED。该回放转角幅值原用260px/s预估，远高于当前精瞄行走上限，5Hz逐格因此被过度减速；现直接用`SURVIVAL.walkSpeed × aimSpeedFactor`限制单步距离，仍由Runtime处理正常运动、负重、疼痛与碰撞。输入规划修正不改实际行走规则，最终重新验证完整矩阵，不拼接旧六浏览器行宣称新全矩阵通过。
 
+`22e5b5c`/HTML c35fdd15的独占固定路线矩阵实际PASS：12 Runtime与六浏览器全部完整12秒、每例原生出手，零错误/外部请求，原绝对预算均通过。60Hz advance p95最大2.027ms、路径最大0.394ms，浏览器advance/present/rAF p95最大1.8/1.0/7.8ms。该结论只签观察后退避路线；不签站定/近距持续射击、同比或真人真机。随后主线合入#102，组合新制品需重测并绑定原PR最终head，不将c35报告改成新制品证据。
+
 修订前的商场五次尝试（stationary240、retreat240、stationary300、strafe+heal300、strafe+heal240）均因死亡短样本或没有持续战斗未签收，全部保留原报告。三次短输入追踪进一步确认旧触屏直接开火时举枪为零、`actorShown`可能选择屏外目标；仅补举枪仍有死亡反例。不得将输入修正或新增避战场景当作既有失败已通过。最终准确head、实际结果和证据归档见承接PR；下方历史报告维持其原输入版本和制品归属。
 
 ## 采样边界

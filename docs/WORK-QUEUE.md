@@ -1,6 +1,6 @@
 # 当前任务入口
 
-最近核对：2026-10-24，main `67a7468`（含 #81街区敌人阶段、#96/#99受击素材与A组姿态）。本轮补核 #91 县域选图的 Opus 视觉深化入口；下表其他条目的合并状态、head 与检查结果以对应 GitHub 页面实时信息为准，旧快照不作为当前指令。
+最近核对：2026-10-24，main `f74ff91`（含 #102瞄准相机边界、#81街区敌人阶段、#96/#99受击素材与A组姿态）。本轮[PR #104](https://github.com/xuys2025/escape-bincov/pull/104)已正常同步主线，继续现有商场二层遭遇；下表其他条目的合并状态、head 与检查结果以对应 GitHub 页面实时信息为准，旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
@@ -13,7 +13,7 @@
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
-| 射击与改枪 | [#80 改枪进度](https://github.com/xuys2025/escape-bincov/issues/80) · [任务与排期](gunsmith/TASKS.md) · [射击说明](SHOOTING-SYSTEM-REWORK.md) | #39 射击基础已合入（`2bac4fb`，“稳定”手感）。#28 改枪规划拆成 55 项任务并排期，合入即表示已排期；M0 在分支 `feat/gunsmith` 进行，分 4 个实现 PR，预计 12-15 完成，进度只在 #80 更新 |
+| 射击与改枪 | [#80 改枪进度](https://github.com/xuys2025/escape-bincov/issues/80) · [任务与排期](gunsmith/TASKS.md) · [射击说明](SHOOTING-SYSTEM-REWORK.md) | #39 射击基础已合入（`2bac4fb`，“稳定”手感）。#28 改枪规划拆成 55 项任务并排期，合入即表示已排期；M0 在分支 `feat/gunsmith` 进行，分 4 个实现 PR，预计 12-15 完成，进度只在 #80 更新。M0-07 发现的地图边瞄准偏转按评审单独修复（`fix/aim-map-edge`，见[射击说明 S1](SHOOTING-SYSTEM-REWORK.md#s1-对齐测量与修法)） |
 | 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · [PR #88](https://github.com/xuys2025/escape-bincov/pull/88) · [PR #94](https://github.com/xuys2025/escape-bincov/pull/94) · [PR #97](https://github.com/xuys2025/escape-bincov/pull/97) · [受击姿态 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) | P0 第一项已合入：慢帧时序 #88（`b38f23d`），抖动顺弹道 #94（`edb02f2`）。命中确认经 [PR #97](https://github.com/xuys2025/escape-bincov/pull/97) 合入（`1af0fec`）：闪白和抖动从命中当帧画起；玩家受伤和敌人中弹分成两种声音，同一批同一目标只响一次；暴击有单独的命中标记和声音；击杀确认音跟随击杀标记。敌人受击/恢复姿态的七类 pixel-v2 图集在 #96：膝部不开缝、侧面缩头的返工已通过独立复验（生物缩头按足底以上的头部测区计，见[复验评论](https://github.com/xuys2025/escape-bincov/pull/96#issuecomment-6379336021)）；v1、原图和提示词保留。A 组（拾荒者、盐枭、守潮人、潮蚀生物）的接入由 `feat/hurt-poses` 的 PR 承接：中弹先显示受击帧约 90 ms，再显示恢复帧约 60 ms，只在角色用本种类身体图时切换；B 组三类依赖 #81。分枪种枪声、枪身回缩和双管按开枪聚合与 #81 正在改的位置重叠，等 #81 合入后再排；其余 P1–P2 未开工 |
 | 暴击与三属性 Perk | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [实现契约与记录](tasks/critical-perk-contract.md) · 分支 `agent/critical-perk` | 设计 #40 已合入（`b475b1b`）；实现经 [PR #92](https://github.com/xuys2025/escape-bincov/pull/92) 合入（`8b6192d`）：存档 v5/行动 v3、开枪暴击快照、24 项 Perk、屏息、基地选择与 500 重置、院子与旧页签界面和行动 HUD。#77 保持开放，只余 CP-T10 真人平衡与真机 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [县域选图实施记录](tasks/county-map-select.md) · [PR #91](https://github.com/xuys2025/escape-bincov/pull/91) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 十二区选图已实现，两处现有入口可出击、十区暂未开发。[Opus 视觉深化](tasks/county-map-select.md#opus-视觉深化2026-10-24)在 #91：固定比例地图、地标标记、选中光照与路线、十二张情报插图、面板就地更新。选图界面 #91 已合入（`4141503`）；真实新增区域/剧情/结局仍由原专题跟踪，不因界面或概念图完成关闭 #82 |
