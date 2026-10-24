@@ -2,6 +2,7 @@
 // Run after reviewing the versioned source PNGs; never overwrites legacy actor art.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
 import { browserOptions } from './browser-options.mjs';
 
@@ -121,9 +122,5 @@ await writeFile('assets/enemies/manifest.json', JSON.stringify({ schema: 1, mode
 const coast = JSON.parse(await readFile('assets/coast/manifest.json', 'utf8'));
 coast.assets = [...coast.assets.filter(a => !a.file.startsWith('assets/coast/enemy-v1/')), ...assets];
 await writeFile('assets/coast/manifest.json', JSON.stringify(coast, null, 2) + '\n');
-const old = await readFile('src/coast-view/assets.ts', 'utf8');
-const variable = id => 'a' + id.replaceAll('-', '_');
-const imports = coast.assets.map(a => `import ${variable(a.id)} from '../../${a.file}';`).join('\n');
-const entries = coast.assets.map(a => `  '${a.id}': ${variable(a.id)},`).join('\n');
-await writeFile('src/coast-view/assets.ts', `/** Coast PNGs inlined for offline play; generated from assets/coast/manifest.json. */\n${imports}\n\nexport const COAST_ASSET_URLS: Readonly<Record<string, string>> = {\n${entries}\n};\n\n${old.slice(old.indexOf('let loaded:'))}`);
+execFileSync(process.env.BINCOV_ART_PYTHON || 'python', ['scripts/pack-coast-art.py'], { stdio: 'inherit' });
 console.log(`Exported ${assets.length} enemy frames, ${coast.assets.length} total coast assets.`);
