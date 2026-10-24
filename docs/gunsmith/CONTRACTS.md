@@ -313,25 +313,29 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 
 ### Runtime 怎么接（M1-05）
 
-**状态：** 2026-10-24 在分支 `wip/gunsmith-m1runtime` 完成，基线 `feat/gunsmith` `e19cf00`。旧三枪的手感、弹量、换弹和重量一位不变。
+**状态：** 2026-10-24 在分支 `wip/gunsmith-m1runtime` 完成，基线 `feat/gunsmith` `e19cf00`；同日在 `feat/gunsmith` 与 M1-01～04、06（`wip/gunsmith-m1core`）合并，读装备栏里真实的枪械实例。旧三枪的手感、弹量、换弹和重量一位不变。
 
-- 入口是 [domain.ts](../../src/domain.ts) 的 `equippedGun(slot)`：装备栏（profile 的 `equipment` 或行动的 `loadout`）里那把枪的配置，即枪型加配件树；没枪是 `null`。读装备枪数值的地方都从这里走：
+- 入口是 [domain.ts](../../src/domain.ts) 的 `equippedGun(slot)`：装备栏（profile 的 `equipment` 或行动的 `loadout`）里那把枪的实例，即 UID、枪型、枪身救济、配件树和开关；没枪或匕首是 `null`。两半合并前各有一个同名函数（M1-05 的只返回原厂配置，M1-01 的返回实例），现在只有这一个。读装备枪的地方都从这里走，数值经 `buildOf` 取实例的配件：
   - `equippedWeapon(slot)`：经 `effectiveWeapon` 的有效 `WeaponDef`；没枪时是匕首那一行。
   - `equippedWeight(slot)`：枪加配件的重量（`gunWeight`）；没枪是 0。
-  - 装备栏现在还没有实例数据，装备的枪都按原厂配置算。参数类型 `GunSlot` 在 M1-01 给 `Equipment` 加上 `gun` 时自己带上它，`equippedGun` 只改一行，读 `slot.gun!.parts`；只拿着武器 id 的调用方（`cleanMagazine`）随即编译不过，提示改为传装备栏。这一点用临时加上 `gun` 的改动核对过。
+  - 结算估值（`settleRun` 的装备枪价值）也读它（M1-06）。
+  - 装备栏写了枪却没有 `weaponUid` 或 `gun` 是程序错误（存档校验不会放进来），`equippedGun` 直接抛错，不把它当原厂枪去算数值、重量或价钱。
 - Runtime：
-  - `currentWeapon`、`grip` 读装备枪的有效属性。按配置缓存：以 `equippedGun` 结果的 JSON 为键，配置变了才重算；缓存的对象冻结，所有读者共用。匕首照旧读 `WEAPONS.knife` 和 `handlingOf`；#39 的样本 `m4a1` 照旧读 `SAMPLE_GUNS` 和 `handlingOf`，M2-01 退役。
+  - `currentWeapon`、`grip` 读装备枪的有效属性。按实例缓存：以 `equippedGun` 返回的实例的 JSON 为键（UID、配置、开关），实例变了才重算；缓存的对象冻结，所有读者共用。匕首照旧读 `WEAPONS.knife` 和 `handlingOf`；#39 的样本 `m4a1` 照旧读 `SAMPLE_GUNS` 和 `handlingOf`，M2-01 退役。
   - `reloadTime` 是有效换弹时间，再乘 #92 的换弹 Perk 一次。`shoot` 用有效的 `WeaponDef` 和手感，RPG 身体倍率和控枪 Perk 仍在原处各乘一次。
-  - `startReload`、`loadMagazine` 按有效弹量。domain 的 `reloadMagazine` 改为接收装备栏，部署时的装填（`initialCheckpoint`、`SaveSession.beginRun`）也传装备栏。`cleanMagazine` 的调用方（`migrateSave`、`beginRun`、`settleRun`、装卸时退弹）只有武器 id，按原厂配置的有效弹量夹紧，由 M1-01、M1-03 改为传装备栏。
+  - `startReload`、`loadMagazine` 按有效弹量。domain 的 `reloadMagazine` 接收装备栏，部署时的装填（`initialCheckpoint`、`SaveSession.beginRun`）也传装备栏。
   - `carriedWeight` 里枪的重量来自 `gunWeight`。
   - 画面的 `hud.weapon`（含 `magSize`）、准星锥和 HUD 武器卡读的就是 `currentWeapon` 和 `grip`，不另查表。
-- 试枪场 `arm()` 和测试驱动的 `weapon()`、`magazine()` 按有效弹量装满和校验。
+- 弹匣：
+  - `cleanMagazine(slot, …)` 接收装备栏，按那把枪实例的有效弹量夹紧，普通弹里的救济弹不超过装弹数。调用方是 `migrateSave`（v3 按保留下来的实例；v0–v2 旧档只有原厂枪、还没有 UID，按原厂弹量，即旧规则）、`beginRun`、`settleRun`。
+  - 卸枪退弹（`equip`、`unequip`、`equipRun` 里的 `unloadMagazine`）不夹紧，按装备栏存的弹数原样退回，普通弹、救济弹分开：以后配置改了、弹量变小，退弹也不能吞子弹。
+  - 存档校验的弹匣上限：profile-codec 的 `validEquipment` 和 `validateExpansion` 在 `validateGun` 通过后用 `equippedWeapon(slot).magazine`；没枪时只能是 0。旧格式（profile v1/v2）仍按枪型的原厂弹量。经典检查点的携带物经 `decodeStoredProfile` 走同一条。
+- 试枪场 `arm()` 和测试驱动的 `weapon()`：换成另一种枪时给一把新的原厂实例（新的物品 UID），再按有效弹量装满；同一把枪不换实例。`magazine()` 按装备实例的有效弹量校验。
 - 院子和旧页签：出发负重（`RealHideoutRuntime.departure`、旧页签的 `preparedWeight`）里枪的重量用 `equippedWeight`；院子装备卡、旧页签装备区和行动背包面板显示的弹量用 `equippedWeapon`。只读名称、弹药种类或暴击的地方（出发检查、Perk 文案、救济规则等）照旧查 `WEAPONS`，配件不改这些。
-- 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，试枪场装弹，以及院子的出发负重。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。
+- 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，试枪场装弹，以及院子的出发负重。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。合并后加测：读者读的是实例自己的配件（以装了 G01 加长匣的 G17 为例，弹量 17→24、重量、换弹装填、出击和结算的弹匣都随实例），装备栏缺实例时抛错，卸枪按存的弹数原样退回，profile 的弹匣上限按实例。合并前后 `scripts/shooting-bench.ts` 的报告逐字节相同。
 - 还没接的：
   - 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定；开着的设备也要进缓存键。
   - 枪声半径是 `SURVIVAL.gunNoiseRange × noise`，M2-11 接入敌人听觉。
-  - 存档校验的弹匣上限（`profile-codec` 的 `validEquipment`、`expansion-state` 的 `validateExpansion`）仍是 `WEAPONS[weapon].magazine`。M1-01 在 `validateGun` 通过后改用 `equippedWeapon(slot).magazine`。
 
 ### 待维护者定
 
@@ -529,7 +533,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - **真实旧客户端。** `test:expansion` 加了第三个固定旧包 `pre-gunsmith.html`（main `30781f4`，最后一个 v5 客户端）：它和另两个旧包有锁无锁都拒读 v6、不改任何字节；v4、v5 客户端都拒绝 v6 完整备份文件。
 - **估值与售价（M1-06）。** `D.itemSale` 按组成算，救济组成值 0；有救济组成时商店拒绝整件出售，原因是「这把枪装有救济配件，不能整枪出售。」，结算时混进待卖区的也整笔拒绝；救济判定 `liquidValue` 把这样的枪算 0（商店现在不收）。
 - **提交顺序。** M1-01 的提交单独看时只读写 v6，旧记录一律拒读（原字节不变）；M1-02 的提交接上迁移后全部测试通过。
-- **留给 M1-05。** 弹匣上限仍用 `WEAPONS[weapon].magazine`，卸枪时的 `cleanMagazine` 也是；改成有效弹量时，卸枪要按存档里的弹数原样退回，不能先按原厂弹量截断。
+- **弹匣上限（与 M1-05 合并时接上）。** 存档校验和 `cleanMagazine` 按装备实例的有效弹量，卸枪按存的弹数原样退回，见上面[Runtime 怎么接](#runtime-怎么接m1-05)的「弹匣」。
 - **风险。** `gunsBackup` 让第一次写入的记录约翻倍；原记录超过约 1 MiB 时写入会超出 2 MiB 上限而失败，读档仍不覆盖原字节，可导出原始备份。实测刚出击的记录约 16 KB，带全部旧备份的约 25 KB。
 
 ### 待维护者定

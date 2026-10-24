@@ -8,7 +8,7 @@
  * Versions 1 and 2 (records v2 to v5) are the old format, where no `gun` or `weaponUid` field may appear: they are
  * checked by the old rules and migrated (docs/gunsmith/CONTRACTS.md, the M0-06 section), never repaired.
  */
-import { ITEMS, WEAPONS, cleanOldSave, createInventory, fits, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
+import { ITEMS, WEAPONS, cleanOldSave, createInventory, equippedWeapon, fits, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
 import { gunUids, isGunId, validateGun } from './gunsmith/instance';
 import type { ProfileV2 } from './gunsmith/migrate';
 
@@ -68,17 +68,19 @@ export function validInventory(value: unknown, w: number, h: number, seen: Set<s
 }
 /**
  * The equipped slot: a gun that is not the knife (or none), a magazine within its size. In the gun format the slot also
- * names the gun: `weaponUid` and `gun` are both null without a gun, otherwise a valid instance whose uids join `seen`.
- * The old format may hold neither field.
+ * names the gun: `weaponUid` and `gun` are both null without a gun, otherwise a valid instance whose uids join `seen`,
+ * and the size is that instance's effective capacity (equippedWeapon, M1-05). The old format may hold neither field and
+ * keeps the gun type's size.
  */
 function validEquipment(value: any, seen: Set<string>, guns: boolean): boolean {
   if (!value || typeof value.relief !== 'boolean' || !whole(value.ammo, 0, COUNT_MAX) || !whole(value.ammoRelief, 0, COUNT_MAX)) return false;
   const gun = value.weapon === null ? null : hasOwnStringKey(WEAPONS, value.weapon) && value.weapon !== 'knife' ? WEAPONS[value.weapon] : undefined;
-  if (gun === undefined || value.ammo > (gun?.magazine ?? 0) || value.ammoRelief > value.ammo) return false;
-  if (!guns) return !Object.hasOwn(value, 'weaponUid') && !Object.hasOwn(value, 'gun');
+  if (gun === undefined || value.ammoRelief > value.ammo) return false;
+  if (!guns) return value.ammo <= (gun?.magazine ?? 0) && !Object.hasOwn(value, 'weaponUid') && !Object.hasOwn(value, 'gun');
   if (!Object.hasOwn(value, 'weaponUid') || !Object.hasOwn(value, 'gun')) return false;
-  if (value.weapon === null) return value.weaponUid === null && value.gun === null;
-  if (!validateGun(value.weapon, value.weaponUid, value.gun).ok) return false;
+  if (value.weapon === null) return value.ammo === 0 && value.weaponUid === null && value.gun === null;
+  // The capacity is read from the instance only once it is known to be valid.
+  if (!validateGun(value.weapon, value.weaponUid, value.gun).ok || value.ammo > equippedWeapon(value).magazine) return false;
   const uids = gunUids({ uid: value.weaponUid, parts: value.gun.parts });
   if (uids.some(uid => seen.has(uid))) return false;
   for (const uid of uids) seen.add(uid);

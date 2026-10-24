@@ -288,12 +288,15 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1 | Profil
     inventory(profile.stash, 10, profile.upgraded ? 9 : 6); inventory(raid.loadout.bag, 6, 5); inventory(raid.loadout.safe, 2, 2);
     exactKeys(raid.loadout, ['bag', 'safe', 'weapon', 'ammo', 'ammoRelief', 'relief', 'runId', ...(guns ? ['weaponUid', 'gun'] : [])]);
     const magazine = raid.loadout, gun = magazine.weapon === null ? null : hasOwnStringKey(D.WEAPONS, magazine.weapon) ? D.WEAPONS[magazine.weapon] : undefined;
-    if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !whole(magazine.ammo, 0, gun?.magazine ?? 0)
+    // The old format caps the magazine at the gun type's size; the gun format at its instance's, below.
+    if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !whole(magazine.ammo, 0, guns ? COUNT_MAX : gun?.magazine ?? 0)
         || !whole(magazine.ammoRelief, 0, magazine.ammo) || typeof magazine.relief !== 'boolean'
         || profile.bag.items.length || profile.equipment.weapon !== null) fail();
-    // The equipped gun (gun format): its own uid and its parts' join the item uids, like a gun in the bag.
+    // The equipped gun (gun format): its own uid and its parts' join the item uids, like a gun in the bag. The magazine
+    // holds at most the effective capacity of that instance's build (M1-05), read once the instance is known valid.
     if (guns) {
         if (magazine.weapon === null ? magazine.weaponUid !== null || magazine.gun !== null : !validateGun(magazine.weapon, magazine.weaponUid, magazine.gun).ok) fail();
+        if (magazine.ammo > D.equippedWeapon(magazine).magazine) fail();
         for (const uid of D.equipmentUids(magazine)) { if (invIds.has(uid)) fail(); allocated(uid); invIds.add(uid); }
     }
     const inventoryIdentity = (inv: D.Inventory) => JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated, D.gunKey(i.gun)])]);

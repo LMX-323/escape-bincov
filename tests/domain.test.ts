@@ -9,6 +9,10 @@ import {
 import * as S from '../src/shop';
 import { factoryState } from '../src/gunsmith/instance';
 
+/** An equipped slot holding a factory `weapon` (or nothing for null and the knife), as the gun readers take it. */
+const held = (weapon: string | null) => weapon && weapon !== 'knife'
+  ? { weapon, weaponUid: `held-${weapon}`, gun: factoryState(), relief: false } : { weapon, weaponUid: null, gun: null, relief: false };
+
 test('20 original items plus production/RPG items have coherent footprints, stacks and prices', () => {
   const original = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'];
   assert.equal(original.length, 20); original.forEach(id => assert.ok(ITEMS[id]));
@@ -82,17 +86,17 @@ test('equipping swaps safely and returns the gun to storage on unequip', () => {
 test('reload consumes exactly missing rounds and never invents ammunition', () => {
   const bag = createInventory(6, 5);
   addItem(bag, 'ammo9', 10);
-  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 3, 0, bag), { ammo: 8, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('pistol'), 3, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 8, 0, bag), { ammo: 8, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('pistol'), 8, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 0, 0, bag), { ammo: 5, ammoRelief: 0 });
-  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('pistol'), 0, 0, bag), { ammo: 5, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('pistol'), 0, 0, bag), { ammo: 0, ammoRelief: 0 });
   assert.deepEqual(bag.items, []);
   // Only the gun's own ammunition is taken; the knife has none.
   addItem(bag, 'ammo9', 4);
-  assert.deepEqual(reloadMagazine({ weapon: 'shotgun' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
-  assert.deepEqual(reloadMagazine({ weapon: 'knife' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('shotgun'), 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine(held('knife'), 0, 0, bag), { ammo: 0, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 4);
 });
 
@@ -305,11 +309,11 @@ test('mixed magazines load relief rounds first without changing ordinary ammo pr
   const bag = createInventory(6, 5);
   addItem(bag, 'ammo9', 10);
   addItem(bag, 'ammo9', 3, true);
-  const result = reloadMagazine({ weapon: 'pistol' }, 2, 1, bag);
+  const result = reloadMagazine(held('pistol'), 2, 1, bag);
   assert.deepEqual(result, { ammo: 8, ammoRelief: 4 });
   assert.equal(count(bag, 'ammo9'), 7);
   assert.equal(bag.items.every(i => !i.relief), true);
-  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, result.ammo, result.ammoRelief, bag), result);
+  assert.deepEqual(reloadMagazine(held('pistol'), result.ammo, result.ammoRelief, bag), result);
   assert.equal(count(bag, 'ammo9'), 7);
 });
 

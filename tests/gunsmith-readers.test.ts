@@ -9,12 +9,20 @@ import { createRangeRaid, ShootingRange } from '../src/range/raid';
 import { SaveSession, createSessionState } from '../src/session';
 import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { arm, benchRaid, perkBench, type Bench } from './fixtures/shooting-bench';
+import { decodeStoredProfile } from '../src/profile-codec';
+import { effectiveWeapon } from '../src/gunsmith/stats';
+import { buildOf, gunWeight, type PartNode } from '../src/gunsmith/instance';
 
-// #28 M1-05: every reader of the equipped gun's numbers goes through the gunsmith entry (D.equippedGun and the
-// effective stats). Nothing can modify the old three guns yet, so each reader must give exactly what it gave when it
-// looked WEAPONS, handlingOf and ITEMS up by id. The oracles below are those old readers, copied from before M1-05.
+// #28 M1-05: every reader of the equipped gun's numbers goes through the gunsmith entry (D.equippedGun, the equipped
+// instance, and the effective stats of its parts). Nothing can modify the old three guns yet, so each reader must give
+// exactly what it gave when it looked WEAPONS, handlingOf and ITEMS up by id. The oracles below are those old readers,
+// copied from before M1-05.
 
 const FACTORY = ['pistol', 'shotgun', 'carbine'] as const;
+/** An equipped slot as the saves keep it: `weapon` as one instance with `parts` (a factory gun by default), or no gun. */
+const slot = (weapon: string | null, parts: PartNode[] = []) => weapon && weapon !== 'knife'
+    ? { weapon, weaponUid: `held-${weapon}`, gun: { parts, devices: { laser: false, light: false } }, relief: false }
+    : { weapon, weaponUid: null, gun: null, relief: false };
 const integer = (value: unknown, fallback = 0, max = 1e9) =>
     typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(max, Math.floor(value))) : fallback;
 const isGun = (id: unknown): id is string => typeof id === 'string' && id !== 'knife' && Object.hasOwn(D.WEAPONS, id);
@@ -45,21 +53,73 @@ function oldCarried(r: Bench['runtime']): number {
         + (w.ammo ? D.ITEMS[w.ammo].weight * r.mag : 0) + (r.layered?.charm ? D.ITEMS[r.layered.charm.id].weight : 0);
 }
 
-test('the equipped gun\'s build, weapon and weight: the old three read as from WEAPONS and ITEMS, through the gunsmith', () => {
+test('the equipped gun\'s instance, weapon and weight: the old three read as from WEAPONS and ITEMS, through the gunsmith', () => {
     for (const id of FACTORY) {
-        const slot = { weapon: id }, w = D.equippedWeapon(slot);
-        assert.deepEqual(D.equippedGun(slot), { id, parts: [] });
+        const held = slot(id), w = D.equippedWeapon(held);
+        assert.deepEqual(D.equippedGun(held), { uid: `held-${id}`, id, relief: false, parts: [], devices: { laser: false, light: false } });
         assert.deepEqual(w, D.WEAPONS[id]);
         assert.notEqual(w, D.WEAPONS[id], 'the effective stats, worked out fresh, not the table row');
-        assert.equal(D.equippedWeight(slot), D.ITEMS[id].weight);
+        assert.equal(D.equippedWeight(held), D.ITEMS[id].weight);
     }
     // No gun is the knife: its row, no weight. Neither the knife nor the #39 sample rifle is a catalog gun.
     for (const weapon of [null, 'knife']) {
-        assert.equal(D.equippedGun({ weapon }), null);
-        assert.equal(D.equippedWeapon({ weapon }), D.WEAPONS.knife);
-        assert.equal(D.equippedWeight({ weapon }), 0);
+        assert.equal(D.equippedGun(slot(weapon)), null);
+        assert.equal(D.equippedWeapon(slot(weapon)), D.WEAPONS.knife);
+        assert.equal(D.equippedWeight(slot(weapon)), 0);
     }
-    assert.equal(D.equippedGun({ weapon: SAMPLE_GUNS.m4a1.id }), null);
+    assert.equal(D.equippedGun({ ...slot(null), weapon: SAMPLE_GUNS.m4a1.id }), null);
+});
+
+test('the readers take the equipped instance\'s own parts, and refuse a gun slot without its instance', () => {
+    // No old gun has a feed module, and G17 becomes an item only in M2-01, so a G17 with its extended magazine (17 to
+    // 24 rounds, heavier) shows the instance's parts reach every reader: capacity, numbers, weight, reload, the raid.
+    const g01: PartNode = { uid: 'part-g01', id: 'G01', slot: 'mag', relief: false, children: [] };
+    const modded = slot('gb17', [g01]), factory = slot('gb17');
+    assert.deepEqual([D.equippedWeapon(factory).magazine, D.equippedWeapon(modded).magazine], [17, 24]);
+    assert.deepEqual(D.equippedWeapon(modded), effectiveWeapon(buildOf({ id: 'gb17', parts: [g01] })));
+    assert.equal(D.equippedWeight(modded), gunWeight({ id: 'gb17', parts: [g01] }));
+    assert.ok(D.equippedWeight(modded) > D.equippedWeight(factory));
+    const bag = D.createInventory(6, 5); D.addItem(bag, 'ammo9', 40);
+    assert.deepEqual(D.reloadMagazine(modded, 3, 0, bag), { ammo: 24, ammoRelief: 0 });
+    assert.equal(D.count(bag, 'ammo9'), 19);
+    // A raid starts and settles with the magazine the instance holds: 24 is kept, more is cut to 24, never to 17.
+    const save = D.newSave(), at = save.equipment.weaponUid;
+    save.equipment = { ...modded, weaponUid: at, ammo: 24, ammoRelief: 5 };
+    const loadout = D.beginRun(save, 7);
+    assert.deepEqual([loadout.weaponUid, loadout.gun, loadout.ammo, loadout.ammoRelief], [at, modded.gun, 24, 5]);
+    loadout.ammo = 30;
+    assert.ok(D.settleRun(save, loadout, 'extract', 0));
+    assert.deepEqual([save.equipment.weaponUid, save.equipment.gun, save.equipment.ammo, save.equipment.ammoRelief], [at, modded.gun, 24, 5]);
+    // A slot that names a gun but holds no instance is a bug: the readers throw instead of reading a factory gun.
+    for (const broken of [{ ...modded, gun: null }, { ...modded, weaponUid: null }]) {
+        assert.throws(() => D.equippedGun(broken), /holds no gun instance/);
+        assert.throws(() => D.equippedWeapon(broken), /holds no gun instance/);
+        assert.throws(() => D.equippedWeight(broken), /holds no gun instance/);
+    }
+});
+
+test('unloading gives back the stored rounds as they are; the saves cap a magazine at its instance\'s capacity', () => {
+    // An equipped pistol holding more rounds than it takes (8): unequipping returns all 10, ordinary and relief apart.
+    const save = D.newSave(), relief = (inv: D.Inventory) => inv.items.filter(i => i.id === 'ammo9' && i.relief).reduce((n, i) => n + i.qty, 0);
+    const ordinary = D.count(save.stash, 'ammo9') - relief(save.stash);
+    save.equipment.ammo = 10; save.equipment.ammoRelief = 3;
+    assert.ok(D.unequip(save));
+    assert.deepEqual([D.count(save.stash, 'ammo9') - relief(save.stash), relief(save.stash)], [ordinary + 7, 3]);
+    // A stored profile holds at most the effective capacity of the equipped instance; no gun holds no rounds.
+    for (const id of FACTORY) {
+        const profile = D.newSave(), cap = D.equippedWeapon(slot(id)).magazine;
+        profile.equipment = { ...slot(id), ammo: cap, ammoRelief: 1 };
+        assert.equal(decodeStoredProfile(profile).equipment.ammo, cap, id);
+        profile.equipment.ammo = cap + 1;
+        assert.throws(() => decodeStoredProfile(profile), /存档格式不支持/, id);
+    }
+    const empty = D.newSave(); empty.equipment = { ...slot(null), ammo: 1, ammoRelief: 0 };
+    assert.throws(() => decodeStoredProfile(empty), /存档格式不支持/);
+    // A layered raid's loadout likewise (validateExpansion): a full magazine of its instance commits, one more does not.
+    const b = benchRaid(), cap = D.equippedWeapon(b.state.loadout!).magazine;
+    const full = b.saves.prepareExpansionMutation(d => { d.expansion.raid!.loadout.ammo = cap; });
+    assert.ok(full); assert.equal(b.saves.commitExpansionMutation(full), 'committed');
+    assert.throws(() => b.saves.prepareExpansionMutation(d => { d.expansion.raid!.loadout.ammo = cap + 1; }), /行动|存档/);
 });
 
 test('reloads and stored magazines stop at the effective capacity exactly where they stopped at WEAPONS', () => {
@@ -75,7 +135,7 @@ test('reloads and stored magazines stop at the effective capacity exactly where 
     for (const weapon of [...FACTORY, 'knife', null]) for (const current of [-3, 0, 1, 2, 7, 8, 12, 30, 2.5, NaN])
         for (const relief of [0, 1, 5, 99]) for (const contents of bags) {
             const was = fill(contents), now = fill(contents), at = `${weapon} ${current} ${relief} ${JSON.stringify(contents)}`;
-            assert.deepEqual(D.reloadMagazine({ weapon }, current, relief, now), oldReload(weapon || 'knife', current, relief, was), at);
+            assert.deepEqual(D.reloadMagazine(slot(weapon), current, relief, now), oldReload(weapon || 'knife', current, relief, was), at);
             assert.deepEqual(now, was, at);
             cases++;
         }
@@ -146,7 +206,7 @@ test('the base departure weight weighs the equipped gun through the gunsmith ent
     const hideout = new RealHideoutRuntime(state, saves, () => now, () => true);
     assert.equal(hideout.enter().ok, true);
     for (const weapon of [...FACTORY, null]) {
-        const ticket = saves.prepareExpansionMutation(d => { d.profile.equipment = { weapon, relief: false, ammo: weapon ? D.WEAPONS[weapon].magazine : 0, ammoRelief: 0 }; });
+        const ticket = saves.prepareExpansionMutation(d => { d.profile.equipment = { ...slot(weapon), ammo: weapon ? D.WEAPONS[weapon].magazine : 0, ammoRelief: 0 }; });
         assert.ok(ticket); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
         const p = hideout.snapshot().profile, w = D.WEAPONS[p.equipment.weapon || 'knife'], charm = state.expansion?.charm;
         assert.equal(p.equipment.weapon, weapon);

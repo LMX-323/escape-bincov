@@ -166,7 +166,7 @@ function fillMagazine(capacity: number, current: unknown, relief: unknown): Maga
  * unloading never clamps (unloadMagazine).
  */
 function cleanMagazine(slot: GunSlot, current: unknown, relief: unknown): Magazine {
-  return fillMagazine(isGun(slot.weapon) ? equippedWeapon(slot).magazine : 0, current, relief);
+  return fillMagazine(isGunId(slot.weapon) ? equippedWeapon(slot).magazine : 0, current, relief);
 }
 const emptyEquipment = (): Equipment => ({ weapon: null, weaponUid: null, gun: null, relief: false, ammo: 0, ammoRelief: 0 });
 /** What a new item of this id is born with: a gun leaves the factory with nothing installed, anything else has no state. */
@@ -460,7 +460,7 @@ const equippedValue = (e: Equipment) => { const held = equippedGun(e); return he
 export function settleRun(save: SaveDataV1, loadout: RunLoadout, outcome: Outcome, kills: number): RunSummary | null {
   if (!save.activeRun?.runId || save.activeRun.runId !== loadout.runId) return null;
   const magazine = cleanMagazine(loadout, loadout.ammo, loadout.ammoRelief);
-  const ammoId = isGun(loadout.weapon) ? WEAPONS[loadout.weapon].ammo : null;
+  const ammoId = isGunId(loadout.weapon) ? equippedWeapon(loadout).ammo : null;
   const carriedValue = inventoryValue(loadout.bag) + equippedValue(loadout) + (ammoId ? (magazine.ammo - magazine.ammoRelief) * ITEMS[ammoId].sell : 0);
   save.safe = clone(loadout.safe);
   const summary: RunSummary = {
@@ -606,12 +606,15 @@ export function equipRun(loadout: RunLoadout, itemUid: string): boolean {
   Object.assign(loadout, slotOf(selected));
   return true;
 }
-/** Called only against a trial inventory so a failed unload cannot partially commit. */
+/**
+ * The rounds in `equipment`'s magazine back into `inv`, ordinary and relief kept apart. Called only against a trial
+ * inventory so a failed unload cannot partially commit. The stored count comes back as it is, never clamped to the
+ * gun's capacity first: rounds a changed build no longer holds (the M2 workbench) must not vanish on the way out.
+ */
 function unloadMagazine(inv: Inventory, equipment: Equipment): boolean {
   if (!isGun(equipment.weapon)) return true;
-  const magazine = cleanMagazine(equipment, equipment.ammo, equipment.ammoRelief);
-  const ammoId = WEAPONS[equipment.weapon].ammo!;
-  return addItem(inv, ammoId, magazine.ammo - magazine.ammoRelief) === 0 && addItem(inv, ammoId, magazine.ammoRelief, true) === 0;
+  const ammo = integer(equipment.ammo), relief = integer(equipment.ammoRelief, 0, ammo), ammoId = equippedWeapon(equipment).ammo!;
+  return addItem(inv, ammoId, ammo - relief) === 0 && addItem(inv, ammoId, relief, true) === 0;
 }
 export function submitQuest(save: SaveDataV1, id: string): boolean {
   const quest = QUESTS[id];
@@ -643,7 +646,7 @@ export function upgradeStash(save: SaveDataV1): boolean {
  * independently of the gun's origin.
  */
 export function reloadMagazine(slot: GunSlot, current: number, currentRelief: number, bag: Inventory): Magazine {
-  if (!isGun(slot.weapon)) return fillMagazine(0, current, currentRelief);
+  if (!isGunId(slot.weapon)) return fillMagazine(0, current, currentRelief);
   const weapon = equippedWeapon(slot), magazine = fillMagazine(weapon.magazine, current, currentRelief);
   for (const relief of [true, false]) for (const entry of bag.items) {
     if (entry.id !== weapon.ammo || !!entry.relief !== relief) continue;

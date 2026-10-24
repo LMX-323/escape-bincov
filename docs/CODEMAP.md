@@ -58,7 +58,7 @@
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
-5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun` 和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按配置缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
+5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
 6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）；搜刮面板里移动键（`isMoveKey`）直接离开并开始移动（#26 F13），回归在 [loot-browser-test.mjs](../scripts/loot-browser-test.mjs)。
 
 画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。

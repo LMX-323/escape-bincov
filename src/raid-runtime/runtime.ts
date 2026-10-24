@@ -91,9 +91,10 @@ export class CoastRaidRuntime implements RaidRuntime {
     /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
     private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
     /**
-     * The loadout gun's effective numbers (gunsmith/stats.ts) and weight, for the build `key` names. The gun in hand is
-     * read several times a frame, so they are worked out once per build (docs/gunsmith/CONTRACTS.md, M1-05) and frozen,
-     * since every reader shares them. Never saved; M2-03 adds the switched-on devices to the key.
+     * The loadout gun's effective numbers (gunsmith/stats.ts) and weight, for the instance `key` names: its uid, type,
+     * installed parts and switches. The gun in hand is read several times a frame, so they are worked out once per
+     * instance (docs/gunsmith/CONTRACTS.md, M1-05) and frozen, since every reader shares them. Never saved. The
+     * switches are in the key already; M2-03 passes the switched-on devices to effectiveStats.
      */
     private armed: { key: string; weapon: D.WeaponDef; grip: Handling; weight: number } | null = null;
     extractTime = 0;
@@ -188,8 +189,8 @@ export class CoastRaidRuntime implements RaidRuntime {
     get limits() { return this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit }; }
     get paused() { return this.locked || ['pause', 'help', 'abandon', 'rotate', 'checkpoint-error'].includes(this.overlay); }
     /**
-     * The loadout gun's effective numbers (#28 M1-05: its build through D.equippedGun and effectiveStats), recomputed
-     * only when the build changes; null when the loadout has no gun.
+     * The loadout gun's effective numbers (#28 M1-05: buildOf of the instance D.equippedGun returns, through
+     * effectiveStats), recomputed only when that instance changes; null when the loadout has no gun.
      */
     private equipped() {
         const gun = D.equippedGun(this.session.loadout ?? this.terminalLoadout);
