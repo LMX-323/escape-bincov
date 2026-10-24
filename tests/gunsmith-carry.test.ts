@@ -8,6 +8,8 @@ import { CoastRaidRuntime } from '../src/raid-runtime/runtime';
 import { createRuntimeTestDriver } from '../src/raid-runtime/test-support';
 import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { organizeStash, transferBagToStash } from '../src/inventory-actions';
+import { firstAvailableSlot, moveQuantity, placementError } from '../src/loot';
+import * as S from '../src/shop';
 import { gunSize, type GunState, type PartNode } from '../src/gunsmith/instance';
 
 // Gunsmith M1-03 (docs/gunsmith/CONTRACTS.md): equipping, unequipping and swapping guns in a raid move one gun instance:
@@ -256,4 +258,36 @@ test('a gun carried through a layer change stays the same instance; a gun left o
     assert.deepEqual([raid.loadout.weaponUid, raid.loadout.gun], ['m-carbine', fitted()]);
     assert.deepEqual(raid.maps[from].loot.find(l => l.uid === 'm-shotgun')!.gun, factory());
     assert.equal(raid.maps[raid.currentMap].loot.some(l => l.uid === 'm-shotgun'), false);
+});
+
+test('a gun is moved, swapped, sorted and sold at its own footprint: a part that lengthens it needs the longer gap', () => {
+    const long = () => gunItem('long', 'carbine', 0, 0, suppressed());
+    // A three-cell-wide grid refuses the 4x1 gun (a factory carbine would fit); four cells take it.
+    const from = D.createInventory(6, 5), narrow = D.createInventory(3, 2), to = D.createInventory(4, 1);
+    from.items = [long()];
+    assert.match(placementError(from, narrow, 'long', 0, 0)!, /超出/); assert.equal(moveQuantity(from, narrow, 'long', 0, 0), false);
+    assert.equal(firstAvailableSlot(narrow, from.items[0]), null); assert.deepEqual(narrow.items, []);
+    assert.equal(placementError(from, to, 'long', 0, 0), null);
+    assert.deepEqual(firstAvailableSlot(to, from.items[0]), { x: 0, y: 0, rotated: false });
+    assert.ok(moveQuantity(from, to, 'long', 0, 0)); assert.deepEqual(to.items[0].gun, suppressed());
+    // Dropping a watch onto it would swap it into the watch's three-cell row: refused, both sides unchanged.
+    const bag = D.createInventory(3, 1), stash = D.createInventory(4, 1);
+    bag.items = [{ uid: 'w', id: 'watch', qty: 1, x: 0, y: 0 }]; stash.items = [long()];
+    const sides = structuredClone([bag, stash]);
+    assert.match(placementError(bag, stash, 'w', 0, 0)!, /原位置放不下/); assert.equal(moveQuantity(bag, stash, 'w', 0, 0), false);
+    assert.deepEqual([bag, stash], sides);
+    // Sorting and stashing everything pack it at its real length without overlaps.
+    const save = D.newSave(); save.bag.items = [long()]; save.stash.items = [];
+    for (let x = 0; x < 10; x++) for (let y = 1; y < 6; y++) save.stash.items.push({ uid: `s-${x}-${y}`, id: 'watch', qty: 1, x, y });
+    for (let x = 3; x < 10; x++) save.stash.items.push({ uid: `s-${x}-0`, id: 'watch', qty: 1, x, y: 0 });
+    const kept = structuredClone(save);
+    assert.equal(transferBagToStash(save), false, 'a 4x1 gun does not fit the 3-cell gap, nothing moves'); assert.deepEqual(save, kept);
+    save.stash.items = save.stash.items.filter(i => i.uid !== 's-3-0'); assert.ok(transferBagToStash(save)); assert.ok(organizeStash(save));
+    assert.deepEqual(save.stash.items.find(i => i.uid === 'long')!.gun, suppressed());
+    assert.doesNotThrow(() => decodeStoredProfile({ ...save, activeRun: null }));
+    // The sell list (4x3) takes it only where four cells are free.
+    const shop = D.newSave(); shop.stash.items = [gunItem('sell-long', 'carbine', 0, 0, suppressed())]; shop.bag.items = []; shop.safe.items = [];
+    const cart = S.createCart(shop, 'arms');
+    assert.equal(S.shopPlacementError(cart, 'stash', 'sell', 'sell-long', 1, 0), S.SHOP_SPACE_MESSAGE);
+    assert.equal(S.shopPlacementError(cart, 'stash', 'sell', 'sell-long', 0, 0), null);
 });

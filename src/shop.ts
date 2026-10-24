@@ -62,7 +62,7 @@ export function shopPlacementError(cart: ShopCart, from: ShopSource, to: ShopSou
     if (from === 'buy' && to === 'merchant') return null;
     if (!((from === 'merchant' && to === 'buy') || (from === 'stash' && to === 'sell') || (from === 'sell' && to === 'stash') || (from === to && from !== 'merchant'))) return '先放入待买或待卖区，再统一结算。';
     if (to === 'sell') { const refusal = saleRefusal(item); if (refusal) return refusal; }
-    return D.fits(shopInventory(cart, to), item.id, x, y, from === to ? uid : undefined, !!item.rotated) ? null : SHOP_SPACE_MESSAGE;
+    return D.fits(shopInventory(cart, to), item, x, y, from === to ? uid : undefined, !!item.rotated) ? null : SHOP_SPACE_MESSAGE;
 }
 /** Only edits the disposable cart. Owned goods and money remain untouched. */
 export function moveShopItem(cart: ShopCart, from: ShopSource, to: ShopSource, uid: string, x: number, y: number): boolean {
@@ -118,7 +118,7 @@ export function settleCartResult(save: D.SaveDataV1, cart: ShopCart, rpg = false
     const stash = structuredClone(cart.stash), { net } = cartTotals(cart);
     if (!Number.isFinite(net)) return fail('rule');
     if (save.cash < net) return fail('funds');
-    for (const item of stash.items) if (!D.fits(stash, item.id, item.x, item.y, item.uid, !!item.rotated)) return fail('space');
+    for (const item of stash.items) if (!D.fits(stash, item, item.x, item.y, item.uid, !!item.rotated)) return fail('space');
     for (const item of cart.buy.items) if (D.addItem(stash, item.id, item.qty)) return fail('space');
     save.stash = stash; save.cash -= net;
     return { ok: true };
