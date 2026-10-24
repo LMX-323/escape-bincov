@@ -64,6 +64,16 @@ export function recordUpgradeFields(expansion: ExpansionState | null, previous: 
     enemyBackup: enemies ? enemyRecord(previous) ? previous!.enemyBackup! : raw : undefined };
 }
 const failure = (): never => { throw new Error('无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。'); };
+/**
+ * A legacy-key profile names a gun field: an item with `gun` in any inventory the lenient repair reads (stash, the v0
+ * `inventory`, bag, safe; a list or an object holding `items`), or the slot with `gun` or `weaponUid`.
+ */
+function holdsGunFields(raw: Record<string, any>): boolean {
+  const own = (value: unknown, key: string) => !!value && typeof value === 'object' && Object.hasOwn(value, key);
+  const items = (inv: any): unknown[] => Array.isArray(inv) ? inv : inv && typeof inv === 'object' && Array.isArray(inv.items) ? inv.items : [];
+  return [raw.stash, raw.inventory, raw.bag, raw.safe].some(inv => items(inv).some(item => own(item, 'gun')))
+    || own(raw.equipment, 'gun') || own(raw.equipment, 'weaponUid');
+}
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
   if (value && typeof value === 'object') return '{' + Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => JSON.stringify(k) + ':' + canonical(v)).join(',') + '}';
@@ -179,6 +189,9 @@ export class RecoveryStore {
       try { raw = JSON.parse(this.legacy); } catch { return failure(); }
       if (!raw || typeof raw !== 'object' || Array.isArray(raw) || ![undefined, 0, 1, 2].includes(raw.version)
           || (!raw.stash && !raw.inventory)) return failure();
+      // No client before gun instances wrote `gun` or `weaponUid` (M0 review, decision 2): a v0/v1 profile holding one is
+      // refused here, never stripped by the lenient repair below; v2 is checked strictly and refuses it as well.
+      if (raw.version !== 2 && holdsGunFields(raw)) return failure();
       // Both paths migrate to profile v3 (migrateSave), every gun a factory instance; the bytes stay as legacyBackup.
       save = raw.version === 2 ? decodeStoredProfile({ ...raw, activeRun: null }) : D.migrateSave(raw);
       if (raw.version === 2) {

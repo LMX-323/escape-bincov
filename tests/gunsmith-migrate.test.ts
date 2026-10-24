@@ -297,6 +297,36 @@ test('the equipped gun\'s uid avoids every string already in the save', () => {
     assert.equal(decodeSession(JSON.stringify(record)).expansion!.raid!.loadout.weaponUid, 'gun-v6-2');
 });
 
+test('a legacy-key v0/v1 profile holding a gun field is refused at load, never stripped by the old repair, and its bytes stay', () => {
+    // No client before gun instances wrote these fields (M0 review, decision 2). Version 2 is checked strictly and refused
+    // them already; v0/v1 went through the lenient repair (migrateSave), which dropped them silently (M1-08 save review, p3).
+    const v1 = { version: 1, cash: 900, upgraded: false, activeRun: null, settings: { volume: .3 }, stats: { runs: 1, extracts: 1, kills: 0 },
+        quests: { repair: false, sample: false, ledger: false }, stash: { w: 10, h: 6, items: [{ uid: 'c1', id: 'carbine', qty: 1, x: 0, y: 0 }] },
+        bag: { w: 6, h: 5, items: [{ uid: 'b1', id: 'pistol', qty: 1, x: 0, y: 0 }] }, safe: { w: 2, h: 2, items: [{ uid: 's1', id: 'ammo9', qty: 5, x: 0, y: 0 }] },
+        equipment: { weapon: 'carbine', relief: false, ammo: 3, ammoRelief: 0 } };
+    const muzzle = () => ({ parts: [{ uid: 'p1', id: 'M05', slot: 'muzzle', relief: false, children: [] }], devices: { laser: false, light: false } });
+    const faults: [string, (p: any) => void][] = [
+        ['a stash gun holding a fitted state', p => { p.stash.items[0].gun = muzzle(); }],
+        ['a bag gun holding a factory state', p => { p.bag.items[0].gun = factoryState(); }],
+        ['a safe item holding a null state', p => { p.safe.items[0].gun = null; }],
+        ['the slot holding a uid', p => { p.equipment.weaponUid = 'x1'; }],
+        ['the slot holding a state', p => { p.equipment.gun = factoryState(); }],
+        ['a version 0 inventory gun holding a state', p => { delete p.version; p.inventory = p.stash; delete p.stash; p.inventory.items[0].gun = muzzle(); }],
+        ['a version 0 bare list holding a state', p => { p.version = 0; p.bag = [{ ...p.bag.items[0], gun: factoryState() }]; }],
+    ];
+    for (const [why, mutate] of faults) {
+        const p = structuredClone(v1) as any; mutate(p); const text = JSON.stringify(p), o = origin(); o.data.set(D.SAVE_KEY, text);
+        assert.throws(() => new RecoveryStore(o.storage).load(), UNREADABLE, why);
+        const loaded = page(o, false);
+        assert.equal(loaded.initialized, false, why); assert.equal(o.data.get(D.SAVE_KEY), text, why); assert.equal(o.data.has(SESSION_KEY), false, why);
+    }
+    // The control: the same profile without those fields loads, every gun a factory instance (the stored one keeps its uid).
+    const o = origin(); o.data.set(D.SAVE_KEY, JSON.stringify(v1)); const fine = page(o, false);
+    assert.ok(fine.initialized); assert.equal(fine.record.legacyBackup, JSON.stringify(v1));
+    assert.deepEqual(fine.record.profile.stash.items.find(i => i.uid === 'c1')?.gun, factoryState());
+    assert.deepEqual([fine.record.profile.equipment.weaponUid, fine.record.profile.equipment.gun], ['gun-v6', factoryState()]);
+});
+
 test('old formats holding gun fields, and unknown or malformed inputs, are refused, never repaired', () => {
     const save = oldProfile(D.newSave()) as ProfileV2, v3 = migrateProfile(save), text = old('liveRaidV5'), live: RecordV7 = JSON.parse(text);
     const v8 = migrateRecord(live, text);
