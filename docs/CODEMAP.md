@@ -138,7 +138,7 @@
 - [perk-save.test.ts](../tests/perk-save.test.ts)：扩展 v3/Perk 选择、进行中的旧行动保持扩展 v2 至结算、旧备份导入、降级保护与 `perksBackup`。
 - [gunsmith-migrate.test.ts](../tests/gunsmith-migrate.test.ts)：v5 客户端真实写下的 v3–v5 记录和备份（冻结在 [fixtures/gunsmith-v5-saves.json](../tests/fixtures/gunsmith-v5-saves.json)）经真实 `decodeSession` 迁移到 v8、写回、重读和继续行动，`gunsBackup` 与拒读；[gunsmith-enemy-records.test.ts](../tests/gunsmith-enemy-records.test.ts)：v6/v7 迁移后敌人规则（`enemyBackup`）保持，v4/v5 到第一次敌人行动才开启，坏的 v8 记录拒读；旧客户端拒读 v8 用 `test:expansion` 的四个真实固定旧包验证。
 - [gunsmith-carry.test.ts](../tests/gunsmith-carry.test.ts)、[gunsmith-value.test.ts](../tests/gunsmith-value.test.ts)：装卸、转移、丢下拾取、跨层、结算时搬的是同一把枪；按组成估值和出售。
-- [gunsmith-conservation.test.ts](../tests/gunsmith-conservation.test.ts)：固定种子随机走 200 × 30 步合法操作（院子、商店、出击、行动、跨层、结算、导出导入、写入失败后重试），每步解码存档，查 UID 唯一、每把枪连配件不变、两种弹药与现金守恒、负重一致；失败时打印种子和步骤，`GUNSMITH_SEEDS` 单独重放。
+- [gunsmith-conservation.test.ts](../tests/gunsmith-conservation.test.ts)、[gunsmith-conservation-2.test.ts](../tests/gunsmith-conservation-2.test.ts)（逻辑在 [fixtures/conservation.ts](../tests/fixtures/conservation.ts)）：固定种子随机走 200 × 30 步合法操作（院子、商店、出击、行动、跨层、结算、导出导入、写入失败后重试），每步解码存档，查 UID 唯一、每把枪连配件不变、两种弹药与现金守恒、负重一致；失败时打印种子和步骤，`GUNSMITH_SEEDS` 在第一个文件里单独重放。
 - [systems-session.test.ts](../tests/systems-session.test.ts)、[recovery.test.ts](../tests/recovery.test.ts)：重试不重复奖励、未知字段、原字节保留、修订栅栏。
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
