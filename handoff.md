@@ -2,6 +2,8 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) 原分支续作：已正常合入 main `1af0fec`，内置 image_gen 交七类五朝向的受击／恢复原图（8 张含拾荒者首版）及逐字提示词。[已有任务摘要](docs/hit-feel-art/README.md#2026-10-24-原图交付与验收结果)和[只读检查结果](docs/hit-feel-art/source-audit.json)记录 35/35 参考哈希一致、649/649 单测、package 通过且产物未变；生成画布、站立列锁定及部分锚点未通过，未转 Ready、未接入、未合并。下一步先返修，再由接入 PR 导出运行帧及两档分辨率验收；B 组仍依赖 #81。
+
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
   - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。
   - **声音**：玩家中弹改播居中的 `pain`，敌人中弹仍播带方位的 `hit`；`SampleSound` 按批次 `revision` 去重，同一批同一目标只响一次，有暴击时另加一次 `crit`。
