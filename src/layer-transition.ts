@@ -3,6 +3,7 @@ import { getLegacyEnemyProfile } from './enemy-profile';
 import { archetype, enemyDefinition } from './enemy-archetypes';
 import { canDamageEnemy } from './enemy-relations';
 import { enemyDamageAfterArmor } from './enemy-defense';
+import { enemyPost } from './enemy-posts';
 import type { BulletState, EnemyState } from './checkpoint';
 import type { ExpansionState, LayeredRaid, WorldDefinition } from './expansion-state';
 import type { Point } from './world';
@@ -245,7 +246,7 @@ export function changeLayer(state: ExpansionState, world: WorldDefinition, entry
     const landing = findLanding({ definition: targetMap, doors: target.doors, highTide: raid.highTide }, entry.landing, occupied);
     if (!landing) return false; // No damage, RNG draws, entity allocations, or pursuit registration before this point.
     const witnesses = source.enemies.filter(e => e.hp > 0 && (!archetype(e.id) || enemyRules(raid) &&
-        ['raider-melee', 'mercenary-assault'].includes(e.id) && e.tactics?.stance === 'hostile' && e.tactics.phase === 'idle'
+        ['raider-melee', 'mercenary-assault'].includes(e.id) && !enemyPost(e) && e.tactics?.stance === 'hostile' && e.tactics.phase === 'idle'
         && e.tactics.memory?.target === 'player' && e.tactics.memory.source === 'sight' && raid.elapsed - e.tactics.memory.time <= 1)
         && (e.state === 'chase' || e.state === 'attack') && e.alert > 0 && separation(e, raid.player) <= enemyDefinition(e.id).vision
         && corridor(sourceContext, e, raid.player, 'sight'));

@@ -40,7 +40,7 @@ export const ENEMY_CATALOG = Object.freeze([
         defaultStance: 'hostile', engagementRule: '为暴力团伙望风，先确认再通知附近同伴。', disengageRule: '失联或近身受威胁时后撤。',
         behavior: { idle: '观察门窗与路口、记录人数', alert: '确认动静后发出有限范围信号', combat: '侧面牵制，不持续正面交火', search: '带同伴检查最后目击位置' },
         weaponCategories: ['pistol', 'tool-melee'], assets: { status: 'body-and-corpse', silhouette: '轻瘦、贴身小包和频繁转头', equipment: '望远镜、对讲机或哨子及短武器', animations: ['侧身观察', '发信号', '转头确认', '后撤'] } }),
-    entry({ id: 'raider-boss', designNumber: '04', name: '盐枭头目', faction: 'raiders', implementation: 'design-only',
+    entry({ id: 'raider-boss', designNumber: '04', name: '盐枭头目', faction: 'raiders', implementation: 'street-prototype',
         defaultStance: 'hostile', engagementRule: '仅暴力控制局部设施的匿名头目；具名船主与掮客另走剧情。', disengageRule: '护卫损失后换位，有退路时携贵重物撤离。',
         behavior: { idle: '查账与分配物资', alert: '调护卫守入口和侧路', combat: '依托预设射位与护卫', search: '保住据点和退路，不跨图追击' },
         weaponCategories: ['shotgun', 'rifle'], assets: { status: 'body-and-corpse', silhouette: '防水外套、防护背心和钥匙束', equipment: '较好长枪、褪色橙布条和账本', animations: ['查账', '指挥', '射击', '换位撤离'] } }),

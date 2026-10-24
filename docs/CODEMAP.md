@@ -93,7 +93,7 @@
 
 组织关系、目标、NPC 伤害与玩家收益归属见 [enemy-relations.ts](../src/enemy-relations.ts) 和[合同](tasks/enemy-relations.md)。条件交涉仍用 `SpatialInteraction` → `targetView/activate` 的单一选择链，询问只发说明事件；跨层新原型职责与两人预算在 `changeLayer`，抵达观察点清理在 `advancePursuits`。对应回归为 `enemy-relations.test.ts`、`enemy-pursuit.test.ts` 和 `test:enemy`，不要给旧四类追加新阵营字段。
 
-**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 保留旧四类；[enemy-archetypes.ts](../src/enemy-archetypes.ts) 定义新原型与持久战术状态。[enemy-encounters.ts](../src/enemy-encounters.ts) 在新街区出击事务中安装三原型样板，旧活动行动不迁移敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)保留完整设计需求，不是完成清单；当前接入与验证见[街区样板](tasks/enemy-street-encounter.md)。
+**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 保留旧四类；[enemy-archetypes.ts](../src/enemy-archetypes.ts) 定义新原型与持久战术状态。[enemy-encounters.ts](../src/enemy-encounters.ts) 在新街区出击事务中安装三原型样板与每五种子之一的市场头目据点，旧活动行动不迁移敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)保留完整设计需求，不是完成清单；当前接入与验证见[街区样板](tasks/enemy-street-encounter.md)。
 
 **首读路径。** [enemy-profile.ts](../src/enemy-profile.ts) 的 `getLegacyEnemyProfile` 提供旧身体、武器、攻击类型与尸体抽取次数；[enemy-ai.ts](../src/raid-runtime/enemy-ai.ts) 的 `advanceLegacyEnemy` 更新旧敌人的感知、状态、冷却、路径和移动。世界碰撞由 `LegacyEnemyWorld` 提供，随机数、发射/近战/开门副作用经 `LegacyEnemyEffects` 同步返回 [Runtime](../src/raid-runtime/runtime.ts)。敌人状态、RNG、UID、伤害、事务和事件仍由 Runtime 所有，AI 模块不增加持久化入口。
 
@@ -101,7 +101,9 @@
 
 新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；仅首三类在街区正式投放。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
+方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类与市场头目在街区正式投放。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
+
+[enemy-posts.ts](../src/enemy-posts.ts) 拥有市场据点的固定岗位、短巡查与备用位置，target/path/timer/stance 保存在既有敌人字段；其近身护卫不跨层追击。布置、经济守恒和绕行证据见[据点记录](tasks/enemy-market.md)。
 
 **验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 

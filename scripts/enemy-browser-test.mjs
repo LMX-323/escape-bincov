@@ -14,11 +14,12 @@ import { corridor, traversable } from '../src/spatial.ts';
 import { archetype, initialTactics } from '../src/enemy-archetypes.ts';
 import { damageLayerEnemy } from '../src/layer-transition.ts';
 import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
+import { MARKET_RAIDERS, MARKET_STORES } from '../src/enemy-posts.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
-const report = { scope: 'First three roles deploy natively; other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const report = { scope: 'First three roles deploy natively; seed multiples of five add the native boss compound. Fourteen other art roles use valid saved fixtures until their authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
@@ -199,6 +200,37 @@ try {
             await page.close();
         }
         await context.close();
+        // Ordinary fresh deployment: only the player's observation position uses the explicit test driver.
+        // Enemies, roster, supplies and AI come from the normal seed-45 initialization transaction.
+        const nativeContext = await browser.newContext({ viewport, offline: true, hasTouch: touch, isMobile: touch });
+        await resumeStalls(nativeContext);
+        const native = await nativeContext.newPage(); native.setDefaultTimeout(60000);
+        native.on('pageerror', e => report.errors.push(String(e))); native.on('request', r => { if (/^https?:/.test(r.url())) report.external.push(r.url()); });
+        await native.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
+        await native.locator('[data-action="enter"]').click(); await native.locator('#seed').fill('45');
+        await native.locator('[data-action="deploy"]').click(); await raidReady(native);
+        const initial = decodeSession(await native.evaluate(key => localStorage.getItem(key), SESSION_KEY));
+        const deployed = Object.values(initial.expansion.raid.maps).flatMap(m => m.enemies);
+        const team = deployed.filter(e => e.tactics?.squad === MARKET_RAIDERS), boss = team.find(e => e.id === 'raider-boss');
+        assert.equal(deployed.length, 25); assert.equal(team.length, 3); assert.ok(boss);
+        assert.ok(initial.expansion.raid.maps.coast.containers.some(c => Math.hypot(c.x-MARKET_STORES.x,c.y-MARKET_STORES.y)<1));
+        await drive(native, 'placePlayer', { x: boss.home.x + 160, y: boss.home.y }, Math.PI, 'coast');
+        await native.waitForFunction(uid => {
+            const a = window.__bincovSample.host.lastBatch.frame.actors.find(a => a.uid === uid);
+            return a?.tactics && ['windup','release','recovery'].includes(a.tactics.phase);
+        }, boss.uid);
+        const file = `native-market-${viewport.width}.png`; await native.screenshot({ path: resolve(out,file) }); report.screenshots.push(file);
+        if (touch) await native.locator('.coast-sample [data-pause]').tap(); else await native.keyboard.press('Escape');
+        await native.waitForFunction(() => window.__bincovSample.host.panel === 'pause');
+        const saved = decodeSession(await native.evaluate(key => localStorage.getItem(key), SESSION_KEY));
+        await native.reload(); await native.locator('[data-action="enter"]').click(); await raidReady(native);
+        const loaded = decodeSession(await native.evaluate(key => localStorage.getItem(key), SESSION_KEY));
+        const members = r => r.expansion.raid.maps.coast.enemies.filter(e => e.tactics?.squad === MARKET_RAIDERS);
+        assert.deepEqual(members(loaded),members(saved), 'paused checkpoint preserves complete native squad without restocking');
+        report.cases.push({ viewport, scenario: 'native-market-deployment-and-restore', population: deployed.length,
+            squad: team.map(e => ({ uid:e.uid,id:e.id })), saveVersion:loaded.version, screenshot:file });
+        console.log(`PASS native-market ${viewport.width}: ordinary deployment, attack and checkpoint restore`);
+        await nativeContext.close();
     }
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';
 } finally {

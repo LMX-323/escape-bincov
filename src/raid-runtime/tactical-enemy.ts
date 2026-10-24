@@ -3,6 +3,7 @@ import { archetype } from '../enemy-archetypes';
 import { canReceiveReport, enemyRelation } from '../enemy-relations';
 import type { Point } from '../world';
 import type { LegacyEnemyWorld } from './enemy-ai';
+import { enemyPost } from '../enemy-posts';
 
 interface TacticalWorld extends LegacyEnemyWorld {
     readonly elapsed: number;
@@ -161,7 +162,23 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
             if (world.walkable(flank.x, flank.y, world.highTide, 10)) target = flank;
         }
     } else { target = e.home; e.state = 'patrol'; }
+    const post = enemyPost(e);
+    if (post && !flooded) {
+        if (t.stance === 'retreat') { target = post.fallback; e.state = 'return'; }
+        else if (stale) {
+            let index = post.patrol.findIndex(p => distance(p, e.target) < .1);
+            if (index < 0) index = 0;
+            if (distance(e, post.patrol[index]) < 12 && e.timer <= 0) {
+                index = (index + 1) % post.patrol.length; e.timer = 2;
+            }
+            target = post.patrol[index]; e.state = 'patrol';
+        } else if (t.stance === 'hostile' && distance(target, e.home) > 96) {
+            // The leader and guards defend their assigned side instead of emptying the compound.
+            target = e.home; e.state = 'return';
+        }
+    }
     e.target = { ...target }; e.alert = t.memory ? Math.max(0, 7 - (world.elapsed - t.memory.time)) : 0;
+    if (post && stale && t.stance !== 'retreat' && !flooded && e.timer > 0) return;
     if (distance(e, target) < 12) return;
     if (e.repath <= 0) { e.path = world.path(e, target, flooded ? false : world.highTide); e.repath = .8; }
     while (e.path.length && distance(e, e.path[0]) < 12) e.path.shift();

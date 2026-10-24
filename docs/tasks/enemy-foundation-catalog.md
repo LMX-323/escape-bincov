@@ -1,6 +1,6 @@
 # EN-01：敌人内容目录与旧映射边界
 
-本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog-data.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。前三条为 `street-prototype`，身体/行走/尸体素材为 `body-and-corpse`；其余十五条整项交付仍为 `design-only`，十八类素材均为 `body-and-corpse`，部分共享机制不等于完整原型。动画需求列表仍是目标规格，不能把 468 张帧图当作搬运、查账等全部情境动画已完成。
+本交付承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78)，依据 [ENEMY-DESIGN](../ENEMY-DESIGN.md) 建立十八张卡的稳定程序身份。目录位于 [enemy-catalog-data.ts](../../scripts/enemy-catalog-data.ts)，身份、条件敌对与兼容风险由 [enemy-catalog.test.ts](../../tests/enemy-catalog.test.ts) 检查。前四条为 `street-prototype`，身体/行走/尸体素材为 `body-and-corpse`；其余十四条整项交付仍为 `design-only`，十八类素材均为 `body-and-corpse`，部分共享机制不等于完整原型。动画需求列表仍是目标规格，不能把 468 张帧图当作搬运、查账等全部情境动画已完成。
 
 `ENEMY_CATALOG` 按设计编号排列，每条包含稳定 ID、阵营、默认立场、接敌与脱离条件、平时/警觉/交战/搜索行为、武器类别和素材需求。`ENEMY_FACTIONS` 给出五类中文名称。表与嵌套对象均冻结。用 `pnpm enemy:catalog` 输出对照表，`pnpm enemy:catalog --json --id=raider-melee` 查看单卡。目录位于制作工具中，不进入游戏包或游戏字体扫描；实际新规则消费 [enemy-archetypes.ts](../../src/enemy-archetypes.ts)，旧类消费 [enemy-profile.ts](../../src/enemy-profile.ts)，不将整张设计卡写入存档。
 
@@ -29,7 +29,7 @@
 | 17 巡逻队员 | `blockade-patrol` | 沿海封锁队 | conditional | 长枪/近距枪；巡检工具、封条检查与互相掩护 |
 | 18 检查站班长 | `blockade-sergeant` | 沿海封锁队 | conditional | 制式长枪；记录本、边界说明与保护民众 |
 
-每张卡均列独立剪影、装备和动作需求；十八类独立身体/尸体及程序阶段姿态已交付，覆盖和实际来源见美术记录。其余十五类的正式遭遇仍开放。实际生命、伤害、射程、警觉数值和掉落概率继续以现有实现为准，新兵种数值需要后续平衡验收。
+每张卡均列独立剪影、装备和动作需求；十八类独立身体/尸体及程序阶段姿态已交付，覆盖和实际来源见美术记录。其余十四类的正式遭遇仍开放。实际生命、伤害、射程、警觉数值和掉落概率继续以现有实现为准，新兵种数值需要后续平衡验收。
 
 ## 旧四类的保守资源与行为映射
 

@@ -1,3 +1,8 @@
+## 2026-10-24 正式市场头目据点
+
+EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人，世界人口25、两剧情物资守卫保留，一箱既有补给平移且内容不增殖。固定岗位/两秒短巡查/备用站位使用已有 home/target/path/timer/stance；目击半数损失后撤退，据点护卫不跨层追击。详见 docs/tasks/enemy-market.md。
+
+710 完整单测、更新目录6项复跑、62 CI 守卫、package、108 敌人浏览器场景（100截图）通过。标准seed42对照及seed45正常走位负载各12Node/六浏览器样本通过，报告与原失败边界见 enemy-performance.md。HTML SHA 7ba664aeca05ccfc01a27b85c9dd0739be552880529a23cb44bfd1f9a39766f0，7,297,822字节。完整十分钟街区自然输入、三次实际商场分层游玩及portable/browser/ui正在运行，未计为通过；最终结果放原PR/Issue与本地协调检查点。上一已推送92cff64完整CI40044343195构建和八浏览器组全绿，不能替代本批准确head CI。原PR继续草稿，未合并/部署。
 ## 2026-10-24 EN-04 正式性能基线
 
 新增独立 `node --import tsx scripts/enemy-performance.mjs`，协议、预算及失败说明见 docs/tasks/enemy-performance.md，原始结果 docs/enemy-street/performance-baseline-92cff64.json。运行的是已推送 92cff64 的最终 HTML，12 Node 样本和六浏览器场景通过，预算在测前固定，未放宽；实际 renderer RTX3070/ANGLE D3D11，rAF 节奏不代表显示器/GPU 完成时间。零页面错误/外部请求，62 CI 守卫通过。普通游戏源码和生成物本批未变。补实际字段归属、修目录历史状态，EN-01～04 可按基础契约范围核销；剩余正式遭遇继续 #78。

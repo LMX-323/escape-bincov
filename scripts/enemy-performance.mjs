@@ -18,7 +18,12 @@ import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime.ts';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
 
-const out = resolve('test-results/enemy-performance'); await mkdir(out, { recursive: true });
+const options = new Map(process.argv.slice(2).map(arg => {
+  const match = /^--(seed|baseline|out|policy)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
+}));
+const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
+const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe'].includes(policy));
+const out = resolve(options.get('out') ?? 'test-results/enemy-performance'); await mkdir(out, { recursive: true });
 // Provisional expansion ceilings, declared before the first measurement. Device-specific;
 // passing is necessary for this desktop expansion, not sufficient for phone/balance signoff.
 const budgets = { worldEnemies: 25, advanceP95Ms: 8, advanceP99Ms: 16, pathP95Ms: 4, pathMaxMs: 16,
@@ -26,13 +31,14 @@ const budgets = { worldEnemies: 25, advanceP95Ms: 8, advanceP99Ms: 16, pathP95Ms
   atlasPages: 3, estimatedTextureBytes: 96 * 1024 ** 2, htmlBytes: 8 * 1024 ** 2, portableBytes: 5 * 1024 ** 2 };
 const summary = values => {
   const sorted = [...values].sort((a, b) => a - b), at = q => sorted[Math.floor((sorted.length - 1) * q)] ?? 0;
+  assert.ok(values.every(n => Number.isFinite(n) && n >= 0), 'finite nonnegative measurement values');
   return { count: sorted.length, total: values.reduce((a, b) => a + b, 0), p50: at(.5), p95: at(.95), p99: at(.99), max: at(1) };
 };
 function fixture(highTide) {
   const data = new Map(), state = createSessionState();
   const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }), undefined, () => 1800000000000);
   assert.ok(saves.initialize(), state.storageError); state.state = 'hideout';
-  assert.ok(saves.beginRun(42, true), state.storageError);
+  assert.ok(saves.beginRun(seed, true), state.storageError);
   const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === 'raider-gunner');
   assert.ok(e); assert.equal(raid.version, 5);
   raid.initialHigh = raid.highTide = highTide;
@@ -46,12 +52,12 @@ function fixture(highTide) {
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
   return { raw, state, saves, target: { x: e.x, y: e.y } };
 }
-const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), budgets,
+const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), seed, policy, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
-  scope: 'Native seed-42 roster, only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
+  scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
   environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
   runtime: [], browser: [], failures: [], errors: [], external: [], status: 'RUNNING' };
-const fail = (name, actual, limit) => { if (actual > limit) report.failures.push({ name, actual, limit }); };
+const fail = (name, actual, limit) => { if (!Number.isFinite(actual) || actual > limit) report.failures.push({ name, actual, limit }); };
 try {
   for (const highTide of [false, true]) for (const hz of [60, 20, 5]) for (let repeat = 0; repeat < 2; repeat++) {
     const f = fixture(highTide); f.state.state = 'run';
@@ -64,6 +70,10 @@ try {
       const intent = { ...emptyIntent(), aim: target ? Math.atan2(target.y-r.player.y,target.x-r.player.x) : 0,
         firePressed: frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: !!target, precise: true,
         commands: frame % (hz * 3) === 0 ? ['reload'] : [] };
+      if (policy === 'strafe') {
+        const bearing = intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
+        intent.move = { x: Math.cos(bearing), y: Math.sin(bearing), sprint: false };
+      }
       const start = performance.now(); r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
     }
     const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending };
@@ -100,7 +110,14 @@ try {
           if (document.elementFromPoint(x,y)?.tagName === 'CANVAS') return { x,y };
         } return null;
       }) : null;
-      if (touch) { assert.ok(origin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }] }); }
+      const movementOrigin = touch && policy === 'strafe' ? await page.evaluate(() => {
+        for (let d=0;d<100;d+=8) for (const [dx,dy] of [[0,0],[d,0],[-d,0],[0,d],[0,-d]]) {
+          const x=Math.round(innerWidth*.25+dx),y=Math.round(innerHeight*.45+dy);
+          if(document.elementFromPoint(x,y)?.tagName==='CANVAS') return {x,y};
+        } return null;
+      }) : null;
+      if (touch) { assert.ok(origin); if(policy==='strafe') assert.ok(movementOrigin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }, ...(movementOrigin ? [{id:2,...movementOrigin}]:[])] }); }
+      else if (policy === 'strafe') await page.mouse.down({button:'right'});
       const measurement = page.evaluate(() => new Promise((resolve, reject) => {
         const h = window.__bincovSample.host, gap = [], advance = [], present = [], phases = new Set(), attackPhases = new Set();
         let previous = performance.now(), started = previous, lastFrame = -1;
@@ -122,6 +139,7 @@ try {
       // Attach a handler immediately while normal input is sent on the same page.
       const result = measurement.then(value => ({ value }), error => ({ error: String(error) }));
       const started = performance.now();
+      let held = [];
       while (performance.now() - started < 12200) {
         const aim = await page.evaluate(() => {
           const h = window.__bincovSample.host, b = h?.lastBatch; if (!b || b.frame.phase !== 'running') return null;
@@ -129,14 +147,23 @@ try {
             .sort((a,b) => Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
           return target ? { ...h.view.worldToClient({ x: target.x, y: target.y - 22 }), angle: Math.atan2(target.y-p.y,target.x-p.x) } : null;
         });
-        if (aim && touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: origin.x + Math.cos(aim.angle) * 60, y: origin.y + Math.sin(aim.angle) * 60 }] });
+        const bearing = (aim?.angle ?? 0) + Math.PI/2 + (Math.floor((performance.now()-started)/1000)%2 ? Math.PI:0);
+        if (aim && touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: origin.x + Math.cos(aim.angle) * 60, y: origin.y + Math.sin(aim.angle) * 60 },
+          ...(movementOrigin ? [{id:2,x:movementOrigin.x+Math.cos(bearing)*40,y:movementOrigin.y+Math.sin(bearing)*40}]:[])] });
         else if (aim) { await page.mouse.move(aim.x, aim.y); await page.mouse.click(aim.x, aim.y); }
+        if (!touch && policy === 'strafe') {
+          const next = [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean);
+          for(const key of held) if(!next.includes(key)) await page.keyboard.up(key);
+          for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
+        }
         if (performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
         await page.waitForTimeout(250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      for(const key of held) await page.keyboard.up(key); if(!touch && policy==='strafe') await page.mouse.up({button:'right'});
       const outcome = await result; if (outcome.error) throw Error(outcome.error); const measured = outcome.value;
       const row = { viewport, highTide, ...measured, gap: summary(measured.gap), advance: summary(measured.advance), present: summary(measured.present) };
+      assert.ok(row.gap.count > 100 && row.advance.count > 100 && row.present.count > 100, 'sufficient live-frame samples');
       report.browser.push(row);
       const key = `browser/${viewport.width}/${highTide}`;
       if (measured.phases.some(p => p !== 'running')) report.failures.push({ name: `${key}/not-continuously-running`, phases: measured.phases });
@@ -150,6 +177,28 @@ try {
     }
   } finally { await browser.close(); }
   if (report.errors.length || report.external.length) report.failures.push({ name: 'browser-errors-or-external-requests' });
+  if (options.has('baseline')) {
+    const old = JSON.parse(await readFile(resolve(options.get('baseline')), 'utf8'));
+    assert.equal(old.protocol, report.protocol); assert.equal(old.status,'PASS'); assert.equal(old.seed ?? 42,seed);
+    assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
+    assert.equal(old.environment.cpu,report.environment.cpu); assert.equal(old.environment.browser,report.environment.browser);
+    assert.equal(old.browser.length,report.browser.length); assert.equal(old.runtime.length,report.runtime.length);
+    report.comparison = { baselineArtifact: old.artifact.sha256, baselineHead: old.source.head, p95: [] };
+    for (const row of report.browser) {
+      const before = old.browser.find(b => b.viewport.width === row.viewport.width && b.highTide === row.highTide);
+      assert.ok(before); assert.deepEqual(before.environment,row.environment,'same browser renderer, DPR and user agent');
+      for (const metric of ['advance','present']) {
+        const limit = Math.max(.5,before[metric].p95)*1.2;
+        report.comparison.p95.push({ key:`${row.viewport.width}/${row.highTide}/${metric}`, before:before[metric].p95,after:row[metric].p95,limit });
+        fail(`comparison/${row.viewport.width}/${row.highTide}/${metric}`,row[metric].p95,limit);
+      }
+    }
+    for (const highTide of [false,true]) {
+      const average = rows => rows.filter(r => r.hz===60 && r.highTide===highTide).reduce((n,r) => n+r.advance.p95,0)/2;
+      const before=average(old.runtime),after=average(report.runtime),limit=Math.max(.5,before)*1.2;
+      report.comparison.p95.push({key:`node/${highTide}/advance`,before,after,limit}); fail(`comparison/node/${highTide}`,after,limit);
+    }
+  }
   report.status = report.failures.length ? 'BUDGET_BLOCKED' : 'PASS';
 } catch (error) { report.status = 'ERROR'; report.errors.push(String(error?.stack ?? error)); }
 await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');

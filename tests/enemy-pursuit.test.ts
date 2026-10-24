@@ -6,6 +6,7 @@ import { archetype, initialTactics } from '../src/enemy-archetypes';
 import { changeLayer } from '../src/layer-transition';
 import { advancePursuits } from '../src/pursuit';
 import { validateExpansion } from '../src/expansion-state';
+import { MARKET_POSTS, MARKET_RAIDERS } from '../src/enemy-posts';
 
 function fixture(ids = ['raider-melee', 'raider-lookout']) {
     const world = prototypeWorld(), profile = D.newSave(), state = prototypeRaid(profile, world), raid = state.raid!;
@@ -34,12 +35,13 @@ test('new pursuit keeps one identity and paid equipment, reacquires sight instea
 });
 
 test('reports, unseen connectors, guards and paid attack phases never become new cross-layer pursuit', () => {
-    for (const reason of ['report', 'hidden', 'windup', 'guard']) {
+    for (const reason of ['report', 'hidden', 'windup', 'guard', 'market-post']) {
         const f = fixture(reason === 'guard' ? ['blockade-sentry', 'blockade-sergeant'] : undefined);
         const enemy = f.raid.maps.downstairs.enemies[0];
         if (reason === 'report') enemy.tactics!.memory!.source = 'report';
         if (reason === 'hidden') f.world.maps.downstairs.cells[1][2] = 'wall';
         if (reason === 'windup') { enemy.tactics!.phase = 'windup'; enemy.tactics!.phaseLeft = .3; }
+        if (reason === 'market-post') { enemy.tactics!.squad = MARKET_RAIDERS; enemy.home = { ...MARKET_POSTS.find(p => p.id === enemy.id)!.home }; }
         assert.ok(changeLayer(f.state, f.world, 'up')); assert.equal(f.raid.pursuits.length, 0, reason);
     }
 });

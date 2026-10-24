@@ -43,3 +43,17 @@ Node 顺序测低/高潮 × 60/20/5 Hz × 两次，每次 12 模拟秒；记录�
 60 Hz Node 样本的 advance p95 为 2.41～3.00 ms、p99 2.95～4.19 ms；所有样本单次路径 p95 不超过 0.10 ms、最大不超过 0.28 ms，atlas 均一页。低帧样本按较长子步汇总，保留在 JSON，未冒用 60 Hz 的 CPU 门槛。当前基线允许进行上述有界编组替换，扩量后仍需同协议重测与同比。
 
 首测站定夹具在 4.92 秒死亡，并误用启动回滚清理，结果为 ERROR；修为正常射击输入和正式结算清理。首次触屏用鼠标造成采样无法完成，修为触摸摇杆并加三十秒超时/页面异常捕获。失败日志保存在本地，未计入通过样本。预算未调整。
+## 头目据点扩量后的实测
+
+同一设备/Chromium/renderer，当前 HTML SHA-256 `7ba664aeca05ccfc01a27b85c9dd0739be552880529a23cb44bfd1f9a39766f0`，7,297,822 字节，便携 ZIP 4,693,576 字节。标准 seed42 / stationary 协议的 12 Node 与六浏览器样本通过；相对基线的各项 p95 变化为 -11.8%～+10.0%，均在既定 20% 门槛内。原始报告见[独占复测](../enemy-street/performance-market-regression.json)。前一遍标准对照有七秒 CI 守卫重叠，虽返回 PASS，正式记录使用后续独占复测。
+
+额外测 seed45 的六名新原型负载：12 Node 与六浏览器样本通过。使用显式 `--policy=strafe`，正常射击并每秒反向侧移；桌面右键精确瞄准，触屏双摇杆，不使用额外生命、冻结或清敌。浏览器 advance p95 2.5～2.7 ms、present p95 2.8～3.7 ms、rAF p95 8.0～8.7 ms，纹理估算最高 40.9 MiB，atlas 一页。该策略与 seed42 的站定输入不同，只用绝对门槛签收，不作跨输入同比；工具会拒绝不同 policy 的 baseline 比较。原始报告见[六人负载](../enemy-street/performance-market-strafe.json)。
+
+seed45 的首次站定浏览器采样有三例在十二秒内死亡，判为 BUDGET_BLOCKED；保留在本地 `enemy-performance-market-density`，未签收。后续改正常走位取得完整运行样本，绝对门槛未变。这也说明独自站定正面承受整组攻击并不安全；真人战斗难度与提示理解仍待 EN-21。
+
+```powershell
+node --import tsx scripts/enemy-performance.mjs --baseline=docs/enemy-street/performance-baseline-92cff64.json --out=test-results/enemy-performance-market-regression
+node --import tsx scripts/enemy-performance.mjs --seed=45 --policy=strafe --out=test-results/enemy-performance-market-strafe
+```
+
+`--seed` 为 1..UINT32_MAX，默认42；`--policy` 为 stationary/strafe，默认stationary；`--out` 指定独立证据目录。参数、种子、策略、源码/制品及环境写入报告；无效参数/非有限测值、短样本、不同输入、CPU、浏览器或 renderer/DPR 对照直接失败。
