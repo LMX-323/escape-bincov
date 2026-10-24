@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SampleSound, type SoundOut } from '../src/coast-view/sound';
+import { SampleSound, type HitCueOut, type SoundOut } from '../src/coast-view/sound';
 import type { PublishedView, StampedEvent } from '../src/raid-runtime/contract';
 
 const recorder = () => {
@@ -8,7 +8,7 @@ const recorder = () => {
   const out = new Proxy({}, { get: (_t, name: string) => (...a: unknown[]) => {
     (args[name] ??= []).push(a);
     calls.push(a.length ? `${name}:${a.map(x => typeof x === 'object' ? 'spot' : x).join(',')}` : name);
-  } }) as SoundOut;
+  } }) as SoundOut & HitCueOut;
   return { calls, args, out };
 };
 type Over = { phase?: string; moving?: boolean; sprinting?: boolean; reloading?: boolean; heals?: number; alive?: boolean; hp?: number; region?: string | null;
@@ -33,7 +33,7 @@ test('样板音效：开枪、近战、受击、拾取与开门按原 RaidScene 
   s.event(ev({ type: 'looted', item: 'wire' }), 'coast');
   s.event(ev({ type: 'door', id: 'x', by: 'player' }), 'coast');
   s.event(ev({ type: 'shot', shooter: 'player', weapon: 'pistol' }, 'resident-f2'), 'coast');
-  assert.deepEqual(calls, ['shot:shotgun', 'shot:enemy', 'shot:knife', 'hit', 'stow', 'click']);
+  assert.deepEqual(calls, ['shot:shotgun', 'shot:enemy', 'shot:knife', 'pain', 'stow', 'click']);
 });
 
 test('样板音效：他人的枪声、受击、撞墙和开门按方位左右声像、随距离减弱；玩家自己的声音居中', () => {
@@ -87,7 +87,7 @@ test('样板音效：只按 Runtime 给出的原因判断受击音——打击�
     for (const damage of [.03, 1, 6]) s.event(ev({ type: 'hurt', cause, uid: 'player', damage, angle: null, at: { x: 400, y: 300 } }), 'coast');
   assert.deepEqual(calls, []);
   s.event(ev({ type: 'hurt', cause: 'blow', uid: 'player', damage: .4, angle: null, at: { x: 400, y: 300 } }), 'coast');
-  assert.deepEqual(calls, ['hit']);
+  assert.deepEqual(calls, ['pain']);
 });
 
 test('样板音效：未揭示房间里的命中和弹着点不发声，枪声照常', () => {
@@ -132,4 +132,31 @@ test('样板音效：结算提示音立即请求；从暂停菜单放弃时先�
   const paused = recorder(), b = new SampleSound(paused.out);
   b.frame(batch({ phase: 'paused' }), 0); paused.calls.length = 0;
   b.settled('death'); assert.deepEqual(paused.calls, ['start', 'death']);
+});
+
+/** A blow in a published batch: every event of one batch carries that batch's revision. */
+const blow = (uid: string, revision: number, o: { critical?: boolean; at?: { x: number; y: number } } = {}) => ({ type: 'hurt', cause: 'blow', uid, damage: 9,
+  critical: !!o.critical, angle: 0, at: o.at ?? { x: 460, y: 300 }, stamp: { world: { mapId: 'coast' }, revision } }) as unknown as StampedEvent;
+
+test('命中确认：同一批里打在同一身体上的多次打击（如霰弹的六颗弹丸）只响一次，其中有暴击时另响一次暴击声；下一批照常', () => {
+  const { calls, out } = recorder(), s = new SampleSound(out);
+  s.frame(batch({ actors: [{ uid: 'enemy-3', x: 460, y: 300 }, { uid: 'enemy-4', x: 340, y: 300 }] }), 1 / 60); calls.length = 0;
+  for (let i = 0; i < 6; i++) s.event(blow('enemy-3', 7, { critical: i === 2 }), 'coast');
+  s.event(blow('enemy-4', 7, { at: { x: 340, y: 300 } }), 'coast');
+  assert.deepEqual(calls, ['hit:spot', 'crit:spot', 'hit:spot']);
+  calls.length = 0; s.event(blow('enemy-3', 8), 'coast');
+  assert.deepEqual(calls, ['hit:spot'], 'the next batch is heard again');
+});
+
+test('命中确认：玩家自己中弹播放居中的受伤声，同一批只响一次；未揭示房间里的命中不占这一次；击杀确认音由宿主随击杀标记请求', () => {
+  const { calls, out } = recorder(), s = new SampleSound(out), hidden = (p: { x: number }) => p.x < 300;
+  s.frame(batch({ actors: [{ uid: 'enemy-3', x: 200, y: 300 }] }), 1 / 60); calls.length = 0;
+  s.event(blow('player', 3, { at: { x: 400, y: 300 } }), 'coast'); s.event(blow('player', 3, { at: { x: 400, y: 300 } }), 'coast');
+  assert.deepEqual(calls, ['pain']);
+  calls.length = 0;
+  s.event(blow('enemy-3', 4, { at: { x: 200, y: 300 } }), 'coast', p => !hidden(p));
+  s.event(blow('enemy-3', 4, { at: { x: 320, y: 300 } }), 'coast', p => !hidden(p));
+  assert.deepEqual(calls, ['hit:spot'], 'a hidden blow is silent and leaves the visible one heard');
+  calls.length = 0; s.killed();
+  assert.deepEqual(calls, ['kill']);
 });

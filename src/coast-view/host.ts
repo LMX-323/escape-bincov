@@ -248,6 +248,9 @@ export class CoastSampleHost {
   private kick = 0;
   private markT = 0;
   private markAt = { x: 0, y: 0 };
+  /** Whom the hit marker is up for, and whom it shows a critical hit on ('' none): a kill of that target keeps it. */
+  private markUid = '';
+  private critUid = '';
   /** Feedback for one new event. Hits are marked only where the hit point is in a revealed area (or outdoors). */
   private feedback(e: StampedEvent, b: PublishedView) {
     const f = b.frame, shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
@@ -268,6 +271,8 @@ export class CoastSampleHost {
       if (e.cause === 'blow') { this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40); if (this.panel === 'loot') this.lootHitT = 1.2; }
       else this.drains[e.cause].acc += e.damage;
     }
+    // Only the player's rounds crit, and their impact comes first in the batch: the marker it put up turns critical.
+    else if (e.type === 'hurt' && e.critical && e.uid === this.markUid && this.markT > 0) this.critMark();
     else if (e.type === 'shot' && e.shooter !== 'player') {
       // A shot from off screen by someone standing in the open or in a revealed room: mark the edge toward them.
       const a = f.actors.find(x => x.uid === e.shooter);
@@ -317,7 +322,16 @@ export class CoastSampleHost {
     this.recentHits.set(uid, performance.now());
     if (this.recentHits.size > 40) this.recentHits.delete(this.recentHits.keys().next().value!);
     this.markT = kill ? .42 : .2; this.markAt = { ...at };
-    const el = this.q('[data-hitpop]'); el.classList.toggle('kill', kill); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    // A kill of the target the marker shows a critical hit on stays critical; any other mark starts plain.
+    const crit = kill && uid === this.critUid; this.markUid = uid; if (!crit) this.critUid = '';
+    const el = this.q('[data-hitpop]'); el.classList.toggle('kill', kill); el.classList.toggle('crit', crit); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    // The kill marker's own attribution decides the confirm sound, so the two never disagree (#75).
+    if (kill) this.sound.killed();
+  }
+  /** The marker just put up for markUid becomes a critical one: gold, a bigger pop and at least 0.3 s (#75). */
+  private critMark() {
+    this.critUid = this.markUid; this.markT = Math.max(this.markT, .3);
+    const el = this.q('[data-hitpop]'); el.classList.add('crit'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   }
   /** The game's synth audio, driven from this host's batches (see sound.ts). */
   private readonly sound: SampleSound;

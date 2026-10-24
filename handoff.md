@@ -2,6 +2,13 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
+  - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。
+  - **声音**：玩家中弹改播居中的 `pain`，敌人中弹仍播带方位的 `hit`；`SampleSound` 按批次 `revision` 去重，同一批同一目标只响一次，有暴击时另加一次 `crit`。
+  - **标记**：宿主收到玩家子弹的暴击时，把刚出的命中标记改成金色；对该目标的击杀保持暴击样式。击杀确认音由 `mark()` 随击杀标记请求，沿用标记自己的归属规则。
+  - **测试**：`test:shooting` 检查 g 改为从命中当帧计帧，新增步骤 h；main 构建上 g、h 均失败（负对照）。
+  - **与 #81**：只改了 #81 没碰的段落；试合并 #81 的 `2fcad9d` 后，src/tests 无新增冲突，类型检查通过，单测 708/708。
+  - 音色只做了离线响度测量，好不好听待维护者试听。证据见[说明](docs/evidence/issue75-hit-confirm/README.md)，准确 head 与 CI 见本分支 PR。
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击抖动方向（`fix/hurt-kick-direction`，起点 main `04736f7`，已同步 #93 `98c69b4`）：维护者决定受击抖动改为顺着子弹方向被打退，血迹返溅和来弹方向提示不变。`hurt` 事件的 `angle` 不变，仍从受击者指回打击来源（逆着子弹、指向近战攻击者），契约里补了这句说明；`CoastView.onEvent` 只把 2 像素抖动取反。血迹仍按 `angle` 朝来源喷，HUD 来弹方向由 Runtime 另算，都没动；玩家自己中弹也改为顺弹道后移。`test:shooting` 检查 g 改为断言东向子弹抖 2,0、南向子弹抖 0,2，且这次命中的血滴全部朝射手；main 构建上实测只在方向一项失败（[报告与裁图](docs/evidence/issue75-kick-direction/README.md)）。命中当帧不闪白（60 帧/秒晚一帧）和 #75 其余 P0–P2 未动。准确 head、验证结果与 CI 见本分支 PR。
 - 2026-10-23 · [#60 Q-E08 检查导航](docs/tasks/check-navigation.md)（`agent/quality-checks`，起点 main `04736f7`）：按风险列出最少检查、前置与人工证据；脚本分类明确现役/诊断/历史/待确认，两个行动堆报告默认分目录。单测 647 项、CI 守卫 62 项、Perk 手动入口 14 项通过，打包产物与基线字节一致。原有两个 20 轮堆探针均完成，生命周期通过、堆趋势仍 PARTIAL，未跑 strict60，未替 #32 签收。使用与维护见 [CHECKS](docs/CHECKS.md)，等待承接 PR 的 CI 与维护者审阅。
 
