@@ -22,6 +22,26 @@
 
 验证入口：[组合兼容回归](../../tests/enemy-perk-compatibility.test.ts)、[Perk 存档回归](../../tests/perk-save.test.ts)、[固定历史端探针](../../scripts/enemy-old-client-probe.ts)。本地完整单测 **701/701**、CI 规则 **53/53**；固定端 `35b3a38`、`76adbd6`、敌人 `dc14ad5`、Perk `8b6192d` 共 **80/80** 正反例通过，包含实际合法组合行动档 7。各端公开导入解码、主档初始化及失败后写入尝试均拒绝新档且保留原字节。浏览器、十分钟计时和准确 head CI 另记集成交付结果。
 
+## 当前实际字段归属
+
+当前字段归属以本节上方版本矩阵及下表为准。
+
+| 当前字段 | 唯一所有者、单位和保存方式 |
+| --- | --- |
+| `EnemyState.uid/id/hp/x/y/rotation/home/target/path` | 行动名册与所属地图持有；生命为原型范围内数值，坐标为当前地图像素、角度为弧度；全部持久。旧四类保持旧定义 |
+| `EnemyState.state/timer/cooldown/alert/repath` | Runtime 的对应敌人控制器持有；状态为封闭枚举，计时为行动秒；全部持久。旧控制器历史负倒计时语义不变 |
+| `tactics.version/squad` | 新遭遇初始化器设置，版本固定 1，编组为本行动字符串引用；持久，恢复不重新分配 |
+| `tactics.awareness/stance/warning` | 战术控制器持有；察觉在 0..1、立场为 idle/warning/hostile/retreat，警告累计秒数；持久 |
+| `tactics.memory` | 控制器或伤害处理写入的观察值：地图像素、行动秒、sight/sound/report/damage 来源、player 或敌人 UID；持久，未知为 null，不保存实时对象引用 |
+| `tactics.phase/phaseLeft/lockedAim` | 控制器持有；idle/windup/release/recovery/reload，剩余行动秒与锁定弧度；持久。释放前先写 recovery，再调用副作用，恢复不重复付伤害 |
+| `tactics.magazine/reserve/equipment/supplies` | 初始化、攻击/换弹及死亡处理共同通过同一敌人实体修改；弹量/物品数量为有界整数、装备为原型允许 ID；持久，唯一尸体来源 |
+| `tactics.signalUsed/killedBy` | 控制器一次通报锁；伤害处理记录实际致死来源 UID 或 player/null；持久。NPC 击杀不增加玩家 kills/训练 |
+| `ActorView.tactics` | presentation 从上列状态和静态定义投影；name/phase/stance/awareness/left/total/range/aim/warningLeft/boundary 全为只读派生值，秒/像素/弧度单位不变；不写回、不消费 RNG |
+| 身体姿态、手臂持握、声音边沿与痕迹 | 视图/声音所有者从已发布阶段及事件产生；非持久。隐藏/暂停期间不补播声音，恢复不影响战斗阶段或弹药 |
+| `ViewEvent` 与实际攻击 | Runtime 分配序号与来源，伤害/弹丸/尸体由领域事务处理；视图只消费。#39 的玩家射击和 #75 的受击方向共用既有合同，不在视图结算伤害 |
+
+规则模块不导入 DOM/PixiJS。普通 `beginRun` 在一次候选提交中调用 `installStreetEncounter`；`?test=1` 只暴露测试驱动，不参与普通出击初始化。完整存档边界仍由严格解码器及组合版本回归约束，表格不会放宽校验。
+
 ## 历史方案与探针记录（下文版本号不是当前格式）
 
 对应 [#78](https://github.com/xuys2025/escape-bincov/issues/78)、[实施 PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。2026-10-23 以任务 head `35b3a38223a7bb0020db25e9b2d0bb5476caa993` 检查源码。本文是**下一批实现的合同与已执行的历史端探针**；不把拟议字段描述成已实现，也不替代[既有兼容基线](enemy-foundation-compatibility.md)或源码类型/严格校验器。

@@ -1,3 +1,6 @@
+## 2026-10-24 EN-04 正式性能基线
+
+新增独立 `node --import tsx scripts/enemy-performance.mjs`，协议、预算及失败说明见 docs/tasks/enemy-performance.md，原始结果 docs/enemy-street/performance-baseline-92cff64.json。运行的是已推送 92cff64 的最终 HTML，12 Node 样本和六浏览器场景通过，预算在测前固定，未放宽；实际 renderer RTX3070/ANGLE D3D11，rAF 节奏不代表显示器/GPU 完成时间。零页面错误/外部请求，62 CI 守卫通过。普通游戏源码和生成物本批未变。补实际字段归属、修目录历史状态，EN-01～04 可按基础契约范围核销；剩余正式遭遇继续 #78。
 ## 2026-10-24 敌人续作：同步 #94
 
 敌人分支在动作/音效提交 `2fcad9d` 后正常合入 main `edb02f2`（#94）。保留沿子弹方向的受击退移、返溅与方向合同，保留十八原型动作和声音；生成物重新打包。706/706 单测、62/62 CI 守卫、package 和完整 shooting（含 g 慢帧/方向、鼠标/触摸）通过。此轮没有更改 AI/存档，准确合并提交及远端 CI 见 #81。EN-04 的正式街区性能工具另外开发，未计作已通过。

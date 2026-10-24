@@ -1,0 +1,156 @@
+/** EN-04, current native street, AI active. Run alone after pnpm package:
+ * node --import tsx scripts/enemy-performance.mjs
+ * Real 12-second browser samples; no accelerated clocks or GPU-completion claims.
+ * Budget misses are reported and exit 1. Do not relax budgets to fit a result. */
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { cpus, release } from 'node:os';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { chromium } from 'playwright';
+import { browserOptions } from './browser-options.mjs';
+import { raidReady, frames } from './raid-view.mjs';
+import { createSessionState, SaveSession } from '../src/session.ts';
+import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
+import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime.ts';
+import { BUILDING_WORLD } from '../src/building-world.ts';
+import { corridor, traversable } from '../src/spatial.ts';
+
+const out = resolve('test-results/enemy-performance'); await mkdir(out, { recursive: true });
+// Provisional expansion ceilings, declared before the first measurement. Device-specific;
+// passing is necessary for this desktop expansion, not sufficient for phone/balance signoff.
+const budgets = { worldEnemies: 25, advanceP95Ms: 8, advanceP99Ms: 16, pathP95Ms: 4, pathMaxMs: 16,
+  presentP95Ms: 8, presentP99Ms: 16, frameP95Ms: 33.4, frameP99Ms: 50,
+  atlasPages: 3, estimatedTextureBytes: 96 * 1024 ** 2, htmlBytes: 8 * 1024 ** 2, portableBytes: 5 * 1024 ** 2 };
+const summary = values => {
+  const sorted = [...values].sort((a, b) => a - b), at = q => sorted[Math.floor((sorted.length - 1) * q)] ?? 0;
+  return { count: sorted.length, total: values.reduce((a, b) => a + b, 0), p50: at(.5), p95: at(.95), p99: at(.99), max: at(1) };
+};
+function fixture(highTide) {
+  const data = new Map(), state = createSessionState();
+  const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }), undefined, () => 1800000000000);
+  assert.ok(saves.initialize(), state.storageError); state.state = 'hideout';
+  assert.ok(saves.beginRun(42, true), state.storageError);
+  const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === 'raider-gunner');
+  assert.ok(e); assert.equal(raid.version, 5);
+  raid.initialHigh = raid.highTide = highTide;
+  const context = { definition: BUILDING_WORLD.maps.coast, doors: raid.maps.coast.doors, highTide };
+  const p = Array.from({ length: 24 }, (_, i) => i * Math.PI / 12)
+    .map(a => ({ x: e.x + Math.cos(a) * 240, y: e.y + Math.sin(a) * 240 }))
+    .filter(p => traversable(context, p, 'body', 10) && corridor(context, e, p, 'sight'))
+    .sort((a, b) => Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - b.x, o.y - b.y)))
+      - Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
+  assert.ok(p, 'safe, visible observation point'); raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
+  assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
+  return { raw, state, saves, target: { x: e.x, y: e.y } };
+}
+const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), budgets,
+  source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
+  scope: 'Native seed-42 roster, only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
+  environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
+  runtime: [], browser: [], failures: [], errors: [], external: [], status: 'RUNNING' };
+const fail = (name, actual, limit) => { if (actual > limit) report.failures.push({ name, actual, limit }); };
+try {
+  for (const highTide of [false, true]) for (const hz of [60, 20, 5]) for (let repeat = 0; repeat < 2; repeat++) {
+    const f = fixture(highTide); f.state.state = 'run';
+    const r = new CoastRaidRuntime(f.state, f.saves), advances = [], paths = [], originalPath = r.path;
+    r.path = function (...args) { const start = performance.now(); try { return originalPath.apply(this, args); } finally { paths.push(performance.now() - start); } };
+    r.advance(0, emptyIntent());
+    const initialEnemies = r.enemies.length, worldEnemies = r.layered.raid.roster.length;
+    for (let frame = 1; frame <= 12 * hz && !r.ending; frame++) {
+      const target = r.enemies.filter(e => e.hp > 0 && r.sight(r.player, e)).sort((a, b) => Math.hypot(a.x-r.player.x,a.y-r.player.y)-Math.hypot(b.x-r.player.x,b.y-r.player.y))[0];
+      const intent = { ...emptyIntent(), aim: target ? Math.atan2(target.y-r.player.y,target.x-r.player.x) : 0,
+        firePressed: frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: !!target, precise: true,
+        commands: frame % (hz * 3) === 0 ? ['reload'] : [] };
+      const start = performance.now(); r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
+    }
+    const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending };
+    report.runtime.push(row); r.path = originalPath;
+    if (r.elapsed < 11.9) report.failures.push({ name: `runtime/${highTide}/${hz}/${repeat}/short-sample`, seconds: r.elapsed });
+    if (!r.ending) r.finish('abandon'); r.dispose();
+    fail(`runtime/${highTide}/${hz}/${repeat}/population`, worldEnemies, budgets.worldEnemies);
+    // 20/5 Hz intentionally aggregate larger steps; report them, but do not apply 60 Hz per-frame CPU ceilings.
+    if (hz === 60) { fail(`runtime/${highTide}/${repeat}/advance-p95`, row.advance.p95, budgets.advanceP95Ms); fail(`runtime/${highTide}/${repeat}/advance-p99`, row.advance.p99, budgets.advanceP99Ms); }
+    fail(`runtime/${highTide}/${hz}/${repeat}/path-p95`, row.path.p95, budgets.pathP95Ms);
+    fail(`runtime/${highTide}/${hz}/${repeat}/path-max`, row.path.max, budgets.pathMaxMs);
+    console.log('runtime', highTide, hz, repeat, JSON.stringify(row));
+  }
+  const html = await readFile('dist/index.html'); report.artifact = { bytes: html.length, sha256: createHash('sha256').update(html).digest('hex'), portableBytes: (await stat('release/Escape-Bincov-portable.zip')).size };
+  fail('html', html.length, budgets.htmlBytes); fail('portable', report.artifact.portableBytes, budgets.portableBytes);
+  const browser = await chromium.launch(browserOptions); report.environment.browser = browser.version();
+  try {
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }, { width: 844, height: 390 }]) for (const highTide of [false, true]) {
+      console.log('begin-browser', viewport.width, highTide);
+      const touch = viewport.width === 844;
+      const context = await browser.newContext({ viewport, offline: true, hasTouch: touch, isMobile: touch });
+      const page = await context.newPage(); page.setDefaultTimeout(60000);
+      const saved = fixture(highTide);
+      await page.addInitScript(([key, raw]) => localStorage.setItem(key, raw), [SESSION_KEY, saved.raw]);
+      page.on('pageerror', e => report.errors.push(String(e))); page.on('request', r => { if (/^https?:/.test(r.url())) report.external.push(r.url()); });
+      await page.goto(pathToFileURL(resolve('dist/index.html')).href + '?test=1&entry=tabs');
+      await page.locator('[data-action="enter"]').click(); await raidReady(page);
+      const resume = page.locator('.coast-sample [data-do="resume"]'); if (await resume.isVisible()) await resume.click();
+      await frames(page, 30);
+      const cdp = touch ? await context.newCDPSession(page) : null;
+      const origin = touch ? await page.evaluate(() => {
+        for (let d = 0; d < 160; d += 8) for (const [dx,dy] of [[0,0],[d,0],[-d,0],[0,d],[0,-d]]) {
+          const x = Math.round(innerWidth * .62 + dx), y = Math.round(innerHeight * .45 + dy);
+          if (document.elementFromPoint(x,y)?.tagName === 'CANVAS') return { x,y };
+        } return null;
+      }) : null;
+      if (touch) { assert.ok(origin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }] }); }
+      const measurement = page.evaluate(() => new Promise((resolve, reject) => {
+        const h = window.__bincovSample.host, gap = [], advance = [], present = [], phases = new Set(), attackPhases = new Set();
+        let previous = performance.now(), started = previous, lastFrame = -1;
+        const timeout = setTimeout(() => reject(Error('Twelve-second rAF sample did not finish within thirty seconds')), 30000);
+        const tick = () => { try {
+          const now = performance.now(), batch = h.lastBatch;
+          gap.push(now - previous); previous = now; phases.add(batch.frame.phase);
+          for (const a of batch.frame.actors) if (a.tactics) attackPhases.add(a.tactics.phase);
+          if (h.stats.frames !== lastFrame) { advance.push(h.stats.advanceMs); present.push(h.stats.presentMs); lastFrame = h.stats.frames; }
+          if (now - started < 12000) { requestAnimationFrame(tick); return; }
+          clearTimeout(timeout);
+          const canvas = document.querySelector('.coast-sample canvas'), gl = canvas?.getContext('webgl2') ?? canvas?.getContext('webgl'), debug = gl?.getExtension('WEBGL_debug_renderer_info');
+          resolve({ gap, advance, present, seconds: (now - started) / 1000, phases: [...phases], attackPhases: [...attackPhases],
+            counts: window.__bincovSample.counts(), atlas: { ...h.view.tex.atlas.stats }, estimatedTextureBytes: h.view.textureBytes(),
+            activeEnemies: batch.frame.actors.filter(a => a.kind !== 'player').length,
+            environment: { dpr: devicePixelRatio, renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null, userAgent: navigator.userAgent } });
+        } catch (error) { clearTimeout(timeout); reject(error); } }; requestAnimationFrame(tick);
+      }));
+      // Attach a handler immediately while normal input is sent on the same page.
+      const result = measurement.then(value => ({ value }), error => ({ error: String(error) }));
+      const started = performance.now();
+      while (performance.now() - started < 12200) {
+        const aim = await page.evaluate(() => {
+          const h = window.__bincovSample.host, b = h?.lastBatch; if (!b || b.frame.phase !== 'running') return null;
+          const p = b.frame.player, target = b.frame.actors.filter(a => a.alive && h.view.actorShown(a.uid))
+            .sort((a,b) => Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
+          return target ? { ...h.view.worldToClient({ x: target.x, y: target.y - 22 }), angle: Math.atan2(target.y-p.y,target.x-p.x) } : null;
+        });
+        if (aim && touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: origin.x + Math.cos(aim.angle) * 60, y: origin.y + Math.sin(aim.angle) * 60 }] });
+        else if (aim) { await page.mouse.move(aim.x, aim.y); await page.mouse.click(aim.x, aim.y); }
+        if (performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
+        await page.waitForTimeout(250);
+      }
+      if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      const outcome = await result; if (outcome.error) throw Error(outcome.error); const measured = outcome.value;
+      const row = { viewport, highTide, ...measured, gap: summary(measured.gap), advance: summary(measured.advance), present: summary(measured.present) };
+      report.browser.push(row);
+      const key = `browser/${viewport.width}/${highTide}`;
+      if (measured.phases.some(p => p !== 'running')) report.failures.push({ name: `${key}/not-continuously-running`, phases: measured.phases });
+      if (!measured.attackPhases.some(p => p === 'windup' || p === 'release' || p === 'recovery' || p === 'reload')) report.failures.push({ name: `${key}/no-active-combat` });
+      for (const [name, actual, limit] of [['advance-p95', row.advance.p95, budgets.advanceP95Ms], ['advance-p99', row.advance.p99, budgets.advanceP99Ms],
+        ['present-p95', row.present.p95, budgets.presentP95Ms], ['present-p99', row.present.p99, budgets.presentP99Ms],
+        ['frame-p95', row.gap.p95, budgets.frameP95Ms], ['frame-p99', row.gap.p99, budgets.frameP99Ms],
+        ['atlas-pages', row.atlas.pages, budgets.atlasPages], ['texture-bytes', row.estimatedTextureBytes, budgets.estimatedTextureBytes]]) fail(`${key}/${name}`, actual, limit);
+      await page.screenshot({ path: resolve(out, `${viewport.width}-${highTide ? 'high' : 'low'}.png`) });
+      console.log('browser', viewport.width, highTide, JSON.stringify(row)); await context.close();
+    }
+  } finally { await browser.close(); }
+  if (report.errors.length || report.external.length) report.failures.push({ name: 'browser-errors-or-external-requests' });
+  report.status = report.failures.length ? 'BUDGET_BLOCKED' : 'PASS';
+} catch (error) { report.status = 'ERROR'; report.errors.push(String(error?.stack ?? error)); }
+await writeFile(resolve(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+console.log(report.status, JSON.stringify(report.failures)); if (report.status !== 'PASS') process.exitCode = 1;

@@ -2,6 +2,7 @@
 // Package entries and CI infrastructure are derived; unregistered legacy tools
 // are explicitly held for review, never silently deleted or promoted to gates.
 const groups = [
+  { kind: 'diagnostic', reason: 'EN-04 当前正式街区 AI/寻路与三尺寸真实帧时、纹理、包体预算。先 pnpm package，再 node --import tsx scripts/enemy-performance.mjs；独占测量，预算未过返回非零，不代表真机或自然游玩。', files: ['enemy-performance.mjs'] },
   { kind: 'check', reason: '敌人存档交给固定历史源码客户端验证拒绝和零写入；需显式 --candidate 与匹配的旧源码检出。详见 enemy-save-contract，不用当前客户端替代。', files: ['enemy-old-client-probe.ts'] },
   { kind: 'support', reason: '被现役构建或测试导入的共用模块，不是独立验收命令。', files: [
     'browser-options.mjs', 'canvas-click.mjs', 'font-characters.mjs', 'game-bundle.mjs', 'inventory-actions.mjs',
