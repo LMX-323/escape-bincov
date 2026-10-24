@@ -205,11 +205,15 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1 | Profil
     if (rpgEnabled(state)) {
         if (!Array.isArray(state.awards) || state.awards.length > 1000 || state.awards.some(id => !identity(id)) || new Set(state.awards).size !== state.awards.length) fail();
         const charm = state.charm;
+        // A classic raid's gear (its checkpoint, already checked) is the charm's neighbour too: its bag and safe, and in
+        // the gun format its gun and every part. A layered raid's gear is covered below (invIds starts with the charm).
+        const carried = legacyRaid?.loadout;
         if (charm !== null) {
             if (!obj(charm) || !identity(charm.uid) || !['luckyCharm', 'unluckyCharm'].includes(charm.id) || charm.qty !== 1 || charm.x !== 0 || charm.y !== 0 || charm.rotated !== undefined || charm.relief !== undefined
-                || [profile.stash, profile.bag, profile.safe, state.raid?.loadout.bag].filter(Boolean).some(inv => inv!.items.some(i => i.uid === charm.uid))
-                // The profile (already checked) also holds part uids and the equipped gun's; in a raid invIds covers the loadout's.
-                || (guns && [...[profile.stash, profile.bag, profile.safe].flatMap(inv => inv.items.flatMap(D.itemUids)), ...D.equipmentUids(profile.equipment as D.Equipment)].includes(charm.uid))) fail();
+                || [profile.stash, profile.bag, profile.safe, state.raid?.loadout.bag, carried?.bag, carried?.safe].filter(Boolean).some(inv => inv!.items.some(i => i.uid === charm.uid))
+                // The profile (already checked) also holds part uids and the equipped gun's; in a layered raid invIds covers the loadout's.
+                || (guns && [...[profile.stash, profile.bag, profile.safe, ...(carried ? [carried.bag, carried.safe] : [])].flatMap(inv => inv.items.flatMap(D.itemUids)),
+                    ...D.equipmentUids(profile.equipment as D.Equipment), ...(carried ? D.equipmentUids(carried) : [])].includes(charm.uid))) fail();
             exactKeys(charm, ['uid', 'id', 'qty', 'x', 'y']);
         }
     }

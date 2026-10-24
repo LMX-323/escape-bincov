@@ -396,6 +396,8 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
 
 test('a v8 record breaking the gun or record rules is refused before anything trusts it, and its bytes stay', () => {
     const v8 = decodeSession(old('liveRaidV5')), classic = decodeSession(old('classicRaidV5')), bare = decodeSession(old('newGameV3'));
+    const charm = (uid: string) => ({ uid, id: 'luckyCharm', qty: 1, x: 0, y: 0 });
+    const part = (uid: string, id: string) => ({ uid, id, slot: 'muzzle', relief: false, children: [] });
     const faults: [string, SessionRecord, (r: any) => void][] = [
         ['a stored gun without its state', v8, r => { delete r.profile.stash.items.find((i: any) => i.id === 'carbine').gun; }],
         ['a medkit with a gun state', v8, r => { r.profile.stash.items.find((i: any) => i.id === 'medkit').gun = factoryState(); }],
@@ -415,6 +417,13 @@ test('a v8 record breaking the gun or record rules is refused before anything tr
         ['a classic crate gun without its state', classic, r => { delete r.raid.containers.flatMap((c: any) => c.inventory.items).find((i: any) => i.id === 'shotgun').gun; }],
         // A dropped gun keeps its item uid on the ground (M1-04), so it could name a crate; every pickup write then failed (M1-08 review).
         ['a classic ground gun uid equal to a crate id', classic, r => { r.raid.loot.find((l: any) => l.uid === 'loot-900').uid = r.raid.containers[0].id; }],
+        // The charm against a classic raid's gear (the gun, a bag item, a part): a settlement then failed for good (M1-08 review).
+        ['a charm uid equal to the classic raid\'s gun', classic, r => { r.expansion.charm = charm(r.raid.loadout.weaponUid); }],
+        ['a charm uid equal to a classic bag item', classic, r => { r.expansion.charm = charm(r.raid.loadout.bag.items[0].uid); }],
+        ['a charm uid equal to a part of the classic raid\'s gun', classic, r => { r.raid.loadout.gun.parts.push(part('p-charm', 'M05')); r.expansion.charm = charm('p-charm'); }],
+        ['a charm uid equal to a part of a classic bag gun', classic, r => {
+            r.raid.loadout.bag.items.find((i: any) => i.id === 'shotgun').gun.parts.push(part('p-charm', 'M11')); r.expansion.charm = charm('p-charm');
+        }],
         ['a v8 record without gunsBackup', v8, r => { delete r.gunsBackup; }],
         ['a v8 record with a v2 profile', v8, r => { r.profile.version = 2; }],
         ['a v3 expansion without perksBackup', v8, r => { delete r.perksBackup; }],
@@ -430,7 +439,13 @@ test('a v8 record breaking the gun or record rules is refused before anything tr
         const p = page(o, false); assert.equal(p.initialized, false, why); assert.equal(o.data.get(SESSION_KEY), corrupt, why);
     }
     assert.doesNotThrow(() => decodeSession(JSON.stringify(v8))); assert.doesNotThrow(() => decodeSession(JSON.stringify(classic)));
-    // The controls: the same ground gun under an item uid nobody else holds is fine.
+    // The controls: the same ground gun under an item uid nobody else holds is fine, and so are the parts beside a charm of its own.
     const renamed = structuredClone(classic) as any; renamed.raid.loot.find((l: any) => l.uid === 'loot-900').uid = 'dropped-carbine';
     assert.doesNotThrow(() => decodeSession(JSON.stringify(renamed)));
+    const worn = structuredClone(classic) as any; worn.raid.loadout.gun.parts.push(part('p-own', 'M05')); worn.expansion.charm = charm('charm-own');
+    assert.doesNotThrow(() => decodeSession(JSON.stringify(worn)));
+    // The bag item variant was open before gun instances too (main 67a7468): the old rules refuse it now, bytes kept.
+    const stored = JSON.parse(old('classicRaidV5')); stored.expansion.charm = charm(stored.raid.loadout.bag.items[0].uid);
+    const corrupt = JSON.stringify(stored), o = origin(); o.data.set(SESSION_KEY, corrupt);
+    assert.throws(() => decodeSession(corrupt)); assert.equal(page(o, false).initialized, false); assert.equal(o.data.get(SESSION_KEY), corrupt);
 });
