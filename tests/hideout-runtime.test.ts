@@ -118,7 +118,7 @@ test('station upgrades legacy bytes atomically, preserves progress and is idempo
     const profile = oldProfile(save), old = JSON.stringify(profile), f = fixture(old, false), v3 = f.raw;
     assert.equal(f.runtime.enter().ok, true); const record = decodeSession(f.raw);
     // The legacy key's v2 profile arrives migrated (gunsmith M0-06): the same profile with factory guns.
-    assert.deepEqual(record.profile, migrateProfile(profile)); assert.equal(record.version, 6); assert.equal(record.expansion?.version, 3);
+    assert.deepEqual(record.profile, migrateProfile(profile)); assert.equal(record.version, 8); assert.equal(record.expansion?.version, 3);
     // Straight from a record without an expansion to expansion v3: the bytes without one are kept once, and there is
     // no v1/v2 expansion to keep; the legacy bytes stay in legacyBackup, so there is no gunsBackup.
     assert.equal(record.legacyBackup, old); assert.equal(record.systemsBackup, v3); assert.equal(record.perksBackup, null); assert.equal(record.gunsBackup, null);
@@ -410,9 +410,9 @@ test('v1 expansion upgrade preserves body, facilities and growth without double 
     const g = fixture(JSON.stringify(record)); assert.equal(g.state.expansion!.version, 3); assert.equal(g.state.expansion!.body.hp, 47);
     assert.deepEqual(g.state.expansion!.growth.perks, []);
     assert.equal(g.state.expansion!.growth.permanent.technique, 13); assert.equal(g.state.expansion!.base.facilities.rest, 2); assert.equal(g.saves.currentRecord()!.systemsBackup, record.systemsBackup);
-    // Loading wrote the record as v6 with the v1 expansion (the old text is gunsBackup); the perk upgrade then kept that text.
+    // Loading wrote the record as v8 with the v1 expansion (the old text is gunsBackup); the perk upgrade then kept that text.
     const v4 = JSON.parse(g.saves.currentRecord()!.perksBackup!);
-    assert.equal(v4.version, 6); assert.equal(v4.expansion.version, 1); assert.equal('perksBackup' in v4, false);
+    assert.equal(v4.version, 8); assert.equal(v4.expansion.version, 1); assert.equal('perksBackup' in v4, false);
     assert.equal(g.saves.currentRecord()!.gunsBackup, JSON.stringify(record));
 });
 test('offline production remains finite and cannot bank blocked time; offline movement is never credited', () => {

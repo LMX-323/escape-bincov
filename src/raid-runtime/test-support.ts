@@ -53,7 +53,7 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
         },
         weapon(id: 'pistol' | 'carbine' | 'shotgun') {
             const state = runtime.snapshot();
-            // Another gun in hand is another instance: a factory one under a new uid (the slot names its gun, record v6).
+            // Another gun in hand is another instance: a factory one under a new uid (the slot names its gun, record v8).
             if (state.loadout.weapon !== id || state.loadout.weaponUid === null) {
                 const scratch = createInventory(6, 5); addItem(scratch, id);
                 Object.assign(state.loadout, { weaponUid: scratch.items[0].uid, gun: scratch.items[0].gun });
@@ -133,5 +133,7 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
 export function createTestCoastHost(session: SessionState, saves: SaveSession, search: string) {
     if (new URLSearchParams(search).get('test') !== '1') throw new Error('Runtime fixtures require ?test=1.');
     const core = new CoastRaidRuntime(session, saves);
+    // Art fixtures must freeze before the host's first tick, not after an asynchronous browser round trip.
+    core.freezeAI = new URLSearchParams(search).get('freezeAI') === '1';
     return { ...wrapCoastRuntime(core, session, saves), driver: createRuntimeTestDriver(core, search) };
 }

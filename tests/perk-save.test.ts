@@ -13,10 +13,11 @@ import { isPristine, startOver } from '../src/fresh-start';
 import type { CritSnapshot, PerkId } from '../src/perks';
 import { plainCrit } from './fixtures/layered';
 import { makeV4 } from './fixtures/old-saves';
+import { actorArchetype } from '../src/enemy-archetypes';
 
 // Save format of the perk work (#77, docs/tasks/critical-perk-contract.md sections 1, 2 and 6): expansion v3 and raid
 // v3, the station-boundary upgrade, and the CP-08/CP-22/CP-23 fixtures. Since the gun instance format (gunsmith M1-02)
-// every write is session v6 and the expansion names its own version; the previous client's v4 records are read and
+// every write is session v8 and the expansion names its own version; the previous client's v4 records are read and
 // migrated on load, keeping their expansion and raid versions (v2) until the station boundary.
 const NOW = 1800000000000;
 function origin() {
@@ -41,7 +42,7 @@ type Page = ReturnType<typeof page>;
 function reason(result: Result) { assert.equal(result.ok, false); return !result.ok && result.reason; }
 /** The record the previous client (session v4) writes for the same state: expansion and raid v2, no perks, no gun fields. */
 function asV4(text: string): string {
-    const r = JSON.parse(text); assert.equal(r.version, 6); assert.deepEqual(r.expansion.growth.perks, []);
+    const r = JSON.parse(text); assert.equal(r.version, 8); assert.deepEqual(r.expansion.growth.perks, []);
     makeV4(r);
     return JSON.stringify(r);
 }
@@ -53,7 +54,8 @@ function lowDraw() { let s = 1; while (D.seededRandom(s)() >= .02) s++; return s
 function drawIn(lo: number, hi: number) { let s = 1; while (!(D.seededRandom(s)() >= lo && D.seededRandom(s)() < hi)) s++; return s; }
 /** A player round fired at point blank into a live enemy of the current layer, with its shot snapshot in a v3 raid; never lethal. */
 function fire(state: ExpansionState, crit?: CritSnapshot) {
-    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20)!;
+    // This probe isolates crit migration: authored encounters may put an armoured role first.
+    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20 && !actorArchetype(e)?.armor)!;
     const bullet: BulletState = { uid: 'probe', x: enemy.x, y: enemy.y, rotation: 0, vx: 900, vy: 0, left: 40, damage: 10, enemy: false, ...(crit ? { crit } : {}) };
     const hp = enemy.hp, rng = raid.rng;
     let critical: boolean | null = null;
@@ -61,13 +63,13 @@ function fire(state: ExpansionState, crit?: CritSnapshot) {
     return { critical, damage: hp - enemy.hp, rolled: raid.rng !== rng };
 }
 
-test('CP-22: a v4 record with a live v2 raid keeps the old rules and expansion v2 until it settles; the station then upgrades it and the next raid is v3', () => {
+test('CP-22: a v4 live v2 raid keeps old rules and expansion v2 until settlement; the station upgrades it and the next street raid combines both systems', () => {
     const o = origin(), first = page(o);
-    assert.ok(first.runtime.deploy({ world: 'buildings', seed: 'cp-22' }).ok); assert.equal(first.record.expansion!.raid!.version, 3);
+    assert.ok(first.runtime.deploy({ world: 'mall', seed: 'cp-22' }).ok); assert.equal(first.record.expansion!.raid!.version, 3);
     const old = asV4(first.raw); o.data.set(SESSION_KEY, old); // what the previous client stored for this deployment
     const p = page(o, false);
-    // Read and written as v6 (the gun format), the v4 text kept as gunsBackup; the expansion and raid stay v2.
-    assert.equal(p.initialized, true); assert.equal(p.record.version, 6); assert.equal(p.record.gunsBackup, old);
+    // Read and written as v8 (the gun format), the v4 text kept as gunsBackup; the expansion and raid stay v2.
+    assert.equal(p.initialized, true); assert.equal(p.record.version, 8); assert.equal(p.record.gunsBackup, old);
     assert.equal(p.state.expansion!.version, 2); assert.equal(p.state.expansion!.raid!.version, 2);
     // The station boundary stays closed while the raid is live: no upgrade and no write.
     const live = p.raw; assert.equal(reason(p.runtime.enter()), 'locked'); assert.equal(p.saves.ensureRpg(), false); assert.equal(p.raw, live);
@@ -95,12 +97,12 @@ test('CP-22: a v4 record with a live v2 raid keeps the old rules and expansion v
     const settled = p.raw; assert.equal(p.record.expansion!.version, 2); assert.equal(p.record.expansion!.raid, null);
     p.state.state = 'result'; assert.ok(p.runtime.returnToBase().ok);
     const upgraded = p.record;
-    assert.equal(upgraded.version, 6); assert.equal(upgraded.perksBackup, settled); assert.equal(upgraded.gunsBackup, old);
+    assert.equal(upgraded.version, 8); assert.equal(upgraded.perksBackup, settled); assert.equal(upgraded.gunsBackup, old);
     assert.equal(upgraded.expansion!.version, 3); assert.deepEqual(upgraded.expansion!.growth.perks, []);
     // The next deployment is v3: a round rolls its shot snapshot once (a pistol at technique 10: 6.9%), never the old
     // formula, which gives 10% at point blank; a draw between the two crits only under the old rule.
     assert.ok(p.runtime.deploy({ world: 'buildings', seed: 'cp-22-next' }).ok);
-    const next = structuredClone(p.state.expansion!); assert.equal(next.raid!.version, 3); assert.equal(p.record.perksBackup, settled);
+    const next = structuredClone(p.state.expansion!); assert.equal(next.raid!.version, 5); assert.equal(p.record.perksBackup, settled);
     next.raid!.rng = drawIn(.07, .1); assert.deepEqual(fire(next, plainCrit()), { critical: false, damage: 10, rolled: true });
     next.raid!.rng = low; assert.deepEqual(fire(next, plainCrit()), { critical: true, damage: 15, rolled: true });
 });
@@ -122,26 +124,26 @@ test('CP-22: a classic checkpoint raid in a v4 record also keeps expansion v2 un
 test('perk format round trips: new game, settled and live backups, reopen', () => {
     // A new game writes a record without an expansion first; the first station entry writes expansion v3 directly, so
     // there is no v1/v2 expansion to keep.
-    const o = origin(), a = page(o, false), v3 = a.raw; assert.equal(JSON.parse(v3).version, 6); assert.equal('expansion' in JSON.parse(v3), false);
+    const o = origin(), a = page(o, false), v3 = a.raw; assert.equal(JSON.parse(v3).version, 8); assert.equal('expansion' in JSON.parse(v3), false);
     assert.ok(a.runtime.enter().ok);
-    assert.equal(a.record.version, 6); assert.equal(a.record.expansion!.version, 3); assert.equal(a.record.systemsBackup, v3); assert.equal(a.record.perksBackup, null);
+    assert.equal(a.record.version, 8); assert.equal(a.record.expansion!.version, 3); assert.equal(a.record.systemsBackup, v3); assert.equal(a.record.perksBackup, null);
     const perks: PerkId[] = ['strength-20-b', 'constitution-15-a', 'technique-15-a', 'technique-30-b'];
     a.setup(d => { d.expansion.growth.permanent = { strength: 25, constitution: 15, technique: 30 }; d.expansion.growth.perks = [...perks]; });
     const growth = structuredClone(a.state.expansion!.growth);
     // Settled export and import into another save.
     const settled = a.runtime.exportBackup(), file = JSON.parse(settled);
-    assert.equal(file.formatVersion, 6); assert.equal(file.record.version, 6); assert.deepEqual(file.record.expansion.growth.perks, perks);
+    assert.equal(file.formatVersion, 8); assert.equal(file.record.version, 8); assert.deepEqual(file.record.expansion.growth.perks, perks);
     const b = page(); assert.ok(importText(b, settled).ok);
-    assert.equal(b.record.version, 6); assert.deepEqual(b.state.expansion!.growth, growth);
+    assert.equal(b.record.version, 8); assert.deepEqual(b.state.expansion!.growth, growth);
     assert.equal(b.record.perksBackup, null, 'the importing save keeps its own recovery bytes');
     // Live export: the v3 raid travels with the perks and resumes as v3.
     assert.ok(a.runtime.deploy({ world: 'mall', seed: 'round-trip' }).ok);
     const live = a.runtime.exportBackup(), decoded = decodePortableBackup(live);
     assert.equal(decoded.kind, 'session'); if (decoded.kind !== 'session') return;
-    assert.equal(decoded.record.version, 6); assert.equal(decoded.record.expansion!.raid!.version, 3);
-    assert.equal(encodeRecoveryBackup(decoded.record), JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 6, record: decoded.record }));
+    assert.equal(decoded.record.version, 8); assert.equal(decoded.record.expansion!.raid!.version, 3);
+    assert.equal(encodeRecoveryBackup(decoded.record), JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 8, record: decoded.record }));
     const c = page(); assert.ok(importText(c, live).ok);
-    assert.equal(c.state.state, 'menu'); assert.equal(c.record.version, 6); assert.equal(c.state.expansion!.raid!.version, 3);
+    assert.equal(c.state.state, 'menu'); assert.equal(c.record.version, 8); assert.equal(c.state.expansion!.raid!.version, 3);
     assert.deepEqual(c.state.expansion!.growth, growth); assert.ok(c.saves.resumeRun());
     // An envelope must name its record's version.
     const mislabelled = JSON.parse(live); mislabelled.formatVersion = 4;
@@ -154,7 +156,7 @@ test('perk format round trips: new game, settled and live backups, reopen', () =
 
 test('perksBackup holds the exact expansion-v2 text once: later writes, reopening and a fresh start keep it, never a v3 one', () => {
     const o = origin(), seed = page(o), old = asV4(seed.raw); o.data.set(SESSION_KEY, old);
-    // Loading writes the record as v6 at once (still expansion v2): that text is what the perk upgrade replaces.
+    // Loading writes the record as v8 at once (still expansion v2): that text is what the perk upgrade replaces.
     const p = page(o, false), v4 = p.raw; assert.equal(p.record.expansion!.version, 2); assert.equal(p.record.gunsBackup, old);
     assert.ok(p.runtime.enter().ok); assert.equal(p.record.expansion!.version, 3); assert.equal(p.record.perksBackup, v4);
     p.setup(d => { d.expansion.growth.permanent.technique = 20; d.expansion.growth.perks = ['technique-20-a']; });
@@ -165,7 +167,7 @@ test('perksBackup holds the exact expansion-v2 text once: later writes, reopenin
     const systems = reopened.record.systemsBackup;
     assert.deepEqual(startOver(reopened.runtime, () => o.storage, reopened.clock.now), { ok: true, copied: true });
     const fresh = reopened.record;
-    assert.equal(fresh.version, 6); assert.deepEqual(fresh.expansion!.growth.perks, []); assert.ok(isPristine(fresh));
+    assert.equal(fresh.version, 8); assert.deepEqual(fresh.expansion!.growth.perks, []); assert.ok(isPristine(fresh));
     assert.equal(fresh.perksBackup, v4); assert.equal(fresh.systemsBackup, systems); assert.equal(fresh.gunsBackup, old);
 });
 
@@ -244,9 +246,9 @@ test('CP-23: a stale window cannot overwrite the upgraded record; an ordinary co
     assert.throws(() => store.commit(loaded.save, null, undefined, null)); assert.equal(o.data.get(SESSION_KEY), upgraded);
     // A confirmed import may write expansion v2; the next v3 write then keeps that text, as a new cycle.
     const imported = store.commit(loaded.save, null, undefined, older, true);
-    assert.equal(imported.version, 6); assert.equal(imported.expansion!.version, 2); assert.equal('perksBackup' in imported, false);
+    assert.equal(imported.version, 8); assert.equal(imported.expansion!.version, 2); assert.equal('perksBackup' in imported, false);
     const v4 = o.data.get(SESSION_KEY)!, again = store.commit(loaded.save, null, undefined, loaded.expansion);
-    assert.equal(again.version, 6); assert.equal(again.expansion!.version, 3); assert.equal(again.perksBackup, v4);
+    assert.equal(again.version, 8); assert.equal(again.expansion!.version, 3); assert.equal(again.perksBackup, v4);
 });
 
 test('imports: a settled v4 backup upgrades at the station; one with a live v2 raid keeps expansion v2 until it settles', () => {
@@ -257,7 +259,7 @@ test('imports: a settled v4 backup upgrades at the station; one with a live v2 r
     const yard = page(); yard.setup(d => { d.expansion.growth.permanent.strength = 15; d.expansion.growth.perks = ['strength-15-a']; });
     const backup = yard.record.perksBackup, guns = yard.record.gunsBackup;
     assert.ok(importText(yard, settled).ok);
-    assert.equal(yard.record.version, 6); assert.equal(yard.record.expansion!.version, 3); assert.equal(yard.record.perksBackup, backup);
+    assert.equal(yard.record.version, 8); assert.equal(yard.record.expansion!.version, 3); assert.equal(yard.record.perksBackup, backup);
     assert.equal(yard.record.gunsBackup, guns);
     assert.equal(yard.state.save.cash, 4321); assert.equal(yard.state.expansion!.growth.permanent.technique, 22); assert.deepEqual(yard.state.expansion!.growth.perks, []);
     // The old tab page writes the confirmed record as it is (expansion v2); its next station entry upgrades it.

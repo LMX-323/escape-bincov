@@ -3,9 +3,9 @@
  * reading file or record text (byte limits, JSON) stays with save-backup and recovery-store, which call into this
  * module, never the other way round. Checks return booleans so that each format keeps its own error message.
  *
- * Two profile formats are read. Version 3 (record v6) holds gun instances: every gun item, every gun on the ground and
+ * Two profile formats are read. Version 3 (record v8) holds gun instances: every gun item, every gun on the ground and
  * the equipped slot carry a gun state (src/gunsmith/instance.ts), and gun, part and item uids are unique together.
- * Versions 1 and 2 (records v2 to v5) are the old format, where no `gun` or `weaponUid` field may appear: they are
+ * Versions 1 and 2 (records v2 to v7) are the old format, where no `gun` or `weaponUid` field may appear: they are
  * checked by the old rules and migrated (docs/gunsmith/CONTRACTS.md, the M0-06 section), never repaired.
  */
 import { ITEMS, WEAPONS, cleanOldSave, createInventory, equippedWeapon, fits, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
@@ -38,7 +38,7 @@ export function hasExactKeys(value: unknown, keys: readonly string[]): value is 
  * One persisted inventory: the exact grid size, known items within their stack size, uids unique across `seen`
  * (the caller chooses the scope and gets the accepted uids added), whole in-bounds positions, no overlap.
  * `rotation`: whether this format may store rotated items. `exact`: also reject unknown inventory and item fields.
- * `guns`: the gun format (profile v3, record v6). A gun item must carry a valid gun state (validateGun), takes the cells
+ * `guns`: the gun format (profile v3, record v8). A gun item must carry a valid gun state (validateGun), takes the cells
  * its parts grow it to, and its part uids join `seen` like item uids; no other item may have a `gun` field. Without it
  * (the old format) no item may have one at all.
  * `each` runs for an item that passed, before it is recorded; it may throw the caller's own error.
@@ -129,7 +129,7 @@ export function decodeStoredProfile(value: unknown): SaveDataV1 {
 }
 
 /**
- * A v1/v2 profile held in a record from before gun instances (session v2 to v5), or the profile such a record's classic
+ * A v1/v2 profile held in a record from before gun instances (session v2 to v7), or the profile such a record's classic
  * raid gear settles into: the old rules and normalization, kept in the old format (not migrated), so decodeSession can
  * compare it with the stored profile and then migrate the whole record at once.
  */

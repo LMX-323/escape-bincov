@@ -22,7 +22,7 @@ export interface LootEntry { id: string; weight: number; min: number; max: numbe
 export type LootTable = LootEntry[];
 /**
  * `gun`: a gun item's installed parts and device switches (src/gunsmith/instance.ts). Every gun item has it and no
- * other item does (profile v3, record v6); the gun's uid, type and body relief flag are this item's `uid`, `id`, `relief`.
+ * other item does (profile v3, record v8); the gun's uid, type and body relief flag are this item's `uid`, `id`, `relief`.
  */
 export interface Item { uid: string; id: string; qty: number; x: number; y: number; relief?: boolean; rotated?: boolean; gun?: GunState }
 export interface Inventory { w: number; h: number; items: Item[] }
@@ -134,7 +134,7 @@ type GunSlot = Pick<Equipment, 'weapon' | 'weaponUid' | 'gun' | 'relief'>;
  * The gun the slot holds, as the one instance it is: its uid, type, body relief flag, installed parts and switches;
  * null without a gun (no weapon, or the knife). Every reader of the equipped gun starts here (#28 M1-05): its effective
  * numbers through buildOf of these parts (equippedWeapon, the Runtime's currentWeapon and grip), its weight and its
- * value. A slot that names a gun always carries its uid and state (profile v3, record v6, validEquipment); one that
+ * value. A slot that names a gun always carries its uid and state (profile v3, record v8, validEquipment); one that
  * does not is a bug, and reading it throws rather than fire, weigh or price a modified gun as a factory one.
  */
 export function equippedGun(slot: GunSlot): GunInstance | null {

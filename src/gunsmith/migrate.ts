@@ -1,14 +1,15 @@
 /**
- * Save migration to gun instances (#28 M0-06): pure functions that bring a profile v2 to v3 and a session record
- * v3/v4/v5 to v6. Every old gun becomes a factory instance (nothing installed, devices off) under the uid it already
- * has; only the equipped gun, which old saves keep without a uid, gets one: `gun-v6`, or `gun-v6-2`, `gun-v6-3` ...
- * when a string anywhere in the save already is that. Nothing else changes: the migration adds the gun fields, raises
- * the profile and record versions and adds gunsBackup, so stripping those gives back the input exactly.
+ * Save migration to gun instances (#28 M0-06): pure functions that bring a profile v2 to v3 and a session record v3 to
+ * v7 to v8. Every old gun becomes a factory instance (nothing installed, devices off) under the uid it already has;
+ * only the equipped gun, which old saves keep without a uid, gets one: `gun-v6`, or `gun-v6-2`, `gun-v6-3` ... when a
+ * string anywhere in the save already is that. Nothing else changes: the migration adds the gun fields, raises the
+ * profile and record versions and adds gunsBackup, so stripping those gives back the input exactly. The perk and enemy
+ * backups stay as they were: a v6/v7 record keeps its enemyBackup key, which is how a v8 record says enemy rules are on.
  *
- * Deterministic and idempotent (a v3 profile or v6 record comes back as an equal copy after the same checks); no
+ * Deterministic and idempotent (a v3 profile or v8 record comes back as an equal copy after the same checks); no
  * clock, RNG or entity serials. Every result is checked as the new format: each gun valid (validateGun) and no gun,
  * part or item uid used twice. domain migrateSave calls migrateProfile for profiles v0-v2, and decodeSession calls
- * migrateRecord for records v2-v5 after the old format's own strict check, then checks the result as v6
+ * migrateRecord for records v2-v7 after the old format's own strict check, then checks the result as v8
  * (docs/gunsmith/CONTRACTS.md, the M0-06 section).
  */
 import type { Equipment, SaveDataV1 } from '../domain';
@@ -23,11 +24,12 @@ export type EquipmentV2 = Omit<Equipment, 'weaponUid' | 'gun'>;
 /** A profile before gun instances (v2): no item has a `gun` field and the equipped slot names no gun uid. Read only. */
 export type ProfileV2 = Omit<SaveDataV1, 'version' | 'equipment'> & { version: 2; equipment: EquipmentV2 };
 /**
- * A session record before gun instances: v3 without an expansion, v4 with a v1/v2 one, v5 with a v3 one, and no
- * `gunsBackup`; its profile is v2. What decodeSession checks by the old rules and hands to migrateRecord. Its nested
- * loadouts, ground loot and containers are typed as the current ones but hold no gun fields.
+ * A session record before gun instances: v3 without an expansion, v4 with a v1/v2 one, v5 with a v3 one, v6 and v7 as
+ * v4 and v5 with enemy rules on (#81, they hold enemyBackup), and no `gunsBackup`; its profile is v2. What decodeSession
+ * checks by the old rules and hands to migrateRecord. Its nested loadouts, ground loot and containers are typed as the
+ * current ones but hold no gun fields.
  */
-export type RecordV5 = Omit<SessionRecord, 'version' | 'profile' | 'gunsBackup'> & { version: 3 | 4 | 5; profile: ProfileV2 };
+export type RecordV7 = Omit<SessionRecord, 'version' | 'profile' | 'gunsBackup'> & { version: 3 | 4 | 5 | 6 | 7; profile: ProfileV2 };
 
 type Json = Record<string, any>;
 const EQUIPPED = 'gun-v6';
@@ -143,25 +145,28 @@ export function migrateProfile(profile: ProfileV2 | SaveDataV1): SaveDataV1 {
 }
 
 /**
- * A session record v3/v4/v5 (as decodeSession returns it, a v2 record already turned into v3 there) to v6, with
- * `original` kept as gunsBackup: decodeSession passes the stored text of a v3-v5 record and null for v2, whose bytes
- * migrationBackup already keeps. A v6 record comes back as a checked copy and `original` is ignored. Throws on an
- * unknown version, a profile version that does not match, old records already holding gun fields, a gun an old save
- * cannot hold, and any result that breaks the gun rules; never repairs.
+ * A session record v3 to v7 (as decodeSession returns it, a v2 record already turned into v3 there) to v8, with
+ * `original` kept as gunsBackup: decodeSession passes the stored text of a v3-v7 record and null for v2, whose bytes
+ * migrationBackup already keeps. perksBackup and enemyBackup stay as they are, so a v6/v7 record keeps enemy rules on.
+ * A v8 record comes back as a checked copy and `original` is ignored. Throws on an unknown version, a profile version
+ * that does not match, old records already holding gun fields, a gun an old save cannot hold, and any result that
+ * breaks the gun rules; never repairs.
  */
-export function migrateRecord(record: RecordV5 | SessionRecord, original: string | null): SessionRecord {
+export function migrateRecord(record: RecordV7 | SessionRecord, original: string | null): SessionRecord {
     const out: unknown = structuredClone(record);
-    if (!obj(out) || out.format !== 'escape-bincov-session' || ![3, 4, 5, 6].includes(out.version) || !obj(out.profile)
-        || out.profile.version !== (out.version === 6 ? 3 : 2)) return reject();
+    if (!obj(out) || out.format !== 'escape-bincov-session' || ![3, 4, 5, 6, 7, 8].includes(out.version) || !obj(out.profile)
+        || out.profile.version !== (out.version === 8 ? 3 : 2)) return reject();
     const h = recordHolders(out);
-    if (out.version === 6) {
+    if (out.version === 8) {
         if (!own(out, 'gunsBackup') || (out.gunsBackup !== null && typeof out.gunsBackup !== 'string')) reject();
     } else {
-        // The record version names the expansion it carries: v3 none, v4 a v1/v2 one, v5 a v3 one (recordVersion).
+        // The record version names what it carries: v3 no expansion, v4/v6 a v1/v2 one, v5/v7 a v3 one, and v6/v7 enemy
+        // rules, with enemyBackup.
         if (own(out, 'gunsBackup') || (original !== null && typeof original !== 'string') || (out.version === 3) === own(out, 'expansion')
-            || (out.version !== 3 && (out.version === 5) !== (out.expansion.version === 3))) reject(); // recordHolders checked it is an object
+            || (out.version !== 3 && (out.version === 5 || out.version === 7) !== (out.expansion.version === 3)) // recordHolders checked it is an object
+            || (out.version >= 6) !== own(out, 'enemyBackup')) reject();
         upgrade(h, strings(out));
-        out.profile.version = 3; out.version = 6; out.gunsBackup = original;
+        out.profile.version = 3; out.version = 8; out.gunsBackup = original;
     }
     verify(h);
     return out as SessionRecord;

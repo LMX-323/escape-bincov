@@ -1,4 +1,5 @@
 import * as D from './domain';
+import type { EnemyTactics } from './enemy-archetypes';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
 import { decodeOldStoredProfile, decodeStoredProfile, finite, hasOwnStringKey, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
@@ -10,11 +11,13 @@ import type { ProfileV2 } from './gunsmith/migrate';
 export const WORLD_VERSION = 'coast-v2';
 export interface ActorState extends Point { rotation: number }
 export interface EnemyState extends ActorState {
+  /** Present only for an authored archetype in a layered v4 action. Never added to an old active enemy. */
+  tactics?: EnemyTactics;
   uid: string; id: string; hp: number; home: Point; target: Point;
   state: 'patrol' | 'investigate' | 'chase' | 'attack' | 'return';
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
 }
-/** Ground loot. `gun`: a gun on the ground carries its state as an item does (record v6); nothing else has one. */
+/** Ground loot. `gun`: a gun on the ground carries its state as an item does (record v8); nothing else has one. */
 export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean; gun?: GunState }
 export interface BulletState extends ActorState {
   uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string;
@@ -67,8 +70,8 @@ function inventoryIdentity(inv: D.Inventory): string {
 
 /**
  * Strict validation before rebuilding any world objects; never normalize a partial raid. The profile's version names
- * the format: v3 (record v6) holds gun instances on the loadout, on ground guns and in containers, and one uid space
- * for every item, gun and part that no ground uid, enemy, round or container may share; v2 (records up to v5) holds
+ * the format: v3 (record v8) holds gun instances on the loadout, on ground guns and in containers, and one uid space
+ * for every item, gun and part that no ground uid, enemy, round or container may share; v2 (records up to v7) holds
  * none and keeps the old rules, which decodeSession applies before migrating such a record.
  */
 export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | ProfileV2, legacy = false): RaidCheckpoint {
@@ -102,7 +105,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | Profi
   if (!Array.isArray(c.enemies) || c.enemies.length !== config.enemies.length) fail();
   c.enemies.forEach((e, i) => {
     id(e.uid);
-    if (e.uid !== `enemy-${i}` || e.id !== config.enemies[i].id || !actor(e) || !point(e.home) || !point(e.target)
+    if (e.tactics !== undefined || e.uid !== `enemy-${i}` || e.id !== config.enemies[i].id || !actor(e) || !point(e.home) || !point(e.target)
         || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state)
         || !Array.isArray(e.path) || e.path.length > 4000 || !e.path.every(point)) fail();
     for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();
@@ -146,7 +149,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | Profi
     }
   }
   // The gun format keeps items and the world apart (M0 review): no item, gun or part uid is a ground, enemy, round or
-  // container uid. The old format never checked this; real old raids pass it, and decodeSession checks them again as v6.
+  // container uid. The old format never checked this; real old raids pass it, and decodeSession checks them again as v8.
   if (guns && [...itemIds].some(uid => ids.has(uid) || containers.has(uid))) fail();
   return { ...structuredClone(c), version: 2, worldVersion: WORLD_VERSION, containers: structuredClone(c.containers ?? []) };
 }

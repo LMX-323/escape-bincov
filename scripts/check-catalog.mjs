@@ -3,7 +3,7 @@
 import { browserGroups, manualSuites, suitesForGroup } from './ci/browser-suites.mjs';
 
 const descriptions = {
-  browser: '普通行动入口与基本操作', 'desktop-input': '真实键鼠、组合输入与释放', shooting: '射击、镜头、弹道与慢帧反馈',
+  enemy: '新敌人保存场景、攻击阶段、素材和条件交涉', browser: '普通行动入口与基本操作', 'desktop-input': '真实键鼠、组合输入与释放', shooting: '射击、镜头、弹道与慢帧反馈',
   'save-browser': '保存失败、重试、导入导出与多窗口', play: '约十分钟真实计时行动', portable: '解压两种 ZIP、离线入口与操作',
   ui: '桌面界面布局', mobile: '触屏行动与按钮', 'mobile-ux': '手机横竖屏、短屏与操作边界', title: '标题页与输入',
   opening: '序幕播放、跳过与持久化', loot: '搜刮、物品转移与退出输入', 'loot-target': '附近搜刮目标与选择',
@@ -52,7 +52,7 @@ export const risks = {
   inventory: { title: '背包与搜刮操作', extends: ['ui', 'save', 'input'], checks: ['test:loot', 'test:loot-target', 'test:issue26-inventory', 'test:issue26-station'], evidence: ['角色和世界同笔提交；取消、双端守恒与下次操作正常。'] },
   shop: { title: '商店与据点交易', extends: ['ui', 'save', 'input'], checks: ['test:shop-drag', 'test:shop-feedback', 'test:hideout', 'test:station'], evidence: ['院子与旧页签都检查；救济品、净额交易与确认取消不退化。'] },
   world: { title: '地图、建筑与分层', extends: ['rules'], checks: ['test:buildings', 'test:mall-passages', 'test:mall-landing', 'test:mall-sample', 'test:raid-default'], evidence: ['检查旧布局身份、可达性、门/楼梯和隐藏内容；改画面/输入再叠加对应风险。'] },
-  combat: { title: '战斗、AI、潮汐或持续负载', extends: ['rules'], checks: ['test:shooting', 'test:range', 'test:play'], evidence: ['真人手感和平衡另验；改分层战斗再叠加 layered，改输入再叠加 input。'] },
+  combat: { title: '战斗、AI、潮汐或持续负载', extends: ['rules'], checks: ['test:shooting', 'test:range', 'test:enemy', 'test:play'], evidence: ['真人手感和平衡另验；改分层战斗再叠加 layered，改输入再叠加 input。'] },
   layered: { title: '分层自然行动', extends: ['world', 'combat'], checks: ['test:layered-play'], evidence: [] },
   base: { title: 'RPG 与据点成长', extends: ['ui', 'save'], checks: ['test:systems', 'test:station', 'test:station-tier1', 'test:station-tier2', 'test:station-relief', 'check:perk-ui'], evidence: ['训练保留真实计时；Perk 自动化不代表首次解锁、选择率或重置成本的真人平衡。'] },
   opening: { title: '序幕播放与状态', extends: ['ui', 'input', 'save'], checks: ['test:opening'], evidence: ['检查跳过、首次播放标记和静音；保存失败不假成功。'] },

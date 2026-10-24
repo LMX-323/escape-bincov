@@ -111,11 +111,16 @@ async function suite(viewport) {
     }
     finally { result.durationMs = Math.round(performance.now() - start); await writeReport(); }
   }
-  /** Enemies frozen and parked far down the quay road; the player whole again. */
+  /** Freeze the loot fixture's enemies. Authored program posts must retain their validated homes. */
   async function quiet() {
     await page.evaluate(() => {
       const { driver, host } = window.__bincovSample; driver.freezeAI(true);
-      for (const e of host.lastBatch.frame.actors) if (e.alive) driver.placeEnemy(e.uid, { x: 208, y: 1456 });
+      const raid = window.__bincov.saveSession.captureExpansion().raid;
+      // placeEnemy also replaces home. Keep these frozen members at their native posts instead
+      // of invalidating the next real SaveSession transaction (seed44 includes a checkpoint).
+      const posts = new Set(raid.maps[raid.currentMap].enemies.filter(e => e.tactics?.version === 2
+        && ['recovery', 'blockade'].includes(e.tactics.program.kind)).map(e => e.uid));
+      for (const e of host.lastBatch.frame.actors) if (e.alive && !posts.has(e.uid)) driver.placeEnemy(e.uid, { x: 208, y: 1456 });
       driver.vitals({ hp: 100, bleeding: false, pollution: 0 });
     });
     await frames(page, 2);

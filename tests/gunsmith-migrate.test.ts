@@ -12,15 +12,15 @@ import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { CoastRaidRuntime } from '../src/raid-runtime/runtime';
 import { GUNS } from '../src/gunsmith/catalog';
 import { factoryState, isGunId, validateGun } from '../src/gunsmith/instance';
-import { OLD_GUNS, migrateProfile, migrateRecord, type ProfileV2, type RecordV5 } from '../src/gunsmith/migrate';
+import { OLD_GUNS, migrateProfile, migrateRecord, type ProfileV2, type RecordV7 } from '../src/gunsmith/migrate';
 import { prototypeWorld } from './fixtures/layered';
 import { holders, oldProfile, oldRecord } from './fixtures/old-saves';
 
 // Gunsmith M0-06 and M1-02 (docs/gunsmith/CONTRACTS.md, the save and migration section): the pure migration to profile
-// v3 / record v6 and its wiring into reading. The old saves are real bytes the client before gun instances wrote
-// (fixtures/gunsmith-v5-saves.json, frozen at feat/gunsmith e19cf00); each goes through the real decodeSession, is
-// written back as v6 and read again. That old clients refuse the new formats is checked against a real pinned old
-// client in test:expansion (scripts/expansion-browser-test.mjs), not against a stand-in here.
+// v3 / record v8 and its wiring into reading. The old saves are real bytes a client before gun instances wrote
+// (fixtures/gunsmith-v5-saves.json, frozen at feat/gunsmith e19cf00, before #81 took records 6 and 7); each goes through
+// the real decodeSession, is written back as v8 and read again. That old clients refuse the new formats is checked
+// against real pinned old clients in test:expansion (scripts/expansion-browser-test.mjs), not against a stand-in here.
 const NOW = 1800000000000;
 const REFUSED = /存档格式不支持或内容不完整/, UNREADABLE = /无法读取这份存档/;
 const SAVES = JSON.parse(readFileSync(join(import.meta.dirname, 'fixtures', 'gunsmith-v5-saves.json'), 'utf8'));
@@ -59,14 +59,14 @@ const importText = (p: ReturnType<typeof page>, text: string) => { const preview
 const gunUids = (p: D.SaveDataV1) => [...[p.stash, p.bag, p.safe].flatMap(inv => inv.items.filter(i => isGunId(i.id)).map(i => i.uid)), ...(p.equipment.weaponUid ? [p.equipment.weaponUid] : [])].sort();
 
 /**
- * The proof every old record goes through: read as v6 with its exact text as gunsBackup (a v2 record keeps its bytes as
+ * The proof every old record goes through: read as v8 with its exact text as gunsBackup (a v2 record keeps its bytes as
  * migrationBackup instead); lossless (taking the added fields away gives the stored record back); every gun a factory
  * instance under its own uid and the equipped one `equipped`; deterministic. Then the real persist and reload: the first
- * write stores v6, the old bytes stay, a second write keeps them and a reopened page reads the same profile.
+ * write stores v8, the old bytes stay, a second write keeps them and a reopened page reads the same profile.
  */
 function prove(name: string, text: string, resolve?: WorldResolver, equipped = ['gun-v6']) {
     const stored = JSON.parse(text), after = decodeSession(text, resolve);
-    assert.deepEqual([after.version, after.profile.version, after.gunsBackup], [6, 3, stored.version === 2 ? null : text], name);
+    assert.deepEqual([after.version, after.profile.version, after.gunsBackup], [8, 3, stored.version === 2 ? null : text], name);
     if (stored.version >= 3) assert.deepEqual(oldRecord(after, stored.version), stored, `${name}: nothing but the gun fields changes`);
     const was = holders(stored), now = holders(after);
     assert.equal(now.items.length, was.items.length, name);
@@ -82,12 +82,13 @@ function prove(name: string, text: string, resolve?: WorldResolver, equipped = [
     assert.deepEqual(now.slots.filter(s => s.weapon !== null).map(s => s.weaponUid), equipped, name);
     assert.equal(JSON.stringify(decodeSession(text, resolve)), JSON.stringify(after), `${name}: deterministic`);
     const p = opened(text, resolve);
-    assert.equal(p.initialized, true, name); assert.equal(JSON.parse(p.raw).version, 6, name);
+    assert.equal(p.initialized, true, name); assert.equal(JSON.parse(p.raw).version, 8, name);
     const written = p.record;
     assert.equal(written.gunsBackup, after.gunsBackup, name);
-    assert.deepEqual([written.legacyBackup, written.migrationBackup, written.systemsBackup, written.perksBackup], [after.legacyBackup, after.migrationBackup, after.systemsBackup, after.perksBackup], name);
+    assert.deepEqual([written.legacyBackup, written.migrationBackup, written.systemsBackup, written.perksBackup, written.enemyBackup],
+        [after.legacyBackup, after.migrationBackup, after.systemsBackup, after.perksBackup, after.enemyBackup], name);
     assert.deepEqual([written.profile, written.raid, written.terminal], [after.profile, after.raid, after.terminal], name);
-    assert.ok(p.saves.persist(), name); assert.equal(p.record.gunsBackup, after.gunsBackup, `${name}: never replaced by a v6 text`);
+    assert.ok(p.saves.persist(), name); assert.equal(p.record.gunsBackup, after.gunsBackup, `${name}: never replaced by a v8 text`);
     const again = opened(p.raw, resolve);
     assert.deepEqual(again.state.save, p.state.save, name); assert.equal(again.record.gunsBackup, after.gunsBackup, name);
     return { stored, after, page: again };
@@ -132,20 +133,20 @@ test('old settled backup files: the profile file and the recovery file give the 
     assert.deepEqual(oldProfile(fromFile), SAVES.settledProfileFile.save);
     const recovery = decodePortableBackup(old('settledRecoveryFile'));
     assert.equal(recovery.kind, 'session'); if (recovery.kind !== 'session') return;
-    assert.deepEqual([recovery.record.version, recovery.record.gunsBackup], [6, inner('settledRecoveryFile')]);
+    assert.deepEqual([recovery.record.version, recovery.record.gunsBackup], [8, inner('settledRecoveryFile')]);
     assert.deepEqual(recovery.record.profile, settled.profile);
     // The yard previews and imports the old full backup; the store keeps its own recovery bytes, the backup's are dropped.
     const yard = page(), guns = yard.record.gunsBackup;
     assert.ok(importText(yard, old('settledRecoveryFile')).ok);
-    assert.deepEqual([yard.record.version, yard.record.gunsBackup, yard.record.profile.equipment.weaponUid], [6, guns, 'gun-v6']);
+    assert.deepEqual([yard.record.version, yard.record.gunsBackup, yard.record.profile.equipment.weaponUid], [8, guns, 'gun-v6']);
     assert.equal(yard.state.save.cash, 4321);
-    // The old tab page takes the old settled profile file (no expansion there yet); it is written as v6.
+    // The old tab page takes the old settled profile file (no expansion there yet); it is written as v8.
     const tabs = page(origin(), false); tabs.state.state = 'hideout';
     assert.ok(tabs.saves.importSave(decodeBackup(old('settledProfileFile'))));
-    assert.deepEqual(tabs.record.profile, fromFile); assert.equal(tabs.record.version, 6);
-    // Export after import: a v6 recovery file that reads back the same and imports into another save.
+    assert.deepEqual(tabs.record.profile, fromFile); assert.equal(tabs.record.version, 8);
+    // Export after import: a v8 recovery file that reads back the same and imports into another save.
     const exported = yard.runtime.exportBackup(), file = JSON.parse(exported);
-    assert.deepEqual([file.formatVersion, file.record.version, file.record.profile.version], [6, 6, 3]);
+    assert.deepEqual([file.formatVersion, file.record.version, file.record.profile.version], [8, 8, 3]);
     const other = page(); assert.ok(importText(other, exported).ok); assert.deepEqual(other.state.save, yard.state.save);
     // A settled profile file (v3) round trips too.
     const v3file = JSON.stringify({ format: 'escape-bincov-backup', formatVersion: 3, createdAt: new Date(NOW).toISOString(), save: fromFile });
@@ -209,7 +210,7 @@ test('a pending settlement exported by the old client imports once: the terminal
     const file = old('pendingSettlementFile'), decoded = decodePortableBackup(file);
     assert.equal(decoded.kind, 'session'); if (decoded.kind !== 'session') return;
     const record = decoded.record;
-    assert.deepEqual([record.version, record.gunsBackup, record.terminal!.outcome, record.terminal!.reason, record.expansion!.base.location, record.expansion!.raid], [6, inner('pendingSettlementFile'), 'extract', 'extract', 'settlement', null]);
+    assert.deepEqual([record.version, record.gunsBackup, record.terminal!.outcome, record.terminal!.reason, record.expansion!.base.location, record.expansion!.raid], [8, inner('pendingSettlementFile'), 'extract', 'extract', 'settlement', null]);
     assert.deepEqual([record.profile.activeRun, record.raid, record.profile.equipment.weaponUid, record.profile.equipment.ammo, record.profile.equipment.ammoRelief], [null, null, 'gun-v6', 12, 5]);
     assert.deepEqual(oldRecord(record, 5), SAVES.pendingSettlementFile.record);
     const yard = page(); assert.ok(importText(yard, file).ok);
@@ -243,32 +244,32 @@ test('a record carrying every earlier backup keeps them verbatim and adds its ow
     assert.equal(after.profile.cash, 1842);
     // The embedded records read on their own, each migrated: v2 keeps its bytes in migrationBackup, so gunsBackup is null.
     const v2 = decodeSession(chain.migrationBackup);
-    assert.deepEqual([v2.version, v2.migrationBackup, v2.gunsBackup], [6, chain.migrationBackup, null]);
+    assert.deepEqual([v2.version, v2.migrationBackup, v2.gunsBackup], [8, chain.migrationBackup, null]);
     assert.ok(v2.profile.stash.items.some(i => i.id === 'pistol' && i.gun));
-    for (const embedded of [chain.systemsBackup, chain.perksBackup]) { const r = decodeSession(embedded); assert.deepEqual([r.version, r.gunsBackup], [6, embedded]); }
+    for (const embedded of [chain.systemsBackup, chain.perksBackup]) { const r = decodeSession(embedded); assert.deepEqual([r.version, r.gunsBackup], [8, embedded]); }
     // The legacy key (profile v1) migrates through migrateSave: the equipped pistol and the stored one become instances.
     const o = origin(); o.data.set(D.SAVE_KEY, chain.legacyBackup);
     const legacy = page(o, false); assert.equal(legacy.initialized, true);
-    assert.deepEqual([legacy.record.version, legacy.record.legacyBackup, legacy.record.gunsBackup, legacy.state.save.equipment.weaponUid], [6, chain.legacyBackup, null, 'gun-v6']);
+    assert.deepEqual([legacy.record.version, legacy.record.legacyBackup, legacy.record.gunsBackup, legacy.state.save.equipment.weaponUid], [8, chain.legacyBackup, null, 'gun-v6']);
     assert.ok(legacy.state.save.stash.items.some(i => i.id === 'pistol' && i.gun));
     assert.deepEqual(legacy.state.save, migrateProfile(D.cleanOldSave(JSON.parse(chain.legacyBackup))));
 });
 
-test('the first v6 write can fail: the old bytes stay stored and the retry writes v6 with them once', () => {
+test('the first v8 write can fail: the old bytes stay stored and the retry writes v8 with them once', () => {
     const text = old('liveRaidV5'), o = origin(); o.data.set(SESSION_KEY, text); o.failing.add(SESSION_KEY);
     const p = page(o, false);
     assert.equal(p.initialized, false); assert.equal(p.raw, text); assert.equal(p.state.storageOK, false);
     o.failing.delete(SESSION_KEY); assert.ok(p.saves.persist());
     const written = p.raw;
-    assert.deepEqual([JSON.parse(written).version, p.record.gunsBackup], [6, text]);
-    // A store that read the old bytes before that write cannot overwrite the v6 record (compare before write).
+    assert.deepEqual([JSON.parse(written).version, p.record.gunsBackup], [8, text]);
+    // A store that read the old bytes before that write cannot overwrite the v8 record (compare before write).
     o.data.set(SESSION_KEY, text); const behind = new RecoveryStore(o.storage); const loaded = behind.load(); o.data.set(SESSION_KEY, written);
     assert.equal(behind.record!.gunsBackup, text);
     assert.throws(() => behind.commit(loaded.save, null), /另一窗口已修改存档/); assert.equal(o.data.get(SESSION_KEY), written);
 });
 
 test('deterministic and idempotent: the same result every time, no clock or random numbers, nothing new on a second run', () => {
-    const text = old('liveRaidV5'), stored: RecordV5 = JSON.parse(text), fresh = oldProfile(D.newSave());
+    const text = old('liveRaidV5'), stored: RecordV7 = JSON.parse(text), fresh = oldProfile(D.newSave());
     const random = Math.random, now = Date.now;
     let runs: string[];
     try {
@@ -278,7 +279,7 @@ test('deterministic and idempotent: the same result every time, no clock or rand
         assert.deepEqual(migrateRecord(migrateRecord(once, text), text), once);
         const profile = migrateProfile(fresh);
         assert.deepEqual(migrateProfile(migrateProfile(profile)), profile);
-        assert.deepEqual(migrateRecord(once, 'other bytes'), once, 'a v6 record ignores the offered bytes');
+        assert.deepEqual(migrateRecord(once, 'other bytes'), once, 'a v8 record ignores the offered bytes');
     } finally { Math.random = random; Date.now = now; }
     assert.equal(new Set(runs).size, 1);
     assert.deepEqual(stored, JSON.parse(text), 'the input is not changed');
@@ -297,8 +298,8 @@ test('the equipped gun\'s uid avoids every string already in the save', () => {
 });
 
 test('old formats holding gun fields, and unknown or malformed inputs, are refused, never repaired', () => {
-    const save = oldProfile(D.newSave()) as ProfileV2, v3 = migrateProfile(save), text = old('liveRaidV5'), live: RecordV5 = JSON.parse(text);
-    const v6 = migrateRecord(live, text);
+    const save = oldProfile(D.newSave()) as ProfileV2, v3 = migrateProfile(save), text = old('liveRaidV5'), live: RecordV7 = JSON.parse(text);
+    const v8 = migrateRecord(live, text);
     const refuse = <T>(base: T, run: (value: T) => unknown, faults: [string, (value: any) => void][], pattern = REFUSED) => {
         for (const [why, mutate] of faults) {
             const value = structuredClone(base); mutate(value);
@@ -309,7 +310,7 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         assert.throws(() => migrateProfile(value as never), REFUSED); assert.throws(() => migrateRecord(value as never, null), REFUSED);
     }
     for (const version of [0, 1, 4, '2', undefined]) assert.throws(() => migrateProfile({ ...save, version } as never), REFUSED, String(version));
-    for (const version of [1, 2, 7, '5', null]) assert.throws(() => migrateRecord({ ...live, version } as never, text), REFUSED, String(version));
+    for (const version of [1, 2, 9, '5', null]) assert.throws(() => migrateRecord({ ...live, version } as never, text), REFUSED, String(version));
     refuse(save, migrateProfile, [
         ['an old item already holding a gun state', p => { p.stash.items.push({ uid: 'x1', id: 'pistol', qty: 1, x: 0, y: 5, gun: factoryState() }); }],
         ['an old slot holding a uid', p => { p.equipment.weaponUid = 'x1'; }],
@@ -340,6 +341,8 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         ['a v3 profile in an old record', r => { r.profile.version = 3; }],
         ['gunsBackup in an old record', r => { r.gunsBackup = null; }], ['v5 holding a v2 expansion', r => { r.expansion.version = 2; }],
         ['v4 holding a v3 expansion', r => { r.version = 4; }], ['v3 holding an expansion', r => { r.version = 3; }],
+        ['v7 without enemyBackup', r => { r.version = 7; }], ['v5 holding enemyBackup', r => { r.enemyBackup = null; }],
+        ['v6 holding a v3 expansion', r => { r.version = 6; r.enemyBackup = null; }],
         ['an old ground gun holding a state', r => { ground(r).gun = factoryState(); }],
         ['an old crate item holding a state', r => { crate(r).inventory.items[0].gun = factoryState(); }],
         ['an old loadout holding a uid', r => { r.expansion.raid.loadout.weaponUid = 'x1'; }],
@@ -361,7 +364,7 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         const p = page(o, false); assert.equal(p.initialized, false, why); assert.equal(o.data.get(SESSION_KEY), corrupt, why);
     }
     assert.throws(() => migrateRecord(live, 5 as never), REFUSED, 'gunsBackup must be text or null');
-    refuse(v6, r => migrateRecord(r, text), [
+    refuse(v8, r => migrateRecord(r, text), [
         ['no gunsBackup', r => { delete r.gunsBackup; }], ['gunsBackup not text', r => { r.gunsBackup = 5; }],
         ['a v2 profile', r => { r.profile.version = 2; }], ['a ground gun without its state', r => { delete ground(r).gun; }],
         ['a loadout gun with a part for another gun', r => { r.expansion.raid.loadout.gun.parts.push({ uid: 'p1', id: 'M11', slot: 'muzzle', relief: false, children: [] }); }],
@@ -372,7 +375,7 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         }],
     ]);
     // The same additions are legal one at a time, so each refusal above is for the fault it names.
-    const single = structuredClone(v6) as any;
+    const single = structuredClone(v8) as any;
     single.expansion.raid.loadout.gun.parts.push({ uid: 'p-shared', id: 'M05', slot: 'muzzle', relief: false, children: [] });
     assert.deepEqual(migrateRecord(single, null), single);
     // Settled profile files: an old one holding a gun field is refused whole; so is an unknown version.
@@ -385,32 +388,38 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
     ] as const) { const f = structuredClone(file); mutate(f); assert.throws(() => decodeBackup(JSON.stringify(f, null, 2)), REFUSED, why); }
     assert.throws(() => decodeBackup(JSON.stringify({ ...file, formatVersion: 4, save: { ...file.save, version: 4 } })), /不兼容的版本/);
     assert.throws(() => decodeStoredProfile({ ...v3, version: 2 }), REFUSED, 'a v3 profile carrying gun fields read as v2');
-    assert.throws(() => decodeSession(JSON.stringify({ ...v6, version: 7 })), UNREADABLE);
-    assert.throws(() => decodePortableBackup(envelope({ ...v6, version: 7 })), /不兼容的版本/);
+    // An unknown version, and a v8 record relabelled as one of the enemy client's (v7, its profile still v3).
+    assert.throws(() => decodeSession(JSON.stringify({ ...v8, version: 9 })), UNREADABLE);
+    assert.throws(() => decodePortableBackup(envelope({ ...v8, version: 9 })), /不兼容的版本/);
+    assert.throws(() => decodeSession(JSON.stringify({ ...v8, version: 7, enemyBackup: null })), UNREADABLE);
 });
 
-test('a v6 record breaking the gun rules is refused before anything trusts it, and its bytes stay', () => {
-    const v6 = decodeSession(old('liveRaidV5')), classic = decodeSession(old('classicRaidV5'));
+test('a v8 record breaking the gun or record rules is refused before anything trusts it, and its bytes stay', () => {
+    const v8 = decodeSession(old('liveRaidV5')), classic = decodeSession(old('classicRaidV5')), bare = decodeSession(old('newGameV3'));
     const faults: [string, SessionRecord, (r: any) => void][] = [
-        ['a stored gun without its state', v6, r => { delete r.profile.stash.items.find((i: any) => i.id === 'carbine').gun; }],
-        ['a medkit with a gun state', v6, r => { r.profile.stash.items.find((i: any) => i.id === 'medkit').gun = factoryState(); }],
-        ['a gun state with an extra key', v6, r => { r.profile.stash.items.find((i: any) => i.id === 'carbine').gun.extra = 1; }],
-        ['a loadout without weaponUid', v6, r => { delete r.expansion.raid.loadout.weaponUid; }],
-        ['an equipped uid shared with a stored item', v6, r => { r.expansion.raid.loadout.weaponUid = r.profile.stash.items[0].uid; }],
-        ['an equipped uid shared with an entity', v6, r => { r.expansion.raid.loadout.weaponUid = r.expansion.raid.roster[0].uid; }],
-        ['a part uid shared with ground loot', v6, r => {
+        ['a stored gun without its state', v8, r => { delete r.profile.stash.items.find((i: any) => i.id === 'carbine').gun; }],
+        ['a medkit with a gun state', v8, r => { r.profile.stash.items.find((i: any) => i.id === 'medkit').gun = factoryState(); }],
+        ['a gun state with an extra key', v8, r => { r.profile.stash.items.find((i: any) => i.id === 'carbine').gun.extra = 1; }],
+        ['a loadout without weaponUid', v8, r => { delete r.expansion.raid.loadout.weaponUid; }],
+        ['an equipped uid shared with a stored item', v8, r => { r.expansion.raid.loadout.weaponUid = r.profile.stash.items[0].uid; }],
+        ['an equipped uid shared with an entity', v8, r => { r.expansion.raid.loadout.weaponUid = r.expansion.raid.roster[0].uid; }],
+        ['a part uid shared with ground loot', v8, r => {
             r.expansion.raid.loadout.gun.parts.push({ uid: r.expansion.raid.maps[r.expansion.raid.currentMap].loot[0].uid, id: 'M05', slot: 'muzzle', relief: false, children: [] });
         }],
-        ['a ground gun without its state', v6, r => { delete r.expansion.raid.maps[r.expansion.raid.currentMap].loot.find((l: any) => l.id === 'shotgun').gun; }],
-        ['ground loot with a gun state', v6, r => { const l = r.expansion.raid.maps[r.expansion.raid.currentMap].loot.find((x: any) => x.id !== 'shotgun'); l.gun = factoryState(); }],
-        ['a device switched on without a device', v6, r => { r.profile.safe.items.find((i: any) => i.id === 'pistol').gun.devices.light = true; r.expansion.raid.loadout.safe.items.find((i: any) => i.id === 'pistol').gun.devices.light = true; }],
-        ['the mirrored safe differing in the gun state', v6, r => { r.profile.safe.items.find((i: any) => i.id === 'pistol').gun.parts.push({ uid: 'p1', id: 'M01', slot: 'muzzle', relief: false, children: [] }); }],
+        ['a ground gun without its state', v8, r => { delete r.expansion.raid.maps[r.expansion.raid.currentMap].loot.find((l: any) => l.id === 'shotgun').gun; }],
+        ['ground loot with a gun state', v8, r => { const l = r.expansion.raid.maps[r.expansion.raid.currentMap].loot.find((x: any) => x.id !== 'shotgun'); l.gun = factoryState(); }],
+        ['a device switched on without a device', v8, r => { r.profile.safe.items.find((i: any) => i.id === 'pistol').gun.devices.light = true; r.expansion.raid.loadout.safe.items.find((i: any) => i.id === 'pistol').gun.devices.light = true; }],
+        ['the mirrored safe differing in the gun state', v8, r => { r.profile.safe.items.find((i: any) => i.id === 'pistol').gun.parts.push({ uid: 'p1', id: 'M01', slot: 'muzzle', relief: false, children: [] }); }],
         ['a classic ground gun without its state', classic, r => { delete r.raid.loot.find((l: any) => l.uid === 'loot-900').gun; }],
         ['a classic item uid equal to a ground uid', classic, r => { r.raid.loadout.bag.items[0].uid = r.raid.loot[0].uid; r.profile.stash.items = r.profile.stash.items.filter((i: any) => i.uid !== r.raid.loot[0].uid); }],
         ['a classic crate gun without its state', classic, r => { delete r.raid.containers.flatMap((c: any) => c.inventory.items).find((i: any) => i.id === 'shotgun').gun; }],
-        ['a v6 record without gunsBackup', v6, r => { delete r.gunsBackup; }],
-        ['a v6 record with a v2 profile', v6, r => { r.profile.version = 2; }],
-        ['a v3 expansion without perksBackup', v6, r => { delete r.perksBackup; }],
+        ['a v8 record without gunsBackup', v8, r => { delete r.gunsBackup; }],
+        ['a v8 record with a v2 profile', v8, r => { r.profile.version = 2; }],
+        ['a v3 expansion without perksBackup', v8, r => { delete r.perksBackup; }],
+        ['perksBackup beside a v2 expansion', v8, r => { r.expansion.version = 2; delete r.expansion.growth.perks; r.expansion.raid.version = 2; }],
+        ['enemyBackup that is not text', v8, r => { r.enemyBackup = 5; }],
+        ['enemy rules without an expansion', bare, r => { r.enemyBackup = null; }],
+        ['a live enemy raid without enemy rules', v8, r => { r.expansion.raid.version = 5; }],
     ];
     for (const [why, base, mutate] of faults) {
         const r = structuredClone(base); mutate(r); const corrupt = JSON.stringify(r);
@@ -418,5 +427,5 @@ test('a v6 record breaking the gun rules is refused before anything trusts it, a
         const o = origin(); o.data.set(SESSION_KEY, corrupt);
         const p = page(o, false); assert.equal(p.initialized, false, why); assert.equal(o.data.get(SESSION_KEY), corrupt, why);
     }
-    assert.doesNotThrow(() => decodeSession(JSON.stringify(v6))); assert.doesNotThrow(() => decodeSession(JSON.stringify(classic)));
+    assert.doesNotThrow(() => decodeSession(JSON.stringify(v8))); assert.doesNotThrow(() => decodeSession(JSON.stringify(classic)));
 });

@@ -1,4 +1,7 @@
 import * as D from './domain';
+import { archetype, actorArchetype, actorDefinition, initialTactics } from './enemy-archetypes';
+import { RECOVERY_POSTS } from './enemy-recovery';
+import { BLOCKADE_POSTS } from './enemy-blockade';
 import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
@@ -58,10 +61,11 @@ export interface PursuitState {
 }
 /**
  * `version` is the raid's rules identity, kept until it settles: 1 no RPG; 2 RPG with the old critical rule; 3 RPG
- * with the new critical rules, deployed only from a v3 expansion. v2 and v3 store the same keys.
+ * with Perk critical snapshots; 4 enemy tactics with the old critical rule; 5 both systems.
+ * Only 3 and 5 belong to a v3 expansion. Restoring never changes a live raid's rules.
  */
 export interface LayeredRaid {
-    version: 1 | 2 | 3; worldVersion: string; layoutRevision: string; seed: number; runId: string;
+    version: 1 | 2 | 3 | 4 | 5; worldVersion: string; layoutRevision: string; seed: number; runId: string;
     currentMap: string; player: ActorState; loadout: D.RunLoadout;
     elapsed: number; initialHigh: boolean; highTide: boolean; warned: boolean; tideChanged: boolean;
     kills: number; rng: number; nextEntity: number; maps: Record<string, LayerState>; pursuits: PursuitState[];
@@ -85,6 +89,9 @@ export interface ExpansionState {
 }
 /** RPG is on: an expansion from v2, or a layered raid deployed from one. Any later version keeps meaning this. */
 export function rpgEnabled(value: { version: number } | null | undefined): boolean { return !!value && value.version >= 2; }
+/** Raid identities are independent capabilities, not an ordered feature ladder. */
+export const enemyRules = (raid: { version: number } | null | undefined): boolean => raid?.version === 4 || raid?.version === 5;
+export const perkRaidRules = (raid: { version: number } | null | undefined): boolean => raid?.version === 3 || raid?.version === 5;
 /** The expansion has passed the latest station-boundary upgrade (upgradeToRpg): v3. */
 export const stationUpgraded = (state: Pick<ExpansionState, 'version'> | null | undefined) => state?.version === 3;
 export interface WorldDefinition {
@@ -186,9 +193,9 @@ function critSnapshot(value: unknown, owned: PerkModifiers, roster: readonly { u
 
 /**
  * Complete validation is shared by imports and the single-record commit, before publishing state. The profile's version
- * names the gun format: with v3 (record v6) the raid loadout names its gun (`weaponUid`, `gun`), gun items and ground
+ * names the gun format: with v3 (record v8) the raid loadout names its gun (`weaponUid`, `gun`), gun items and ground
  * guns carry valid states, and every gun and part uid joins the item uids that no entity may share; with v2 (records up
- * to v5) none of those fields may appear, as before.
+ * to v7) none of those fields may appear, as before.
  */
 export function validateExpansion(value: unknown, profile: D.SaveDataV1 | ProfileV2, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
     const state = value as ExpansionState, guns = profile.version === 3;
@@ -254,8 +261,8 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1 | Profil
     exactKeys(raid, ['version', 'worldVersion', 'layoutRevision', 'seed', 'runId', 'currentMap', 'player', 'loadout', 'elapsed', 'initialHigh', 'highTide', 'warned', 'tideChanged', 'kills', 'rng', 'nextEntity', 'maps', 'pursuits', 'training', 'reloadLeft', 'fireCooldown', 'knife', 'hitTime', 'roster', 'eventRolled', ...(rpgEnabled(raid) ? ['shockAt', 'mapEvent'] : [])]);
     const world = resolveWorld(raid.worldVersion);
     if (!world) return fail();
-    // Perks and the new critical rules travel together: a v3 expansion holds only a v3 raid, and a v3 raid only a v3 expansion.
-    if (![1, 2, 3].includes(raid.version) || (raid.version === 3) !== (state.version === 3)
+    // Perks and critical snapshots travel together; enemy-only v4 keeps its original v2 expansion.
+    if (![1, 2, 3, 4, 5].includes(raid.version) || perkRaidRules(raid) !== (state.version === 3)
         || (rpgEnabled(raid) && (!finite(raid.shockAt, -10, raid.elapsed) || !['none', 'neutral', 'good', 'bad'].includes(raid.mapEvent!))) || raid.layoutRevision !== world.revision || !whole(raid.seed, 1, UINT32_MAX)
         || raid.runId !== profile.activeRun?.runId || raid.seed !== profile.activeRun.seed || raid.loadout?.runId !== raid.runId) fail();
     validateSpaces(world.maps);
@@ -304,19 +311,64 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1 | Profil
     const entities = new Set<string>(), enemies = new Map<string, EnemyState>(), enemyMaps = new Map<string, string>();
     const containers: { container: LootContainer; mapId: string }[] = [];
     // What the owned perks (checked above) put into every shot snapshot of a v3 raid.
-    const owned = raid.version === 3 ? perkModifiers(growth.perks ?? []) : null;
+    const owned = perkRaidRules(raid) ? perkModifiers(growth.perks ?? []) : null;
     const entity = (uid: string) => { if (!identity(uid) || entities.has(uid) || invIds.has(uid)) fail(); allocated(uid); entities.add(uid); };
     const point = (p: Point, map: SpaceDefinition) => { if (!obj(p) || !inSpace(map, p)) fail(); };
     const plainPoint = (p: Point, map: SpaceDefinition) => { exactKeys(p, ['x', 'y']); point(p, map); };
     const enemy = (e: EnemyState, map: SpaceDefinition) => {
         if (!obj(e)) return fail();
-        exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert']);
+        const spec = enemyRules(raid) ? actorArchetype(e) : undefined;
+        exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert', ...(spec ? ['tactics'] : [])]);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
-        if (!hasOwnStringKey(D.ENEMIES, e.id) || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !finite(e.rotation, -100, 100)
+        if ((!spec && !hasOwnStringKey(D.ENEMIES, e.id)) || !finite(e.hp, 0, actorDefinition(e).hp) || !finite(e.rotation, -100, 100)
             || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state) || !Array.isArray(e.path) || e.path.length > 4000) fail();
         if (e.hp > 0 && !bodyFits(map.id, e)) fail();
         e.path.forEach(p => plainPoint(p, map));
         for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();
+        if (spec) {
+            const t = e.tactics!;
+            exactKeys(t, ['version', 'squad', 'awareness', 'stance', 'warning', 'memory', 'phase', 'phaseLeft', 'lockedAim', 'magazine', 'reserve', 'signalUsed', 'equipment', 'supplies', 'killedBy', ...(t.version === 2 ? ['program'] : [])]);
+            if (t.version === 2) {
+                if(!obj(t.program))fail();
+                if(t.program.kind==='affected') {
+                    exactKeys(t.program, ['kind', 'armament']);
+                    if(spec.faction !== 'affected' || (e.id === 'tide-ritualist' ? !['rifle','polearm'].includes(t.program.armament) : t.program.armament !== 'unarmed')) fail();
+                } else if(t.program.kind==='recovery') {
+                    const p=t.program;exactKeys(p,['kind','leader','crate','phase','leg','since','heardAt']);
+                    if(spec.faction!=='mercenaries'||!identity(p.leader)||!identity(p.crate)
+                        ||!['collect','loading','advance','delivered','withdraw'].includes(p.phase)||!whole(p.leg,0,2)
+                        ||!finite(p.since,0,raid.elapsed)||!finite(p.heardAt,0,raid.elapsed)
+                        ||(['collect','loading'].includes(p.phase)&&p.leg!==0)||(p.phase==='delivered'&&p.leg!==2))fail();
+                } else if(t.program.kind==='blockade') {
+                    const p=t.program;exactKeys(p,['kind','leader','phase','waited','since']);
+                    if(spec.faction!=='blockade'||!identity(p.leader)||!['none','waiting','granted','engaged'].includes(p.phase)
+                        ||!finite(p.waited,0,Math.min(4,raid.elapsed))||!finite(p.since,0,raid.elapsed)
+                        ||p.phase==='none'&&p.waited!==0||p.phase==='granted'&&p.waited!==4||p.phase==='waiting'&&p.waited>=4)fail();
+                } else fail();
+            }
+            const initial = initialTactics(e.id, t.squad, t.version === 2 ? t.program : undefined);
+            if (![1,2].includes(t.version) || !identity(t.squad) || !finite(t.awareness, 0, 1) || !finite(t.warning, 0, 5)
+                || !['idle', 'warning', 'hostile', 'retreat'].includes(t.stance)
+                || !['idle', 'windup', 'release', 'recovery', 'reload'].includes(t.phase) || !finite(t.phaseLeft, 0, 10)
+                || !finite(t.lockedAim, -100, 100) || !whole(t.magazine, 0, spec.magazine) || !whole(t.reserve, 0, spec.reserve)
+                || typeof t.signalUsed !== 'boolean' || t.equipment !== initial.equipment
+                || !Array.isArray(t.supplies) || t.supplies.length > 4
+                || (e.hp > 0 ? t.killedBy !== null : t.killedBy !== 'player' && !raid.roster.some(r => r.uid === t.killedBy && r.uid !== e.uid))) fail();
+            goods(t.supplies);
+            const carried = initial.supplies;
+            if (new Set(t.supplies.map(s => s.id)).size !== t.supplies.length
+                || t.supplies.some(s => !carried.some(c => c.id === s.id && s.qty <= c.qty))) fail();
+            const phaseLimit = t.phase === 'windup' ? spec.windup : t.phase === 'reload' ? spec.reload : spec.recovery;
+            if (t.phase !== 'release' && t.phaseLeft > phaseLimit) fail();
+            if (t.phase === 'idle' && t.phaseLeft !== 0) fail();
+            if (t.phase === 'release' && (spec.attack !== 'pounce' ? t.phaseLeft !== 0 : t.phaseLeft > .3)) fail();
+            if (t.phase === 'reload' && (spec.magazine === 0 || t.reserve === 0 || t.magazine === spec.magazine)) fail();
+            if (t.memory !== null) {
+                exactKeys(t.memory, ['at', 'time', 'source', 'target']); plainPoint(t.memory.at, map);
+                if (!finite(t.memory.time, 0, raid.elapsed) || !['sight', 'sound', 'report', 'damage'].includes(t.memory.source)
+                    || (t.memory.target !== 'player' && !raid.roster.some(r => r.uid === t.memory!.target && r.uid !== e.uid))) fail();
+            }
+        }
         enemies.set(e.uid, e);
         enemyMaps.set(e.uid, map.id);
     };
@@ -374,10 +426,44 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1 | Profil
             || Math.abs(event.arrivalAt - (event.registeredAt + event.distance / event.speed + 1)) > 1e-6) fail();
     }
     if ([...invIds].some(id => entities.has(id) || events.has(id))) fail();
+    const cargoOwners=new Map<string,string>(),recoveryTeams=new Map<string,EnemyState[]>();
+    for(const e of enemies.values()) {
+        const t=e.tactics,p=t?.version===2?t.program:null;if(p?.kind!=='recovery')continue;
+        const leader=enemies.get(p.leader),lt=leader?.tactics,order=lt?.version===2?lt.program:null;
+        if(order?.kind!=='recovery')return fail();
+        const cargo=containers.find(c=>c.container.id===p.crate),mapId=enemyMaps.get(e.uid);
+        const post=RECOVERY_POSTS.find(post=>post.id===e.id);
+        if(!leader||leader.id!=='recovery-leader'||order?.kind!=='recovery'||order.leader!==leader.uid
+            ||order.crate!==p.crate||lt!.squad!==t!.squad||enemyMaps.get(leader.uid)!==mapId
+            ||world.id!=='coast-buildings-v1'||mapId!=='coast'||!post||e.home.x!==post.home.x||e.home.y!==post.home.y
+            ||!cargo||cargo.mapId!==mapId||cargo.container.kind!=='crate'
+            ||e.id==='recovery-leader'&&e.uid!==p.leader||cargoOwners.has(p.crate)&&cargoOwners.get(p.crate)!==p.leader)fail();
+        cargoOwners.set(p.crate,p.leader);
+        const team=recoveryTeams.get(p.leader)??[];team.push(e);recoveryTeams.set(p.leader,team);
+        if(p.leg>order.leg)fail();
+        if(p.phase!=='withdraw') {
+            const rank=['collect','loading','advance','delivered','withdraw'];
+            if(p.heardAt<p.since||p.since>order.since||p.leg>order.leg||rank.indexOf(p.phase)>rank.indexOf(order.phase))fail();
+        }
+    }
+    for(const team of recoveryTeams.values())if(team.length!==4||new Set(team.map(e=>e.id)).size!==4)fail();
+    const checkpointTeams=new Map<string,EnemyState[]>();
+    for(const e of enemies.values()) {
+        const t=e.tactics,p=t?.version===2?t.program:null;if(p?.kind!=='blockade')continue;
+        const leader=enemies.get(p.leader),lt=leader?.tactics,order=lt?.version===2?lt.program:null;
+        if(!leader||leader.id!=='blockade-sergeant'||order?.kind!=='blockade'||order.leader!==leader.uid)return fail();
+        const post=BLOCKADE_POSTS.find(post=>post.id===e.id),mapId=enemyMaps.get(e.uid);
+        if(world.id!=='coast-buildings-v1'||mapId!=='coast'||enemyMaps.get(leader.uid)!==mapId||t!.squad!==lt!.squad
+            ||!post||e.home.x!==post.home.x||e.home.y!==post.home.y||e.id==='blockade-sergeant'&&e.uid!==p.leader
+            ||p.phase==='granted'&&!['granted','engaged'].includes(order.phase)||p.phase==='waiting'&&order.phase==='none'
+            ||p.phase!=='engaged'&&p.since>order.since)fail();
+        const team=checkpointTeams.get(p.leader)??[];team.push(e);checkpointTeams.set(p.leader,team);
+    }
+    for(const team of checkpointTeams.values())if(team.length!==3||new Set(team.map(e=>e.id)).size!==3)fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
-        || raid.roster.some(e => !identity(e.uid) || !hasOwnStringKey(D.ENEMIES, e.id) || enemies.get(e.uid)?.id !== e.id)
-        || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0).length) fail();
+        || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(enemyRules(raid) && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)
+        || raid.kills !== [...enemies.values()].filter(e => e.hp <= 0 && (!e.tactics || e.tactics.killedBy === 'player')).length) fail();
     for (const { container: c, mapId } of containers.filter(c => c.container.kind === 'corpse')) {
         const dead = enemies.get(c.id.replace(/^corpse-/, ''));
         if (!c.id.startsWith('corpse-') || !dead || dead.hp > 0 || enemyMaps.get(dead.uid) !== mapId) fail();

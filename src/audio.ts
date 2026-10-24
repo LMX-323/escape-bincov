@@ -172,6 +172,11 @@ export class SynthAudio {
   }
 
   shot(kind = 'pistol', spot?: Spot): void {
+    if (kind === 'spit') {
+      this.hiss(.22, .28, 180, 0, spot); this.hiss(.12, .2, 260, .09, spot);
+      this.tone(150, .18, .12, 'triangle', 48, 0, spot); return;
+    }
+    if (kind === 'acid-hit') { this.hiss(.2, .16, 240, 0, spot); this.tone(100, .09, .05, 'sine', 38, 0, spot); return; }
     if (kind === 'knife') { this.hiss(0.12, 0.35, 900, 0, spot); this.tone(320, 0.08, 0.05, 'triangle', 90, 0, spot); return; }
     const shotgun = kind === 'shotgun';
     const level = kind === 'enemy' ? 0.55 : 1;
@@ -179,6 +184,36 @@ export class SynthAudio {
     this.tone(shotgun ? 140 : 210, shotgun ? 0.2 : 0.12, 0.3 * level, 'triangle', 36, 0, spot);
     this.tone(72, 0.13, 0.18 * level, 'sine', 32, 0.025, spot);
     this.hiss(0.06, 0.09 * level, 1500, 0.11, spot);
+  }
+
+  /** Short, positional enemy action cues; shared timbres keep simultaneous encounters within the voice budget. */
+  enemy(voice: string, phase: 'prepare' | 'release' | 'warning' | 'reload', spot?: Spot): void {
+    if (phase === 'reload') { this.hiss(.10, .13, 1400, 0, spot); this.tone(420, .05, .055, 'square', 220, .07, spot); return; }
+    if (voice === 'radio' || voice === 'raider') {
+      if (phase === 'warning') {
+        this.tone(voice === 'radio' ? 680 : 270, .10, .075, 'triangle', 390, 0, spot);
+        this.hiss(.13, .10, 800, .08, spot);
+      } else { this.hiss(.09, .10, 950, 0, spot); this.tone(330, .05, .04, 'triangle', 180, .04, spot); }
+      return;
+    }
+    const release = phase === 'release';
+    if (voice === 'crab') {
+      this.tone(release ? 720 : 920, .055, .08, 'square', 310, 0, spot);
+      this.tone(610, .045, .06, 'triangle', 240, release ? .04 : .13, spot);
+    } else if (voice === 'dog') {
+      this.tone(release ? 190 : 100, release ? .12 : .26, .13, 'sawtooth', 55, 0, spot);
+      this.hiss(.13, .11, 200, .02, spot);
+    } else if (voice === 'spit') {
+      this.tone(85, .25, .10, 'triangle', 155, 0, spot); this.hiss(.18, .12, 160, .06, spot);
+    } else if (voice === 'heavy') {
+      this.tone(release ? 80 : 120, .23, release ? .20 : .10, 'triangle', 28, 0, spot);
+      this.hiss(release ? .16 : .30, .16, 100, 0, spot);
+    } else if (voice === 'polearm') {
+      this.hiss(release ? .12 : .20, .18, release ? 1000 : 380, 0, spot);
+      this.tone(180, .08, .04, 'triangle', 95, 0, spot);
+    } else {
+      this.hiss(.20, .14, 260, 0, spot); this.tone(release ? 165 : 95, .19, .07, 'sawtooth', 45, 0, spot);
+    }
   }
 
   step(): void {
