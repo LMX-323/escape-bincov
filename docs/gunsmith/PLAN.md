@@ -198,7 +198,7 @@ PR22 当前采用武器图中的手套、运行时袖管、握把旋转轴、前
 | session.ts / recovery-store.ts / save-backup.ts | 同一事务边界、迁移、完整验证、故障回滚 |
 | checkpoint.ts / expansion-state.ts | 两类行动的实例与运行状态恢复 |
 | PR22 的 raid-runtime/runtime.ts / presentation.ts / contract.ts | 有效属性、HUD、只读武器外观与声音数据；延续动作、帧戳和事件语义 |
-| shooting.ts（#39）/ rpg.ts | 手感参数改由有效配置提供；角色状态修正只乘一次，#40 的控枪 Perk 接在同一处，不复制两套规则 |
+| shooting.ts（#39）/ rpg.ts | 手感参数改由有效配置提供；角色状态修正只乘一次，#92 的控枪、换弹 Perk 接在同一处，不复制两套规则 |
 | 新 gunsmith-ui.ts 配合 ui.ts / coast-view/inventory.ts | 工作台、基地和新沿海库存的实例展示、兼容解释、预设及移动交互 |
 | coast-view/scene.ts / textures.ts / sound.ts 等 | 接入 PR22 的相机、持枪组合、视觉后坐、音效与生命周期 |
 | src/art/ / audio.ts / font.ts 及 PR22 素材导入流程 | 共享图标、合成音频、资产清单与字集 |
