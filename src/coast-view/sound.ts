@@ -23,6 +23,9 @@ function segmentDistance(ax: number, ay: number, bx: number, by: number, px: num
   return Math.hypot(ax + dx * t - px, ay + dy * t - py);
 }
 
+/** Hit confirmation (#75): the player's own pain, a confirmed critical and a confirmed kill. */
+export type HitCueOut = Pick<SynthAudio, 'pain' | 'crit' | 'kill'>;
+
 export class SampleSound {
   private live: boolean | null = null;
   private stepLeft = 0;
@@ -38,7 +41,7 @@ export class SampleSound {
   private enemyStates = new Map<string, { phase: string; stance: string; archetype: string }>();
   private enemyMap = '';
 
-  constructor(private readonly out: SoundOut) {}
+  constructor(private readonly out: SoundOut & HitCueOut) {}
 
   /** Stereo position and level of a sound at world (x, y) for the player standing at the listener. */
   spot(x: number, y: number): Spot {
@@ -132,9 +135,9 @@ export class SampleSound {
       // are silent here; the HUD shows them.
       case 'hurt': {
         if (e.cause !== 'blow') break;
-        if (e.uid === 'player') this.out.hit();
+        if (e.uid === 'player') this.struck(e, undefined);
         // The blow lands on an actor: both the actor (as the Runtime shows it) and the hit point must be visible.
-        else if (shown(e.at) && actorShown(e.uid)) this.out.hit(this.spot(e.at.x, e.at.y));
+        else if (shown(e.at) && actorShown(e.uid)) this.struck(e, this.spot(e.at.x, e.at.y));
         break;
       }
       case 'impact':
@@ -148,6 +151,18 @@ export class SampleSound {
       case 'door': { const s = e.by === 'player' ? undefined : at(e.by); if (s) this.out.click(s); else this.out.click(); break; }
       default: break;
     }
+  }
+
+  /** Who was heard being struck in the batch being played (all its events share one revision), and who took a crit. */
+  private heard = { revision: -1 as number | undefined, hit: new Set<string>(), crit: new Set<string>() };
+  /**
+   * One blow heard: the player's pain centred, anyone else's hit where it lands (#75). Several blows on one body in one
+   * batch, such as a shotgun's pellets, sound once, with one critical tick if any of them crit.
+   */
+  private struck(e: Extract<StampedEvent, { type: 'hurt' }>, spot: Spot | undefined) {
+    if (this.heard.revision !== e.stamp.revision) this.heard = { revision: e.stamp.revision, hit: new Set(), crit: new Set() };
+    if (!this.heard.hit.has(e.uid)) { this.heard.hit.add(e.uid); if (e.uid === 'player') this.out.pain(); else this.out.hit(spot); }
+    if (e.critical && !this.heard.crit.has(e.uid)) { this.heard.crit.add(e.uid); this.out.crit(spot); }
   }
 
   /** The trigger was pulled on an empty magazine with nothing left to load (otherwise the reload click follows). */
@@ -167,6 +182,8 @@ export class SampleSound {
 
   /** A supply used from the inventory panel (bag or safe) committed. */
   used() { this.out.pickup(); }
+  /** The host showed the kill marker for the player's kill: the confirm sound, centred like the marker (#75). */
+  killed() { this.out.kill(); }
   /** A radio line is shown (not a note being read). */
   radio() { this.out.radio(); }
 }

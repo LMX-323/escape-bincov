@@ -81,7 +81,7 @@
 
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
-- 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
+- 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。县域选图展示在 [station-view/deploy-map.ts](../src/station-view/deploy-map.ts)（地标坐标、标签方向、路线与插图焦点，验证见 [deploy-map.test.ts](../tests/deploy-map.test.ts)）；`deploymentWorld` 只允许现有区域白名单，未开发区域的预览只存在于站内 UI，不创建世界或修改存档。地图与插图只由 [county-art.ts](../src/station-view/county-art.ts) 在渲染侧导入（构建按清单核对）；出击面板重绘经 [morph.ts](../src/station-view/morph.ts) 就地更新，换区的滑动与入场动画依赖元素保留，浏览器回归在 `test:raid-default` 的 R10/R11。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`，屏息蓄力在 `hud.breath`（规则在 [breath.ts](../src/breath.ts)，Runtime 在 `step` 逐子步取瞄准目标、在 `runTrigger` 推进，清空点列在 `CoastRaidRuntime.breath` 注释）。手中枪械的暴击率在 `hud.crit`，与开枪取同一份 `CoastRaidRuntime.shotCrit` 快照；武器卡底部的文字由 [perk-copy.ts](../src/perk-copy.ts) 的 `critHud` 生成、[coast-view/host.ts](../src/coast-view/host.ts) 的 `critLines` 绘制，界面不再推算概率。
 - 鼠标瞄准与镜头：[coast-view/scene.ts](../src/coast-view/scene.ts) 的 `aimFromClient` 经平滑镜头换算瞄准，镜头前探由 [coast-view/camera.ts](../src/coast-view/camera.ts) 的 `pointerLead` / `stepLead`（鼠标，只在精瞄时）或 `aimLead`（触屏）决定。改前探前先跑 `test:shooting` 的“静止指针不漂”。
 - 试枪场：[range/](../src/range/index.ts)（`?range=1`，内存存档，不碰正式存档）。

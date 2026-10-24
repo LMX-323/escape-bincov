@@ -57,6 +57,16 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Opening asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Opening asset size mismatch: ${a.file}`);
   }
+  const county = JSON.parse(await readFile('assets/county-map/manifest.json', 'utf8'));
+  for (const [file, hash] of [[county.source, county.sourceSha256], [county.output, county.sha256]]) {
+    if (createHash('sha256').update(await readFile(file)).digest('hex') !== hash) throw new Error(`County map hash mismatch: ${file}`);
+  }
+  // County briefing art: the deploy panel imports exactly the terrain and the twelve briefing WebPs of the manifests.
+  const briefing = JSON.parse(await readFile('assets/county-map/briefing-concepts/manifest.json', 'utf8'));
+  const briefingFile = a => `assets/county-map/briefing-concepts/${a.file}`;
+  const countyImports = [...(await readFile('src/station-view/county-art.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/county-map\/[^']+\.webp)'/g)].map(m => m[1]).sort();
+  if (JSON.stringify(countyImports) !== JSON.stringify([county.output, ...briefing.assets.map(briefingFile)].sort())) throw new Error('County art imports do not match the county map manifests.');
+  for (const a of briefing.assets) if (createHash('sha256').update(await readFile(briefingFile(a))).digest('hex') !== a.sha256) throw new Error(`County briefing art hash mismatch: ${a.file}`);
   const js = inlineScript(await buildGameScript());
   const font = await readFile('assets/fonts/bincov-text.woff2');
   const manifest = JSON.parse(await readFile('assets/fonts/manifest.json','utf8'));

@@ -74,8 +74,7 @@ interface ActorGfx {
   /** Player only: faint warm outline so the player separates from dark asphalt (not the occlusion rim). */
   edge: Sprite | null;
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
-  /** A blow read after this actor was drawn (present takes a batch's events after its actors): the next frame draws its
-   *  flash and kick even when that frame's delta outlives them (see syncActor). */
+  /** A blow not drawn yet: the next syncActor draws its flash and kick even when that frame's delta outlives them. */
   hit: boolean;
   /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
   sense: 1 | -1;
@@ -245,6 +244,13 @@ export class CoastView {
     // frame turns the body into a corpse. Only this map/epoch counts: a rebuild (load, layer change) never replays a fall.
     const current = (e: StampedEvent) => worldKeyString(e.stamp.world) === this.mapKey && e.stamp.epoch === this.epoch;
     const fallen = new Set(batch.events.flatMap(e => e.type === 'death' && current(e) ? [e.uid] : []));
+    // A blow flashes and kicks its body on the frame that brings it, so it is set before the body is drawn (#75); the
+    // blood still comes with the event below. A body drawn for the first time in this batch gets it from the next frame.
+    const blown = new Set<string>();
+    for (const e of batch.events) {
+      if (e.type !== 'hurt' || e.cause !== 'blow' || !current(e)) continue;
+      const g = this.actors.get(e.uid); if (g) { this.blow(g, e.angle); blown.add(e.uid); }
+    }
     this.tide.sync(f.flooded, dt, this.time);
     const seen = new Set<string>();
     for (const a of [f.player, ...f.actors]) { seen.add(a.uid); this.syncActor(a, dt, visible(a.regionId), fallen.has(a.uid)); }
@@ -254,7 +260,7 @@ export class CoastView {
     for (const e of batch.events) {
       this.stats.events++;
       if (!current(e)) { this.stats.droppedEvents++; continue; }
-      this.onEvent(e, f);
+      this.onEvent(e, f, blown);
     }
     this.bakeAhead(dt);
     this.fx.update(dt);
@@ -533,7 +539,13 @@ export class CoastView {
     }
   }
 
-  private onEvent(e: StampedEvent, f: ViewFrame) {
+  /** A blow's 70 ms flash and 80 ms kick: 2 px the way it travelled, as its angle points back at the source (#75). */
+  private blow(g: ActorGfx, angle: number | null) {
+    g.flashT = .07; g.kick = angle === null ? { x: 0, y: 0 } : { x: -Math.cos(angle) * 2, y: -Math.sin(angle) * 2 }; g.kickT = .08; g.hit = true;
+  }
+
+  /** `blown`: bodies whose blow present() already set before drawing them. */
+  private onEvent(e: StampedEvent, f: ViewFrame, blown: ReadonlySet<string>) {
     const all = [f.player, ...f.actors], actor = (uid: string) => all.find(a => a.uid === uid);
     // Rooms may overlap: a point is shown only when every room containing it is revealed (the Runtime's rule).
     const regionAt = (p: Point) => regionAtClosed(this.map!, f.revealed, p);
@@ -597,11 +609,9 @@ export class CoastView {
         // Only blows (any size) flash, kick and spray blood; bleeding, pollution, thirst, hunger and a lowered health
         // limit are shown by the host's HUD, not on the body.
         const g = this.actors.get(e.uid); if (!g || e.cause !== 'blow') break;
-        // The angle points back at the blow's source: blood sprays that way, while the body is knocked 2 px the way the
-        // blow travelled, along the bullet or away from the attacker (#75).
-        const ang = e.angle ?? 0;
-        g.flashT = .07; g.kick = e.angle === null ? { x: 0, y: 0 } : { x: -Math.cos(ang) * 2, y: -Math.sin(ang) * 2 }; g.kickT = .08; g.hit = true;
-        const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, ang, this.rnd);
+        if (!blown.has(e.uid)) this.blow(g, e.angle);
+        // The angle points back at the blow's source, and the blood sprays that way.
+        const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, e.angle ?? 0, this.rnd);
         break;
       }
       case 'door': { const d = this.map!.doors.find(x => x.id === e.id); if (d) this.fx.dust(d.x * 32 + 16, d.y * 32 + 30, this.rnd, 4); break; }
@@ -654,9 +664,9 @@ export class CoastView {
     // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08). The dead
     // and the falling face the aim as before: a death batch still carries the velocity of the step the actor died in.
     const gt = gait(a.aim, a.vx, a.vy, speed > 5 && a.alive, g.sense); g.sense = gt.sense; g.dir = gt.dir;
-    // A blow's 70 ms flash and 80 ms kick start ageing on the frame after the hit, the first that can draw them: below
-    // about 14 frames a second (12.5 for the kick) that frame used to age them away unseen (#75). It draws them at least
-    // once now; faster frames age them exactly as before.
+    // A blow's 70 ms flash and 80 ms kick age from the first frame that draws them: the hit's own (present sets them
+    // before drawing), or the next for a body first drawn with the blow. Below about 14 frames a second (12.5 for the
+    // kick) that frame's delta outlives them, so it draws them at least once (#75).
     const hit = g.hit; g.hit = false;
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
