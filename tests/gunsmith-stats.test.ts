@@ -6,7 +6,7 @@ import { coneOf, handlingOf, recoil, SAMPLE_GUNS, unsteadyAim, type Handling } f
 import { perkModifiers } from '../src/perks';
 import { ATTACHMENTS, GUNS, type GunDef, type GunHandling, type GunId } from '../src/gunsmith/catalog';
 import { checkInstall, removalCascade, type Build } from '../src/gunsmith/compat';
-import { combineFactors, effectiveHandling, effectiveStats, effectiveWeapon, GUARDRAILS, type FactorSet, type GunStats } from '../src/gunsmith/stats';
+import { combineFactors, effectiveHandling, effectiveStats, effectiveWeapon, CONE_FLOOR, GUARDRAILS, type FactorSet, type GunStats } from '../src/gunsmith/stats';
 
 const GUN_IDS = Object.keys(GUNS) as GunId[], PART_IDS = Object.keys(ATTACHMENTS);
 const bare = (gun: string): Build => ({ gun, parts: [] });
@@ -121,6 +121,73 @@ test('each guardrail a real stack can reach clamps it exactly: recoil, precise, 
     assert.deepEqual(effectiveStats(fit(bare('mb4a1'), 'H01', 'F06', 'T02'), ['T02']).laser, { hip: m4.hip * (.8 * .82), range: 170 });
 });
 
+/** The settled hip and aimed cones (coneOf at rest, aim down and fully raised) as shares of the factory gun's. */
+const coneShares = (s: Pick<GunStats, 'weapon' | 'handling'>, gun: GunDef) => [0, 1].map(raise => {
+    const calm = { raise, sway: 0, bloom: 0, drift: 0, settle: 0 };
+    return coneOf(calm, s.weapon, s.handling) / coneOf(calm, gun.stats, gun.handling);
+});
+
+test('the cone floor (M0 review): hip and aimed cones keep 0.6 of factory, given back by the factor each adds last', () => {
+    // Lifting hip and precise never takes them past 1 only because each of the three keeps the floor on its own.
+    for (const d of ['spread', 'hip', 'precise'] as const) assert.ok(GUARDRAILS[d] >= CONE_FLOOR, d);
+    const m4 = GUNS.mb4a1.handling;
+    // M4A1, hip grip (.8), stable long scope and precision barrel (precise .65 x .85, clamped to .6): the aimed cone was
+    // .8 x .6 = .48. The hip cone keeps the grip's whole .8; precise gives back to .6 / .8.
+    const m4Stack = effectiveStats(fit(bare('mb4a1'), 'H01', 'F06', 'O09', 'B08'));
+    assert.deepEqual([m4Stack.handling.hip, m4Stack.handling.precise], [m4.hip * .8, m4.precise * (.6 / .8)]);
+    assert.ok(near(coneShares(m4Stack, GUNS.mb4a1)[0], .8) && near(coneShares(m4Stack, GUNS.mb4a1)[1], .6));
+    // RPK with the hip grip, its bipod and the stable long scope: aimed .8 x .65 = .52, braced .8 x .6 = .48. Both lift to
+    // .6 / .8, so braced the bipod's precise adds nothing.
+    const rpk = effectiveStats(fit(bare('rpkb'), 'H10', 'F06', 'F08', 'A08', 'O09'));
+    assert.deepEqual([rpk.handling.precise, rpk.braced!.precise], [GUNS.rpkb.handling.precise * (.6 / .8), GUNS.rpkb.handling.precise * (.6 / .8)]);
+    // Double barrel with the choke (.72) and a mid scope (.75): .54 aimed. Spread keeps its .72; precise gives back.
+    const db = effectiveStats(fit(bare('shotgun'), 'M11', 'A05', 'O07')), sg = GUNS.shotgun;
+    assert.deepEqual([db.weapon.spread, db.handling.hip, db.handling.precise], [sg.stats.spread * .72, sg.handling.hip, sg.handling.precise * (.6 / .72)]);
+    assert.ok(near(coneShares(db, sg)[0], .72) && near(coneShares(db, sg)[1], .6));
+    // The hip cone: M1014 with choke and barrel (spread .78 x .82 = .6396) and the hip grip (.8) made .51 from the hip.
+    // Hip gives back to .6 / .6396; the aimed cone is then at the floor already, so a sight adds nothing more.
+    const choke = .78 * .82, m1014 = GUNS.mb1014;
+    for (const sight of [[], ['O07']]) {
+        const s = effectiveStats(fit(bare('mb1014'), 'M10', 'B06', 'H09', 'F06', ...sight));
+        assert.deepEqual([s.weapon.spread, s.handling.hip, s.handling.precise], [m1014.stats.spread * choke, m1014.handling.hip * (.6 / choke), m1014.handling.precise], sight.join());
+        assert.ok(coneShares(s, m1014).every(share => near(share, .6)), sight.join());
+    }
+    // A laser's in-range hip keeps the hip cone floor too: M870 with the choke (.78) and the close laser (.7) on gives
+    // .546 within range, lifted to .6 / .78, with or without the hip grip (whose own hip cone, .624, is above it).
+    const m870 = GUNS.mb870.handling;
+    for (const grip of [[], ['F06']]) {
+        const s = effectiveStats(fit(bare('mb870'), 'M10', 'H08', ...grip, 'T01'), ['T01']);
+        assert.deepEqual([s.handling.hip, s.laser], [m870.hip * (grip.length ? .8 : 1), { hip: m870.hip * (.6 / .78), range: 240 }], grip.join());
+    }
+});
+
+test('the cone floor holds for any factors to the last bit, moves only hip and precise, and only as far as it must', () => {
+    type Cone = 'spread' | 'hip' | 'precise';
+    const random = seeded(606), pick = (lo: number, hi: number) => lo + random() * (hi - lo);
+    const maybe = (d: Cone): Partial<Record<Cone, number>> => random() < .6 ? { [d]: pick(.45, 1.3) } : {};
+    const lifted = { hip: 0, precise: 0 };
+    for (let i = 0; i < 20000; i++) {
+        const list: Partial<Record<Cone | 'raise', number>>[] = Array.from({ length: 1 + Math.floor(random() * 6) },
+            () => ({ ...maybe('spread'), ...maybe('hip'), ...maybe('precise'), raise: pick(.6, 1.4) }));
+        const f = combineFactors(list), at = JSON.stringify(list);
+        // Each dimension alone: no cone can fall under the floor with the other two at 1, so these are the plain clamps.
+        const own = (d: 'spread' | 'hip' | 'precise' | 'raise') => combineFactors(list.map(m => ({ [d]: m[d] })))[d];
+        assert.equal(f.spread, own('spread'), at);
+        assert.equal(f.raise, own('raise'), at);
+        assert.ok(f.spread * f.hip >= CONE_FLOOR && f.spread * f.hip * f.precise >= CONE_FLOOR, at);
+        // Hip moves only when the hip cone was under the floor, precise only when the aimed cone still was, and each
+        // lands on the floor (within rounding), never past 1 unless it was a cost already.
+        assert.equal(f.hip !== own('hip'), own('spread') * own('hip') < CONE_FLOOR, at);
+        assert.equal(f.precise !== own('precise'), f.spread * f.hip * own('precise') < CONE_FLOOR, at);
+        if (f.hip !== own('hip')) assert.ok(f.hip > own('hip') && f.hip <= 1 && near(f.spread * f.hip, CONE_FLOOR), at);
+        if (f.precise !== own('precise')) assert.ok(f.precise > own('precise') && f.precise <= 1 && near(f.spread * f.hip * f.precise, CONE_FLOOR), at);
+        lifted.hip += +(f.hip !== own('hip')); lifted.precise += +(f.precise !== own('precise'));
+        // The same factors in another order: the same bits.
+        assert.deepEqual(combineFactors([...list].reverse()), f, at);
+    }
+    assert.ok(lifted.hip > 1000 && lifted.precise > 1000, JSON.stringify(lifted));
+});
+
 test('the bounds no real stack reaches yet hold for any stack, and costs are never clamped', () => {
     // One part per position keeps these out of reach today: range only on barrels (best 1.15), noise only on muzzles
     // (best 0.5), reload only on feed modules and one handguard (best 0.75), spread only on shotgun chokes and barrels
@@ -222,6 +289,10 @@ test('seeded random legal builds: every number finite and inside its bounds, the
             const bound = GUARDRAILS[d], ceiling = d === 'recover' || d === 'range';
             assert.ok(ceiling ? value <= base * bound && value >= base * .4 : value >= base * bound && value <= base * 2.5, `${build.gun} ${d} ${value / base}`);
         }
+        // Both settled cones keep the floor, braced and with the laser's in-range hip too (that one as a hip cone).
+        const floor = CONE_FLOOR * (1 - 1e-12);
+        for (const h of [s.handling, ...s.braced ? [s.braced] : []]) assert.ok(coneShares({ weapon: s.weapon, handling: h }, gun).every(c => c >= floor), build.gun);
+        if (s.laser) assert.ok(coneShares({ weapon: s.weapon, handling: { ...s.handling, hip: s.laser.hip } }, gun)[0] >= floor, build.gun);
         // Devices: only those switched on, a laser held to the hip floor and never worse than none.
         const lit = build.parts.filter(p => on.includes(p.uid) && ATTACHMENTS[p.id].cat === 'tactical').map(p => ATTACHMENTS[p.id].mods);
         assert.equal(s.laser === null, !lit.some(m => m.laser));
