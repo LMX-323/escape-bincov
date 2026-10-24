@@ -88,6 +88,13 @@ EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人�
   - **和 #81 试合并**：只有发布清单冲突；第一次发现与它的局部变量 `pose` 重名，已改名为 `hurtT` / `hurtFrame`；合并结果单测 747/747；在合并构建上实测，原型敌人中弹不换帧、也不出现占位图。
   - 证据见[说明](docs/evidence/issue75-hurt-poses/README.md)。B 组等 #81；真人观感未验。准确 head 与 CI 见本分支 PR。
 
+- 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击姿态接入 B 组（`feat/hurt-poses-b`，基于 main `67a7468`，#81 已合入）：
+  - **切帧**：`export-hurt-poses.ts` 加近身掠夺者、拾荒枪手、望风者（`raider-melee` / `raider-gunner` / `raider-lookout`），按原型样式名切出 30 张帧，约 55 KB；A 组 40 张逐字节不变。
+  - **画布取整**：B 组图集的站立列与 #81 的站立帧只差在半透明像素上，单个通道差 1 级。`driftMap` 把这些颜色还原成运行帧的值，其他差异一律报错；A 组没有半透明像素。
+  - **播放**：`posable` 改为调用 `Textures.hasBodyFrame`：角色身体所用的样式（原型自己的，否则种类的）有受击帧才换帧，不再比较上一帧贴图。#81 的另外 15 类原型有自己的身体图、没有姿态，中弹照旧。
+  - **测试**：`hurt-poses.test.ts` 扩到 70 帧，并补还原规则的正反例；`test:shooting` 检查 g 加三类原型，以及无姿态、须保持自身帧的盐枭头目。main 构建上只有三类原型的姿态序列失败。
+  - 证据见[说明](docs/evidence/issue75-hurt-poses-b/README.md)。其余 15 类原型的姿态需新一轮美术；真人观感未验。准确 head 与 CI 见本分支 PR。
+
 - 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96)：在原分支按维护者评论完成七张 pixel-v2 返工稿，只改人形 S/N 膝部24格及生物 E/SE/NE 缩头6格；35站立格和40个其他动作格不变，v1与生成原图保留。[当前返工摘要](docs/hit-feel-art/README.md#2026-10-24-v2-返工)、[v2检查](docs/hit-feel-art/pixel-audit-v2.json)与[有效v1负对照](docs/hit-feel-art/pixel-v1-rework-negative.json)记录无新增洞、腿部不开缝和原有锚点检查；生物固定足底与整帧最右边界的3条指标冲突待核定，不能记为全部验收通过。653单测、package通过，产物相对main `4141503`不变；游戏接入另PR，保持草稿、未合并，等待独立复验。
 
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
