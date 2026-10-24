@@ -28,6 +28,12 @@
 
 最终标准与检查站撤退负载各12Runtime/六浏览器的原绝对预算通过；固定五组A/B的present p95中位2.9/3.0ms、advance2.5/2.5ms，十个单样本原绝对预算通过。原单次历史同比BUDGET_BLOCKED、近距死亡短样本和触屏未完成ERROR全部保留，配对诊断不覆盖原失败，详见[性能记录与复现](enemy-performance.md)。真手机、GPU完成帧率、真人识别/平衡和十二区域未签收。准确head完整CI在原PR核对，保留草稿，未合并/上线。
 
+## 首轮CI搜刮夹具修复
+
+`df30df8`的[完整CI40065883806](https://github.com/xuys2025/escape-bincov/actions/runs/40065883806)构建及其余七组浏览器通过，第8组在seed44第二次出击建立搜刮夹具时失败。本地原样复现：测试`quiet()`用`placeEnemy()`停车，连带改写检查站的固定home，下一笔真实SaveSession候选被严格校验正确拒绝。现在让已冻结的recovery/blockade成员留在原岗位，其余停车、输入、事务断言和正式校验均保留；未修改游戏源码或制品。
+
+[修复后48项搜刮回归](../enemy-street/blockade-loot-fixture-regression.json)通过：两档桌面各22项，844触屏4项，包括真实三秒撤离、死亡/超时、拖放、失败保存/重试和跨窗口保护。62CI守卫通过；上述最终HTML哈希与十分钟/性能证据继续有效。首败没有记为通过，修复提交准确head的完整CI仍由原PR签收。
+
 ![1920桌面，真实登记后的绿色公共通道](../enemy-street/native-blockade-registration-1920.png)
 ![844触屏仿真，真实登记后的公共通道](../enemy-street/native-blockade-registration-844.png)
 ![班长实际射击准备与越界警告](../enemy-street/native-blockade-blockade-sergeant-1920.png)
