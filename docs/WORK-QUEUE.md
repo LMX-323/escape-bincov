@@ -13,7 +13,7 @@
 | 商场扩量 | [#47](https://github.com/xuys2025/escape-bincov/issues/47) | 布局四版、其余 31 区素材与验收 |
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
-| 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [#80](https://github.com/xuys2025/escape-bincov/issues/80) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已合入（`2bac4fb`），采用维护者认可的“稳定”参数。#28 承接规划与排期，代码实施进度见 #80；完整改枪尚未进入 main |
+| 射击与改枪 | [#80 改枪进度](https://github.com/xuys2025/escape-bincov/issues/80) · [任务与排期](gunsmith/TASKS.md) · [射击说明](SHOOTING-SYSTEM-REWORK.md) | #39 射击基础已合入（`2bac4fb`，“稳定”手感）。#28 改枪规划拆成 55 项任务并排期，合入即表示已排期；M0 在分支 `feat/gunsmith` 进行，分 4 个实现 PR，预计 12-15 完成，进度只在 #80 更新 |
 | 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · [PR #88](https://github.com/xuys2025/escape-bincov/pull/88) · [PR #94](https://github.com/xuys2025/escape-bincov/pull/94) · `feat/hit-confirm` · [美术草稿 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) | P0 第一项已合入：慢帧时序 #88（`b38f23d`），抖动顺弹道 #94（`edb02f2`）。命中确认经 [PR #97](https://github.com/xuys2025/escape-bincov/pull/97) 合入（`1af0fec`）：闪白和抖动从命中当帧画起；玩家受伤和敌人中弹分成两种声音，同一批同一目标只响一次；暴击有单独的命中标记和声音；击杀确认音跟随击杀标记。敌人受击/恢复姿态的美术需求在草稿 #96，待 GPT 绘制，接入另开 PR，其中 B 组三类依赖 #81。分枪种枪声、枪身回缩和双管按开枪聚合与 #81 正在改的位置重叠，等 #81 合入后再排；其余 P1–P2 未开工 |
 | 暴击与三属性 Perk | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [实现契约与记录](tasks/critical-perk-contract.md) · 分支 `agent/critical-perk` | 设计 #40 已合入（`b475b1b`）；实现经 [PR #92](https://github.com/xuys2025/escape-bincov/pull/92) 合入（`8b6192d`）：存档 v5/行动 v3、开枪暴击快照、24 项 Perk、屏息、基地选择与 500 重置、院子与旧页签界面和行动 HUD。#77 保持开放，只余 CP-T10 真人平衡与真机 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [县域选图实施记录](tasks/county-map-select.md) · [PR #91](https://github.com/xuys2025/escape-bincov/pull/91) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 十二区选图已实现，两处现有入口可出击、十区暂未开发。[Opus 视觉深化](tasks/county-map-select.md#opus-视觉深化2026-10-24)在 #91：固定比例地图、地标标记、选中光照与路线、十二张情报插图、面板就地更新。选图界面 #91 已合入（`4141503`）；真实新增区域/剧情/结局仍由原专题跟踪，不因界面或概念图完成关闭 #82 |
@@ -368,5 +368,15 @@ Astra按维护者要求从5075ed6续作，见[第三轮资源报告](station-yar
 2026-10-09 Opus 从 `5b09c05` 处理 R7-F20-FE-01/02：停放渲染器时重建 Pixi 的 GC 管理表，去掉空槽（实测六张表都在长，不只 Graphics）；初始化后摘下样板不用的 Pixi 事件系统，不再保留旧 HUD，指针和触屏样式由 coast.css 保留。命名快照第 6/20/40/60 轮空槽和旧 HUD 都为 0。同口径严格 60 轮第 56–60 轮 +939,563 B → +797,456 B，F20 仍 PARTIAL。样板 51/51、Sol 边界 7 项通过、生命周期 2×4/4、CI 同款 20/20。见[报告](coast-sample-view/opus-f20-20261009/README.md)。仅本地提交。
 
 2026-10-09 Sol 从 `6e34e96` 独立复验 F20：先补六表原始结构门禁及59个负对照；FE-01 PASS，FE-02 Pixi链PASS但广义HUD释放PARTIAL（Phaser mousePointer事件在放弃结果页保留1棵、原生返回后0，交Astra SOL-F20-HUD-01）。原严格正式包60轮三个窗口+358879.2/+620021.6/+794532.8 B，总堆仍PARTIAL；命名四快照六表空槽/旧HUD/Pixi native均0，宿主12类owner保留/释放1→0。243单测、package、样板51项、桌面/移动输入、F14/F16、普通生命周期两尺寸4/4通过；六制品不变。ASTRA-SAVE-01未确认、真机真人未测。见[签收](coast-sample-view/sol-f20-20261009/README.md)、[分工清单](coast-sample-view/sol-f20-20261009/defects.md)。仅本地测试报告提交后停止，不扩功能/素材、不推送/合并/发布。
+
+## 6. PR22 完成后的改枪计划
+
+2026-10-09 维护者明确要求先检查 PR22 重做冲突、调整计划并提交文档 PR，改枪实施排在 PR22 之后。本次为独立文档交付，承接分支 `docs/gunsmith-after-pr22`，不新增并行代码实现线。
+
+| 事项 | 来源 / 当前归属 | 当前处理 |
+| --- | --- | --- |
+| 20 枪与 100 配件改枪系统 | 维护者当前指令；[计划入口](gunsmith/README.md)、[PR22 衔接记录](gunsmith/PR22-INTEGRATION.md) | 枪械名称用原型号；#22 设计与 #33 实现已经合入 main，2026-10-12 已同步主线 6450504 并解决本 PR #28 文档冲突。品牌已确定放详情、功能名作主标题；[射击调研](gunsmith/SHOOTING-FOUNDATION.md)已完成，先做 M0-S 射击基础样板再实施改装，代码等待明确开工安排，不以 #32 全部清零为前置 |
+
+上段 2026-10-09 为初始安排；当前主线已包含 #22/#33 及后续修复。#32 未确认、PARTIAL 与真机未测项继续保留；本次仅同步原文档 PR，不启动改枪实现，不合并或发布。
 
 </details>
