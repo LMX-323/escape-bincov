@@ -5,6 +5,8 @@
 
 当前协议 `enemy-native-performance-v1`，入口 [enemy-performance.mjs](../../scripts/enemy-performance.mjs)。先 `pnpm package`，在本机无其他测试负载时运行 `node --import tsx scripts/enemy-performance.mjs`。报告与六张截图写入 `test-results/enemy-performance/`。这项诊断返回非零表示采样错误或预算阻塞；不能把进程完成当作通过。
 
+商场二层用 `--world=mall --out=test-results/enemy-mall-performance` 单独采样现有 `mall-v3/mall-f2` 的原生三人小队。默认仍为 `buildings`，报告显式保存世界标记；历史缺省标记按街区解释，同比要求同一世界，原预算和完整样本不变。两者不能互相冒充性能基线，设备/真人边界仍按下文。
+
 ## 采样边界
 
 使用种子 42 的正式街区 25 人名册，保留首三类拾荒者及全部其他原生敌人。合法存档只改变玩家观察位置和初始潮位；保存后由严格解码器复核。没有新增敌人、冻结 AI、无敌、清空弹药或加速时钟。观察点距枪手 240 像素，从 24 个方向选择与其他敌人距离最大的合法点，保证实际视线和身体可站立。Node 对可见最近敌人用正式输入射击、每三秒请求换弹；桌面通过鼠标瞄准可见最近敌人并每 250 毫秒点击；触屏通过真实 CDP 触摸拖动右摇杆外圈连续射击，期间正常请求换弹。

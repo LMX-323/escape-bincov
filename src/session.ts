@@ -1,5 +1,6 @@
 import * as D from './domain';
 import { installStreetEncounter } from './enemy-encounters';
+import { installMallEncounter } from './enemy-mall';
 import { moveQuantity, placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
@@ -277,6 +278,7 @@ export class SaveSession {
             if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
             if (buildings === true && !options.legacyEnemies) installStreetEncounter(expansion!.raid!, this.resolveWorld(expansion!.raid!.worldVersion)!);
+            if (buildings === 'mall' && options.mallLayout === 3 && !options.legacyEnemies) installMallEncounter(expansion!.raid!, this.resolveWorld(expansion!.raid!.worldVersion)!);
         }
         if (expansion) expansion.base.location = 'raid';
         if (!this.persist(candidate, checkpoint, null, expansion)) return false;

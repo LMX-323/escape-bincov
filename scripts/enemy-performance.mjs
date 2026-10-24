@@ -1,4 +1,4 @@
-/** EN-04, current native street, AI active. Run alone after pnpm package:
+/** EN-04, native street or --world=mall upstairs encounter, AI active. Run alone after pnpm package:
  * node --import tsx scripts/enemy-performance.mjs
  * Real 12-second browser samples; no accelerated clocks or GPU-completion claims.
  * Budget misses are reported and exit 1. Do not relax budgets to fit a result. */
@@ -16,12 +16,14 @@ import { createSessionState, SaveSession } from '../src/session.ts';
 import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
 import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime.ts';
 import { BUILDING_WORLD } from '../src/building-world.ts';
+import { mallWorldV3 } from '../src/mall-world.ts';
 import { corridor, traversable } from '../src/spatial.ts';
 import { archetype } from '../src/enemy-archetypes.ts';
 
 const options = new Map(process.argv.slice(2).map(arg => {
-  const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
+  const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out|world)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
 }));
+const world = options.get('world') ?? 'buildings'; assert.ok(['buildings', 'mall'].includes(world));
 const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
 const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe','retreat'].includes(policy));
 const focus = options.get('focus') ?? 'raider-gunner',radius=Number(options.get('radius')??240);
@@ -44,17 +46,18 @@ function fixture(highTide) {
   const data = new Map(), state = createSessionState();
   const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }), undefined, () => 1800000000000);
   assert.ok(saves.initialize(), state.storageError); state.state = 'hideout';
-  assert.ok(saves.beginRun(seed, true), state.storageError);
-  const raid = state.expansion.raid, e = raid.maps.coast.enemies.find(e => e.id === focus);
+  assert.ok(saves.beginRun(seed, world === 'mall' ? 'mall' : true, world === 'mall' ? { mallLayout: 3 } : {}), state.storageError);
+  const mapId = world === 'mall' ? 'mall-f2' : 'coast', definition = world === 'mall' ? mallWorldV3() : BUILDING_WORLD;
+  const raid = state.expansion.raid, layer = raid.maps[mapId], e = layer.enemies.find(e => e.id === focus);
   assert.ok(e); assert.equal(raid.version, 5);
   raid.initialHigh = raid.highTide = highTide;
-  const context = { definition: BUILDING_WORLD.maps.coast, doors: raid.maps.coast.doors, highTide };
+  const context = { definition: definition.maps[mapId], doors: layer.doors, highTide };
   const p = Array.from({ length: 24 }, (_, i) => i * Math.PI / 12)
     .map(a => ({ x: e.x + Math.cos(a) * radius, y: e.y + Math.sin(a) * radius }))
     .filter(p => traversable(context, p, 'body', 10) && corridor(context, e, p, 'sight'))
-    .sort((a, b) => Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - b.x, o.y - b.y)))
-      - Math.min(...raid.maps.coast.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
-  assert.ok(p, 'safe, visible observation point'); raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
+    .sort((a, b) => Math.min(...layer.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - b.x, o.y - b.y)))
+      - Math.min(...layer.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
+  assert.ok(p, 'safe, visible observation point'); raid.currentMap = mapId; raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
   return { raw, state, saves, target: { x: e.x, y: e.y } };
 }
@@ -62,7 +65,7 @@ if(options.has('fixture-out')) {
   const path=resolve(options.get('fixture-out'));await mkdir(resolve(path,'..'),{recursive:true});await writeFile(path,fixture(false).raw);
   console.log('Prepared strict low-tide performance input; no measurement or acceptance claimed.');process.exit(0);
 }
-const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), seed, policy, focus, radius, heal, budgets,
+const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), world, seed, policy, focus, radius, heal, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
   scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
   environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
@@ -203,6 +206,7 @@ try {
   if (options.has('baseline')) {
     const old = JSON.parse(await readFile(resolve(options.get('baseline')), 'utf8'));
     assert.equal(old.protocol, report.protocol); assert.equal(old.status,'PASS'); assert.equal(old.seed ?? 42,seed);
+    assert.equal(old.world ?? 'buildings', world, 'compare the same world and encounter geometry');
     assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
     assert.equal(old.focus ?? 'raider-gunner',focus);assert.equal(old.radius ?? 240,radius,'identical observation geometry for comparison');
     assert.equal(old.heal??false,heal,'identical carried-supply input for comparison');

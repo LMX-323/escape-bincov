@@ -1,0 +1,135 @@
+{
+  "base": "67a74688eef7e43563e61a2ebf86c26fe03ef8d4",
+  "artifact": {
+    "version": "0.2.0",
+    "htmlBytes": 8020914,
+    "htmlSha256": "c35fdd152d46d327f8814a23cdbdf43d4a9c0bd941a9cfac3fb455a089c69774",
+    "artifacts": {
+      "dist/index.html": {
+        "bytes": 8020914,
+        "sha256": "c35fdd152d46d327f8814a23cdbdf43d4a9c0bd941a9cfac3fb455a089c69774"
+      },
+      "start the game.html": {
+        "bytes": 8020914,
+        "sha256": "c35fdd152d46d327f8814a23cdbdf43d4a9c0bd941a9cfac3fb455a089c69774"
+      },
+      "release/Escape-Bincov-portable.zip": {
+        "bytes": 5253582,
+        "sha256": "4bdb8cb65e967ad95a9640529d3308f61c916c984b45ed5604a07e1e5d79ddd8"
+      },
+      "release/Escape-Bincov-web.zip": {
+        "bytes": 5249101,
+        "sha256": "7abb389578ba4258b85c936c17e921ec296cb2d88485799114747a04eb4a16c1"
+      }
+    }
+  },
+  "sourceFilesSha256": {
+    "src/enemy-mall.ts": "ceca8f7a525a52d5fb558570dc35594b8a86a2922b74c6473d3a8cffd586c958",
+    "src/session.ts": "f2cec49db56ba76ae138bc92081dc1874d6945f06e1c073cf356cc6270b677d6"
+  },
+  "nativeBrowser": {
+    "cases": 10,
+    "screenshots": [
+      "native-mall-raiders-1280.png",
+      "native-mall-raiders-1920.png",
+      "native-mall-raiders-844.png"
+    ],
+    "status": "PASS",
+    "priorClientSha256": "eda19651f349f6523641da16b48957c93552c2d2e51b9dda5e1ea0e98d46cc7d",
+    "priorClientCase": {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scenario": "native-mall-prior-67a7468-client",
+      "exactRaidRestored": true,
+      "backupByteIdentity": true
+    }
+  },
+  "fullEnemy": {
+    "status": "PASS",
+    "cases": 165,
+    "screenshots": 151,
+    "errors": [],
+    "external": []
+  },
+  "mallNatural": {
+    "startedAt": "2026-10-24T10:20:09.027Z",
+    "finishedAt": "2026-10-24T10:32:34.478Z",
+    "htmlSha256": "c35fdd152d46d327f8814a23cdbdf43d4a9c0bd941a9cfac3fb455a089c69774",
+    "status": "passed",
+    "runs": [
+      {
+        "outcome": "timeout",
+        "seconds": 600.583,
+        "lastObservedElapsed": 599.8611999998902
+      },
+      {
+        "outcome": "death",
+        "seconds": 37.389,
+        "lastObservedElapsed": 36.932300000027254
+      },
+      {
+        "outcome": "extract",
+        "seconds": 8.832,
+        "lastObservedElapsed": 5.772200000002968
+      }
+    ],
+    "transitions": [
+      {
+        "run": 1,
+        "from": "mall-f1",
+        "to": "mall-f2",
+        "elapsed": 9.138500000000008,
+        "inputToObservedMilliseconds": 120
+      },
+      {
+        "run": 1,
+        "from": "mall-f2",
+        "to": "mall-f1",
+        "elapsed": 578.5238999998998,
+        "inputToObservedMilliseconds": 212
+      },
+      {
+        "run": 2,
+        "from": "mall-f1",
+        "to": "mall-f2",
+        "elapsed": 13.68030000001201,
+        "inputToObservedMilliseconds": 178
+      },
+      {
+        "run": 2,
+        "from": "mall-f2",
+        "to": "mall-f1",
+        "elapsed": 33.17420000001849,
+        "inputToObservedMilliseconds": 127
+      }
+    ],
+    "errors": [],
+    "requests": [],
+    "scope": "Natural east-side bypass and original outcomes; not human balance or a native raider engagement claim."
+  },
+  "classicNatural": {
+    "startedAt": "2026-10-24T10:21:48.328Z",
+    "finishedAt": "2026-10-24T10:32:11.481Z",
+    "htmlSha256": "c35fdd152d46d327f8814a23cdbdf43d4a9c0bd941a9cfac3fb455a089c69774",
+    "status": "passed",
+    "outcomes": 13,
+    "totals": {
+      "extract": 6,
+      "death": 7,
+      "timeout": 0
+    },
+    "nativeLootTransfers": 49,
+    "errors": [],
+    "external": []
+  },
+  "notSignedOff": [
+    "R06 full region",
+    "remaining 11 region identities and routes",
+    "EN19-22 overall completion",
+    "physical phones",
+    "human readability and balance"
+  ],
+  "performance": "Independent final-source run is recorded in the PR after normal hooks and other tests finish; these natural frame samples are not exclusive performance signoff."
+}
