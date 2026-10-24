@@ -1,7 +1,7 @@
 /**
  * 试枪场 (src/range) on an isolated offline build: real mouse clicks on the 2.5D raid canvas and on the range panel. The
  * page's read-only ?test=1 hook (window.__bincovRange) is only read, never driven. The page must leave browser storage
- * alone; every gun must land hits on the 5-tile target and the panel must count them; the M4A1 must fire while
+ * alone; every gun (the old three, G17 and M4A1) must land hits on the 5-tile target and the panel must count them; the M4A1 must fire while
  * the button is held; presses on the panel must never fire or turn the
  * aim; the panel must fit 1280x720 and 1920x1080; abandoning settles in memory and reloads a fresh range. A phone page
  * without ?test=1 checks the touch layout and that no test hook exists there.
@@ -175,7 +175,7 @@ try {
     assert.equal(await p.evaluate(() => typeof window.__bincov), 'undefined', 'the game test hook stays off on the range');
     await untouched(p);
     const guns = [];
-    for (const gun of ['pistol', 'carbine', 'shotgun', 'mb4a1']) guns.push(await hitWith(p, gun));
+    for (const gun of ['pistol', 'gb17', 'carbine', 'shotgun', 'mb4a1']) guns.push(await hitWith(p, gun));
     const rifle = await holdRifle(p);
 
     // Presses on the panel: no shot, the magazine untouched, and the host's pointer (the aim's source) never moves. The

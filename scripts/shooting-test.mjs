@@ -594,6 +594,108 @@ async function hitConfirm(page) {
   return r;
 }
 
+/** The bench lane (tests/fixtures/shooting-bench.ts LANE, the range's firing line): 700 px clear east on the seed 42 coast. */
+const LANE = { x: 208, y: 1104 };
+const node = (uid, id, slot, children = []) => ({ uid, id, slot, relief: false, children });
+/** An M4A1 with a short handguard and, on its side rail, the close laser (T01) or the close floodlight (T05). */
+const FIT_LASER = [node('fit-h01', 'H01', 'handguard', [node('fit-t01', 'T01', 'side')])];
+const FIT_LIGHT = [node('fit-h01', 'H01', 'handguard', [node('fit-t05', 'T05', 'side')])];
+const hudDevices = page => page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.devices);
+const deviceLine = page => page.evaluate(() => { const el = document.querySelector('.coast-sample [data-devices]'); return el.hidden ? null : el.textContent; });
+/** The view's device drawing: the laser line's path instructions, the light's pools in the light layer, the outlines shown. */
+const deviceDrawing = page => page.evaluate(() => {
+  const v = window.__bincovSample.host.view;
+  return { laserPaths: (v.laserG.context?.instructions ?? []).length, lights: v.deviceLights.length,
+    rims: v.litRims.filter(s => s.visible).map(s => ({ x: s.x, y: s.y })) };
+});
+/** The devices of the gun as the save holds them, after a checkpoint. */
+const savedDevices = page => page.evaluate(() => {
+  if (!window.__bincovSample.host.services.checkpoint()) return 'checkpoint failed';
+  return JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion.raid.loadout.gun.devices;
+});
+const toast = page => page.evaluate(() => document.querySelector('.coast-sample [data-toast]').textContent);
+
+/**
+ * i. Devices (#28 M2-03) on a fitted M4A1 (driver.fit; no workbench before M2-04), by real keys: G switches the laser,
+ * the HUD's weapon card and the saved instance follow, the view draws the beam, and with the beam on an enemy 150 px out
+ * (inside the close laser's 240) the published hip cone tightens; G again clears it all. F on the floodlight lights up
+ * the ground item ahead: the HUD lists it and the view outlines it and adds the light's pools. G on a gun without a laser
+ * says so. Screenshots: devices-laser.png and devices-light.png.
+ */
+async function devices(page) {
+  await place(page, LANE, 0);
+  await drive(page, 'weapon', 'mb4a1'); await drive(page, 'fit', FIT_LASER);
+  const foe = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.alive).uid);
+  await drive(page, 'placeEnemy', foe, { x: LANE.x + 150, y: LANE.y });
+  await aimAt(page, 0, 150); await steady(page); await settle(page, .3);
+  const before = { hud: await hudDevices(page), line: await deviceLine(page), cone: await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.aim.cone) };
+  check(before.hud?.parts.length === 1 && !before.hud.parts[0].on && before.hud.laser === null, 'a fitted laser starts off', before);
+  check(before.line?.includes('激光 关') && before.line.includes('G'), `the weapon card shows the switch: ${before.line}`, before);
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === true, null, { polling: 'raf' });
+  await steady(page); await settle(page, .3);
+  const on = { hud: await hudDevices(page), line: await deviceLine(page), drawing: await deviceDrawing(page), saved: await savedDevices(page),
+    cone: await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.aim.cone) };
+  check(on.hud.laser?.hit && on.hud.laser.inRange, 'the beam rests on the enemy within range', on);
+  check(on.cone < before.cone * .8, `the hip cone tightens with the laser on target: ${before.cone} -> ${on.cone}`, { before, on });
+  check(on.drawing.laserPaths > 0 && on.line.includes('激光 开'), 'the view draws the beam and the card says on', on);
+  check(on.saved?.laser === true && on.saved.light === false, 'the checkpoint saves the switch on the gun', on);
+  await page.screenshot({ path: resolve(out, 'devices-laser.png') });
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await settle(page, .2);
+  const off = { drawing: await deviceDrawing(page), saved: await savedDevices(page), line: await deviceLine(page) };
+  check(off.drawing.laserPaths === 0 && off.saved?.laser === false && off.line.includes('激光 关'), 'G again switches it off everywhere', off);
+  // The floodlight: the ground item 100 px ahead is lit, outlined where it is drawn.
+  await drive(page, 'fit', FIT_LIGHT);
+  const loot = await drive(page, 'spawnLoot', 'scrap', 1, { x: LANE.x + 100, y: LANE.y });
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => /没有装激光/.test(document.querySelector('.coast-sample [data-toast]').textContent), null, { polling: 'raf' });
+  const refused = await toast(page);
+  await page.keyboard.press('f');
+  await page.waitForFunction(uid => window.__bincovSample.host.lastBatch.frame.hud.devices?.light?.lit.includes(uid), loot, { polling: 'raf' });
+  await settle(page, .2);
+  const light = { hud: await hudDevices(page), drawing: await deviceDrawing(page), line: await deviceLine(page),
+    item: await page.evaluate(uid => { const s = window.__bincovSample.host.view.loot.get(uid); return s && { x: s.x, y: s.y, visible: s.visible }; }, loot) };
+  check(light.drawing.lights === 3 && light.drawing.rims.some(r => r.x === light.item?.x && r.y === light.item?.y) && light.line.includes('灯光 开'),
+    'the light adds its pools and outlines the lit item', light);
+  await page.screenshot({ path: resolve(out, 'devices-light.png') });
+  await page.keyboard.press('f');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await drive(page, 'weapon', 'pistol'); await place(page, HOME, 0);
+  return { before, on, off, refused, light };
+}
+/** i-touch. The 设备 button: hidden for a factory gun, shown for a fitted one, and each tap switches its devices. */
+async function touchDevices(page) {
+  await place(page, LANE, 0);
+  await drive(page, 'weapon', 'mb4a1');
+  await frames(page, 4);
+  const button = () => page.evaluate(() => { const b = document.querySelector('.coast-sample [data-device]'), r = b.getBoundingClientRect();
+    return { hidden: b.hidden, pressed: b.getAttribute('aria-pressed'), box: { l: r.left, t: r.top, r: r.right, b: r.bottom } }; });
+  const factory = await button();
+  check(factory.hidden, 'a factory gun has no 设备 button', factory);
+  await drive(page, 'fit', FIT_LASER);
+  await page.waitForFunction(() => !document.querySelector('.coast-sample [data-device]').hidden, null, { polling: 'raf' });
+  const shown = await button();
+  // Inside the screen and clear of every other touch button.
+  const others = await page.evaluate(() => [...document.querySelectorAll('.coast-sample .cs-touch button:not([data-device])')].filter(b => !b.hidden)
+    .map(b => { const r = b.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }));
+  const overlap = others.filter(o => o.l < shown.box.r && shown.box.l < o.r && o.t < shown.box.b && shown.box.t < o.b);
+  check(shown.box.l >= 0 && shown.box.r <= 844 && shown.box.b <= 390 && !overlap.length, 'the 设备 button fits the bar', { shown, others });
+  await page.locator('.coast-sample [data-device]').tap();
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === true, null, { polling: 'raf' });
+  await frames(page, 2);
+  const on = await button();
+  await page.locator('.coast-sample [data-device]').tap();
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await frames(page, 2);
+  const off = await button();
+  check(on.pressed === 'true' && off.pressed === 'false', 'each tap switches the laser and the button shows it', { on, off });
+  await drive(page, 'weapon', 'pistol'); await place(page, HOME, 0);
+  return { factory, shown, on: on.pressed, off: off.pressed };
+}
+const frames = (page, n) => page.evaluate(n => new Promise(done => { let k = 0; const tick = () => (++k >= n ? done() : requestAnimationFrame(tick)); requestAnimationFrame(tick); }), n);
+
 /* ---------------------------------------------------------------- run ---------------------------------------------------------------- */
 
 let desktop, phone;
@@ -607,12 +709,14 @@ try {
   await step('h', 'a critical hit turns the hit marker critical; each kill marker asks for one confirm sound', desktop, hitConfirm);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
+  await step('i', 'devices: G and F switch a fitted gun\'s laser and light; HUD, cone, beam, outline and save follow', desktop, devices);
   desktop.stallResumes = await stallResumes(desktop.page);
   phone = await context('phone', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   phone.touch = true;
   await touchReady(phone.page);
   await step('d', 'walls, a closed door and a corner stop the bullet at the surface', phone, walls);
   await step('f-touch', 'touch fire modes: outer ring repeats, inner ring never fires', phone, touchModes);
+  await step('i-touch', 'the 设备 button: hidden for a factory gun, each tap switches a fitted gun\'s devices', phone, touchDevices);
   phone.stallResumes = await stallResumes(phone.page);
 } catch (error) {
   report.failure = error.stack; console.error(error);

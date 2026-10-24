@@ -15,9 +15,9 @@ import { drawAim, SWAY } from '../shooting';
 import { checkpointBodyFits, traversable } from '../spatial';
 import type { Point } from '../world';
 
-/** The weapons the panel hands out: the old three, the real M4A1 (the #39 sample rifle until M2-01) and the knife. */
-export type RangeWeapon = 'pistol' | 'carbine' | 'shotgun' | 'mb4a1' | 'knife';
-export const RANGE_WEAPONS: readonly RangeWeapon[] = ['pistol', 'carbine', 'shotgun', 'mb4a1', 'knife'];
+/** The weapons the panel hands out: the old three, the real G17 and M4A1 (the M4A1 was the #39 sample rifle until M2-01) and the knife. */
+export type RangeWeapon = 'pistol' | 'gb17' | 'carbine' | 'shotgun' | 'mb4a1' | 'knife';
+export const RANGE_WEAPONS: readonly RangeWeapon[] = ['pistol', 'gb17', 'carbine', 'shotgun', 'mb4a1', 'knife'];
 
 const SEED = 42, MAP = 'coast', KIND = 'elite';
 /**

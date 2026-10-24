@@ -84,8 +84,10 @@ export interface Modifiers extends Factors {
     magazine?: number;
     /** Kg the installed part adds to the gun; negative when it is lighter than the factory part it replaces. */
     weight: number;
-    /** Factor on the gunshot noise radius, today the one SURVIVAL.gunNoiseRange for every gun. */
+    /** Factor on the radius within which enemies hear a shot (SURVIVAL.gunNoiseRange for every factory gun, M2-11). */
     noise?: number;
+    /** A suppressor: the shots sound muffled (the view's quiet recipe, M2-11). How far enemies hear them is `noise`'s. */
+    suppressor?: true;
     /** Cells the installed part adds to the gun's footprint (suppressors lengthen, a drum deepens). */
     grow?: { w: number; h: number };
     /** Factor on the precise-aim camera look-ahead, one per sight mode; M0-07 sets the cap these scale. */
@@ -289,18 +291,18 @@ export const ATTACHMENTS: Readonly<Record<string, AttachmentDef>> = Object.fromE
     ...section('muzzle', 'yanwan', [
         p('M01', '轻型消焰器', 'muzzle', ['pistol', 'gb17', 'pb226', 'mpb5', 'vb9'], .05, 90, { noise: .9, kick: .97 }),
         p('M02', '近战补偿器', 'muzzle', ['gb17', 'pb226', 'mpb5', 'vb9'], .08, 220, { bloom: .8, kick: .9, noise: 1.15 }),
-        p('M03', '九系短消音器', 'muzzle', ['gb17', 'pb226', 'mpb5', 'vb9'], .2, 520, { noise: .5, raise: 1.1, grow: { w: 1, h: 0 } },
+        p('M03', '九系短消音器', 'muzzle', ['gb17', 'pb226', 'mpb5', 'vb9'], .2, 520, { noise: .5, suppressor: true, raise: 1.1, grow: { w: 1, h: 0 } },
             { needs: [{ part: 'B01', on: ['gb17', 'pb226'] }] }),
-        p('M04', '重弹消音器', 'muzzle', ['mb1911', 'umpb45'], .28, 560, { noise: .55, grow: { w: 1, h: 0 } },
+        p('M04', '重弹消音器', 'muzzle', ['mb1911', 'umpb45'], .28, 560, { noise: .55, suppressor: true, grow: { w: 1, h: 0 } },
             { needs: [{ part: 'B02', on: ['mb1911'] }] }),
         p('M05', '步枪消焰器', 'muzzle', RIFLE_MUZZLE, .08, 110, { noise: .9, bloom: .96 }),
         p('M06', '步枪制退器', 'muzzle', RIFLE_MUZZLE, .12, 260, { bloom: .8, kick: .75, noise: 1.2 }),
-        p('M07', '步枪紧凑消音器', 'muzzle', RIFLE_MUZZLE, .35, 680, { noise: .55, raise: 1.12, grow: { w: 1, h: 0 } }),
-        p('M08', '精确枪消音器', 'muzzle', PRECISION, .55, 760, { noise: .5, grow: { w: 1, h: 0 } }),
+        p('M07', '步枪紧凑消音器', 'muzzle', RIFLE_MUZZLE, .35, 680, { noise: .55, suppressor: true, raise: 1.12, grow: { w: 1, h: 0 } }),
+        p('M08', '精确枪消音器', 'muzzle', PRECISION, .55, 760, { noise: .5, suppressor: true, grow: { w: 1, h: 0 } }),
         p('M09', '精确枪制退器', 'muzzle', PRECISION, .15, 300, { recover: 1.3, kick: .8, noise: 1.2 }),
         p('M10', '通用霰弹收束器', 'muzzle', ['mb870', 'mb1014'], .1, 160, { spread: .78 }),
         p('M11', '双管收束组', 'muzzle', ['shotgun'], .15, 180, { spread: .72 }),
-        p('M12', '轻高速消音器', 'muzzle', ['pb90'], .25, 900, { noise: .5, grow: { w: 1, h: 0 } }),
+        p('M12', '轻高速消音器', 'muzzle', ['pb90'], .25, 900, { noise: .5, suppressor: true, grow: { w: 1, h: 0 } }),
     ]),
     // Barrels, handguards, stocks, grips and magazines replace a factory part, so their installed weight may be negative.
     ...section('barrel', 'binji', [

@@ -82,6 +82,7 @@ const HTML = `
   </section>
   <section class="cs-clock"><b data-time></b><small data-tide></small></section>
   <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div>
+    <div class="cs-dev" data-devices hidden></div>
     <div class="cs-crit" data-crit hidden><div><span data-crit-label></span><b data-crit-chance></b><em data-crit-target aria-hidden="true"></em></div><div class="cs-breath" data-breath hidden aria-hidden="true"><span data-breath-label></span><i><b data-breath-bar></b></i><small data-breath-time></small></div></div></section>
   <div data-radio class="cs-radio" hidden></div>
   <section class="cs-info">
@@ -99,7 +100,7 @@ const HTML = `
   <div data-hitpop class="cs-hitpop" aria-hidden="true"><b><i></i><i></i><i></i><i></i></b></div>
   <div data-fade class="cs-fade"></div>
   <div data-curtain class="cs-curtain" aria-live="assertive"><b data-curtain-text></b></div>
-  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-act>交互</button><button type="button" data-pause aria-label="暂停">暂停</button></div>
+  <div class="cs-touch"><button type="button" data-bag>背包</button><button type="button" data-do="map">地图</button><button type="button" data-heal>治疗</button><button type="button" data-reload>换弹</button><button type="button" data-swap aria-label="切换武器">匕首</button><button type="button" data-device aria-pressed="false" hidden>设备</button><button type="button" data-act>交互</button><button type="button" data-pause aria-label="暂停">暂停</button></div>
 </div>
 <section class="cs-panel" data-panel hidden role="dialog" aria-modal="true"></section>`;
 
@@ -424,6 +425,13 @@ export class CoastSampleHost {
     s.on(this.q('[data-heal]'), 'pointerdown', e => { e.preventDefault(); this.input.press('heal'); });
     // Touch has no 1 / 2 keys: one button switches between the primary weapon and the knife, labelled with the other one.
     s.on(this.q('[data-swap]'), 'pointerdown', e => { e.preventDefault(); this.input.press(this.weaponShown === 'knife' ? 'primary' : 'knife'); });
+    // Touch has no F / G: one 设备 button switches the gun's devices together (#28 M2-03). With any on it turns those
+    // off, otherwise it turns every one on, each by its own part's switch (a combiner is one part, named by its laser).
+    s.on(this.q('[data-device]'), 'pointerdown', e => {
+      e.preventDefault();
+      const parts = this.last?.frame.hud.devices?.parts ?? [], any = parts.some(p => p.on);
+      for (const p of parts) if (p.on === any) this.input.press(p.laser ? 'laser' : 'light');
+    });
     s.on(this.q('[data-bag]'), 'click', () => { if (!this.panel) this.openInventory(); else if (this.panel === 'inventory') this.closePanel(true); });
     s.on(this.q('[data-choices]'), 'click', e => {
       const el = e.target as HTMLElement, w = this.last?.stamp.world; if (!w || this.panel) return;
@@ -521,7 +529,7 @@ export class CoastSampleHost {
   }
   /** Controls for this device, the guide the original pause offered. */
   private showGuide() {
-    const keys: [string, string][] = [['W A S D', '移动 / 离开搜刮'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
+    const keys: [string, string][] = [['W A S D', '移动 / 离开搜刮'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['F / G', '开关枪上的灯光 / 激光'], ['Esc', '暂停 / 关闭面板']];
     const body = this.input.touch
       ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
       : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;
@@ -655,6 +663,7 @@ export class CoastSampleHost {
     q('[data-weapon]').classList.toggle('reloading', w.reloading);
     q('[data-heals]').textContent = String(h.heals);
     this.critLines(h);
+    this.deviceLine(h);
     q('.cs-status').classList.toggle('low', h.hp / h.maxHp < .35);
     if ((this.stats.frames & 7) === 0) this.slowHud(b);
     const region = this.view.regionName();
@@ -739,6 +748,27 @@ export class CoastSampleHost {
     const charge = c?.breath ?? null, bar = charge ? `${(charge.share * 100).toFixed(1)}%` : '', key = charge ? `${bar}|${charge.full}` : '';
     if (charge && key !== this.critBar) { this.q('[data-breath-bar]').style.width = bar; breath.classList.toggle('full', charge.full); }
     this.critBar = key;
+  }
+  /** The device line as last written (deviceLine rewrites it only when it changes). */
+  private devicesShown = '';
+  /**
+   * The switches of the gun in hand's devices at the foot of the weapon card (#28 M2-03): each part with its key (F for
+   * a light, G for a laser, either for a combiner; no keys on touch) and whether it is on, and the touch 设备 button,
+   * shown only for a gun with a device and marked pressed while any is on. The Runtime's own published state; nothing
+   * here switches anything.
+   */
+  private deviceLine(h: HudView) {
+    const d = h.devices, touch = this.input.touch;
+    const key = d ? `${touch}|${d.parts.map(p => `${p.name}:${+p.laser}${+p.light}${+p.on}`).join()}` : '';
+    if (key === this.devicesShown) return;
+    this.devicesShown = key;
+    const line = this.q('[data-devices]'), button = this.q('[data-device]'), any = !!d?.parts.some(p => p.on);
+    line.hidden = button.hidden = !d;
+    line.innerHTML = d ? d.parts.map(p => {
+      const kind = p.laser && p.light ? '组合' : p.laser ? '激光' : '灯光', keys = p.laser && p.light ? 'F/G' : p.laser ? 'G' : 'F';
+      return `<span class="${p.on ? 'on' : ''}" title="${esc(p.name)}">${touch ? '' : `<kbd>${keys}</kbd>`}${kind} ${p.on ? '开' : '关'}</span>`;
+    }).join('') : '';
+    button.setAttribute('aria-pressed', String(any)); button.classList.toggle('on', any);
   }
   /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
   private lootHitT = 0;

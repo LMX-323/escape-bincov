@@ -7,6 +7,7 @@ import { ITEMS, addItem, createInventory, equippedWeapon, isGun } from '../domai
 import { derivedLimits } from '../expansion-state';
 import { checkpointBodyFits } from '../spatial';
 import { isWalkable } from '../world';
+import { validateGun, type PartNode } from '../gunsmith/instance';
 
 export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: string) {
     if (new URLSearchParams(search).get('test') !== '1') throw new Error('Runtime fixtures require ?test=1.');
@@ -63,6 +64,19 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             // A full magazine of the instance's effective capacity; more fails checkpoint validation.
             state.loadout.weapon = id; state.loadout.ammo = equippedWeapon(state.loadout).magazine;
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
+        },
+        /**
+         * Attachments on the gun in hand, as the tree of nodes a gun instance stores (there is no workbench before M2-04):
+         * the same gun and uid, every device switched off and a full magazine of the fitted gun's capacity. The part uids
+         * must be item uids found nowhere else in the record. Throws when validateGun refuses the fitted gun.
+         */
+        fit(parts: PartNode[]) {
+            const state = runtime.snapshot(), l = state.loadout, gun = { parts: structuredClone(parts), devices: { laser: false, light: false } };
+            if (!isGun(l.weapon) || l.weaponUid === null) throw new Error('Fit fixtures need a gun in the loadout.');
+            const check = validateGun(l.weapon, l.weaponUid, gun);
+            if (!check.ok) throw new Error(`Invalid fit fixture (${check.code}): ${check.reason}`);
+            l.gun = gun; l.ammo = equippedWeapon(l).magazine; l.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0;
+            runtime.restore(state);
         },
         /** Rounds in the equipped gun's magazine (0 to its effective size); relief rounds never exceed what is loaded. */
         magazine(rounds: number) {

@@ -40,6 +40,9 @@ export class SampleSound {
   private ambience = '';
   private enemyStates = new Map<string, { phase: string; stance: string; archetype: string }>();
   private enemyMap = '';
+  /** The device parts of the gun in hand last frame (uids) and their switches (#28 M2-03). */
+  private deviceParts = '';
+  private switches = '';
 
   constructor(private readonly out: SoundOut & HitCueOut) {}
 
@@ -96,6 +99,10 @@ export class SampleSound {
     } else this.stepLeft = 0;
     // Reload start and finish each click, as in the original.
     if (w.reloading !== this.reloading) { this.reloading = w.reloading; this.out.click(); }
+    // A device switched on the same gun clicks too (#28 M2-03); drawing another weapon or gun does not.
+    const devices = f.hud.devices, parts = devices ? devices.parts.map(d => d.uid).join() : '', switches = devices ? devices.parts.map(d => +d.on).join('') : '';
+    if (parts && parts === this.deviceParts && switches !== this.switches) this.out.click();
+    this.deviceParts = parts; this.switches = switches;
     // A heal (Q) spends a supply: the original plays the pickup cue for any used supply.
     if (this.heals !== null && f.hud.heals < this.heals) this.out.pickup();
     this.heals = f.hud.heals;
@@ -124,7 +131,8 @@ export class SampleSound {
     const at = (uid: string) => { const p = this.where.get(uid); return p ? this.spot(p.x, p.y) : undefined; };
     switch (e.type) {
       case 'shot': {
-        if (e.shooter === 'player') { this.out.shot(e.weapon); break; }
+        // The player's gun picks its recipe by class (#28 M2-11; older events by look), muffled when suppressed.
+        if (e.shooter === 'player') { if (e.suppressed) this.out.shot(e.gun?.cls ?? e.weapon, undefined, true); else this.out.shot(e.gun?.cls ?? e.weapon); break; }
         const s = at(e.shooter) ?? (e.pellets[0] ? this.spot(e.pellets[0].origin.x, e.pellets[0].origin.y) : undefined);
         if (this.spitters.has(e.shooter)) { if (actorShown(e.shooter)) this.out.shot('spit', s); break; }
         if (s) this.out.shot('enemy', s); else this.out.shot('enemy');

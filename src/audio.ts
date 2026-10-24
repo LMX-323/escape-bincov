@@ -4,6 +4,37 @@
  */
 export type Spot = { pan: number; gain: number };
 
+/** One synth voice of a gunshot: a noise burst through a high-pass (`cutoff` Hz; `lowpass` dulls it), or a falling tone. */
+type Burst = { length: number; gain: number; cutoff: number; delay: number; lowpass?: number };
+type Sweep = { from: number; to: number; length: number; gain: number; delay: number; type: OscillatorType };
+/**
+ * A gunshot as SynthAudio.shot plays it: the blast, its crack and its low thump, then a bright tail (none when
+ * suppressed) and, suppressed, the mechanism's click that keeps a quiet shot audible (#28 M2-11).
+ */
+export type ShotRecipe = { blast: Burst; crack: Sweep; thump: Sweep; tail: Burst | null; action: Sweep | null };
+/**
+ * The one place a gunshot's sound is chosen (#28 M2-11): by `kind`, a gun class or a weapon look (the player's shot
+ * names its gun's class, an enemy's is 'enemy'), and whether a suppressor muffles it. The shotgun keeps its own
+ * recipe, an enemy's shot the pistol's at 55%, every other gun the pistol's: unsuppressed, these are the numbers the
+ * game always played. A suppressed shot is clearly quieter and duller but still audible: the blast is low-passed and a
+ * third as loud, the crack lower, shorter and weaker, the bright tail gone, and the action's click stays. #75 swaps in
+ * per-gun recipes here (the shot event also names the gun).
+ */
+export function shotRecipe(kind: string, suppressed = false): ShotRecipe {
+  const shotgun = kind === 'shotgun', level = kind === 'enemy' ? 0.55 : 1;
+  const blast: Burst = { length: shotgun ? 0.3 : 0.16, gain: (shotgun ? 1.05 : 0.72) * level, cutoff: 380, delay: 0 };
+  const crack: Sweep = { from: shotgun ? 140 : 210, to: 36, length: shotgun ? 0.2 : 0.12, gain: 0.3 * level, delay: 0, type: 'triangle' };
+  const thump: Sweep = { from: 72, to: 32, length: 0.13, gain: 0.18 * level, delay: 0.025, type: 'sine' };
+  if (!suppressed) return { blast, crack, thump, tail: { length: 0.06, gain: 0.09 * level, cutoff: 1500, delay: 0.11 }, action: null };
+  return {
+    blast: { ...blast, length: blast.length * 0.7, gain: blast.gain * 0.32, cutoff: 160, lowpass: 1100 },
+    crack: { ...crack, from: crack.from * 0.6, to: 30, length: crack.length * 0.6, gain: crack.gain * 0.3 },
+    thump: { ...thump, gain: thump.gain * 0.55 },
+    tail: null,
+    action: { from: 1300, to: 700, length: 0.03, gain: 0.05 * level, delay: 0.02, type: 'square' },
+  };
+}
+
 /** Original, synthesized audio. Nothing is fetched and no recorded samples are used. */
 export class SynthAudio {
   private context?: AudioContext;
@@ -153,7 +184,8 @@ export class SynthAudio {
     oscillator.stop(at + length + 0.025);
   }
 
-  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot): void {
+  /** A noise burst through a high-pass at `cutoff` Hz; `lowpass` (Hz) also cuts its top, for a muffled sound. */
+  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot, lowpass?: number): void {
     if (!this.noise || !this.ready()) return;
     const ctx = this.context!, at = ctx.currentTime + delay;
     const source = ctx.createBufferSource();
@@ -165,25 +197,36 @@ export class SynthAudio {
     envelope.gain.setValueAtTime(gain, at);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length);
     const nodes: AudioNode[] = [source, filter, envelope];
-    source.connect(filter).connect(envelope).connect(this.route(nodes, spot));
+    let shaped: AudioNode = source.connect(filter);
+    if (lowpass !== undefined) {
+      const dull = ctx.createBiquadFilter();
+      dull.type = 'lowpass';
+      dull.frequency.value = lowpass;
+      nodes.push(dull); shaped = shaped.connect(dull);
+    }
+    shaped.connect(envelope).connect(this.route(nodes, spot));
     this.trackVoice(source, nodes);
     source.start(at, Math.random() * 2);
     source.stop(at + length + 0.02);
   }
 
-  shot(kind = 'pistol', spot?: Spot): void {
+  /**
+   * A shot, a swing or a spit. Gunshots play the recipe shotRecipe chooses for `kind` (a gun class or a weapon look) and
+   * `suppressed`; spit, acid hits and the knife keep their own cues.
+   */
+  shot(kind = 'pistol', spot?: Spot, suppressed = false): void {
     if (kind === 'spit') {
       this.hiss(.22, .28, 180, 0, spot); this.hiss(.12, .2, 260, .09, spot);
       this.tone(150, .18, .12, 'triangle', 48, 0, spot); return;
     }
     if (kind === 'acid-hit') { this.hiss(.2, .16, 240, 0, spot); this.tone(100, .09, .05, 'sine', 38, 0, spot); return; }
     if (kind === 'knife') { this.hiss(0.12, 0.35, 900, 0, spot); this.tone(320, 0.08, 0.05, 'triangle', 90, 0, spot); return; }
-    const shotgun = kind === 'shotgun';
-    const level = kind === 'enemy' ? 0.55 : 1;
-    this.hiss(shotgun ? 0.3 : 0.16, (shotgun ? 1.05 : 0.72) * level, 380, 0, spot);
-    this.tone(shotgun ? 140 : 210, shotgun ? 0.2 : 0.12, 0.3 * level, 'triangle', 36, 0, spot);
-    this.tone(72, 0.13, 0.18 * level, 'sine', 32, 0.025, spot);
-    this.hiss(0.06, 0.09 * level, 1500, 0.11, spot);
+    const r = shotRecipe(kind, suppressed), sweep = (s: Sweep) => this.tone(s.from, s.length, s.gain, s.type, s.to, s.delay, spot);
+    this.hiss(r.blast.length, r.blast.gain, r.blast.cutoff, r.blast.delay, spot, r.blast.lowpass);
+    sweep(r.crack);
+    sweep(r.thump);
+    if (r.tail) this.hiss(r.tail.length, r.tail.gain, r.tail.cutoff, r.tail.delay, spot);
+    if (r.action) sweep(r.action);
   }
 
   /** Short, positional enemy action cues; shared timbres keep simultaneous encounters within the voice budget. */
