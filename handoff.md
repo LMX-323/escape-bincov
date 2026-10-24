@@ -1,3 +1,9 @@
+## 2026-10-24 等候方交付与新主线同步
+
+维护者要求尽快推进#81以解除后续#75 B组姿态/枪声接入等待，并明确取消便携ZIP 5 MiB上限。正常同步main f73e9de（#96/#99）；游戏源码自动合并，生成物由package重建。撤销了仅为卡5 MiB临时加入的40帧图集尝试，原40张PNG/哈希保留。诊断取消ZIP硬门槛，仅报告实际大小；HTML/帧时/纹理门槛未改。源冻结后执行单测/CI守卫/package、shooting、enemy、portable及标准绝对性能，结果以本次后续记录与原PR为准。
+
+本期可审阅交付为EN01～18的街区十八原型闭环，#78剩余EN19～22及地图/真人真机依赖继续开放；不自行合并或部署。待准确组合head完整CI通过后提供review-ready状态和稳定入口，后续任务不必重复等待十个未建地图。此前32cf5f4整轮CI通过属于新主线整合前，不冒领成整合后证据。
+
 ## 2026-10-24 CI搜刮夹具收口
 
 游戏提交df30df8已推，HTML仍ac1f62b3...、7993985字节。首轮完整CI40065883806只有batch8搜刮夹具失败，构建与另七浏览器组通过；本地原样复现。quiet中的placeEnemy连带改写seed44检查站home，严格保存拒绝该测试布置；修正为冻结且保留回收/检查站固定岗位，其余断言不改，无产品源码/制品变化。修复后两桌面各22项及触屏4项共48项搜刮、62CI守卫通过，证据见[检查站](docs/tasks/enemy-blockade.md#首轮ci搜刮夹具修复)。正常提交推送后核对新准确head完整CI；原首败保留，成功才在Issue核销18/22，EN19～22仍开放。
@@ -73,6 +79,16 @@ EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人�
 - 2026-10-24 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` / PR #91；十二地区战术地图、两处现有入口可出击、十区暂未开发。[Opus 视觉深化](docs/tasks/county-map-select.md#opus-视觉深化2026-10-24)：先正常合并 main（#89、#90、#92、#93、#94）并重建字体子集与生成物；地图固定 3:2（容器查询单位适配，最多裁 6%），标记钉在地标上、标签放一侧；选中时局部点亮、准星滑动锁定（`CSS.registerProperty`）、路线沿公路绘制；十二张插图接入区域情报；出发按钮常驻底部；出击面板由 `morph.ts` 就地更新，焦点、种子与过渡在重绘中保留。`test:raid-default` R10 扩充、新增 R11 与 `tests/deploy-map.test.ts`。真机与真人观感未验，额外训练 E4 记录见任务文档；准确 head / CI 见 PR，新增关卡继续归 #82。
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
+
+- 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击姿态接入 A 组（`feat/hurt-poses`，基于 #96 的 `17613b6`）：
+  - **切帧**：`scripts/export-hurt-poses.ts` 复用 `title-art/png.ts`，从 pixel-v2 图集切出拾荒者、盐枭、守潮人、潮蚀生物各五朝向的受击帧（帧号 5）和恢复帧（帧号 6），共 40 张、15 KB，放在 `assets/coast/poses`。
+  - **加载**：`src/coast-view/pose-assets.ts` 在海岸素材加载后并入同一张素材表。`assets.ts`、`textures.ts` 都没动，因为 #81 已把它们改成打包图集。
+  - **播放**：`CoastView.syncActor` 中弹后显示受击帧约 90 ms、恢复帧约 60 ms，命中那一帧至少显示一次受击帧。只在角色用本种类身体图时切换（`posable` 看上一帧贴图），#81 的原型敌人因此不会误用 A 组的帧。
+  - **测试**：`build.mjs` 核对哈希；`tests/hurt-poses.test.ts` 守住像素一致和脚底、肩点所在行；`test:shooting` 检查 g 加了逐帧姿态断言，main 构建上只在姿态一项失败。
+  - **和 #81 试合并**：只有发布清单冲突；第一次发现与它的局部变量 `pose` 重名，已改名为 `hurtT` / `hurtFrame`；合并结果单测 747/747；在合并构建上实测，原型敌人中弹不换帧、也不出现占位图。
+  - 证据见[说明](docs/evidence/issue75-hurt-poses/README.md)。B 组等 #81；真人观感未验。准确 head 与 CI 见本分支 PR。
+
+- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96)：在原分支按维护者评论完成七张 pixel-v2 返工稿，只改人形 S/N 膝部24格及生物 E/SE/NE 缩头6格；35站立格和40个其他动作格不变，v1与生成原图保留。[当前返工摘要](docs/hit-feel-art/README.md#2026-10-24-v2-返工)、[v2检查](docs/hit-feel-art/pixel-audit-v2.json)与[有效v1负对照](docs/hit-feel-art/pixel-v1-rework-negative.json)记录无新增洞、腿部不开缝和原有锚点检查；生物固定足底与整帧最右边界的3条指标冲突待核定，不能记为全部验收通过。653单测、package通过，产物相对main `4141503`不变；游戏接入另PR，保持草稿、未合并，等待独立复验。
 
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
   - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。

@@ -32,7 +32,9 @@ const out = resolve(options.get('out') ?? 'test-results/enemy-performance'); awa
 // passing is necessary for this desktop expansion, not sufficient for phone/balance signoff.
 const budgets = { worldEnemies: 25, advanceP95Ms: 8, advanceP99Ms: 16, pathP95Ms: 4, pathMaxMs: 16,
   presentP95Ms: 8, presentP99Ms: 16, frameP95Ms: 33.4, frameP99Ms: 50,
-  atlasPages: 3, estimatedTextureBytes: 96 * 1024 ** 2, htmlBytes: 8 * 1024 ** 2, portableBytes: 5 * 1024 ** 2 };
+  atlasPages: 3, estimatedTextureBytes: 96 * 1024 ** 2, htmlBytes: 8 * 1024 ** 2 };
+// The maintainer explicitly removed the 5 MiB portable ZIP cap on 2026-10-24.
+// Continue reporting its actual bytes; frame, texture and HTML budgets remain unchanged.
 const summary = values => {
   const sorted = [...values].sort((a, b) => a - b), at = q => sorted[Math.floor((sorted.length - 1) * q)] ?? 0;
   assert.ok(values.every(n => Number.isFinite(n) && n >= 0), 'finite nonnegative measurement values');
@@ -99,7 +101,7 @@ try {
     console.log('runtime', highTide, hz, repeat, JSON.stringify(row));
   }
   const html = await readFile('dist/index.html'); report.artifact = { bytes: html.length, sha256: createHash('sha256').update(html).digest('hex'), portableBytes: (await stat('release/Escape-Bincov-portable.zip')).size };
-  fail('html', html.length, budgets.htmlBytes); fail('portable', report.artifact.portableBytes, budgets.portableBytes);
+  fail('html', html.length, budgets.htmlBytes);
   const browser = await chromium.launch(browserOptions); report.environment.browser = browser.version();
   try {
     for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }, { width: 844, height: 390 }]) for (const highTide of [false, true]) {

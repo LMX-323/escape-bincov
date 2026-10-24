@@ -1,5 +1,8 @@
 # EN-04：正式街区扩量预算
 
+**当前包体政策（维护者2026-10-24明确指示）：便携ZIP的5 MiB上限已取消。** 后续只记录ZIP实际字节，不以该值阻断交付，也不为卡该值继续压缩素材。HTML、帧时、寻路和纹理预算保持既有规则；下文历史5 MiB预算、失败及旧制品的记录不改写。[诊断脚本](../../scripts/enemy-performance.mjs)已取消该项硬门槛，仍输出portableBytes。
+
+
 当前协议 `enemy-native-performance-v1`，入口 [enemy-performance.mjs](../../scripts/enemy-performance.mjs)。先 `pnpm package`，在本机无其他测试负载时运行 `node --import tsx scripts/enemy-performance.mjs`。报告与六张截图写入 `test-results/enemy-performance/`。这项诊断返回非零表示采样错误或预算阻塞；不能把进程完成当作通过。
 
 ## 采样边界
@@ -22,7 +25,7 @@ Node 顺序测低/高潮 × 60/20/5 Hz × 两次，每次 12 模拟秒；记录�
 | view present CPU 提交 | p95 ≤8 ms，p99 ≤16 ms |
 | 真实 rAF 间隔 | p95 ≤33.4 ms，p99 ≤50 ms |
 | 纹理 | atlas ≤3 页，当前 view 的纹理估算 ≤96 MiB |
-| 单文件 HTML / 便携 ZIP | ≤8 MiB / ≤5 MiB |
+| 单文件 HTML / 便携 ZIP | ≤8 MiB / 原≤5 MiB，现已由维护者取消，记录实际大小 |
 
 首轮扩量只允许每局新增一个不超过四人的编组、替换原名册成员；总新原型人数不超过七人。候选点、出生/撤离/门梯安全距离、高潮绕行、旧行动保存与人口校验必须继续通过。扩量前后使用同环境同协议测量，除上述绝对门槛外，advance / present 的 p95 不得上升超过 20%；低于 0.5 ms 的基线使用 0.5 ms 作分母，以免定时噪声主导比例。不同 renderer 或设备不得直接套用同比。
 

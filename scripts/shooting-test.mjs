@@ -13,7 +13,7 @@
  *      inner ring never fires and precise aim stays off on touch;
  *   g. a blow's flash and kick on an enemy are drawn from the hit's own frame (#75), on as many frames as before at 60,
  *      30 and 15 frames a second and on one at 12 and 10; the kick goes 2 px the way the bullet flew (east and south) and
- *      the blood sprays back toward the shooter;
+ *      the blood sprays back toward the shooter; the enemy's body shows its hurt frame, then its recovery frame;
  *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
  *      asks for one kill confirm sound.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
@@ -456,6 +456,9 @@ async function touchModes(page, c) {
  *  at 15, 12 and 10 (Pixi caps a frame at 100 ms). They used to start a frame after the hit, and at 12 and 10 Hz that
  *  frame outlived both and drew neither (#75). */
 const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1] };
+/** Body poses from the hit's own frame on, for a kind whose art has pose frames (#75): H hurt (90 ms), R recovery (60 ms),
+ *  then the idle body. At 12 and 10 Hz the hit's frame shows hurt and the next is already past the recovery. */
+const POSE_FRAMES = { 60: 'HHHHHRRR', 30: 'HHRR', 15: 'HR', 12: 'H', 10: 'H' };
 /** Bullets for g: flying east at every rate in BLOW_FRAMES, and south at 60 Hz so that each axis of the kick is checked. */
 const BLOWS = [...Object.keys(BLOW_FRAMES).map(Number).reverse().map(hz => ({ hz, dir: 'east', vx: 1, vy: 0 })), { hz: 60, dir: 'south', vx: 0, vy: 1 }];
 /** g. A blow on slow frames: copies of the live batch, one living enemy 64 px east of the player and hit by a bullet from
@@ -475,7 +478,8 @@ async function blowOnSlowFrames(page) {
         // Idle frames age any earlier flash or kick away; the body then stands where no kick puts it.
         for (let i = 0; i < 3; i++) v.present(batch([]), .1);
         const g = v.actors.get(foe.uid), rest = { x: g.body.x, y: g.body.y }, before = new Set(v.fx.live);
-        const read = () => ({ body: g.body.visible, flash: g.flash.visible, kick: [g.body.x - rest.x, g.body.y - rest.y] });
+        const pose = () => g.body.texture === v.tex.actor(foe.kind, g.dir, 5) ? 'H' : g.body.texture === v.tex.actor(foe.kind, g.dir, 6) ? 'R' : '-';
+        const read = () => ({ body: g.body.visible, flash: g.flash.visible, kick: [g.body.x - rest.x, g.body.y - rest.y], pose: pose() });
         v.present(batch([hit]), dt);
         // The blow's blood drops, still in the air after one frame: each one's speed along the bullet (px/s).
         const blood = v.fx.live.filter(q => !before.has(q) && q.settle === 'decal').map(q => Math.round(q.vx * vx + q.vy * vy));
@@ -493,7 +497,7 @@ async function blowOnSlowFrames(page) {
     return { hz: r.hz, dir: r.dir, enemy: `${r.kind} ${r.uid}`, flashFrames: count(flash), kickFrames: count(kick), fromFirstFrame: leading(flash) && leading(kick),
       kicksPx: [...new Set(r.frames.filter((q, i) => kick[i]).map(q => q.kick.join(',')))], wantPx: r.bullet.map(d => d * 2).join(','), drawn: r.frames.every(q => q.body),
       hitFrame: { flash: r.frames[0].flash, kickPx: r.frames[0].kick.join(',') }, flashByFrame: flash.map(Number).join(''), kickByFrame: kick.map(Number).join(''),
-      bloodAlongBullet: r.blood };
+      bloodAlongBullet: r.blood, poseByFrame: r.frames.map(q => q.pose).join(''), wantPose: POSE_FRAMES[r.hz].padEnd(r.frames.length, '-') };
   });
   const fail = cases.flatMap(c => {
     const [flash, kick] = BLOW_FRAMES[c.hz], out = [], at = `${c.hz} Hz ${c.dir}`;
@@ -502,6 +506,7 @@ async function blowOnSlowFrames(page) {
     // Knocked 2 px the way the bullet flew (#75), while the blood still sprays back toward the shooter.
     if (c.kicksPx.some(k => k !== c.wantPx)) out.push(`${at}: kicked ${c.kicksPx.join(' / ')} px (want ${c.wantPx})`);
     if (!c.bloodAlongBullet.length || c.bloodAlongBullet.some(s => s >= 0)) out.push(`${at}: blood speeds along the bullet ${c.bloodAlongBullet.join(' / ') || 'none'} (want all below 0, back toward the shooter)`);
+    if (c.poseByFrame !== c.wantPose) out.push(`${at}: body poses ${c.poseByFrame} (want ${c.wantPose})`);
     return out;
   });
   check(!fail.length, fail.join('; '), { cases });

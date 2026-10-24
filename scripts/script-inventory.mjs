@@ -21,6 +21,7 @@ const groups = [
   { kind: 'diagnostic', reason: '读取已有 V8 快照的分析工具；先看各脚本参数。强路径/支配关系是记录图内的证据，不自动证明原生内存归属或泄漏。', files: [
     'astra-r7-heap-graph.mjs', 'astra-r7-cache-graph.mjs', 'coast-heap-retainers.mjs',
   ] },
+  { kind: 'tool', reason: '把 #96 的受击/恢复图集切成运行帧，写 assets/coast/poses 与 src/coast-view/pose-assets.ts（node --import tsx 运行）；--check 只核对、不写入。', files: ['export-hurt-poses.ts'] },
   { kind: 'archive', reason: 'R6 历史音频对照；写死旧工作目录，main 与工作区同源码也会越过 ±20% 门槛（#60 / #90 实测）。保留原证据和负对照制作代码，不能用作当前回归门禁。', files: ['sol-r6-audio-controls.mjs'] },
   { kind: 'archive', reason: '旧商场兼容实验要求 main 新建一版商场；当前 main 已改变新局布局。只在明确历史基线复放，现役兼容入口为 test:expansion / test:mall-sample。', files: ['mall-runtime-compat.mjs'] },
   { kind: 'archive', reason: 'R3 固定构建的压缩名/哈希分析链，build-map 只登记两个历史 HTML；需要对应旧 HTML 和快照，不能直接分析新构建。', files: [

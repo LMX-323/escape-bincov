@@ -52,6 +52,8 @@ function barrelTip(canvas: HTMLCanvasElement): Point {
 const FALL_T = .16;
 /** The feet slide back this far (world px, plus a little down) while the body tips, so the fallen body lies where the corpse is drawn. */
 const FALL_SLIDE = 18;
+/** Seconds a blow shows the hurt body (frame 5), then the recovery body (frame 6), on art that has them (#75). */
+const HURT_POSE = .09, RECOVERY_POSE = .06;
 
 interface Occluder {
   sprite: Sprite; key: string; kind: OccluderKind;
@@ -76,6 +78,11 @@ interface ActorGfx {
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
   /** A blow not drawn yet: the next syncActor draws its flash and kick even when that frame's delta outlives them. */
   hit: boolean;
+  /** Seconds left of a blow's body pose, like flashT: the hurt frame while more than RECOVERY_POSE is left, then recovery. */
+  hurtT?: number;
+  /** Direction and frame of the body texture drawn last, so a pose is shown only on the kind's own frames. */
+  drawnDir?: number;
+  drawnFrame?: number;
   /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
   sense: 1 | -1;
   /** Half-cycles of the walk, to put a puff of dust under each sprinting step. */
@@ -539,9 +546,22 @@ export class CoastView {
     }
   }
 
-  /** A blow's 70 ms flash and 80 ms kick: 2 px the way it travelled, as its angle points back at the source (#75). */
+  /**
+   * A blow's 70 ms flash and 80 ms kick: 2 px the way it travelled, as its angle points back at the source (#75); and its
+   * hurt and recovery pose, which syncActor shows where the art has those frames.
+   */
   private blow(g: ActorGfx, angle: number | null) {
     g.flashT = .07; g.kick = angle === null ? { x: 0, y: 0 } : { x: -Math.cos(angle) * 2, y: -Math.sin(angle) * 2 }; g.kickT = .08; g.hit = true;
+    g.hurtT = HURT_POSE + RECOVERY_POSE;
+  }
+
+  /**
+   * Whether this actor may show pose frames: the art has them for its kind (group A, assets/coast/poses), and its body is
+   * drawn with that kind's own frames, which last frame's texture tells. A body drawn in another style keeps its own.
+   */
+  private posable(a: ActorView, g: ActorGfx) {
+    return g.drawnDir !== undefined && g.drawnFrame !== undefined && !!this.opts.art?.has(`coast-${a.kind}-body-e-f5-v1`)
+      && g.body.texture === this.tex.actor(a.kind, g.drawnDir, g.drawnFrame);
   }
 
   /** `blown`: bodies whose blow present() already set before drawing them. */
@@ -682,7 +702,17 @@ export class CoastView {
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
     const dying = !a.alive && g.deathT > 0 && g.deathT < FALL_T;
-    const frame = dying ? 0 : speed > 5 ? walkFrame(g.walk, g.sense) : 0;
+    // A blow's pose replaces the idle or walk frame: hurt (5) first, recovery (6) for the last RECOVERY_POSE seconds. The
+    // frame that first draws the blow shows hurt however long it is, like the flash.
+    let hurtFrame = 0;
+    if (g.hurtT !== undefined) {
+      // Under a microsecond counts as over: 0.15 s is 9 frames at 60 Hz, and the float left after them may not be 0.
+      g.hurtT = g.hurtT - dt > 1e-6 ? g.hurtT - dt : 0;
+      if (a.alive && this.posable(a, g)) hurtFrame = hit || g.hurtT > RECOVERY_POSE ? 5 : g.hurtT > 0 ? 6 : 0;
+      if (g.hurtT === 0) g.hurtT = undefined;
+    }
+    const frame = dying ? 0 : hurtFrame || (speed > 5 ? walkFrame(g.walk, g.sense) : 0);
+    g.drawnDir = g.dir; g.drawnFrame = frame;
     const dead = !a.alive && !dying;
     const kicked = g.kickT > 0 || hit, kx = kicked ? g.kick.x : 0, ky = kicked ? g.kick.y : 0;
     const x = Math.round(a.x + kx), y = Math.round(a.y + ky);
