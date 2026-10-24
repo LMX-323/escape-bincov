@@ -14,9 +14,11 @@ import { buyAffordable } from './inventory-actions.mjs';
 const minutes = Number(process.env.BINCOV_PLAY_MINUTES || 10);
 assert.ok(minutes >= 1 && minutes <= 60);
 const world = process.env.BINCOV_PLAY_WORLD || 'coast';
+const firstSeed = Number(process.env.BINCOV_PLAY_SEED || 42);
+assert.ok(Number.isInteger(firstSeed) && firstSeed > 0 && firstSeed <= 0xffffffff - 60);
 const entry = resolve(process.env.BINCOV_PLAY_ENTRY || 'dist/index.html');
 assert.ok(['coast', 'buildings'].includes(world), 'BINCOV_PLAY_WORLD must be coast or buildings');
-const report = { htmlSha256: createHash('sha256').update(await readFile(entry)).digest('hex'), entry, startedAt: new Date().toISOString(), minutes, world,
+const report = { htmlSha256: createHash('sha256').update(await readFile(entry)).digest('hex'), entry, startedAt: new Date().toISOString(), minutes, world, firstSeed,
   methodology: `Automated real-time session on ${world === 'coast' ? 'the classic coast' : 'the layered street with new enemy encounters'} (2.5D view). Test hook is read-only: no teleports, no clock changes, no changes to health, enemies, inventory or RNG. All actions use visible buttons and real keyboard/mouse, including E opening and native inventory drag for crates and corpses. This is not a human fun/balance evaluation.`, enemyPhases: {}, containerLoot: { opened: [], transfers: [], threatenedClosures: 0 }, samples: [], outcomes: [], errors: [], externalRequests: [] };
 const out = resolve(process.env.BINCOV_PLAY_OUT || 'test-results'); await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
@@ -130,7 +132,7 @@ try {
         await items.first().dblclick(); if (await items.count() >= count) break;
       }
       await page.locator('#run-world').selectOption(world);
-      await page.locator('#seed').fill(String(42 + runNumber++)); await action('deploy').click();
+      await page.locator('#seed').fill(String(firstSeed + runNumber++)); await action('deploy').click();
       await page.waitForFunction(() => !!window.__bincovSample?.host?.lastBatch, null, { timeout: 30000 });
       goal = null; path = []; visited = new Set(); lastPosition = null; stuckAt = now; streetStep = 0;
       continue;

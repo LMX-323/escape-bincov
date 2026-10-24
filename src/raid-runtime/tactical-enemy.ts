@@ -1,13 +1,16 @@
 import type { EnemyState } from '../checkpoint';
-import { actorArchetype } from '../enemy-archetypes';
+import { actorArchetype, enemyBoundary } from '../enemy-archetypes';
 import { canReceiveReport, enemyRelation } from '../enemy-relations';
 import type { Point } from '../world';
 import type { LegacyEnemyWorld } from './enemy-ai';
 import { enemyPost } from '../enemy-posts';
+import type { LootContainer } from '../loot';
+import { recoveryObjective } from './recovery-objective';
 
 interface TacticalWorld extends LegacyEnemyWorld {
     readonly elapsed: number;
     readonly enemies: EnemyState[];
+    readonly containers?: readonly LootContainer[];
 }
 export interface TacticalEffects {
     fire(enemy: EnemyState, angle: number): void;
@@ -24,14 +27,14 @@ const turnToward = (from: number, to: number, limit: number) => {
 };
 
 function observedTarget(world: TacticalWorld, e: EnemyState) {
-    const def = actorArchetype(e)!, t = e.tactics!;
+    const def = actorArchetype(e)!, t = e.tactics!, boundary=enemyBoundary(e);
     const candidates = [{ uid: 'player', point: world.player, relation: def.stance === 'hostile' ? 'hostile' : 'neutral' },
         ...world.enemies.filter(other => other !== e && other.hp > 0 && other.tactics)
             .map(other => ({ uid: other.uid, point: other, relation: enemyRelation(e, other) }))];
     return candidates.filter(c => c.relation !== 'friendly' && distance(e, c.point) <= def.vision && world.sight(e, c.point)
         && (!(t.phase === 'windup' || t.phase === 'release') || !t.memory || t.memory.target === c.uid))
         .map(c => ({ ...c, engaged: t.stance === 'hostile' && t.memory?.target === c.uid,
-            inside: distance(e.home, c.point) < (def.stance === 'conditional' ? 90 : def.territory * .55) }))
+            inside: distance(boundary?.at??e.home, c.point) < (boundary?.radius??def.territory * .55) }))
         .filter(c => t.stance !== 'hostile' || !t.memory || world.elapsed - t.memory.time > 7 || c.engaged || c.relation === 'hostile')
         .filter(c => c.uid === 'player' || c.engaged || c.relation === 'hostile' || def.stance !== 'hostile' && c.inside)
         .sort((a, b) => Number(b.engaged) - Number(a.engaged) || Number(b.relation === 'hostile') - Number(a.relation === 'hostile')
@@ -53,6 +56,7 @@ function meleeContact(world: TacticalWorld, e: EnemyState): string | null {
  * All changes live on EnemyState, including limited ammunition, warning and one-use squad reports. */
 export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffects, e: EnemyState, dt: number): void {
     const def = actorArchetype(e)!, t = e.tactics!;
+    const objective=recoveryObjective(world,e,effects.notice);
     const observed = observedTarget(world, e), sees = !!observed, inside = !!observed?.inside;
     e.cooldown = Math.max(0, e.cooldown - dt); e.repath -= dt; e.timer -= dt;
     t.awareness = Math.max(0, Math.min(1, t.awareness + (sees ? dt / def.confirm : -dt * .5)));
@@ -78,7 +82,7 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
     }
     if (t.stance === 'hostile' && def.signal && !t.signalUsed && t.memory?.source === 'sight') {
         t.signalUsed = true;
-        effects.notice(e, '正在向附近同组报告最后目击位置。');
+        let reported=0;
         for (const ally of world.enemies) {
             if (ally === e || ally.hp <= 0 || !ally.tactics || !canReceiveReport(e, ally) || distance(e, ally) > 320) continue;
             if (t.memory.target !== 'player') {
@@ -87,7 +91,9 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
             }
             ally.tactics.memory = { ...structuredClone(t.memory), source: 'report' };
             ally.tactics.stance = 'hostile'; ally.tactics.awareness = 1;
+            reported++;
         }
+        effects.notice(e,reported?'正在向附近同组报告最后目击位置。':'正在呼喊，附近没有收到回应。');
     }
     const flooded = world.highTide && !world.walkable(e.x, e.y, true, 10);
     const stale = !t.memory || world.elapsed - t.memory.time > 7;
@@ -196,6 +202,10 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
             // The leader and guards defend their assigned side instead of emptying the compound.
             target = e.home; e.state = 'return';
         }
+    }
+    if(objective&&!flooded) {
+        target=objective;
+        if(t.stance==='retreat')e.state='return';else if(t.stance!=='hostile')e.state='patrol';
     }
     e.target = { ...target }; e.alert = t.memory ? Math.max(0, 7 - (world.elapsed - t.memory.time)) : 0;
     if (post && stale && t.stance !== 'retreat' && !flooded && e.timer > 0) return;

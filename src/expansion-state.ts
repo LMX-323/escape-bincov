@@ -1,5 +1,6 @@
 import * as D from './domain';
 import { archetype, actorArchetype, actorDefinition, initialTactics } from './enemy-archetypes';
+import { RECOVERY_POSTS } from './enemy-recovery';
 import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
@@ -310,9 +311,17 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             const t = e.tactics!;
             exactKeys(t, ['version', 'squad', 'awareness', 'stance', 'warning', 'memory', 'phase', 'phaseLeft', 'lockedAim', 'magazine', 'reserve', 'signalUsed', 'equipment', 'supplies', 'killedBy', ...(t.version === 2 ? ['program'] : [])]);
             if (t.version === 2) {
-                exactKeys(t.program, ['kind', 'armament']);
-                if (t.program.kind !== 'affected' || spec.faction !== 'affected'
-                    || (e.id === 'tide-ritualist' ? !['rifle','polearm'].includes(t.program.armament) : t.program.armament !== 'unarmed')) fail();
+                if(!obj(t.program))fail();
+                if(t.program.kind==='affected') {
+                    exactKeys(t.program, ['kind', 'armament']);
+                    if(spec.faction !== 'affected' || (e.id === 'tide-ritualist' ? !['rifle','polearm'].includes(t.program.armament) : t.program.armament !== 'unarmed')) fail();
+                } else if(t.program.kind==='recovery') {
+                    const p=t.program;exactKeys(p,['kind','leader','crate','phase','leg','since','heardAt']);
+                    if(spec.faction!=='mercenaries'||!identity(p.leader)||!identity(p.crate)
+                        ||!['collect','loading','advance','delivered','withdraw'].includes(p.phase)||!whole(p.leg,0,2)
+                        ||!finite(p.since,0,raid.elapsed)||!finite(p.heardAt,0,raid.elapsed)
+                        ||(['collect','loading'].includes(p.phase)&&p.leg!==0)||(p.phase==='delivered'&&p.leg!==2))fail();
+                } else fail();
             }
             const initial = initialTactics(e.id, t.squad, t.version === 2 ? t.program : undefined);
             if (![1,2].includes(t.version) || !identity(t.squad) || !finite(t.awareness, 0, 1) || !finite(t.warning, 0, 5)
@@ -385,6 +394,27 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             || Math.abs(event.arrivalAt - (event.registeredAt + event.distance / event.speed + 1)) > 1e-6) fail();
     }
     if ([...invIds].some(id => entities.has(id) || events.has(id))) fail();
+    const cargoOwners=new Map<string,string>(),recoveryTeams=new Map<string,EnemyState[]>();
+    for(const e of enemies.values()) {
+        const t=e.tactics,p=t?.version===2?t.program:null;if(p?.kind!=='recovery')continue;
+        const leader=enemies.get(p.leader),lt=leader?.tactics,order=lt?.version===2?lt.program:null;
+        if(order?.kind!=='recovery')return fail();
+        const cargo=containers.find(c=>c.container.id===p.crate),mapId=enemyMaps.get(e.uid);
+        const post=RECOVERY_POSTS.find(post=>post.id===e.id);
+        if(!leader||leader.id!=='recovery-leader'||order?.kind!=='recovery'||order.leader!==leader.uid
+            ||order.crate!==p.crate||lt!.squad!==t!.squad||enemyMaps.get(leader.uid)!==mapId
+            ||world.id!=='coast-buildings-v1'||mapId!=='coast'||!post||e.home.x!==post.home.x||e.home.y!==post.home.y
+            ||!cargo||cargo.mapId!==mapId||cargo.container.kind!=='crate'
+            ||e.id==='recovery-leader'&&e.uid!==p.leader||cargoOwners.has(p.crate)&&cargoOwners.get(p.crate)!==p.leader)fail();
+        cargoOwners.set(p.crate,p.leader);
+        const team=recoveryTeams.get(p.leader)??[];team.push(e);recoveryTeams.set(p.leader,team);
+        if(p.leg>order.leg)fail();
+        if(p.phase!=='withdraw') {
+            const rank=['collect','loading','advance','delivered','withdraw'];
+            if(p.heardAt<p.since||p.since>order.since||p.leg>order.leg||rank.indexOf(p.phase)>rank.indexOf(order.phase))fail();
+        }
+    }
+    for(const team of recoveryTeams.values())if(team.length!==4||new Set(team.map(e=>e.id)).size!==4)fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
         || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(enemyRules(raid) && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)

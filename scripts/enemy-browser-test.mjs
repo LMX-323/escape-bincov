@@ -17,11 +17,12 @@ import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
 import { MARKET_RAIDERS, MARKET_STORES } from '../src/enemy-posts.ts';
 import { FAUNA_SITES, FAUNA_SQUAD } from '../src/enemy-fauna.ts';
 import { AFFECTED_SQUAD } from '../src/enemy-affected.ts';
+import { RECOVERY_SQUAD, RECOVERY_POSTS, RECOVERY_PICKUP } from '../src/enemy-recovery.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
-const report = { scope: 'Eleven distinct roles deploy natively: first three, seed mod 5 = 0 boss, mod 5 = 1 fauna, mod 15 = 2 affected with real rifle/polearm variants. Seven other art roles still use valid saved fixtures.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const report = { scope: 'Fifteen distinct roles deploy natively: first three, seed mod 5 = 0 boss, mod 5 = 1 fauna, mod 15 = 2 affected, mod 5 = 3 recovery with one existing cargo. Three blockade art roles still use valid saved fixtures.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
@@ -300,6 +301,46 @@ try {
             assert.deepEqual(members(restored),members(saved),'actual armament, paid phases and ammunition survive the normal checkpoint');
             report.cases.push({viewport,scenario:`native-affected-${focus}-${seed}`,population:25,actual,screenshot:image});
             console.log(`PASS native-affected ${focus} ${seed} ${viewport.width}: ordinary deployment, paid attack and restore`);await ctx.close();
+        }
+        for(const {id:focus} of RECOVERY_POSTS) {
+            const ctx=await browser.newContext({viewport,offline:true,hasTouch:touch,isMobile:touch});await resumeStalls(ctx);
+            const p=await ctx.newPage();p.setDefaultTimeout(60000);
+            p.on('pageerror',e=>report.errors.push(String(e)));p.on('request',r=>{if(/^https?:/.test(r.url()))report.external.push(r.url());});
+            await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');
+            await p.locator('[data-action="enter"]').click();await p.locator('#seed').fill('48');await p.locator('[data-action="deploy"]').click();await raidReady(p);
+            const initial=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY)),raid=initial.expansion.raid;
+            const team=raid.maps.coast.enemies.filter(e=>e.tactics?.squad===RECOVERY_SQUAD),actor=team.find(e=>e.id===focus),leader=team.find(e=>e.id==='recovery-leader');
+            assert.equal(raid.roster.length,25);assert.equal(team.length,4);assert.ok(actor);const cargoId=leader.tactics.program.crate;
+            let carried=false;
+            if(focus==='recovery-leader') {
+                // Observe live AI from the public side; do not move the team, cargo, health or simulation clock.
+                await drive(p,'placePlayer',{x:6.5*32,y:RECOVERY_PICKUP.y},0,'coast');
+                await p.waitForFunction(([uid,id])=>{const f=window.__bincovSample.host.lastBatch.frame,a=f.actors.find(a=>a.uid===uid),c=f.containers.find(c=>c.id===id);
+                    return !!a&&!!c&&c.x>610&&Math.hypot(c.x-a.x,c.y-a.y)<1;},[leader.uid,cargoId]);carried=true;
+            }
+            const point=await p.evaluate(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return {x:a.x,y:a.y};},actor.uid);
+            const context={definition:BUILDING_WORLD.maps.coast,doors:raid.maps.coast.doors,highTide:raid.highTide};
+            const observer=Array.from({length:16},(_,i)=>({x:point.x+Math.cos(i*Math.PI/8)*32,y:point.y+Math.sin(i*Math.PI/8)*32}))
+                .find(at=>traversable(context,at,'body',10)&&corridor(context,point,at,'sight'));
+            assert.ok(observer);await drive(p,'placePlayer',observer,Math.atan2(point.y-observer.y,point.x-observer.x),'coast');
+            // Keep the observation fixture inside the moving warning boundary until four real seconds elapse.
+            // Only the player position changes; NPCs, cargo, ammo, health and time remain live.
+            await p.waitForFunction(([uid,dx,dy])=>{const h=window.__bincovSample,a=h.host.lastBatch.frame.actors.find(a=>a.uid===uid);
+                if(a?.tactics&&['windup','release','recovery'].includes(a.tactics.phase))return true;
+                if(a)h.driver.placePlayer({x:a.x+dx,y:a.y+dy},Math.atan2(-dy,-dx),'coast');return false;
+            },[actor.uid,observer.x-point.x,observer.y-point.y],{polling:200});
+            const image=`native-recovery-${focus}-${viewport.width}.png`;await p.screenshot({path:resolve(out,image)});report.screenshots.push(image);
+            if(touch)await p.locator('.coast-sample [data-pause]').tap();else await p.keyboard.press('Escape');
+            await p.waitForFunction(()=>window.__bincovSample.host.panel==='pause');
+            const saved=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            await p.reload();await p.locator('[data-action="enter"]').click();await raidReady(p);
+            const restored=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            const members=r=>r.expansion.raid.maps.coast.enemies.filter(e=>e.tactics?.squad===RECOVERY_SQUAD);
+            assert.deepEqual(members(restored),members(saved),'cargo orders, paid phases and ammunition survive the actual pause checkpoint');
+            const cargo=r=>r.expansion.raid.maps.coast.containers.filter(c=>c.id===cargoId);
+            assert.equal(cargo(restored).length,1);assert.deepEqual(cargo(restored),cargo(saved));
+            report.cases.push({viewport,scenario:`native-recovery-${focus}`,population:25,team:4,carried,screenshot:image});
+            console.log(`PASS native-recovery ${focus} ${viewport.width}: ordinary deployment, cargo, attack and restore`);await ctx.close();
         }
     }
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';

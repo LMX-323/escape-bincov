@@ -91,3 +91,7 @@ node --import tsx scripts/enemy-performance.mjs --seed=46 --policy=strafe --focu
 当前HTML SHA-256 1c0ad62d90b53a9d61d584c773dd0fd5349ac5a8251b498086a5a25132339431，7,979,758字节，便携ZIP5,235,408字节。2026-10-24在同RTX3070/CoreUltra5230F/Chrome155独占测量，Node已更新为24.22.1，因此不与旧24.19.0报告作耗时同比；比较入口新增Node/OS/平台/逻辑核数一致性检查。
 
 [标准seed42](../enemy-street/performance-affected-standard.json)与[seed47执仪者64像素走位＋原物资Q治疗](../enemy-street/performance-affected-combat.json)各12Runtime/六浏览器样本全部通过原固定预算。后者为七名新原型成员、四种盐蚀者的真实普通出击，不增加人口/生命/物资或冻结AI。报告记录实际观察点、输入和阶段；正常射击可能先击杀敌人，不代表四者持续同时攻击的极限。原始source.head指测量时已提交的图集父提交，dirty及制品哈希明确标识当前盐蚀者候选；最终提交/CI在原PR核实。
+
+## 回收队最终候选（严格地图/岗位绑定之后）
+
+最终HTML408ae6f97b5e487aa948d0b5cf5fb2db200e88e86eb25ceb77112d5af9e19f42、7,986,545字节，便携ZIP5,237,293字节。相同Node24.22.1/RTX3070/CoreUltra5230F/Chrome155，在无其他测试负载时顺序采样[标准seed42](../enemy-street/performance-recovery-standard.json)与[seed48回收队战斗](../enemy-street/performance-recovery-combat.json)，各12Runtime/六浏览器全部通过原预算，2潮位/3尺寸均满12秒。64像素组用真实走位、原有弹药和Q治疗，不补生命/物资、不冻结AI。它是输入策略下的实际负载，不代表四名NPC始终同时攻击的极限或真手机/GPU完成帧率。之前35146fc8...的两组也通过，但最终结果不借用该制品。

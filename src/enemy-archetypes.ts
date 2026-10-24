@@ -53,22 +53,35 @@ export function enemyDefinition(id: string): Readonly<EnemyDef> {
 
 /** Actor capability v2. Unknown program kinds/armaments fail closed in the save reader.
  * Armament is the actual carried weapon, not an independent presentation choice. */
-export type EnemyProgram = { kind: 'affected'; armament: 'unarmed' | 'polearm' | 'rifle' };
+export type EnemyProgram = { kind: 'affected'; armament: 'unarmed' | 'polearm' | 'rifle' }
+    | { kind:'recovery'; leader:string; crate:string; phase:'collect'|'loading'|'advance'|'delivered'|'withdraw'; leg:0|1|2; since:number; heardAt:number };
 const AFFECTED_DAZED = Object.freeze({ ...ENEMY_ARCHETYPES['salt-dazed'], confirm: 1.2 });
 const AFFECTED_HULK = Object.freeze({ ...ENEMY_ARCHETYPES['salt-hulk'], confirm: 1.6, vision: 180 });
 const RITUALIST_RIFLE: Readonly<Archetype> = Object.freeze({ ...ENEMY_ARCHETYPES['tide-ritualist'], attack: 'projectile', weapon: 'rifle',
     damage: 12, range: 240, magazine: 4, reserve: 8, reload: 2.4, recovery: .8 });
+const RECOVERY_RULES:Readonly<Record<string,Readonly<Archetype>>> = Object.freeze(Object.fromEntries(
+    (['mercenary-scout','mercenary-assault','mercenary-support','recovery-leader'] as const)
+        .map(id=>[id,Object.freeze({...ENEMY_ARCHETYPES[id],territory:600})])));
 /** All controller, projectile, save and view consumers resolve one persisted armament here.
  * Existing v1 actors retain their original definitions and confirmation times. */
 export function actorArchetype(actor: { id: string; tactics?: EnemyTactics }): Readonly<Archetype> | undefined {
     const def = archetype(actor.id), t = actor.tactics;
-    if (t?.version !== 2 || t.program?.kind !== 'affected') return def;
+    if (t?.version !== 2) return def;
+    if (t.program?.kind === 'recovery' && Object.hasOwn(RECOVERY_RULES,actor.id)) return RECOVERY_RULES[actor.id];
+    if (t.program?.kind !== 'affected') return def;
     if (actor.id === 'salt-dazed') return AFFECTED_DAZED;
     if (actor.id === 'salt-hulk') return AFFECTED_HULK;
     return actor.id === 'tide-ritualist' && t.program.armament === 'rifle' ? RITUALIST_RIFLE : def;
 }
 export function actorDefinition(actor: { id: string; tactics?: EnemyTactics }): Readonly<EnemyDef> {
     return actorArchetype(actor) ?? enemyDefinition(actor.id);
+}
+/** The same visible permission boundary feeds perception and presentation. A working convoy warns
+ * around its actual bodies; historical conditional guards keep their original fixed home boundary. */
+export function enemyBoundary(actor:Point&{id:string;home:Point;tactics?:EnemyTactics}):{at:Point;radius:number}|null {
+    if(actorArchetype(actor)?.stance!=='conditional')return null;
+    const t=actor.tactics,mobile=t?.version===2&&t.program.kind==='recovery';
+    return {at:mobile?{x:actor.x,y:actor.y}:{...actor.home},radius:mobile?64:90};
 }
 
 /** Authored raid v4/v5 only. All times are simulation seconds; points are current-map world pixels.
@@ -85,8 +98,9 @@ interface EnemyTacticsCore {
 }
 export type EnemyTactics = EnemyTacticsCore & ({ version: 1 } | { version: 2; program: EnemyProgram });
 export function initialTactics(id: string, squad: string, program?: EnemyProgram): EnemyTactics {
-    if (program && (program.kind !== 'affected' || archetype(id)?.faction !== 'affected'
-        || (id === 'tide-ritualist' ? !['rifle', 'polearm'].includes(program.armament) : program.armament !== 'unarmed')))
+    if (program && (program.kind === 'affected' ? archetype(id)?.faction !== 'affected'
+        || (id === 'tide-ritualist' ? !['rifle', 'polearm'].includes(program.armament) : program.armament !== 'unarmed')
+        : program.kind !== 'recovery' || archetype(id)?.faction !== 'mercenaries'))
         throw new RangeError(`Invalid enemy program: ${id}`);
     const def = actorArchetype({ id, ...(program ? { tactics: { version: 2, program } as EnemyTactics } : {}) });
     if (!def) throw new RangeError(`Unknown archetype: ${id}`);

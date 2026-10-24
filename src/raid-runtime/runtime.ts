@@ -4,6 +4,7 @@ import { getLegacyEnemyProfile } from '../enemy-profile';
 import { actorArchetype, actorDefinition, enemyDefinition } from '../enemy-archetypes';
 import { advanceTacticalEnemy, type TacticalEffects } from './tactical-enemy';
 import { advanceLegacyEnemy, type LegacyEnemyEffects } from './enemy-ai';
+import { syncRecoveryCargo } from '../enemy-recovery';
 import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
@@ -1011,6 +1012,9 @@ export class CoastRaidRuntime implements RaidRuntime {
     updateEnemy(e: Enemy, dt: number) {
         if (enemyRules(this.layered?.raid) && e.tactics) advanceTacticalEnemy(this, this.tacticalEffects, e, dt);
         else advanceLegacyEnemy(this, this.enemyEffects, e, dt);
+        if(e.tactics?.version===2&&e.tactics.program.kind==='recovery') {
+            const live=this.enemies.find(a=>a.uid===e.uid);if(live)syncRecoveryCargo(live,this.containers);
+        }
     }
     private layerMutation(action: (state: ExpansionState) => boolean | void | 'unreachable' | 'occupied', suppress = false, name = 'world', events: ViewEventBody[] = []): boolean {
         const mark = this.queue.length, from = this.worldKey().mapId;
@@ -1457,7 +1461,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         if (target.kind === 'talk') {
             const enemy = this.enemies.find(e => e.uid === target.id)!;
+            const t=enemy.tactics!,program=t.version===2?t.program:null;
             const text = enemy.tactics!.stance === 'hostile' ? '正在交火，请远离现场。' :
+                program?.kind==='recovery' ? program.phase==='delivered' ? '回收完成，请从公共通道绕行。'
+                    : program.phase==='withdraw' ? '正在撤回，请从公共通道绕行。'
+                    : '正在回收物资，请从外围公共通道绕行。进入黄色边界后请在四秒警告结束前退出。' :
                 '黄色边界内是限制区，请从外围公共通道绕行。可以在边界外询问；进入后请在四秒警告结束前退出。';
             // Information only: asking never buys immunity, clears a warning or resets combat on refresh.
             this.say(`${enemyDefinition(enemy.id).name}：${text}`, 9); return true;

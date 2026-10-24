@@ -14,7 +14,7 @@
 
 本批10项能力回归、734完整单测、62CI守卫、package通过。三尺寸普通UI新增15例，含两种实际武器，全部等待真实攻击、暂停/刷新并严格核对完整四人组；共132案例/124截图、零错误/请求。正常save-browser/UI与portable通过。两个独占性能组（各12Runtime/六浏览器）通过原预算，见[性能记录](enemy-performance.md)。
 
-三尺寸与完整十分钟属于角度归一化前候选1c0ad62d...：[自然输入记录](../enemy-street/natural-affected-pre-angle.json)保留原时间、次数与制品。后续复查修复重躯长时间转身累计角度，新增4,000次绕行和严格保存回归；最终734单测、package/portable重新通过。最终HTML7,979,796字节，SHA-256 94d0d453601ec5800c85c08ebf074486504ed929ebb41e14d66b63837ebb4475，便携ZIP5,235,421字节；该版本另启完整自然输入，准确head完整CI推送后核对，不借前候选结果冒领。CPU性能签收边界、真机/真人平衡和全地区仍归EN-21/19。
+三尺寸与完整十分钟属于角度归一化前候选1c0ad62d...：[自然输入记录](../enemy-street/natural-affected-pre-angle.json)保留原时间、次数与制品。后续复查修复重躯长时间转身累计角度，新增4,000次绕行和严格保存回归；最终734单测、package/portable重新通过。最终HTML7,979,796字节，SHA-256 94d0d453601ec5800c85c08ebf074486504ed929ebb41e14d66b63837ebb4475，便携ZIP5,235,421字节；该版本[完整自然输入](../enemy-street/natural-affected-final.json)于02:52:04.943～03:02:19.804 UTC通过，26次击杀、两次撤离、32次原生拖放，零错误/外部请求；准确head `71cf986` 的[完整CI 40056388894](https://github.com/xuys2025/escape-bincov/actions/runs/40056388894)全部通过。CPU性能签收边界、真机/真人平衡和全地区仍归EN-21/19。
 
 ![实际持枪执仪者，1280×720](../enemy-street/native-affected-tide-ritualist-47-1280.png)
 ![实际长柄执仪者，1920×1080](../enemy-street/native-affected-tide-ritualist-62-1920.png)

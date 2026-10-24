@@ -1,6 +1,6 @@
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
-import { actorArchetype, actorDefinition } from '../enemy-archetypes';
+import { actorArchetype, actorDefinition, enemyBoundary } from '../enemy-archetypes';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
@@ -136,7 +136,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
                     : enemy.tactics.phase === 'recovery' ? spec.recovery : enemy.tactics.phase === 'release' && spec.attack === 'pounce' ? .3 : 0,
                 range: spec.range, aim: enemy.tactics.lockedAim,
                 warningLeft: Math.max(0, (spec.stance === 'conditional' ? 4 : 1.5) - enemy.tactics.warning),
-                boundary: spec.stance === 'conditional' ? { at: { ...enemy.home }, radius: 90 } : null } } : {}),
+                boundary: enemyBoundary(enemy) } } : {}),
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
                 reloading: enemy?.tactics?.phase === 'reload' ? { left: enemy.tactics.phaseLeft, total: spec!.reload } : player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.reloadTime } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },

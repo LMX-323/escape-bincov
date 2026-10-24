@@ -12,6 +12,7 @@ import { resolveLayerShot } from '../src/layer-transition';
 import { isPristine, startOver } from '../src/fresh-start';
 import type { CritSnapshot, PerkId } from '../src/perks';
 import { plainCrit } from './fixtures/layered';
+import { actorArchetype } from '../src/enemy-archetypes';
 
 // Save format of the perk work (#77, docs/tasks/critical-perk-contract.md sections 1, 2 and 6): session v5 with
 // expansion v3 and raid v3, the station-boundary upgrade, and the CP-08/CP-22/CP-23 fixtures.
@@ -51,7 +52,8 @@ function lowDraw() { let s = 1; while (D.seededRandom(s)() >= .02) s++; return s
 function drawIn(lo: number, hi: number) { let s = 1; while (!(D.seededRandom(s)() >= lo && D.seededRandom(s)() < hi)) s++; return s; }
 /** A player round fired at point blank into a live enemy of the current layer, with its shot snapshot in a v3 raid; never lethal. */
 function fire(state: ExpansionState, crit?: CritSnapshot) {
-    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20)!;
+    // This probe isolates crit migration: authored encounters may put an armoured role first.
+    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20 && !actorArchetype(e)?.armor)!;
     const bullet: BulletState = { uid: 'probe', x: enemy.x, y: enemy.y, rotation: 0, vx: 900, vy: 0, left: 40, damage: 10, enemy: false, ...(crit ? { crit } : {}) };
     const hp = enemy.hp, rng = raid.rng;
     let critical: boolean | null = null;

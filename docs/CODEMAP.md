@@ -101,11 +101,13 @@
 
 新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目及三种动物在街区正式投放。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
+方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者与四人回收队在街区正式投放。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
 [enemy-posts.ts](../src/enemy-posts.ts) 拥有市场据点的固定岗位、短巡查与备用位置，target/path/timer/stance 保存在既有敌人字段；其近身护卫不跨层追击。布置、经济守恒和绕行证据见[据点记录](tasks/enemy-market.md)。
 
 [enemy-fauna.ts](../src/enemy-fauna.ts) 在新街区一次初始化候选中，从四份动物携带预算分配三处地面食源；字段与UID仍走原严格格式。可见同伴接近、返巢、食品守恒与真实射程/墙挡及恢复见[动物样板](tasks/enemy-fauna.md)。
+
+[enemy-recovery.ts](../src/enemy-recovery.ts) 在同一部署候选中分配四个岗位及一只既有运输箱；[recovery-objective.ts](../src/raid-runtime/recovery-objective.ts) 推进实际回收、装箱、分段搬运与撤回。命令只携带静态阶段，最后接收时间按同队通信范围保存；`syncRecoveryCargo` 在 Runtime 更新后读取当前实体移动唯一容器。角色与货物的严格引用、每阶段恢复和事务失败反例见[回收队样板](tasks/enemy-recovery.md)及[测试](../tests/enemy-recovery.test.ts)。
 
 **验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 

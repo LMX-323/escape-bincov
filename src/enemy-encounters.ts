@@ -5,6 +5,7 @@ import { WORLD } from './world';
 import { MARKET_POSTS, MARKET_RAIDERS, MARKET_STORES } from './enemy-posts';
 import { FAUNA_SITES, FAUNA_SQUAD, installFaunaFood } from './enemy-fauna';
 import { AFFECTED_POSTS, AFFECTED_SQUAD } from './enemy-affected';
+import { installRecoveryProgram, RECOVERY_POSTS, RECOVERY_SQUAD } from './enemy-recovery';
 
 /** Authored street encounter, away from every deployment, extraction and stair landing.
  * Replaces three, six on the market seed variant, or seven on the fauna variant before one deployment commit.
@@ -22,6 +23,7 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
     // One in fifteen: leave the fixed seed42 street baseline intact and alternate real armament across matching seeds.
     if (raid.seed % 15 === 2) members.push(...AFFECTED_POSTS.map(post => ({ id:post.id, x:post.home.x/32-.5, y:post.home.y/32-.5, squad:AFFECTED_SQUAD,
         program: { kind:'affected' as const, armament: post.id === 'tide-ritualist' ? Math.floor(raid.seed/5)%2 ? 'rifle' as const : 'polearm' as const : 'unarmed' as const } })));
+    if(raid.seed%5===3)members.push(...RECOVERY_POSTS.map(post=>({id:post.id,x:post.home.x/32-.5,y:post.home.y/32-.5,squad:RECOVERY_SQUAD})));
     const layer = raid.maps.coast, map = world.maps.coast;
     const used = new Set<string>();
     for (const member of members) {
@@ -44,6 +46,7 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
         Object.assign(crate, MARKET_STORES);
     }
     if (fauna) installFaunaFood(raid);
+    if(raid.seed%5===3)installRecoveryProgram(raid);
     raid.version = raid.version === 3 ? 5 : 4;
     raid.roster = Object.values(raid.maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id })));
 }
