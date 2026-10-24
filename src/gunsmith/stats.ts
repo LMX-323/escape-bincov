@@ -1,7 +1,7 @@
 /**
  * Gunsmith effective stats (#28 M0-04): what a gun type plus a build does in combat. Pure rules over catalog.ts and
- * compat.ts; nothing in the game reads them until M1-05. Decisions and open questions: docs/gunsmith/CONTRACTS.md,
- * section 有效属性.
+ * compat.ts; nothing in the game reads them until M1-05. Decisions and open questions are in the M0-04 section of
+ * docs/gunsmith/CONTRACTS.md.
  *
  * The order is fixed (PLAN section 6):
  *   1. factory values: the gun type's catalog WeaponDef and handling;
