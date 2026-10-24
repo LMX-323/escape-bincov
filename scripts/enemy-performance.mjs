@@ -190,6 +190,7 @@ try {
     assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
     assert.equal(old.focus ?? 'raider-gunner',focus);assert.equal(old.radius ?? 240,radius,'identical observation geometry for comparison');
     assert.equal(old.heal??false,heal,'identical carried-supply input for comparison');
+    for (const field of ['node','platform','os','logicalCpus']) assert.equal(old.environment[field],report.environment[field],`same ${field} for comparison`);
     assert.equal(old.environment.cpu,report.environment.cpu); assert.equal(old.environment.browser,report.environment.browser);
     assert.equal(old.browser.length,report.browser.length); assert.equal(old.runtime.length,report.runtime.length);
     report.comparison = { baselineArtifact: old.artifact.sha256, baselineHead: old.source.head, p95: [] };

@@ -16,11 +16,12 @@ import { damageLayerEnemy } from '../src/layer-transition.ts';
 import { ENEMY_CATALOG } from './enemy-catalog-data.ts';
 import { MARKET_RAIDERS, MARKET_STORES } from '../src/enemy-posts.ts';
 import { FAUNA_SITES, FAUNA_SQUAD } from '../src/enemy-fauna.ts';
+import { AFFECTED_SQUAD } from '../src/enemy-affected.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
-const report = { scope: 'First three roles deploy natively; seed mod 5 = 0 adds the boss compound, mod 5 = 1 the four-animal ecology. Eleven other art roles use valid saved fixtures until authored encounters are ready.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const report = { scope: 'Eleven distinct roles deploy natively: first three, seed mod 5 = 0 boss, mod 5 = 1 fauna, mod 15 = 2 affected with real rifle/polearm variants. Seven other art roles still use valid saved fixtures.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
@@ -269,6 +270,36 @@ try {
             if(collected)assert.equal(restored.expansion.raid.maps.coast.loot.some(l=>l.uid===source.uid),false,'collected nest food never respawns on refresh');
             report.cases.push({viewport,scenario:`native-fauna-${focus}`,population:25,animals:4,collected,screenshot:image});
             console.log(`PASS native-fauna ${focus} ${viewport.width}: ordinary deployment, attack, food and restore`);await ecologyContext.close();
+        }
+        for(const [seed,focus] of [[47,'salt-dazed'],[47,'tide-chaser'],[47,'tide-ritualist'],[62,'tide-ritualist'],[47,'salt-hulk']]) {
+            const ctx=await browser.newContext({viewport,offline:true,hasTouch:touch,isMobile:touch});await resumeStalls(ctx);
+            const p=await ctx.newPage();p.setDefaultTimeout(60000);
+            p.on('pageerror',e=>report.errors.push(String(e)));p.on('request',r=>{if(/^https?:/.test(r.url()))report.external.push(r.url());});
+            await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');
+            await p.locator('[data-action="enter"]').click();await p.locator('#seed').fill(String(seed));await p.locator('[data-action="deploy"]').click();await raidReady(p);
+            const initial=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY)),raid=initial.expansion.raid;
+            const team=raid.maps.coast.enemies.filter(e=>e.tactics?.squad===AFFECTED_SQUAD),actor=team.find(e=>e.id===focus);
+            assert.equal(raid.roster.length,25);assert.equal(team.length,4);assert.equal(actor?.tactics?.version,2);
+            const point=await p.evaluate(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return {x:a.x,y:a.y};},actor.uid);
+            const context={definition:BUILDING_WORLD.maps.coast,doors:raid.maps.coast.doors,highTide:raid.highTide};
+            const radius=focus==='salt-dazed'?28:focus==='tide-chaser'?80:focus==='salt-hulk'?48:seed===47?64:42;
+            const observer=Array.from({length:16},(_,i)=>({x:point.x+Math.cos(i*Math.PI/8)*radius,y:point.y+Math.sin(i*Math.PI/8)*radius}))
+                .filter(at=>traversable(context,at,'body',10)&&corridor(context,point,at,'sight')&&raid.maps.coast.enemies.every(e=>Math.hypot(at.x-e.x,at.y-e.y)>=24))
+                .sort((a,b)=>Math.min(...team.filter(e=>e!==actor).map(e=>Math.hypot(b.x-e.x,b.y-e.y)))-Math.min(...team.filter(e=>e!==actor).map(e=>Math.hypot(a.x-e.x,a.y-e.y))))[0];
+            assert.ok(observer);await drive(p,'placePlayer',observer,Math.atan2(point.y-observer.y,point.x-observer.x),'coast');
+            await p.waitForFunction(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return a?.tactics&&['windup','release','recovery'].includes(a.tactics.phase);},actor.uid);
+            const actual=await p.evaluate(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return {weapon:a.weapon,range:a.tactics.range};},actor.uid);
+            if(focus==='tide-ritualist')assert.deepEqual(actual,{weapon:seed===47?'rifle':'club',range:seed===47?240:64});
+            const image=`native-affected-${focus}-${seed}-${viewport.width}.png`;await p.screenshot({path:resolve(out,image)});report.screenshots.push(image);
+            if(touch)await p.locator('.coast-sample [data-pause]').tap();else await p.keyboard.press('Escape');
+            await p.waitForFunction(()=>window.__bincovSample.host.panel==='pause');
+            const saved=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            await p.reload();await p.locator('[data-action="enter"]').click();await raidReady(p);
+            const restored=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            const members=r=>r.expansion.raid.maps.coast.enemies.filter(e=>e.tactics?.squad===AFFECTED_SQUAD);
+            assert.deepEqual(members(restored),members(saved),'actual armament, paid phases and ammunition survive the normal checkpoint');
+            report.cases.push({viewport,scenario:`native-affected-${focus}-${seed}`,population:25,actual,screenshot:image});
+            console.log(`PASS native-affected ${focus} ${seed} ${viewport.width}: ordinary deployment, paid attack and restore`);await ctx.close();
         }
     }
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';

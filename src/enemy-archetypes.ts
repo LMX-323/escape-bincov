@@ -51,11 +51,31 @@ export function enemyDefinition(id: string): Readonly<EnemyDef> {
     return def;
 }
 
-/** Raid v4 only. All times are simulation seconds; points are current-map world pixels.
+/** Actor capability v2. Unknown program kinds/armaments fail closed in the save reader.
+ * Armament is the actual carried weapon, not an independent presentation choice. */
+export type EnemyProgram = { kind: 'affected'; armament: 'unarmed' | 'polearm' | 'rifle' };
+const AFFECTED_DAZED = Object.freeze({ ...ENEMY_ARCHETYPES['salt-dazed'], confirm: 1.2 });
+const AFFECTED_HULK = Object.freeze({ ...ENEMY_ARCHETYPES['salt-hulk'], confirm: 1.6, vision: 180 });
+const RITUALIST_RIFLE: Readonly<Archetype> = Object.freeze({ ...ENEMY_ARCHETYPES['tide-ritualist'], attack: 'projectile', weapon: 'rifle',
+    damage: 12, range: 240, magazine: 4, reserve: 8, reload: 2.4, recovery: .8 });
+/** All controller, projectile, save and view consumers resolve one persisted armament here.
+ * Existing v1 actors retain their original definitions and confirmation times. */
+export function actorArchetype(actor: { id: string; tactics?: EnemyTactics }): Readonly<Archetype> | undefined {
+    const def = archetype(actor.id), t = actor.tactics;
+    if (t?.version !== 2 || t.program?.kind !== 'affected') return def;
+    if (actor.id === 'salt-dazed') return AFFECTED_DAZED;
+    if (actor.id === 'salt-hulk') return AFFECTED_HULK;
+    return actor.id === 'tide-ritualist' && t.program.armament === 'rifle' ? RITUALIST_RIFLE : def;
+}
+export function actorDefinition(actor: { id: string; tactics?: EnemyTactics }): Readonly<EnemyDef> {
+    return actorArchetype(actor) ?? enemyDefinition(actor.id);
+}
+
+/** Authored raid v4/v5 only. All times are simulation seconds; points are current-map world pixels.
  * Memory is observed information, never a live target pointer. Phase/locked aim and ammunition survive refresh.
  * signalUsed is a once-per-action latch. Equipment and supplies are the sole source of corpse contents. */
-export interface EnemyTactics {
-    version: 1; squad: string;
+interface EnemyTacticsCore {
+    squad: string;
     awareness: number; stance: 'idle' | 'warning' | 'hostile' | 'retreat'; warning: number;
     memory: { at: Point; time: number; source: 'sight' | 'sound' | 'report' | 'damage'; target: string } | null;
     phase: 'idle' | 'windup' | 'release' | 'recovery' | 'reload'; phaseLeft: number; lockedAim: number;
@@ -63,10 +83,14 @@ export interface EnemyTactics {
     equipment: string | null; supplies: { id: string; qty: number }[];
     killedBy: string | null;
 }
-export function initialTactics(id: string, squad: string): EnemyTactics {
-    const def = archetype(id);
+export type EnemyTactics = EnemyTacticsCore & ({ version: 1 } | { version: 2; program: EnemyProgram });
+export function initialTactics(id: string, squad: string, program?: EnemyProgram): EnemyTactics {
+    if (program && (program.kind !== 'affected' || archetype(id)?.faction !== 'affected'
+        || (id === 'tide-ritualist' ? !['rifle', 'polearm'].includes(program.armament) : program.armament !== 'unarmed')))
+        throw new RangeError(`Invalid enemy program: ${id}`);
+    const def = actorArchetype({ id, ...(program ? { tactics: { version: 2, program } as EnemyTactics } : {}) });
     if (!def) throw new RangeError(`Unknown archetype: ${id}`);
-    return { version: 1, squad, awareness: 0, stance: 'idle', warning: 0, memory: null,
+    return { ...(program ? { version: 2 as const, program: { ...program } } : { version: 1 as const }), squad, awareness: 0, stance: 'idle', warning: 0, memory: null,
         phase: 'idle', phaseLeft: 0, lockedAim: 0, magazine: def.magazine, reserve: def.reserve, signalUsed: false,
         equipment: def.attack === 'projectile' ? def.weapon === 'rifle' ? 'carbine' : def.weapon : null,
         supplies: [{ id: def.faction === 'fauna' ? 'food' : 'bandage', qty: 1 }], killedBy: null };

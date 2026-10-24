@@ -1,6 +1,6 @@
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
-import { archetype, enemyDefinition } from '../enemy-archetypes';
+import { actorArchetype, actorDefinition } from '../enemy-archetypes';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
@@ -125,10 +125,10 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
     const actor = (e: typeof r.player | typeof r.enemies[number], player: boolean): ActorView => {
         const enemy = player ? null : e as typeof r.enemies[number], hp = enemy?.hp ?? r.hp;
         const uid = enemy?.uid ?? 'player', velocity = velocities.get(uid) ?? { x: 0, y: 0 };
-        const spec = enemy ? archetype(enemy.id) : undefined;
+        const spec = enemy ? actorArchetype(enemy) : undefined;
         const containerId = `corpse-${uid}`, profile = spec ? { bodyKind: spec.body, weapon: spec.weapon } : enemy ? getLegacyEnemyProfile(enemy.id) : null;
         return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
-            vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? enemyDefinition(enemy.id).hp : limits.hp, alive: hp > 0,
+            vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? actorDefinition(enemy).hp : limits.hp, alive: hp > 0,
             weapon: profile?.weapon ?? r.weaponLook,
             ...(enemy?.tactics && spec ? { tactics: { archetype: enemy.id, name: spec.name, phase: enemy.tactics.phase,
                 stance: enemy.tactics.stance, awareness: enemy.tactics.awareness, left: enemy.tactics.phaseLeft,

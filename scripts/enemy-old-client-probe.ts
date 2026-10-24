@@ -14,7 +14,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = join(root, 'test-results', 'enemy-old-client-probe');
 const versions = ['35b3a38223a7bb0020db25e9b2d0bb5476caa993', '76adbd627f582d063cc6f80a4551e8b8cbe2dddd',
-    'dc14ad5c38008d36392ad2cf02a73a2badc51d87', '8b6192d9987b6e65dc458095f690cd6e017e7d23'];
+    'dc14ad5c38008d36392ad2cf02a73a2badc51d87', '8b6192d9987b6e65dc458095f690cd6e017e7d23',
+    '174341b02c6c3efe32fbd7f0151473b97ec42812'];
 const NOW = 1800000000000;
 const SESSION_ERROR = '无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。';
 const EXPANSION_ERROR = '建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。';
@@ -44,7 +45,8 @@ function rejects(fn: () => unknown, message: string) {
 
 for (const revision of versions) {
     const recent = versions.indexOf(revision) >= 2;
-    const supportedSessions = recent ? [2, 3, 4, revision.startsWith('dc14ad5') ? 6 : 5] : [2, 3, 4];
+    const supportedSessions = revision.startsWith('174341b') ? [2,3,4,5,6,7]
+        : recent ? [2, 3, 4, revision.startsWith('dc14ad5') ? 6 : 5] : [2, 3, 4];
     assert.equal(git('rev-parse', revision), revision);
     const client = join(evidence, revision.slice(0, 7)), sourceHashes: Record<string, string> = {};
     // Extract only explicit tracked source files and one historical fixture; no

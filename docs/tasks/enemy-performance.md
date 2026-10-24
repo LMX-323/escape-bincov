@@ -85,3 +85,9 @@ node --import tsx scripts/enemy-performance.mjs --seed=46 --policy=strafe --focu
 ### 包体恢复（无损图集）
 
 原始RGBA逐帧核对后生成19图集，HTML7,977,494字节、便携ZIP5,234,907字节，原8MiB/5MiB门槛恢复通过。浏览器透明边缘舍入边界与首败明确记录在[素材记录](enemy-street-art.md)。此前8,600,598/5,655,203字节的未通过结果保留；本节只核销包体，不冒领新CPU/GPU或十分钟结果。
+
+## 盐蚀者能力与主线整合后的绝对预算
+
+当前HTML SHA-256 1c0ad62d90b53a9d61d584c773dd0fd5349ac5a8251b498086a5a25132339431，7,979,758字节，便携ZIP5,235,408字节。2026-10-24在同RTX3070/CoreUltra5230F/Chrome155独占测量，Node已更新为24.22.1，因此不与旧24.19.0报告作耗时同比；比较入口新增Node/OS/平台/逻辑核数一致性检查。
+
+[标准seed42](../enemy-street/performance-affected-standard.json)与[seed47执仪者64像素走位＋原物资Q治疗](../enemy-street/performance-affected-combat.json)各12Runtime/六浏览器样本全部通过原固定预算。后者为七名新原型成员、四种盐蚀者的真实普通出击，不增加人口/生命/物资或冻结AI。报告记录实际观察点、输入和阶段；正常射击可能先击杀敌人，不代表四者持续同时攻击的极限。原始source.head指测量时已提交的图集父提交，dirty及制品哈希明确标识当前盐蚀者候选；最终提交/CI在原PR核实。

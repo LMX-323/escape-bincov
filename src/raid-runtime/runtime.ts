@@ -1,7 +1,7 @@
 /** Headless coastal raid. Rules transplanted from RaidScene at f144147; no renderer/DOM imports. */
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
-import { archetype, enemyDefinition } from '../enemy-archetypes';
+import { actorArchetype, actorDefinition, enemyDefinition } from '../enemy-archetypes';
 import { advanceTacticalEnemy, type TacticalEffects } from './tactical-enemy';
 import { advanceLegacyEnemy, type LegacyEnemyEffects } from './enemy-ai';
 import { SURVIVAL as B } from '../balance';
@@ -139,14 +139,14 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (distance(this.player, enemy) < 360 && this.sight(this.player, enemy)) this.say(`${enemyDefinition(enemy.id).name}：${message}`, 3);
         },
         strike: (enemy, targetId) => {
-            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: enemyDefinition(enemy.id).range, hit: targetId });
-            if (targetId === 'player') this.hurt(enemyDefinition(enemy.id).damage, enemy, enemy.uid);
+            this.emit({ type: 'melee', attacker: enemy.uid, angle: enemy.rotation, range: actorDefinition(enemy).range, hit: targetId });
+            if (targetId === 'player') this.hurt(actorDefinition(enemy).damage, enemy, enemy.uid);
             else {
                 const state = this.snapshotExpansion(), raid = state.raid!, map = raid.currentMap;
                 const target = raid.maps[map].enemies.find(e => e.uid === targetId);
                 if (target) {
                     const hp = target.hp;
-                    damageLayerEnemy(state, map, target, enemyDefinition(enemy.id).damage, false, { owner: enemy.uid, at: { x: enemy.x, y: enemy.y } });
+                    damageLayerEnemy(state, map, target, actorDefinition(enemy).damage, false, { owner: enemy.uid, at: { x: enemy.x, y: enemy.y } });
                     this.restoreExpansion(state);
                     if (target.hp < hp) {
                         this.emit({ type: 'hurt', cause: 'blow', uid: targetId, at: { x: target.x, y: target.y },
@@ -157,7 +157,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             }
         },
         fire: (enemy, angle) => {
-            const def = archetype(enemy.id)!, speed = def.attack === 'spit' ? 180 : 365;
+            const def = actorArchetype(enemy)!, speed = def.attack === 'spit' ? 180 : 365;
             // Start at the body: the normal segment collision cannot shoot through a wall beside a muzzle.
             const bullet: BulletState = { uid: this.allocateEntityUid(), x: enemy.x, y: enemy.y, rotation: angle,
                 vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, left: def.range, damage: def.damage, enemy: true, owner: enemy.uid };
@@ -1395,7 +1395,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             ...this.loot.map(l => ({ id: l.uid, kind: 'ground' as const, at: l, label: `拾取 · ${D.ITEMS[l.id].name} × ${l.qty}` })),
             ...this.containers.map(c => ({ id: c.id, kind: 'container' as const, at: c, label: `搜刮 · ${c.name}${c.inventory.items.length ? '' : ' · 已搜空'}` })),
             ...this.mapData.notes.map(n => ({ id: n.title, kind: 'note' as const, at: n, label: `阅读 · ${n.title}` })),
-            ...this.enemies.filter(e => e.hp > 0 && e.tactics && archetype(e.id)?.stance === 'conditional')
+            ...this.enemies.filter(e => e.hp > 0 && e.tactics && actorArchetype(e)?.stance === 'conditional')
                 .map(e => ({ id: e.uid, kind: 'talk' as const, at: e, label: `询问 · ${enemyDefinition(e.id).name}` })),
         ];
         for (const door of this.space.definition.doors) {

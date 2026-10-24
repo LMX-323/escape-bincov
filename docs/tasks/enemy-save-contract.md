@@ -30,7 +30,7 @@
 | --- | --- |
 | `EnemyState.uid/id/hp/x/y/rotation/home/target/path` | 行动名册与所属地图持有；生命为原型范围内数值，坐标为当前地图像素、角度为弧度；全部持久。旧四类保持旧定义 |
 | `EnemyState.state/timer/cooldown/alert/repath` | Runtime 的对应敌人控制器持有；状态为封闭枚举，计时为行动秒；全部持久。旧控制器历史负倒计时语义不变 |
-| `tactics.version/squad` | 新遭遇初始化器设置，版本固定 1，编组为本行动字符串引用；持久，恢复不重新分配 |
+| `tactics.version/squad` | 新遭遇初始化器设置，历史能力版本 1；新盐蚀者能力 2 持有严格 program 判别联合，编组为本行动字符串引用；持久，恢复不重新分配 |
 | `tactics.awareness/stance/warning` | 战术控制器持有；察觉在 0..1、立场为 idle/warning/hostile/retreat，警告累计秒数；持久 |
 | `tactics.memory` | 控制器或伤害处理写入的观察值：地图像素、行动秒、sight/sound/report/damage 来源、player 或敌人 UID；持久，未知为 null，不保存实时对象引用 |
 | `tactics.phase/phaseLeft/lockedAim` | 控制器持有；idle/windup/release/recovery/reload，剩余行动秒与锁定弧度；持久。释放前先写 recovery，再调用副作用，恢复不重复付伤害 |
@@ -41,6 +41,12 @@
 | `ViewEvent` 与实际攻击 | Runtime 分配序号与来源，伤害/弹丸/尸体由领域事务处理；视图只消费。#39 的玩家射击和 #75 的受击方向共用既有合同，不在视图结算伤害 |
 
 规则模块不导入 DOM/PixiJS。普通 `beginRun` 在一次候选提交中调用 `installStreetEncounter`；`?test=1` 只暴露测试驱动，不参与普通出击初始化。完整存档边界仍由严格解码器及组合版本回归约束，表格不会放宽校验。
+
+## 盐蚀者能力 v2（2026-10-24）
+
+外层仍为session7/expansion3/raid5。`EnemyTactics`保持严格v1；v2显式增加`program`，当前唯一允许kind是affected，armament只能为unarmed/polearm/rifle，且受原型约束：只有执仪者可有后两种，其余三种必须unarmed。未知kind/版本/字段、错误武器、弹量和跨原型注入整笔拒绝。没有把新字段塞进v1，也不在恢复旧档时补字段或换武器。`actorArchetype/actorDefinition`共同决定攻击类型、射程、弹量、装备与投影；枪械执仪者四发弹匣/八发备弹，单独持久，不影响旧v1长柄规则。
+
+原enemyBackup/perksBackup逐字保留，不覆盖或重新嵌套。新出击的v2能力、原型/武器和名册在同一候选提交；失败保留此前字节和状态，重试不额外分配。五固定历史端（前四端加174341b）对三个新端严格验证过的真实v2存档（枪/长柄/换弹中）连同正反例共110例通过：旧端拒绝整个新活动档，所有失败后写入/公共导入尝试均零写入、原文可导出。[完整探针报告](../enemy-street/program-old-clients.json)保留实际SHA/案例。另将真实v2行动正常结算后交给固定174341b验证：[旧端读取、初始化、继续写入全部通过](../enemy-street/program-settled-old-reader.json)，两个原始备份仍逐字相同。保持未知能力失败关闭，不依靠外层版本大小推断支持。每阶段往返、真实发射/剩余掉落和中途换弹恢复由[能力测试](../../tests/enemy-affected.test.ts)验证。
 
 ## 历史方案与探针记录（下文版本号不是当前格式）
 

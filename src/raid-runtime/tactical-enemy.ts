@@ -1,5 +1,5 @@
 import type { EnemyState } from '../checkpoint';
-import { archetype } from '../enemy-archetypes';
+import { actorArchetype } from '../enemy-archetypes';
 import { canReceiveReport, enemyRelation } from '../enemy-relations';
 import type { Point } from '../world';
 import type { LegacyEnemyWorld } from './enemy-ai';
@@ -18,9 +18,13 @@ export interface TacticalEffects {
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const angle = (a: Point, b: Point) => Math.atan2(b.y - a.y, b.x - a.x);
 const delta = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+const turnToward = (from: number, to: number, limit: number) => {
+    const next = from + Math.max(-limit,Math.min(limit,delta(to,from)));
+    return Math.atan2(Math.sin(next),Math.cos(next));
+};
 
 function observedTarget(world: TacticalWorld, e: EnemyState) {
-    const def = archetype(e.id)!, t = e.tactics!;
+    const def = actorArchetype(e)!, t = e.tactics!;
     const candidates = [{ uid: 'player', point: world.player, relation: def.stance === 'hostile' ? 'hostile' : 'neutral' },
         ...world.enemies.filter(other => other !== e && other.hp > 0 && other.tactics)
             .map(other => ({ uid: other.uid, point: other, relation: enemyRelation(e, other) }))];
@@ -36,7 +40,7 @@ function observedTarget(world: TacticalWorld, e: EnemyState) {
 
 /** A swing hits the first body along its locked direction. Allies block it, as they block bullets. */
 function meleeContact(world: TacticalWorld, e: EnemyState): string | null {
-    const def = archetype(e.id)!, reach = def.attack === 'pounce' ? 36 : def.range;
+    const def = actorArchetype(e)!, reach = def.attack === 'pounce' ? 36 : def.range;
     const bodies = [{ uid: 'player', point: world.player, enemy: null as EnemyState | null },
         ...world.enemies.filter(other => other !== e && other.hp > 0).map(other => ({ uid: other.uid, point: other, enemy: other }))];
     const first = bodies.filter(c => distance(e, c.point) <= reach && Math.abs(delta(angle(e, c.point), e.tactics!.lockedAim)) <= .65
@@ -48,7 +52,7 @@ function meleeContact(world: TacticalWorld, e: EnemyState): string | null {
  * The phase machine consumes at most one release per substep. It keeps its cost and locked direction on restore.
  * All changes live on EnemyState, including limited ammunition, warning and one-use squad reports. */
 export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffects, e: EnemyState, dt: number): void {
-    const def = archetype(e.id)!, t = e.tactics!;
+    const def = actorArchetype(e)!, t = e.tactics!;
     const observed = observedTarget(world, e), sees = !!observed, inside = !!observed?.inside;
     e.cooldown = Math.max(0, e.cooldown - dt); e.repath -= dt; e.timer -= dt;
     t.awareness = Math.max(0, Math.min(1, t.awareness + (sees ? dt / def.confirm : -dt * .5)));
@@ -143,6 +147,11 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         && world.elapsed - t.memory.time < 2 ? t.memory.at : null;
     const attackPoint = observed?.point ?? suppression;
     if (!flooded && t.stance === 'hostile' && attackPoint && distance(e, attackPoint) < def.range && e.cooldown === 0) {
+        if (t.version === 2 && e.id === 'salt-hulk') {
+            // A heavy body turns before paying its windup, never snaps across a target on the far side.
+            e.rotation = turnToward(e.rotation,angle(e,attackPoint),1.1*dt);
+            if (Math.abs(delta(angle(e,attackPoint),e.rotation)) > .4) { e.state='chase'; return; }
+        }
         t.lockedAim = angle(e, attackPoint); e.rotation = t.lockedAim;
         if (def.magazine && t.magazine === 0) {
             if (t.reserve === 0) t.stance = 'retreat';
@@ -201,5 +210,9 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         const door = world.space.definition.doors.find(d => Math.floor(at.x / 32) === d.x && Math.floor(at.y / 32) === d.y);
         if (door && !world.space.doors[door.id]) { effects.openDoor(e, door.id); return; }
     }
-    e.rotation = facing; world.move(e, Math.cos(facing) * speed * dt, Math.sin(facing) * speed * dt, flooded);
+    if (t.version === 2 && e.id === 'salt-hulk') {
+        e.rotation = turnToward(e.rotation,facing,1.1*dt);
+        if (Math.abs(delta(facing,e.rotation)) > .4) return;
+    } else e.rotation = facing;
+    world.move(e, Math.cos(facing) * speed * dt, Math.sin(facing) * speed * dt, flooded);
 }

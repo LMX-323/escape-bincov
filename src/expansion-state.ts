@@ -1,5 +1,5 @@
 import * as D from './domain';
-import { archetype, enemyDefinition, initialTactics } from './enemy-archetypes';
+import { archetype, actorArchetype, actorDefinition, initialTactics } from './enemy-archetypes';
 import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
@@ -298,26 +298,32 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
     const plainPoint = (p: Point, map: SpaceDefinition) => { exactKeys(p, ['x', 'y']); point(p, map); };
     const enemy = (e: EnemyState, map: SpaceDefinition) => {
         if (!obj(e)) return fail();
-        const spec = enemyRules(raid) ? archetype(e.id) : undefined;
+        const spec = enemyRules(raid) ? actorArchetype(e) : undefined;
         exactKeys(e, ['uid', 'id', 'hp', 'x', 'y', 'rotation', 'home', 'target', 'state', 'timer', 'cooldown', 'path', 'repath', 'alert', ...(spec ? ['tactics'] : [])]);
         entity(e.uid); point(e, map); plainPoint(e.home, map); plainPoint(e.target, map);
-        if ((!spec && !hasOwnStringKey(D.ENEMIES, e.id)) || !finite(e.hp, 0, enemyDefinition(e.id).hp) || !finite(e.rotation, -100, 100)
+        if ((!spec && !hasOwnStringKey(D.ENEMIES, e.id)) || !finite(e.hp, 0, actorDefinition(e).hp) || !finite(e.rotation, -100, 100)
             || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state) || !Array.isArray(e.path) || e.path.length > 4000) fail();
         if (e.hp > 0 && !bodyFits(map.id, e)) fail();
         e.path.forEach(p => plainPoint(p, map));
         for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();
         if (spec) {
             const t = e.tactics!;
-            exactKeys(t, ['version', 'squad', 'awareness', 'stance', 'warning', 'memory', 'phase', 'phaseLeft', 'lockedAim', 'magazine', 'reserve', 'signalUsed', 'equipment', 'supplies', 'killedBy']);
-            if (t.version !== 1 || !identity(t.squad) || !finite(t.awareness, 0, 1) || !finite(t.warning, 0, 5)
+            exactKeys(t, ['version', 'squad', 'awareness', 'stance', 'warning', 'memory', 'phase', 'phaseLeft', 'lockedAim', 'magazine', 'reserve', 'signalUsed', 'equipment', 'supplies', 'killedBy', ...(t.version === 2 ? ['program'] : [])]);
+            if (t.version === 2) {
+                exactKeys(t.program, ['kind', 'armament']);
+                if (t.program.kind !== 'affected' || spec.faction !== 'affected'
+                    || (e.id === 'tide-ritualist' ? !['rifle','polearm'].includes(t.program.armament) : t.program.armament !== 'unarmed')) fail();
+            }
+            const initial = initialTactics(e.id, t.squad, t.version === 2 ? t.program : undefined);
+            if (![1,2].includes(t.version) || !identity(t.squad) || !finite(t.awareness, 0, 1) || !finite(t.warning, 0, 5)
                 || !['idle', 'warning', 'hostile', 'retreat'].includes(t.stance)
                 || !['idle', 'windup', 'release', 'recovery', 'reload'].includes(t.phase) || !finite(t.phaseLeft, 0, 10)
                 || !finite(t.lockedAim, -100, 100) || !whole(t.magazine, 0, spec.magazine) || !whole(t.reserve, 0, spec.reserve)
-                || typeof t.signalUsed !== 'boolean' || t.equipment !== initialTactics(e.id, t.squad).equipment
+                || typeof t.signalUsed !== 'boolean' || t.equipment !== initial.equipment
                 || !Array.isArray(t.supplies) || t.supplies.length > 4
                 || (e.hp > 0 ? t.killedBy !== null : t.killedBy !== 'player' && !raid.roster.some(r => r.uid === t.killedBy && r.uid !== e.uid))) fail();
             goods(t.supplies);
-            const carried = initialTactics(e.id, t.squad).supplies;
+            const carried = initial.supplies;
             if (new Set(t.supplies.map(s => s.id)).size !== t.supplies.length
                 || t.supplies.some(s => !carried.some(c => c.id === s.id && s.qty <= c.qty))) fail();
             const phaseLimit = t.phase === 'windup' ? spec.windup : t.phase === 'reload' ? spec.reload : spec.recovery;
