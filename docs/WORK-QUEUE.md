@@ -1,6 +1,6 @@
 # 当前任务入口
 
-最近核对：2026-10-24，main `edb02f2`（另已合入 #90、#92–#94）。本轮补核 #91 县域选图的 Opus 视觉深化入口；下表其他条目的合并状态、head 与检查结果以对应 GitHub 页面实时信息为准，旧快照不作为当前指令。
+最近核对：2026-10-24，main `1af0fec`（另已合入 #90、#92–#94、#97）。本轮补核 #91 县域选图的 Opus 视觉深化入口；下表其他条目的合并状态、head 与检查结果以对应 GitHub 页面实时信息为准，旧快照不作为当前指令。
 
 | 目标 | 承接入口 | 接手提示 |
 | --- | --- | --- |
@@ -14,7 +14,7 @@
 | CI 后续 | [#61](https://github.com/xuys2025/escape-bincov/issues/61) | 八组均衡 #62、主机包缓存与 lavapipe #74（`c6ad042`）均已合入，说明见 [CI 文档](CI.md#浏览器-job-的主机环境字体chromium-与渲染器)。后续按新耗时重新分组、评估手动套件是否进 CI，继续由 #61 承接 |
 | 2.5D 收尾后的剩余 | [收尾说明](2-5d-closeout/README.md) | #64、Runtime 缺口 #65 和现有敌人素材 #66 均已合入；地图美术扩量与新封锁区地图仍待完成 |
 | 射击与改枪 | [PR #39](https://github.com/xuys2025/escape-bincov/pull/39) · [PR #28](https://github.com/xuys2025/escape-bincov/pull/28) · [#80](https://github.com/xuys2025/escape-bincov/issues/80) | #39 的 [S0–S5 与试枪场](SHOOTING-SYSTEM-REWORK.md#阶段)已合入（`2bac4fb`），采用维护者认可的“稳定”参数。#28 承接规划与排期，代码实施进度见 #80；完整改枪尚未进入 main |
-| 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · [PR #88](https://github.com/xuys2025/escape-bincov/pull/88) · `fix/hurt-kick-direction` | 研究已登记，其余实施未排期。P0 第一项：慢帧时序已由 #88 合入（`b38f23d`），命中后的第一帧至少画一次受击闪白和抖动；抖动方向按维护者决定改为顺着子弹被打退，血迹返溅和来弹方向提示不变，已由 [PR #94](https://github.com/xuys2025/escape-bincov/pull/94) 合入（`edb02f2`）。命中当帧不闪白（60 帧/秒晚一帧）及其余 P0–P2 未开工 |
+| 打击感：枪声、受击与击杀反馈 | [#75](https://github.com/xuys2025/escape-bincov/issues/75) · [PR #88](https://github.com/xuys2025/escape-bincov/pull/88) · [PR #94](https://github.com/xuys2025/escape-bincov/pull/94) · `feat/hit-confirm` · [美术草稿 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) | P0 第一项已合入：慢帧时序 #88（`b38f23d`），抖动顺弹道 #94（`edb02f2`）。命中确认经 [PR #97](https://github.com/xuys2025/escape-bincov/pull/97) 合入（`1af0fec`）：闪白和抖动从命中当帧画起；玩家受伤和敌人中弹分成两种声音，同一批同一目标只响一次；暴击有单独的命中标记和声音；击杀确认音跟随击杀标记。敌人受击/恢复姿态的美术需求在草稿 #96，待 GPT 绘制，接入另开 PR，其中 B 组三类依赖 #81。分枪种枪声、枪身回缩和双管按开枪聚合与 #81 正在改的位置重叠，等 #81 合入后再排；其余 P1–P2 未开工 |
 | 暴击与三属性 Perk | [#77](https://github.com/xuys2025/escape-bincov/issues/77) · [实现契约与记录](tasks/critical-perk-contract.md) · 分支 `agent/critical-perk` | 设计 #40 已合入（`b475b1b`）；实现经 [PR #92](https://github.com/xuys2025/escape-bincov/pull/92) 合入（`8b6192d`）：存档 v5/行动 v3、开枪暴击快照、24 项 Perk、屏息、基地选择与 500 重置、院子与旧页签界面和行动 HUD。#77 保持开放，只余 CP-T10 真人平衡与真机 |
 | 地图、主线与人物结局 | [地图 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [县域选图实施记录](tasks/county-map-select.md) · [PR #91](https://github.com/xuys2025/escape-bincov/pull/91) · [市场 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物 #85](https://github.com/xuys2025/escape-bincov/issues/85) | 十二区选图已实现，两处现有入口可出击、十区暂未开发。[Opus 视觉深化](tasks/county-map-select.md#opus-视觉深化2026-10-24)在 #91：固定比例地图、地标标记、选中光照与路线、十二张情报插图、面板就地更新。续作沿用 `feat/county-map-select` / #91；真实新增区域/剧情/结局仍由原专题跟踪，不因界面或概念图完成关闭 #82 |
 | 玩家反馈与历史 AI 遗留 | [#26](https://github.com/xuys2025/escape-bincov/issues/26) · [#32](https://github.com/xuys2025/escape-bincov/issues/32) | 保留原验收边界，调查登记不代表修复。#26 F13（搜刮时按 WASD 离开）在分支 `fix/issue26-wasd-leaves-loot` 实现，承接 PR 见 #26 |
