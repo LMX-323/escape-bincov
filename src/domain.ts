@@ -1,5 +1,5 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
-import { factoryState, gunSize, gunUids, isGunId, validateGun, type GunState } from './gunsmith/instance';
+import { factoryState, gunSale, gunSize, gunUids, isGunId, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
 import { migrateProfile, type ProfileV2 } from './gunsmith/migrate';
 
 export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory';
@@ -136,6 +136,20 @@ const emptyEquipment = (): Equipment => ({ weapon: null, weaponUid: null, gun: n
 export const factoryGun = (id: string): Pick<Item, 'gun'> => isGunId(id) ? { gun: factoryState() } : {};
 /** Every uid an item holds: its own and, for a gun, each installed part's (record-wide unique). For a checked item. */
 export const itemUids = (item: Pick<Item, 'uid' | 'gun'>): string[] => item.gun ? gunUids({ uid: item.uid, parts: item.gun.parts }) : [item.uid];
+/** The gun the slot holds as one instance (null without a gun): what valuation and the effective stats read. */
+export function equippedGun(e: Equipment): GunInstance | null {
+  return isGunId(e.weapon) && e.weaponUid !== null && e.gun ? { uid: e.weaponUid, id: e.weapon, relief: e.relief, ...e.gun } : null;
+}
+/**
+ * What an item is worth to the shop, component by component: the sell price of everything in it that is not relief (a
+ * gun's body at the gun's price and each installed part at its loose price, gunSale; any other item its price times the
+ * quantity), and whether a relief component (the item itself, a relief gun body or a relief part) bars selling it
+ * whole. Such a sale is refused with the reason, never made by stripping or destroying the relief parts.
+ */
+export function itemSale(item: Pick<Item, 'id' | 'qty' | 'relief' | 'gun'>): { value: number; restricted: boolean } {
+  if (item.gun && isGunId(item.id)) return gunSale({ id: item.id, relief: !!item.relief, parts: item.gun.parts });
+  return { value: item.relief ? 0 : ITEMS[item.id].sell * item.qty, restricted: !!item.relief };
+}
 /** Every uid the equipped slot holds: the gun's and its parts', none without a gun. */
 export const equipmentUids = (e: Equipment): string[] => e.weaponUid !== null && e.gun ? gunUids({ uid: e.weaponUid, parts: e.gun.parts }) : [];
 /** A gun state as text with its keys sorted, so two equal states compare equal whatever order their keys were read in. */
@@ -401,12 +415,15 @@ export function checkpointSafe(save: SaveDataV1, safe: Inventory, runId?: string
   if (!save.activeRun || (runId !== undefined && save.activeRun.runId !== runId)) return;
   save.safe = cleanInventory(safe, 2, 2);
 }
-const inventoryValue = (inv: Inventory) => inv.items.reduce((sum, i) => sum + (i.relief ? 0 : ITEMS[i.id].sell * i.qty), 0);
+/** Settlement value: every component that is not relief, a gun's parts included (itemSale). */
+const inventoryValue = (inv: Inventory) => inv.items.reduce((sum, i) => sum + itemSale(i).value, 0);
+/** The equipped gun's settlement value: its body unless relief, plus its parts that are not relief. */
+const equippedValue = (e: Equipment) => { const held = equippedGun(e); return held ? gunSale(held).value : 0; };
 export function settleRun(save: SaveDataV1, loadout: RunLoadout, outcome: Outcome, kills: number): RunSummary | null {
   if (!save.activeRun?.runId || save.activeRun.runId !== loadout.runId) return null;
   const magazine = cleanMagazine(loadout.weapon, loadout.ammo, loadout.ammoRelief);
   const ammoId = isGun(loadout.weapon) ? WEAPONS[loadout.weapon].ammo : null;
-  const carriedValue = inventoryValue(loadout.bag) + (loadout.weapon && !loadout.relief ? ITEMS[loadout.weapon].sell : 0) + (ammoId ? (magazine.ammo - magazine.ammoRelief) * ITEMS[ammoId].sell : 0);
+  const carriedValue = inventoryValue(loadout.bag) + equippedValue(loadout) + (ammoId ? (magazine.ammo - magazine.ammoRelief) * ITEMS[ammoId].sell : 0);
   save.safe = clone(loadout.safe);
   const summary: RunSummary = {
     outcome, kills: integer(kills), keptValue: inventoryValue(loadout.safe) + (outcome === 'extract' ? carriedValue : 0),
@@ -434,7 +451,8 @@ export function recoverInterrupted(save: SaveDataV1): RunSummary | null {
 }
 /**
  * Cash plus what the shop would pay for everything stored in the stash, bag and safe.
- * Relief goods are unsellable, and the copies an unfinished quest still needs are not counted
+ * Relief goods are unsellable, a gun counts with its parts (itemSale) and not at all while a relief part bars
+ * selling it whole, and the copies an unfinished quest still needs are not counted
  * (the same quest needs that Shop.questUses / saleWarnings warn about, read from QUESTS here).
  * The equipped weapon and its magazine are left out: relief only asks this when that weapon is
  * absent or a relief gun with an empty magazine.
@@ -449,6 +467,7 @@ export function liquidValue(save: SaveDataV1): number {
   let value = save.cash;
   for (const inv of [save.stash, save.bag, save.safe]) for (const entry of inv.items) {
     if (entry.relief) continue;
+    if (entry.gun) { const sale = itemSale(entry); if (!sale.restricted) value += sale.value; continue; } // no quest needs a gun
     const kept = Math.min(entry.qty, reserved.get(entry.id) ?? 0);
     if (kept) reserved.set(entry.id, reserved.get(entry.id)! - kept);
     value += ITEMS[entry.id].sell * (entry.qty - kept);
