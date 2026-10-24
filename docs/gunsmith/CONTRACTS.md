@@ -313,10 +313,24 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 
 ### Runtime 怎么接（M1-05）
 
-- `currentWeapon` 改用 `effectiveWeapon`，`grip` 改用 `effectiveHandling`。没有配件时两者和今天逐项相等（测试锁定）：旧三枪等于 `WEAPONS` 和 `handlingOf`，`mb4a1` 除 id 和名称外等于样本 M4A1。
-- 每次调用都会校验配置、新建对象。Runtime 每帧多次读 `grip`，接入时按枪械实例缓存，配置或开关变了再重算。
-- 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定。
-- 枪声半径是 `SURVIVAL.gunNoiseRange × noise`，M2-11 接入敌人听觉。
+**状态：** 2026-10-24 在分支 `wip/gunsmith-m1runtime` 完成，基线 `feat/gunsmith` `e19cf00`。旧三枪的手感、弹量、换弹和重量一位不变。
+
+- 入口是 [domain.ts](../../src/domain.ts) 的 `equippedGun(slot)`：装备栏（profile 的 `equipment` 或行动的 `loadout`）里那把枪的配置，即枪型加配件树；没枪是 `null`。读装备枪数值的地方都从这里走：
+  - `equippedWeapon(slot)`：经 `effectiveWeapon` 的有效 `WeaponDef`；没枪时是匕首那一行。
+  - `equippedWeight(slot)`：枪加配件的重量（`gunWeight`）；没枪是 0。
+  - 装备栏现在还没有实例数据，装备的枪都按原厂配置算。M1-01 给 `Equipment` 加上 `gun` 后，`equippedGun` 只改一行，读 `slot.gun!.parts`（`Pick` 里加上 `gun`）；只拿着武器 id 的调用方（`cleanMagazine`）随即编译不过，提示改为传装备栏。
+- Runtime：
+  - `currentWeapon`、`grip` 读装备枪的有效属性。按配置缓存：以 `equippedGun` 结果的 JSON 为键，配置变了才重算；缓存的对象冻结，所有读者共用。匕首照旧读 `WEAPONS.knife` 和 `handlingOf`；#39 的样本 `m4a1` 照旧读 `SAMPLE_GUNS` 和 `handlingOf`，M2-01 退役。
+  - `reloadTime` 是有效换弹时间，再乘 #92 的换弹 Perk 一次。`shoot` 用有效的 `WeaponDef` 和手感，RPG 身体倍率和控枪 Perk 仍在原处各乘一次。
+  - `startReload`、`loadMagazine` 按有效弹量。domain 的 `reloadMagazine` 改为接收装备栏，部署时的装填（`initialCheckpoint`、`SaveSession.beginRun`）也传装备栏。`cleanMagazine` 的调用方（`migrateSave`、`beginRun`、`settleRun`、装卸时退弹）只有武器 id，按原厂配置的有效弹量夹紧，由 M1-01、M1-03 改为传装备栏。
+  - `carriedWeight` 里枪的重量来自 `gunWeight`。
+  - 画面的 `hud.weapon`（含 `magSize`）、准星锥和 HUD 武器卡读的就是 `currentWeapon` 和 `grip`，不另查表。
+- 试枪场 `arm()` 和测试驱动的 `weapon()`、`magazine()` 按有效弹量装满和校验。
+- 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，以及试枪场装弹。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。
+- 还没接的：
+  - 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定；开着的设备也要进缓存键。
+  - 枪声半径是 `SURVIVAL.gunNoiseRange × noise`，M2-11 接入敌人听觉。
+  - 存档校验的弹匣上限（`profile-codec` 的 `validEquipment`、`expansion-state` 的 `validateExpansion`）仍是 `WEAPONS[weapon].magazine`。M1-01 在 `validateGun` 通过后改用 `equippedWeapon(slot).magazine`。
 
 ### 待维护者定
 

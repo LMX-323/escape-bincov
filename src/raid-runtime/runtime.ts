@@ -14,7 +14,9 @@ import { advanceLayerShots, aimTarget, changeLayer, damageLayerEnemy, type ShotO
 import { critMultiplier, critSources, type CritSnapshot } from '../perks';
 import { advanceBreath, breathChance, clearBreath, idleBreath } from '../breath';
 import { advancePursuits } from '../pursuit';
-import { advanceAim, coneOf, drawAim, driftOf, handlingOf, preciseHeld, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, preciseHeld, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Handling, type Motion } from '../shooting';
+import { effectiveStats } from '../gunsmith/stats';
+import { buildOf, gunWeight } from '../gunsmith/instance';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
@@ -88,6 +90,12 @@ export class CoastRaidRuntime implements RaidRuntime {
     private newbornFlight: Map<string, number> | null = null;
     /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
     private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
+    /**
+     * The loadout gun's effective numbers (gunsmith/stats.ts) and weight, for the build `key` names. The gun in hand is
+     * read several times a frame, so they are worked out once per build (docs/gunsmith/CONTRACTS.md, M1-05) and frozen,
+     * since every reader shares them. Never saved; M2-03 adds the switched-on devices to the key.
+     */
+    private armed: { key: string; weapon: D.WeaponDef; grip: Handling; weight: number } | null = null;
     extractTime = 0;
     warned = false;
     tideChanged = false;
@@ -179,10 +187,29 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     get limits() { return this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit }; }
     get paused() { return this.locked || ['pause', 'help', 'abandon', 'rotate', 'checkpoint-error'].includes(this.overlay); }
-    get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.sample?.def ?? D.WEAPONS[(this.session.loadout ?? this.terminalLoadout).weapon || 'knife']; }
+    /**
+     * The loadout gun's effective numbers (#28 M1-05: its build through D.equippedGun and effectiveStats), recomputed
+     * only when the build changes; null when the loadout has no gun.
+     */
+    private equipped() {
+        const gun = D.equippedGun(this.session.loadout ?? this.terminalLoadout);
+        if (!gun) return null;
+        const key = JSON.stringify(gun);
+        if (this.armed?.key !== key) {
+            const stats = effectiveStats(buildOf(gun));
+            this.armed = { key, weapon: Object.freeze(stats.weapon), grip: Object.freeze(stats.handling), weight: gunWeight(gun) };
+        }
+        return this.armed;
+    }
+    /**
+     * The weapon in hand as it fires: the loadout gun's effective stats, the knife's, or the #39 sample rifle's. The
+     * knife and the sample keep WEAPONS, SAMPLE_GUNS and handlingOf (M2-01 retires the sample).
+     */
+    get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.sample?.def ?? this.equipped()?.weapon ?? D.WEAPONS.knife; }
     /** How the held weapon is drawn: the sample rifle borrows the rifle look. */
     get weaponLook(): WeaponLook { return this.currentWeapon.id === 'm4a1' ? 'rifle' : this.currentWeapon.id as WeaponLook; }
-    get grip() { return handlingOf(this.currentWeapon.id); }
+    /** Handling of the weapon in hand, from the same source as currentWeapon. */
+    get grip(): Handling { const gun = !this.knife && !this.sample && this.equipped(); return gun ? gun.grip : handlingOf(this.currentWeapon.id); }
     get sampleGun() { return this.sample?.def.id ?? null; }
     private worldKey(): WorldKey {
         const r = this.layered?.raid;
@@ -687,7 +714,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     loadMagazine() {
         if (this.sample) { this.mag = this.sample.def.magazine; return; }
-        const loaded = D.reloadMagazine(this.session.loadout!.weapon || 'knife', this.mag, this.magRelief, this.session.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine();
+        const loaded = D.reloadMagazine(this.session.loadout!, this.mag, this.magRelief, this.session.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine();
     }
     /**
      * Hand the player a playtest sample gun (SAMPLE_GUNS) or take it back. The loadout, its weapon and its rounds stay
@@ -707,7 +734,8 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     /** Another weapon comes to hand: the aim starts from the hip again (drawAim) and the breath charge is gone. */
     private draw() { drawAim(this.handling, SWAY); clearBreath(this.breath); }
-    carriedWeight() { const l = this.session.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
+    /** Kg carried: bag, safe, the loadout gun with its parts (gunsmith gunWeight) and loaded rounds, the knife, the charm. */
+    carriedWeight() { const l = this.session.loadout!, gun = this.equipped(); return D.weight(l.bag) + D.weight(l.safe) + (gun?.weight ?? 0) + D.ITEMS.knife.weight + (gun?.weapon.ammo ? D.ITEMS[gun.weapon.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
     carryLimit() { return this.layered ? derivedLimits(this.layered).carry : B.carryLimit; }
     useItem(id: string, inv: D.Inventory = this.session.loadout!.bag, itemUid?: string) {
         const chosen = itemUid ? inv.items.find(i => i.uid === itemUid && i.id === id && i.qty > 0) : null;
@@ -779,7 +807,10 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.walkable(sprite.x, sprite.y + dy, high, 10))
             sprite.y += dy;
     }
-    /** Seconds a reload of the held weapon takes: the reload perks (technique-20-b, 30-b) shorten it in a v3 raid. */
+    /**
+     * Seconds a reload of the held weapon takes: its effective reload time (attachments within their guardrail), which
+     * the reload perks (technique-20-b, 30-b) shorten once more in a v3 raid.
+     */
     get reloadTime() { return this.currentWeapon.reload * perkEffects(this.layered).reload; }
     startReload() {
         const w = this.currentWeapon;
@@ -1215,7 +1246,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.shotNoise = { x: at.x, y: at.y };
         this.noiseRadius = B.gunNoiseRange;
         this.noiseTime = .6;
-        // Random scatter over the cone, around a centre that recoil has pushed toward the shooter's right.
+        // Random scatter over the cone, around a centre that recoil has pushed toward the shooter's right. `w` and `h` are
+        // the gun's effective stats; the RPG body multiplier and the recoil perk scale apply once each, here.
         const body = this.layered ? rpgMultipliers(this.layered).recoil : 1;
         const cone = coneOf(this.handling, w, h, body), centre = this.player.rotation + driftOf(this.handling, h, body);
         const pellets: BulletState[] = [], angles: number[] = [];

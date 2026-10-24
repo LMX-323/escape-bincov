@@ -1,4 +1,6 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
+import { effectiveWeapon } from './gunsmith/stats';
+import { buildOf, gunWeight, isGunId, type GunInstance } from './gunsmith/instance';
 export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory';
 export interface ItemDef {
   id: string; name: string; short: string; w: number; h: number; weight: number;
@@ -115,9 +117,40 @@ const integer = (value: unknown, fallback = 0, max = 1e9): number =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(max, Math.floor(value))) : fallback;
 const isObject = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 const isGun = (id: unknown): id is string => typeof id === 'string' && id !== 'knife' && Object.hasOwn(WEAPONS, id);
-function cleanMagazine(weaponId: unknown, current: unknown, relief: unknown): Magazine {
-  const ammo = isGun(weaponId) ? integer(current, 0, WEAPONS[weaponId].magazine) : 0;
+/**
+ * The build of the gun an equipment slot holds (profile equipment or a raid loadout): its catalog type and installed
+ * part tree, as the gunsmith rules take it; null for no gun. Every reader of the equipped gun's numbers starts here
+ * (#28 M1-05). Until the slot carries its instance, every equipped gun is a factory gun. When M1-01 adds
+ * Equipment.gun, this is the one line to change: `parts: slot.gun!.parts` (with 'gun' in the Pick); the compiler then
+ * points at each caller that has only a weapon id, such as cleanMagazine.
+ */
+export const equippedGun = (slot: Pick<Equipment, 'weapon'>): Pick<GunInstance, 'id' | 'parts'> | null =>
+  isGunId(slot.weapon) ? { id: slot.weapon, parts: [] } : null;
+/**
+ * The equipped gun as it fires: the effective WeaponDef of its build (gunsmith/stats.ts), attachments and their
+ * guardrails included; WEAPONS for no gun (the knife). Fresh objects every call: the Runtime caches its own.
+ */
+export function equippedWeapon(slot: Pick<Equipment, 'weapon'>): WeaponDef {
+  const gun = equippedGun(slot);
+  return gun ? effectiveWeapon(buildOf(gun)) : WEAPONS[slot.weapon || 'knife'];
+}
+/** Kg of the equipped gun, every installed part counted once (gunsmith gunWeight); 0 without a gun. */
+export function equippedWeight(slot: Pick<Equipment, 'weapon'>): number {
+  const gun = equippedGun(slot);
+  return gun ? gunWeight(gun) : 0;
+}
+/** `current` rounds, `relief` of them relief, clamped to a magazine of `capacity`. */
+function fillMagazine(capacity: number, current: unknown, relief: unknown): Magazine {
+  const ammo = integer(current, 0, capacity);
   return { ammo, ammoRelief: integer(relief, 0, ammo) };
+}
+/**
+ * The equipped magazine clamped to the effective capacity of the gun `weaponId` names (none for the knife or no gun).
+ * Its callers (migrateSave, beginRun, settleRun, the equip unloads) hold only the weapon id, so this reads the factory
+ * build until they pass the slot (M1-01, M1-03).
+ */
+function cleanMagazine(weaponId: unknown, current: unknown, relief: unknown): Magazine {
+  return fillMagazine(isGun(weaponId) ? equippedWeapon({ weapon: weaponId }).magazine : 0, current, relief);
 }
 const emptyEquipment = (): Equipment => ({ weapon: null, relief: false, ammo: 0, ammoRelief: 0 });
 
@@ -459,13 +492,13 @@ export function upgradeStash(save: SaveDataV1): boolean {
   return true;
 }
 /**
- * Takes exactly the missing rounds of the gun's own ammunition out of `bag` (edited in place). Relief rounds are
- * loaded first and retain their identity, independently of the gun's origin.
+ * Takes exactly the missing rounds of the equipped gun's own ammunition out of `bag` (edited in place), up to the
+ * effective capacity of the gun in `slot` (equippedWeapon). Relief rounds are loaded first and retain their identity,
+ * independently of the gun's origin.
  */
-export function reloadMagazine(weaponId: string, current: number, currentRelief: number, bag: Inventory): Magazine {
-  const magazine = cleanMagazine(weaponId, current, currentRelief);
-  if (!isGun(weaponId)) return magazine;
-  const weapon = WEAPONS[weaponId];
+export function reloadMagazine(slot: Pick<Equipment, 'weapon'>, current: number, currentRelief: number, bag: Inventory): Magazine {
+  if (!isGun(slot.weapon)) return fillMagazine(0, current, currentRelief);
+  const weapon = equippedWeapon(slot), magazine = fillMagazine(weapon.magazine, current, currentRelief);
   for (const relief of [true, false]) for (const entry of bag.items) {
     if (entry.id !== weapon.ammo || !!entry.relief !== relief) continue;
     const take = Math.min(entry.qty, weapon.magazine - magazine.ammo);

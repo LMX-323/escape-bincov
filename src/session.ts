@@ -270,7 +270,7 @@ export class SaveSession {
         if (buildings) {
             // Deploying is a station boundary: an older expansion upgrades in this same candidate, so the raid is v3.
             upgradeToRpg(expansion!, this.now());
-            Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
+            Object.assign(loadout, D.reloadMagazine(loadout, loadout.ammo, loadout.ammoRelief, loadout.bag));
             if (buildings === 'mall') initializeMallRaid(expansion!, loadout, config, options.mallLayout === 3 ? mallWorldV3() : options.mallLayout === 2 ? mallWorldV2() : undefined);
             else initializeBuildingRaid(expansion!, loadout, config);
         }

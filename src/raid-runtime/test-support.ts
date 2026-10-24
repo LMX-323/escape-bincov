@@ -3,7 +3,7 @@ import { CoastRaidRuntime } from './runtime';
 import { wrapCoastRuntime } from './host';
 import type { SaveSession, SessionState } from '../session';
 import type { Point } from '../world';
-import { ITEMS, WEAPONS, addItem } from '../domain';
+import { ITEMS, addItem, equippedWeapon } from '../domain';
 import { derivedLimits } from '../expansion-state';
 import { checkpointBodyFits } from '../spatial';
 import { isWalkable } from '../world';
@@ -52,14 +52,14 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             if (!(id in doors)) throw new Error('Unknown door.'); doors[id] = open; runtime.restoreExpansion(state);
         },
         weapon(id: 'pistol' | 'carbine' | 'shotgun') {
-            const state = runtime.snapshot(); state.loadout.weapon = id; state.loadout.ammo = WEAPONS[id].magazine; // a full magazine; more fails checkpoint validation
+            const state = runtime.snapshot(); state.loadout.weapon = id; state.loadout.ammo = equippedWeapon(state.loadout).magazine; // a full magazine; more fails checkpoint validation
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
         },
         /** Hand the playtest sample gun (SAMPLE_GUNS in src/shooting.ts) or take it back; the loadout is untouched. */
         sampleGun(id: 'm4a1' | null) { runtime.setSampleGun(id); },
-        /** Rounds in the equipped gun's magazine (0 to its size); relief rounds never exceed what is loaded. */
+        /** Rounds in the equipped gun's magazine (0 to its effective size); relief rounds never exceed what is loaded. */
         magazine(rounds: number) {
-            const state = runtime.snapshot(), w = WEAPONS[state.loadout.weapon || 'knife'];
+            const state = runtime.snapshot(), w = equippedWeapon(state.loadout);
             if (!w.magazine || !Number.isInteger(rounds) || rounds < 0 || rounds > w.magazine) throw new Error(`Invalid magazine fixture: ${rounds}.`);
             state.loadout.ammo = rounds; state.loadout.ammoRelief = Math.min(state.loadout.ammoRelief, rounds); state.reloadLeft = 0; runtime.restore(state);
         },

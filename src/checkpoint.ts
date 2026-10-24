@@ -36,7 +36,7 @@ export interface RaidCheckpoint {
 /** The deployment checkpoint and debit are committed together, before a scene exists. */
 export function initialCheckpoint(config: RunConfig, carried: D.RunLoadout): RaidCheckpoint {
   const loadout = structuredClone(carried);
-  Object.assign(loadout, D.reloadMagazine(loadout.weapon || 'knife', loadout.ammo, loadout.ammoRelief, loadout.bag));
+  Object.assign(loadout, D.reloadMagazine(loadout, loadout.ammo, loadout.ammoRelief, loadout.bag));
   const random = D.seededRandom(config.seed + 771);
   const enemies: EnemyState[] = config.enemies.map((e, i) => ({ ...e, uid: `enemy-${i}`, rotation: 0, hp: D.ENEMIES[e.id].hp,
     home: { x: e.x, y: e.y }, target: { x: e.x, y: e.y }, state: 'patrol', timer: random() * 3,

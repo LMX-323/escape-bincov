@@ -81,17 +81,17 @@ test('equipping swaps safely and returns the gun to storage on unequip', () => {
 test('reload consumes exactly missing rounds and never invents ammunition', () => {
   const bag = createInventory(6, 5);
   addItem(bag, 'ammo9', 10);
-  assert.deepEqual(reloadMagazine('pistol', 3, 0, bag), { ammo: 8, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 3, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.deepEqual(reloadMagazine('pistol', 8, 0, bag), { ammo: 8, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 8, 0, bag), { ammo: 8, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 5);
-  assert.deepEqual(reloadMagazine('pistol', 0, 0, bag), { ammo: 5, ammoRelief: 0 });
-  assert.deepEqual(reloadMagazine('pistol', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 0, 0, bag), { ammo: 5, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
   assert.deepEqual(bag.items, []);
   // Only the gun's own ammunition is taken; the knife has none.
   addItem(bag, 'ammo9', 4);
-  assert.deepEqual(reloadMagazine('shotgun', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
-  assert.deepEqual(reloadMagazine('knife', 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'shotgun' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
+  assert.deepEqual(reloadMagazine({ weapon: 'knife' }, 0, 0, bag), { ammo: 0, ammoRelief: 0 });
   assert.equal(count(bag, 'ammo9'), 4);
 });
 
@@ -304,11 +304,11 @@ test('mixed magazines load relief rounds first without changing ordinary ammo pr
   const bag = createInventory(6, 5);
   addItem(bag, 'ammo9', 10);
   addItem(bag, 'ammo9', 3, true);
-  const result = reloadMagazine('pistol', 2, 1, bag);
+  const result = reloadMagazine({ weapon: 'pistol' }, 2, 1, bag);
   assert.deepEqual(result, { ammo: 8, ammoRelief: 4 });
   assert.equal(count(bag, 'ammo9'), 7);
   assert.equal(bag.items.every(i => !i.relief), true);
-  assert.deepEqual(reloadMagazine('pistol', result.ammo, result.ammoRelief, bag), result);
+  assert.deepEqual(reloadMagazine({ weapon: 'pistol' }, result.ammo, result.ammoRelief, bag), result);
   assert.equal(count(bag, 'ammo9'), 7);
 });
 
