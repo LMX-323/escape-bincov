@@ -1,7 +1,7 @@
 // Cut the hurt and recovery frames out of the #96 pixel-v2 sheets into runtime PNGs under assets/coast/poses, and write
-// their manifest and the importer src/coast-view/pose-assets.ts. Group A only (main's four enemy kinds); group B waits
-// for #81. A sheet is 3 columns (idle, hurt, recovery) by 5 rows (E, SE, S, NE, N) at exactly 8x nearest-neighbour.
-// Every 8x8 block must be one colour and column 0 must equal the runtime idle frame, or nothing is written.
+// their manifest and the importer src/coast-view/pose-assets.ts. A sheet is 3 columns (idle, hurt, recovery) by 5 rows
+// (E, SE, S, NE, N) at exactly 8x nearest-neighbour. Every 8x8 block must be one colour, and column 0 must equal the
+// runtime idle frame once driftMap's one-level canvas drift is restored, or nothing is written.
 // Usage: node --import tsx scripts/export-hurt-poses.ts [--check]
 //   --check writes nothing: it compares the committed frames pixel for pixel (deflate output may differ between Node
 //   versions) and the manifest and importer text with what the sheets give, and exits 1 on any difference.
@@ -9,16 +9,23 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { decodePng, encodePng, type RGBA } from './title-art/png';
 
-/** [kind, logical width, logical height] of each sheet. */
-export const POSE_KINDS = [['scav', 32, 48], ['salt', 32, 48], ['elite', 32, 48], ['creature', 40, 28]] as const;
+/** [art style, logical width, logical height, folder of the style's runtime body frames in assets/coast] of each sheet:
+ *  group A is main's four enemy kinds, group B three of #81's archetypes (src/enemy-archetypes.ts) in their own style. */
+export const POSE_KINDS = [['scav', 32, 48, 'v1'], ['salt', 32, 48, 'v1'], ['elite', 32, 48, 'v1'], ['creature', 40, 28, 'v1'],
+  ['raider-melee', 32, 48, 'enemy-v1'], ['raider-gunner', 32, 48, 'enemy-v1'], ['raider-lookout', 32, 48, 'enemy-v1']] as const;
 /** [pose, sheet column, body frame index]: Sol's idle and walk frames are 0-4. */
 export const POSES = [['hurt', 1, 5], ['recovery', 2, 6]] as const;
 export const DIRS = ['e', 'se', 's', 'ne', 'n'] as const;
 const SCALE = 8, OUT_DIR = 'assets/coast/poses';
 export const MANIFEST = `${OUT_DIR}/manifest.json`, IMPORTER = 'src/coast-view/pose-assets.ts';
 export const sheetPath = (kind: string) => `assets/hit-feel/sources/${kind}-hurt-sheet-pixel-v2.png`;
-export const idlePath = (kind: string, dir: string) => `assets/coast/v1/coast-${kind}-body-${dir}-f0-v1.png`;
+export function idlePath(kind: string, dir: string): string {
+  const folder = POSE_KINDS.find(k => k[0] === kind)?.[3];
+  if (!folder) throw new Error(`${kind} has no pose sheet`);
+  return `assets/coast/${folder}/coast-${kind}-body-${dir}-f0-v1.png`;
+}
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+const colour = (f: RGBA, i: number) => ((f.data[i] << 24) | (f.data[i + 1] << 16) | (f.data[i + 2] << 8) | f.data[i + 3]) >>> 0;
 
 export type PoseAsset = { id: string; file: string; w: number; h: number; anchor: number[]; kind: string; dir: string;
   frameIndex: number; pose: string; sheet: string; sha256: string };
@@ -43,6 +50,40 @@ function cell(sheet: RGBA, row: number, col: number, w: number, h: number, name:
   return { w, h, data };
 }
 
+/**
+ * The sheets went through a canvas, whose premultiplied alpha can move a channel of a semi-transparent pixel by one level.
+ * #81's archetype bodies have such pixels (main's four kinds have none). Maps each drifted colour of the sheet's idle
+ * column to the runtime idle frame's colour at the same pixel. Throws on any other difference (alpha, an opaque pixel,
+ * a step above one level), on a colour standing for two runtime colours, and on a drifted colour that the idle frame
+ * itself uses, since restoring it would change real pixels too.
+ */
+export function driftMap(sheetIdle: RGBA, idle: RGBA, name: string): Map<number, number> {
+  if (sheetIdle.w !== idle.w || sheetIdle.h !== idle.h) throw new Error(`${name}: column 0 is ${sheetIdle.w}x${sheetIdle.h}, the runtime idle frame ${idle.w}x${idle.h}`);
+  const map = new Map<number, number>(), own = new Set<number>();
+  for (let i = 0; i < idle.data.length; i += 4) {
+    if (idle.data[i + 3]) own.add(colour(idle, i));
+    if (sheetIdle.data[i + 3] === 0 && idle.data[i + 3] === 0) continue;
+    const from = colour(sheetIdle, i), to = colour(idle, i), alpha = idle.data[i + 3];
+    if (from === to) continue;
+    if (sheetIdle.data[i + 3] !== alpha || alpha === 255 || [0, 1, 2].some(k => Math.abs(sheetIdle.data[i + k] - idle.data[i + k]) > 1))
+      throw new Error(`${name}: column 0 is not the runtime idle frame at (${i / 4 % idle.w},${Math.floor(i / 4 / idle.w)})`);
+    if ((map.get(from) ?? to) !== to) throw new Error(`${name}: colour ${from.toString(16)} stands for two runtime colours`);
+    map.set(from, to);
+  }
+  for (const from of map.keys()) if (own.has(from)) throw new Error(`${name}: drifted colour ${from.toString(16)} is also an idle colour`);
+  return map;
+}
+
+/** A copy of a frame with each drifted colour of a driftMap restored. */
+export function restoreDrift(f: RGBA, map: ReadonlyMap<number, number>): RGBA {
+  const data = new Uint8Array(f.data);
+  for (let i = 0; i < data.length; i += 4) {
+    const to = map.get(colour(f, i));
+    if (to !== undefined) data.set([to >>> 24, (to >>> 16) & 255, (to >>> 8) & 255, to & 255], i);
+  }
+  return { w: f.w, h: f.h, data };
+}
+
 /** The frames and their manifest entries (hashes still to fill in), and the source sheet hashes, computed in memory. */
 export function cutPoses() {
   const coast = JSON.parse(readFileSync('assets/coast/manifest.json', 'utf8')) as { assets: { file: string; anchor: number[] }[] };
@@ -52,13 +93,14 @@ export function cutPoses() {
     if (sheet.w !== 3 * w * SCALE || sheet.h !== 5 * h * SCALE) throw new Error(`${sheetPath(kind)}: ${sheet.w}x${sheet.h}, want ${3 * w * SCALE}x${5 * h * SCALE}`);
     sources[sheetPath(kind)] = sha(bytes);
     for (const [row, dir] of DIRS.entries()) {
-      if (!samePixels(cell(sheet, row, 0, w, h, kind), decodePng(readFileSync(idlePath(kind, dir))))) throw new Error(`${kind} ${dir}: column 0 is not the runtime idle frame`);
+      const idle = decodePng(readFileSync(idlePath(kind, dir))), drift = driftMap(cell(sheet, row, 0, w, h, kind), idle, `${kind} ${dir}`);
+      if (!samePixels(restoreDrift(cell(sheet, row, 0, w, h, kind), drift), idle)) throw new Error(`${kind} ${dir}: column 0 is not the runtime idle frame`);
       const anchor = coast.assets.find(a => a.file === idlePath(kind, dir))?.anchor;
       if (!anchor) throw new Error(`${idlePath(kind, dir)} is not in assets/coast/manifest.json`);
       for (const [pose, col, frameIndex] of POSES) {
         const id = `coast-${kind}-body-${dir}-f${frameIndex}-v1`;
         entries.push({ asset: { id, file: `${OUT_DIR}/${id}.png`, w, h, anchor, kind, dir: dir.toUpperCase(), frameIndex, pose, sheet: sheetPath(kind), sha256: '' },
-          frame: cell(sheet, row, col, w, h, kind) });
+          frame: restoreDrift(cell(sheet, row, col, w, h, kind), drift) });
       }
     }
   }
@@ -69,7 +111,7 @@ export const manifestText = (sources: Record<string, string>, assets: readonly P
   schema: 1,
   source: 'assets/hit-feel/sources/*-hurt-sheet-pixel-v2.png (#96)',
   generator: 'scripts/export-hurt-poses.ts',
-  note: 'Runtime hurt (frame 5) and recovery (frame 6) bodies cut from the pixel-v2 sheets. Anchors are the idle frames\'.',
+  note: 'Runtime hurt (frame 5) and recovery (frame 6) bodies cut from the pixel-v2 sheets, with the one-level canvas drift on semi-transparent pixels restored to the idle frames\' colours. Anchors are the idle frames\'.',
   sources,
   assets,
 }, null, 2) + '\n';
@@ -78,7 +120,8 @@ export function importerText(assets: readonly { id: string; file: string }[]): s
   const name = (a: { id: string }) => `p${a.id.replace(/^coast-/, '').replace(/-v1$/, '').replaceAll('-', '_')}`;
   return `/**
  * Hurt and recovery body frames (#75; art from #96 pixel-v2): frame indices 5 and 6 beside Sol's idle and walk frames
- * 0-4, named the same way, so Textures.actor and its flash, rim and edge find them by frame. Generated by
+ * 0-4, named the same way (an archetype's under its own style), so Textures.actor and its flash, rim and edge find them
+ * by frame. Generated by
  * scripts/export-hurt-poses.ts from ${MANIFEST}; build.mjs checks every hash.
  */
 ${assets.map(a => `import ${name(a)} from '../../${a.file}';`).join('\n')}

@@ -80,9 +80,6 @@ interface ActorGfx {
   hit: boolean;
   /** Seconds left of a blow's body pose, like flashT: the hurt frame while more than RECOVERY_POSE is left, then recovery. */
   hurtT?: number;
-  /** Direction and frame of the body texture drawn last, so a pose is shown only on the kind's own frames. */
-  drawnDir?: number;
-  drawnFrame?: number;
   /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
   sense: 1 | -1;
   /** Half-cycles of the walk, to put a puff of dust under each sprinting step. */
@@ -556,12 +553,11 @@ export class CoastView {
   }
 
   /**
-   * Whether this actor may show pose frames: the art has them for its kind (group A, assets/coast/poses), and its body is
-   * drawn with that kind's own frames, which last frame's texture tells. A body drawn in another style keeps its own.
+   * Whether this actor may show pose frames: the art has them (assets/coast/poses) in the style its body is drawn with,
+   * its archetype's own or else its kind's. An archetype with its own body but no poses keeps its own frames.
    */
-  private posable(a: ActorView, g: ActorGfx) {
-    return g.drawnDir !== undefined && g.drawnFrame !== undefined && !!this.opts.art?.has(`coast-${a.kind}-body-e-f5-v1`)
-      && g.body.texture === this.tex.actor(a.kind, g.drawnDir, g.drawnFrame);
+  private posable(a: ActorView) {
+    return this.tex.hasBodyFrame(a.kind, 5, a.tactics?.archetype);
   }
 
   /** `blown`: bodies whose blow present() already set before drawing them. */
@@ -708,11 +704,10 @@ export class CoastView {
     if (g.hurtT !== undefined) {
       // Under a microsecond counts as over: 0.15 s is 9 frames at 60 Hz, and the float left after them may not be 0.
       g.hurtT = g.hurtT - dt > 1e-6 ? g.hurtT - dt : 0;
-      if (a.alive && this.posable(a, g)) hurtFrame = hit || g.hurtT > RECOVERY_POSE ? 5 : g.hurtT > 0 ? 6 : 0;
+      if (a.alive && this.posable(a)) hurtFrame = hit || g.hurtT > RECOVERY_POSE ? 5 : g.hurtT > 0 ? 6 : 0;
       if (g.hurtT === 0) g.hurtT = undefined;
     }
     const frame = dying ? 0 : hurtFrame || (speed > 5 ? walkFrame(g.walk, g.sense) : 0);
-    g.drawnDir = g.dir; g.drawnFrame = frame;
     const dead = !a.alive && !dying;
     const kicked = g.kickT > 0 || hit, kx = kicked ? g.kick.x : 0, ky = kicked ? g.kick.y : 0;
     const x = Math.round(a.x + kx), y = Math.round(a.y + ky);
