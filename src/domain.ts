@@ -118,24 +118,28 @@ const integer = (value: unknown, fallback = 0, max = 1e9): number =>
 const isObject = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 const isGun = (id: unknown): id is string => typeof id === 'string' && id !== 'knife' && Object.hasOwn(WEAPONS, id);
 /**
- * The build of the gun an equipment slot holds (profile equipment or a raid loadout): its catalog type and installed
- * part tree, as the gunsmith rules take it; null for no gun. Every reader of the equipped gun's numbers starts here
- * (#28 M1-05). Until the slot carries its instance, every equipped gun is a factory gun. When M1-01 adds
- * Equipment.gun, this is the one line to change: `parts: slot.gun!.parts` (with 'gun' in the Pick); the compiler then
- * points at each caller that has only a weapon id, such as cleanMagazine.
+ * What the equipped-gun readers below take from an equipment slot (profile equipment or a raid loadout): the weapon id,
+ * and the gun instance as soon as M1-01 adds Equipment.gun, which this type then picks up by itself. From then on a
+ * caller holding only a weapon id, such as cleanMagazine, no longer compiles and must pass the slot.
  */
-export const equippedGun = (slot: Pick<Equipment, 'weapon'>): Pick<GunInstance, 'id' | 'parts'> | null =>
+type GunSlot = Pick<Equipment, Extract<keyof Equipment, 'weapon' | 'gun'>>;
+/**
+ * The build of the gun in `slot`: its catalog type and installed part tree, as the gunsmith rules take it; null for no
+ * gun. Every reader of the equipped gun's numbers starts here (#28 M1-05). Until the slot carries its instance, every
+ * equipped gun is a factory gun; reading the instance is then the one line to change, to `parts: slot.gun!.parts`.
+ */
+export const equippedGun = (slot: GunSlot): Pick<GunInstance, 'id' | 'parts'> | null =>
   isGunId(slot.weapon) ? { id: slot.weapon, parts: [] } : null;
 /**
  * The equipped gun as it fires: the effective WeaponDef of its build (gunsmith/stats.ts), attachments and their
  * guardrails included; WEAPONS for no gun (the knife). Fresh objects every call: the Runtime caches its own.
  */
-export function equippedWeapon(slot: Pick<Equipment, 'weapon'>): WeaponDef {
+export function equippedWeapon(slot: GunSlot): WeaponDef {
   const gun = equippedGun(slot);
   return gun ? effectiveWeapon(buildOf(gun)) : WEAPONS[slot.weapon || 'knife'];
 }
 /** Kg of the equipped gun, every installed part counted once (gunsmith gunWeight); 0 without a gun. */
-export function equippedWeight(slot: Pick<Equipment, 'weapon'>): number {
+export function equippedWeight(slot: GunSlot): number {
   const gun = equippedGun(slot);
   return gun ? gunWeight(gun) : 0;
 }
@@ -496,7 +500,7 @@ export function upgradeStash(save: SaveDataV1): boolean {
  * effective capacity of the gun in `slot` (equippedWeapon). Relief rounds are loaded first and retain their identity,
  * independently of the gun's origin.
  */
-export function reloadMagazine(slot: Pick<Equipment, 'weapon'>, current: number, currentRelief: number, bag: Inventory): Magazine {
+export function reloadMagazine(slot: GunSlot, current: number, currentRelief: number, bag: Inventory): Magazine {
   if (!isGun(slot.weapon)) return fillMagazine(0, current, currentRelief);
   const weapon = equippedWeapon(slot), magazine = fillMagazine(weapon.magazine, current, currentRelief);
   for (const relief of [true, false]) for (const entry of bag.items) {

@@ -318,7 +318,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - 入口是 [domain.ts](../../src/domain.ts) 的 `equippedGun(slot)`：装备栏（profile 的 `equipment` 或行动的 `loadout`）里那把枪的配置，即枪型加配件树；没枪是 `null`。读装备枪数值的地方都从这里走：
   - `equippedWeapon(slot)`：经 `effectiveWeapon` 的有效 `WeaponDef`；没枪时是匕首那一行。
   - `equippedWeight(slot)`：枪加配件的重量（`gunWeight`）；没枪是 0。
-  - 装备栏现在还没有实例数据，装备的枪都按原厂配置算。M1-01 给 `Equipment` 加上 `gun` 后，`equippedGun` 只改一行，读 `slot.gun!.parts`（`Pick` 里加上 `gun`）；只拿着武器 id 的调用方（`cleanMagazine`）随即编译不过，提示改为传装备栏。
+  - 装备栏现在还没有实例数据，装备的枪都按原厂配置算。参数类型 `GunSlot` 在 M1-01 给 `Equipment` 加上 `gun` 时自己带上它，`equippedGun` 只改一行，读 `slot.gun!.parts`；只拿着武器 id 的调用方（`cleanMagazine`）随即编译不过，提示改为传装备栏。这一点用临时加上 `gun` 的改动核对过。
 - Runtime：
   - `currentWeapon`、`grip` 读装备枪的有效属性。按配置缓存：以 `equippedGun` 结果的 JSON 为键，配置变了才重算；缓存的对象冻结，所有读者共用。匕首照旧读 `WEAPONS.knife` 和 `handlingOf`；#39 的样本 `m4a1` 照旧读 `SAMPLE_GUNS` 和 `handlingOf`，M2-01 退役。
   - `reloadTime` 是有效换弹时间，再乘 #92 的换弹 Perk 一次。`shoot` 用有效的 `WeaponDef` 和手感，RPG 身体倍率和控枪 Perk 仍在原处各乘一次。
