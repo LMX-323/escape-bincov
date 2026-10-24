@@ -76,6 +76,7 @@ EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人�
 
 2026-10-23 · PR #81 正常同步 Perk #92（main `8b6192d`），组合新行动采用 session 7 / expansion 3 / raid 5，历史敌人 6/2/4 与 Perk 5/3/3 按保存规则继续；双备份、严格版本矩阵和失败原子性见[存档合同](docs/tasks/enemy-save-contract.md)。本批 701 项单测、53 项 CI 规则、四固定客户端 80 项正反例、旧世界 9/9 A/B、package、22 个敌人场景、save-browser/buildings/mobile/portable 与 4 个桌面/触屏 Perk HUD 场景通过。HTML SHA-256 `aa2763118603ad38f5a2e60c93751405e4ab33106410265237dfde32266ddaf9` 的真实输入游玩于 14:33:10～14:43:15 UTC 完成 10 分 4 秒，24 撤离/12 死亡、零脚本错误和外部请求；这是自动流程回归，不代表真人平衡。准确提交与 CI 见原 PR。其余原型美术与正式场景继续推进，未合并、未上线。
 
+- 2026-10-24 · [改枪 M0+M1](docs/gunsmith/CONTRACTS.md)（PR #98，分支 `feat/gunsmith`）：20 枪/100 件目录、兼容判定、有效属性（护栏、锥级下限 0.6）、枪械实例；物品与装备栏带实例，会话记录 v8（#81 已用 v6/v7，按先合入者顺延；敌人规则以 `enemyBackup` 键表示），旧档读档时迁移并保留 `gunsBackup`；装备、转移、丢拾、结算保持同一实例，售价按组成计算；Runtime 经 `src/gunsmith/stats.ts` 读数值。守恒属性测试 200 个种子；两个独立复核的 5 个低级问题已修 4 个、1 个（详情售价）归 M2-08。决定与待办见 CONTRACTS.md 开头「M0 评审决定」，进度在 #80。
 - 2026-10-24 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` / PR #91；十二地区战术地图、两处现有入口可出击、十区暂未开发。[Opus 视觉深化](docs/tasks/county-map-select.md#opus-视觉深化2026-10-24)：先正常合并 main（#89、#90、#92、#93、#94）并重建字体子集与生成物；地图固定 3:2（容器查询单位适配，最多裁 6%），标记钉在地标上、标签放一侧；选中时局部点亮、准星滑动锁定（`CSS.registerProperty`）、路线沿公路绘制；十二张插图接入区域情报；出发按钮常驻底部；出击面板由 `morph.ts` 就地更新，焦点、种子与过渡在重绘中保留。`test:raid-default` R10 扩充、新增 R11 与 `tests/deploy-map.test.ts`。真机与真人观感未验，额外训练 E4 记录见任务文档；准确 head / CI 见 PR，新增关卡继续归 #82。
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
