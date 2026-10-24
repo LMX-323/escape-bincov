@@ -205,3 +205,128 @@
 
 - 安装、拆卸、换件（M2-04 改装事务）和散件配件的占格（M2-02）。
 - 战斗数值（M0-04）。
+
+## 存档与迁移（M0-06）
+
+**状态：** 2026-10-24 在分支 `wip/gunsmith-instance` 完成设计和纯函数，样本测试通过。**没有接入读档**：游戏照旧读写 v5，下面的 v6、profile v3 只在迁移函数和测试里出现；M1-01、M1-02 按本节末尾的清单接入。版本号按 #92 之后的主线分配，维护者在 M0 评审时确认。
+
+### 模块
+
+- [src/gunsmith/migrate.ts](../../src/gunsmith/migrate.ts)：`migrateProfile`、`migrateRecord`，纯函数，已加入 `PURE`，对存档模块只有 `import type`。测试：[gunsmith-migrate.test.ts](../../tests/gunsmith-migrate.test.ts)，样本都由真实的存档流程生成。
+- 迁移前后的对比、旧客户端拒读都用今天的解码器验证：接入之前，今天的 `decodeSession`、`decodePortableBackup`、`decodeBackup` 就是“旧客户端”。
+
+### 实例存在哪里
+
+| 位置 | 存法 | 理由 |
+| --- | --- | --- |
+| 库存里的枪（仓库、背包、安全箱，行动携带的背包和安全箱，箱子和尸体） | 物品原样，枪多一个 `gun: { parts, devices }`；枪的 UID、枪型、枪身救济就是物品的 `uid`、`id`、`relief` | 不重复存 UID 和枪型，两处就不会对不上；枪本来不堆叠，`qty` 恒为 1；转移代码照旧搬整个物品对象。其他物品没有这个键 |
+| 装备的枪（profile 的 `equipment`，经典检查点和分层行动的 `loadout`） | 加 `weaponUid` 和 `gun`，没枪时都是 null；`weapon` 仍是枪型 id，弹匣仍是 `ammo`、`ammoRelief` | 读 `weapon` 的几十处不用动；装备、卸下时 `uid`↔`weaponUid`、`gun`↔`gun` 原样搬，和物品对称。一份记录最多一处装备栏有枪：行动中 profile 的装备栏必须是空的 |
+| 地上的枪（经典检查点的 `loot`，分层行动各层的 `loot`） | 和物品一样多一个 `gun`；地上枪的 UID 就是地上物品的 UID | 丢下、捡起都是同一把枪（M1-04） |
+| 分层行动的携带物 | `raid.loadout` 按装备栏和物品存，各层 `loot`、`containers` 按上两行 | `LayeredRaid.version` 是暴击规则身份，不因枪械格式改变 |
+| 经典检查点 | `loadout`、`loot`、`containers` 同上 | 检查点只存在于记录里，格式跟着记录版本走 |
+| 两种备份 | 已结算备份 = profile v3 加封套 `formatVersion: 3`；完整备份 = v6 记录加封套 `formatVersion: 6` | 封套版本照旧等于里面的版本 |
+
+- 行动中 profile 的安全箱是 `loadout.safe` 的镜像，两边比对时要包括 `gun`。
+- 配件 UID 和物品 UID 是同一空间：全档唯一，也不能和行动里的实体 UID（敌人、弹丸、箱子、追击）相同。
+- 不会放枪的地方不变：护符只能是两种护符；生产批次的材料和成品、待领救济（9 毫米弹和绷带）、结算摘要都不是枪。
+
+### 版本
+
+| 组成 | 现在 | 改枪后 | 理由 |
+| --- | --- | --- | --- |
+| profile（`SaveDataV1.version`，已结算备份的 `formatVersion`） | 2 | **3** | 物品和装备栏多了字段。不升的话，旧客户端读已结算备份文件时不查多余键，再经 `migrateSave` 重建物品，配件会被静默丢掉；升了以后旧客户端按版本拒读 |
+| 会话记录 `SessionRecord.version`、完整备份 `formatVersion` | 3/4/5 | **6** | 主档和完整备份的第一道门。v6 就是枪械实例格式，不管带不带扩展、带哪一版；扩展有没有、是哪版由扩展自己的 `version` 说明。之后的写入一律是 v6 |
+| `ExpansionState.version` | 1/2/3 | 不变 | 它表示 RPG 等级，枪械格式不改变它。若升成 4，进行中的 v2 行动要么被换规则，要么继续用旧物品格式；后者让 M1 每处都写两套 |
+| `LayeredRaid.version` | 1/2/3 | 不变 | 暴击规则身份；出厂枪不改变任何战斗规则，所以进行中的行动可以读档时直接迁移 |
+| `RaidCheckpoint.version`、`worldVersion`、`layoutRevision` | 2（旧 1）、`coast-v2` 等 | 不变 | 只在记录里出现，跟着记录版本 |
+| 旧键 `escape-bincov.save.v1` | profile 0/1/2 | 只读 | 新代码从不写它 |
+
+- 为什么记录只加一个 v6，而不是照 3/4/5 再开 6/7/8：读档时迁移要覆盖所有现存状态（新开局还没进站的 v3、带进行中 v2 行动的 v4、v5），三种扩展状态都要有枪械格式；照抄要多三个号，`version >= 4` 这类判断全要改写。v6 下，今天按记录版本做的判断改为看扩展本身（清单见 M1-02）。
+- v6 的键：总有 `format`、`version`、`revision`、`savedAt`、`profile`、`raid`、`terminal`、`legacyBackup`、`migrationBackup`、`gunsBackup`；带扩展时加 `expansion`、`systemsBackup`；扩展是 v3 时再加 `perksBackup`。和 v3/v4/v5 的规则一样，只多 `gunsBackup`。
+
+### 各旧版本怎么升
+
+| 读到的 | 走法 | `gunsBackup` |
+| --- | --- | --- |
+| 旧键 profile v0/1/2 | `migrateSave`（旧规则，可修复）后 `migrateProfile` | null；原字节照旧在 `legacyBackup` |
+| 会话 v2（profile v1） | `decodeSession` 照旧转成 v3（`migrationBackup` 存原文），再 `migrateRecord(记录, null)` | null；原文已在 `migrationBackup`，不存第二份 |
+| 会话 v3、v4、v5 | 先按今天的规则严格校验，再 `migrateRecord(记录, 原文)`，结果按 v6 规则再校验一次 | 原文 |
+| 会话 v6 | 按 v6 规则校验 | 照存 |
+| 已结算备份 1、2，或没有封套的 profile | `decodeProfileDocument` 按旧规则，再 `migrateProfile` | 不涉及 |
+| 完整备份 2–5 | `decodePortableBackup` → `decodeSession`，同上 | 导入时丢掉，保留当前存档自己的（与 `perksBackup` 相同） |
+| 进行中的旧行动（经典，分层 v1/v2/v3） | 读档时迁移，行动继续；`rng`、`nextEntity`、时间、世界都不变，规则版本不变 | 原文 |
+| 待保存结算 | 不在主档里；M1 之后导出的完整备份就是 v6 | — |
+
+### 原字节
+
+- `gunsBackup`：第一次写 v6 时被替换的那份 v3–v5 记录的原文，只存一次，以后不会被 v6 的文本替换。新开局、旧键迁移和 v2 记录为 null（原字节已在 `legacyBackup`、`migrationBackup`）。
+- 在 `decodeSession` 里设，与 `migrationBackup` 相同：它把版本改成 6，存储层只能在这里拿到原文。
+- 第一次写 v6 可能发生在行动中，这时 `gunsBackup` 是整份进行中的记录（先例：`systemsBackup` 可能存进行中的经典行动）。实测刚出击的记录约 14–16 KB（海岸、居民楼、商场），翻倍后仍远低于 2 MiB 上限。
+- 以后第一次写扩展 v3 时，`perksBackup` 存的是那时的 v6 文本；v4 原字节仍在 `gunsBackup`，没有字节丢失。
+
+### 旧客户端怎么拒绝（测试用今天的代码验证）
+
+- 主档 v6：今天的 `decodeSession` 只认 2–5，报「无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。」，`initialize` 失败，不写入，原字节不变。
+- 已经开着的旧页：写前比对失败，标记冲突，不覆盖。
+- 完整备份 6：「此备份来自不兼容的版本，请使用兼容版本导入。」已结算备份 3：「此备份来自不兼容的版本，当前进度未改动。」没有封套的 v3 profile：「存档格式不支持或内容不完整，当前进度未改动。」院子的导入预览都拒绝，存档不变。
+- 剩下的口子：有人手工把 v3 文件的版本改成 2，旧客户端会读进去并丢掉配件，这一点已经无法在旧客户端上修。新客户端遇到带 `gun` 或 `weaponUid` 的 v1/v2 profile 要拒绝，不能剥掉（M1-01）。
+
+### 迁移函数
+
+- `migrateProfile(profile)`：v2 → v3；v3 原样返回一份校验过的副本。
+- `migrateRecord(record, original)`：`decodeSession` 返回的 v3/v4/v5 记录 → v6，`original` 存为 `gunsBackup`；v6 原样返回校验过的副本，不看 `original`。
+- 只加东西：库存和地上的旧枪加出厂状态 `{ parts: [], devices: { laser: false, light: false } }`，装备栏加 `weaponUid`、`gun`，profile 改 3，记录改 6，加 `gunsBackup`。测试把这些去掉后与输入逐字段相等：现金、位置、旋转、救济标记、弹匣和救济弹、任务、统计、已结算还是进行中、待保存结算的状态都不变。
+- UID：库存和地上的枪沿用原 UID，出厂枪没有配件。唯一要新发的是装备中那把枪的 UID（一份记录最多一把）：取 `gun-v6`，存档里任何键或字符串已经是它就依次试 `gun-v6-2`、`gun-v6-3`……只取决于存档内容。不按修订号派生：已结算备份没有修订号，而这样同一份存档在记录里和在备份文件里迁移出同一个 UID（有测试）。
+- 不读时钟、`Math.random`，不动行动的 `rng` 和实体序号 `nextEntity`。测试把 `Date.now`、`Math.random` 换成会抛错的函数，结果不变。
+- 幂等：迁移两次等于一次。
+- 拒绝（抛出「存档格式不支持或内容不完整，当前进度未改动。」，不修复）：未知版本；profile 版本和记录版本对不上；记录版本和扩展对不上；旧格式里已经有 `gun`、`weaponUid`；旧存档不可能有的枪（旧三枪以外，包括匕首、样本 `m4a1`、原型键）；坏掉的物品栏、地上物品、箱子、地图；结果里有枪通不过 `validateGun`，或者枪、配件、物品 UID 重复。
+- `OLD_GUNS` 是旧存档可能有的枪，就是旧三枪（测试核对等于 `WEAPONS` 去掉匕首）。M2-01 把 G17、M4A1 做成物品后它也不变：新枪只会出现在 v6 之后的存档里。
+
+### 测过的样本
+
+| 样本 | 来源 |
+| --- | --- |
+| 新存档 | `newSave` 的 profile；新开局还没进站的会话 v3；第一次进站后的 v5；`freshStartRecord` |
+| 已结算旧档 | 仓库有旋转的卡宾枪和救济手枪，背包有霰弹枪和含救济弹的步枪弹，安全箱有手枪，装备卡宾枪；出击居民楼后撤离结算 |
+| 已结算旧备份 | 同一存档的已结算备份文件（v2）和完整备份文件；两者迁移出同样的枪 |
+| 活动分层行动 | 上面的存档在居民楼行动中（v5、行动 v3），地上丢一把霰弹枪、箱子里放一把救济手枪；同一行动改写成上一版客户端的 v4（扩展和行动 v2）；M0 原型世界的 v4（扩展和行动 v1） |
+| 活动经典行动 | 海岸检查点，地上一把救济卡宾枪，箱子里一把霰弹枪 |
+| 待保存结算 | 撤离时写入失败，导出完整备份 |
+| 内含迁移备份 | 旧键 → 会话 v2 → v3 → v4 → v5，带 `legacyBackup`、`migrationBackup`、`systemsBackup`、`perksBackup`；另外直接迁移那份 v2 记录和旧键 profile |
+
+### M1-01 要改的（实例字段与严格校验）
+
+- `src/domain.ts`
+  - `Item` 加 `gun?: GunState`；`Equipment` 加 `weaponUid: string | null`、`gun: GunState | null`；`SaveDataV1.version` 改为 3。`migrate.ts` 里临时的 `StoredItem`、`StoredEquipment`、`StoredLoot`、`ProfileV3`、`RecordV6` 改用这些类型。
+  - 所有产生枪的地方同一次改好，否则之后第一次保存就校验失败：`newSave`（起始手枪用 `uid()` 发 `weaponUid`）、`emptyEquipment`、`grantRelief`（救济手枪）、`addItem` 新建枪物品时给出厂状态、`equip`/`equipRun` 取物品的 `uid` 和 `gun`、`settleRun`/`beginRun` 带上 `weaponUid` 和 `gun`。卸枪仍走 `addItem` 时会换 UID，M1-03 再改成搬同一个实例；那之前只有出厂枪，不会丢配件。
+  - `cleanInventory` 保留通过校验的 `gun`；`migrateSave` 接受并输出 3，v0–2 规整后交给 `migrateProfile`；`checkpointSafe` 复制安全箱时带上 `gun`。
+- `src/profile-codec.ts`
+  - `validInventory`：枪物品必须有 `gun` 且 `validateGun` 通过，其他物品不能有；`exact` 时枪多一个 `gun` 键；`gunUids` 里的配件 UID 也查 `seen` 再放进去。
+  - `validEquipment`：要求 `weaponUid`、`gun` 两个键，没枪时都为 null，否则 `validateGun(weapon, weaponUid, gun)`，UID 进同一个 `seen`。弹匣上限在 M1-05 之前仍用 `WEAPONS[weapon].magazine`。
+  - `decodeProfileDocument`：profile 和封套接受 1、2、3；3 按新规则；1、2 带 `gun` 或 `weaponUid` 就拒绝，否则按旧规则校验，经 `migrateSave` 后 `migrateProfile`。
+- `src/save-backup.ts`：`encodeBackup` 写 `formatVersion: save.version`（今天写死 2）；`decodePortableBackup` 接受完整备份 2–6。
+- `src/checkpoint.ts` 的 `validateCheckpoint`：携带物合成 profile 时带上 `weaponUid`、`gun`；地上的枪要有合法 `gun`，其他地上物品不能有；物品 UID、装备的枪和全部配件 UID 用同一个集合，并且不能和地上物品 UID 相同（今天经典检查点不查这一条，真实存档不会冲突）；`inventoryIdentity` 包括 `gun`。经典检查点的地上 UID 只能是 `(enemy|loot|entity)-N`，M1-04 让丢下的枪保留物品 UID 时要放宽。
+- `src/expansion-state.ts` 的 `validateExpansion`：`loadout` 的精确键加 `weaponUid`、`gun`，装备的枪校验后 UID 进 `invIds`；地上物品是枪时精确键加 `gun`，`validateGun`，配件 UID 进 `invIds`（现有“`invIds` 与实体 UID 不相交”的检查就覆盖到）；箱子走带枪规则的 `validInventory`；`inventoryIdentity` 包括 `gun`。
+- `src/fresh-start.ts` 的 `freshStartRecord`：`version: 6`、`gunsBackup: null`、profile v3。
+
+### M1-02 要改的（旧档迁移接入读档）
+
+- `src/recovery-store.ts`
+  - `SessionRecord.version` 为 6，加 `gunsBackup: string | null`；`recordVersion` 恒返回 6（或删掉）。
+  - `decodeSession` 接受 2–6。v6：精确键按上面的 v6 规则，`profile.version === 3`；今天的 `r.version >= 4` 改成“带扩展”，`r.version === 5` 改成“带 v3 扩展”，规范化比较按 v3 profile。v2–v5：照今天的规则校验，再 `migrateRecord(记录, r.version >= 3 ? text : null)`，结果按 v6 校验；迁移抛出的错误统一转成 `failure()`。
+  - `RecoveryStore.load` 记住 `this.guns = record.gunsBackup`（旧键路径为 null），旧键 profile 走 `migrateProfile`。
+  - `commit` 写 `gunsBackup: this.guns`，从不替换。按记录版本做的判断改看已存记录的扩展：`had = this.record?.expansion?.version ?? 0`；`had > 0` 而新写入没有扩展时拒绝；`had === 3` 而新写入的扩展低于 3、又不是确认过的导入时拒绝；`systemsBackup = this.systems ?? (expansion && had === 0 ? this.expected : null)`；扩展是 v3 时 `perksBackup = this.perks ?? (had === 1 || had === 2 ? this.expected : null)`，否则不写这个键。
+- `src/session.ts` 的 `prepareExpansionMutation`：试算记录用 v6，带上 `gunsBackup`，扩展是 v3 时才带 `perksBackup`。
+- `src/save-backup.ts` 的 `encodeRecoveryBackup`：`formatVersion` 跟记录一样是 6。
+- 院子的 `previewImport`、`importBackup` 和旧页签导入不用改：解码器已经迁移，“当前成长存档不接受降级覆盖”的判断照旧。
+- 要跟着改的测试：`perk-save`、`perk-base`、`expansion-recovery`、`hideout-runtime`、`fresh-start`、`recovery`、`profile-codec`、`save-validation-audit` 等断言 v3/v4/v5 写入或 `formatVersion` 的地方；CP-23 里“未知记录版本”的 6 要改成 7；`test:save-browser` 的导出断言。
+
+### 待维护者定
+
+- 记录只加 v6 一个号，不按扩展分成 6/7/8；`ExpansionState.version` 不升。
+- 进行中的旧行动读档时就迁移，不等结算。
+- `gunsBackup` 在解码时取原文；第一次写 v6 若在行动中，记录大约翻倍。
+- 装备的枪用 `gun-v6` 加序号，而不是按修订号派生。
+- 配件树按嵌套存（本页目录一节原写“沿用平铺形状”，已改）。
+- 拆掉设备时开关必须一起关，而不是记住玩家的偏好。
+- 经典检查点从此要求地上物品 UID 和物品 UID 不同；带 `gun` 字段的 v1/v2 profile 一律拒绝。
