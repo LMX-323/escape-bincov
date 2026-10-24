@@ -6,9 +6,9 @@
 
 ## 每次仍然执行的检查
 
-PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略测试、严格类型检查、构建和打包。重新生成的两份 HTML、两份 ZIP 和发布清单必须与提交一致。只构建一次，浏览器任务下载同一制品并校验 SHA-256。
+PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略测试、严格类型检查、构建和打包。只构建一次，浏览器任务下载同一制品并校验 SHA-256；生成物不入库，见[构建与离线包发布](#构建与离线包发布)。
 
-CI 策略测试还守住四件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；其余三件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖；[game-bundle.test.mjs](../scripts/ci/game-bundle.test.mjs) 构建堆诊断换进打包页的未压缩带探针游戏脚本，并拒绝在 [game-bundle.mjs](../scripts/game-bundle.mjs) 之外复制游戏脚本的 esbuild 配置（#60 Q-B06）。它只证明这些诊断能构建，不代表诊断通过。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
+CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；[generated-files.test.mjs](../scripts/ci/generated-files.test.mjs) 拒绝提交生成物；其余三件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖；[game-bundle.test.mjs](../scripts/ci/game-bundle.test.mjs) 构建堆诊断换进打包页的未压缩带探针游戏脚本，并拒绝在 [game-bundle.mjs](../scripts/game-bundle.mjs) 之外复制游戏脚本的 esbuild 配置（#60 Q-B06）。它只证明这些诊断能构建，不代表诊断通过。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
 
 `Build and test` 是保持名称不变的必需检查。它在依赖失败或跳过后也运行，只接受：
 
@@ -21,7 +21,7 @@ CI 策略测试还守住四件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 白名单为根目录 `README.md`、`AGENTS.md`、`CONTRIBUTING.md`、`handoff.md`、`.github/PULL_REQUEST_TEMPLATE.md`、`docs/` 内的 Markdown，以及已确认只作文学交接的 `docs/story/GEMINI-RETURN-MANIFEST-20261014.json`。必须是普通非可执行文件；符号链接和未知路径走全量。
 
-`THIRD_PARTY_NOTICES.md` 嵌入 HTML，`README-游玩说明.txt` 进入便携 ZIP，`docs/release-manifest.json` 是制品依据，均不属于可跳过输入。代码、素材、测试、脚本、锁文件、配置和生成物也全部参与验证指纹。
+`THIRD_PARTY_NOTICES.md` 嵌入 HTML，`README-游玩说明.txt` 进入便携 ZIP，均不属于可跳过输入。代码、素材、测试、脚本、锁文件和配置也全部参与验证指纹。生成物不入库，指纹只看源码：构建可复现，同一份源码和锁文件在本地与 CI 上打出相同字节（移出仓库前，每次 CI 都逐字节核对过提交的生成物与 CI 构建）。
 
 快速通道同时要求：
 
@@ -96,9 +96,19 @@ CI 策略测试还守住四件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ## Pages 与镜像
 
-main 即便走文档快速通道，也从本次重新构建并校验的制品正常执行 `Deploy Pages`。相同游戏字节已有完整 main 回归证据，本次单测、构建与制品一致性仍需通过。
+main 即便走文档快速通道，也从本次重新构建并校验的制品正常执行 `Deploy Pages` 和离线包发布。相同游戏字节已有完整 main 回归证据，本次单测与构建仍需通过。
 
-这样保留镜像对 `Build and test`、`Deploy Pages` 的成功要求及固定提交/清单/实际 Pages 字节一致校验，不需要修改服务器脚本或部署权限。PR 不部署，main 新代码必须完整回归；浏览器首次采用本策略的 PR 和合并后主线都需要全量通过。
+镜像对 `Build and test`、`Deploy Pages` 的成功要求和检查名不变。提交里已经没有 HTML 和发布清单，镜像要核对 Pages 字节时，读 `main-latest` 发布页的 `release-manifest.json`，并核对该发布的标签指向本次运行的提交（服务器脚本不在本仓库）。PR 不部署，main 新代码必须完整回归；浏览器首次采用本策略的 PR 和合并后主线都需要全量通过。
+
+## 构建与离线包发布
+
+`pnpm build` 和 `pnpm package` 写出的 `dist/index.html`、`start the game.html`、`release/` 下的两个 ZIP 与 `release-manifest.json` 都是生成物：不入库，由 `.gitignore` 忽略，[generated-files.test.mjs](../scripts/ci/generated-files.test.mjs) 拒绝提交。本地浏览器测试、`test:portable` 和根目录的三个试玩跳转页（`试枪场.html`、`城中村试玩.html`、`商场试玩.html`）都读本地生成的文件，所以要先打包。2026-10-24 以前这些文件随源码提交，任意两个改游戏代码的 PR 都会在它们上冲突，只能合并后重新打包、再跑一轮 CI。
+
+- 每次运行由 build job 打包一次，上传为 `built-game` 制品（保留 1 天），浏览器组与发布都用它并先核对 SHA-256。PR 不发布任何东西。
+- main 的 `Build and test` 通过后，`Deploy Pages` 部署 `dist/`，`Publish offline release` 用 [publish-release.sh](../scripts/ci/publish-release.sh) 更新滚动预发布 [`main-latest`](https://github.com/xuys2025/escape-bincov/releases/tag/main-latest)：标签移到本次提交，两个 ZIP 和清单按同名替换，所以 [README](../README.md) 的下载地址不变；发布说明写明提交和运行。`main-latest` 是预发布，不抢正式版本（v0.2.0）的 Latest 标记。只有这一个 job 有 `contents: write`。
+- 发布 job 失败会让这次 main 运行失败，它也就不能作为文档快速通道的复用证据。一天内只重跑失败的 job 即可（`built-game` 只保留 1 天，过期后整体重跑）。较新的 main push 会取消还在跑的旧运行；万一恰好取消在替换文件的几秒里，缺的文件要等较新的运行发布后才补上。
+- 旧客户端：batch-8 下载的四份旧 HTML 来自历史提交里的 `dist/index.html`，历史保留，固定链接仍然有效。以后的提交里没有 HTML，新增固定旧客户端时，要么从该提交的源码重新构建（构建可复现，脚本照样核对哈希），要么在 `main-latest` 被替换前保存它的文件；用哪种由新增固定的 PR 一并定下。
+- 同步 main 时，若旧分支还改着这些文件，Git 会报“对方删除、我方修改”的冲突：保留删除（`git rm` 这几个路径），不要把它们加回来。
 
 ## 本次未改变的验收
 
