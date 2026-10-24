@@ -4,7 +4,7 @@
 
 ## 当前交付
 
-本文保留最初 EN-01～04 基础批的交付记录。2026-10-23 续作已把三原型接入新街区出击，当前行为、版本协调及实际验证见[街区样板](enemy-street-encounter.md)、[组织与兵种规则](enemy-relations.md)和[存档合同](enemy-save-contract.md)。十八类独立身体/尸体共 468 张图已接入，前三类、市场头目、三种动物、四类盐蚀者及四人回收队已接入普通出击；动物的食源/返巢见[生态样板](enemy-fauna.md)，盐蚀者的武器/岗位见[能力样板](enemy-affected.md)，回收/运输箱与掩护见[回收队样板](enemy-recovery.md)，其余三类仍以合法存档场景验图，见[美术记录](enemy-street-art.md)。专属动作/声音已接入；三类正式场景、十二区域和综合验收仍按 #78 继续推进。“未改变格式”等是基础批当时的边界，不能作为当前进度。
+本文保留最初 EN-01～04 基础批的交付记录。2026-10-23 续作已把三原型接入新街区出击，当前行为、版本协调及实际验证见[街区样板](enemy-street-encounter.md)、[组织与兵种规则](enemy-relations.md)和[存档合同](enemy-save-contract.md)。十八类独立身体/尸体共 468 张图已接入，前三类、市场头目、三种动物、四类盐蚀者、四人回收队及三类封锁队已接入普通街区出击；动物的食源/返巢见[生态样板](enemy-fauna.md)，盐蚀者的武器/岗位见[能力样板](enemy-affected.md)，回收/运输箱与掩护见[回收队样板](enemy-recovery.md)，检查站的登记/等待/通行见[检查站样板](enemy-blockade.md)，十八类均有普通出击场景，见[美术记录](enemy-street-art.md)。专属动作/声音已接入；十二区域和综合验收仍按 #78 继续推进。“未改变格式”等是基础批当时的边界，不能作为当前进度。
 
 | 任务 | 当前核销与证据 |
 | --- | --- |
@@ -14,6 +14,19 @@
 | EN-04 测量基线 | 完成：固定 A/B/恢复、门梯/潮位回归保留；12 个 Runtime 与六个真实浏览器样本通过，固定扩量门槛及原始报告见[性能记录](enemy-performance.md) |
 
 EN-01～04 的核销仅覆盖其基础契约验收，不代表后续完整兵种、地区或真人平衡完成。准确 head、制品及 CI 继续原 PR。下文“全部 design-only”“未改格式”等保留为最初基础批的历史实现说明。
+## 街区阶段验收对照
+
+下表只核销现有街区阶段，最终准确head的完整CI仍以原PR记录为准。地图专题未完成前不核销EN-19～22；自动化不替代真人/真机。
+
+| 任务 | 实现与有效反例 |
+| --- | --- |
+| EN-08 空间 | [普通100种子](../../tests/enemy-tactics.test.ts)、[头目](../../tests/enemy-posts.test.ts)、[食源](../../tests/enemy-fauna.test.ts)、[盐蚀者](../../tests/enemy-affected.test.ts)、[回收队](../../tests/enemy-recovery.test.ts)、[检查站](../../tests/enemy-blockade.test.ts)各自检查固定人口、双潮位、出生/撤离/门梯距离、岗位与公共绕行；未建区域不生成假世界 |
+| EN-09 首三原型路线 | [街区记录](enemy-street-encounter.md)与[战术测试](../../tests/enemy-tactics.test.ts)覆盖锁定近战打空、有限弹药/换弹、望风去重、死亡剩余掉落、刷新/导入；[跨层](../../tests/enemy-pursuit.test.ts)保留唯一身份；最终自然输入证据见检查站记录 |
+| EN-10 组织 | [回收队](enemy-recovery.md)四岗位/交替掩护/有时效路段命令、[头目](enemy-market.md)有限已有支援/损失撤退、[专家](../../tests/enemy-specialists.test.ts)可信最后位置压制、[跨层](../../tests/enemy-pursuit.test.ts)两名已有成员槽及恢复去重；无新增人口/全图坐标共享 |
+| EN-12 条件敌对 | [关系](enemy-relations.md)的真实来源自卫和只读询问，[检查站](enemy-blockade.md)登记/连续可见等待/许可/越界、未付攻击退回、空枪/换弹与真实交火恢复；三尺寸真实交互，持枪/询问不定罪，无永久声望 |
+| EN-17 检查站 | [16项服务/坏档回归](../../tests/enemy-blockade.test.ts)，三岗位实投、固定公开通路/外围绕行、许可只覆盖通道、班长留守；等待与许可均经原子存档和实际暂停刷新 |
+| EN-18 表现 | [18/18覆盖表](enemy-street-art.md#十八原型接入核对)、来源/哈希/离线图集、各原型前摇/恢复/换弹/声音与隐藏房间规则；三尺寸实际截图/动作检查，不将触屏仿真当真机或合成输出当主观辨识 |
+
 ## 实现与所有权
 
 [制作目录](../../scripts/enemy-catalog-data.ts)不进入游戏包或字体扫描。`pnpm enemy:catalog` 输出对照表，`pnpm enemy:catalog --json --id=raider-melee` 输出单卡；所有卡标为 `design-only`，素材标为 `not-produced`。

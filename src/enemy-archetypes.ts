@@ -54,7 +54,8 @@ export function enemyDefinition(id: string): Readonly<EnemyDef> {
 /** Actor capability v2. Unknown program kinds/armaments fail closed in the save reader.
  * Armament is the actual carried weapon, not an independent presentation choice. */
 export type EnemyProgram = { kind: 'affected'; armament: 'unarmed' | 'polearm' | 'rifle' }
-    | { kind:'recovery'; leader:string; crate:string; phase:'collect'|'loading'|'advance'|'delivered'|'withdraw'; leg:0|1|2; since:number; heardAt:number };
+    | { kind:'recovery'; leader:string; crate:string; phase:'collect'|'loading'|'advance'|'delivered'|'withdraw'; leg:0|1|2; since:number; heardAt:number }
+    | { kind:'blockade'; leader:string; phase:'none'|'waiting'|'granted'|'engaged'; waited:number; since:number };
 const AFFECTED_DAZED = Object.freeze({ ...ENEMY_ARCHETYPES['salt-dazed'], confirm: 1.2 });
 const AFFECTED_HULK = Object.freeze({ ...ENEMY_ARCHETYPES['salt-hulk'], confirm: 1.6, vision: 180 });
 const RITUALIST_RIFLE: Readonly<Archetype> = Object.freeze({ ...ENEMY_ARCHETYPES['tide-ritualist'], attack: 'projectile', weapon: 'rifle',
@@ -100,7 +101,8 @@ export type EnemyTactics = EnemyTacticsCore & ({ version: 1 } | { version: 2; pr
 export function initialTactics(id: string, squad: string, program?: EnemyProgram): EnemyTactics {
     if (program && (program.kind === 'affected' ? archetype(id)?.faction !== 'affected'
         || (id === 'tide-ritualist' ? !['rifle', 'polearm'].includes(program.armament) : program.armament !== 'unarmed')
-        : program.kind !== 'recovery' || archetype(id)?.faction !== 'mercenaries'))
+        : program.kind === 'recovery' ? archetype(id)?.faction !== 'mercenaries'
+        : program.kind !== 'blockade' || archetype(id)?.faction !== 'blockade'))
         throw new RangeError(`Invalid enemy program: ${id}`);
     const def = actorArchetype({ id, ...(program ? { tactics: { version: 2, program } as EnemyTactics } : {}) });
     if (!def) throw new RangeError(`Unknown archetype: ${id}`);

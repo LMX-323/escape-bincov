@@ -1,6 +1,6 @@
 # 《逃离滨科夫》地图敌人详细设定
 
-> **状态：设计已由 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) 合入；[Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 已拆分排期。[PR #81](https://github.com/xuys2025/escape-bincov/pull/81) 正在实现街区前三原型、[市场头目据点](tasks/enemy-market.md)、[动物食源样板](tasks/enemy-fauna.md)、[盐蚀者样板](tasks/enemy-affected.md)和[回收队样板](tasks/enemy-recovery.md)，范围及验证见[实施记录](tasks/enemy-street-encounter.md)。十八类身体/尸体共 468 张图已接入；阶段动作与辨识音效已接入；三类封锁队场景和十二规划区域仍开放。** 本稿是整体设计，不是全部已上线的游玩指南。
+> **状态：设计已由 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67) 合入；[Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 已拆分排期。[PR #81](https://github.com/xuys2025/escape-bincov/pull/81) 正在实现街区前三原型、[市场头目据点](tasks/enemy-market.md)、[动物食源样板](tasks/enemy-fauna.md)、[盐蚀者样板](tasks/enemy-affected.md)、[回收队样板](tasks/enemy-recovery.md)和[检查站样板](tasks/enemy-blockade.md)，范围及验证见[实施记录](tasks/enemy-street-encounter.md)。十八类身体/尸体共 468 张图已接入；阶段动作与辨识音效已接入；十八类已有街区样板；十二规划区域与整体验收仍开放。** 本稿是整体设计，不是全部已上线的游玩指南。
 
 日期：2026-10-17。核对基线：main `345aff4fefaf64a5c40e7f0204e1eab5827662ce`。
 

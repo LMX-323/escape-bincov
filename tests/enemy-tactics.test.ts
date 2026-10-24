@@ -65,7 +65,7 @@ test('street encounter has reproducible positions, no extra population, and safe
         const f = fixture(); assert.ok(f.saves.beginRun(seed, true), `${seed}: ${f.state.storageError}`);
         const raid = f.state.expansion!.raid!, actors = Object.values(raid.maps).flatMap(m => m.enemies);
         assert.equal(actors.length, 25); assert.equal(new Set(actors.map(e => e.uid)).size, 25);
-        assert.equal(actors.filter(e => e.tactics).length, seed % 5 === 0 ? 6 : seed % 5 === 1 || seed % 5 === 3 || seed % 15 === 2 ? 7 : 3);
+        assert.equal(actors.filter(e => e.tactics).length, seed % 5 === 0 || seed % 5 === 4 ? 6 : seed % 5 === 1 || seed % 5 === 3 || seed % 15 === 2 ? 7 : 3);
         assert.deepEqual(actors.filter(e => e.tactics?.squad === 'street-salvage').map(e => [e.id, e.x, e.y]).sort(),
             [['raider-gunner', 912, 720], ['raider-lookout', 816, 432], ['raider-melee', 656, 592]].sort());
     }

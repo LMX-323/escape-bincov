@@ -95,3 +95,27 @@ node --import tsx scripts/enemy-performance.mjs --seed=46 --policy=strafe --focu
 ## 回收队最终候选（严格地图/岗位绑定之后）
 
 最终HTML408ae6f97b5e487aa948d0b5cf5fb2db200e88e86eb25ceb77112d5af9e19f42、7,986,545字节，便携ZIP5,237,293字节。相同Node24.22.1/RTX3070/CoreUltra5230F/Chrome155，在无其他测试负载时顺序采样[标准seed42](../enemy-street/performance-recovery-standard.json)与[seed48回收队战斗](../enemy-street/performance-recovery-combat.json)，各12Runtime/六浏览器全部通过原预算，2潮位/3尺寸均满12秒。64像素组用真实走位、原有弹药和Q治疗，不补生命/物资、不冻结AI。它是输入策略下的实际负载，不代表四名NPC始终同时攻击的极限或真手机/GPU完成帧率。之前35146fc8...的两组也通过，但最终结果不借用该制品。
+
+## 检查站最终候选与保留的失败
+
+最终HTML SHA-256 `ac1f62b3b8920330e01c0a3e739d14efd7763cbed2366060b28a9ff61a61de9f`，7,993,985字节，便携ZIP5,240,246字节。Node24.22.1/Chrome155/CoreUltra5230F/RTX3070 ANGLE D3D11，顺序独占测量；原8MiB/5MiB与帧时/路径/纹理预算均未调整。
+
+| 证据 | 实际结论与范围 |
+| --- | --- |
+| [最终标准矩阵](../enemy-street/performance-blockade-final-standard.json) | seed42/stationary，12 Runtime＋六浏览器满12秒，原绝对预算PASS；此轮未传历史baseline，不冒充单次同比通过 |
+| [最终检查站撤退负载](../enemy-street/performance-blockade-final-retreat.json) | seed49/sergeant240像素/retreat/原物资Q，12 Runtime＋六浏览器满12秒，原绝对预算PASS；正常键鼠/触屏移动，不是近距持续交火极限 |
+| [最终五组A/B](../enemy-street/performance-blockade-final-paired.json) | 固定旧1b884f2 HTML与相同严格合成输入，交错AB/BA各五次；十次均满足原绝对预算。advance p95中位2.5/2.5ms，present 2.9/3.0ms（+3.45%），在原20%范围内 |
+
+首次de251b2a...候选[单次同比](../enemy-street/performance-blockade-pre-interaction-single-blocked.json)仍为BUDGET_BLOCKED：1920低潮present p95=3.1ms超过历史单次1.2ms×1.2。该轮绝对预算通过；重复五组协议在测量前固定，保留所有快慢值，不替换/删除原失败。[旧候选五组](../enemy-street/performance-blockade-pre-interaction-paired.json)3.5/3.4ms与[旧候选撤退](../enemy-street/performance-blockade-pre-interaction-retreat.json)保留原制品归属。
+
+[64像素走位](../enemy-street/performance-blockade-close-short.json)四个5Hz样本9.92秒死亡，短样本未签收；[240像素走位](../enemy-street/performance-blockade-outer-incomplete.json)在首个触屏例宿主脱离，ERROR、未完成后续样本，旧采样未记录脱离原因，不断言根因。采样器现在明确记录脱离时app状态/结果；不会将短样本记成PASS。retreat只增加正常朝远离焦点方向的输入，未冻结AI、补血/弹或改预算，不覆盖近距未通过结论。
+
+复现最终固定协议（Windows先将接受版本HTML用`git show 1b884f2:dist/index.html`按原字节保存为下述路径；工具核对SHA，禁止用当前HTML代替）：
+
+```powershell
+node --import tsx scripts/enemy-performance.mjs --out=test-results/enemy-performance-blockade-final-standard
+node --import tsx scripts/enemy-performance.mjs --seed=49 --policy=retreat --focus=blockade-sergeant --radius=240 --heal=true --out=test-results/enemy-performance-blockade-final-retreat
+node --import tsx scripts/enemy-performance-paired.mjs --baseline=test-results/enemy-performance-paired/baseline-1b884f2.html --fixture=docs/enemy-street/performance-paired-synthetic-input.json --policy=docs/enemy-street/performance-recovery-standard.json --out=test-results/enemy-performance-blockade-final-paired
+```
+
+配对诊断只检查首败的1920低潮条件，不能替代标准完整矩阵、Node物理、十分钟自然输入、真手机、GPU完成帧率或真人平衡。`--fixture-out=PATH`只导出当前合法合成输入后退出，不宣称做过测量；默认stationary与原strafe轨迹保留。EN-21继续开放。

@@ -20,10 +20,10 @@ import { corridor, traversable } from '../src/spatial.ts';
 import { archetype } from '../src/enemy-archetypes.ts';
 
 const options = new Map(process.argv.slice(2).map(arg => {
-  const match = /^--(seed|baseline|out|policy|focus|radius|heal)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
+  const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
 }));
 const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
-const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe'].includes(policy));
+const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe','retreat'].includes(policy));
 const focus = options.get('focus') ?? 'raider-gunner',radius=Number(options.get('radius')??240);
 assert.ok(archetype(focus));assert.ok(Number.isFinite(radius)&&radius>=32&&radius<=300);
 assert.ok(['true','false'].includes(options.get('heal')??'false'));const heal=options.get('heal')==='true';
@@ -56,6 +56,10 @@ function fixture(highTide) {
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
   return { raw, state, saves, target: { x: e.x, y: e.y } };
 }
+if(options.has('fixture-out')) {
+  const path=resolve(options.get('fixture-out'));await mkdir(resolve(path,'..'),{recursive:true});await writeFile(path,fixture(false).raw);
+  console.log('Prepared strict low-tide performance input; no measurement or acceptance claimed.');process.exit(0);
+}
 const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), seed, policy, focus, radius, heal, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
   scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
@@ -75,8 +79,9 @@ try {
       const intent = { ...emptyIntent(), aim: target ? Math.atan2(target.y-r.player.y,target.x-r.player.x) : 0,
         firePressed: frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: !!target, precise: true,
         commands: frame % (hz * 3) === 0 ? ['reload'] : [] };
-      if (policy === 'strafe') {
-        const bearing = intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
+      if (policy !== 'stationary') {
+        const bearing = policy==='retreat'?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
+          :intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
         intent.move = { x: Math.cos(bearing), y: Math.sin(bearing), sprint: false };
       }
       if(heal&&(r.hp<70||r.bleeding)&&frame/hz-lastHeal>=2){intent.commands.push('heal');lastHeal=frame/hz;}
@@ -116,20 +121,21 @@ try {
           if (document.elementFromPoint(x,y)?.tagName === 'CANVAS') return { x,y };
         } return null;
       }) : null;
-      const movementOrigin = touch && policy === 'strafe' ? await page.evaluate(() => {
+      const movementOrigin = touch && policy !== 'stationary' ? await page.evaluate(() => {
         for (let d=0;d<100;d+=8) for (const [dx,dy] of [[0,0],[d,0],[-d,0],[0,d],[0,-d]]) {
           const x=Math.round(innerWidth*.25+dx),y=Math.round(innerHeight*.45+dy);
           if(document.elementFromPoint(x,y)?.tagName==='CANVAS') return {x,y};
         } return null;
       }) : null;
-      if (touch) { assert.ok(origin); if(policy==='strafe') assert.ok(movementOrigin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }, ...(movementOrigin ? [{id:2,...movementOrigin}]:[])] }); }
-      else if (policy === 'strafe') await page.mouse.down({button:'right'});
+      if (touch) { assert.ok(origin); if(policy!=='stationary') assert.ok(movementOrigin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }, ...(movementOrigin ? [{id:2,...movementOrigin}]:[])] }); }
+      else if (policy !== 'stationary') await page.mouse.down({button:'right'});
       const measurement = page.evaluate(() => new Promise((resolve, reject) => {
         const h = window.__bincovSample.host, gap = [], advance = [], present = [], phases = new Set(), attackPhases = new Set();
         let previous = performance.now(), started = previous, lastFrame = -1;
         const timeout = setTimeout(() => reject(Error('Twelve-second rAF sample did not finish within thirty seconds')), 30000);
         const tick = () => { try {
           const now = performance.now(), batch = h.lastBatch;
+          if(!batch)throw Error('Live raid detached before the twelve-second sample finished');
           gap.push(now - previous); previous = now; phases.add(batch.frame.phase);
           for (const a of batch.frame.actors) if (a.tactics) attackPhases.add(a.tactics.phase);
           if (h.stats.frames !== lastFrame) { advance.push(h.stats.advanceMs); present.push(h.stats.presentMs); lastFrame = h.stats.frames; }
@@ -153,11 +159,14 @@ try {
             .sort((a,b) => Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
           return target ? { ...h.view.worldToClient({ x: target.x, y: target.y - 22 }), angle: Math.atan2(target.y-p.y,target.x-p.x) } : null;
         });
-        const bearing = (aim?.angle ?? 0) + Math.PI/2 + (Math.floor((performance.now()-started)/1000)%2 ? Math.PI:0);
+        const bearing = policy==='retreat'?await page.evaluate(target=>{
+          const frame=window.__bincovSample?.host?.lastBatch?.frame;
+          return frame?Math.atan2(frame.player.y-target.y,frame.player.x-target.x):0;
+        },saved.target):(aim?.angle ?? 0) + Math.PI/2 + (Math.floor((performance.now()-started)/1000)%2 ? Math.PI:0);
         if (aim && touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: origin.x + Math.cos(aim.angle) * 60, y: origin.y + Math.sin(aim.angle) * 60 },
           ...(movementOrigin ? [{id:2,x:movementOrigin.x+Math.cos(bearing)*40,y:movementOrigin.y+Math.sin(bearing)*40}]:[])] });
         else if (aim) { await page.mouse.move(aim.x, aim.y); await page.mouse.click(aim.x, aim.y); }
-        if (!touch && policy === 'strafe') {
+        if (!touch && policy !== 'stationary') {
           const next = [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean);
           for(const key of held) if(!next.includes(key)) await page.keyboard.up(key);
           for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
@@ -167,8 +176,13 @@ try {
         await page.waitForTimeout(250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      for(const key of held) await page.keyboard.up(key); if(!touch && policy==='strafe') await page.mouse.up({button:'right'});
-      const outcome = await result; if (outcome.error) throw Error(outcome.error); const measured = outcome.value;
+      for(const key of held) await page.keyboard.up(key); if(!touch && policy!=='stationary') await page.mouse.up({button:'right'});
+      const outcome = await result;
+      if(outcome.error) {
+        const end=await page.evaluate(()=>{const a=window.__bincov?.app;return {state:a?.state,result:a?.result??null,pending:!!a?.pendingSettlement};});
+        report.failures.push({name:`browser/${viewport.width}/${highTide}/incomplete`,...end});throw Error(outcome.error);
+      }
+      const measured = outcome.value;
       const row = { viewport, highTide, ...measured, gap: summary(measured.gap), advance: summary(measured.advance), present: summary(measured.present) };
       assert.ok(row.gap.count > 100 && row.advance.count > 100 && row.present.count > 100, 'sufficient live-frame samples');
       report.browser.push(row);

@@ -2,6 +2,7 @@ import type { EnemyState } from './checkpoint';
 import type { ArchetypeId } from './enemy-archetypes';
 import type { Point } from './world';
 import { AFFECTED_POSTS, AFFECTED_SQUAD } from './enemy-affected';
+import { BLOCKADE_POSTS, BLOCKADE_SQUAD } from './enemy-blockade';
 
 /** Static authored content, selected only for newly deployed members of this squad.
  * home identifies a post; target/path/timer and stance already persist its current movement.
@@ -16,6 +17,7 @@ export const MARKET_POSTS: readonly Readonly<{ id: ArchetypeId; home: Readonly<P
 export const MARKET_STORES = at(25, 34);
 export function enemyPost(enemy: EnemyState) {
     const posts = enemy.tactics?.squad === MARKET_RAIDERS ? MARKET_POSTS
-        : enemy.tactics?.version === 2 && enemy.tactics.program.kind === 'affected' && enemy.tactics.squad === AFFECTED_SQUAD ? AFFECTED_POSTS : [];
+        : enemy.tactics?.version === 2 && enemy.tactics.program.kind === 'affected' && enemy.tactics.squad === AFFECTED_SQUAD ? AFFECTED_POSTS
+        : enemy.tactics?.version === 2 && enemy.tactics.program.kind === 'blockade' && enemy.tactics.squad === BLOCKADE_SQUAD ? BLOCKADE_POSTS : [];
     return posts.find(post => post.id === enemy.id && post.home.x === enemy.home.x && post.home.y === enemy.home.y) ?? null;
 }

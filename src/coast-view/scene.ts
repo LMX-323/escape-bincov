@@ -644,6 +644,17 @@ export class CoastView {
       const color = warning ? 0xe4c46e : t.phase === 'reload' ? 0x86bed2 : t.stance === 'hostile' ? 0xe38969 : 0x97b7a3;
       g.telegraph.position.set(a.x, a.y); g.telegraph.zIndex = a.y + .09;
         if (t.boundary) g.telegraph.circle(t.boundary.at.x - a.x, t.boundary.at.y - a.y, t.boundary.radius).stroke({ width: 1.5, color: 0xe4c46e, alpha: .65 });
+      if(t.checkpoint) {
+        const p=t.checkpoint,permitted=p.phase==='granted',closed=p.phase==='engaged';
+        const color=closed?0xe38969:permitted?0x8bd4b8:0xe4c46e;
+        const wait=p.waiting,pass=p.passage;
+        g.telegraph.rect(wait.x-a.x,wait.y-a.y,wait.w,wait.h).fill({color,alpha:.12}).stroke({width:1.5,color,alpha:.8});
+        g.telegraph.rect(pass.x-a.x,pass.y-a.y,pass.w,pass.h).fill({color:permitted?color:0x8b9eac,alpha:permitted ? .16 : .04})
+          .stroke({width:1,color:permitted?color:0x8b9eac,alpha:.6});
+        const x=wait.x+wait.w/2-24-a.x,y=wait.y-8-a.y;
+        g.telegraph.rect(x,y,48,4).fill({color:0x171b1b,alpha:.9});
+        if(p.phase==='waiting'||permitted)g.telegraph.rect(x,y,48*p.waited/4,4).fill(color);
+      }
       if (windup) {
         const length = Math.min(t.range, 90), c = Math.cos(t.aim), s = Math.sin(t.aim);
         g.telegraph.moveTo(0, 0).lineTo(c * length, s * length).stroke({ width: 2, color, alpha: .8 });

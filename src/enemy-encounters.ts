@@ -3,6 +3,7 @@ import type { LayeredRaid, WorldDefinition } from './expansion-state';
 import { separation, traversable } from './spatial';
 import { WORLD } from './world';
 import { MARKET_POSTS, MARKET_RAIDERS, MARKET_STORES } from './enemy-posts';
+import { BLOCKADE_POSTS, BLOCKADE_SQUAD, installBlockadeProgram } from './enemy-blockade';
 import { FAUNA_SITES, FAUNA_SQUAD, installFaunaFood } from './enemy-fauna';
 import { AFFECTED_POSTS, AFFECTED_SQUAD } from './enemy-affected';
 import { installRecoveryProgram, RECOVERY_POSTS, RECOVERY_SQUAD } from './enemy-recovery';
@@ -24,6 +25,7 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
     if (raid.seed % 15 === 2) members.push(...AFFECTED_POSTS.map(post => ({ id:post.id, x:post.home.x/32-.5, y:post.home.y/32-.5, squad:AFFECTED_SQUAD,
         program: { kind:'affected' as const, armament: post.id === 'tide-ritualist' ? Math.floor(raid.seed/5)%2 ? 'rifle' as const : 'polearm' as const : 'unarmed' as const } })));
     if(raid.seed%5===3)members.push(...RECOVERY_POSTS.map(post=>({id:post.id,x:post.home.x/32-.5,y:post.home.y/32-.5,squad:RECOVERY_SQUAD})));
+    if(raid.seed%5===4)members.push(...BLOCKADE_POSTS.map(post=>({id:post.id,x:post.home.x/32-.5,y:post.home.y/32-.5,squad:BLOCKADE_SQUAD})));
     const layer = raid.maps.coast, map = world.maps.coast;
     const used = new Set<string>();
     for (const member of members) {
@@ -47,6 +49,7 @@ export function installStreetEncounter(raid: LayeredRaid, world: WorldDefinition
     }
     if (fauna) installFaunaFood(raid);
     if(raid.seed%5===3)installRecoveryProgram(raid);
+    if(raid.seed%5===4)installBlockadeProgram(raid);
     raid.version = raid.version === 3 ? 5 : 4;
     raid.roster = Object.values(raid.maps).flatMap(m => m.enemies.map(e => ({ uid: e.uid, id: e.id })));
 }

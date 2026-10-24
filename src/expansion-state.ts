@@ -1,6 +1,7 @@
 import * as D from './domain';
 import { archetype, actorArchetype, actorDefinition, initialTactics } from './enemy-archetypes';
 import { RECOVERY_POSTS } from './enemy-recovery';
+import { BLOCKADE_POSTS } from './enemy-blockade';
 import { perkLimitBonus, perkModifiers, validPerkSelection, BREATH_MAX, CRIT_SOURCE_IDS, FOCUS_CRIT, type CritSnapshot, type CritSourceId, type PerkId, type PerkModifiers } from './perks';
 import type { ActorState, BulletState, EnemyState, LootState, RaidCheckpoint } from './checkpoint';
 import type { LootContainer } from './loot';
@@ -321,6 +322,11 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
                         ||!['collect','loading','advance','delivered','withdraw'].includes(p.phase)||!whole(p.leg,0,2)
                         ||!finite(p.since,0,raid.elapsed)||!finite(p.heardAt,0,raid.elapsed)
                         ||(['collect','loading'].includes(p.phase)&&p.leg!==0)||(p.phase==='delivered'&&p.leg!==2))fail();
+                } else if(t.program.kind==='blockade') {
+                    const p=t.program;exactKeys(p,['kind','leader','phase','waited','since']);
+                    if(spec.faction!=='blockade'||!identity(p.leader)||!['none','waiting','granted','engaged'].includes(p.phase)
+                        ||!finite(p.waited,0,Math.min(4,raid.elapsed))||!finite(p.since,0,raid.elapsed)
+                        ||p.phase==='none'&&p.waited!==0||p.phase==='granted'&&p.waited!==4||p.phase==='waiting'&&p.waited>=4)fail();
                 } else fail();
             }
             const initial = initialTactics(e.id, t.squad, t.version === 2 ? t.program : undefined);
@@ -415,6 +421,19 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         }
     }
     for(const team of recoveryTeams.values())if(team.length!==4||new Set(team.map(e=>e.id)).size!==4)fail();
+    const checkpointTeams=new Map<string,EnemyState[]>();
+    for(const e of enemies.values()) {
+        const t=e.tactics,p=t?.version===2?t.program:null;if(p?.kind!=='blockade')continue;
+        const leader=enemies.get(p.leader),lt=leader?.tactics,order=lt?.version===2?lt.program:null;
+        if(!leader||leader.id!=='blockade-sergeant'||order?.kind!=='blockade'||order.leader!==leader.uid)return fail();
+        const post=BLOCKADE_POSTS.find(post=>post.id===e.id),mapId=enemyMaps.get(e.uid);
+        if(world.id!=='coast-buildings-v1'||mapId!=='coast'||enemyMaps.get(leader.uid)!==mapId||t!.squad!==lt!.squad
+            ||!post||e.home.x!==post.home.x||e.home.y!==post.home.y||e.id==='blockade-sergeant'&&e.uid!==p.leader
+            ||p.phase==='granted'&&!['granted','engaged'].includes(order.phase)||p.phase==='waiting'&&order.phase==='none'
+            ||p.phase!=='engaged'&&p.since>order.since)fail();
+        const team=checkpointTeams.get(p.leader)??[];team.push(e);checkpointTeams.set(p.leader,team);
+    }
+    for(const team of checkpointTeams.values())if(team.length!==3||new Set(team.map(e=>e.id)).size!==3)fail();
     raid.roster.forEach(e => exactKeys(e, ['uid', 'id']));
     if (new Set(raid.roster.map(e => e.uid)).size !== world.enemyCount || enemies.size !== world.enemyCount
         || raid.roster.some(e => !identity(e.uid) || (!hasOwnStringKey(D.ENEMIES, e.id) && !(enemyRules(raid) && archetype(e.id))) || enemies.get(e.uid)?.id !== e.id)

@@ -1,3 +1,11 @@
+## 2026-10-24 十八原型街区阶段收口
+
+原PR81 / Issue78，feat/enemy-foundation，已正常整合main30781f4（#28仅文档，产品基线仍4141503）。十八个不同原型均有普通街区场景，人口25与两剧情守卫保留。EN17三岗位已接实际原子登记/连续可见等待/公共通道/越界解除与交火锁定，严格actor v2 program；外层7/3/5和原双备份不变。七固定旧端154项及结算后1b884f2读写通过。
+
+最终761单测、62CI守卫、package、save-browser/portable/UI、156敌人案例/148截图通过。HTML7,993,985字节/ac1f62b3b8920330e01c0a3e739d14efd7763cbed2366060b28a9ff61a61de9f，portable5,240,246字节。标准和退路两性能组各12Runtime/六浏览器绝对预算通过；五组A/B通过，原单次同比及近距/触屏失败原样保留。[最终自然输入](docs/enemy-street/natural-blockade-final.json)：2026-10-24T05:06:20.218Z～2026-10-24T05:16:26.220Z，606.0秒，3次撤离/25击杀/29次原生物资拖放，零页面错误/外部请求。
+
+入口：[检查站与最终验证](docs/tasks/enemy-blockade.md)、[合同](docs/tasks/enemy-save-contract.md)、[性能含失败](docs/tasks/enemy-performance.md)、[阶段验收表](docs/tasks/enemy-foundation.md#街区阶段验收对照)、[地区依赖](docs/tasks/enemy-regions.md)。源与制品已冻结；下一步正常提交/推原分支并等准确head完整CI，成功后按证据核销EN08/09/10/12/17/18（18/22）。EN19～22因十个未建地区/全图回归、真手机/真人平衡继续开放。不推main、不强推、不自行合并/部署、不读SSH私钥、不绕过钩子；当前无子agent。
+
 ## 2026-10-24 回收队本地交付完成
 
 承接PR81 / Issue78，分支feat/enemy-foundation，已接受main4141503。父71cf986盐蚀者完整CI40056388894成功；本批回收队准确head/完整CI以原PR核对，未合并/部署。十五不同原型有普通街区场景，三类封锁队登记、十个未建地图/剧情、真手机与真人平衡仍开放。

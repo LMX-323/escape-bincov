@@ -18,11 +18,12 @@ import { MARKET_RAIDERS, MARKET_STORES } from '../src/enemy-posts.ts';
 import { FAUNA_SITES, FAUNA_SQUAD } from '../src/enemy-fauna.ts';
 import { AFFECTED_SQUAD } from '../src/enemy-affected.ts';
 import { RECOVERY_SQUAD, RECOVERY_POSTS, RECOVERY_PICKUP } from '../src/enemy-recovery.ts';
+import { BLOCKADE_SQUAD, BLOCKADE_WAIT_POINT } from '../src/enemy-blockade.ts';
 
 const out = resolve('test-results/enemy-browser'); await mkdir(out, { recursive: true });
 const artRoles = ENEMY_CATALOG.filter(card => card.assets.status === 'body-and-corpse').map(card => card.id);
 const motionRoles = ['tidal-crab', 'saltback-dog', 'sac-spitter', 'salt-dazed', 'tide-chaser', 'salt-hulk'];
-const report = { scope: 'Fifteen distinct roles deploy natively: first three, seed mod 5 = 0 boss, mod 5 = 1 fauna, mod 15 = 2 affected, mod 5 = 3 recovery with one existing cargo. Three blockade art roles still use valid saved fixtures.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
+const report = { scope: 'All eighteen roles deploy natively in bounded street variants: first three, seed mod 5 = 0 boss, mod 5 = 1 fauna, mod 15 = 2 affected, mod 5 = 3 recovery with one existing cargo, mod 5 = 4 checkpoint with atomic registration and a real marked passage. Phase/art fixtures remain separate from ordinary deployment evidence.', screenshots: [], cases: [], errors: [], external: [], status: 'RUNNING' };
 function fixture(phase, role = 'raider-gunner') {
     const data = new Map(), state = createSessionState();
     const saves = new SaveSession(state, () => ({ getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) }));
@@ -341,6 +342,64 @@ try {
             assert.equal(cargo(restored).length,1);assert.deepEqual(cargo(restored),cargo(saved));
             report.cases.push({viewport,scenario:`native-recovery-${focus}`,population:25,team:4,carried,screenshot:image});
             console.log(`PASS native-recovery ${focus} ${viewport.width}: ordinary deployment, cargo, attack and restore`);await ctx.close();
+        }
+        for(const focus of ['blockade-sentry','blockade-patrol','blockade-sergeant']) {
+            const ctx=await browser.newContext({viewport,offline:true,hasTouch:touch,isMobile:touch});await resumeStalls(ctx);
+            const p=await ctx.newPage();p.setDefaultTimeout(60000);
+            p.on('pageerror',e=>report.errors.push(String(e)));p.on('request',r=>{if(/^https?:/.test(r.url()))report.external.push(r.url());});
+            await p.goto(pathToFileURL(resolve('dist/index.html')).href+'?test=1&entry=tabs');
+            await p.locator('[data-action="enter"]').click();await p.locator('#seed').fill('49');await p.locator('[data-action="deploy"]').click();await raidReady(p);
+            const initial=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY)),raid=initial.expansion.raid;
+            const team=raid.maps.coast.enemies.filter(e=>e.tactics?.squad===BLOCKADE_SQUAD),actor=team.find(e=>e.id===focus);
+            assert.equal(raid.roster.length,25);assert.equal(team.length,3);assert.ok(actor);
+            if(focus==='blockade-sentry') {
+                await drive(p,'placePlayer',BLOCKADE_WAIT_POINT,0,'coast');
+                if(touch)await p.locator('.coast-sample [data-act]').tap();else await p.keyboard.press('e');
+                await p.waitForFunction(()=>window.__bincovSample.host.lastBatch.frame.actors.some(a=>a.tactics?.checkpoint?.phase==='waiting'&&a.tactics.checkpoint.waited>=1.5));
+                if(touch)await p.locator('.coast-sample [data-pause]').tap();else await p.keyboard.press('Escape');
+                await p.waitForFunction(()=>window.__bincovSample.host.panel==='pause');
+                const paid=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+                await p.reload();await p.locator('[data-action="enter"]').click();await raidReady(p);
+                const resumed=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+                const members=r=>r.expansion.raid.maps.coast.enemies.filter(e=>e.tactics?.squad===BLOCKADE_SQUAD);
+                assert.deepEqual(members(resumed),members(paid),'pending registration and already waited time survive refresh');
+                const resume=p.locator('.coast-sample [data-do="resume"]');if(await resume.isVisible())await resume.click();
+                await p.waitForFunction(()=>window.__bincovSample.host.lastBatch.frame.actors.some(a=>a.tactics?.checkpoint?.phase==='granted'));
+                const image=`native-blockade-registration-${viewport.width}.png`;await p.screenshot({path:resolve(out,image)});report.screenshots.push(image);
+                // Cross the actual permission corridor through real keyboard/joystick input, without moving NPCs or time.
+                let cdp;
+                try {
+                    if(touch) {
+                        cdp=await ctx.newCDPSession(p);const origin=await p.evaluate(()=>{
+                            for(let d=0;d<96;d+=8)for(const [dx,dy] of [[0,0],[d,0],[-d,0],[0,d],[0,-d]]) {
+                                const x=Math.round(innerWidth*.22+dx),y=Math.round(innerHeight*.55+dy);
+                                if(document.elementFromPoint(x,y)?.tagName==='CANVAS')return {x,y};
+                            }return null;
+                        });assert.ok(origin);
+                        await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:1,...origin}]});
+                        await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:1,x:origin.x+64,y:origin.y}]});
+                    } else await p.keyboard.down('d');
+                    await p.waitForFunction(()=>window.__bincovSample.host.lastBatch.frame.player.x>=1170,null,{timeout:20000});
+                } finally {if(touch&&cdp)await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});else await p.keyboard.up('d');}
+                await frames(p,3);
+                const access=await p.evaluate(ids=>window.__bincovSample.host.lastBatch.frame.actors.filter(a=>ids.includes(a.uid)).map(a=>a.tactics.stance),team.map(e=>e.uid));
+                assert.ok(access.every(stance=>stance==='idle'),'a legal passage must not provoke the checkpoint');
+                report.cases.push({viewport,scenario:'native-blockade-registration-and-passage',waitRestored:true,input:touch?'native tap and CDP joystick':'native E and keyboard',screenshot:image});
+            } else if(focus==='blockade-patrol') {
+                await p.waitForFunction(([uid,home])=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return a&&Math.hypot(a.x-home.x,a.y-home.y)>8;},[actor.uid,actor.home]);
+            }
+            await drive(p,'placePlayer',{x:actor.home.x,y:actor.home.y-32},Math.PI/2,'coast');
+            await p.waitForFunction(uid=>{const a=window.__bincovSample.host.lastBatch.frame.actors.find(a=>a.uid===uid);return a?.tactics&&['windup','release','recovery'].includes(a.tactics.phase);},actor.uid);
+            const image=`native-blockade-${focus}-${viewport.width}.png`;await p.screenshot({path:resolve(out,image)});report.screenshots.push(image);
+            if(touch)await p.locator('.coast-sample [data-pause]').tap();else await p.keyboard.press('Escape');
+            await p.waitForFunction(()=>window.__bincovSample.host.panel==='pause');
+            const saved=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            await p.reload();await p.locator('[data-action="enter"]').click();await raidReady(p);
+            const restored=decodeSession(await p.evaluate(key=>localStorage.getItem(key),SESSION_KEY));
+            const members=r=>r.expansion.raid.maps.coast.enemies.filter(e=>e.tactics?.squad===BLOCKADE_SQUAD);
+            assert.deepEqual(members(restored),members(saved),'engagement, permission, ammunition and paid attack survive actual refresh');
+            report.cases.push({viewport,scenario:`native-blockade-${focus}`,population:25,team:3,screenshot:image});
+            console.log(`PASS native-blockade ${focus} ${viewport.width}: ordinary registration/patrol, paid trespass reaction and restore`);await ctx.close();
         }
     }
     assert.deepEqual(report.errors, []); assert.deepEqual(report.external, []); report.status = 'PASS';

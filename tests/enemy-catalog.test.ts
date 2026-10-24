@@ -21,7 +21,7 @@ test('the eighteen design identities stay stable and separate from legacy save I
     for (const [faction, count] of Object.entries(countByFaction)) assert.equal(ENEMY_CATALOG.filter(card => card.faction === faction).length, count);
     const cards: readonly EnemyArchetype[] = ENEMY_CATALOG;
     for (const card of cards) {
-        assert.equal(card.implementation, Number(card.designNumber) <= 15 ? 'street-prototype' : 'design-only');
+        assert.equal(card.implementation, 'street-prototype');
         assert.equal(Object.hasOwn(ENEMIES, card.id), false, 'new archetypes must not reinterpret legacy IDs');
         assert.equal(Object.hasOwn(LEGACY_ENEMY_PROFILES, card.id), false);
         assert.equal(card.assets.status, 'body-and-corpse');

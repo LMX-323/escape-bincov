@@ -1,6 +1,7 @@
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
 import { actorArchetype, actorDefinition, enemyBoundary } from '../enemy-archetypes';
+import { blockadeProgram, BLOCKADE_WAIT, BLOCKADE_PASSAGE } from '../enemy-blockade';
 import { WORLD, type Point } from '../world';
 import type { BulletState } from '../checkpoint';
 import { tideFlooded } from '../spatial';
@@ -118,6 +119,9 @@ function critChanceView(r: CoastRaidRuntime): CritChanceView | null {
 
 export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: ReadonlyMap<string, Point>): ViewFrame {
     const revealed = r.revelation.read(r, map);
+    const checkpointOwner=r.enemies.find(e=>e.hp>0&&e.id==='blockade-sentry'&&blockadeProgram(e))
+        ??r.enemies.find(e=>e.hp>0&&e.id==='blockade-sergeant'&&blockadeProgram(e))
+        ??r.enemies.find(e=>e.hp>0&&e.id==='blockade-patrol'&&blockadeProgram(e));
     // Overlap fails closed: a containing unrevealed room wins; deterministic ties by stable ID.
     const regionAt = (p: Point) => map.regions.filter(a => a.inside && contains(a, p))
         .sort((a, b) => Number(!!revealed[a.id]) - Number(!!revealed[b.id]) || a.id.localeCompare(b.id, 'en'))[0]?.id ?? null;
@@ -126,6 +130,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
         const enemy = player ? null : e as typeof r.enemies[number], hp = enemy?.hp ?? r.hp;
         const uid = enemy?.uid ?? 'player', velocity = velocities.get(uid) ?? { x: 0, y: 0 };
         const spec = enemy ? actorArchetype(enemy) : undefined;
+        const registration=enemy&&enemy.uid===checkpointOwner?.uid?blockadeProgram(enemy):null;
         const containerId = `corpse-${uid}`, profile = spec ? { bodyKind: spec.body, weapon: spec.weapon } : enemy ? getLegacyEnemyProfile(enemy.id) : null;
         return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? actorDefinition(enemy).hp : limits.hp, alive: hp > 0,
@@ -136,7 +141,8 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
                     : enemy.tactics.phase === 'recovery' ? spec.recovery : enemy.tactics.phase === 'release' && spec.attack === 'pounce' ? .3 : 0,
                 range: spec.range, aim: enemy.tactics.lockedAim,
                 warningLeft: Math.max(0, (spec.stance === 'conditional' ? 4 : 1.5) - enemy.tactics.warning),
-                boundary: enemyBoundary(enemy) } } : {}),
+                boundary: enemyBoundary(enemy),
+                ...(registration?{checkpoint:{phase:registration.phase,waited:registration.waited,waiting:BLOCKADE_WAIT,passage:BLOCKADE_PASSAGE}}:{}) } } : {}),
             state: { moving: !!(velocity.x || velocity.y), sprinting: player && r.sprinting, precise: player && r.intent.precise,
                 reloading: enemy?.tactics?.phase === 'reload' ? { left: enemy.tactics.phaseLeft, total: spec!.reload } : player && r.reloadLeft > 0 ? { left: r.reloadLeft, total: r.reloadTime } : null,
                 attackCooldown: Math.max(0, enemy?.cooldown ?? r.fireCooldown), hurtLeft: player ? r.hitTime : r.hurtTimers.get(uid) ?? 0, ai: enemy?.state ?? null },

@@ -6,6 +6,8 @@ import type { LegacyEnemyWorld } from './enemy-ai';
 import { enemyPost } from '../enemy-posts';
 import type { LootContainer } from '../loot';
 import { recoveryObjective } from './recovery-objective';
+import { advanceBlockadeCheckpoint } from './blockade-checkpoint';
+import { blockadePassageAllowed, blockadeProgram } from '../enemy-blockade';
 
 interface TacticalWorld extends LegacyEnemyWorld {
     readonly elapsed: number;
@@ -28,13 +30,13 @@ const turnToward = (from: number, to: number, limit: number) => {
 
 function observedTarget(world: TacticalWorld, e: EnemyState) {
     const def = actorArchetype(e)!, t = e.tactics!, boundary=enemyBoundary(e);
-    const candidates = [{ uid: 'player', point: world.player, relation: def.stance === 'hostile' ? 'hostile' : 'neutral' },
+    const candidates = [{ uid: 'player', point: world.player, relation: def.stance === 'hostile' || blockadeProgram(e)?.phase==='engaged' ? 'hostile' : 'neutral' },
         ...world.enemies.filter(other => other !== e && other.hp > 0 && other.tactics)
             .map(other => ({ uid: other.uid, point: other, relation: enemyRelation(e, other) }))];
     return candidates.filter(c => c.relation !== 'friendly' && distance(e, c.point) <= def.vision && world.sight(e, c.point)
         && (!(t.phase === 'windup' || t.phase === 'release') || !t.memory || t.memory.target === c.uid))
         .map(c => ({ ...c, engaged: t.stance === 'hostile' && t.memory?.target === c.uid,
-            inside: distance(boundary?.at??e.home, c.point) < (boundary?.radius??def.territory * .55) }))
+            inside: !(c.uid==='player'&&blockadePassageAllowed(e,c.point)) && distance(boundary?.at??e.home, c.point) < (boundary?.radius??def.territory * .55) }))
         .filter(c => t.stance !== 'hostile' || !t.memory || world.elapsed - t.memory.time > 7 || c.engaged || c.relation === 'hostile')
         .filter(c => c.uid === 'player' || c.engaged || c.relation === 'hostile' || def.stance !== 'hostile' && c.inside)
         .sort((a, b) => Number(b.engaged) - Number(a.engaged) || Number(b.relation === 'hostile') - Number(a.relation === 'hostile')
@@ -56,6 +58,7 @@ function meleeContact(world: TacticalWorld, e: EnemyState): string | null {
  * All changes live on EnemyState, including limited ammunition, warning and one-use squad reports. */
 export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffects, e: EnemyState, dt: number): void {
     const def = actorArchetype(e)!, t = e.tactics!;
+    advanceBlockadeCheckpoint(world,e,dt,effects.notice);
     const objective=recoveryObjective(world,e,effects.notice);
     const observed = observedTarget(world, e), sees = !!observed, inside = !!observed?.inside;
     e.cooldown = Math.max(0, e.cooldown - dt); e.repath -= dt; e.timer -= dt;
@@ -162,7 +165,16 @@ export function advanceTacticalEnemy(world: TacticalWorld, effects: TacticalEffe
         if (def.magazine && t.magazine === 0) {
             if (t.reserve === 0) t.stance = 'retreat';
             else { t.phase = 'reload'; t.phaseLeft = def.reload; effects.notice(e, '正在换弹。'); }
-        } else { t.phase = 'windup'; t.phaseLeft = def.windup; }
+        } else {
+            t.phase = 'windup'; t.phaseLeft = def.windup;
+            // Only an irrevocably paid attack at the actually seen player confirms an exchange.
+            // A warning/report from an empty weapon, or combat with an NPC, cannot revoke clearance.
+            const permission=blockadeProgram(e);
+            if(permission&&permission.phase!=='engaged'&&observed?.uid==='player') {
+                permission.phase='engaged';permission.since=world.elapsed;
+                effects.notice(e,'通行许可已暂停，请脱离交火区域。');
+            }
+        }
         e.state = 'attack'; return;
     }
     let target: Point;

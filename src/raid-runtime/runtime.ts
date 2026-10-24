@@ -5,6 +5,7 @@ import { actorArchetype, actorDefinition, enemyDefinition } from '../enemy-arche
 import { advanceTacticalEnemy, type TacticalEffects } from './tactical-enemy';
 import { advanceLegacyEnemy, type LegacyEnemyEffects } from './enemy-ai';
 import { syncRecoveryCargo } from '../enemy-recovery';
+import { blockadeProgram, requestBlockadeRegistration, BLOCKADE_WAIT, inCheckpointRect } from '../enemy-blockade';
 import { SURVIVAL as B } from '../balance';
 import { WORLD, TILE, isWalkable, lineOfSight, findPath, findDryRefuge, generateRun, type RunConfig, type Point, type MapData } from '../world';
 import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as Enemy, type LootState, type BulletState } from '../checkpoint';
@@ -1408,6 +1409,12 @@ export class CoastRaidRuntime implements RaidRuntime {
                 candidates.push({ id: door.id, kind: 'door', at, label: this.space.doors[door.id] ? '关门' : '开门' });
         }
         let target = interactionTarget(this.space, this.player, candidates);
+        // In the marked area registration outranks the old notice, while loot/doors/entries keep their normal priority.
+        // Reuse the real talk range/corridor filter rather than accepting an arbitrary officer reference.
+        if(target?.kind==='note'&&inCheckpointRect(BLOCKADE_WAIT,this.player)) {
+            const registration=interactionTarget(this.space,this.player,candidates.filter(c=>c.kind==='talk'&&blockadeProgram(this.enemies.find(e=>e.uid===c.id)!)));
+            if(registration)target={...registration,label:'登记 / 通行查询'};
+        }
         if ((target?.kind === 'container' || target?.kind === 'ground') && !this.inputFrame.touch) {
             const c = targets.find(c => c.id === this.lootTargetId);
             if (c)
@@ -1461,6 +1468,20 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         if (target.kind === 'talk') {
             const enemy = this.enemies.find(e => e.uid === target.id)!;
+            const access=blockadeProgram(enemy);
+            if(access) {
+                if(access.phase==='none') {
+                    if(!this.enemies.some(e=>e.uid===access.leader&&e.hp>0)) {
+                        this.say('登记暂不可用，请从外围公共道路绕行。',10);return true;
+                    }
+                    const accepted=this.layerMutation(state=>requestBlockadeRegistration(state.raid!,enemy.uid),true,'registration');
+                    if(accepted)this.say('登记已受理。请到哨兵左侧的金色等候标记内连续停留四秒；许可只限公共通道。',10);
+                    return accepted;
+                }
+                this.say(access.phase==='engaged'?'通行许可已暂停，请脱离交火区域。':access.phase==='granted'
+                    ?'本次行动已登记，请沿绿色公共通道通过，后场仍受限。':'请在金色等候标记内连续停留四秒；离开后需重新等待。',10);
+                return true;
+            }
             const t=enemy.tactics!,program=t.version===2?t.program:null;
             const text = enemy.tactics!.stance === 'hostile' ? '正在交火，请远离现场。' :
                 program?.kind==='recovery' ? program.phase==='delivered' ? '回收完成，请从公共通道绕行。'

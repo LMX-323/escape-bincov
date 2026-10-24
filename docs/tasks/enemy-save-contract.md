@@ -44,7 +44,7 @@
 
 ## 盐蚀者能力 v2（2026-10-24）
 
-外层仍为session7/expansion3/raid5。`EnemyTactics`保持严格v1；v2显式增加`program`，当前唯一允许kind是affected，armament只能为unarmed/polearm/rifle，且受原型约束：只有执仪者可有后两种，其余三种必须unarmed。未知kind/版本/字段、错误武器、弹量和跨原型注入整笔拒绝。没有把新字段塞进v1，也不在恢复旧档时补字段或换武器。`actorArchetype/actorDefinition`共同决定攻击类型、射程、弹量、装备与投影；枪械执仪者四发弹匣/八发备弹，单独持久，不影响旧v1长柄规则。
+外层仍为session7/expansion3/raid5。`EnemyTactics`保持严格v1；v2显式增加`program`，该批首次引入的kind是affected，后续recovery/blockade分别见下节，armament只能为unarmed/polearm/rifle，且受原型约束：只有执仪者可有后两种，其余三种必须unarmed。未知kind/版本/字段、错误武器、弹量和跨原型注入整笔拒绝。没有把新字段塞进v1，也不在恢复旧档时补字段或换武器。`actorArchetype/actorDefinition`共同决定攻击类型、射程、弹量、装备与投影；枪械执仪者四发弹匣/八发备弹，单独持久，不影响旧v1长柄规则。
 
 原enemyBackup/perksBackup逐字保留，不覆盖或重新嵌套。新出击的v2能力、原型/武器和名册在同一候选提交；失败保留此前字节和状态，重试不额外分配。五固定历史端（前四端加174341b）对三个新端严格验证过的真实v2存档（枪/长柄/换弹中）连同正反例共110例通过：旧端拒绝整个新活动档，所有失败后写入/公共导入尝试均零写入、原文可导出。[完整探针报告](../enemy-street/program-old-clients.json)保留实际SHA/案例。另将真实v2行动正常结算后交给固定174341b验证：[旧端读取、初始化、继续写入全部通过](../enemy-street/program-settled-old-reader.json)，两个原始备份仍逐字相同。保持未知能力失败关闭，不依靠外层版本大小推断支持。每阶段往返、真实发射/剩余掉落和中途换弹恢复由[能力测试](../../tests/enemy-affected.test.ts)验证。
 
@@ -53,6 +53,14 @@
 `program.kind=recovery` 保存队长/物资箱UID、回收/装箱/搬运/交付/撤回阶段、0～2路段、阶段开始与最后收到通信的行动秒。四个不同岗位必须同图同队且引用同一个自指队长和唯一crate；已收命令不能领先队长阶段/路段/时间。身份或阶段未知、支持岗位重复、跨图货物和未来时间均整档拒绝。载体死亡后实体与箱体仍保留，程序不会再移动箱子；不跨层搬运或追击。
 
 每个首次出现的阶段都用真实控制器移动后捕获，并在新的SaveSession/Runtime中恢复；搬运中搜刮失败会回滚整个世界与背包，重试不复制物资。真实搬运、交付、撤回三候选已由当前解码器严格接受，再交给六个固定旧端（增加`71cf986`）验证，132项正反例通过：[实际报告](../enemy-street/recovery-old-clients.json)。外层7/3/5及原始双备份沿用既有规则，没有为未知program增加容错默认值。
+
+## 检查站能力 v2（2026-10-24）
+
+`program.kind=blockade`保存班长UID、none/waiting/granted/engaged、等待行动秒和阶段开始时间。固定街区地图/岗位、三种不同角色、同图同队自指班长严格绑定；等待0～4秒且不超过行动时长，获准必须恰满4秒，跟随者不能早于班长获准或接受未来命令。真实交火可先在受击成员本地锁定，通信不能伪造来源。未知kind、额外键、移除program或错配v1均整档拒绝。外层仍7/3/5，旧v1行为和原字节双备份不变。
+
+登记通过实际Runtime交互进入同一SaveSession候选，提交前不显示成功；quota失败连同整组状态回滚，保留票据重试一次。等待仅由可见班长在真实行动时间推进，暂停不推进；捕获/新Runtime恢复不重新等待、免除已付前摇或补弹。地面标记由持久许可与静态几何派生，无第二个计时器；箱体/门梯交互保持原优先级。
+
+七个固定历史客户端（新增`1b884f2`）对真实控制器产生且当前严格解码通过的等待/许可/交火候选，连同正反例共[154/154通过](../enemy-street/blockade-old-clients.json)。三个可复现输入均为合成新档，非用户存档：[等待](../enemy-street/blockade-synthetic-waiting.json)、[许可](../enemy-street/blockade-synthetic-granted.json)、[交火](../enemy-street/blockade-synthetic-engaged.json)。旧端拒绝整个未知活动档、失败后零写入并保留原字节；正常结算后固定1b884f2端[读取/初始化/继续保存通过](../enemy-street/blockade-settled-old-reader.json)，两备份逐字相同。真实损伤、空枪报告、换弹退回、军官损失、箱体守恒和坏档反例见[16项检查站测试](../../tests/enemy-blockade.test.ts)。
 
 ## 历史方案与探针记录（下文版本号不是当前格式）
 

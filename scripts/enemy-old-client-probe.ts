@@ -15,7 +15,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = join(root, 'test-results', 'enemy-old-client-probe');
 const versions = ['35b3a38223a7bb0020db25e9b2d0bb5476caa993', '76adbd627f582d063cc6f80a4551e8b8cbe2dddd',
     'dc14ad5c38008d36392ad2cf02a73a2badc51d87', '8b6192d9987b6e65dc458095f690cd6e017e7d23',
-    '174341b02c6c3efe32fbd7f0151473b97ec42812', '71cf986e620de38eaf5b3ca015fa52cacb47923f'];
+    '174341b02c6c3efe32fbd7f0151473b97ec42812', '71cf986e620de38eaf5b3ca015fa52cacb47923f',
+    '1b884f29d4a137b4dd7a7e392ec8c5072cdd51f5'];
 const NOW = 1800000000000;
 const SESSION_ERROR = '无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。';
 const EXPANSION_ERROR = '建筑、角色或基地存档损坏或版本不兼容。原始数据已保留。';
