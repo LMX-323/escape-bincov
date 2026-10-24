@@ -1,8 +1,10 @@
 # 任务交接入口
 
+- 2026-10-24 · [县域选图界面 / #82](docs/tasks/county-map-select.md)：`feat/county-map-select` / PR #91；十二地区战术地图、两处现有入口可出击、十区暂未开发。[Opus 视觉深化](docs/tasks/county-map-select.md#opus-视觉深化2026-10-24)：先正常合并 main（#89、#90、#92、#93、#94）并重建字体子集与生成物；地图固定 3:2（容器查询单位适配，最多裁 6%），标记钉在地标上、标签放一侧；选中时局部点亮、准星滑动锁定（`CSS.registerProperty`）、路线沿公路绘制；十二张插图接入区域情报；出发按钮常驻底部；出击面板由 `morph.ts` 就地更新，焦点、种子与过渡在重绘中保留。`test:raid-default` R10 扩充、新增 R11 与 `tests/deploy-map.test.ts`。真机与真人观感未验，额外训练 E4 记录见任务文档；准确 head / CI 见 PR，新增关卡继续归 #82。
+
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
-- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) 原分支续作：已正常合入 main `1af0fec`，内置 image_gen 交七类五朝向的受击／恢复原图（8 张含拾荒者首版）及逐字提示词。[已有任务摘要](docs/hit-feel-art/README.md#2026-10-24-原图交付与验收结果)和[只读检查结果](docs/hit-feel-art/source-audit.json)记录 35/35 参考哈希一致、649/649 单测、package 通过且产物未变；生成画布、站立列锁定及部分锚点未通过，未转 Ready、未接入、未合并。下一步先返修，再由接入 PR 导出运行帧及两档分辨率验收；B 组仍依赖 #81。
+- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) 原分支续作：同步 main `4141503`，按维护者“允许像素工具返修，保留原图”完成七类 `pixel-v1` 规范图集（70 个受击／恢复姿态），8 张 image_gen 原图和实际提示词完整保留。[本轮摘要](docs/hit-feel-art/README.md#2026-10-24-像素规范版)、[独立像素检查](docs/hit-feel-art/pixel-audit.json)及1倍／3倍审图和GIF：画布、站立列、肩线、脚部固定区、轮廓差异与配色检查7张／35朝向／70姿态全部通过，35张参考哈希仍匹配最新来源。美术交付完成；下一步接入PR从规范版导出运行帧，验证实际播放和两档分辨率；B组依赖#81。本PR仍草稿、未合并，游戏源码与产物相对main不变。
 
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
   - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。

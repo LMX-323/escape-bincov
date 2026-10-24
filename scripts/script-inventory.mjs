@@ -10,7 +10,7 @@ const groups = [
   ] },
   { kind: 'tool', reason: '素材生成、导入或交付工具；会写源码或资产，不能当作只读测试执行。开工前检查输入清单、哈希、字体环境和输出。', files: [
     'coast-import-assets.mjs', 'mall-assets.mjs', 'opening-assets.mjs', 'station-assets.mjs', 'subset-font.py', 'build-coast-runtime.mjs',
-    'format.mjs',
+    'format.mjs', 'prepare-county-map.mjs',
   ] },
   { kind: 'diagnostic', reason: '帧时、标题性能或确定性射击测量；参数见源码头部，独立运行并记录环境。本轮未重测这些性能工具，不把输出数值当作真人手感或 GPU 完成时间。', files: [
     'coast-sample-measure.mjs', 'title-performance.mjs', 'shooting-bench.ts',

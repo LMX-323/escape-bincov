@@ -1,8 +1,45 @@
 # 受击姿态美术需求（#75 打击感）
 
-草稿。GPT 已交七类角色的受击／恢复原始图集，**尚未通过严格像素验收，不能直接接入**。游戏接入仍另开代码 PR；本次没有改 `src/`、现有运行图或运行素材清单。
+七类角色的受击／恢复**像素规范版已完成并通过素材检查**；8 张 image_gen 原图与实际提示词完整保留。PR 仍保留草稿，游戏接入另开代码 PR；本次没有改 `src/`、现有运行图或运行素材清单。
+
+## 2026-10-24 像素规范版
+
+原图两轮未能锁定画布与站立列后，维护者明确同意“允许像素工具返修，保留原图”，随后要求继续。本轮按此授权制作独立 `pixel-v1` 版，不覆盖原图、不把原图失败项改记为通过。最新同步 main 为 `4141503c813cc5aaf415d9257e53c679f9878b62`（#91 已合入）；B 组参考仍匹配 #81 head `174341b`。
+
+| 角色 | 最终规范版 | 整张尺寸 |
+| --- | --- | --- |
+| 拾荒者 | [scav-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/scav-hurt-sheet-pixel-v1.png) | 768×1920 |
+| 盐枭 | [salt-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/salt-hurt-sheet-pixel-v1.png) | 768×1920 |
+| 守潮人 | [elite-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/elite-hurt-sheet-pixel-v1.png) | 768×1920 |
+| 潮蚀生物 | [creature-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/creature-hurt-sheet-pixel-v1.png) | 960×1120 |
+| 近身掠夺者 | [raider-melee-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/raider-melee-hurt-sheet-pixel-v1.png) | 768×1920 |
+| 拾荒枪手 | [raider-gunner-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/raider-gunner-hurt-sheet-pixel-v1.png) | 768×1920 |
+| 望风者 | [raider-lookout-hurt-sheet-pixel-v1.png](../../assets/hit-feel/sources/raider-lookout-hurt-sheet-pixel-v1.png) | 768×1920 |
+
+每张保持原 3 列 × 5 行：站立／受击／恢复，E／SE／S／NE／N。第 0 列直接保留模板原始像素；动作在原 32×48／40×28 逻辑网格分部位编辑，再作精确最近邻 8 倍放大。没有把不合格生成图逐帧裁切、居中或缩放来伪装合格图。
+
+人形受击时头帽／兜帽下收 2 像素，恢复下收 1 像素；躯干局部向内收 1 像素，膝部微屈。肩点所在的第 19–21 行完全不动，鞋底及脚部固定区完整保留，守潮人的躯干与膝部变化更小。生物壳体下压 2／1 像素、上部向内收，底部 4 行支撑足完全不动。角色身份、五朝向、已有身体部件、光照和像素配色沿用原版，不新增手、武器或特效。
+
+### 像素检查与审看
+
+- [独立检查脚本](audit-pixel-poses.py)：`python docs/hit-feel-art/audit-pixel-poses.py`。只读已保存 PNG，不调用绘制函数；[结果](pixel-audit.json)为 **7 张／35 朝向／70 新姿态，0 失败**。
+- 画布、透明背景、均匀 8×8 块、站立列逐像素一致、原图配色、肩线固定区、脚部固定区、帧内边界全部通过；受击头顶／壳顶下收恰为 2 像素，恢复为 1 像素；恢复与受击不同，变化像素数少于受击。各方向受击轮廓差异至少 20 个逻辑像素，躯干相对原版的横向重心变化最大约 0.17 像素。
+- 逐格审看下方 1 倍／3 倍预览，核对朝向、部件、轮廓、配色与恢复顺序；另提供固定原点的[慢放 GIF](pixel-preview.gif)，用于观察脚点和动作过渡。GIF 时间仅供审图，不是最终游戏播放参数。
+- [可复现像素编辑脚本](author-pixel-poses.py)：`python docs/hit-feel-art/author-pixel-poses.py`；[源图集登记与 SHA-256](../../assets/hit-feel/sources/pixel-editions-v1.json)。绘制和检查相互独立，没有导出或接入运行帧。
+- 首次规范版检查查出生物三个朝向的最顶端单像素壳脊被收缩掉，使下压超出 2／1 像素；保留壳脊首行后重绘，复验通过。没有放宽检查。
+- 8/8 原始 image_gen PNG 与 `b627f2c` 逐字节一致；35/35 参考帧与最新来源一致。原图失败和本轮规范版通过分别记录。
+
+![A 组：上方 1 倍、下方 3 倍，依次站立／受击／恢复，素材审图并非游戏截图](pixel-preview-a.png)
+
+![B 组：上方 1 倍、下方 3 倍，依次站立／受击／恢复，素材审图并非游戏截图](pixel-preview-b.png)
+
+**美术交付范围已完成。** 运行帧切出、运行清单与哈希、实际播放及闪白轮廓、1280×720／1920×1080 游戏内叠加观感仍属于接入 PR；本 PR 保留草稿，不把素材审图记为这些项目通过。B 组接入仍等 #81 合入。下一位从上述七张 `pixel-v1` 图集接手，不用失败的 image_gen 原图作为运行输入。
+
+同步 main `4141503` 后，Windows / Node 24.19.0 / pnpm 11.19.0 实测 `pnpm test` **653/653**、`pnpm package` **通过**；重建后 HTML、ZIP 和发布清单与该 main 逐字节一致。七张规范版重新绘制后 SHA-256 完全一致，38 个本页本地链接全部存在。本轮未运行本地游戏浏览器套件；原图提交 `b627f2c` 的八组完整 CI 已通过，规范版新 head 的 CI 以原 PR 最新检查为准，两者分别计证据。
 
 ## 2026-10-24 原图交付与验收结果
+
+本节保留首轮原图检查，所述失败针对原始 image_gen 输出；当前交付以上方像素规范版为准。
 
 续作原 [PR #96](https://github.com/xuys2025/escape-bincov/pull/96)，原 head `7900f98`；已正常合入接手时最新 main `1af0fecdbcc5eb9790fd34bd5a8701a5c2fbb329`，未重写历史。B 组最新 #81 head `174341b02c6c3efe32fbd7f0151473b97ec42812` 的 15 张身体参考与模板哈希仍全部一致，A 组 20 张也与最新 main 一致。
 

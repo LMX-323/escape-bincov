@@ -1,4 +1,5 @@
 import * as D from '../domain';
+import { countyMapHtml, deploymentRegion, deploymentWorld, regionBriefHtml, type CountyArt } from './deploy-map';
 import type { Attribute, CartView, FacilityInfo, HideoutSnapshot, PerkBoard, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
 import { ATTRIBUTE_NAMES, PERK_UI, critContext, critView, perkPanel, perkWaiting, type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from '../perk-copy';
 import { RECIPES } from '../expansion-state';
@@ -135,12 +136,8 @@ export function generatorHtml(s: HideoutSnapshot) {
   ${done ? `<p class="muted">${esc(q.radio)}</p>` : `<ul class="needs">${needs.map(x => `<li class="${x.have >= x.n ? 'ok' : ''}">${icon(x.item, 24)}<span>${esc(D.ITEMS[x.item].name)}</span><b>${Math.min(x.have, x.n)} / ${x.n}</b></li>`).join('')}</ul>${btn('交付维修物资', 'quest:repair', ready ? 'primary wide' : 'wide', ready ? '' : 'disabled')}`}</div>`;
 }
 
-const WORLDS: { id: RunWorld; name: string; note: string }[] = [
-  { id: 'coast', name: '沿海封锁区', note: '经典规则 · 每局 10 分钟' },
-  { id: 'buildings', name: '沿海街区', note: '居民楼 · 可进入建筑' },
-  { id: 'mall', name: '滨湾商场', note: '两层与露台' },
-];
-export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string, worlds: readonly RunWorld[]) {
+export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string, worlds: readonly RunWorld[], preview: string | null, art: CountyArt['regions'], narrow: boolean) {
+  const region = deploymentRegion(worlds, world, preview), canDeploy = deploymentWorld(region, worlds) !== null;
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const meds = D.count(p.bag, 'bandage') + D.count(p.bag, 'medkit');
   const checks = [
@@ -150,11 +147,12 @@ export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight
     { ok: dep.weight <= dep.carry, label: `携行重量 · ${dep.weight.toFixed(1)} / ${dep.carry.toFixed(1)} kg` },
     { ok: s.body.hp >= s.body.hpMax, label: `生命 · ${Math.floor(s.body.hp)} / ${s.body.hpMax}` },
   ];
-  return `<div class="deploy"><h3>行动区域</h3><div class="worlds">${WORLDS.filter(x => worlds.includes(x.id)).map(x => `<label class="world ${x.id === world ? 'on' : ''}"><input type="radio" name="world" value="${x.id}" ${x.id === world ? 'checked' : ''}><b>${x.name}</b><small>${x.note}</small></label>`).join('')}</div>
-  <label class="seedrow">行动种子 <input id="seed" maxlength="16" placeholder="留空随机" value="${esc(seed)}" aria-label="行动种子"><small>输入相同的数字或文字，可重现本局初始配置。</small></label>
-  <h3>出发前检查</h3><ul class="checks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'bad'}"><i></i>${esc(c.label)}</li>`).join('')}</ul>
-  <p class="rule">撤离失败会丢失背包物资和主武器，安全箱保留。出击即写入存档，院门打开后不能撤回。</p>
-  <div class="go"><span>${dep.warnings.length ? esc(dep.warnings.join(' · ')) : '装备与快捷补给已备齐'}</span>${btn('开门出击 <span aria-hidden="true">→</span>', 'deploy', 'primary big')}</div></div>`;
+  const ready = checks.filter(c => c.ok).length, clear = canDeploy && !dep.warnings.length;
+  return `<div class="deploy county-deploy">${countyMapHtml(region, worlds, narrow)}<aside class="county-briefing" aria-label="区域情报与出击准备">
+  ${regionBriefHtml(region, worlds, art)}<div class="county-preflight"><h3>出发前检查<span class="${ready === checks.length ? 'ok' : 'bad'}">${ready} / ${checks.length}</span></h3><ul class="checks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'bad'}"><i></i>${esc(c.label)}</li>`).join('')}</ul>
+  <p class="rule">撤离失败会丢失背包物资和主武器，安全箱保留。出击即写入存档。</p></div>
+  <div class="go"><span class="${clear ? 'ok' : ''}">${canDeploy ? dep.warnings.length ? esc(dep.warnings.join(' · ')) : '装备与快捷补给已备齐' : '选择地图上已开放的区域即可出击。'}</span><div class="go-row">
+  <label class="seedrow" title="相同种子可重现初始配置">种子 <input id="seed" maxlength="16" placeholder="留空随机" value="${esc(seed)}" aria-label="行动种子"></label>${btn(canDeploy ? '开门出击 <span aria-hidden="true">→</span>' : '暂未开发', 'deploy', 'primary big', canDeploy ? '' : 'disabled')}</div></div></aside></div>`;
 }
 
 export function trainingHint(t: TrainingProgress): string {
