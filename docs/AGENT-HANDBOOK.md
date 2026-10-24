@@ -35,7 +35,7 @@ git rev-parse HEAD
 - `pnpm dev` 在 `http://127.0.0.1:4173` 提供刷新后重建；`pnpm package` 执行类型检查、构建、两种 ZIP 和 SHA-256 清单。浏览器脚本读取打包 HTML，源码改动后先重建，避免测试旧制品。游戏脚本的 esbuild 配置（loader、target、define）只在 [game-bundle.mjs](../scripts/game-bundle.mjs) 维护，正式构建与诊断共用：新资源类型的 loader 改这一处，诊断只在调用处覆盖压缩、探针等差异。
 - Playwright 用 `pnpm exec playwright install chromium`；Linux 缺系统库时用 `pnpm exec playwright install --with-deps chromium`。浏览器选择统一见 [browser-options.mjs](../scripts/browser-options.mjs)：可设置 `BINCOV_CHROME`，`BINCOV_CHROME_ARGS` 为 JSON 字符串数组。
 - `test:portable` 在 Windows 用 .NET 解压，在 Linux/macOS 需要 Python 3。证据默认写入忽略的 `test-results/`；只将经过审核、具有长期价值的报告和截图提升到 `docs/`。
-- `test:expansion` 需要两份真实固定旧客户端：扩展前的 `test-results/pre-m0.html` 和 session v5 之前最后的 v4 客户端 `test-results/pre-perk.html`，准备方式见 [CI 工作流](../.github/workflows/ci-pages.yml)，脚本会核对哈希。`test:mobile-ux` 的另一项旧客户端检查仅在提供 `BINCOV_LEGACY_HTML` 时执行；不能拿当前 HTML 或不匹配旧包替代。
+- `test:expansion` 需要三份真实固定旧客户端：扩展前的 `test-results/pre-m0.html`、session v5 之前最后的 v4 客户端 `test-results/pre-perk.html` 和 session v6（枪械实例）之前最后的 v5 客户端 `test-results/pre-gunsmith.html`，准备方式见 [CI 工作流](../.github/workflows/ci-pages.yml)，脚本会核对哈希。`test:mobile-ux` 的另一项旧客户端检查仅在提供 `BINCOV_LEGACY_HTML` 时执行；不能拿当前 HTML 或不匹配旧包替代。
 
 安装或浏览器失败时记录具体命令和错误。未运行成功不能记为通过，不得修改断言来掩盖环境故障。
 

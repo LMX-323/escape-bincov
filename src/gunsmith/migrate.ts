@@ -7,29 +7,27 @@
  *
  * Deterministic and idempotent (a v3 profile or v6 record comes back as an equal copy after the same checks); no
  * clock, RNG or entity serials. Every result is checked as the new format: each gun valid (validateGun) and no gun,
- * part or item uid used twice. Not wired in: M1-02 calls these from the decoders after the old format's own strict
- * check (docs/gunsmith/CONTRACTS.md, the M0-06 section).
+ * part or item uid used twice. domain migrateSave calls migrateProfile for profiles v0-v2, and decodeSession calls
+ * migrateRecord for records v2-v5 after the old format's own strict check, then checks the result as v6
+ * (docs/gunsmith/CONTRACTS.md, the M0-06 section).
  */
-import type { Equipment, Item, SaveDataV1 } from '../domain';
-import type { LootState } from '../checkpoint';
+import type { Equipment, SaveDataV1 } from '../domain';
 import type { SessionRecord } from '../recovery-store';
 import type { GunId } from './catalog';
-import { factoryState, gunUids, isGunId, repeatedUids, validateGun, type GunState } from './instance';
+import { factoryState, gunUids, isGunId, repeatedUids, validateGun } from './instance';
 
 /** The guns a save from before the catalog can hold: the three that were items. The test ties them to domain WEAPONS. */
 export const OLD_GUNS: readonly GunId[] = ['pistol', 'shotgun', 'carbine'];
-/** From profile v3 on, a gun item carries its state and no other item does. M1-01 moves `gun` into domain's Item. */
-export type StoredItem = Item & { gun?: GunState };
-/** From record v6 on, ground loot that is a gun carries its state the same way. */
-export type StoredLoot = LootState & { gun?: GunState };
-/** From profile v3 on, the equipped slot (profile equipment, every raid loadout) names its gun; both null with no gun. */
-export type StoredEquipment = Equipment & { weaponUid: string | null; gun: GunState | null };
-export type ProfileV3 = Omit<SaveDataV1, 'version' | 'equipment'> & { version: 3; equipment: StoredEquipment };
+/** The equipped slot before gun instances: the gun type and magazine, with no uid or state. */
+export type EquipmentV2 = Omit<Equipment, 'weaponUid' | 'gun'>;
+/** A profile before gun instances (v2): no item has a `gun` field and the equipped slot names no gun uid. Read only. */
+export type ProfileV2 = Omit<SaveDataV1, 'version' | 'equipment'> & { version: 2; equipment: EquipmentV2 };
 /**
- * Session record v6: the keys v3, v4 or v5 had for the expansion it carries (none; a v1/v2 expansion adds `expansion`
- * and `systemsBackup`; a v3 one also `perksBackup`), plus `gunsBackup`. Nested loadouts keep their old types until M1-01.
+ * A session record before gun instances: v3 without an expansion, v4 with a v1/v2 one, v5 with a v3 one, and no
+ * `gunsBackup`; its profile is v2. What decodeSession checks by the old rules and hands to migrateRecord. Its nested
+ * loadouts, ground loot and containers are typed as the current ones but hold no gun fields.
  */
-export type RecordV6 = Omit<SessionRecord, 'version' | 'profile'> & { version: 6; profile: ProfileV3; gunsBackup: string | null };
+export type RecordV5 = Omit<SessionRecord, 'version' | 'profile' | 'gunsBackup'> & { version: 3 | 4 | 5; profile: ProfileV2 };
 
 type Json = Record<string, any>;
 const EQUIPPED = 'gun-v6';
@@ -134,14 +132,14 @@ function verify(h: Holders) {
  * Profile v2 (as decodeStoredProfile or domain migrateSave returns it, a legacy-key profile included) to v3; a v3
  * profile comes back as a checked copy. Throws on anything else, never repairs.
  */
-export function migrateProfile(profile: SaveDataV1 | ProfileV3): ProfileV3 {
+export function migrateProfile(profile: ProfileV2 | SaveDataV1): SaveDataV1 {
     const out: unknown = structuredClone(profile);
     if (!obj(out) || (out.version !== 2 && out.version !== 3)) return reject();
     const h: Holders = { items: [], loot: [], slots: [], mirrors: new Set(), uids: [] };
     profileHolders(h, out, false);
     if (out.version === 2) { upgrade(h, strings(out)); out.version = 3; }
     verify(h);
-    return out as ProfileV3;
+    return out as SaveDataV1;
 }
 
 /**
@@ -151,7 +149,7 @@ export function migrateProfile(profile: SaveDataV1 | ProfileV3): ProfileV3 {
  * unknown version, a profile version that does not match, old records already holding gun fields, a gun an old save
  * cannot hold, and any result that breaks the gun rules; never repairs.
  */
-export function migrateRecord(record: SessionRecord | RecordV6, original: string | null): RecordV6 {
+export function migrateRecord(record: RecordV5 | SessionRecord, original: string | null): SessionRecord {
     const out: unknown = structuredClone(record);
     if (!obj(out) || out.format !== 'escape-bincov-session' || ![3, 4, 5, 6].includes(out.version) || !obj(out.profile)
         || out.profile.version !== (out.version === 6 ? 3 : 2)) return reject();
@@ -166,5 +164,5 @@ export function migrateRecord(record: SessionRecord | RecordV6, original: string
         out.profile.version = 3; out.version = 6; out.gunsBackup = original;
     }
     verify(h);
-    return out as RecordV6;
+    return out as SessionRecord;
 }

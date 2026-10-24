@@ -2,7 +2,7 @@ import * as D from './domain';
 import { moveQuantity, placementError, type LootContainer, type LootEndpoint, type LootTransfer } from './loot';
 import { initialCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { generateRun } from './world';
-import { decodeSession, recordVersion, RecoveryStore, StorageConflictError, type SessionRecord } from './recovery-store';
+import { decodeSession, RecoveryStore, StorageConflictError, type SessionRecord } from './recovery-store';
 import { newExpansion, rpgEnabled, stationUpgraded, upgradeToRpg, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
 import { initializeMallRaid, mallRunConfig, mallWorldV2, mallWorldV3 } from './mall-world';
@@ -213,10 +213,9 @@ export class SaveSession {
         if (action(draft) === false) return null;
         const raid = draft.expansion.raid ?? draft.legacyRaid;
         if (raid) D.checkpointSafe(draft.profile, raid.loadout.safe, raid.runId);
-        // Checked as the record version commit writes for this expansion (v4, or v5 with its perksBackup).
-        const version = recordVersion(draft.expansion);
-        decodeSession(JSON.stringify({ ...record, version, profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion,
-            terminal: draft.profile.activeRun ? null : record.terminal, perksBackup: version === 5 ? record.perksBackup ?? null : undefined }), this.resolveWorld);
+        // Checked as the record commit writes for this expansion: v6, with perksBackup beside a v3 expansion only.
+        decodeSession(JSON.stringify({ ...record, profile: draft.profile, raid: draft.legacyRaid, expansion: draft.expansion, systemsBackup: record.systemsBackup ?? null,
+            terminal: draft.profile.activeRun ? null : record.terminal, perksBackup: draft.expansion.version === 3 ? record.perksBackup ?? null : undefined }), this.resolveWorld);
         const ticket: ExpansionTransaction = Object.freeze({ kind: 'expansion-transaction' });
         this.prepared.set(ticket, { revision: record.revision, before, draft: structuredClone(draft) });
         return ticket;

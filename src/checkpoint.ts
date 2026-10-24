@@ -1,9 +1,11 @@
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
-import { decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { decodeOldStoredProfile, decodeStoredProfile, finite, hasOwnStringKey, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 import type { LootContainer } from './loot';
 import type { CritSnapshot } from './perks';
+import { gunUids, isGunId, validateGun, type GunState } from './gunsmith/instance';
+import type { ProfileV2 } from './gunsmith/migrate';
 
 export const WORLD_VERSION = 'coast-v2';
 export interface ActorState extends Point { rotation: number }
@@ -12,7 +14,8 @@ export interface EnemyState extends ActorState {
   state: 'patrol' | 'investigate' | 'chase' | 'attack' | 'return';
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
 }
-export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean }
+/** Ground loot. `gun`: a gun on the ground carries its state as an item does (record v6); nothing else has one. */
+export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean; gun?: GunState }
 export interface BulletState extends ActorState {
   uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string;
   /**
@@ -51,7 +54,7 @@ export function initialCheckpoint(config: RunConfig, carried: D.RunLoadout): Rai
     kills: 0, elapsed: 0, highTide: config.initialHigh, knife: false, reloadLeft: 0, fireCooldown: 0,
     warned: false, tideChanged: false, shotNoise: null, noiseRadius: 510, noiseTime: 0, hitTime: 0,
     exhausted: false, stepTime: 0, noteSeen: [], rng: random.getState(), nextEntity: 1,
-    enemies, loot: config.loot.map((l, i) => ({ ...l, uid: `loot-${i}`, relief: false })), bullets: [], containers };
+    enemies, loot: config.loot.map((l, i) => ({ ...l, uid: `loot-${i}`, relief: false, ...D.factoryGun(l.id) })), bullets: [], containers };
 }
 
 const fail = (): never => { throw new Error('行动检查点损坏或版本不兼容。原始存档已保留，请导出备份。'); };
@@ -59,18 +62,24 @@ function point(value: any): boolean { return !!value && finite(value.x, 0, WORLD
 function actor(value: any): boolean { return point(value) && finite(value.rotation, -100, 100); }
 function bool(value: unknown): boolean { return typeof value === 'boolean'; }
 function inventoryIdentity(inv: D.Inventory): string {
-  return JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated])]);
+  return JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated, D.gunKey(i.gun)])]);
 }
 
-/** Strict validation before rebuilding any world objects; never normalize a partial raid. */
-export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy = false): RaidCheckpoint {
-  const c = value as RaidCheckpoint;
+/**
+ * Strict validation before rebuilding any world objects; never normalize a partial raid. The profile's version names
+ * the format: v3 (record v6) holds gun instances on the loadout, on ground guns and in containers, and one uid space
+ * for every item, gun and part that no ground uid, enemy, round or container may share; v2 (records up to v5) holds
+ * none and keeps the old rules, which decodeSession applies before migrating such a record.
+ */
+export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | ProfileV2, legacy = false): RaidCheckpoint {
+  const c = value as RaidCheckpoint, guns = profile.version === 3;
   if (!c || c.version !== (legacy ? 1 : 2) || ![WORLD_VERSION, 'coast-v1'].includes(c.worldVersion) || !whole(c.seed, 0, UINT32_MAX)
       || typeof c.runId !== 'string' || c.runId !== profile.activeRun?.runId || c.seed !== profile.activeRun.seed
       || !c.loadout || c.loadout.runId !== c.runId || !actor(c.player)) fail();
   // Carried gear follows the stored-profile rules: checked as the profile it settles into, failing with that profile's errors.
-  decodeStoredProfile({ ...profile, activeRun: null, bag: c.loadout.bag, safe: c.loadout.safe,
-    equipment: { weapon: c.loadout.weapon, ammo: c.loadout.ammo, ammoRelief: c.loadout.ammoRelief, relief: c.loadout.relief } });
+  const l = c.loadout, slot = { weapon: l.weapon, ammo: l.ammo, ammoRelief: l.ammoRelief, relief: l.relief };
+  if (guns) decodeStoredProfile({ ...profile, activeRun: null, bag: l.bag, safe: l.safe, equipment: { ...slot, weaponUid: l.weaponUid, gun: l.gun } });
+  else decodeOldStoredProfile({ ...profile, activeRun: null, bag: l.bag, safe: l.safe, equipment: slot });
   if (inventoryIdentity(profile.safe) !== inventoryIdentity(c.loadout.safe) || profile.bag.items.length || profile.equipment.weapon !== null) fail();
   for (const key of ['hp', 'stamina', 'pollution'] as const) if (!finite(c[key], 0, 100)) fail();
   if (!finite(c.bleeding, 0, 1) || !finite(c.elapsed, 0, 600) || !whole(c.kills, 0, 25)) fail();
@@ -84,10 +93,11 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   if (c.highTide !== (c.tideChanged ? !config.initialHigh : config.initialHigh)
       || c.warned !== (c.elapsed >= config.warningAt) || c.tideChanged !== (c.elapsed >= config.tideAt)) fail();
   const ids = new Set<string>();
-  const id = (uid: unknown) => {
-    if (typeof uid !== 'string' || !/^(enemy|loot|entity)-[0-9]+$/.test(uid) || ids.has(uid)) return fail();
+  // World uids come from the raid's counters; a dropped gun keeps its item uid on the ground (the gun format, M1-04).
+  const id = (uid: unknown, item = false) => {
+    if (typeof uid !== 'string' || !(/^(enemy|loot|entity)-[0-9]+$/.test(uid) || item && identity(uid)) || ids.has(uid)) return fail();
     ids.add(uid);
-    if (uid.startsWith('entity-') && Number(uid.slice(7)) >= c.nextEntity) fail();
+    if (/^entity-[0-9]+$/.test(uid) && Number(uid.slice(7)) >= c.nextEntity) fail();
   };
   if (!Array.isArray(c.enemies) || c.enemies.length !== config.enemies.length) fail();
   c.enemies.forEach((e, i) => {
@@ -99,9 +109,16 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   });
   if (c.kills !== c.enemies.filter(e => e.hp <= 0).length) fail();
   if (!Array.isArray(c.loot) || c.loot.length > 4000 || !Array.isArray(c.bullets) || c.bullets.length > 1000) fail();
+  // Every item, gun and part uid the raid holds (the gun format adds the equipped gun and every part); checked above
+  // through the profile rules, so the reads are safe. Container and ground gun parts join it below.
+  const items = [...profile.stash.items, ...c.loadout.bag.items, ...c.loadout.safe.items];
+  const itemIds = new Set(guns ? [...items.flatMap(D.itemUids), ...D.equipmentUids(c.loadout)] : items.map(item => item.uid));
   for (const l of c.loot) {
-    id(l.uid);
+    id(l.uid, guns && isGunId(l.id));
     if (!point(l) || !hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
+    // A gun on the ground carries a valid state (the gun format) and nothing else carries one.
+    if (guns && isGunId(l.id) ? !validateGun(l.id, l.uid, l.gun).ok : Object.hasOwn(l, 'gun')) fail();
+    if (l.gun) for (const part of gunUids({ uid: l.uid, parts: l.gun.parts }).slice(1)) { if (itemIds.has(part)) fail(); itemIds.add(part); }
   }
   for (const b of c.bullets) {
     id(b.uid);
@@ -110,10 +127,9 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   }
   if (c.worldVersion === WORLD_VERSION && !Array.isArray(c.containers)) fail();
   if (c.worldVersion !== WORLD_VERSION && c.containers !== undefined) fail();
+  const containers = new Set<string>();
   if (c.containers !== undefined) {
     if (!Array.isArray(c.containers) || c.containers.length > config.containers.length + config.enemies.length) fail();
-    const containers = new Set<string>();
-    const itemIds = new Set([...profile.stash.items, ...c.loadout.bag.items, ...c.loadout.safe.items].map(item => item.uid));
     for (const container of c.containers) {
       if (!container || typeof container.id !== 'string' || containers.has(container.id) || container.runId !== c.runId
           || !point(container) || typeof container.name !== 'string' || !container.name.length || container.name.length > 100) fail();
@@ -126,8 +142,11 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
         const enemy = c.enemies.find(entry => `corpse-${entry.uid}` === container.id);
         if (!enemy || enemy.hp > 0) fail();
       } else fail();
-      if (!validInventory(container.inventory, 6, 5, itemIds, { rotation: !legacy, exact: false })) fail();
+      if (!validInventory(container.inventory, 6, 5, itemIds, { rotation: !legacy, exact: false, guns })) fail();
     }
   }
+  // The gun format keeps items and the world apart (M0 review): no item, gun or part uid is a ground, enemy, round or
+  // container uid. The old format never checked this; real old raids pass it, and decodeSession checks them again as v6.
+  if (guns && [...itemIds].some(uid => ids.has(uid) || containers.has(uid))) fail();
   return { ...structuredClone(c), version: 2, worldVersion: WORLD_VERSION, containers: structuredClone(c.containers ?? []) };
 }

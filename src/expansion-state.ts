@@ -5,6 +5,8 @@ import type { LootContainer } from './loot';
 import type { Point } from './world';
 import { inSpace, separation, checkpointBodyFits, validateSpaces, type SpaceDefinition } from './spatial';
 import { finite, hasExactKeys, hasOwnStringKey, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { gunUids, isGunId, validateGun } from './gunsmith/instance';
+import type { ProfileV2 } from './gunsmith/migrate';
 
 export const EXPANSION_VERSION = 1;
 export const ATTRIBUTES = ['strength', 'constitution', 'technique'] as const;
@@ -182,9 +184,14 @@ function critSnapshot(value: unknown, owned: PerkModifiers, roster: readonly { u
         || (breath === undefined ? target !== null : !owned.breath || !(breath > 0 && breath <= BREATH_MAX) || !roster.some(e => e.uid === target))) fail();
 }
 
-/** Complete validation is shared by imports and the single-record commit, before publishing state. */
-export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
-    const state = value as ExpansionState;
+/**
+ * Complete validation is shared by imports and the single-record commit, before publishing state. The profile's version
+ * names the gun format: with v3 (record v6) the raid loadout names its gun (`weaponUid`, `gun`), gun items and ground
+ * guns carry valid states, and every gun and part uid joins the item uids that no entity may share; with v2 (records up
+ * to v5) none of those fields may appear, as before.
+ */
+export function validateExpansion(value: unknown, profile: D.SaveDataV1 | ProfileV2, legacyRaid: RaidCheckpoint | null, resolveWorld: WorldResolver): ExpansionState {
+    const state = value as ExpansionState, guns = profile.version === 3;
     exactKeys(state, ['version', 'body', 'growth', 'base', 'raid', ...(rpgEnabled(state) ? ['charm', 'awards'] : [])]);
     if (![EXPANSION_VERSION, 2, 3].includes(state.version) || !obj(state.body) || !obj(state.growth) || !obj(state.base)) fail();
     const { body, growth, base } = state;
@@ -193,7 +200,9 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         const charm = state.charm;
         if (charm !== null) {
             if (!obj(charm) || !identity(charm.uid) || !['luckyCharm', 'unluckyCharm'].includes(charm.id) || charm.qty !== 1 || charm.x !== 0 || charm.y !== 0 || charm.rotated !== undefined || charm.relief !== undefined
-                || [profile.stash, profile.bag, profile.safe, state.raid?.loadout.bag].filter(Boolean).some(inv => inv!.items.some(i => i.uid === charm.uid))) fail();
+                || [profile.stash, profile.bag, profile.safe, state.raid?.loadout.bag].filter(Boolean).some(inv => inv!.items.some(i => i.uid === charm.uid))
+                // The profile (already checked) also holds part uids and the equipped gun's; in a raid invIds covers the loadout's.
+                || (guns && [...[profile.stash, profile.bag, profile.safe].flatMap(inv => inv.items.flatMap(D.itemUids)), ...D.equipmentUids(profile.equipment as D.Equipment)].includes(charm.uid))) fail();
             exactKeys(charm, ['uid', 'id', 'qty', 'x', 'y']);
         }
     }
@@ -274,15 +283,20 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
         if (match && (!whole(Number(match[1]), 1, COUNT_MAX) || Number(match[1]) >= raid.nextEntity)) fail();
     };
     const inventory = (inv: D.Inventory, w: number, h: number) => {
-        if (!validInventory(inv, w, h, invIds, { rotation: true, exact: true }, item => allocated(item.uid))) fail();
+        if (!validInventory(inv, w, h, invIds, { rotation: true, exact: true, guns }, item => D.itemUids(item).forEach(allocated))) fail();
     };
     inventory(profile.stash, 10, profile.upgraded ? 9 : 6); inventory(raid.loadout.bag, 6, 5); inventory(raid.loadout.safe, 2, 2);
-    exactKeys(raid.loadout, ['bag', 'safe', 'weapon', 'ammo', 'ammoRelief', 'relief', 'runId']);
+    exactKeys(raid.loadout, ['bag', 'safe', 'weapon', 'ammo', 'ammoRelief', 'relief', 'runId', ...(guns ? ['weaponUid', 'gun'] : [])]);
     const magazine = raid.loadout, gun = magazine.weapon === null ? null : hasOwnStringKey(D.WEAPONS, magazine.weapon) ? D.WEAPONS[magazine.weapon] : undefined;
     if ((magazine.weapon !== null && (!gun || magazine.weapon === 'knife')) || !whole(magazine.ammo, 0, gun?.magazine ?? 0)
         || !whole(magazine.ammoRelief, 0, magazine.ammo) || typeof magazine.relief !== 'boolean'
         || profile.bag.items.length || profile.equipment.weapon !== null) fail();
-    const inventoryIdentity = (inv: D.Inventory) => JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated])]);
+    // The equipped gun (gun format): its own uid and its parts' join the item uids, like a gun in the bag.
+    if (guns) {
+        if (magazine.weapon === null ? magazine.weaponUid !== null || magazine.gun !== null : !validateGun(magazine.weapon, magazine.weaponUid, magazine.gun).ok) fail();
+        for (const uid of D.equipmentUids(magazine)) { if (invIds.has(uid)) fail(); allocated(uid); invIds.add(uid); }
+    }
+    const inventoryIdentity = (inv: D.Inventory) => JSON.stringify([inv.w, inv.h, inv.items.map(i => [i.uid, i.id, i.qty, i.x, i.y, !!i.relief, !!i.rotated, D.gunKey(i.gun)])]);
     if (inventoryIdentity(profile.safe) !== inventoryIdentity(raid.loadout.safe)) fail();
     const entities = new Set<string>(), enemies = new Map<string, EnemyState>(), enemyMaps = new Map<string, string>();
     const containers: { container: LootContainer; mapId: string }[] = [];
@@ -313,7 +327,16 @@ export function validateExpansion(value: unknown, profile: D.SaveDataV1, legacyR
             || !Array.isArray(layer.containers) || layer.containers.length > 100 || !Array.isArray(layer.bullets) || layer.bullets.length > 1000
             || (mapId !== raid.currentMap && layer.bullets.length > 0)) fail();
         layer.enemies.forEach(e => enemy(e, map));
-        for (const l of layer.loot) { exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y']); entity(l.uid); point(l, map); if (!hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail(); }
+        for (const l of layer.loot) {
+            // A gun on the ground (gun format) carries its state: its uid is an entity's, its part uids are item uids.
+            const ground = guns && isGunId(l.id);
+            exactKeys(l, ['uid', 'id', 'qty', 'relief', 'x', 'y', ...(ground ? ['gun'] : [])]); entity(l.uid); point(l, map);
+            if (!hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || typeof l.relief !== 'boolean') fail();
+            if (ground) {
+                if (!validateGun(l.id, l.uid, l.gun).ok) fail();
+                for (const part of gunUids({ uid: l.uid, parts: l.gun!.parts }).slice(1)) { if (invIds.has(part) || entities.has(part)) fail(); allocated(part); invIds.add(part); }
+            }
+        }
         for (const c of layer.containers) {
             exactKeys(c, ['id', 'runId', 'kind', 'name', 'x', 'y', 'inventory']);
             entity(c.id); point(c, map);

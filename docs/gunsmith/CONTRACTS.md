@@ -346,7 +346,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 
 ## 枪械实例（M0-05）
 
-**状态：** 2026-10-24 在分支 `wip/gunsmith-instance` 完成，基线 `feat/gunsmith` `c343692`。未接入游戏；各存档位置怎么放、旧档怎么迁移见[存档与迁移](#存档与迁移m0-06)。
+**状态：** 2026-10-24 在分支 `wip/gunsmith-instance` 完成，基线 `feat/gunsmith` `c343692`。M1-01 起接入存档、校验、装卸、转移和估值（分支 `wip/gunsmith-m1core`）；各存档位置怎么放、旧档怎么迁移见[存档与迁移](#存档与迁移m0-06)。
 
 ### 模块
 
@@ -402,12 +402,12 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 
 ## 存档与迁移（M0-06）
 
-**状态：** 2026-10-24 在分支 `wip/gunsmith-instance` 完成设计和纯函数，样本测试通过。**没有接入读档**：游戏照旧读写 v5，下面的 v6、profile v3 只在迁移函数和测试里出现；M1-01、M1-02 按本节末尾的清单接入。版本号按 #92 之后的主线分配，维护者在 M0 评审时确认。
+**状态：** 2026-10-24 在分支 `wip/gunsmith-instance` 完成设计和纯函数；同日 M1-01、M1-02 在分支 `wip/gunsmith-m1core`（基线 `feat/gunsmith` `e19cf00`）按本节末尾的清单接入：游戏只写 profile v3、记录和完整备份 v6，读到 v2–v5 记录和 v1/v2 profile 时先按旧规则校验再迁移。与清单不同或清单没写到的地方见本节末尾「M1 接入的实际做法」。版本号按 #92 之后的主线分配，维护者在 M0 评审时确认。
 
 ### 模块
 
 - [src/gunsmith/migrate.ts](../../src/gunsmith/migrate.ts)：`migrateProfile`、`migrateRecord`，纯函数，已加入 `PURE`，对存档模块只有 `import type`。测试：[gunsmith-migrate.test.ts](../../tests/gunsmith-migrate.test.ts)，样本都由真实的存档流程生成。
-- 迁移前后的对比、旧客户端拒读都用今天的解码器验证：接入之前，今天的 `decodeSession`、`decodePortableBackup`、`decodeBackup` 就是“旧客户端”。
+- M0 时迁移前后的对比、旧客户端拒读都用当时的解码器验证。接入以后，样本是上一版客户端真实写下的字节，冻结在 [fixtures/gunsmith-v5-saves.json](../../tests/fixtures/gunsmith-v5-saves.json)，经真实的 `decodeSession` 读、写回、重读；旧客户端拒读由 `test:expansion` 用真实固定的 v5 客户端（main `30781f4`）验证。
 
 ### 实例存在哪里
 
@@ -458,7 +458,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - 第一次写 v6 可能发生在行动中，这时 `gunsBackup` 是整份进行中的记录（先例：`systemsBackup` 可能存进行中的经典行动）。实测刚出击的记录约 14–16 KB（海岸、居民楼、商场），翻倍后仍远低于 2 MiB 上限。
 - 以后第一次写扩展 v3 时，`perksBackup` 存的是那时的 v6 文本；v4 原字节仍在 `gunsBackup`，没有字节丢失。
 
-### 旧客户端怎么拒绝（测试用今天的代码验证）
+### 旧客户端怎么拒绝（M0 用当时的代码验证，接入后见 `test:expansion`）
 
 - 主档 v6：今天的 `decodeSession` 只认 2–5，报「无法读取这份存档。请导出原始备份后使用兼容版本，当前进度未被覆盖。」，`initialize` 失败，不写入，原字节不变。
 - 已经开着的旧页：写前比对失败，标记冲突，不覆盖。
@@ -514,6 +514,23 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - `src/save-backup.ts` 的 `encodeRecoveryBackup`：`formatVersion` 跟记录一样是 6。
 - 院子的 `previewImport`、`importBackup` 和旧页签导入不用改：解码器已经迁移，“当前成长存档不接受降级覆盖”的判断照旧。
 - 要跟着改的测试：`perk-save`、`perk-base`、`expansion-recovery`、`hideout-runtime`、`fresh-start`、`recovery`、`profile-codec`、`save-validation-audit` 等断言 v3/v4/v5 写入或 `formatVersion` 的地方；CP-23 里“未知记录版本”的 6 要改成 7；`test:save-browser` 的导出断言。
+
+### M1 接入的实际做法
+
+2026-10-24 在分支 `wip/gunsmith-m1core` 按上面两张清单做完（M1-01、M1-02，以及 M1-03、M1-04、M1-06）。与清单不同或清单没写到的地方：
+
+- **格式由 profile 版本决定。** 新旧两种格式共用一套校验函数：profile v3（记录 v6）按枪械实例规则，v1/v2（记录 v2–v5）按今天的规则，并且不许出现 `gun`、`weaponUid`。`validInventory` 的 `guns` 规则、`validateCheckpoint`、`validateExpansion` 都按传入 profile 的版本选格式，不另加参数。旧格式的 profile 由新增的 `decodeOldStoredProfile` 按旧规则校验和规整（不迁移），`decodeSession` 拿它和存的 profile 比对，再整份记录一起迁移。
+- **`migrateSave` 只输出 v3。** v3 按新规则规整，保留通过校验的枪状态；v0–v2 先按旧规则规整（`cleanOldSave`），再 `migrateProfile`。
+- **读档。** v2–v5 先按旧规则校验，再迁移；迁移结果做一次 JSON 往返后按 v6 校验。迁移和这次 v6 校验里的任何错误都统一成 `failure()`（清单只写了迁移）。迁移只在内存里做，打开页面时那次写入才把 v6 和 `gunsBackup` 写进去；写入失败时原字节不动，重试照常。`recordVersion` 已删除。v6 记录不论有没有扩展都按精确键校验。
+- **占格读枪的状态。** `itemSize`、`fits` 对带 `gun` 的物品用 `gunSize`，装了延伸件的枪在校验和摆放里都按实际大小算；出厂枪和以前一样大。界面格子的绘制和预览仍按物品表，M2 有了可装的配件再改。
+- **搬同一把枪（M1-03、M1-04）。** `D.placeItem` 把已有物品原样放进第一个空位；装备、卸下、行动内换枪时离开装备栏的枪保持 UID 和状态，快速移动、安全箱、丢下和拾取都不再重建枪。放不下时整次不变。
+- **地上的枪。** 丢下的枪保留物品 UID；经典检查点的地上 UID 对枪放宽为任意物品 UID（清单已预告）。另外，经典行动和 v1 分层行动地上生出的枪带的是行动内计数的 UID（`loot-3`、`entity-12`），下一局会再发同样的号，所以拾取时换成新的物品 UID（`D.placeGroundGun`）；v2/v3 分层行动的 `entity-<runId>-n` 照旧保留。
+- **UID 不相交。** 经典检查点新加：所有物品、装备的枪和配件的 UID 不能和地上物品、敌人、弹丸、箱子的 UID 相同（分层行动原来就查）。
+- **真实旧客户端。** `test:expansion` 加了第三个固定旧包 `pre-gunsmith.html`（main `30781f4`，最后一个 v5 客户端）：它和另两个旧包有锁无锁都拒读 v6、不改任何字节；v4、v5 客户端都拒绝 v6 完整备份文件。
+- **估值与售价（M1-06）。** `D.itemSale` 按组成算，救济组成值 0；有救济组成时商店拒绝整件出售，原因是「这把枪装有救济配件，不能整枪出售。」，结算时混进待卖区的也整笔拒绝；救济判定 `liquidValue` 把这样的枪算 0（商店现在不收）。
+- **提交顺序。** M1-01 的提交单独看时只读写 v6，旧记录一律拒读（原字节不变）；M1-02 的提交接上迁移后全部测试通过。
+- **留给 M1-05。** 弹匣上限仍用 `WEAPONS[weapon].magazine`，卸枪时的 `cleanMagazine` 也是；改成有效弹量时，卸枪要按存档里的弹数原样退回，不能先按原厂弹量截断。
+- **风险。** `gunsBackup` 让第一次写入的记录约翻倍；原记录超过约 1 MiB 时写入会超出 2 MiB 上限而失败，读档仍不覆盖原字节，可导出原始备份。实测刚出击的记录约 16 KB，带全部旧备份的约 25 KB。
 
 ### 待维护者定
 

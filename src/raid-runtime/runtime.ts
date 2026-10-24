@@ -473,7 +473,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.dirty = true;
     }
     private allocateEntityUid() { const serial = this.nextEntity++; return this.layered?.raid ? entityUid(this.layered.raid, serial) : `entity-${serial}`; }
-    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), x, y, id, qty, relief }); }
+    /** New ground loot under a new entity uid; a gun is born a factory instance. */
+    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), x, y, id, qty, relief, ...D.factoryGun(id) }); }
     nearbyLoot() { return this.loot.filter(l => distance(l, this.player) < 43 && this.sight(l, this.player, this.highTide, this.space ? 10 : 0)).sort((a, b) => distance(a, this.player) - distance(b, this.player) || a.uid.localeCompare(b.uid)); }
     private transaction(action: string, mutate: () => boolean | void): MutationResult {
         if (this.disposed || this.ending || this.locked || this.session.state !== 'run' || this.session.conflict || this.paused) {
@@ -514,6 +515,13 @@ export class CoastRaidRuntime implements RaidRuntime {
             return false;
         }
         return this.transaction('pickup', () => {
+            if (loot.gun) {
+                // A gun comes off the ground whole, as the same instance (D.placeGroundGun), or stays where it lies.
+                if (!D.placeGroundGun(this.session.loadout!.bag, loot)) return false;
+                this.loot.splice(this.loot.indexOf(loot), 1);
+                this.emit({ type: 'looted', source: uid, item: loot.id, qty: 1, partial: false, to: 'bag' });
+                return;
+            }
             const before = loot.qty, left = D.addItem(this.session.loadout!.bag, loot.id, before, !!loot.relief);
             if (left === before)
                 return false;
@@ -540,7 +548,9 @@ export class CoastRaidRuntime implements RaidRuntime {
             const inventory = this.session.loadout![from], item = inventory.items.find(i => i.uid === uid);
             if (!item) return false;
             inventory.items = inventory.items.filter(i => i.uid !== uid);
-            this.spawnLoot(this.player.x, this.player.y, item.id, item.qty, !!item.relief);
+            // A gun lies on the ground as itself, under its item uid with its state; anything else becomes new ground loot.
+            if (item.gun) this.loot.push({ uid: item.uid, x: this.player.x, y: this.player.y, id: item.id, qty: 1, relief: !!item.relief, gun: item.gun });
+            else this.spawnLoot(this.player.x, this.player.y, item.id, item.qty, !!item.relief);
         });
     }
     equipItem(uid: string) {

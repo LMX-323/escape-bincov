@@ -40,6 +40,7 @@
 **按需继续。**
 
 - 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
+- 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
 - 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - Perk 选择与 500 现金重置：据点 Runtime 的 `perkBoard`、`previewPerk` → `choosePerk`、`previewPerkReset` → `resetPerks` → `transaction`，院子与旧页签共用。确认票据绑定的内容和失败重试写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，选择规则在 [perks.ts](../src/perks.ts)；验证见 [perk-base.test.ts](../tests/perk-base.test.ts)。界面入口是院子 [station-view/ui.ts](../src/station-view/ui.ts) 的 `confirmPerk` 和旧页签 [ui.ts](../src/ui.ts) 的 `confirmPerkTab`（写入失败只经 `retrySave` 重试）；Perk 名称、效果文案、预览行和静态暴击显示都在 [perk-copy.ts](../src/perk-copy.ts)，验证见 [perk-copy.test.ts](../tests/perk-copy.test.ts) 与 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs)。
@@ -107,12 +108,16 @@
 **验证入口。**
 
 - [expansion-recovery.test.ts](../tests/expansion-recovery.test.ts)：原子升级、严格导入拒绝、完整备份与待保存候选。
-- [perk-save.test.ts](../tests/perk-save.test.ts)：session v5/Perk 选择、进行中的旧行动保持 v4 至结算、旧备份导入、降级保护与 `perksBackup`。
+- [perk-save.test.ts](../tests/perk-save.test.ts)：扩展 v3/Perk 选择、进行中的旧行动保持扩展 v2 至结算、旧备份导入、降级保护与 `perksBackup`。
+- [gunsmith-migrate.test.ts](../tests/gunsmith-migrate.test.ts)：上一版客户端真实写下的 v3–v5 记录和备份（冻结在 [fixtures/gunsmith-v5-saves.json](../tests/fixtures/gunsmith-v5-saves.json)）经真实 `decodeSession` 迁移、写回、重读和继续行动，`gunsBackup` 与拒读；旧客户端拒读 v6 用 `test:expansion` 的真实固定旧包验证。
+- [gunsmith-carry.test.ts](../tests/gunsmith-carry.test.ts)、[gunsmith-value.test.ts](../tests/gunsmith-value.test.ts)：装卸、转移、丢下拾取、跨层、结算时搬的是同一把枪；按组成估值和出售。
 - [systems-session.test.ts](../tests/systems-session.test.ts)、[recovery.test.ts](../tests/recovery.test.ts)：重试不重复奖励、未知字段、原字节保留、修订栅栏。
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
 - [fresh-start.test.ts](../tests/fresh-start.test.ts)：重开和恢复备份；活动世界再看 [raid-runtime.test.ts](../tests/raid-runtime.test.ts) 的回滚/恢复断言。
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
 - [save-validation-audit.test.ts](../tests/save-validation-audit.test.ts)：原型键、数组伪装 ID 的拒绝与原字节保留，及正常基地/经典/分层记录对照。外部 ID 必须先用 `hasOwnStringKey` 检查字符串类型和自身键，不能只做真值查表或 `Object.hasOwn`。
+
+**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
 
 **按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 
