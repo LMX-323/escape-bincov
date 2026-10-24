@@ -4,6 +4,14 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 受击姿态接入 A 组（`feat/hurt-poses`，基于 #96 的 `17613b6`）：
+  - **切帧**：`scripts/export-hurt-poses.ts` 复用 `title-art/png.ts`，从 pixel-v2 图集切出拾荒者、盐枭、守潮人、潮蚀生物各五朝向的受击帧（帧号 5）和恢复帧（帧号 6），共 40 张、15 KB，放在 `assets/coast/poses`。
+  - **加载**：`src/coast-view/pose-assets.ts` 在海岸素材加载后并入同一张素材表。`assets.ts`、`textures.ts` 都没动，因为 #81 已把它们改成打包图集。
+  - **播放**：`CoastView.syncActor` 中弹后显示受击帧约 90 ms、恢复帧约 60 ms，命中那一帧至少显示一次受击帧。只在角色用本种类身体图时切换（`posable` 看上一帧贴图），#81 的原型敌人因此不会误用 A 组的帧。
+  - **测试**：`build.mjs` 核对哈希；`tests/hurt-poses.test.ts` 守住像素一致和脚底、肩点所在行；`test:shooting` 检查 g 加了逐帧姿态断言，main 构建上只在姿态一项失败。
+  - **和 #81 试合并**：只有发布清单冲突；第一次发现与它的局部变量 `pose` 重名，已改名为 `hurtT` / `hurtFrame`；合并结果单测 747/747；在合并构建上实测，原型敌人中弹不换帧、也不出现占位图。
+  - 证据见[说明](docs/evidence/issue75-hurt-poses/README.md)。B 组等 #81；真人观感未验。准确 head 与 CI 见本分支 PR。
+
 - 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96)：在原分支按维护者评论完成七张 pixel-v2 返工稿，只改人形 S/N 膝部24格及生物 E/SE/NE 缩头6格；35站立格和40个其他动作格不变，v1与生成原图保留。[当前返工摘要](docs/hit-feel-art/README.md#2026-10-24-v2-返工)、[v2检查](docs/hit-feel-art/pixel-audit-v2.json)与[有效v1负对照](docs/hit-feel-art/pixel-v1-rework-negative.json)记录无新增洞、腿部不开缝和原有锚点检查；生物固定足底与整帧最右边界的3条指标冲突待核定，不能记为全部验收通过。653单测、package通过，产物相对main `4141503`不变；游戏接入另PR，保持草稿、未合并，等待独立复验。
 
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
