@@ -4,6 +4,8 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
+- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96)：在原分支按维护者评论完成七张 pixel-v2 返工稿，只改人形 S/N 膝部24格及生物 E/SE/NE 缩头6格；35站立格和40个其他动作格不变，v1与生成原图保留。[当前返工摘要](docs/hit-feel-art/README.md#2026-10-24-v2-返工)、[v2检查](docs/hit-feel-art/pixel-audit-v2.json)与[有效v1负对照](docs/hit-feel-art/pixel-v1-rework-negative.json)记录无新增洞、腿部不开缝和原有锚点检查；生物固定足底与整帧最右边界的3条指标冲突待核定，不能记为全部验收通过。653单测、package通过，产物相对main `4141503`不变；游戏接入另PR，保持草稿、未合并，等待独立复验。
+
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
   - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。
   - **声音**：玩家中弹改播居中的 `pain`，敌人中弹仍播带方位的 `hit`；`SampleSound` 按批次 `revision` 去重，同一批同一目标只响一次，有暴击时另加一次 `crit`。
