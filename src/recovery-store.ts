@@ -25,7 +25,8 @@ export interface SessionRecord {
   /**
    * The exact v3 to v7 record text the first v8 write replaced, taken by decodeSession when it migrates that record (a
    * live raid included); null for a new game, a legacy-key migration and a v2 record, whose bytes legacyBackup and
-   * migrationBackup keep. Retained once, never replaced by a v8 text; an imported backup's own is dropped.
+   * migrationBackup keep. Retained once, never replaced by a v8 text. An explicit import treats it as perksBackup and
+   * enemyBackup (recordUpgradeFields, RecoveryStore.commit).
    */
   gunsBackup: string | null;
   /** Present exactly when the record carries an expansion. It is part of this same atomic record, never a second key. */
@@ -50,13 +51,13 @@ export const enemyRecord = (record: Pick<SessionRecord, 'enemyBackup'> | null | 
 /**
  * The fields a write of `expansion` sets beside the common ones, given the record it replaces (`previous`; for an
  * explicit import, the imported record or null) and that record's exact text (`raw`, null for an import): the version,
- * always 8; perksBackup with a v3 expansion; enemyBackup once enemy rules are on, which they stay once a record has had
- * them (main's rule for records 6 and 7). Shared by candidate validation, pending exports and durable writes; never
- * nests the same generation again.
+ * always 8; gunsBackup, which only a migration sets (decodeSession), so it is previous's; perksBackup with a v3
+ * expansion; enemyBackup once enemy rules are on, which they stay once a record has had them (main's rule for records 6
+ * and 7). Shared by candidate validation, pending exports and durable writes; never nests the same generation again.
  */
 export function recordUpgradeFields(expansion: ExpansionState | null, previous: SessionRecord | null, raw: string | null) {
   const enemies = !!expansion && (enemyRecord(previous) || enemyRules(expansion.raid));
-  return { version: 8 as const,
+  return { version: 8 as const, gunsBackup: previous?.gunsBackup ?? null,
     perksBackup: expansion?.version === 3
       ? previous?.expansion?.version === 3 ? previous.perksBackup! : previous?.expansion ? raw : null
       : undefined,
@@ -160,7 +161,6 @@ export class RecoveryStore {
   private legacy: string | null = null;
   private migration: string | null = null;
   private systems: string | null = null;
-  private guns: string | null = null;
   private loaded = false;
   writable = true;
   constructor(private storage: D.StorageLike, private now = () => Date.now(), private resolveWorld: WorldResolver = resolveExpansionWorld) {}
@@ -169,7 +169,7 @@ export class RecoveryStore {
     if (text !== null) {
       const record = decodeSession(text, this.resolveWorld); // Unknown/corrupt is never treated as missing.
       this.expected = text; this.record = record; this.legacy = record.legacyBackup; this.migration = record.migrationBackup; this.loaded = true;
-      this.systems = record.systemsBackup ?? null; this.guns = record.gunsBackup;
+      this.systems = record.systemsBackup ?? null;
       return { save: structuredClone(record.profile), raid: structuredClone(record.raid), expansion: structuredClone(record.expansion ?? null), legacyRecovery: false };
     }
     this.legacy = this.storage.getItem(D.SAVE_KEY);
@@ -199,8 +199,8 @@ export class RecoveryStore {
    * no write may drop it; a v3 (perk) expansion is never written back as v1/v2 and enemy rules are never switched off,
    * except by `explicitImport`, a player-confirmed import (the imported record, or true without one) of an older backup,
    * possibly holding a live v2 raid; it upgrades again at the next station boundary. Importing or resetting a current
-   * perk profile keeps this origin's perk and enemy copies; a confirmed older expansion starts a new upgrade cycle, and
-   * importing into an origin without a perk profile keeps the imported copies.
+   * perk profile keeps this origin's gun, perk and enemy copies; a confirmed older expansion starts a new upgrade cycle,
+   * and importing into an origin without a perk profile keeps the imported copies (main's rule, #81, for all three).
    */
   commit(profile: D.SaveDataV1, raid: RaidCheckpoint | null, terminal?: SessionRecord['terminal'], expansion = this.record?.expansion ?? null, explicitImport: boolean | SessionRecord = false): SessionRecord {
     if (!this.loaded || !this.writable) throw new Error('存档未就绪或另一窗口正在使用。');
@@ -208,6 +208,7 @@ export class RecoveryStore {
     const previous = typeof explicitImport === 'object' ? explicitImport : explicitImport ? null : this.record;
     const fields = recordUpgradeFields(expansion, previous, explicitImport ? null : this.expected);
     if (explicitImport && expansion?.version === 3 && this.record?.expansion?.version === 3) {
+      fields.gunsBackup = this.record.gunsBackup;
       fields.perksBackup = this.record.perksBackup!;
       if (enemyRecord(this.record)) fields.enemyBackup = this.record.enemyBackup!;
     }
@@ -222,7 +223,7 @@ export class RecoveryStore {
     const candidate: SessionRecord = { format: 'escape-bincov-session', version: fields.version, revision: (this.record?.revision ?? 0) + 1,
       savedAt: this.now(), profile: structuredClone(profile), raid: structuredClone(raid),
       terminal: terminal === undefined ? (profile.activeRun ? null : this.record?.terminal ?? null) : terminal,
-      legacyBackup: this.legacy, migrationBackup: this.migration, gunsBackup: this.guns,
+      legacyBackup: this.legacy, migrationBackup: this.migration, gunsBackup: fields.gunsBackup,
       ...(expansion ? { expansion: structuredClone(expansion), systemsBackup: systems } : {}),
       ...(fields.perksBackup !== undefined ? { perksBackup: fields.perksBackup } : {}),
       ...(fields.enemyBackup !== undefined ? { enemyBackup: fields.enemyBackup } : {}) };

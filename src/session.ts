@@ -363,8 +363,10 @@ export class SaveSession {
         return true;
     }
     /**
-     * A confirmed full-record import. An older record stays in its version (a v4 backup with a live v2 raid stays v4
-     * until that raid settles); the next station boundary (ensureRpg) upgrades it.
+     * A confirmed full-record import. An older expansion stays as it is (a v4 backup with a live v2 raid keeps
+     * expansion v2 until that raid settles); the next station boundary (ensureRpg) upgrades it. The record keeps the
+     * imported gunsBackup, perksBackup and enemyBackup, unless both it and this origin hold a v3 (perk) expansion: then
+     * the origin keeps its own (RecoveryStore.commit).
      */
     importRecord(record: SessionRecord): boolean {
         const s = this.session;

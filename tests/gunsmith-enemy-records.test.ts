@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createSessionState, SaveSession } from '../src/session';
 import { decodeSession, enemyRecord, RecoveryStore, SESSION_KEY, type SessionRecord } from '../src/recovery-store';
 import { decodePortableBackup, encodeRecoveryBackup } from '../src/save-backup';
+import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { oldRecord, makeV4 } from './fixtures/old-saves';
 
 // Record v8 and the enemy rules of #81 (docs/gunsmith/CONTRACTS.md, the save and migration section). Main took records
@@ -104,12 +105,12 @@ test('a v8 record breaking the enemy rule is refused, never repaired, and its by
 });
 
 test('imports follow main\'s rule: a fresh origin keeps the imported enemy rules, a current perk origin keeps its own', () => {
-    // An old v7 backup file into a new save: enemy rules arrive with it, its enemyBackup kept; gunsBackup stays the origin's.
+    // An old v7 backup file into a new save: enemy rules arrive with it, its enemyBackup and gunsBackup (its own text) kept.
     const v7 = oldRecord(deployed(true)), file = JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 7, record: v7 });
     const decoded = decodePortableBackup(file); assert.equal(decoded.kind, 'session'); if (decoded.kind !== 'session') return;
-    assert.deepEqual([decoded.record.version, decoded.record.enemyBackup], [8, v7.enemyBackup]);
+    assert.deepEqual([decoded.record.version, decoded.record.enemyBackup, decoded.record.gunsBackup], [8, v7.enemyBackup, JSON.stringify(v7)]);
     const fresh = page(); assert.ok(fresh.saves.importRecord(decoded.record));
-    assert.deepEqual([fresh.record.version, fresh.record.enemyBackup, fresh.record.gunsBackup], [8, v7.enemyBackup, null]);
+    assert.deepEqual([fresh.record.version, fresh.record.enemyBackup, fresh.record.gunsBackup], [8, v7.enemyBackup, JSON.stringify(v7)]);
     // A perk save without enemy rules imported into a perk origin with them: the origin keeps its own copies, rules on.
     const v5 = oldRecord(deployed(false)); settleText(v5);
     const plain = decodePortableBackup(JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: 5, record: v5 }));
@@ -117,10 +118,58 @@ test('imports follow main\'s rule: a fresh origin keeps the imported enemy rules
     assert.equal(enemyRecord(plain.record), false);
     const own = fresh.record; settle(fresh);
     assert.ok(fresh.saves.importRecord(plain.record));
-    assert.deepEqual([fresh.record.enemyBackup, fresh.record.perksBackup], [own.enemyBackup, own.perksBackup]);
+    assert.deepEqual([fresh.record.enemyBackup, fresh.record.perksBackup, fresh.record.gunsBackup], [own.enemyBackup, own.perksBackup, own.gunsBackup]);
+    assert.notEqual(plain.record.gunsBackup, own.gunsBackup);
     // Its export is a v8 file; the round trip keeps the flag and every backup.
     const again = decodePortableBackup(encodeRecoveryBackup(fresh.record)); assert.equal(again.kind, 'session'); if (again.kind !== 'session') return;
     assert.deepEqual(backups(again.record), backups(fresh.record)); assert.equal(JSON.parse(encodeRecoveryBackup(fresh.record)).formatVersion, 8);
+});
+
+test('gunsBackup on import follows the same rule: a fresh origin keeps the backup\'s own, a current perk origin keeps its own', () => {
+    const envelope = (record: any) => JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: record.version, record });
+    const read = (text: string): SessionRecord => { const d = decodePortableBackup(text); assert.equal(d.kind, 'session'); return (d as { record: SessionRecord }).record; };
+    const copies = (r: SessionRecord) => [r.gunsBackup, r.perksBackup, r.enemyBackup];
+    const settled = (enemies: boolean) => { const r = oldRecord(deployed(enemies)); settleText(r); return r; };
+    // Old backup files (settled records 3, 5 and 7): read as v8, each with its own record text as gunsBackup.
+    const olds = [oldRecord(page().record), settled(false), settled(true)].map(r => ({ name: `old record ${r.version}`, own: JSON.stringify(r), file: envelope(r) }));
+    // A v8 backup file of a save that was migrated itself: it carries that save's gunsBackup (its v5 text) and perksBackup.
+    const migrated = settled(false), source = page(JSON.stringify(migrated)); assert.ok(source.initialized);
+    const backups = [...olds, { name: 'v8', own: JSON.stringify(migrated), file: encodeRecoveryBackup(source.record) }].map(b => ({ ...b, record: read(b.file) }));
+    assert.deepEqual(backups.map(b => [b.record.version, b.record.gunsBackup]), backups.map(b => [8, b.own]));
+    assert.deepEqual(backups.map(b => JSON.parse(b.file).formatVersion), [3, 5, 7, 8]);
+    // A fresh origin (a new game, no perk profile) keeps every backup's own copies, gunsBackup included, and reads them back.
+    for (const b of backups) {
+        const fresh = page(); assert.equal(fresh.record.gunsBackup, null);
+        assert.ok(fresh.saves.importRecord(b.record), b.name);
+        assert.deepEqual(copies(fresh.record), copies(b.record), b.name); assert.equal(fresh.record.gunsBackup, b.own, b.name);
+        assert.deepEqual(copies(page(fresh.raw).record), copies(b.record), `${b.name}: read back`);
+    }
+    // The rule is the perk profile's, as for perksBackup and enemyBackup: an origin without one takes the imported copy even
+    // when it holds a gunsBackup of its own (opened from an old record 3).
+    const plain = page(JSON.stringify(oldRecord(page().record)));
+    assert.deepEqual([typeof plain.record.gunsBackup, plain.record.expansion], ['string', undefined]);
+    assert.ok(plain.saves.importRecord(backups[3].record)); assert.deepEqual(copies(plain.record), copies(backups[3].record));
+    // An existing perk origin (opened from its own settled record 7: gunsBackup, perksBackup and enemyBackup of its own) keeps
+    // all three when a backup with a perk profile replaces its save, by the old tab page or by the yard.
+    const existing = () => { const mine = settled(true), p = page(JSON.stringify(mine)); assert.equal(p.record.gunsBackup, JSON.stringify(mine)); return p; };
+    for (const b of backups.slice(1)) for (const yard of [false, true]) {
+        const p = existing(), own = copies(p.record), name = `${b.name} by the ${yard ? 'yard' : 'tab page'}`;
+        if (yard) {
+            const rt = new RealHideoutRuntime(p.state, p.saves, () => NOW); assert.ok(rt.enter().ok, name);
+            const preview = rt.previewImport(b.file); assert.ok(preview.ok && preview.token, name); assert.ok(rt.importBackup(b.file, preview.token!).ok, name);
+        } else assert.ok(p.saves.importRecord(b.record), name);
+        assert.deepEqual(p.record.profile, b.record.profile, `${name}: the save is the backup's`);
+        assert.deepEqual(copies(p.record), own, name); assert.notEqual(own[0], b.own, name);
+    }
+    // A backup without an expansion cannot replace it at all; the bytes stay.
+    const locked = existing(), bytes = locked.raw; assert.equal(locked.saves.importRecord(backups[0].record), false); assert.equal(locked.raw, bytes);
+    // A confirmed older expansion starts a new cycle there: a v4 backup with a live v2 raid brings its own gunsBackup and no
+    // perk or enemy copy; settling and the next station boundary then keep the perk upgrade's text, never a second gunsBackup.
+    const live = oldRecord(deployed(false)); makeV4(live);
+    const older = read(envelope(live)), p = existing();
+    assert.ok(p.saves.importRecord(older)); assert.deepEqual(copies(p.record), [JSON.stringify(live), undefined, undefined]);
+    settle(p); const before = p.raw; assert.ok(p.saves.ensureRpg());
+    assert.deepEqual(copies(p.record), [JSON.stringify(live), before, undefined]);
 });
 
 /** In place: the settled form of an old live-raid record, as its client would have written after extraction. */

@@ -451,7 +451,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - **Perk 规则照旧看扩展版本。** 扩展是 v3 时带 `perksBackup`，取值规则同 main（上一份记录是 Perk 格式就沿用它的，上一份带 v1/v2 扩展就存那份原文，否则 null）。
 - **敌人规则看 `enemyBackup` 这个键。** v8 记录有这个键（值是文本或 null），敌人规则就开着；没有这个键就没开。
   - 只能和扩展一起出现；进行中的分层行动是敌人版（LayeredRaid 4/5）时必须有；值只能是文本或 null。解码器逐条检查，读档时不猜、不补。
-  - 写入照 main 的 `recordUpgradeFields`：上一份记录有这个键就原样带上，所以一直开着；没有时，第一次写进敌人行动就开启，值是被替换那份记录的原文。只有明确导入另起一轮：导入的和本地的都带 v3 扩展时，保留本地的 `perksBackup`，本地敌人规则开着就保留本地的 `enemyBackup`（导入后仍开着），否则用导入记录的；其他情况一律用导入记录自己的两份备份。
+  - 写入照 main 的 `recordUpgradeFields`：上一份记录有这个键就原样带上，所以一直开着；没有时，第一次写进敌人行动就开启，值是被替换那份记录的原文。只有明确导入另起一轮：导入的和本地的都带 v3 扩展时，保留本地的 `gunsBackup`、`perksBackup`，本地敌人规则开着就保留本地的 `enemyBackup`（导入后仍开着），否则用导入记录的；其他情况一律用导入记录自己的三份备份。`gunsBackup` 原来导入时一律保留本地的，M1-07 改成和另两份同一条规则，见下面「原字节」。
   - 普通写入不能去掉这个键（`RecoveryStore.commit` 有一道检查，对应 main 的「7 不能写回别的号」）。
 - **为什么用这个键，不另加字段。** main 的 6/7 恰好就是带 `enemyBackup` 的记录，键在和规则开本来一一对应。迁移时原样留下这个键，开关就留下了，不用新造字段；另加一个布尔值会和这个键各说各的，还得规定对不上时听谁的。内存里的记录可能有值为 `undefined` 的键，所以代码一律用 `enemyRecord(record)`（值不是 `undefined`）判断，存下来的 JSON 里这和「有这个键」是一回事。
 - **迁移。** v6、v7 迁移后保留 `enemyBackup`，敌人规则仍开着，之后结算、进站升级、下一局不带敌人的行动都保持；v4、v5 迁移后没有这个键，直到第一次出击带敌人的街区才开启，`enemyBackup` 存那次写入前的原文（写入失败就不开）。`gunsBackup` 存被替换的 v3–v7 原文；`enemyBackup`、`perksBackup`、`systemsBackup`、`migrationBackup` 原样不动。
@@ -468,13 +468,17 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 | 会话 v3、v4、v5、v6、v7 | 先按各自的旧规则严格校验，再 `migrateRecord(记录, 原文)`，结果按 v8 规则再校验一次；v6/v7 的 `enemyBackup` 原样保留 | 原文 |
 | 会话 v8 | 按 v8 规则校验 | 照存 |
 | 已结算备份 1、2，或没有封套的 profile | `decodeProfileDocument` 按旧规则，再 `migrateProfile` | 不涉及 |
-| 完整备份 2–7 | `decodePortableBackup` → `decodeSession`，同上 | 导入时丢掉，保留当前存档自己的（`perksBackup`、`enemyBackup` 按 main 的导入规则，见上一节） |
+| 完整备份 2–7 | `decodePortableBackup` → `decodeSession`，同上 | 原文（2 为 null）。导入时和 `perksBackup`、`enemyBackup` 同一条规则（见上一节）：导入的和本地的都带 v3 扩展时保留本地的，否则用导入记录的 |
 | 进行中的旧行动（经典，分层 v1–v5） | 读档时迁移，行动继续；`rng`、`nextEntity`、时间、世界都不变，规则版本不变 | 原文 |
 | 待保存结算 | 不在主档里；M1 之后导出的完整备份就是 v8 | — |
 
 ### 原字节
 
 - `gunsBackup`：第一次写 v8 时被替换的那份 v3–v7 记录的原文，只存一次，以后不会被 v8 的文本替换。新开局、旧键迁移和 v2 记录为 null（原字节已在 `legacyBackup`、`migrationBackup`）。
+- 明确导入完整备份时，`gunsBackup` 和 `perksBackup`、`enemyBackup` 走同一条规则（main 在 #81 定的，`recordUpgradeFields` 加 `RecoveryStore.commit` 的导入分支）：
+  - 导入的和本地的都带 v3（Perk）扩展：保留本地的。院子导入已结算的备份时会先把它升到 v3，所以在院子里导入已结算的备份、「重新开始」都保留本地的。
+  - 其他情况用导入记录的：v3–v7 备份是它自己的原文，v8 备份是它带的那份。本地没有 Perk 扩展时（新开局还没进站，或只有 v1/v2 扩展），本地原有的 `gunsBackup` 也被换掉，和另两份一样；导入扩展较旧的备份（例如带进行中 v2 行动的 v4 备份）另起一轮。
+  - 测试：[gunsmith-enemy-records.test.ts](../../tests/gunsmith-enemy-records.test.ts) 的导入两项，覆盖新存档和已有 Perk 存档，v3、v5、v7、v8 备份，旧页签和院子两条路径。
 - 在 `decodeSession` 里设，与 `migrationBackup` 相同：它把版本改成 8，存储层只能在这里拿到原文。
 - 第一次写 v8 可能发生在行动中，这时 `gunsBackup` 是整份进行中的记录（先例：`systemsBackup` 可能存进行中的经典行动）。实测刚出击的记录约 14–16 KB（海岸、居民楼、商场），翻倍后仍远低于 2 MiB 上限。
 - 以后第一次写扩展 v3 时，`perksBackup` 存的是那时的 v8 文本；第一次开启敌人规则时，`enemyBackup` 也存那时的 v8 文本。v3–v7 原字节仍在 `gunsBackup`，没有字节丢失。
@@ -553,6 +557,7 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - **估值与售价（M1-06）。** `D.itemSale` 按组成算，救济组成值 0；有救济组成时商店拒绝整件出售，原因是「这把枪装有救济配件，不能整枪出售。」，结算时混进待卖区的也整笔拒绝；救济判定 `liquidValue` 把这样的枪算 0（商店现在不收）。
 - **提交顺序。** M1-01 的提交单独看时只读写 v6，旧记录一律拒读（原字节不变）；M1-02 的提交接上迁移后全部测试通过。
 - **弹匣上限（与 M1-05 合并时接上）。** 存档校验和 `cleanMagazine` 按装备实例的有效弹量，卸枪按存的弹数原样退回，见上面[Runtime 怎么接](#runtime-怎么接m1-05)的「弹匣」。
+- **导入时的 `gunsBackup`（M1-07）。** 清单写的是 `commit` 写 `this.guns`、从不替换，导入时就一律保留本地的。M1-07 删掉 `this.guns`：`gunsBackup` 由 `recordUpgradeFields` 取上一份记录的（普通写入是本地的，导入是导入记录的），导入分支和 `perksBackup`、`enemyBackup` 同一条规则，见上面「原字节」。
 - **风险。** `gunsBackup` 让第一次写入的记录约翻倍；原记录超过约 1 MiB 时写入会超出 2 MiB 上限而失败，读档仍不覆盖原字节，可导出原始备份。实测刚出击的记录约 16 KB，带全部旧备份的约 25 KB。
 
 ### 待维护者定
