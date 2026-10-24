@@ -12,7 +12,7 @@
 - [src/gunsmith/compat.ts](../../src/gunsmith/compat.ts)：兼容判定。`checkInstall` 判一次安装，`validateBuild` 判一整棵配件树，`removalCascade` 列出随父件进待卸的件。
 - 两个文件都是纯规则，已加入 `scripts/ci/source-health.test.mjs` 的 `PURE`。运行时只互相引用，对 `domain.ts` 只有 `import type`。以后由 domain 单向引用它们，不会成环。
 - 不引用 `shooting.ts`。`GunHandling` 和 `Handling` 字段一一对应，测试里两种类型互相赋值，一边改了字段另一边就编译不过。
-- 现在只有测试读它们。`ITEMS`、`WEAPONS`、存档、Runtime、界面和生成物都没改。从 M0-04 起接入。
+- 现在只有测试读它们。`ITEMS`、`WEAPONS`、存档、Runtime、界面和生成物都没改。M0-04 在它们上面算有效属性，M1 才接入游戏。
 - 测试：[gunsmith-catalog.test.ts](../../tests/gunsmith-catalog.test.ts)、[gunsmith-compat.test.ts](../../tests/gunsmith-compat.test.ts)。两份测试经 [fixtures/gunsmith-docs.ts](../../tests/fixtures/gunsmith-docs.ts) 自己解析 WEAPONS.md、ATTACHMENTS.md 和 PLAN 第 4 节，再和模块比对，不借用模块的数据。
 
 ### 内部 ID

@@ -151,15 +151,15 @@ export function checkInstall(build: Build, id: string, at?: Placement): InstallC
     const chosen = at ? all.filter(s => s.at.parent === at.parent && s.at.slot === at.slot) : all;
     if (at && !chosen.length) return refuse('place', PLACE);
     if (!chosen.length) return missingSlot(gun, build, a.mount);
-    const spot = chosen.find(s => s.room > 0);
-    if (!spot) return refuse('full', full(a.mount));
+    const open = chosen.filter(s => s.room > 0);
+    if (!open.length) return refuse('full', full(a.mount));
     const missing = prerequisiteFault(gun, parts, a);
     if (missing) return missing;
     const used = parts.flatMap(p => effects(def(p.id)));
     for (const e of effects(a)) if (used.includes(e)) return refuse(e, QUOTA[e]);
     if (parts.length >= MAX_PARTS) return refuse('count', COUNT);
-    if (depthOf(parts, spot.at.parent) >= MAX_DEPTH) return refuse('depth', DEPTH);
-    return { ok: true, at: spot.at };
+    const spot = open.find(s => depthOf(parts, s.at.parent) < MAX_DEPTH);
+    return spot ? { ok: true, at: spot.at } : refuse('depth', DEPTH);
 }
 
 /**

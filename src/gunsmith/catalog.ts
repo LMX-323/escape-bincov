@@ -1,7 +1,7 @@
 /**
  * Gunsmith catalog (#28 M0-01/02/03): the 20 guns of docs/gunsmith/WEAPONS.md and the 100 attachments of
- * ATTACHMENTS.md as plain data, and the slot model they share. Pure rules, not wired into the game: until M1 only
- * compat.ts and the tests read it. Decisions and open questions are in docs/gunsmith/CONTRACTS.md.
+ * ATTACHMENTS.md as plain data, and the slot model they share. Pure rules: nothing in the game reads it until M1 (M0-04
+ * first builds effective stats on it). Decisions and open questions are in docs/gunsmith/CONTRACTS.md.
  *
  * The old three guns (pistol, shotgun, carbine) copy today's domain WEAPONS and ITEMS and the shooting.ts handling
  * exactly, and mb4a1 copies the #39 sample rifle; tests/gunsmith-catalog.test.ts keeps them equal. The two docs fix
