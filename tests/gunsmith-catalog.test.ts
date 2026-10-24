@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as D from '../src/domain';
-import { handlingOf, SAMPLE_GUNS, type Handling } from '../src/shooting';
+import { handlingOf, type Handling } from '../src/shooting';
 import { ATTACHMENTS, BRAND_NAMES, CATEGORY_NAMES, GUN_CLASS_NAMES, GUNS, SLOT_NAMES, type AttachmentDef, type Factors, type GunHandling,
     type GunId, type Modifiers } from '../src/gunsmith/catalog';
 import { DOCS } from './fixtures/gunsmith-docs';
@@ -42,7 +42,16 @@ test('counts: guns by class 4/4/3/5/2/1/1, attachments by category 12/12/10/10/1
     for (const [id, a] of Object.entries(ATTACHMENTS)) assert.equal(a.id, id);
 });
 
-test('the old three equal today\'s WEAPONS, ITEMS and handling; mb4a1 starts as the #39 sample rifle', () => {
+/**
+ * The #39 sample rifle as the maintainer playtested it (SAMPLE_GUNS.m4a1 and its handling row in src/shooting.ts),
+ * frozen here when M2-01 retired it: the real M4A1 must keep it exactly.
+ */
+const SAMPLE_M4A1 = {
+    stats: { ammo: 'ammoR', magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03, crit: .05 },
+    handling: { mode: 'auto', hip: 2.4, precise: .22, raise: .4, sway: 2.2, bloom: .009, bloomMax: .08, kick: .008, kickMax: .08, settle: .15, recover: 4 },
+} as const;
+
+test('the old three equal today\'s WEAPONS, ITEMS and handling; mb4a1 keeps the #39 sample rifle\'s numbers and handling', () => {
     for (const id of ['pistol', 'shotgun', 'carbine'] as const) {
         const gun = GUNS[id], item = D.ITEMS[id];
         assert.deepEqual(gun.stats, D.WEAPONS[id]);
@@ -50,9 +59,9 @@ test('the old three equal today\'s WEAPONS, ITEMS and handling; mb4a1 starts as 
         assert.deepEqual({ w: gun.w, h: gun.h, weight: gun.weight, buy: gun.buy, sell: gun.sell },
             { w: item.w, h: item.h, weight: item.weight, buy: item.buy, sell: item.sell });
     }
-    const sample = SAMPLE_GUNS.m4a1;
-    assert.deepEqual({ ...GUNS.mb4a1.stats, id: sample.id, name: sample.name }, sample);
-    assert.deepEqual(GUNS.mb4a1.handling, handlingOf('m4a1'));
+    const { id, name, ...stats } = GUNS.mb4a1.stats;
+    assert.deepEqual([id, name, stats], ['mb4a1', 'M4A1 模块步枪', SAMPLE_M4A1.stats]);
+    assert.deepEqual(GUNS.mb4a1.handling, SAMPLE_M4A1.handling);
     // GunHandling mirrors shooting.ts's Handling, which the rule module may not import: each type takes the other.
     const asHandling: Handling = GUNS.carbine.handling, asGun: GunHandling = handlingOf('carbine');
     assert.deepEqual(asHandling, asGun);

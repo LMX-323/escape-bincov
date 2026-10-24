@@ -26,7 +26,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
   const quote = mode === 'shop' ? shopQuote(source as ShopSource, item) : null;
   const usesText = uses.length ? ` · 任务用途：${esc(uses.join('、'))}` : '';
   const price = quote ? `<dt>${quote.side === 'buy' ? '买入' : '卖出'}</dt><dd>${quote.total === null ? '不可出售' : `¥ ${quote.total}`}</dd>` : `<dt>售价</dt><dd>${item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd>`;
-  const gun = D.WEAPONS[item.id] && item.id !== 'knife';
+  const gun = D.isGun(item.id);
   const acts = mode === 'gear' ? [
     gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
     d.kind === 'accessory' ? btn('佩戴', 'charm-equip', 'primary') : '',

@@ -24,8 +24,6 @@ export interface CoastServices {
     checkpoint(): boolean;
     lootContext(): { containerId: string; runId: string } | null;
     lootInventory(ref: TargetRef): Inventory | null;
-    /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
-    sampleGun(id: 'm4a1' | null): void;
 }
 export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
 

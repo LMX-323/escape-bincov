@@ -257,7 +257,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
         if (!['stash', 'bag'].includes(from)) return fail('rule', '请先把枪械放入背包或仓库，再装备主武器。');
         const item = this.state.save[from].items.find(i => i.uid === uid);
         if (!item) return fail('missing-item', '物品已不在原位置，请重新选择。');
-        if (item.id === 'knife' || !Object.hasOwn(D.WEAPONS, item.id)) return fail('rule', '这件物品不能装备为主武器。');
+        if (!D.isGun(item.id)) return fail('rule', '这件物品不能装备为主武器。');
         return this.transaction('equip', d => D.equip(d.profile, uid) || fail('space', '无法装备：原武器及弹匣余弹在原容器中放不下，请先腾出空间。'));
     }
     unequip() { return this.transaction('unequip', d => D.unequip(d.profile) || fail('space')); }

@@ -10,7 +10,7 @@ import type { PublishedView } from '../raid-runtime/contract';
 import type { CoastSampleHost } from '../coast-view/host';
 import { MOVER, RANGE_WEAPONS, TARGETS, type RangeWeapon, type ShootingRange } from './raid';
 
-const WEAPON_NAMES: Record<RangeWeapon, string> = { pistol: '手枪', carbine: '卡宾枪', shotgun: '霰弹枪', m4a1: 'M4A1 样本', knife: '匕首' };
+const WEAPON_NAMES: Record<RangeWeapon, string> = { pistol: '手枪', carbine: '卡宾枪', shotgun: '霰弹枪', mb4a1: 'M4A1 步枪', knife: '匕首' };
 /** Aim angles are radians (contract AimView); the panel shows degrees and shares as percentages. */
 const degrees = (radians: number) => `${(radians * 180 / Math.PI).toFixed(1)} 度`;
 const percent = (share: number) => `${Math.round(share * 100)}%`;
@@ -22,7 +22,7 @@ const markup = (exit: string) => `<section class="rg" aria-label="试枪场">
 <div class="rg-body">
 <p class="rg-note">内存存档 · 不保存进度</p>
 <div class="rg-label">枪械</div>
-<div class="rg-grid">${RANGE_WEAPONS.map(w => `<button type="button" data-gun="${w}" aria-pressed="false"${w === 'm4a1' ? ' class="rg-wide"' : ''}>${WEAPON_NAMES[w]}</button>`).join('')}</div>
+<div class="rg-grid">${RANGE_WEAPONS.map(w => `<button type="button" data-gun="${w}" aria-pressed="false"${w === 'mb4a1' ? ' class="rg-wide"' : ''}>${WEAPON_NAMES[w]}</button>`).join('')}</div>
 <div class="rg-grid two rg-gap"><button type="button" data-act="mover" aria-pressed="true">移动目标：开</button><button type="button" data-act="reset">重新开始</button></div>
 <table><thead><tr><th>目标</th><th>命中</th></tr></thead>
 <tbody>${[...TARGETS.map(t => [t.id, `${t.tiles} 格`]), [MOVER.id, '移动目标']].map(([id, label]) => `<tr><td>${label}</td><td data-hits="${id}">0</td></tr>`).join('')}</tbody>

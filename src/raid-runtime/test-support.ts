@@ -3,7 +3,7 @@ import { CoastRaidRuntime } from './runtime';
 import { wrapCoastRuntime } from './host';
 import type { SaveSession, SessionState } from '../session';
 import type { Point } from '../world';
-import { ITEMS, addItem, createInventory, equippedWeapon } from '../domain';
+import { ITEMS, addItem, createInventory, equippedWeapon, isGun } from '../domain';
 import { derivedLimits } from '../expansion-state';
 import { checkpointBodyFits } from '../spatial';
 import { isWalkable } from '../world';
@@ -51,7 +51,9 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             const state = runtime.snapshotExpansion(), doors = state.raid!.maps[state.raid!.currentMap].doors;
             if (!(id in doors)) throw new Error('Unknown door.'); doors[id] = open; runtime.restoreExpansion(state);
         },
-        weapon(id: 'pistol' | 'carbine' | 'shotgun') {
+        /** Any gun of the game (D.isGun), the real M4A1 (`mb4a1`) included; the #39 sample rifle retired in M2-01. */
+        weapon(id: string) {
+            if (!isGun(id)) throw new Error(`Not a gun fixture: ${id}.`);
             const state = runtime.snapshot();
             // Another gun in hand is another instance: a factory one under a new uid (the slot names its gun, record v8).
             if (state.loadout.weapon !== id || state.loadout.weaponUid === null) {
@@ -62,8 +64,6 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             state.loadout.weapon = id; state.loadout.ammo = equippedWeapon(state.loadout).magazine;
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
         },
-        /** Hand the playtest sample gun (SAMPLE_GUNS in src/shooting.ts) or take it back; the loadout is untouched. */
-        sampleGun(id: 'm4a1' | null) { runtime.setSampleGun(id); },
         /** Rounds in the equipped gun's magazine (0 to its effective size); relief rounds never exceed what is loaded. */
         magazine(rounds: number) {
             const state = runtime.snapshot(), w = equippedWeapon(state.loadout);

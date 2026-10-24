@@ -20,7 +20,8 @@ import { advanceLayerShots, aimTarget, changeLayer, damageLayerEnemy, type ShotO
 import { critMultiplier, critSources, type CritSnapshot } from '../perks';
 import { advanceBreath, breathChance, clearBreath, idleBreath } from '../breath';
 import { advancePursuits } from '../pursuit';
-import { advanceAim, coneOf, drawAim, driftOf, handlingOf, preciseHeld, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Handling, type Motion } from '../shooting';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, preciseHeld, recoil, turnAim, unsteadyAim, SWAY, type AimState, type Handling, type Motion } from '../shooting';
+import { GUNS, type GunClass } from '../gunsmith/catalog';
 import { effectiveStats } from '../gunsmith/stats';
 import { buildOf, gunWeight } from '../gunsmith/instance';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
@@ -43,6 +44,13 @@ const DUE = 1e-9;
  * counts from this old muzzle distance (px), so walls, doors and corners stop it by the same collision as in flight.
  */
 const MUZZLE = 17;
+/**
+ * How a gun is drawn in hand until M2-10 composes the art of each gun and build: the old three keep their own looks,
+ * and any other gun borrows its class's (a pistol the pistol, a shotgun the shotgun, everything longer the rifle).
+ */
+const CLASS_LOOK: Readonly<Record<GunClass, WeaponLook>> = { pistol: 'pistol', shotgun: 'shotgun', smg: 'rifle', rifle: 'rifle', dmr: 'rifle', bolt: 'rifle', lmg: 'rifle' };
+const heldLook = (id: string): WeaponLook => id === 'knife' || id === 'pistol' || id === 'shotgun' || id === 'carbine' ? id
+    : CLASS_LOOK[GUNS[id as keyof typeof GUNS].cls];
 type PendingEvent = {
     body: ViewEventBody;
     world: WorldKey;
@@ -94,8 +102,6 @@ export class CoastRaidRuntime implements RaidRuntime {
     private clickLeft = 0;
     /** Remaining flight time for rounds born in this substep. Consumed before flight, never part of a checkpoint. */
     private newbornFlight: Map<string, number> | null = null;
-    /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
-    private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
     /**
      * The loadout gun's effective numbers (gunsmith/stats.ts) and weight, for the instance `key` names: its uid, type,
      * installed parts and switches. The gun in hand is read several times a frame, so they are worked out once per
@@ -261,15 +267,14 @@ export class CoastRaidRuntime implements RaidRuntime {
         return this.armed;
     }
     /**
-     * The weapon in hand as it fires: the loadout gun's effective stats, the knife's, or the #39 sample rifle's. The
-     * knife and the sample keep WEAPONS, SAMPLE_GUNS and handlingOf (M2-01 retires the sample).
+     * The weapon in hand as it fires: the loadout gun's effective stats, or the knife's. The knife keeps WEAPONS and
+     * handlingOf; the #39 sample rifle is gone (M2-01): the real M4A1 is a loadout gun like any other.
      */
-    get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.sample?.def ?? this.equipped()?.weapon ?? D.WEAPONS.knife; }
-    /** How the held weapon is drawn: the sample rifle borrows the rifle look. */
-    get weaponLook(): WeaponLook { return this.currentWeapon.id === 'm4a1' ? 'rifle' : this.currentWeapon.id as WeaponLook; }
+    get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.equipped()?.weapon ?? D.WEAPONS.knife; }
+    /** How the held weapon is drawn (heldLook). */
+    get weaponLook(): WeaponLook { return heldLook(this.currentWeapon.id); }
     /** Handling of the weapon in hand, from the same source as currentWeapon. */
-    get grip(): Handling { const gun = !this.knife && !this.sample && this.equipped(); return gun ? gun.grip : handlingOf(this.currentWeapon.id); }
-    get sampleGun() { return this.sample?.def.id ?? null; }
+    get grip(): Handling { const gun = !this.knife && this.equipped(); return gun ? gun.grip : handlingOf(this.currentWeapon.id); }
     private worldKey(): WorldKey {
         const r = this.layered?.raid;
         return { runId: this.terminalLoadout.runId!, worldVersion: r?.worldVersion ?? WORLD_VERSION, layoutRevision: r?.layoutRevision ?? null, mapId: r?.currentMap ?? 'coast' };
@@ -484,12 +489,8 @@ export class CoastRaidRuntime implements RaidRuntime {
             'warned', 'tideChanged', 'noiseRadius', 'noiseTime', 'hitTime', 'exhausted', 'stepTime', 'nextEntity'] as const;
         Object.assign(this, Object.fromEntries(keys.map(k => [k, c[k]])));
         Object.assign(this.player, c.player);
-        if (this.sample)
-            this.sample.base = { mag: c.loadout.ammo, relief: c.loadout.ammoRelief };
-        else {
-            this.mag = c.loadout.ammo;
-            this.magRelief = c.loadout.ammoRelief;
-        }
+        this.mag = c.loadout.ammo;
+        this.magRelief = c.loadout.ammoRelief;
         this.player.rotation = wrap(c.player.rotation);
         this.random = D.seededRandom(c.rng);
         this.noteSeen = new Set(c.noteSeen);
@@ -613,7 +614,6 @@ export class CoastRaidRuntime implements RaidRuntime {
         });
     }
     equipItem(uid: string) {
-        this.setSampleGun(null);
         return this.transaction('equip', () => {
             this.draw();
             this.syncMagazine();
@@ -777,34 +777,17 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     syncMagazine() {
         if (this.session.loadout) {
-            this.session.loadout.ammo = this.sample?.base.mag ?? this.mag;
-            this.session.loadout.ammoRelief = this.sample?.base.relief ?? this.magRelief;
+            this.session.loadout.ammo = this.mag;
+            this.session.loadout.ammoRelief = this.magRelief;
         }
     }
     loadMagazine() {
-        if (this.sample) { this.mag = this.sample.def.magazine; return; }
         const loaded = D.reloadMagazine(this.session.loadout!, this.mag, this.magRelief, this.session.loadout!.bag); this.mag = loaded.ammo; this.magRelief = loaded.ammoRelief; this.syncMagazine();
-    }
-    /**
-     * Hand the player a playtest sample gun (SAMPLE_GUNS) or take it back. The loadout, its weapon and its rounds stay
-     * untouched and are what every checkpoint saves; the sample's own magazine reloads from an endless reserve.
-     */
-    setSampleGun(id: keyof typeof SAMPLE_GUNS | null) {
-        this.assertLive();
-        if ((this.sample?.def.id ?? null) === id) return;
-        if (id !== null && !Object.hasOwn(SAMPLE_GUNS, id)) throw new Error(`Unknown sample gun: ${id}.`);
-        if (this.sample) { this.mag = this.sample.base.mag; this.magRelief = this.sample.base.relief; }
-        this.sample = id ? { def: SAMPLE_GUNS[id], base: { mag: this.mag, relief: this.magRelief } } : null;
-        if (this.sample) { this.mag = this.sample.def.magazine; this.magRelief = 0; }
-        this.knife = false;
-        this.reloadLeft = 0;
-        this.draw();
-        this.dirty = true;
     }
     /** Another weapon comes to hand: the aim starts from the hip again (drawAim) and the breath charge is gone. */
     private draw() { drawAim(this.handling, SWAY); clearBreath(this.breath); }
     /** Kg carried: bag, safe, the loadout gun with its parts (gunsmith gunWeight) and loaded rounds, the knife, the charm. */
-    carriedWeight() { const l = this.session.loadout!, gun = this.equipped(); return D.weight(l.bag) + D.weight(l.safe) + (gun?.weight ?? 0) + D.ITEMS.knife.weight + (gun?.weapon.ammo ? D.ITEMS[gun.weapon.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
+    carriedWeight() { const l = this.session.loadout!, gun = this.equipped(); return D.weight(l.bag) + D.weight(l.safe) + (gun?.weight ?? 0) + D.ITEMS.knife.weight + (gun?.weapon.ammo ? D.ITEMS[gun.weapon.ammo].weight * this.mag : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
     carryLimit() { return this.layered ? derivedLimits(this.layered).carry : B.carryLimit; }
     useItem(id: string, inv: D.Inventory = this.session.loadout!.bag, itemUid?: string) {
         const chosen = itemUid ? inv.items.find(i => i.uid === itemUid && i.id === id && i.qty > 0) : null;
@@ -884,7 +867,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     startReload() {
         const w = this.currentWeapon;
         if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
-            if (!this.sample && !D.count(this.session.loadout!.bag, w.ammo)) {
+            if (!D.count(this.session.loadout!.bag, w.ammo)) {
                 this.say('背包中没有适用的备用弹药。');
                 return;
             }
@@ -1251,7 +1234,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     }
     /**
      * The critical snapshot of a gun shot fired now (docs/tasks/critical-perk-contract.md section 3), in v3 raids only:
-     * the effective technique (the technique drug included), the gun fired `w` (a sample gun included), the owned perks
+     * the effective technique (the technique drug included), the gun fired `w`, the owned perks
      * and whether the focus drug lasts, all as they are at this instant, plus the breath charge `breath` with the enemy
      * it rests on (a charge without a target counts nothing). Classic, v1 and v2 raids keep their own rules: undefined;
      * so does the knife. The HUD (presentation.ts, HudView.crit) reads the same snapshot, so it prints what a shot takes.

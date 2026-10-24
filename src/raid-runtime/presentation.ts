@@ -160,7 +160,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
         doors: { ...r.space?.doors }, highTide: r.highTide, flooded: floodedCells(map, r.highTide), revealed: { ...revealed }, interaction: r.targetView(),
         hud: { hp: r.hp, maxHp: limits.hp, stamina: r.stamina, maxStamina: limits.stamina, pollution: r.pollution, bleeding: !!r.bleeding,
             timeLeft: Math.max(0, r.config.duration - r.elapsed), tideWarning: r.warned && !r.tideChanged, highTide: r.highTide,
-            weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: r.sampleGun ? 999 : w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
+            weapon: { id: w.id, name: w.name, mag: r.mag, magSize: w.magazine, reserve: w.ammo ? D.count(loadout.bag, w.ammo) : 0, reloading: r.reloadLeft > 0 },
             aim: { mode: grip.mode, cone: coneOf(r.handling, w, grip, body), drift: driftOf(r.handling, grip, body),
                 raise: r.handling.raise, sway: r.handling.sway, bloom: r.handling.bloom },
             breath: r.breathOwned ? { target: r.breath.target, seconds: r.breath.seconds, chance: breathChance(r.breath.seconds), full: BREATH_FULL } : null,

@@ -107,8 +107,8 @@ const scaled = (h: GunHandling, f: FactorSet): GunHandling => ({
 
 /**
  * The effective stats of a valid build, with the tactical devices whose uids are in `on` switched on. Anything
- * validateBuild refuses throws, the knife and the #39 sample `m4a1` included. Uids in `on` that name no installed
- * device count for nothing. Reads only its arguments and the catalog: no character, raid or save state.
+ * validateBuild refuses throws, the knife and every other id that is no catalog gun included. Uids in `on` that name
+ * no installed device count for nothing. Reads only its arguments and the catalog: no character, raid or save state.
  */
 export function effectiveStats(build: Build, on: readonly string[] = []): GunStats {
     const valid = validateBuild(build);
@@ -135,7 +135,7 @@ export function effectiveStats(build: Build, on: readonly string[] = []): GunSta
 
 /**
  * Runtime adapters, for M1-05 to put in place of WEAPONS[id] and handlingOf(id). A bare build gives today's values: the
- * old three equal WEAPONS and handlingOf, and mb4a1 equals the #39 sample rifle but for its id and name.
+ * old three equal WEAPONS and handlingOf, and mb4a1 its WEAPONS row (the #39 sample rifle's numbers, M2-01).
  */
 export const effectiveWeapon = (build: Build): WeaponDef => effectiveStats(build).weapon;
 export const effectiveHandling = (build: Build): GunHandling => effectiveStats(build).handling;

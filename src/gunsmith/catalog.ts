@@ -204,7 +204,7 @@ export const GUNS: Readonly<Record<GunId, GunDef>> = {
         { magazine: 30, damage: 30, range: 640, cooldown: .11, reload: 2.4, pellets: 1, spread: .034, crit: .06 },
         hd('auto', 2.4, .22, .45, 2.2, .011, .09, .011, .1, .17, 4),
         { muzzle: 1, barrel: 1, handguard: 1, stock: 1, grip: 1, mag: 1, base: 1 }, ['longScope']),
-    // The #39 sample rifle the maintainer playtested (SAMPLE_GUNS.m4a1 and its handling); the prices are proposals.
+    // The #39 sample rifle the maintainer playtested, unchanged: the real one since M2-01 (the test pins it); prices are proposals.
     mb4a1: gun('mb4a1', 'M4A1 模块步枪', 'rifle', 'common', 'ammoR', [4, 1, 2.9, 2300, 1080],
         { magazine: 30, damage: 24, range: 600, cooldown: .1, reload: 2.1, pellets: 1, spread: .03, crit: .05 },
         hd('auto', 2.4, .22, .4, 2.2, .009, .08, .008, .08, .15, 4),

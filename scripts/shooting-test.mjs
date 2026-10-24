@@ -285,14 +285,13 @@ async function kickKeepsAim(page) {
 /** c. Flash on the drawn barrel tip; tracers leave that tip. */
 async function muzzleAndTracers(page) {
   const cases = [], tips = {};
-  const guns = [['pistol', null], ['shotgun', null], ['carbine', null], ['m4a1', 'm4a1']];
+  const guns = ['pistol', 'shotgun', 'carbine', 'mb4a1'];
   for (let k = 0; k < 8; k++) {
     const theta = wrap(k * Math.PI / 4);
-    await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+    await drive(page, 'weapon', 'pistol');
     await aimAt(page, theta, 110);
-    for (const [gun, sample] of guns) {
-      await drive(page, 'sampleGun', null);
-      if (sample) await drive(page, 'sampleGun', sample); else await drive(page, 'weapon', gun);
+    for (const gun of guns) {
+      await drive(page, 'weapon', gun);
       await steady(page); await settle(page, .2);
       await rec(page, true); await page.mouse.down(); await page.mouse.up();
       await page.waitForFunction(() => window.__shoot.log.some(r => r.ev.some(e => e.type === 'shot' && e.shooter === 'player')), null, { polling: 'raf' });
@@ -325,9 +324,9 @@ async function muzzleAndTracers(page) {
         tip: { x: r3(tip.x, 2), y: r3(tip.y, 2) }, flash, flashToTipPx: r3(flashToTip, 2), flashToDesignPx: r3(flashToDesign, 2), pellets });
     }
   }
-  await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+  await drive(page, 'weapon', 'pistol');
   const all = cases.flatMap(c => c.pellets.map(p => ({ ...p, gun: c.gun, dirDeg: c.dirDeg })));
-  const summary = Object.fromEntries(guns.map(([gun]) => {
+  const summary = Object.fromEntries(guns.map(gun => {
     const cs = cases.filter(c => c.gun === gun), ps = all.filter(p => p.gun === gun && p.drawn);
     return [gun, { flashToTipMaxPx: max(cs.map(c => c.flashToTipPx)), flashToDesignMaxPx: max(cs.map(c => c.flashToDesignPx)),
       tracerOffTipMaxPx: max(ps.map(p => p.offTipPx)), tracerStartBehindTipMaxPx: max(ps.map(p => -p.startsBeyondTipPx)), undrawn: all.filter(p => p.gun === gun && !p.drawn).length }];
@@ -455,17 +454,17 @@ async function hiddenRoom(page) {
   return detail;
 }
 
-/** f. Desktop fire modes: a held left button fires a pistol once and the sample M4A1 every 0.1 s. */
+/** f. Desktop fire modes: a held left button fires a pistol once and the M4A1 every 0.1 s. */
 async function desktopModes(page) {
-  await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+  await drive(page, 'weapon', 'pistol');
   await aimAt(page, 0, 120); await running(page);
   await rec(page); await page.mouse.down(); await waitRaid(page, .8); await page.mouse.up(); await waitRaid(page, .1);
   const pistol = shotsOf(await stop(page)).length;
-  await drive(page, 'sampleGun', 'm4a1'); await running(page);
+  await drive(page, 'weapon', 'mb4a1'); await running(page);
   await rec(page); const t0 = await simTime(page); await page.mouse.down(); await waitRaid(page, 1.05, t0);
   await page.evaluate(() => { window.__shoot.released = null; }); await page.mouse.up(); await waitRaid(page, .3);
   const m4Release = await released(page), log = await stop(page), m4 = shotsOf(log), frameDt = (log.at(-1).t - log[0].t) / Math.max(1, log.length - 1);
-  await drive(page, 'sampleGun', null);
+  await drive(page, 'weapon', 'pistol');
   const interval = m4.length > 1 ? (m4.at(-1).t - m4[0].t) / (m4.length - 1) : NaN;
   const detail = { pistolShots: pistol, m4a1Shots: m4.length, m4a1MeanInterval: r3(interval, 4), frameDt: r3(frameDt, 4), m4a1ShotsAfterRelease: m4.filter(q => q.t > m4Release).length };
   check(pistol === 1, `held pistol fired ${pistol} shots`, detail);

@@ -1,6 +1,6 @@
 import { brush, C, type PixelContext } from './pixel';
 
-export const ITEM_ART_IDS = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger', 'cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet'] as const;
+export const ITEM_ART_IDS = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger', 'cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet', 'gb17', 'mb4a1'] as const;
 export type ItemArtId = typeof ITEM_ART_IDS[number];
 
 /** Authored 32px silhouettes. Texture identity never depends on a runtime tint. */
@@ -126,6 +126,24 @@ export function paintItem(c: PixelContext, id: ItemArtId, size: 24 | 32): void {
       r(S.tealDark,3,4,26,20); r(S.teal,6,4,21,18); r(S.tealLight,6,4,20,2); r(S.wood,3,4,3,22);
       r(S.paperShade,10,8,13,10); r(S.paper,11,9,11,8); p(S.tealDark,[[12,13],[21,13],[19,16],[14,16]]);
       r(S.tealDark,16,10,1,4); r(S.red,23,20,3,10); r(S.redLight,23,20,1,8); break;
+    // Placeholders until Sol's PNG art (M2-10): a squared dark slide over a stippled polymer frame.
+    case 'gb17':
+      p(S.ink,[[2,5],[30,5],[31,6],[31,12],[29,12],[29,16],[22,16],[22,21],[14,21],[13,30],[3,30],[6,17],[2,16]]);
+      r(S.edge,3,6,27,6); r(S.steelDark,3,6,27,2); r(S.steel,4,6,24,1); r(S.steelDark,30,7,1,4);
+      for (const x of [4,6,8]) r(S.ink,x,8,1,3);
+      r(S.ink,16,8,6,2); r(S.clothDark,6,12,23,4); r(S.cloth,22,13,6,1); for (const x of [23,25,27]) r(S.ink,x,13,1,1);
+      r(S.clothDark,15,19,7,2); r(S.clothDark,20,16,2,4); r(S.steel,16,16,1,3);
+      p(S.clothDark,[[7,16],[14,16],[13,29],[4,29]]); r(S.edge,4,28,9,1);
+      for (const [x,y] of [[9,18],[12,18],[8,21],[11,21],[7,24],[10,24],[6,27],[9,27]]) r(S.cloth,x,y,1,1); break;
+    // A black modular rifle: sliding stock, railed receiver and handguard, curved magazine.
+    case 'mb4a1':
+      p(S.ink,[[1,18],[8,13],[12,13],[12,8],[22,8],[22,11],[31,11],[31,16],[23,16],[24,27],[19,28],[18,17],[16,17],[14,25],[9,25],[11,17],[9,18],[3,24]]);
+      r(S.ink,27,6,3,5);
+      p(S.steelDark,[[2,18],[8,14],[11,14],[11,16],[9,17],[3,22]]); r(S.steel,5,16,3,1);
+      r(S.steelDark,13,9,9,7); r(S.steel,13,9,9,1); for (let x = 13; x < 22; x += 2) r(S.steel,x,8,1,1); r(S.ink,15,11,4,2);
+      r(S.edge,22,12,9,4); for (const x of [24,26,28]) r(S.ink,x,13,1,2); r(S.steelDark,28,7,1,4);
+      p(S.steelDark,[[12,18],[15,18],[13,24],[10,24]]);
+      p(S.steel,[[19,17],[22,17],[23,26],[20,27]]); r(S.steelLight,20,18,1,8); break;
   }
 }
 
@@ -206,6 +224,20 @@ function paintSmall(c: PixelContext, id: ItemArtId): void {
       p(S.ink,[[2,1],[21,1],[24,4],[24,21],[3,24],[0,21],[0,4]]); r(S.woodDark,1,3,22,18); r(S.paperShade,5,19,18,3); r(S.paper,6,19,16,1);
       r(S.tealDark,2,2,20,17); r(S.teal,5,2,16,15); r(S.tealLight,5,2,15,2); r(S.wood,2,2,3,19);
       r(S.paper,8,6,11,8); p(S.tealDark,[[9,10],[18,10],[16,13],[11,13]]); r(S.tealDark,13,7,1,4); r(S.red,18,16,3,8); break;
+    // Placeholders until Sol's PNG art (M2-10).
+    case 'gb17':
+      p(S.ink,[[1,3],[22,3],[23,4],[23,9],[21,9],[21,12],[16,12],[16,16],[11,16],[10,23],[2,23],[5,12],[1,11]]);
+      r(S.edge,2,4,20,5); r(S.steelDark,2,4,20,1); r(S.steel,3,4,17,1); for (const x of [3,5]) r(S.ink,x,6,1,2);
+      r(S.ink,12,5,4,2); r(S.clothDark,5,9,16,3); r(S.cloth,16,10,4,1);
+      r(S.clothDark,11,14,5,1); r(S.clothDark,15,12,1,3); r(S.steel,12,12,1,2);
+      p(S.clothDark,[[6,12],[11,12],[10,22],[3,22]]); for (const [x,y] of [[7,14],[9,14],[6,17],[8,17],[5,20],[7,20]]) r(S.cloth,x,y,1,1); break;
+    case 'mb4a1':
+      p(S.ink,[[1,13],[6,10],[9,10],[9,6],[17,6],[17,8],[24,8],[24,12],[17,12],[18,20],[14,21],[13,13],[12,13],[11,19],[7,19],[8,13],[7,14],[2,18]]);
+      r(S.ink,20,4,2,4);
+      p(S.steelDark,[[2,13],[6,11],[8,11],[8,12],[7,13],[3,17]]);
+      r(S.steelDark,10,7,7,5); for (let x = 10; x < 17; x += 2) r(S.steel,x,6,1,1); r(S.ink,11,8,3,1);
+      r(S.edge,17,9,6,2); r(S.ink,19,9,1,1); r(S.ink,21,9,1,1); r(S.steelDark,21,5,1,3);
+      p(S.steelDark,[[9,14],[11,14],[10,18],[8,18]]); p(S.steel,[[14,13],[16,13],[17,19],[15,20]]); r(S.steelLight,15,14,1,5); break;
   }
 }
 

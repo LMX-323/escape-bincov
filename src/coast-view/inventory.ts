@@ -131,14 +131,14 @@ export class InventoryPanel {
     const btn = (label: string, action: string, extra = '') => `<button type="button" data-do="${action}" ${extra}>${label}</button>`;
     const actions = [
       carried && SUPPLY_IDS.includes(i.id) ? btn('使用', 'inv-use') : '',
-      sel.source === 'bag' && D.WEAPONS[i.id] && i.id !== 'knife' ? btn('装备主武器', 'inv-equip') : '',
+      sel.source === 'bag' && D.isGun(i.id) ? btn('装备主武器', 'inv-equip') : '',
       sel.source === 'container' ? btn('拿到背包', 'inv-quick') : btn(sel.source === 'safe' ? '放入背包' : '放入安全箱', 'inv-quick'),
       d.w !== d.h ? btn('旋转', 'inv-rotate') : '',
       btn('移动格位', 'inv-place'),
       i.qty > 1 ? `<label class="cs-split">拆分 <input type="number" min="1" max="${i.qty - 1}" value="${Math.max(1, Math.floor(i.qty / 2))}" data-split aria-label="拆分数量"></label>${btn('拆分放置', 'inv-split')}` : '',
       carried ? btn('丢弃', 'inv-drop', 'class="cs-danger"') : '',
     ].join('');
-    const gun = !!D.WEAPONS[i.id] && i.id !== 'knife';
+    const gun = D.isGun(i.id);
     return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${D.itemWeight(i).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${gun && sel.source !== 'bag' ? '<p class="cs-sub">枪械先放入背包，再选中并装备主武器。</p>' : carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用。</p>'}`;
   }
 

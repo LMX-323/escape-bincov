@@ -1,6 +1,7 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
+import { GUNS, type GunId } from './gunsmith/catalog';
 import { effectiveWeapon } from './gunsmith/stats';
-import { buildOf, factoryState, gunSale, gunSize, gunUids, gunWeight, isGunId, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
+import { buildOf, factoryState, gunSale, gunSize, gunUids, gunWeight, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
 import { migrateProfile, type ProfileV2 } from './gunsmith/migrate';
 
 export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory';
@@ -53,6 +54,14 @@ export interface StorageLike { getItem(key: string): string | null; setItem(key:
 const item = (id: string, name: string, short: string, w: number, h: number, weight: number,
   stack: number, buy: number, sell: number, kind: ItemKind, description: string, color: number): ItemDef =>
   ({ id, name, short, w, h, weight, stack, buy, sell, kind, description, color });
+/**
+ * A gun the gunsmith catalog adds to the game (#28 M2-01): its name, footprint, weight and prices are the catalog's, so
+ * the two cannot drift apart; the cell label, the description and the colour are the item's own.
+ */
+const gunItem = (id: GunId, short: string, description: string, color: number): ItemDef => {
+  const g = GUNS[id];
+  return item(id, g.stats.name, short, g.w, g.h, g.weight, 1, g.buy, g.sell, 'weapon', description, color);
+};
 
 export const ITEMS: Record<string, ItemDef> = {
   knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '随身携带的旧匕首。撤离失败也不会丢失。', 0xb4c3bf),
@@ -85,6 +94,8 @@ export const ITEMS: Record<string, ItemDef> = {
   pearl: item('pearl', '雾色海珠', '海珠', 1, 1, 0.08, 3, 0, 360, 'valuable', '表面像蒙着一层雾，离水后仍泛着微光。可出售。', 0xb0cec0),
   sample: item('sample', '赤潮封存样本', '样本', 1, 1, 0.25, 1, 0, 100, 'quest', '潮汐观测站封存的赤潮样本，用于任务「瓶中的潮声」。', 0xc26654),
   ledger: item('ledger', '港口船册', '船册', 2, 1, 0.45, 1, 0, 130, 'quest', '旧渔港的值班船册，用于任务「未归的第七艘船」。', 0xd2c396),
+  gb17: gunItem('gb17', 'G17', '使用 9 毫米弹，弹匣容量 17 发。轻便的通用手枪，能装微型瞄具、枪口件和手枪侧挂设备。', 0x8a9390),
+  mb4a1: gunItem('mb4a1', 'M4A1', '使用卡宾枪弹，弹匣容量 30 发，全自动。模块化步枪，护木、枪托、握把和弹匣都能更换。', 0x7c8775),
 };
 
 /** Distances are world pixels; cooldown/reload are seconds; spread is radians. */
@@ -93,6 +104,9 @@ export const WEAPONS: Record<string, WeaponDef> = {
   pistol: { id: 'pistol', name: '旧式手枪', ammo: 'ammo9', magazine: 8, damage: 27, range: 440, cooldown: 0.29, reload: 1.25, pellets: 1, spread: 0.07, crit: 0.05 },
   shotgun: { id: 'shotgun', name: '双管霰弹枪', ammo: 'shell', magazine: 2, damage: 15, range: 290, cooldown: 0.72, reload: 1.9, pellets: 6, spread: 0.27, crit: 0.03 },
   carbine: { id: 'carbine', name: '半自动卡宾枪', ammo: 'ammoR', magazine: 12, damage: 39, range: 660, cooldown: 0.24, reload: 1.65, pellets: 1, spread: 0.035, crit: 0.08 },
+  // #28 M2-01: the gunsmith catalog's factory rows. The old three above stay literal; the catalog test keeps them equal.
+  gb17: { ...GUNS.gb17.stats },
+  mb4a1: { ...GUNS.mb4a1.stats },
 };
 export const ENEMIES: Record<string, EnemyDef> = {
   scav: { id: 'scav', name: '拾荒者', hp: 56, speed: 69, damage: 11, range: 30, vision: 220, cooldown: 0.9, color: 0xab9370 },
@@ -127,7 +141,13 @@ const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const integer = (value: unknown, fallback = 0, max = 1e9): number =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(max, Math.floor(value))) : fallback;
 const isObject = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
-const isGun = (id: unknown): id is string => typeof id === 'string' && id !== 'knife' && Object.hasOwn(WEAPONS, id);
+/**
+ * Is `id` a gun the player can own, carry, equip and save: a WEAPONS row other than the knife (#28 M2-01). This is the
+ * one answer every "is it a gun" check reads: the equipped gun's readers, carrying and swapping, relief, the save
+ * checks and the item panels. Each such gun is also a catalog gun and an item (tests/domain.test.ts), so the gunsmith
+ * rules can read it; the knife, enemy weapon looks and catalog guns that are not items yet (M3) are not guns here.
+ */
+export const isGun = (id: unknown): id is GunId => typeof id === 'string' && id !== 'knife' && Object.hasOwn(WEAPONS, id);
 /** The equipped slot as the gun readers below take it: a profile's equipment or a raid loadout. */
 type GunSlot = Pick<Equipment, 'weapon' | 'weaponUid' | 'gun' | 'relief'>;
 /**
@@ -138,7 +158,7 @@ type GunSlot = Pick<Equipment, 'weapon' | 'weaponUid' | 'gun' | 'relief'>;
  * does not is a bug, and reading it throws rather than fire, weigh or price a modified gun as a factory one.
  */
 export function equippedGun(slot: GunSlot): GunInstance | null {
-  if (!isGunId(slot.weapon)) return null;
+  if (!isGun(slot.weapon)) return null;
   if (slot.weaponUid === null || !slot.gun) throw new Error(`The equipped ${slot.weapon} holds no gun instance.`);
   return { uid: slot.weaponUid, id: slot.weapon, relief: slot.relief, ...slot.gun };
 }
@@ -166,11 +186,11 @@ function fillMagazine(capacity: number, current: unknown, relief: unknown): Maga
  * unloading never clamps (unloadMagazine).
  */
 function cleanMagazine(slot: GunSlot, current: unknown, relief: unknown): Magazine {
-  return fillMagazine(isGunId(slot.weapon) ? equippedWeapon(slot).magazine : 0, current, relief);
+  return fillMagazine(isGun(slot.weapon) ? equippedWeapon(slot).magazine : 0, current, relief);
 }
 const emptyEquipment = (): Equipment => ({ weapon: null, weaponUid: null, gun: null, relief: false, ammo: 0, ammoRelief: 0 });
 /** What a new item of this id is born with: a gun leaves the factory with nothing installed, anything else has no state. */
-export const factoryGun = (id: string): Pick<Item, 'gun'> => isGunId(id) ? { gun: factoryState() } : {};
+export const factoryGun = (id: string): Pick<Item, 'gun'> => isGun(id) ? { gun: factoryState() } : {};
 /** Every uid an item holds: its own and, for a gun, each installed part's (record-wide unique). For a checked item. */
 export const itemUids = (item: Pick<Item, 'uid' | 'gun'>): string[] => item.gun ? gunUids({ uid: item.uid, parts: item.gun.parts }) : [item.uid];
 /**
@@ -180,7 +200,7 @@ export const itemUids = (item: Pick<Item, 'uid' | 'gun'>): string[] => item.gun 
  * whole. Such a sale is refused with the reason, never made by stripping or destroying the relief parts.
  */
 export function itemSale(item: Pick<Item, 'id' | 'qty' | 'relief' | 'gun'>): { value: number; restricted: boolean } {
-  if (item.gun && isGunId(item.id)) return gunSale({ id: item.id, relief: !!item.relief, parts: item.gun.parts });
+  if (item.gun && isGun(item.id)) return gunSale({ id: item.id, relief: !!item.relief, parts: item.gun.parts });
   return { value: item.relief ? 0 : ITEMS[item.id].sell * item.qty, restricted: !!item.relief };
 }
 /** Every uid the equipped slot holds: the gun's and its parts', none without a gun. */
@@ -199,7 +219,7 @@ export function createInventory(w: number, h: number): Inventory {
 }
 /** Cells an item takes. A gun with parts may be larger than its type (gunSize); a factory gun is exactly its ITEMS size. */
 export function itemSize(item: Pick<Item, 'id' | 'rotated' | 'gun'>) {
-  if (item.gun && isGunId(item.id)) return gunSize({ id: item.id, parts: item.gun.parts }, !!item.rotated);
+  if (item.gun && isGun(item.id)) return gunSize({ id: item.id, parts: item.gun.parts }, !!item.rotated);
   const d = ITEMS[item.id];
   return item.rotated ? { w: d.h, h: d.w } : { w: d.w, h: d.h };
 }
@@ -310,7 +330,7 @@ export const count = (inv: Inventory, id: string): number => inv.items.reduce((s
  * exactly its ITEMS weight. Anything else is its ITEMS weight times the quantity.
  */
 export const itemWeight = (item: Pick<Item, 'id' | 'qty' | 'gun'>): number =>
-  item.gun && isGunId(item.id) ? gunWeight({ id: item.id, parts: item.gun.parts }) * item.qty : ITEMS[item.id].weight * item.qty;
+  item.gun && isGun(item.id) ? gunWeight({ id: item.id, parts: item.gun.parts }) * item.qty : ITEMS[item.id].weight * item.qty;
 export const weight = (inv: Inventory): number => Math.round(inv.items.reduce((sum, i) => sum + itemWeight(i), 0) * 1000) / 1000;
 export function removeItem(inv: Inventory, id: string, qty: number): boolean {
   if (!Number.isInteger(qty) || qty < 0 || count(inv, id) < qty) return false;
@@ -372,7 +392,7 @@ function cleanInventory(raw: unknown, w: number, h: number, used = new Set<strin
     let qty = integer(entry.qty ?? entry.quantity, 1, ITEMS[entry.id].stack * w * h);
     if (!qty) continue;
     const kept = { ...(entry.relief === true ? { relief: true } : {}), ...(allowRotation && typeof entry.rotated === 'boolean' ? { rotated: entry.rotated } : {}) };
-    if (guns && isGunId(entry.id)) {
+    if (guns && isGun(entry.id)) {
       // The gun keeps its uid and state wherever it lands; only extra copies of a forged quantity are new factory guns.
       const itemUid = claim(used, entry.uid), gun: Item = { uid: itemUid, id: entry.id, qty: 1, x: entry.x, y: entry.y, ...kept, gun: keptGun(entry.id, itemUid, entry.gun, used) };
       if (fits(inv, gun, entry.x, entry.y, undefined, !!gun.rotated)) inv.items.push(gun);
@@ -413,7 +433,7 @@ function cleanSave(raw: Record<string, any>, guns: boolean): SaveDataV1 | Profil
   // gun that has no uid until migrateProfile issues one, so the old rule stands there: a factory gun's capacity.
   const held = guns ? keptSlot(weapon, equipped, used) : null;
   const magazine = held ? cleanMagazine({ weapon, relief, ...held }, equipped.ammo, equipped.ammoRelief)
-    : fillMagazine(isGunId(weapon) ? effectiveWeapon(buildOf({ id: weapon, parts: [] })).magazine : 0, equipped.ammo, equipped.ammoRelief);
+    : fillMagazine(isGun(weapon) ? effectiveWeapon(buildOf({ id: weapon, parts: [] })).magazine : 0, equipped.ammo, equipped.ammoRelief);
   const slot = { weapon, relief, ...magazine };
   const save = {
     version: guns ? 3 : 2, cash: integer(raw.cash, 0), stash, bag, safe,
@@ -467,7 +487,7 @@ const equippedValue = (e: Equipment) => { const held = equippedGun(e); return he
 export function settleRun(save: SaveDataV1, loadout: RunLoadout, outcome: Outcome, kills: number): RunSummary | null {
   if (!save.activeRun?.runId || save.activeRun.runId !== loadout.runId) return null;
   const magazine = cleanMagazine(loadout, loadout.ammo, loadout.ammoRelief);
-  const ammoId = isGunId(loadout.weapon) ? equippedWeapon(loadout).ammo : null;
+  const ammoId = isGun(loadout.weapon) ? equippedWeapon(loadout).ammo : null;
   const carriedValue = inventoryValue(loadout.bag) + equippedValue(loadout) + (ammoId ? (magazine.ammo - magazine.ammoRelief) * ITEMS[ammoId].sell : 0);
   save.safe = clone(loadout.safe);
   const summary: RunSummary = {
@@ -653,7 +673,7 @@ export function upgradeStash(save: SaveDataV1): boolean {
  * independently of the gun's origin.
  */
 export function reloadMagazine(slot: GunSlot, current: number, currentRelief: number, bag: Inventory): Magazine {
-  if (!isGunId(slot.weapon)) return fillMagazine(0, current, currentRelief);
+  if (!isGun(slot.weapon)) return fillMagazine(0, current, currentRelief);
   const weapon = equippedWeapon(slot), magazine = fillMagazine(weapon.magazine, current, currentRelief);
   for (const relief of [true, false]) for (const entry of bag.items) {
     if (entry.id !== weapon.ammo || !!entry.relief !== relief) continue;

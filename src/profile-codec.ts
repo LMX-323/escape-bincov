@@ -8,8 +8,8 @@
  * Versions 1 and 2 (records v2 to v7) are the old format, where no `gun` or `weaponUid` field may appear: they are
  * checked by the old rules and migrated (docs/gunsmith/CONTRACTS.md, the M0-06 section), never repaired.
  */
-import { ITEMS, WEAPONS, cleanOldSave, createInventory, equippedWeapon, fits, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
-import { gunUids, isGunId, validateGun } from './gunsmith/instance';
+import { ITEMS, WEAPONS, cleanOldSave, createInventory, equippedWeapon, fits, isGun, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
+import { gunUids, validateGun } from './gunsmith/instance';
 import type { ProfileV2 } from './gunsmith/migrate';
 
 /** Upper bound for money, counters and quantities. Seeds and RNG states are 32-bit: UINT32_MAX. */
@@ -51,7 +51,7 @@ export function validInventory(value: unknown, w: number, h: number, seen: Set<s
   const placed = createInventory(w, h);
   for (const item of inv.items as unknown[]) {
     if (!item || typeof item !== 'object') return false;
-    const i = item as Item, gun = rules.guns && isGunId(i.id);
+    const i = item as Item, gun = rules.guns && isGun(i.id);
     if (rules.exact && !hasExactKeys(i, ['uid', 'id', 'qty', 'x', 'y', ...('relief' in i ? ['relief'] : []), ...('rotated' in i ? ['rotated'] : []), ...(gun ? ['gun'] : [])])) return false;
     if (!hasOwnStringKey(ITEMS, i.id) || !whole(i.qty, 1, ITEMS[i.id].stack) || !identity(i.uid) || seen.has(i.uid)
       || (i.relief !== undefined && typeof i.relief !== 'boolean')
@@ -74,7 +74,7 @@ export function validInventory(value: unknown, w: number, h: number, seen: Set<s
  */
 function validEquipment(value: any, seen: Set<string>, guns: boolean): boolean {
   if (!value || typeof value.relief !== 'boolean' || !whole(value.ammo, 0, COUNT_MAX) || !whole(value.ammoRelief, 0, COUNT_MAX)) return false;
-  const gun = value.weapon === null ? null : hasOwnStringKey(WEAPONS, value.weapon) && value.weapon !== 'knife' ? WEAPONS[value.weapon] : undefined;
+  const gun = value.weapon === null ? null : isGun(value.weapon) ? WEAPONS[value.weapon] : undefined;
   if (gun === undefined || value.ammoRelief > value.ammo) return false;
   if (!guns) return value.ammo <= (gun?.magazine ?? 0) && !Object.hasOwn(value, 'weaponUid') && !Object.hasOwn(value, 'gun');
   if (!Object.hasOwn(value, 'weaponUid') || !Object.hasOwn(value, 'gun')) return false;

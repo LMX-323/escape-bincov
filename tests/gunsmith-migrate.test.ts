@@ -95,9 +95,12 @@ function prove(name: string, text: string, resolve?: WorldResolver, equipped = [
 }
 
 test('the old guns are exactly the guns that were items before the catalog', () => {
-    assert.deepEqual([...OLD_GUNS].sort(), Object.keys(D.WEAPONS).filter(id => id !== 'knife').sort());
+    // M2-01 made G17 and M4A1 items too, but no save before v8 can hold them: they are guns and never old guns.
+    const added = ['gb17', 'mb4a1'];
+    assert.deepEqual([...OLD_GUNS].sort(), Object.keys(D.WEAPONS).filter(id => D.isGun(id) && !added.includes(id)).sort());
     for (const id of OLD_GUNS) { assert.ok(isGunId(id) && Object.hasOwn(D.ITEMS, id)); assert.deepEqual(GUNS[id].stats, D.WEAPONS[id]); }
-    assert.ok(Object.keys(GUNS).filter(id => Object.hasOwn(D.ITEMS, id)).every(id => OLD_GUNS.includes(id as never)));
+    assert.ok(Object.keys(GUNS).filter(id => Object.hasOwn(D.ITEMS, id)).every(id => OLD_GUNS.includes(id as never) || added.includes(id)));
+    for (const id of added) assert.ok(D.isGun(id) && !OLD_GUNS.includes(id as never), id);
 });
 
 test('new saves: the starter pistol is a factory instance; old new-game, station and fresh-start records migrate on read', () => {

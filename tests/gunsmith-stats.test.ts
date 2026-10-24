@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as D from '../src/domain';
-import { coneOf, handlingOf, recoil, SAMPLE_GUNS, unsteadyAim, type Handling } from '../src/shooting';
+import { coneOf, handlingOf, recoil, unsteadyAim, type Handling } from '../src/shooting';
 import { perkModifiers } from '../src/perks';
 import { ATTACHMENTS, GUNS, type GunDef, type GunHandling, type GunId } from '../src/gunsmith/catalog';
 import { checkInstall, removalCascade, type Build } from '../src/gunsmith/compat';
@@ -65,18 +65,18 @@ test('a bare gun is its factory self: all 20 guns, every field, in fresh objects
     }
 });
 
-test('the Runtime adapters give today\'s numbers for a bare build: WEAPONS and handlingOf, and the #39 sample rifle', () => {
+test('the Runtime adapters give today\'s numbers for a bare build: WEAPONS and handlingOf, the M4A1 its catalog row', () => {
     for (const id of ['pistol', 'shotgun', 'carbine'] as const) {
         assert.deepEqual(effectiveWeapon(bare(id)), D.WEAPONS[id], id);
         assert.deepEqual(effectiveHandling(bare(id)), handlingOf(id), id);
     }
-    const sample = SAMPLE_GUNS.m4a1;
-    assert.deepEqual({ ...effectiveWeapon(bare('mb4a1')), id: sample.id, name: sample.name }, sample);
-    assert.deepEqual(effectiveHandling(bare('mb4a1')), handlingOf('m4a1'));
+    // The M4A1 (the #39 sample rifle's numbers, pinned in gunsmith-catalog.test.ts) is the WEAPONS row M2-01 made of it.
+    assert.deepEqual(effectiveWeapon(bare('mb4a1')), D.WEAPONS.mb4a1);
+    assert.deepEqual(effectiveHandling(bare('mb4a1')), GUNS.mb4a1.handling);
     // They fit where the Runtime reads WEAPONS[id] and handlingOf(id) today.
     const weapon: D.WeaponDef = effectiveWeapon(bare('carbine')), grip: Handling = effectiveHandling(bare('carbine'));
     assert.equal(coneOf(unsteadyAim(), weapon, grip), coneOf(unsteadyAim(), D.WEAPONS.carbine, handlingOf('carbine')));
-    // The knife and the sample id are not catalog guns, so they stay on WEAPONS and handlingOf; illegal builds throw.
+    // The knife and the retired sample id are not catalog guns (the knife stays on WEAPONS and handlingOf); illegal builds throw.
     for (const id of ['knife', 'm4a1', '__proto__']) assert.throws(() => effectiveStats(bare(id)), /^Error: Invalid gun build \(unknown\)/, id);
     assert.throws(() => effectiveWeapon({ gun: 'mb4a1', parts: [{ uid: 'a', id: 'M11', parent: null, slot: 'muzzle' }] }), /\(gun\)/);
 });

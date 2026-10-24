@@ -24,7 +24,6 @@ import { ITEM_ART_IDS, paintItem, type ItemArtId } from '../art/items';
 import { audio } from '../app';
 import { parkApp, takeApp } from '../pixi-app';
 import { SampleSound } from './sound';
-import { playtestMarks } from '../shooting';
 import { esc } from '../html';
 
 export type SampleExit = { kind: 'settled' };
@@ -53,10 +52,7 @@ const DRAIN: Record<Drain, { label: string; tint: string }> = {
 };
 const ease = (t: number) => t * t * (3 - 2 * t);
 const weaponIcons = new Map<string, string>();
-/**
- * The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. The sample rifle (PR #39) has
- * no item art of its own; its caller passes the carbine's.
- */
+/** The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. Every gun is an item with art. */
 function weaponIcon(id: string): string {
   let url = weaponIcons.get(id);
   if (!url) {
@@ -175,8 +171,6 @@ export class CoastSampleHost {
       // Follow the original phone-layout decision (main.ts toggles html.mobile on resize).
       const ro = new ResizeObserver(() => { if (!this.contextLost) this.view.resize(); if (document.documentElement.classList.contains('mobile')) this.input.touch = true; this.measureSafe(); this.measureHudTop(); this.orientation(); });
       this.scope.observe(ro); ro.observe(this.root);
-      const marks = playtestMarks(location.search);
-      if (marks.gun) this.services.sampleGun(marks.gun);
       this.mounted = true;
     } catch (error) { this.unmount(); throw error; }
   }
@@ -653,7 +647,7 @@ export class CoastSampleHost {
     q('[data-hp]').style.width = `${Math.max(0, h.hp / h.maxHp) * 100}%`; q('[data-hp-text]').textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;
     q('[data-st]').style.width = `${Math.max(0, h.stamina / h.maxStamina) * 100}%`; q('[data-st-text]').textContent = `${Math.round(h.stamina)}`;
     const w = h.weapon;
-    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id === 'm4a1' ? 'carbine' : w.id); q('[data-weapon-name]').textContent = w.name; q('[data-swap]').textContent = w.id === 'knife' ? '主武器' : '匕首'; }
+    if (w.id !== this.weaponShown) { this.weaponShown = w.id; q<HTMLImageElement>('[data-weapon-icon]').src = weaponIcon(w.id); q('[data-weapon-name]').textContent = w.name; q('[data-swap]').textContent = w.id === 'knife' ? '主武器' : '匕首'; }
     q('[data-mag]').textContent = !w.magSize ? '近战' : w.reloading ? '换弹中' : `${w.mag} / ${w.magSize}`;
     q('[data-reserve]').textContent = w.magSize ? `备用 ${w.reserve}` : '';
     q('[data-mode]').textContent = w.magSize ? h.aim.mode === 'auto' ? '全自动' : '单发' : '';

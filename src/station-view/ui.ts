@@ -338,7 +338,7 @@ export class UI {
     const before = this.rt.snapshot().profile, item = before[src].items.find(i => i.uid === uid);
     if (this.result(this.rt.secure(src, uid), 'drop')) {
       this.selected = null;
-      if (src === 'safe' && item && D.WEAPONS[item.id] && item.id !== 'knife') {
+      if (src === 'safe' && item && D.isGun(item.id)) {
         // Automatic transfers allocate a fresh UID; select the newly created gun, not its former safe entry.
         const moved = this.rt.snapshot().profile.bag.items.find(i => i.id === item.id && !!i.relief === !!item.relief && !before.bag.items.some(old => old.uid === i.uid));
         if (moved) this.selected = { src: 'bag', uid: moved.uid };
