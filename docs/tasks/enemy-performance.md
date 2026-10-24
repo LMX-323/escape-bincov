@@ -12,8 +12,10 @@
 `--policy=observe-retreat` 是独立的避战负载：前两秒原地瞄准、不射击，此后沿远离初始焦点方向正常行走，整个样本不射击；`--heal=true` 仍只使用实际携带医疗。固定种子42、240px、双潮位、12 Runtime和六浏览器的完整12秒、全部原延迟/人口/纹理预算均保留，另要求每个样本确实发布原生敌人出手事件，按UID记录攻击阶段与事件。它只证明观察后退避的负载，不替代站定、近距离持续交火或真人平衡。运行命令：
 
 ```powershell
-node --import tsx scripts/enemy-performance.mjs --world=mall --policy=observe-retreat --radius=240 --heal=true --out=test-results/enemy-mall-performance-observe-retreat
+node --import tsx scripts/enemy-performance.mjs --world=mall --policy=observe-retreat --radius=240 --heal=true --retreat-to=S-N-down --out=test-results/enemy-mall-performance-observe-route
 ```
+
+不带`--retreat-to`的首次观察后直退矩阵也未签收：十二组Runtime完整，五组浏览器死亡。末帧截图显示玩家顶住封存检修核西南角；从(1152,432)到S-N落点(2000,432)的直线身体通道实际被挡，正式闭门寻路需要29个路径点并绕到y=464。指定`--retreat-to=S-N-down`后按同一身体寻路给真实键鼠/摇杆指向，靠近路径点时缩短输入轮询以免越过拐角；到达只停留、不按E换层。Node的输入规划仍不计入AI路径分项，浏览器规划仍在外部输入循环；两者的原AI、总时钟及预算不变。报告记录落点，禁止与直退报告直接同比；只有实际全矩阵通过才能签收这一明确路线。
 
 修订前的商场五次尝试（stationary240、retreat240、stationary300、strafe+heal300、strafe+heal240）均因死亡短样本或没有持续战斗未签收，全部保留原报告。三次短输入追踪进一步确认旧触屏直接开火时举枪为零、`actorShown`可能选择屏外目标；仅补举枪仍有死亡反例。不得将输入修正或新增避战场景当作既有失败已通过。最终准确head、实际结果和证据归档见承接PR；下方历史报告维持其原输入版本和制品归属。
 

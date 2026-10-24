@@ -17,11 +17,11 @@ import { decodeSession, SESSION_KEY } from '../src/recovery-store.ts';
 import { CoastRaidRuntime, emptyIntent } from '../src/raid-runtime/runtime.ts';
 import { BUILDING_WORLD } from '../src/building-world.ts';
 import { mallWorldV3 } from '../src/mall-world.ts';
-import { corridor, traversable } from '../src/spatial.ts';
+import { corridor, spacePath, traversable } from '../src/spatial.ts';
 import { archetype } from '../src/enemy-archetypes.ts';
 
 const options = new Map(process.argv.slice(2).map(arg => {
-  const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out|world)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
+  const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out|world|retreat-to)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
 }));
 const world = options.get('world') ?? 'buildings'; assert.ok(['buildings', 'mall'].includes(world));
 const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
@@ -29,6 +29,8 @@ const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','s
 // Fixed avoidance load: observe the first attack without firing for two seconds, then
 // walk away for the rest of the sample. It never stands in for sustained firefight acceptance.
 const observeRetreat = policy === 'observe-retreat', inputRevision = 'visible-aim-v2';
+const retreatTo = options.get('retreat-to') ?? null;
+assert.ok(!retreatTo || observeRetreat, '--retreat-to requires the declared observe-retreat policy');
 const focus = options.get('focus') ?? 'raider-gunner',radius=Number(options.get('radius')??240);
 assert.ok(archetype(focus));assert.ok(Number.isFinite(radius)&&radius>=32&&radius<=300);
 assert.ok(['true','false'].includes(options.get('heal')??'false'));const heal=options.get('heal')==='true';
@@ -62,17 +64,29 @@ function fixture(highTide) {
       - Math.min(...layer.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
   assert.ok(p, 'safe, visible observation point'); raid.currentMap = mapId; raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
-  return { raw, state, saves, target: { x: e.x, y: e.y }, nativeUids: layer.enemies.filter(e => e.tactics).map(e => e.uid), definition: context.definition };
+  const destination = retreatTo ? context.definition.entries.find(e => e.id === retreatTo)?.at : null;
+  if (retreatTo) assert.ok(destination && spacePath(context,p,destination).length, 'declared retreat entry has a closed-door body path');
+  return { raw, state, saves, target: { x: e.x, y: e.y }, nativeUids: layer.enemies.filter(e => e.tactics).map(e => e.uid), definition: context.definition, destination };
+}
+// Plan only from immutable geometry/current doors. Input still walks the real Runtime;
+// no teleporting, opening doors by mutation, E stair activation or extra AI scheduling.
+function routeStep(context, player, destination) {
+  if (Math.hypot(destination.x-player.x,destination.y-player.y)<10) return null;
+  const path=spacePath(context,player,destination);assert.ok(path.length,'retreat body path remains reachable');
+  const next=[...path].reverse().find(p=>corridor(context,player,p,'body',10));
+  assert.ok(next,'retreat has a visible body waypoint');
+  return {angle:Math.atan2(next.y-player.y,next.x-player.x),distance:Math.hypot(next.x-player.x,next.y-player.y)};
 }
 if(options.has('fixture-out')) {
   const path=resolve(options.get('fixture-out'));await mkdir(resolve(path,'..'),{recursive:true});await writeFile(path,fixture(false).raw);
   console.log('Prepared strict low-tide performance input; no measurement or acceptance claimed.');process.exit(0);
 }
-const report = { protocol: 'enemy-native-performance-v1', inputRevision, at: new Date().toISOString(), world, seed, policy, focus, radius, heal, budgets,
+const report = { protocol: 'enemy-native-performance-v1', inputRevision, at: new Date().toISOString(), world, seed, policy, retreatTo, focus, radius, heal, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
   scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
   environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
   input: { aimPreparationSeconds: .6, observeSeconds: observeRetreat ? 2 : 0, playerFires: !observeRetreat,
+    retreatRoute: retreatTo ? `Closed-door body path to ${retreatTo}, stopping at landing without changing floors` : 'straight away from initial focus',
     target: 'Browser: alive, revealed, onscreen canvas and clear sight; Node: alive and clear sight in current map. Release trigger when none.',
     devices: 'Node precise and full walk; desktop right mouse and WASD; touch 24px aim / 60px fire, 40px walk (0.714), movement lowers raise. Node frame targeting and browser 250ms targeting remain separate loads.' },
   runtime: [], browser: [], failures: [], errors: [], external: [], status: 'RUNNING' };
@@ -93,9 +107,11 @@ try {
         firePressed: firing && frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: firing, precise: true,
         commands: !observeRetreat && frame % (hz * 3) === 0 ? ['reload'] : [] };
       if (policy !== 'stationary' && (!observeRetreat || frame / hz >= 2)) {
-        const bearing = policy==='retreat'||observeRetreat?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
+        const step = f.destination ? routeStep({definition:f.definition,doors:r.space.doors,highTide},r.player,f.destination) : null;
+        const bearing = f.destination ? step?.angle ?? 0 : policy==='retreat'||observeRetreat?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
           :intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
-        intent.move = { x: Math.cos(bearing), y: Math.sin(bearing), sprint: false };
+        const amplitude = f.destination ? step ? Math.min(1,step.distance/(260/hz)) : 0 : 1;
+        intent.move = { x: Math.cos(bearing)*amplitude, y: Math.sin(bearing)*amplitude, sprint: false };
       }
       if(heal&&(r.hp<70||r.bleeding)&&frame/hz-lastHeal>=2){intent.commands.push('heal');lastHeal=frame/hz;}
       const start = performance.now(); const batch = r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
@@ -184,8 +200,9 @@ try {
         });
         const aim = snapshot?.candidates.find(a => corridor({ definition:saved.definition, doors:snapshot.doors, highTide }, snapshot.player, {x:a.wx,y:a.wy}, 'sight'));
         const elapsed = performance.now() - started, preparing = elapsed < 600;
-        const moving = policy !== 'stationary' && (!observeRetreat || elapsed >= 2000);
-        const bearing = policy==='retreat'||observeRetreat?await page.evaluate(target=>{
+        const step = snapshot && saved.destination ? routeStep({definition:saved.definition,doors:snapshot.doors,highTide},snapshot.player,saved.destination) : null;
+        const moving = !!snapshot && policy !== 'stationary' && (!observeRetreat || elapsed >= 2000) && (!saved.destination || !!step);
+        const bearing = saved.destination ? step?.angle ?? 0 : policy==='retreat'||observeRetreat?await page.evaluate(target=>{
           const frame=window.__bincovSample?.host?.lastBatch?.frame;
           return frame?Math.atan2(frame.player.y-target.y,frame.player.x-target.x):0;
         },saved.target):(aim?.angle ?? 0) + Math.PI/2 + (Math.floor((performance.now()-started)/1000)%2 ? Math.PI:0);
@@ -194,14 +211,14 @@ try {
           await cdp.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[{id:1,x:origin.x+Math.cos(aim?.angle??0)*distance,y:origin.y+Math.sin(aim?.angle??0)*distance},
             ...(movementOrigin ? [{id:2,x:movementOrigin.x+(moving?Math.cos(bearing)*40:0),y:movementOrigin.y+(moving?Math.sin(bearing)*40:0)}]:[])] });
         } else if (aim) { await page.mouse.move(aim.x, aim.y); if (!preparing && !observeRetreat) await page.mouse.click(aim.x, aim.y); }
-        if (!touch && moving) {
-          const next = [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean);
+        if (!touch) {
+          const next = moving ? [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean) : [];
           for(const key of held) if(!next.includes(key)) await page.keyboard.up(key);
           for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
         }
         if (!observeRetreat && performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
         if(heal&&performance.now()-lastHeal>2000&&await page.evaluate(()=>{const h=window.__bincovSample?.host;return h?.lastBatch?.frame.phase==='running'&&(h.lastBatch.frame.hud.hp<70||h.lastBatch.frame.hud.bleeding);})){await page.keyboard.press('q');lastHeal=performance.now();}
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(step && moving ? Math.max(16,Math.min(250,step.distance/260*1000)) : 250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       for(const key of held) await page.keyboard.up(key); if(!touch) await page.mouse.up({button:'right'});
@@ -231,6 +248,7 @@ try {
     const old = JSON.parse(await readFile(resolve(options.get('baseline')), 'utf8'));
     assert.equal(old.protocol, report.protocol); assert.equal(old.status,'PASS'); assert.equal(old.seed ?? 42,seed);
     assert.equal(old.inputRevision, inputRevision, 'compare the same targeting and aim input revision');
+    assert.equal(old.retreatTo ?? null, retreatTo, 'compare the same fixed retreat route');
     assert.equal(old.world ?? 'buildings', world, 'compare the same world and encounter geometry');
     assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
     assert.equal(old.focus ?? 'raider-gunner',focus);assert.equal(old.radius ?? 240,radius,'identical observation geometry for comparison');
