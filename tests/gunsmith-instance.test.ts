@@ -242,6 +242,12 @@ test('limits: more than 12 parts or 3 levels are refused, and the walk stops the
     assert.ok(!deep.ok && !compatDeep.ok && deep.reason === compatDeep.reason);
     refused(validateGun('mb4a1', 'g', { parts: flat(100_000), devices }), 'count', 'a huge list');
     refused(validateGun('mb4a1', 'g', { parts: [chain(5000)], devices }), 'depth', 'a deep chain');
+    // Nothing past a limit is even read: a value there that throws on any access is never touched.
+    const trap = new Proxy({}, Object.fromEntries(['get', 'has', 'ownKeys', 'getOwnPropertyDescriptor', 'getPrototypeOf'].map(name =>
+        [name, () => { throw new Error(`read past the limit (${name})`); }])));
+    refused(validateGun('mb4a1', 'g', { parts: [...flat(MAX_PARTS + 1), trap], devices }), 'count', 'stops at the 13th part');
+    const below = node('c1', 'H02', 'handguard', [node('c2', 'H02', 'handguard', [node('c3', 'H02', 'handguard', [trap])])]);
+    refused(validateGun('mb4a1', 'g', { parts: [below], devices }), 'depth', 'stops at the fourth level');
     // Three levels are allowed by the tree; the catalog has no part on a part on a part, so compat refuses the slot.
     refused(validateGun('mb4a1', 'g', { parts: [chain(MAX_DEPTH)], devices }), 'place', 'three handguards stacked');
 });
