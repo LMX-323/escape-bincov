@@ -334,8 +334,9 @@ M0 评审决定 3：逐项护栏之外，腰射锥和精瞄锥各自不低于原
 - 院子和旧页签：出发负重（`RealHideoutRuntime.departure`、旧页签的 `preparedWeight`）里枪的重量用 `equippedWeight`；院子装备卡、旧页签装备区和行动背包面板显示的弹量用 `equippedWeapon`。只读名称、弹药种类或暴击的地方（出发检查、Perk 文案、救济规则等）照旧查 `WEAPONS`，配件不改这些。
 - 测试：[gunsmith-readers.test.ts](../../tests/gunsmith-readers.test.ts) 对旧三枪逐项比对新旧读法：`equippedWeapon`、`equippedWeight` 等于 `WEAPONS`、`ITEMS`；`reloadMagazine` 在 1200 组弹匣与背包组合下，结果和背包都与旧实现相同；Runtime 的 `currentWeapon`、`grip`、`reloadTime`（含换弹 Perk）、`carriedWeight`、HUD、换弹，试枪场装弹，以及院子的出发负重。源码检查确认 Runtime、画面、测试驱动和试枪场不再按 id 查 `WEAPONS` 或枪的 `ITEMS` 重量。射击实验台的数字不变；旧读法和新读法各回放 40 段脚本（243 发、6328 帧），射击角度、准星、弹匣和负重逐位相同。合并后加测：读者读的是实例自己的配件（以装了 G01 加长匣的 G17 为例，弹量 17→24、重量、换弹装填、出击和结算的弹匣都随实例），装备栏缺实例时抛错，卸枪按存的弹数原样退回，profile 的弹匣上限按实例。合并前后 `scripts/shooting-bench.ts` 的报告逐字节相同。
 - 还没接的：
-  - 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定；开着的设备也要进缓存键。
+  - 站定和激光距离由 Runtime 判断：站定时用 `braced`，激光开着且目标在 `range` 内时腰射用 `laser.hip`。具体规则 M2-03 定；开关已在缓存键里，M2-03 把开着的设备传给 `effectiveStats`。
   - 枪声半径是 `SURVIVAL.gunNoiseRange × noise`，M2-11 接入敌人听觉。
+  - 「是不是枪」有两种判断：读装备枪的地方（`equippedGun`、`cleanMagazine`、`reloadMagazine`、结算的弹种）看目录（`isGunId`）；装卸搬运（`heldItem`、`unloadMagazine`）、救济规则（`ownedGuns`）和存档校验的装备栏看 `WEAPONS`（旧三枪）。现在两者对能存进档的枪完全一致；M2-01 把 G17、M4A1 做成物品时要统一。
 
 ### 待维护者定
 
