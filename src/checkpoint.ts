@@ -1,4 +1,5 @@
 import * as D from './domain';
+import type { EnemyTactics } from './enemy-archetypes';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
 import { decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
@@ -8,6 +9,8 @@ import type { CritSnapshot } from './perks';
 export const WORLD_VERSION = 'coast-v2';
 export interface ActorState extends Point { rotation: number }
 export interface EnemyState extends ActorState {
+  /** Present only for an authored archetype in a layered v4 action. Never added to an old active enemy. */
+  tactics?: EnemyTactics;
   uid: string; id: string; hp: number; home: Point; target: Point;
   state: 'patrol' | 'investigate' | 'chase' | 'attack' | 'return';
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
@@ -92,7 +95,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   if (!Array.isArray(c.enemies) || c.enemies.length !== config.enemies.length) fail();
   c.enemies.forEach((e, i) => {
     id(e.uid);
-    if (e.uid !== `enemy-${i}` || e.id !== config.enemies[i].id || !actor(e) || !point(e.home) || !point(e.target)
+    if (e.tactics !== undefined || e.uid !== `enemy-${i}` || e.id !== config.enemies[i].id || !actor(e) || !point(e.home) || !point(e.target)
         || !finite(e.hp, 0, D.ENEMIES[e.id].hp) || !['patrol', 'investigate', 'chase', 'attack', 'return'].includes(e.state)
         || !Array.isArray(e.path) || e.path.length > 4000 || !e.path.every(point)) fail();
     for (const key of ['timer', 'cooldown', 'repath', 'alert'] as const) if (!finite(e[key], -10000, 10000)) fail();

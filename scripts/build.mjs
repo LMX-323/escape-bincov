@@ -18,9 +18,35 @@ async function compile() {
   for (const [file, sha256] of Object.entries(titleManifest.sources)) if (createHash('sha256').update(await readFile(file)).digest('hex') !== sha256) throw new Error(`Title source changed: ${file}`);
   // Coast sample assets: every runtime PNG must match its manifest hash, and the importer must cover exactly the manifest.
   const coast = JSON.parse(await readFile('assets/coast/manifest.json','utf8'));
-  const coastImports = [...(await readFile('src/coast-view/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/coast\/[^']+\.png)'/g)].map(m => m[1]).sort();
-  if (JSON.stringify(coastImports) !== JSON.stringify(coast.assets.map(a => a.file).sort())) throw new Error('Coast asset imports do not match assets/coast/manifest.json.');
+  const packed = JSON.parse(await readFile('assets/coast/packed/manifest.json','utf8'));
+  const coastSource = await readFile('src/coast-view/assets.ts','utf8');
+  const coastImports = [...coastSource.matchAll(/from '\.\.\/\.\.\/(assets\/coast\/[^']+\.webp)'/g)].map(m => m[1]).sort();
+  if (packed.schema !== 1 || JSON.stringify(coastImports) !== JSON.stringify(packed.sheets.map(a => a.file).sort())
+    || packed.frames.length !== coast.assets.length || new Set(packed.frames.map(a => a.id)).size !== coast.assets.length)
+    throw new Error('Packed coast imports or coverage do not match the manifest.');
+  for (const sheet of packed.sheets) {
+    const bytes = await readFile(sheet.file);
+    if (bytes.length !== sheet.bytes || createHash('sha256').update(bytes).digest('hex') !== sheet.sha256)
+      throw new Error(`Packed coast sheet hash mismatch: ${sheet.file}`);
+  }
+  for (const frame of packed.frames) {
+    const original = coast.assets.find(a => a.id === frame.id), index = packed.sheets.findIndex(s => s.file === frame.sheet), sheet = packed.sheets[index];
+    if (!original || !sheet || frame.sourceSha256 !== original.sha256 || frame.w !== original.w || frame.h !== original.h
+      || !Number.isInteger(frame.x) || !Number.isInteger(frame.y) || frame.x < 0 || frame.y < 0
+      || frame.x + frame.w > sheet.w || frame.y + frame.h > sheet.h
+      || !coastSource.includes(`['${frame.id}', sheet${index}, ${frame.x}, ${frame.y}, ${frame.w}, ${frame.h}]`))
+      throw new Error(`Packed coast frame mismatch: ${frame.id}`);
+  }
   for (const a of coast.assets) if (createHash('sha256').update(await readFile(a.file)).digest('hex') !== a.sha256) throw new Error(`Coast asset hash mismatch: ${a.file}`);
+  const enemyArt = JSON.parse(await readFile('assets/enemies/manifest.json', 'utf8'));
+  for (const [file, sha256] of Object.entries(enemyArt.sources)) {
+    if (createHash('sha256').update(await readFile(file)).digest('hex') !== sha256) throw new Error(`Enemy art source changed: ${file}`);
+  }
+  for (const a of enemyArt.assets) {
+    const bytes = await readFile(a.file);
+    if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Enemy frame size mismatch: ${a.file}`);
+    if (coast.assets.find(c => c.id === a.id)?.sha256 !== a.sha256) throw new Error(`Enemy art manifest mismatch: ${a.id}`);
+  }
   // Station yard art (Sol R1.1): same rule as the coast sample, plus the PNG size recorded in the manifest.
   const station = JSON.parse(await readFile('assets/station/manifest.json','utf8'));
   const stationImports = [...(await readFile('src/station-view/assets.ts','utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/station\/[^']+\.png)'/g)].map(m => m[1]).sort();
