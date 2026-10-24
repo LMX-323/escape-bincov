@@ -11,6 +11,8 @@ import { advanceTacticalEnemy, type TacticalEffects } from '../src/raid-runtime/
 import { decodeSession, RecoveryStore, SESSION_KEY } from '../src/recovery-store';
 import { encodeRecoveryBackup, decodePortableBackup } from '../src/save-backup';
 import { canonicalBehavior } from './fixtures/enemy-benchmark';
+import { oldRecord } from './fixtures/old-saves';
+import { factoryState, validateGun } from '../src/gunsmith/instance';
 
 function fixture(raw?: string) {
     const data = new Map<string, string>(raw ? [[SESSION_KEY, raw]] : []);
@@ -43,7 +45,7 @@ test('street deployment atomically upgrades only the new action; exact prior byt
     assert.equal(f.raw, before); assert.deepEqual(f.state.save, base); assert.equal(f.writes, writes);
     f.deny(false); assert.ok(f.saves.beginRun(42, true), f.state.storageError);
     const r = decodeSession(f.raw);
-    assert.equal(r.version, 7); assert.equal(r.enemyBackup, before); assert.equal(r.expansion!.raid!.version, 5);
+    assert.equal(r.version, 8); assert.equal(r.enemyBackup, before); assert.equal(r.expansion!.raid!.version, 5);
     assert.equal(r.expansion!.raid!.roster.length, BUILDING_WORLD.enemyCount);
     assert.equal(Object.values(r.expansion!.raid!.maps).flatMap(m => m.enemies).filter(e => e.tactics).length, 3);
     assert.ok(f.saves.persist()); assert.equal(decodeSession(f.raw).enemyBackup, before);
@@ -144,7 +146,10 @@ test('v4 snapshot/restore/import preserve every phase and reject invalid fields 
             const bad = structuredClone(record); corrupt(bad.expansion!.raid!.maps.coast.enemies.find(e => e.uid === enemy.uid)!.tactics);
             assert.throws(() => decodeSession(JSON.stringify(bad)), /存档损坏或版本不兼容/);
         }
-        const downgraded = structuredClone(record); downgraded.version = 4; delete downgraded.enemyBackup;
+        // A live enemy raid needs enemy rules on: neither a v8 record without enemyBackup nor an old v4 record holds one.
+        const dropped = structuredClone(record); delete dropped.enemyBackup;
+        assert.throws(() => decodeSession(JSON.stringify(dropped)), /无法读取/);
+        const downgraded = oldRecord(record, 4); delete downgraded.enemyBackup; delete downgraded.perksBackup;
         assert.throws(() => decodeSession(JSON.stringify(downgraded)), /无法读取/);
     } finally { runtime.cancelStart(); }
 });
@@ -156,6 +161,9 @@ test('corpse contains carried equipment and exactly remaining ammo; repeated dea
     damageLayerEnemy(state, 'coast', enemy, 1000);
     const corpse = raid.maps.coast.containers.find(c => c.id === `corpse-${enemy.uid}`)!;
     assert.equal(D.count(corpse.inventory, 'ammo9'), 6); assert.equal(D.count(corpse.inventory, 'pistol'), 1);
+    // The carried gun drops as a gun instance (gunsmith record v8): a factory state under its own entity uid.
+    const pistol = corpse.inventory.items.find(i => i.id === 'pistol')!;
+    assert.deepEqual(pistol.gun, factoryState()); assert.deepEqual(validateGun(pistol.id, pistol.uid, pistol.gun), { ok: true });
     const before = structuredClone(state); damageLayerEnemy(state, 'coast', enemy, 1000); assert.deepEqual(state, before);
     const store = new RecoveryStore(f.storage); store.load();
     assert.doesNotThrow(() => store.commit(f.state.save, null, null, state));

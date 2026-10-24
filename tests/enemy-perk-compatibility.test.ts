@@ -10,6 +10,7 @@ import { RealHideoutRuntime } from '../src/hideout-runtime';
 import { startOver } from '../src/fresh-start';
 import { seededRandom } from '../src/domain';
 import { plainCrit } from './fixtures/layered';
+import { oldRecord } from './fixtures/old-saves';
 
 const NOW = 1800000000000;
 function page(raw?: string) {
@@ -23,15 +24,22 @@ function page(raw?: string) {
     return { data, storage, state, saves, fail: (value: boolean) => { full = value; },
         get raw() { return data.get(SESSION_KEY)!; }, get record() { return decodeSession(data.get(SESSION_KEY)!); } };
 }
+/**
+ * The record the client before gun instances (main 67a7468) stored for this live action: a Perk-only v5 (raid v3), or an
+ * enemy-only v6 (raid v4, expansion v2). The current client reads either and writes it as v8, enemy rules on for the v6.
+ */
 function historical(version: 5 | 6) {
     const p = page(); assert.ok(p.saves.beginRun(42, true, { legacyEnemies: version === 5 }));
-    const r = p.record;
+    const r = oldRecord(p.record);
     if (version === 6) {
         r.version = 6; delete r.perksBackup;
         r.expansion!.version = 2; delete r.expansion!.growth.perks; r.expansion!.raid!.version = 4;
     }
+    assert.equal(r.version, version);
     const raw = JSON.stringify(r, null, 2) + '\n'; assert.doesNotThrow(() => decodeSession(raw)); return raw;
 }
+/** Enemy rules are on: a v8 record says so by holding enemyBackup. */
+const enemyOn = (record: SessionRecord) => Object.hasOwn(record, 'enemyBackup');
 function hit(record: SessionRecord) {
     const state = structuredClone(record.expansion!), raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!;
     const enemy = raid.maps.coast.enemies.find(e => !e.tactics && e.hp > 20)!;
@@ -52,12 +60,12 @@ test('historical Perk and enemy actions keep distinct critical rules through che
         assert.ok(p.saves.resumeRun()); p.state.state = 'run';
         const runtime = new CoastRaidRuntime(p.state, p.saves);
         assert.ok(p.saves.persist()); runtime.cancelStart();
-        assert.equal(p.record.version, version); assert.deepEqual(hit(p.record), hit(record));
+        assert.equal(p.record.version, 8); assert.equal(enemyOn(p.record), version === 6); assert.deepEqual(hit(p.record), hit(record));
         const reopened = page(p.raw); assert.deepEqual(hit(reopened.record), hit(record));
         const portable = decodePortableBackup(encodeRecoveryBackup(p.record));
         assert.equal(portable.kind, 'session'); if (portable.kind !== 'session') continue;
         const target = page(); assert.ok(target.saves.importRecord(portable.record));
-        assert.equal(target.record.version, version); assert.deepEqual(hit(target.record), hit(record));
+        assert.equal(target.record.version, 8); assert.equal(enemyOn(target.record), version === 6); assert.deepEqual(hit(target.record), hit(record));
         assert.equal(target.record.enemyBackup, record.enemyBackup); assert.equal(target.record.perksBackup, record.perksBackup);
     }
 });
@@ -66,33 +74,33 @@ test('enemy-only v6 settles before Perk upgrade: failed upgrade preserves exact 
     const p = page(historical(6)), enemyBackup = p.record.enemyBackup;
     assert.ok(p.saves.resumeRun()); p.state.state = 'run';
     assert.ok(p.saves.prepareSettlement('extract', 0)); assert.ok(p.saves.retrySettlement());
-    assert.equal(p.record.version, 6); assert.equal(p.record.expansion!.version, 2);
+    assert.equal(p.record.version, 8); assert.ok(enemyOn(p.record)); assert.equal(p.record.expansion!.version, 2);
     p.state.state = 'hideout'; const before = p.raw;
     p.fail(true); assert.equal(p.saves.ensureRpg(), false); assert.equal(p.raw, before);
     assert.equal(p.state.expansion!.version, 2);
     p.fail(false); assert.ok(p.saves.ensureRpg());
-    assert.equal(p.record.version, 7); assert.equal(p.record.perksBackup, before); assert.equal(p.record.enemyBackup, enemyBackup);
+    assert.equal(p.record.version, 8); assert.equal(p.record.perksBackup, before); assert.equal(p.record.enemyBackup, enemyBackup);
     assert.ok(p.saves.beginRun(43, true)); assert.equal(p.record.expansion!.raid!.version, 5);
     assert.equal(hit(p.record).damage, 10); assert.ok(p.saves.persist());
     const reopened = page(p.raw); assert.equal(reopened.record.perksBackup, before); assert.equal(reopened.record.enemyBackup, enemyBackup);
     assert.ok(reopened.saves.persist()); assert.equal(reopened.record.perksBackup, before);
 });
 
-test('Perk-first deployment writes v7 once; both backups survive settlement, reset and portable import', () => {
+test('Perk-first deployment turns enemy rules on once; both backups survive settlement, reset and portable import', () => {
     const p = page(); assert.ok(p.saves.enableExpansion()); const v4 = p.raw;
     assert.ok(p.saves.enableRpg()); const v5 = p.raw;
     assert.equal(p.record.perksBackup, v4);
     p.fail(true); assert.equal(p.saves.beginRun(42, true), false); assert.equal(p.raw, v5);
     p.fail(false); assert.ok(p.saves.beginRun(42, true)); p.state.state = 'run';
-    assert.equal(p.record.version, 7); assert.equal(p.record.enemyBackup, v5); assert.equal(p.record.perksBackup, v4);
+    assert.equal(p.record.version, 8); assert.equal(p.record.enemyBackup, v5); assert.equal(p.record.perksBackup, v4);
     assert.ok(p.saves.prepareSettlement('extract', 0)); assert.ok(p.saves.retrySettlement()); p.state.state = 'hideout';
     const rt = new RealHideoutRuntime(p.state, p.saves, () => NOW); assert.ok(rt.enter().ok);
     assert.ok(startOver(rt, () => p.storage, NOW).ok);
-    assert.equal(p.record.version, 7); assert.equal(p.record.enemyBackup, v5); assert.equal(p.record.perksBackup, v4);
+    assert.equal(p.record.version, 8); assert.equal(p.record.enemyBackup, v5); assert.equal(p.record.perksBackup, v4);
     const decoded = decodePortableBackup(encodeRecoveryBackup(p.record)); assert.equal(decoded.kind, 'session');
     if (decoded.kind !== 'session') return;
     const q = page(); assert.ok(q.saves.importRecord(decoded.record));
-    assert.equal(q.record.version, 7); assert.equal(q.record.enemyBackup, v5); assert.equal(q.record.perksBackup, v4);
+    assert.equal(q.record.version, 8); assert.equal(q.record.enemyBackup, v5); assert.equal(q.record.perksBackup, v4);
 });
 
 test('combined records reject mismatched rules, missing snapshots, lost backups and downgrade without overwriting', () => {
@@ -100,7 +108,8 @@ test('combined records reject mismatched rules, missing snapshots, lost backups 
     const valid = p.record;
     const faults: ((r: any) => void)[] = [
         r => { r.version = 5; delete r.enemyBackup; }, r => { r.version = 6; delete r.perksBackup; },
-        r => { delete r.enemyBackup; }, r => { delete r.perksBackup; },
+        r => { delete r.enemyBackup; }, r => { delete r.perksBackup; }, r => { r.enemyBackup = 5; },
+        r => { Object.assign(r, oldRecord(r, 5)); delete r.enemyBackup; }, r => { Object.assign(r, oldRecord(r, 6)); delete r.perksBackup; },
         r => { r.expansion.raid.version = 3; }, r => { r.expansion.raid.version = 4; },
         r => { const raid = r.expansion.raid; raid.maps.coast.bullets.push({ uid: `entity-${raid.runId}-${raid.nextEntity++}`,
             x: raid.player.x, y: raid.player.y, rotation: 0, vx: 100, vy: 0, left: 50, damage: 10, enemy: false }); },
