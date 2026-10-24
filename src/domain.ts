@@ -210,6 +210,18 @@ export function placeItem(inv: Inventory, item: Item, autoRotate = true): boolea
   inv.items.push(placed);
   return true;
 }
+/** Ground uids a classic or v1 raid deals out from a counter (loot-3, entity-12): a later raid deals the same ones again. */
+const RAID_LOCAL = /^(?:enemy|loot|entity|pursuit)-[0-9]+$/;
+/**
+ * A gun from the ground into `inv` whole, as the same instance: its state and relief flag, and its uid unless that is
+ * raid-local. A dropped gun kept its item uid and v2/v3 raids name their entities with the run id, so those stay; a gun
+ * born on the ground of a classic or v1 raid takes a new item uid, or a later raid's ground loot could collide with it.
+ * False, and nothing changes, when it does not fit.
+ */
+export function placeGroundGun(inv: Inventory, loot: Pick<Item, 'uid' | 'id' | 'gun'> & { relief: boolean }): boolean {
+  return placeItem(inv, { uid: RAID_LOCAL.test(loot.uid) ? uid() : loot.uid, id: loot.id, qty: 1, x: 0, y: 0,
+    ...(loot.relief ? { relief: true } : {}), gun: loot.gun ? clone(loot.gun) : factoryState() });
+}
 export function moveItem(inv: Inventory, itemUid: string, x: number, y: number, rotated?: boolean): boolean {
   const selected = inv.items.find(i => i.uid === itemUid);
   if (!selected) return false;
@@ -239,7 +251,7 @@ export function transferItem(from: Inventory, to: Inventory, itemUid: string, x?
       if (!target || target.id !== selected.id || !!target.relief !== !!selected.relief || target.qty + selected.qty > ITEMS[target.id].stack) return false;
       target.qty += selected.qty;
     }
-  } else if (addItem(trial, selected.id, selected.qty, !!selected.relief, !!selected.rotated) > 0) return false;
+  } else if (selected.gun ? !placeItem(trial, clone(selected)) : addItem(trial, selected.id, selected.qty, !!selected.relief, !!selected.rotated) > 0) return false;
   to.items = trial.items;
   from.items.splice(from.items.indexOf(selected), 1);
   return true;

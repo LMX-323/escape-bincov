@@ -5,6 +5,9 @@ import { SaveSession, createSessionState } from '../src/session';
 import { SESSION_KEY, decodeSession } from '../src/recovery-store';
 import { decodeStoredProfile } from '../src/profile-codec';
 import { CoastRaidRuntime } from '../src/raid-runtime/runtime';
+import { createRuntimeTestDriver } from '../src/raid-runtime/test-support';
+import { RealHideoutRuntime } from '../src/hideout-runtime';
+import { organizeStash, transferBagToStash } from '../src/inventory-actions';
 import { gunSize, type GunState, type PartNode } from '../src/gunsmith/instance';
 
 // Gunsmith M1-03 (docs/gunsmith/CONTRACTS.md): equipping, unequipping and swapping guns in a raid move one gun instance:
@@ -16,7 +19,8 @@ const part = (uid: string, id: string, slot: PartNode['slot'], children: PartNod
 const fitted = (): GunState => ({ parts: [part('p-muzzle', 'M05', 'muzzle'), part('p-base', 'A07', 'base', [part('p-dot', 'O03', 'top')])], devices: { laser: false, light: false } });
 /** The same carbine with the compact suppressor instead: one cell longer (4x1). */
 const suppressed = (): GunState => ({ parts: [part('p-can', 'M07', 'muzzle')], devices: { laser: false, light: false } });
-const gunItem = (uid: string, id: string, x: number, y: number, gun: GunState = { parts: [], devices: { laser: false, light: false } }, extra: Partial<D.Item> = {}): D.Item =>
+const factory = (): GunState => ({ parts: [], devices: { laser: false, light: false } });
+const gunItem = (uid: string, id: string, x: number, y: number, gun: GunState = factory(), extra: Partial<D.Item> = {}): D.Item =>
     ({ uid, id, qty: 1, x, y, ...extra, gun });
 /** Rounds of `id` by origin across inventories and an equipped magazine of that ammunition. */
 function rounds(id: string, inventories: D.Inventory[], slot?: D.Equipment) {
@@ -37,6 +41,10 @@ function raid(arm: (loadout: D.RunLoadout) => void) {
     assert.ok(ticket, state.storageError); assert.equal(saves.commitExpansionMutation(ticket), 'committed');
     const runtime = new CoastRaidRuntime(state, saves); runtime.freezeAI = true;
     return { o, state, saves, runtime, get record() { return decodeSession(o.data.get(SESSION_KEY)!); } };
+}
+/** Edits the live raid loadout through the Runtime, as the ?test=1 driver does; the next commit writes it. */
+function loadoutEdit(r: ReturnType<typeof raid>) {
+    return (change: (loadout: D.RunLoadout) => void) => { const s = r.runtime.snapshotExpansion(); change(s.raid!.loadout); r.runtime.restoreExpansion(s); };
 }
 
 test('a hideout swap moves both guns as themselves: the uid, the parts and the switches go along, the rounds go back apart', () => {
@@ -119,4 +127,133 @@ test('extraction brings the equipped instance home; death loses it and keeps the
         if (outcome === 'extract') assert.deepEqual([home.equipment.weaponUid, home.equipment.gun, home.equipment.ammo], ['eq-carbine', fitted(), 5]);
         else assert.deepEqual([home.equipment.weapon, home.equipment.weaponUid, home.equipment.gun], [null, null, null]);
     }
+});
+
+// Gunsmith M1-04: moving a gun anywhere keeps its uid and its state; a move that does not fit changes nothing.
+
+test('quick move, secure, stash-all and sorting keep every gun as itself', () => {
+    const save = D.newSave();
+    save.stash.items = [gunItem('s-carbine', 'carbine', 0, 0, fitted()), gunItem('s-long', 'carbine', 0, 1, suppressed(), { relief: true })];
+    save.bag.items = [gunItem('b-shotgun', 'shotgun', 0, 0)];
+    // Stash to bag and back without coordinates (the quick move): the same uids and states, a longer gun at its length.
+    assert.ok(D.transferItem(save.stash, save.bag, 's-carbine'));
+    assert.deepEqual(save.bag.items.find(i => i.uid === 's-carbine')!.gun, fitted());
+    assert.ok(D.transferItem(save.bag, save.stash, 's-carbine')); assert.ok(D.transferItem(save.stash, save.bag, 's-long'));
+    const long = save.bag.items.find(i => i.uid === 's-long')!;
+    assert.deepEqual([long.gun, long.relief, D.itemSize(long)], [suppressed(), true, { w: 4, h: 1 }]);
+    const safe = D.createInventory(2, 2), bag = structuredClone(save.bag);
+    assert.equal(D.transferItem(save.bag, safe, 'b-shotgun'), false, 'a 3x1 gun never fits a 2x2 safe');
+    assert.deepEqual([save.bag, safe.items], [bag, []]);
+    // Everything from the bag into the stash, then a sort: still the same guns.
+    assert.ok(transferBagToStash(save)); assert.ok(organizeStash(save));
+    const guns = save.stash.items.filter(i => D.ITEMS[i.id].kind === 'weapon').map(i => [i.uid, i.gun]).sort();
+    assert.deepEqual(guns, [['b-shotgun', factory()], ['s-carbine', fitted()], ['s-long', suppressed()]].sort());
+    assert.doesNotThrow(() => decodeStoredProfile({ ...save, activeRun: null }));
+});
+
+test('the yard quick move writes the same instance and reads it back', () => {
+    const o = origin(), state = createSessionState(), session = new SaveSession(state, () => o.storage, undefined, () => NOW);
+    assert.ok(session.initialize()); const yard = new RealHideoutRuntime(state, session, () => NOW); assert.ok(yard.enter().ok);
+    const ticket = session.prepareExpansionMutation(d => { d.profile.stash.items.push(gunItem('y-carbine', 'carbine', 7, 5, fitted())); });
+    assert.ok(ticket); assert.equal(session.commitExpansionMutation(ticket), 'committed');
+    const stored = () => decodeSession(o.data.get(SESSION_KEY)!).profile;
+    assert.ok(yard.quickMove('stash', 'y-carbine').ok);
+    assert.deepEqual(stored().bag.items.find(i => i.uid === 'y-carbine')!.gun, fitted());
+    assert.ok(yard.quickMove('bag', 'y-carbine').ok);
+    assert.deepEqual(stored().stash.items.find(i => i.uid === 'y-carbine')!.gun, fitted());
+});
+
+test('a raid drop leaves the gun on the ground as itself and a pickup takes the same gun back; no room leaves it lying', () => {
+    const r = raid(l => { l.bag.items = [gunItem('r-carbine', 'carbine', 0, 0, fitted())]; }), edit = loadoutEdit(r);
+    assert.equal(r.runtime.dropItem('r-carbine'), 'committed');
+    const map = () => r.record.expansion!.raid!.maps[r.record.expansion!.raid!.currentMap];
+    const ground = map().loot.find(l => l.uid === 'r-carbine')!;
+    assert.deepEqual([ground.id, ground.qty, ground.relief, ground.gun], ['carbine', 1, false, fitted()]);
+    assert.equal(r.state.loadout!.bag.items.length, 0);
+    // A full bag: the pickup is refused whole and the gun stays on the ground, nothing written.
+    edit(l => { for (let y = 0; y < 5; y++) for (let x = 0; x < 6; x++) l.bag.items.push({ uid: `f-${x}-${y}`, id: 'watch', qty: 1, x, y }); });
+    assert.ok(r.runtime.checkpoint()); const raw = r.o.data.get(SESSION_KEY);
+    assert.equal(r.runtime.pickupLoot('r-carbine'), false); assert.equal(r.o.data.get(SESSION_KEY), raw);
+    assert.ok(r.runtime.loot.some(l => l.uid === 'r-carbine'));
+    edit(l => { l.bag.items = []; });
+    assert.equal(r.runtime.pickupLoot('r-carbine'), true);
+    assert.deepEqual(r.record.expansion!.raid!.loadout.bag.items.map(i => [i.uid, i.gun]), [['r-carbine', fitted()]]);
+    assert.equal(map().loot.some(l => l.uid === 'r-carbine'), false);
+});
+
+test('a gun born on a layered raid\'s ground keeps its run-scoped entity uid when picked up', () => {
+    const r = raid(l => { l.bag.items = []; }), driver = createRuntimeTestDriver(r.runtime, '?test=1');
+    const spot = r.state.loadout!.runId!, uid = driver.spawnLoot('shotgun', 1, r.runtime.player);
+    assert.ok(uid.startsWith(`entity-${spot}-`)); assert.deepEqual(r.runtime.loot.find(l => l.uid === uid)!.gun, factory());
+    assert.equal(r.runtime.pickupLoot(uid), true);
+    assert.deepEqual(r.record.expansion!.raid!.loadout.bag.items.map(i => [i.uid, i.gun]), [[uid, factory()]]);
+});
+
+test('classic raids: a dropped gun keeps its item uid on the ground; a world-born gun takes a new item uid when picked up', () => {
+    const o = origin(), state = createSessionState(), session = new SaveSession(state, () => o.storage, undefined, () => NOW);
+    assert.ok(session.initialize()); state.state = 'hideout'; assert.ok(session.beginRun(42)); state.state = 'run';
+    state.loadout!.bag.items = [gunItem('c-carbine', 'carbine', 0, 0, fitted())];
+    assert.ok(session.persist(), state.storageError);
+    const runtime = new CoastRaidRuntime(state, session); runtime.freezeAI = true;
+    const driver = createRuntimeTestDriver(runtime, '?test=1'), record = () => decodeSession(o.data.get(SESSION_KEY)!);
+    assert.equal(runtime.dropItem('c-carbine'), 'committed');
+    assert.deepEqual(record().raid!.loot.find(l => l.uid === 'c-carbine')!.gun, fitted());
+    assert.equal(runtime.pickupLoot('c-carbine'), true);
+    assert.deepEqual(record().raid!.loadout.bag.items.find(i => i.uid === 'c-carbine')!.gun, fitted());
+    // World loot: loot-N uids repeat in every classic raid, so the picked-up gun gets an item uid of its own.
+    const born = runtime.loot.find(l => D.ITEMS[l.id].kind === 'weapon')!;
+    assert.match(born.uid, /^loot-[0-9]+$/); assert.deepEqual(born.gun, factory());
+    let placed = false;
+    for (const [dx, dy] of [[0, 0], [0, 12], [12, 0], [-12, 0], [0, -12], [0, 20], [20, 0]]) { try { driver.placePlayer({ x: born.x + dx, y: born.y + dy }); placed = true; break; } catch { /* blocked */ } }
+    assert.ok(placed, 'stand by the gun');
+    assert.equal(runtime.pickupLoot(born.uid), true);
+    const taken = record().raid!.loadout.bag.items.filter(i => i.id === born.id && i.uid !== 'c-carbine');
+    assert.equal(taken.length, 1); assert.doesNotMatch(taken[0].uid, /^(loot|entity|enemy)-[0-9]+$/); assert.deepEqual(taken[0].gun, factory());
+    assert.equal(record().raid!.loot.some(l => l.uid === born.uid), false);
+});
+
+test('crates hand guns over as themselves both ways, and the safe mirror keeps their state through checkpoints', () => {
+    const r = raid(l => { l.bag.items = []; l.safe.items = []; }), edit = loadoutEdit(r);
+    const box = r.runtime.containers.find(c => c.kind === 'crate')!;
+    const ticket = r.saves.prepareExpansionMutation(d => {
+        const raid = d.expansion.raid!, crate = raid.maps[raid.currentMap].containers.find(c => c.id === box.id)!;
+        crate.inventory.items = [gunItem('k-carbine', 'carbine', 0, 0, fitted())];
+    });
+    assert.ok(ticket); assert.equal(r.saves.commitExpansionMutation(ticket), 'committed');
+    createRuntimeTestDriver(r.runtime, '?test=1').placePlayer({ x: box.x, y: box.y + 12 });
+    const mapId = r.record.expansion!.raid!.currentMap, ref = { runId: box.runId, mapId, kind: 'container' as const, id: box.id };
+    const request = (from: 'container' | 'bag', to: 'container' | 'bag', x = 0, y = 0) => ({ runId: box.runId, containerId: box.id, from, to, uid: 'k-carbine', x, y });
+    assert.equal(r.runtime.transferLoot(ref, request('container', 'bag')), 'committed');
+    assert.deepEqual(r.record.expansion!.raid!.loadout.bag.items.map(i => [i.uid, i.gun]), [['k-carbine', fitted()]]);
+    // Into the safe through the raid inventory's quick move: the profile's safe mirrors it, state included.
+    const pistol = gunItem('k-pistol', 'pistol', 4, 0, { parts: [part('k-muzzle', 'M01', 'muzzle')], devices: { laser: false, light: false } });
+    edit(l => { l.bag.items.push(pistol); });
+    assert.equal(r.saves.mutate(() => D.transferItem(r.state.loadout!.bag, r.state.loadout!.safe, 'k-pistol')), 'committed');
+    const stored = r.record;
+    assert.deepEqual(stored.expansion!.raid!.loadout.safe.items.map(i => [i.uid, i.gun]), [['k-pistol', pistol.gun]]);
+    assert.deepEqual(stored.profile.safe, stored.expansion!.raid!.loadout.safe);
+    assert.equal(r.runtime.transferLoot(ref, request('bag', 'container', 2, 2)), 'committed');
+    const crate = r.record.expansion!.raid!.maps[mapId].containers.find(c => c.id === box.id)!;
+    assert.deepEqual(crate.inventory.items.find(i => i.uid === 'k-carbine')!.gun, fitted());
+});
+
+test('a gun carried through a layer change stays the same instance; a gun left on a floor stays on that floor', () => {
+    const o = origin(), state = createSessionState(), session = new SaveSession(state, () => o.storage, undefined, () => NOW);
+    assert.ok(session.initialize()); state.state = 'hideout'; assert.ok(session.beginRun(42, 'mall', { mallLayout: 2 })); state.state = 'run';
+    const ticket = session.prepareExpansionMutation(d => {
+        const l = d.expansion.raid!.loadout;
+        Object.assign(l, { weapon: 'carbine', weaponUid: 'm-carbine', gun: fitted(), ammo: 0, ammoRelief: 0, relief: false });
+        l.bag.items = [gunItem('m-shotgun', 'shotgun', 0, 0)];
+    });
+    assert.ok(ticket); assert.equal(session.commitExpansionMutation(ticket), 'committed');
+    const runtime = new CoastRaidRuntime(state, session), driver = createRuntimeTestDriver(runtime, '?test=1'); driver.freezeAI(true);
+    assert.equal(runtime.dropItem('m-shotgun'), 'committed');
+    const from = runtime.current().map.key.mapId, e = runtime.layeredWorld!.maps[from].entries.find(x => x.id === 'S-N-up')!;
+    driver.placePlayer(e.at, 0, from);
+    assert.ok(runtime.activate({ runId: runtime.current().map.key.runId, mapId: from, kind: 'entry', id: e.id }));
+    const raid = decodeSession(o.data.get(SESSION_KEY)!).expansion!.raid!;
+    assert.notEqual(raid.currentMap, from);
+    assert.deepEqual([raid.loadout.weaponUid, raid.loadout.gun], ['m-carbine', fitted()]);
+    assert.deepEqual(raid.maps[from].loot.find(l => l.uid === 'm-shotgun')!.gun, factory());
+    assert.equal(raid.maps[raid.currentMap].loot.some(l => l.uid === 'm-shotgun'), false);
 });

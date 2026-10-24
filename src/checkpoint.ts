@@ -1,7 +1,7 @@
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
-import { decodeOldStoredProfile, decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { decodeOldStoredProfile, decodeStoredProfile, finite, hasOwnStringKey, identity, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 import type { LootContainer } from './loot';
 import type { CritSnapshot } from './perks';
 import { gunUids, isGunId, validateGun, type GunState } from './gunsmith/instance';
@@ -93,10 +93,11 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | Profi
   if (c.highTide !== (c.tideChanged ? !config.initialHigh : config.initialHigh)
       || c.warned !== (c.elapsed >= config.warningAt) || c.tideChanged !== (c.elapsed >= config.tideAt)) fail();
   const ids = new Set<string>();
-  const id = (uid: unknown) => {
-    if (typeof uid !== 'string' || !/^(enemy|loot|entity)-[0-9]+$/.test(uid) || ids.has(uid)) return fail();
+  // World uids come from the raid's counters; a dropped gun keeps its item uid on the ground (the gun format, M1-04).
+  const id = (uid: unknown, item = false) => {
+    if (typeof uid !== 'string' || !(/^(enemy|loot|entity)-[0-9]+$/.test(uid) || item && identity(uid)) || ids.has(uid)) return fail();
     ids.add(uid);
-    if (uid.startsWith('entity-') && Number(uid.slice(7)) >= c.nextEntity) fail();
+    if (/^entity-[0-9]+$/.test(uid) && Number(uid.slice(7)) >= c.nextEntity) fail();
   };
   if (!Array.isArray(c.enemies) || c.enemies.length !== config.enemies.length) fail();
   c.enemies.forEach((e, i) => {
@@ -113,7 +114,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1 | Profi
   const items = [...profile.stash.items, ...c.loadout.bag.items, ...c.loadout.safe.items];
   const itemIds = new Set(guns ? [...items.flatMap(D.itemUids), ...D.equipmentUids(c.loadout)] : items.map(item => item.uid));
   for (const l of c.loot) {
-    id(l.uid);
+    id(l.uid, guns && isGunId(l.id));
     if (!point(l) || !hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
     // A gun on the ground carries a valid state (the gun format) and nothing else carries one.
     if (guns && isGunId(l.id) ? !validateGun(l.id, l.uid, l.gun).ok : Object.hasOwn(l, 'gun')) fail();
