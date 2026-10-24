@@ -485,45 +485,56 @@ export function grantRelief(save: SaveDataV1): boolean {
 }
 /** Purchases enter the stash. Ammo is bought in packs; prices are still per round. */
 export function buyQuantity(id: string): number { return id === 'ammo9' ? 12 : id === 'shell' ? 4 : id === 'ammoR' ? 10 : 1; }
+/**
+ * The equipped gun as the item it becomes when it leaves the slot: the same uid, state and body relief flag, so it
+ * comes back as the gun it is. Null without a gun.
+ */
+function heldItem(e: Equipment): Item | null {
+  if (!isGun(e.weapon)) return null;
+  return { uid: e.weaponUid ?? uid(), id: e.weapon, qty: 1, x: 0, y: 0, ...(e.relief ? { relief: true } : {}), gun: e.gun ? clone(e.gun) : factoryState() };
+}
+/** The slot holding `item`, a gun item, as that same instance: its uid, state and relief flag, an empty magazine. */
+const slotOf = (item: Item): Equipment =>
+  ({ weapon: item.id, weaponUid: item.uid, gun: item.gun ? clone(item.gun) : factoryState(), relief: !!item.relief, ammo: 0, ammoRelief: 0 });
+/**
+ * Swap at the hideout: the chosen gun item becomes the equipped gun and the one it replaces goes back into the same
+ * container as the same instance, then the old magazine's rounds (ordinary and relief kept apart). All or nothing.
+ */
 export function equip(save: SaveDataV1, itemUid: string): boolean {
   if (save.activeRun) return false;
   for (const inv of [save.bag, save.stash]) {
     const selected = inv.items.find(i => i.uid === itemUid);
     if (!selected || !isGun(selected.id)) continue;
-    const trial = clone(inv);
+    const trial = clone(inv), held = heldItem(save.equipment);
     trial.items.splice(inv.items.indexOf(selected), 1);
-    if (save.equipment.weapon && addItem(trial, save.equipment.weapon, 1, save.equipment.relief)) return false;
+    if (held && !placeItem(trial, held)) return false;
     if (!unloadMagazine(trial, save.equipment)) return false;
     inv.items = trial.items;
-    save.equipment = { weapon: selected.id, weaponUid: selected.uid, gun: selected.gun ? clone(selected.gun) : factoryState(), relief: !!selected.relief, ammo: 0, ammoRelief: 0 };
+    save.equipment = slotOf(selected);
     return true;
   }
   return false;
 }
+/** The equipped gun goes to the stash as the same instance, with its rounds; nothing changes when either does not fit. */
 export function unequip(save: SaveDataV1): boolean {
   if (save.activeRun || !save.equipment.weapon) return false;
-  const stash = clone(save.stash);
-  if (addItem(stash, save.equipment.weapon, 1, save.equipment.relief)) return false;
+  const stash = clone(save.stash), held = heldItem(save.equipment);
+  if (!held || !placeItem(stash, held)) return false;
   if (!unloadMagazine(stash, save.equipment)) return false;
   save.stash = stash;
   save.equipment = emptyEquipment();
   return true;
 }
-/** Raid weapon swaps use the backpack only; safe contents remain untouched. */
+/** Raid weapon swaps use the backpack only; safe contents remain untouched. The guns move as the same instances. */
 export function equipRun(loadout: RunLoadout, itemUid: string): boolean {
   const selected = loadout.bag.items.find(entry => entry.uid === itemUid);
   if (!selected || !isGun(selected.id)) return false;
-  const trial = clone(loadout.bag);
+  const trial = clone(loadout.bag), held = heldItem(loadout);
   trial.items.splice(loadout.bag.items.indexOf(selected), 1);
-  if (loadout.weapon && addItem(trial, loadout.weapon, 1, loadout.relief)) return false;
+  if (held && !placeItem(trial, held)) return false;
   if (!unloadMagazine(trial, loadout)) return false;
   loadout.bag = trial;
-  loadout.weapon = selected.id;
-  loadout.weaponUid = selected.uid;
-  loadout.gun = selected.gun ? clone(selected.gun) : factoryState();
-  loadout.relief = !!selected.relief;
-  loadout.ammo = 0;
-  loadout.ammoRelief = 0;
+  Object.assign(loadout, slotOf(selected));
   return true;
 }
 /** Called only against a trial inventory so a failed unload cannot partially commit. */
