@@ -1,23 +1,21 @@
 # 受击姿态美术需求（#75 打击感）
 
-七类角色的受击／恢复 **pixel-v2 已通过独立复验**（[复验评论](https://github.com/xuys2025/escape-bincov/pull/96#issuecomment-6379336021)），是游戏接入的输入；v1、8 张 image_gen 原图与实际提示词完整保留。A 组已接进游戏，见下方“接入状态”；B 组依赖 #81。生物“头部前缘”按足底以上的头部测区验收，见下方记录。
+七类角色的受击／恢复 **pixel-v2 已通过独立复验**（[复验评论](https://github.com/xuys2025/escape-bincov/pull/96#issuecomment-6379336021)），是游戏接入的输入；v1、8 张 image_gen 原图与实际提示词完整保留。A 组已经 #99 接进游戏，B 组随 `feat/hurt-poses-b` 的 PR 接入，见下方“接入状态”。生物“头部前缘”按足底以上的头部测区验收，见下方记录。
 
 ## 接入状态
 
-**A 组（拾荒者、盐枭、守潮人、潮蚀生物）已接入。**
+**A 组（拾荒者、盐枭、守潮人、潮蚀生物）已经 #99 接入（`f73e9de`）；B 组（#81 的近身掠夺者、拾荒枪手、望风者）随 `feat/hurt-poses-b` 的 PR 接入。**
 
-- **切帧**：[export-hurt-poses.ts](../../scripts/export-hurt-poses.ts) 从 pixel-v2 图集切出 40 张运行帧，放在 `assets/coast/poses`。
-  - 受击帧是帧号 5，恢复帧是帧号 6，和 Sol 的站立、走路帧（0–4）同样命名，闪白、描边和遮挡轮廓都从同一帧派生。
+- **切帧**：[export-hurt-poses.ts](../../scripts/export-hurt-poses.ts) 从七张 pixel-v2 图集切出 70 张运行帧，放在 `assets/coast/poses`。
+  - 受击帧是帧号 5，恢复帧是帧号 6，和 Sol 的站立、走路帧（0–4）同样命名；B 组用原型自己的样式名，例如 `coast-raider-melee-body-e-f5-v1`。闪白、描边和遮挡轮廓都从同一帧派生。
   - 切帧时逐块校验，并要求第 0 列与运行站立帧一致。
-  - [hurt-poses.test.ts](../../tests/hurt-poses.test.ts) 守住运行帧的脚底、肩点所在行、配色和头顶位移；`build.mjs` 核对哈希。
+  - B 组图集的第 0 列有画布取整误差：只出现在半透明像素上，单个通道差 1 级。`driftMap` 先把这些颜色还原成运行帧的值再比对，受击、恢复格里的同一批颜色也一并还原；其他任何差异都报错。A 组素材没有半透明像素，不受影响。
+  - [hurt-poses.test.ts](../../tests/hurt-poses.test.ts) 守住运行帧的脚底、肩点所在行、配色和头顶位移，并覆盖还原规则的正反例；`build.mjs` 核对哈希。
 - **加载**：[pose-assets.ts](../../src/coast-view/pose-assets.ts) 在海岸素材加载后把这些帧并入同一张素材表。加载失败时只记日志，敌人照常显示站立身体。
-- **播放**：[scene.ts](../../src/coast-view/scene.ts) 中弹后先放受击帧约 90 ms，再放恢复帧约 60 ms，命中那一帧至少显示一次受击帧。敌人走动时也会切换，因此有一瞬间脚步停住。帧序列与实景见[接入证据](../evidence/issue75-hurt-poses/README.md)。
-- **适用范围**：只在角色用本种类自己的身体图时换帧（`posable`），看的是上一帧的贴图。#81 的原型敌人沿用 scav 等种类、但换了身体图，所以不会误用 A 组的帧，也不会退回占位图。
+- **播放**：[scene.ts](../../src/coast-view/scene.ts) 中弹后先放受击帧约 90 ms，再放恢复帧约 60 ms，命中那一帧至少显示一次受击帧。敌人走动时也会切换，因此有一瞬间脚步停住。帧序列与实景见 [A 组接入证据](../evidence/issue75-hurt-poses/README.md)和 [B 组接入证据](../evidence/issue75-hurt-poses-b/README.md)。
+- **适用范围**：按角色身体实际使用的样式判断（`posable` 调用 [textures.ts](../../src/coast-view/textures.ts) 的 `hasBodyFrame`）。原型有自己的身体图就用原型的，否则用种类的；这个样式有受击帧才换帧。
 
-**B 组（#81 的三类原型）**：等 #81 合入后接入。
-
-- 运行帧要按原型的样式命名，例如 `coast-raider-melee-body-e-f5-v1`。
-- `posable` 要改成按 #81 的 `actorStyle(kind, archetype)` 判断。
+**其余原型**：#81 合入了 18 类有自己身体图的原型，只有 B 组三类有姿态图集。其余 15 类（如盐枭头目、潮蚀蟹、盐背犬）中弹时保持自身的帧，只有闪白和后退。要给它们加姿态，需要新一轮美术；图集交付后在 `POSE_KINDS` 加一行即可切帧。
 
 ## 2026-10-24 v2 返工
 
