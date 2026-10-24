@@ -35,7 +35,7 @@ export const diagnosticChecks = {
 const browserPrerequisites = ['先运行 pnpm package；安装 Playwright Chromium 或设置 BINCOV_CHROME。'];
 const extraPrerequisites = {
   'test:portable': ['Windows 使用 .NET 解压；Linux/macOS 需要 Python 3。'],
-  'test:expansion': ['按 .github/workflows/ci-pages.yml 准备 test-results/pre-m0.html、test-results/pre-perk.html 和 test-results/pre-gunsmith.html；脚本核对固定旧客户端哈希，不能用当前包代替。'],
+  'test:expansion': ['按 .github/workflows/ci-pages.yml 准备 test-results/pre-m0.html、test-results/pre-perk.html、test-results/pre-enemy.html 和 test-results/pre-gunsmith.html；脚本核对固定旧客户端哈希，不能用当前包代替。'],
   'test:mobile-ux': ['BINCOV_LEGACY_HTML 未设置时不会运行其中的真实旧客户端迁移检查；如验证迁移，必须提供对应旧 HTML 并记录实际覆盖。'],
   'test:station-tier2': ['保留真实 120 秒训练；固定时钟的拒绝/回滚用例不能代替计时验收。'],
   'test:station-capability': ['需要真实 GPU 及 16 个原生 batchable textures；CI 软件渲染不能签收此项。'],

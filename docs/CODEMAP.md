@@ -101,7 +101,7 @@
 
 展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
 
-新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
+新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `LayeredRaid` v5，同时保留历史敌人 v4 和 Perk v3 的规则；记录层 #81 原用 `SessionRecord` 6/7，改枪后统一为 v8，敌人规则以 `enemyBackup` 键表示（[记录版本 v8 与敌人规则](gunsmith/CONTRACTS.md#记录版本-v8-与敌人规则与-81-合并)）；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
 方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
@@ -135,7 +135,7 @@
 
 - [expansion-recovery.test.ts](../tests/expansion-recovery.test.ts)：原子升级、严格导入拒绝、完整备份与待保存候选。
 - [perk-save.test.ts](../tests/perk-save.test.ts)：扩展 v3/Perk 选择、进行中的旧行动保持扩展 v2 至结算、旧备份导入、降级保护与 `perksBackup`。
-- [gunsmith-migrate.test.ts](../tests/gunsmith-migrate.test.ts)：上一版客户端真实写下的 v3–v5 记录和备份（冻结在 [fixtures/gunsmith-v5-saves.json](../tests/fixtures/gunsmith-v5-saves.json)）经真实 `decodeSession` 迁移、写回、重读和继续行动，`gunsBackup` 与拒读；旧客户端拒读 v6 用 `test:expansion` 的真实固定旧包验证。
+- [gunsmith-migrate.test.ts](../tests/gunsmith-migrate.test.ts)：v5 客户端真实写下的 v3–v5 记录和备份（冻结在 [fixtures/gunsmith-v5-saves.json](../tests/fixtures/gunsmith-v5-saves.json)）经真实 `decodeSession` 迁移到 v8、写回、重读和继续行动，`gunsBackup` 与拒读；[gunsmith-enemy-records.test.ts](../tests/gunsmith-enemy-records.test.ts)：v6/v7 迁移后敌人规则（`enemyBackup`）保持，v4/v5 到第一次敌人行动才开启，坏的 v8 记录拒读；旧客户端拒读 v8 用 `test:expansion` 的四个真实固定旧包验证。
 - [gunsmith-carry.test.ts](../tests/gunsmith-carry.test.ts)、[gunsmith-value.test.ts](../tests/gunsmith-value.test.ts)：装卸、转移、丢下拾取、跨层、结算时搬的是同一把枪；按组成估值和出售。
 - [systems-session.test.ts](../tests/systems-session.test.ts)、[recovery.test.ts](../tests/recovery.test.ts)：重试不重复奖励、未知字段、原字节保留、修订栅栏。
 - [save-flow.test.ts](../tests/save-flow.test.ts)、[hideout-runtime.test.ts](../tests/hideout-runtime.test.ts)：结算保存失败、导入确认、升级和旧入口。
