@@ -25,7 +25,10 @@ const options = new Map(process.argv.slice(2).map(arg => {
 }));
 const world = options.get('world') ?? 'buildings'; assert.ok(['buildings', 'mall'].includes(world));
 const seed = Number(options.get('seed') ?? 42); assert.ok(Number.isInteger(seed) && seed > 0 && seed <= 0xffffffff);
-const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe','retreat'].includes(policy));
+const policy = options.get('policy') ?? 'stationary'; assert.ok(['stationary','strafe','retreat','observe-retreat'].includes(policy));
+// Fixed avoidance load: observe the first attack without firing for two seconds, then
+// walk away for the rest of the sample. It never stands in for sustained firefight acceptance.
+const observeRetreat = policy === 'observe-retreat', inputRevision = 'visible-aim-v2';
 const focus = options.get('focus') ?? 'raider-gunner',radius=Number(options.get('radius')??240);
 assert.ok(archetype(focus));assert.ok(Number.isFinite(radius)&&radius>=32&&radius<=300);
 assert.ok(['true','false'].includes(options.get('heal')??'false'));const heal=options.get('heal')==='true';
@@ -59,16 +62,19 @@ function fixture(highTide) {
       - Math.min(...layer.enemies.filter(o => o !== e).map(o => Math.hypot(o.x - a.x, o.y - a.y))))[0];
   assert.ok(p, 'safe, visible observation point'); raid.currentMap = mapId; raid.player = { ...p, rotation: Math.atan2(e.y - p.y, e.x - p.x) };
   assert.ok(saves.persist(), state.storageError); const raw = data.get(SESSION_KEY); decodeSession(raw);
-  return { raw, state, saves, target: { x: e.x, y: e.y } };
+  return { raw, state, saves, target: { x: e.x, y: e.y }, nativeUids: layer.enemies.filter(e => e.tactics).map(e => e.uid), definition: context.definition };
 }
 if(options.has('fixture-out')) {
   const path=resolve(options.get('fixture-out'));await mkdir(resolve(path,'..'),{recursive:true});await writeFile(path,fixture(false).raw);
   console.log('Prepared strict low-tide performance input; no measurement or acceptance claimed.');process.exit(0);
 }
-const report = { protocol: 'enemy-native-performance-v1', at: new Date().toISOString(), world, seed, policy, focus, radius, heal, budgets,
+const report = { protocol: 'enemy-native-performance-v1', inputRevision, at: new Date().toISOString(), world, seed, policy, focus, radius, heal, budgets,
   source: { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim() },
   scope: 'Native roster at the recorded seed; only player observation position and initial tide changed in a strictly decoded save. No extra enemies, freezing, invulnerability or virtual time. Node paths exclude dryRefuge direct spacePath calls. Browser present is CPU submission, not GPU completion. Not natural play or phone acceptance.',
   environment: { node: process.version, platform: process.platform, os: release(), cpu: cpus()[0]?.model, logicalCpus: cpus().length },
+  input: { aimPreparationSeconds: .6, observeSeconds: observeRetreat ? 2 : 0, playerFires: !observeRetreat,
+    target: 'Browser: alive, revealed, onscreen canvas and clear sight; Node: alive and clear sight in current map. Release trigger when none.',
+    devices: 'Node precise and full walk; desktop right mouse and WASD; touch 24px aim / 60px fire, 40px walk (0.714), movement lowers raise. Node frame targeting and browser 250ms targeting remain separate loads.' },
   runtime: [], browser: [], failures: [], errors: [], external: [], status: 'RUNNING' };
 const fail = (name, actual, limit) => { if (!Number.isFinite(actual) || actual > limit) report.failures.push({ name, actual, limit }); };
 try {
@@ -79,22 +85,28 @@ try {
     r.advance(0, emptyIntent());
     const initialEnemies = r.enemies.length, worldEnemies = r.layered.raid.roster.length;
     let lastHeal=-Infinity;
+    const nativePhases = {}, nativeAttackEvents = new Map();
     for (let frame = 1; frame <= 12 * hz && !r.ending; frame++) {
       const target = r.enemies.filter(e => e.hp > 0 && r.sight(r.player, e)).sort((a, b) => Math.hypot(a.x-r.player.x,a.y-r.player.y)-Math.hypot(b.x-r.player.x,b.y-r.player.y))[0];
+      const firing = !!target && !observeRetreat && frame / hz >= .6;
       const intent = { ...emptyIntent(), aim: target ? Math.atan2(target.y-r.player.y,target.x-r.player.x) : 0,
-        firePressed: frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: !!target, precise: true,
-        commands: frame % (hz * 3) === 0 ? ['reload'] : [] };
-      if (policy !== 'stationary') {
-        const bearing = policy==='retreat'?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
+        firePressed: firing && frame % Math.max(1, Math.round(hz / 3)) === 0, fireHeld: firing, precise: true,
+        commands: !observeRetreat && frame % (hz * 3) === 0 ? ['reload'] : [] };
+      if (policy !== 'stationary' && (!observeRetreat || frame / hz >= 2)) {
+        const bearing = policy==='retreat'||observeRetreat?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
           :intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
         intent.move = { x: Math.cos(bearing), y: Math.sin(bearing), sprint: false };
       }
       if(heal&&(r.hp<70||r.bleeding)&&frame/hz-lastHeal>=2){intent.commands.push('heal');lastHeal=frame/hz;}
-      const start = performance.now(); r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
+      const start = performance.now(); const batch = r.advance(frame * 1000 / hz, intent); advances.push(performance.now() - start);
+      for (const a of batch.frame.actors) if (a.tactics && f.nativeUids.includes(a.uid)) (nativePhases[a.uid] ??= new Set()).add(a.tactics.phase);
+      for (const e of batch.events) if (e.type === 'shot' && f.nativeUids.includes(e.shooter) || e.type === 'melee' && f.nativeUids.includes(e.attacker)) nativeAttackEvents.set(e.seq, e);
     }
-    const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending };
+    const row = { highTide, hz, repeat, seconds: r.elapsed, initialEnemies, worldEnemies, advance: summary(advances), path: summary(paths), ending: r.ending,
+      nativePhases: Object.fromEntries(Object.entries(nativePhases).map(([uid,p]) => [uid,[...p]])), nativeAttackEvents: [...nativeAttackEvents.values()] };
     report.runtime.push(row); r.path = originalPath;
     if (r.elapsed < 11.9) report.failures.push({ name: `runtime/${highTide}/${hz}/${repeat}/short-sample`, seconds: r.elapsed });
+    if (observeRetreat && !nativeAttackEvents.size) report.failures.push({ name: `runtime/${highTide}/${hz}/${repeat}/no-native-attack` });
     if (!r.ending) r.finish('abandon'); r.dispose();
     fail(`runtime/${highTide}/${hz}/${repeat}/population`, worldEnemies, budgets.worldEnemies);
     // 20/5 Hz intentionally aggregate larger steps; report them, but do not apply 60 Hz per-frame CPU ceilings.
@@ -133,9 +145,10 @@ try {
         } return null;
       }) : null;
       if (touch) { assert.ok(origin); if(policy!=='stationary') assert.ok(movementOrigin); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 1, ...origin }, ...(movementOrigin ? [{id:2,...movementOrigin}]:[])] }); }
-      else if (policy !== 'stationary') await page.mouse.down({button:'right'});
-      const measurement = page.evaluate(() => new Promise((resolve, reject) => {
+      else await page.mouse.down({button:'right'});
+      const measurement = page.evaluate(nativeUids => new Promise((resolve, reject) => {
         const h = window.__bincovSample.host, gap = [], advance = [], present = [], phases = new Set(), attackPhases = new Set();
+        const nativePhases = {}, nativeAttackEvents = new Map();
         let previous = performance.now(), started = previous, lastFrame = -1;
         const timeout = setTimeout(() => reject(Error('Twelve-second rAF sample did not finish within thirty seconds')), 30000);
         const tick = () => { try {
@@ -143,45 +156,55 @@ try {
           if(!batch)throw Error('Live raid detached before the twelve-second sample finished');
           gap.push(now - previous); previous = now; phases.add(batch.frame.phase);
           for (const a of batch.frame.actors) if (a.tactics) attackPhases.add(a.tactics.phase);
+          for (const a of batch.frame.actors) if (a.tactics && nativeUids.includes(a.uid)) (nativePhases[a.uid] ??= new Set()).add(a.tactics.phase);
+          for (const e of batch.events) if (e.type === 'shot' && nativeUids.includes(e.shooter) || e.type === 'melee' && nativeUids.includes(e.attacker)) nativeAttackEvents.set(e.seq, e);
           if (h.stats.frames !== lastFrame) { advance.push(h.stats.advanceMs); present.push(h.stats.presentMs); lastFrame = h.stats.frames; }
           if (now - started < 12000) { requestAnimationFrame(tick); return; }
           clearTimeout(timeout);
           const canvas = document.querySelector('.coast-sample canvas'), gl = canvas?.getContext('webgl2') ?? canvas?.getContext('webgl'), debug = gl?.getExtension('WEBGL_debug_renderer_info');
           resolve({ gap, advance, present, seconds: (now - started) / 1000, phases: [...phases], attackPhases: [...attackPhases],
+            nativePhases: Object.fromEntries(Object.entries(nativePhases).map(([uid,p]) => [uid,[...p]])), nativeAttackEvents: [...nativeAttackEvents.values()],
             counts: window.__bincovSample.counts(), atlas: { ...h.view.tex.atlas.stats }, estimatedTextureBytes: h.view.textureBytes(),
             activeEnemies: batch.frame.actors.filter(a => a.kind !== 'player').length,
             environment: { dpr: devicePixelRatio, renderer: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null, userAgent: navigator.userAgent } });
         } catch (error) { clearTimeout(timeout); reject(error); } }; requestAnimationFrame(tick);
-      }));
+      }), saved.nativeUids);
       // Attach a handler immediately while normal input is sent on the same page.
       const result = measurement.then(value => ({ value }), error => ({ error: String(error) }));
       const started = performance.now();
       let held = [],lastHeal=-Infinity;
       while (performance.now() - started < 12200) {
-        const aim = await page.evaluate(() => {
+        const snapshot = await page.evaluate(() => {
           const h = window.__bincovSample.host, b = h?.lastBatch; if (!b || b.frame.phase !== 'running') return null;
-          const p = b.frame.player, target = b.frame.actors.filter(a => a.alive && h.view.actorShown(a.uid))
-            .sort((a,b) => Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
-          return target ? { ...h.view.worldToClient({ x: target.x, y: target.y - 22 }), angle: Math.atan2(target.y-p.y,target.x-p.x) } : null;
+          const p = b.frame.player, candidates = b.frame.actors.filter(a => a.alive && h.view.actorShown(a.uid))
+            .map(a => ({ uid:a.uid, wx:a.x, wy:a.y, ...h.view.worldToClient({ x:a.x, y:a.y-22 }), angle:Math.atan2(a.y-p.y,a.x-p.x) }))
+            .filter(a => a.x >= 0 && a.x < innerWidth && a.y >= 0 && a.y < innerHeight && document.elementFromPoint(a.x,a.y)?.tagName === 'CANVAS')
+            .sort((a,b) => Math.hypot(a.wx-p.x,a.wy-p.y)-Math.hypot(b.wx-p.x,b.wy-p.y));
+          return { player:p, doors:b.frame.doors, candidates };
         });
-        const bearing = policy==='retreat'?await page.evaluate(target=>{
+        const aim = snapshot?.candidates.find(a => corridor({ definition:saved.definition, doors:snapshot.doors, highTide }, snapshot.player, {x:a.wx,y:a.wy}, 'sight'));
+        const elapsed = performance.now() - started, preparing = elapsed < 600;
+        const moving = policy !== 'stationary' && (!observeRetreat || elapsed >= 2000);
+        const bearing = policy==='retreat'||observeRetreat?await page.evaluate(target=>{
           const frame=window.__bincovSample?.host?.lastBatch?.frame;
           return frame?Math.atan2(frame.player.y-target.y,frame.player.x-target.x):0;
         },saved.target):(aim?.angle ?? 0) + Math.PI/2 + (Math.floor((performance.now()-started)/1000)%2 ? Math.PI:0);
-        if (aim && touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 1, x: origin.x + Math.cos(aim.angle) * 60, y: origin.y + Math.sin(aim.angle) * 60 },
-          ...(movementOrigin ? [{id:2,x:movementOrigin.x+Math.cos(bearing)*40,y:movementOrigin.y+Math.sin(bearing)*40}]:[])] });
-        else if (aim) { await page.mouse.move(aim.x, aim.y); await page.mouse.click(aim.x, aim.y); }
-        if (!touch && policy !== 'stationary') {
+        if (touch) {
+          const distance = aim ? preparing || observeRetreat ? 24 : 60 : 0;
+          await cdp.send('Input.dispatchTouchEvent', { type:'touchMove', touchPoints:[{id:1,x:origin.x+Math.cos(aim?.angle??0)*distance,y:origin.y+Math.sin(aim?.angle??0)*distance},
+            ...(movementOrigin ? [{id:2,x:movementOrigin.x+(moving?Math.cos(bearing)*40:0),y:movementOrigin.y+(moving?Math.sin(bearing)*40:0)}]:[])] });
+        } else if (aim) { await page.mouse.move(aim.x, aim.y); if (!preparing && !observeRetreat) await page.mouse.click(aim.x, aim.y); }
+        if (!touch && moving) {
           const next = [Math.abs(Math.cos(bearing)) > .3 ? Math.cos(bearing)>0?'d':'a':null,Math.abs(Math.sin(bearing)) > .3 ? Math.sin(bearing)>0?'s':'w':null].filter(Boolean);
           for(const key of held) if(!next.includes(key)) await page.keyboard.up(key);
           for(const key of next) if(!held.includes(key)) await page.keyboard.down(key); held=next;
         }
-        if (performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
+        if (!observeRetreat && performance.now() - started > 2500 && Math.floor((performance.now() - started) / 1000) % 3 === 0) await page.keyboard.press('r');
         if(heal&&performance.now()-lastHeal>2000&&await page.evaluate(()=>{const h=window.__bincovSample?.host;return h?.lastBatch?.frame.phase==='running'&&(h.lastBatch.frame.hud.hp<70||h.lastBatch.frame.hud.bleeding);})){await page.keyboard.press('q');lastHeal=performance.now();}
         await page.waitForTimeout(250);
       }
       if (touch) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      for(const key of held) await page.keyboard.up(key); if(!touch && policy!=='stationary') await page.mouse.up({button:'right'});
+      for(const key of held) await page.keyboard.up(key); if(!touch) await page.mouse.up({button:'right'});
       const outcome = await result;
       if(outcome.error) {
         const end=await page.evaluate(()=>{const a=window.__bincov?.app;return {state:a?.state,result:a?.result??null,pending:!!a?.pendingSettlement};});
@@ -194,6 +217,7 @@ try {
       const key = `browser/${viewport.width}/${highTide}`;
       if (measured.phases.some(p => p !== 'running')) report.failures.push({ name: `${key}/not-continuously-running`, phases: measured.phases });
       if (!measured.attackPhases.some(p => p === 'windup' || p === 'release' || p === 'recovery' || p === 'reload')) report.failures.push({ name: `${key}/no-active-combat` });
+      if (observeRetreat && !measured.nativeAttackEvents.length) report.failures.push({ name:`${key}/no-native-attack` });
       for (const [name, actual, limit] of [['advance-p95', row.advance.p95, budgets.advanceP95Ms], ['advance-p99', row.advance.p99, budgets.advanceP99Ms],
         ['present-p95', row.present.p95, budgets.presentP95Ms], ['present-p99', row.present.p99, budgets.presentP99Ms],
         ['frame-p95', row.gap.p95, budgets.frameP95Ms], ['frame-p99', row.gap.p99, budgets.frameP99Ms],
@@ -206,6 +230,7 @@ try {
   if (options.has('baseline')) {
     const old = JSON.parse(await readFile(resolve(options.get('baseline')), 'utf8'));
     assert.equal(old.protocol, report.protocol); assert.equal(old.status,'PASS'); assert.equal(old.seed ?? 42,seed);
+    assert.equal(old.inputRevision, inputRevision, 'compare the same targeting and aim input revision');
     assert.equal(old.world ?? 'buildings', world, 'compare the same world and encounter geometry');
     assert.equal(old.policy ?? 'stationary',policy,'identical input policies for comparison');
     assert.equal(old.focus ?? 'raider-gunner',focus);assert.equal(old.radius ?? 240,radius,'identical observation geometry for comparison');
