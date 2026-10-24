@@ -19,6 +19,7 @@ import { BUILDING_WORLD } from '../src/building-world.ts';
 import { mallWorldV3 } from '../src/mall-world.ts';
 import { corridor, spacePath, traversable } from '../src/spatial.ts';
 import { archetype } from '../src/enemy-archetypes.ts';
+import { SURVIVAL } from '../src/balance.ts';
 
 const options = new Map(process.argv.slice(2).map(arg => {
   const match = /^--(seed|baseline|out|policy|focus|radius|heal|fixture-out|world|retreat-to)=(.+)$/.exec(arg); if (!match) throw Error(`Unknown argument: ${arg}`); return [match[1],match[2]];
@@ -117,7 +118,10 @@ try {
         const step = f.destination ? routeStep({definition:f.definition,doors:r.space.doors,highTide},r.player,f.destination) : null;
         const bearing = f.destination ? step?.angle ?? 0 : policy==='retreat'||observeRetreat?Math.atan2(r.player.y-f.target.y,r.player.x-f.target.x)
           :intent.aim + Math.PI / 2 + (Math.floor(frame / hz) % 2 ? Math.PI : 0);
-        const amplitude = f.destination ? step ? Math.min(1,step.distance/(260/hz)) : 0 : 1;
+        // This replay holds precise and never sprints. Cap by the game's walk
+        // upper bound, not a guessed sprint speed that slows low-Hz input to a crawl.
+        const walkBound = SURVIVAL.walkSpeed * SURVIVAL.aimSpeedFactor;
+        const amplitude = f.destination ? step ? Math.min(1,step.distance/(walkBound/hz)) : 0 : 1;
         intent.move = { x: Math.cos(bearing)*amplitude, y: Math.sin(bearing)*amplitude, sprint: false };
       }
       if(heal&&(r.hp<70||r.bleeding)&&frame/hz-lastHeal>=2){intent.commands.push('heal');lastHeal=frame/hz;}
