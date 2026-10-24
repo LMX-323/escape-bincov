@@ -446,7 +446,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.dirty = true;
     }
     private allocateEntityUid() { const serial = this.nextEntity++; return this.layered?.raid ? entityUid(this.layered.raid, serial) : `entity-${serial}`; }
-    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), x, y, id, qty, relief }); }
+    /** New ground loot under a new entity uid; a gun is born a factory instance. */
+    spawnLoot(x: number, y: number, id: string, qty: number, relief = false) { this.loot.push({ uid: this.allocateEntityUid(), x, y, id, qty, relief, ...D.factoryGun(id) }); }
     nearbyLoot() { return this.loot.filter(l => distance(l, this.player) < 43 && this.sight(l, this.player, this.highTide, this.space ? 10 : 0)).sort((a, b) => distance(a, this.player) - distance(b, this.player) || a.uid.localeCompare(b.uid)); }
     private transaction(action: string, mutate: () => boolean | void): MutationResult {
         if (this.disposed || this.ending || this.locked || this.session.state !== 'run' || this.session.conflict || this.paused) {

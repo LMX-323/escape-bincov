@@ -3,7 +3,7 @@ import { CoastRaidRuntime } from './runtime';
 import { wrapCoastRuntime } from './host';
 import type { SaveSession, SessionState } from '../session';
 import type { Point } from '../world';
-import { ITEMS, WEAPONS, addItem } from '../domain';
+import { ITEMS, WEAPONS, addItem, createInventory } from '../domain';
 import { derivedLimits } from '../expansion-state';
 import { checkpointBodyFits } from '../spatial';
 import { isWalkable } from '../world';
@@ -52,7 +52,13 @@ export function createRuntimeTestDriver(runtime: CoastRaidRuntime, search: strin
             if (!(id in doors)) throw new Error('Unknown door.'); doors[id] = open; runtime.restoreExpansion(state);
         },
         weapon(id: 'pistol' | 'carbine' | 'shotgun') {
-            const state = runtime.snapshot(); state.loadout.weapon = id; state.loadout.ammo = WEAPONS[id].magazine; // a full magazine; more fails checkpoint validation
+            const state = runtime.snapshot();
+            // Another gun in hand is another instance: a factory one under a new uid (the slot names its gun, record v6).
+            if (state.loadout.weapon !== id || state.loadout.weaponUid === null) {
+                const scratch = createInventory(6, 5); addItem(scratch, id);
+                Object.assign(state.loadout, { weaponUid: scratch.items[0].uid, gun: scratch.items[0].gun });
+            }
+            state.loadout.weapon = id; state.loadout.ammo = WEAPONS[id].magazine; // a full magazine; more fails checkpoint validation
             state.loadout.ammoRelief = 0; state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0; runtime.restore(state);
         },
         /** Hand the playtest sample gun (SAMPLE_GUNS in src/shooting.ts) or take it back; the loadout is untouched. */

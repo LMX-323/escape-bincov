@@ -20,7 +20,8 @@ const report = { startedAt: new Date().toISOString(), status: 'running', viewpor
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions); report.browser = browser.version();
 const writeReport = () => writeFile(resolve(out, 'loot-browser-report.json'), JSON.stringify(report, null, 2));
-const item = (uid, id, qty = 1, x = 0, y = 0) => ({ uid, id, qty, x, y });
+// A gun item carries its factory state (save v6).
+const item = (uid, id, qty = 1, x = 0, y = 0) => ({ uid, id, qty, x, y, ...(['pistol', 'shotgun', 'carbine'].includes(id) ? { gun: { parts: [], devices: { laser: false, light: false } } } : {}) });
 /** The seed's original records from the game's own generator (tsx in a child process). */
 function seedLoot(seed) {
   const code = `import('./src/building-world.ts').then(m => { const c = m.buildingRunConfig(${Number(seed)}), all = [...c.loot, ...c.containers.flatMap(x => x.items)];
