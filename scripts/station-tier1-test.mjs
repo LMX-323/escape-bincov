@@ -151,7 +151,7 @@ try {
       await readable('.station-log .section-label'); await shot(`seven-tabs-${w}`);
       assert.equal(radio, '水产站值守记录 · 累计出击 7 次');
       assert.equal(await page.locator('.station-log .section-label').innerText(), radio);
-      assert.equal(JSON.parse(await raw()).legacyBackup, JSON.stringify(legacy));
+      assert.equal(JSON.parse(await raw()).legacyBackup, JSON.stringify(legacyProfile(legacy)));
       await tap(page.locator('[data-action="base-enter"]').first()); await ready(); await assertCounts(7);
       await page.reload(); await tap(page.locator('[data-action="enter"]')); await ready(); await assertCounts(7);
     });
