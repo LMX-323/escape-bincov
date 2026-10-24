@@ -82,8 +82,8 @@ for (const name of ['dist/index.html', 'start the game.html', 'release/Escape-Bi
   artifacts[name] = { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 const { version } = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
-await mkdir(resolve(root, 'docs'), { recursive: true });
-await writeFile(resolve(root, 'docs/release-manifest.json'), JSON.stringify({ version, htmlBytes: portable.length, htmlSha256: artifacts['dist/index.html'].sha256, artifacts }, null, 2) + '\n');
+// The release manifest ships with the ZIPs (CI publishes all three after main is validated; see docs/CI.md).
+await writeFile(resolve(root, 'release', 'release-manifest.json'), JSON.stringify({ version, htmlBytes: portable.length, htmlSha256: artifacts['dist/index.html'].sha256, artifacts }, null, 2) + '\n');
 console.log(`Portable ZIP: ${output} (${(await stat(output)).size} bytes)`);
 console.log(`Web upload ZIP: ${webOutput} (${(await stat(webOutput)).size} bytes)`);
 console.log('Share the ZIP, or just start the game.html. No install, server or internet required.');

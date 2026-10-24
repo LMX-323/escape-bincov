@@ -67,7 +67,7 @@ export function checksFrom(scripts) {
   const manual = new Map(manualSuites.map(s => [s.command, s.reason]));
   const checks = [
     { id: 'test', kind: 'regression', purpose: '领域、世界与存档单测', ci: 'build', prerequisites: ['Node.js 24；pnpm install --frozen-lockfile。'] },
-    { id: 'package', kind: 'regression', purpose: '类型检查、HTML、ZIP 与发布清单', ci: 'build', prerequisites: ['锁定依赖已安装；生成物必须与源码一致。'] },
+    { id: 'package', kind: 'regression', purpose: '类型检查、HTML、ZIP 与发布清单', ci: 'build', prerequisites: ['锁定依赖已安装；生成物不入库，CI 自己构建并在 main 验证后发布。'] },
     { id: 'check:ci', kind: 'regression', purpose: 'CI 策略、清单覆盖与源码守卫', ci: 'build', prerequisites: ['Node.js 24、项目依赖与 Git；完整 CI 守卫在 Windows 还需 Git Bash 可用。'] },
     ...Object.entries(scripts).filter(([id]) => id.startsWith('test:')).map(([id]) => {
       const purpose = descriptions[id.slice(5)];
