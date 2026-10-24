@@ -60,7 +60,7 @@
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
-5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
+5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套；#39 的样本自动枪已在改枪 M2-01 由正式的 M4A1 接替）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
 6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）；搜刮面板里移动键（`isMoveKey`）直接离开并开始移动（#26 F13），回归在 [loot-browser-test.mjs](../scripts/loot-browser-test.mjs)。
 
 画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。
@@ -145,7 +145,7 @@
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
 - [save-validation-audit.test.ts](../tests/save-validation-audit.test.ts)：原型键、数组伪装 ID 的拒绝与原字节保留，及正常基地/经典/分层记录对照。外部 ID 必须先用 `hasOwnStringKey` 检查字符串类型和自身键，不能只做真值查表或 `Object.hasOwn`。
 
-**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
+**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。「是不是枪」只问 `D.isGun`（`WEAPONS` 里除匕首以外的一行，见[改枪契约](gunsmith/CONTRACTS.md#g17m4a1-与样板配件m2-0102)）；配件散件是 `attachment` 类物品（`D.isAttachment`，详情行 `D.attachmentFacts`），只有 M2-04 的改装事务能装到枪上。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
 
 **按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 
