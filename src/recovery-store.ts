@@ -3,7 +3,7 @@ import { validateCheckpoint, type RaidCheckpoint } from './checkpoint';
 import { decodeOldStoredProfile, decodeStoredProfile, identity, utf8Bytes, whole, UINT32_MAX } from './profile-codec';
 import { validateExpansion, type ExpansionState, type WorldResolver, type EndReason } from './expansion-state';
 import { resolveExpansionWorld } from './expansion-worlds';
-import type { ProfileV2 } from './gunsmith/migrate';
+import { migrateRecord, type RecordV5 } from './gunsmith/migrate';
 
 /** A separate versioned record isolates old clients that silently discard unknown fields. */
 export const SESSION_KEY = 'escape-bincov.session.v2';
@@ -75,7 +75,7 @@ function checkRecord(r: any, resolveWorld: WorldResolver): void {
   }
   const active = r.profile.activeRun;
   // Profile fields keep the strict rules of a stored profile (inventory, economy, 1 MiB) of the record's own format.
-  const checked: D.SaveDataV1 | ProfileV2 = current ? decodeStoredProfile({ ...r.profile, activeRun: null }) : decodeOldStoredProfile({ ...r.profile, activeRun: null });
+  const checked: D.SaveDataV1 | RecordV5['profile'] = current ? decodeStoredProfile({ ...r.profile, activeRun: null }) : decodeOldStoredProfile({ ...r.profile, activeRun: null });
   checked.activeRun = active ? { seed: active.seed, runId: active.runId } : null;
   // Never discard the strict decoder's normalized result and then trust unchecked fields.
   if (canonical(checked) !== canonical({ ...r.profile, version: current ? 3 : 2 })) return failure();
@@ -96,16 +96,25 @@ function checkRecord(r: any, resolveWorld: WorldResolver): void {
 }
 
 /**
- * A stored record as v6, checked by the v6 rules. Older records (v2 to v5) are refused here, never repaired, until their
- * migration is wired in (gunsmith M1-02); the stored bytes stay.
+ * A stored record as v6. A v6 record is checked as such. A v2 to v5 record is checked by its own (old) rules first, then
+ * migrated in memory, a live raid included (migrateRecord: factory guns, the equipped gun a new uid; v3 to v5 keep their
+ * text as gunsBackup), and the result is checked again as v6. Nothing is written here: the first commit stores the v6
+ * record. A failed migration or v6 check reads as an incompatible save, never as a repaired one.
  */
 export function decodeSession(text: string, resolveWorld: WorldResolver = resolveExpansionWorld): SessionRecord {
   if (utf8Bytes(text) > SESSION_MAX_BYTES) return failure();
   let r: any;
   try { r = JSON.parse(text); } catch { return failure(); }
-  if (!r || r.format !== 'escape-bincov-session' || r.version !== 6) return failure();
+  if (!r || r.format !== 'escape-bincov-session' || ![2, 3, 4, 5, 6].includes(r.version)) return failure();
   checkRecord(r, resolveWorld);
-  return structuredClone(r);
+  if (r.version === 6) return structuredClone(r);
+  const old: RecordV5 = { ...structuredClone(r), version: r.version >= 4 ? r.version : 3, migrationBackup: r.version === 2 ? text : r.migrationBackup };
+  let migrated: any;
+  try {
+    migrated = JSON.parse(JSON.stringify(migrateRecord(old, r.version >= 3 ? text : null)));
+    checkRecord(migrated, resolveWorld);
+  } catch { return failure(); }
+  return migrated as SessionRecord;
 }
 
 /** A real compare/write ownership failure, distinct from quota or serialization errors. */
