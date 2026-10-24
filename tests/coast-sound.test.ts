@@ -12,7 +12,9 @@ const recorder = () => {
   return { calls, args, out };
 };
 type Over = { phase?: string; moving?: boolean; sprinting?: boolean; reloading?: boolean; heals?: number; alive?: boolean; hp?: number; region?: string | null;
-  map?: string; actors?: { uid: string; x: number; y: number }[]; bullets?: { uid: string; x: number; y: number; vx: number; vy: number; enemy: boolean }[] };
+  map?: string; actors?: { uid: string; x: number; y: number; alive?: boolean; weapon?: string;
+    tactics?: { archetype: string; phase?: string; stance?: string } }[];
+  bullets?: { uid: string; x: number; y: number; vx: number; vy: number; enemy: boolean; owner?: string }[] };
 const batch = (o: Over = {}) => ({
   stamp: { world: { mapId: o.map ?? 'coast' } },
   frame: { phase: o.phase ?? 'running', player: { x: 400, y: 300, alive: o.alive ?? true, regionId: o.region ?? null, state: { moving: !!o.moving, sprinting: !!o.sprinting } },
@@ -21,6 +23,56 @@ const batch = (o: Over = {}) => ({
 }) as unknown as PublishedView;
 const ev = (body: Record<string, unknown>, mapId = 'coast') => ({ ...body, stamp: { world: { mapId } } }) as unknown as StampedEvent;
 const only = (calls: string[], names: string[]) => calls.filter(c => names.includes(c.split(':')[0]));
+
+test('spit uses wet cues, never ballistic whizzes or metal hits, and hidden spitters remain silent', () => {
+  const { calls, out } = recorder(), s = new SampleSound(out);
+  const actors = [{ uid: 'spitter', x: 440, y: 300, tactics: { archetype: 'sac-spitter' } }];
+  s.frame(batch({ actors }), 0); calls.length = 0;
+  s.event(ev({ type: 'shot', shooter: 'spitter', weapon: 'claw', pellets: [] }), 'coast');
+  s.frame(batch({ actors, bullets: [{ uid: 'acid', owner: 'spitter', x: 405, y: 300, vx: -180, vy: 0, enemy: true }] }), .1);
+  s.event(ev({ type: 'impact', owner: 'spitter', reason: 'blocked', surface: 'wall', lastFree: { x: 410, y: 300 } }), 'coast');
+  assert.deepEqual(calls, ['shot:spit,spot', 'shot:acid-hit,spot']);
+  calls.length = 0;
+  s.event(ev({ type: 'shot', shooter: 'spitter', weapon: 'claw', pellets: [] }), 'coast', () => false, () => false);
+  s.event(ev({ type: 'impact', owner: 'spitter', reason: 'blocked', surface: 'wall', lastFree: { x: 410, y: 300 } }), 'coast', () => false);
+  assert.deepEqual(calls, []);
+  s.frame(batch({ actors: [{ uid: 'spitter', x: 440, y: 300 }] }), 0);
+  s.event(ev({ type: 'shot', shooter: 'spitter', weapon: 'rifle', pellets: [] }), 'coast');
+  assert.deepEqual(calls, ['shot:enemy,spot'], 'a later frame cannot retain a stale creature identity');
+});
+
+test('enemy phase cues are positional once per edge, including a release that skips its zero-time frame', () => {
+  const { calls, out, args } = recorder(), sound = new SampleSound(out);
+  const actor = { uid: 'animal', x: 500, y: 300, alive: true, weapon: 'claw',
+    tactics: { archetype: 'saltback-dog', phase: 'idle', stance: 'hostile' } };
+  sound.frame(batch({ actors: [actor] }), 0); calls.length = 0;
+  actor.tactics.phase = 'windup'; sound.frame(batch({ actors: [actor] }), .05);
+  for (let i = 0; i < 20; i++) sound.frame(batch({ actors: [actor] }), .05);
+  actor.tactics.phase = 'recovery'; sound.frame(batch({ actors: [actor] }), .05);
+  sound.frame(batch({ actors: [actor] }), .05);
+  assert.deepEqual(calls, ['enemy:dog,prepare,spot', 'enemy:dog,release,spot']);
+  assert.ok((args.enemy[0][2] as { pan: number }).pan > 0);
+  actor.tactics.archetype = 'blockade-sentry'; actor.weapon = 'rifle'; actor.tactics.phase = 'reload';
+  sound.frame(batch({ actors: [actor] }), .05); sound.frame(batch({ actors: [actor] }), .05);
+  assert.equal(calls.filter(c => c === 'enemy:radio,reload,spot').length, 1);
+});
+
+test('hidden, paused, distant and dead enemies emit no cues; reveal and resume do not replay old phases', () => {
+  const { calls, out } = recorder(), sound = new SampleSound(out);
+  const actor = { uid: 'animal', x: 500, y: 300, alive: true, weapon: 'claw',
+    tactics: { archetype: 'salt-hulk', phase: 'windup', stance: 'hostile' } };
+  sound.frame(batch({ actors: [actor] }), .05, () => false);
+  sound.frame(batch({ actors: [actor] }), .05, () => true);
+  actor.tactics.phase = 'recovery'; sound.frame(batch({ actors: [actor], phase: 'paused' }), .05);
+  sound.frame(batch({ actors: [actor] }), .05);
+  actor.x = 1200; actor.tactics.phase = 'windup'; sound.frame(batch({ actors: [actor] }), .05);
+  actor.x = 500; actor.alive = false; actor.tactics.phase = 'recovery'; sound.frame(batch({ actors: [actor] }), .05);
+  assert.deepEqual(only(calls, ['enemy']), []);
+  actor.alive = true; actor.tactics.phase = 'idle'; actor.tactics.stance = 'warning';
+  sound.frame(batch({ actors: [actor], map: 'resident-f2' }), .05);
+  sound.frame(batch({ actors: [actor], map: 'resident-f2' }), .05);
+  assert.deepEqual(only(calls, ['enemy']), ['enemy:heavy,warning,spot']);
+});
 
 test('样板音效：开枪、近战、受击、拾取与开门按原 RaidScene 的提示音映射，只认当前地图事件', () => {
   const { calls, out } = recorder(), s = new SampleSound(out);

@@ -331,7 +331,7 @@ test('CP-22: a station state not yet upgraded (v2) and a live v2 raid refuse eve
     p.state.state = 'menu'; assert.ok(p.runtime.enter().ok); assert.equal(p.record.version, 5);
     assert.equal(p.runtime.perkBoard().blocked, null); assert.ok(choose(p, 'strength-15-a').ok);
     // A live v2 raid in a v4 record stays locked until it settles, and nothing is written.
-    const raider = page(); assert.ok(raider.runtime.deploy({ world: 'buildings', seed: 'cp-22' }).ok);
+    const raider = page(); assert.ok(raider.runtime.deploy({ world: 'mall', seed: 'cp-22' }).ok);
     const live = origin(); live.data.set(SESSION_KEY, asV4(raider.raw));
     const q = page(live, false), bytes = q.raw;
     assert.equal(q.state.expansion!.raid!.version, 2);

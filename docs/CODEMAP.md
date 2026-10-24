@@ -10,6 +10,7 @@
 | --- | --- | --- |
 | 交易、库存操作、拒绝原因 | [交易](#交易) | 新物品再看领域数据；交互变更再看视图 |
 | 行动命令、输入、暂停或恢复 | [行动输入](#行动输入) | 触屏按钮、DOM 绑定、持久字段分别扩展 |
+| 敌人身份、AI、表现或尸体掉落 | [敌人](#敌人) | 新持久状态继续存档卡；玩家射击继续行动输入 |
 | 新持久字段、迁移、导入、恢复 | [存档](#存档) | 活动行动字段必须核对两端捕获/恢复 |
 | 负重、上限等画面读数不一致 | [派生读数](#派生读数) | 先分清实时模拟、最近检查点与失败候选，再查格式化 |
 
@@ -88,6 +89,30 @@
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
 
 **结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放的断言。资源生命周期只有在本次改变宿主归属时才展开。
+
+## 敌人
+
+组织关系、目标、NPC 伤害与玩家收益归属见 [enemy-relations.ts](../src/enemy-relations.ts) 和[合同](tasks/enemy-relations.md)。条件交涉仍用 `SpatialInteraction` → `targetView/activate` 的单一选择链，询问只发说明事件；跨层新原型职责与两人预算在 `changeLayer`，抵达观察点清理在 `advancePursuits`。对应回归为 `enemy-relations.test.ts`、`enemy-pursuit.test.ts` 和 `test:enemy`，不要给旧四类追加新阵营字段。
+
+**职责与所有者。** [domain.ts](../src/domain.ts) 的 `ENEMIES` 保留旧四类；[enemy-archetypes.ts](../src/enemy-archetypes.ts) 定义新原型与持久战术状态；`actorArchetype/actorDefinition`是已保存武器变体的唯一有效规则来源，控制器、弹丸、投影与校验共同读取。[enemy-encounters.ts](../src/enemy-encounters.ts) 在新街区出击事务中安装三原型、市场头目、动物与[盐蚀者样板](tasks/enemy-affected.md)，旧活动行动不迁移敌人。制作工具的[十八原型目录](../scripts/enemy-catalog-data.ts)保留完整设计需求，不是完成清单；当前接入与验证见[街区样板](tasks/enemy-street-encounter.md)。
+
+**首读路径。** [enemy-profile.ts](../src/enemy-profile.ts) 的 `getLegacyEnemyProfile` 提供旧身体、武器、攻击类型与尸体抽取次数；[enemy-ai.ts](../src/raid-runtime/enemy-ai.ts) 的 `advanceLegacyEnemy` 更新旧敌人的感知、状态、冷却、路径和移动。世界碰撞由 `LegacyEnemyWorld` 提供，随机数、发射/近战/开门副作用经 `LegacyEnemyEffects` 同步返回 [Runtime](../src/raid-runtime/runtime.ts)。敌人状态、RNG、UID、伤害、事务和事件仍由 Runtime 所有，AI 模块不增加持久化入口。
+
+展示看 [presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView`；经典尸体看 Runtime 的 `damageEnemy`，分层看 [layer-transition.ts](../src/layer-transition.ts) 的 `damageLayerEnemy`。新字段或新原型不能只加入目录，必须继续[存档卡](#存档)，同步严格校验、名册、跨层和捕获/恢复。
+
+新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `SessionRecord` v7 / `LayeredRaid` v5，同时保留历史敌人 v6/v4 和 Perk v5/v3 的规则；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
+
+方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
+
+[enemy-posts.ts](../src/enemy-posts.ts) 拥有市场据点的固定岗位、短巡查与备用位置，target/path/timer/stance 保存在既有敌人字段；其近身护卫不跨层追击。布置、经济守恒和绕行证据见[据点记录](tasks/enemy-market.md)。
+
+[enemy-fauna.ts](../src/enemy-fauna.ts) 在新街区一次初始化候选中，从四份动物携带预算分配三处地面食源；字段与UID仍走原严格格式。可见同伴接近、返巢、食品守恒与真实射程/墙挡及恢复见[动物样板](tasks/enemy-fauna.md)。
+
+[enemy-recovery.ts](../src/enemy-recovery.ts) 在同一部署候选中分配四个岗位及一只既有运输箱；[recovery-objective.ts](../src/raid-runtime/recovery-objective.ts) 推进实际回收、装箱、分段搬运与撤回。命令只携带静态阶段，最后接收时间按同队通信范围保存；`syncRecoveryCargo` 在 Runtime 更新后读取当前实体移动唯一容器。角色与货物的严格引用、每阶段恢复和事务失败反例见[回收队样板](tasks/enemy-recovery.md)及[测试](../tests/enemy-recovery.test.ts)。
+
+[enemy-blockade.ts](../src/enemy-blockade.ts) 拥有本局登记候选、等候区与公共通道；[blockade-checkpoint.ts](../src/raid-runtime/blockade-checkpoint.ts) 用真实观察与行动秒推进许可、处理退回/可靠交火来源。登记必须经 Runtime `layerMutation`，不能在视图直接发证。标记投影、军官缺失、空枪报告/换弹退回、真实键鼠/触屏与保存失败反例见[检查站记录](tasks/enemy-blockade.md)和[测试](../tests/enemy-blockade.test.ts)。
+
+**验证入口。** [目录边界](../tests/enemy-catalog.test.ts)、[真实旧档/事务/追击回归](../tests/enemy-compatibility.test.ts)、[固定输入 Runtime 夹具](../tests/fixtures/enemy-benchmark.ts)及其[测量协议](tasks/enemy-foundation-benchmark.md)。A/B 必须使用相同主线机制和输入协议；Node 测量不替代 `test:play`、浏览器和真人验收。当前交付与未来合同边界见[实施摘要](tasks/enemy-foundation.md)。
 
 ## 存档
 

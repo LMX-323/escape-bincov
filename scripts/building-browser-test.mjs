@@ -56,7 +56,7 @@ try {
     await page.evaluate(() => window.__bincovSample.driver.freezeAI(true));
     await step('native deployment saves all three maps with one global roster and body', async () => {
         const state = await info(), record = JSON.parse(state.raw);
-        assert.equal(record.version, 5); assert.equal(record.raid, null); assert.equal(record.expansion.raid.roster.length, 25);
+        assert.equal(record.version, 7); assert.equal(record.raid, null); assert.equal(record.expansion.raid.version, 5); assert.equal(record.expansion.raid.roster.length, 25);
         assert.deepEqual(Object.keys(record.expansion.raid.maps).sort(), ['coast', 'resident-b1', 'resident-f2']);
         assert.equal(state.map, 'coast');
     });

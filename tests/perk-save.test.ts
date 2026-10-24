@@ -12,6 +12,7 @@ import { resolveLayerShot } from '../src/layer-transition';
 import { isPristine, startOver } from '../src/fresh-start';
 import type { CritSnapshot, PerkId } from '../src/perks';
 import { plainCrit } from './fixtures/layered';
+import { actorArchetype } from '../src/enemy-archetypes';
 
 // Save format of the perk work (#77, docs/tasks/critical-perk-contract.md sections 1, 2 and 6): session v5 with
 // expansion v3 and raid v3, the station-boundary upgrade, and the CP-08/CP-22/CP-23 fixtures.
@@ -51,7 +52,8 @@ function lowDraw() { let s = 1; while (D.seededRandom(s)() >= .02) s++; return s
 function drawIn(lo: number, hi: number) { let s = 1; while (!(D.seededRandom(s)() >= lo && D.seededRandom(s)() < hi)) s++; return s; }
 /** A player round fired at point blank into a live enemy of the current layer, with its shot snapshot in a v3 raid; never lethal. */
 function fire(state: ExpansionState, crit?: CritSnapshot) {
-    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20)!;
+    // This probe isolates crit migration: authored encounters may put an armoured role first.
+    const raid = state.raid!, world = resolveExpansionWorld(raid.worldVersion)!, enemy = raid.maps[raid.currentMap].enemies.find(e => e.hp > 20 && !actorArchetype(e)?.armor)!;
     const bullet: BulletState = { uid: 'probe', x: enemy.x, y: enemy.y, rotation: 0, vx: 900, vy: 0, left: 40, damage: 10, enemy: false, ...(crit ? { crit } : {}) };
     const hp = enemy.hp, rng = raid.rng;
     let critical: boolean | null = null;
@@ -59,9 +61,9 @@ function fire(state: ExpansionState, crit?: CritSnapshot) {
     return { critical, damage: hp - enemy.hp, rolled: raid.rng !== rng };
 }
 
-test('CP-22: a v4 record with a live v2 raid keeps the old rules and v4 until it settles; the station then writes v5 and the next raid is v3', () => {
+test('CP-22: a v4 live v2 raid keeps old rules until settlement; station writes v5 and the next street raid combines both systems', () => {
     const o = origin(), first = page(o);
-    assert.ok(first.runtime.deploy({ world: 'buildings', seed: 'cp-22' }).ok); assert.equal(first.record.expansion!.raid!.version, 3);
+    assert.ok(first.runtime.deploy({ world: 'mall', seed: 'cp-22' }).ok); assert.equal(first.record.expansion!.raid!.version, 3);
     o.data.set(SESSION_KEY, asV4(first.raw)); // what the previous client stored for this deployment
     const p = page(o, false);
     assert.equal(p.initialized, true); assert.equal(p.record.version, 4);
@@ -97,7 +99,7 @@ test('CP-22: a v4 record with a live v2 raid keeps the old rules and v4 until it
     // The next deployment is v3: a round rolls its shot snapshot once (a pistol at technique 10: 6.9%), never the old
     // formula, which gives 10% at point blank; a draw between the two crits only under the old rule.
     assert.ok(p.runtime.deploy({ world: 'buildings', seed: 'cp-22-next' }).ok);
-    const next = structuredClone(p.state.expansion!); assert.equal(next.raid!.version, 3); assert.equal(p.record.perksBackup, settled);
+    const next = structuredClone(p.state.expansion!); assert.equal(next.raid!.version, 5); assert.equal(p.record.perksBackup, settled);
     next.raid!.rng = drawIn(.07, .1); assert.deepEqual(fire(next, plainCrit()), { critical: false, damage: 10, rolled: true });
     next.raid!.rng = low; assert.deepEqual(fire(next, plainCrit()), { critical: true, damage: 15, rolled: true });
 });
