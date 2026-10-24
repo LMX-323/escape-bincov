@@ -271,7 +271,7 @@ Sol 的样板任务书在本机 `D:/bincov/工作标准/PR28排期-20261022/Sol-
 1. 只把清单列出的 PNG 和清单本身复制到仓库 `assets/gunsmith/`。不复制 `source/`、`preview/`。
 2. 新增 `scripts/gunsmith-assets.mjs`（照 `mall-assets.mjs`）：核对哈希、宽高、字节、id 唯一、各角色的必填字段、锚点在画布内，生成 `src/art/gunsmith-assets.ts`（导入和元数据）。
 3. 把新脚本登记进 `scripts/script-inventory.mjs` 的 tool 组，否则 `check:ci` 会失败（#91 遇到过）。
-4. `pnpm build` 复核清单并检查预算；`pnpm test` 和加了改枪图的 `test:art` 通过后 `pnpm package`，提交生成物和 `docs/release-manifest.json`。
+4. `pnpm build` 复核清单并检查预算；`pnpm test` 和加了改枪图的 `test:art` 通过后 `pnpm package`；生成物不提交，CI 自己构建。
 5. 不用 `coast-import-assets.mjs`。若 #81 的无损图集已在 main 上，M2-10 决定改枪图要不要并进去。
 
 ### 7.4 字体

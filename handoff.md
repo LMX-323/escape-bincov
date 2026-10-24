@@ -1,3 +1,9 @@
+## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
+
+维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
+
+本地 874 单测（同步 #103 后）、`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）、`pnpm package`、`test:portable` 通过；游戏 HTML 与 main 提交的逐字节相同，便携 ZIP 只因游玩说明一句话变化。发布 job 只能在 main 上运行，本地只用假 gh 走过首次创建与替换两条路径。维护者确认仓库外的服务器镜像会从提交读清单/HTML，合并前要先改：CI 打包时清单加上 `commit`、`run`，镜像改读发布页清单，核对方法见 CI 说明；以后新增固定旧客户端的取法待定。准确 head、CI 与维护者确认见 [PR #105](https://github.com/xuys2025/escape-bincov/pull/105)。
+
 ## 2026-10-24 EN-19商场二层遭遇续作
 
 原PR104、feat/enemy-mall-r06；维护者已明确“授权104”，检查通过后可正常合并，不反复索取授权。执行合并时#98刚合入，已正常同步main49894e9（含#102），双方源码自动合并，生成物经正式package重建；没有强推、推main或绕过检查。

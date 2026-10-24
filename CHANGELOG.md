@@ -1,5 +1,10 @@
 # 更新记录
 
+## 未发布 · 打包产物改由 CI 构建和发布
+
+- 离线版下载地址改为 [`main-latest` 发布页](https://github.com/xuys2025/escape-bincov/releases/tag/main-latest)的 `Escape-Bincov-portable.zip`：`main` 每次通过全部检查后自动替换，地址不变；在线版照旧只在 `main` 验证成功后部署。
+- 打包生成的 `dist/index.html`、`start the game.html`、两个 ZIP 和发布清单不再随源码提交，发布清单移到 `release/`。从源码仓库直接打开 HTML 或试玩跳转页前，先运行 `pnpm build`；存档在浏览器里，不受影响。规则见 [docs/CI.md](docs/CI.md#构建与离线包发布)。
+
 ## 未发布 · #80 改枪第一步：枪械实例与存档 v8（PR #98）
 
 - 玩家看到的枪不变：旧式手枪、双管霰弹枪、半自动卡宾枪的伤害、射速、散布、后坐、弹量、重量、价格和占格都和以前一样（射击实验台报告逐项相同）。改装功能还没有开放，按 [任务与排期](docs/gunsmith/TASKS.md) 在下一步加入。
