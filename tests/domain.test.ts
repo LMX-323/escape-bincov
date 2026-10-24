@@ -16,11 +16,11 @@ const held = (weapon: string | null) => weapon && weapon !== 'knife'
 test('20 original items, 10 production/RPG items and the gunsmith items have coherent footprints, stacks and prices', () => {
   const original = ['knife', 'pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'bandage', 'medkit', 'antidote', 'water', 'food', 'scrap', 'wire', 'fuse', 'battery', 'watch', 'pearl', 'sample', 'ledger'];
   const production = ['cloth', 'analgesic', 'focus', 'strengthDose', 'constitutionDose', 'techniqueDose', 'luckyCharm', 'unluckyCharm', 'luckySachet', 'unluckySachet'];
-  // #28 M2-01: G17 and M4A1 (tests/gunsmith-items.test.ts ties them to the gunsmith catalog).
-  const gunsmith = ['gb17', 'mb4a1'];
-  assert.equal(original.length, 20); assert.equal(production.length, 10);
+  // #28 M2-01 and M2-02: G17, M4A1 and the 20 sample attachments (tests/gunsmith-items.test.ts ties them to the catalog).
+  const gunsmith = ['gb17', 'mb4a1', 'O01', 'O03', 'O08', 'M03', 'M06', 'B01', 'B08', 'H01', 'H05', 'S01', 'S02', 'P01', 'P02', 'F01', 'F03', 'G01', 'G10', 'T01', 'T05', 'A07'];
+  assert.equal(original.length, 20); assert.equal(production.length, 10); assert.equal(gunsmith.length, 22);
   assert.deepEqual(new Set(Object.keys(ITEMS)), new Set([...original, ...production, ...gunsmith]));
-  assert.equal(Object.keys(ITEMS).length, 32);
+  assert.equal(Object.keys(ITEMS).length, 52);
   for (const def of Object.values(ITEMS)) {
     assert.ok(def.w > 0 && def.h > 0 && def.stack > 0);
     if (def.buy) assert.ok(def.sell <= def.buy);

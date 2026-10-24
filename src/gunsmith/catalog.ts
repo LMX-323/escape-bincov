@@ -118,8 +118,8 @@ export interface AttachmentDef {
     requires: readonly Qualification[];
     /** Effect quota: one laser and one light per gun; a combiner uses both. */
     quota: 'laser' | 'light' | 'combiner' | null;
-    /** As a loose item: weight in kg and shop prices. */
-    weight: number; buy: number; sell: number;
+    /** As a loose item: footprint in cells (looseSize), weight in kg and shop prices. */
+    w: number; h: number; weight: number; buy: number; sell: number;
     mods: Modifiers;
 }
 
@@ -242,10 +242,21 @@ interface Draft { id: string; name: string; mount: Slot; guns: readonly GunId[] 
 /** One row: id, name, slot, guns (null for rail parts), loose kg, buy price, modifiers. `mods.weight` defaults to the loose kg. */
 const p = (id: string, name: string, mount: Slot, guns: readonly GunId[] | null, weight: number, buy: number,
     mods: Partial<Modifiers> = {}, extra: Extra = {}): Draft => ({ id, name, mount, guns, weight, buy, mods, extra });
+/**
+ * A loose attachment's footprint (#28 M2-02, M0 review decision 9; a proposal M4 may tune with the shop and loot
+ * space): 2x1 for a long part, 1x1 for the rest. Long are handguards, stocks, a barrel for any gun but a pistol, a part
+ * that lengthens or deepens the installed gun (suppressors and the drum, `grow`), long-range scopes and the folded bipod.
+ * The inventory picture stays the 24 px icon (ART-SPEC section 2); only the cells it takes differ.
+ */
+function looseSize(cat: Category, d: Draft): { w: number; h: number } {
+    const long = cat === 'handguard' || cat === 'stock' || cat === 'barrel' && !!d.guns?.some(id => GUNS[id].cls !== 'pistol')
+        || !!d.mods.grow || !!d.extra.requires?.includes('longScope') || d.mount === 'bipod';
+    return long ? { w: 2, h: 1 } : { w: 1, h: 1 };
+}
 const section = (cat: Category, brand: Brand, drafts: readonly Draft[]): AttachmentDef[] => drafts.map(d => ({
     id: d.id, name: d.name, brand, cat, mount: d.mount, provides: d.extra.provides ?? {}, guns: d.guns,
     needs: d.extra.needs ?? [], grants: d.extra.grants ?? [], requires: d.extra.requires ?? [], quota: d.extra.quota ?? null,
-    weight: d.weight, buy: d.buy, sell: Math.round(d.buy * SELL_SHARE), mods: { weight: d.weight, ...d.mods },
+    ...looseSize(cat, d), weight: d.weight, buy: d.buy, sell: Math.round(d.buy * SELL_SHARE), mods: { weight: d.weight, ...d.mods },
 }));
 const RIFLE_MUZZLE: readonly GunId[] = ['carbine', 'akb74', 'akb103', 'mb4a1', 'augb', 'rpkb'];
 const PRECISION: readonly GunId[] = ['svdb', 'mb14', 'mb700'];

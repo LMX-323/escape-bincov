@@ -138,8 +138,8 @@ export class InventoryPanel {
       i.qty > 1 ? `<label class="cs-split">拆分 <input type="number" min="1" max="${i.qty - 1}" value="${Math.max(1, Math.floor(i.qty / 2))}" data-split aria-label="拆分数量"></label>${btn('拆分放置', 'inv-split')}` : '',
       carried ? btn('丢弃', 'inv-drop', 'class="cs-danger"') : '',
     ].join('');
-    const gun = D.isGun(i.id);
-    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${D.itemWeight(i).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${gun && sel.source !== 'bag' ? '<p class="cs-sub">枪械先放入背包，再选中并装备主武器。</p>' : carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用。</p>'}`;
+    const gun = D.isGun(i.id), facts = D.attachmentFacts(i.id);
+    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${D.itemWeight(i).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p>${facts ? `<p class="cs-sub cs-maker">制造商：${esc(facts.brand)} · 适配：${esc(facts.guns.join('、') || '暂无')}</p>` : ''}<div class="cs-row cs-actions">${actions}</div>${gun && sel.source !== 'bag' ? '<p class="cs-sub">枪械先放入背包，再选中并装备主武器。</p>' : carried ? '' : '<p class="cs-sub">收入背包或安全箱后，才能使用。</p>'}`;
   }
 
   // --- actions ---

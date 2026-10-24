@@ -1,10 +1,12 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
-import { GUNS, type GunId } from './gunsmith/catalog';
+import { ATTACHMENTS, BRAND_NAMES, GUNS, type GunId } from './gunsmith/catalog';
+import { checkInstall } from './gunsmith/compat';
 import { effectiveWeapon } from './gunsmith/stats';
 import { buildOf, factoryState, gunSale, gunSize, gunUids, gunWeight, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
 import { migrateProfile, type ProfileV2 } from './gunsmith/migrate';
 
-export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory';
+/** `attachment`: a gunsmith part as a loose item (#28 M2-02); `part` stays the hideout's repair and crafting material. */
+export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory' | 'attachment';
 export interface ItemDef {
   id: string; name: string; short: string; w: number; h: number; weight: number;
   stack: number; buy: number; sell: number; kind: ItemKind; description: string; color: number;
@@ -62,6 +64,38 @@ const gunItem = (id: GunId, short: string, description: string, color: number): 
   const g = GUNS[id];
   return item(id, g.stats.name, short, g.w, g.h, g.weight, 1, g.buy, g.sell, 'weapon', description, color);
 };
+/**
+ * The 20 sample attachments of #28 M2-02 that are items, with each one's cell label and description (its benefit, then
+ * its cost, from ATTACHMENTS.md). Name (the function name; the brand stays in the details), footprint, weight and
+ * prices are the catalog's. They are unique items under their own uids, never stacked, and their item id is the
+ * catalog id, which a part keeps on a gun (PartNode.id). M3 makes the other 80 items.
+ */
+const ATTACHMENT_ITEMS: Readonly<Record<string, readonly [short: string, description: string]>> = {
+  O01: ['点瞄', '快速举枪，手枪点射较清楚。稳定收益较小。'],
+  O03: ['红点', '低重量、快速精瞄。持续射击稳定收益较小。'],
+  O08: ['远距镜', '远距观察与稳定首发。举枪和转向恢复慢。'],
+  M03: ['短消音', '降低枪声吸引范围。重量及举枪时间增加；装在手枪上要先装九系精瞄枪管组。'],
+  M06: ['制退器', '提高持续射击控制。枪声吸引范围增加。'],
+  B01: ['精瞄管', '精瞄稳定，提供九系消音接口。举枪略慢；不改变弹种。'],
+  B08: ['精确枪管', '提高精瞄稳定与有效距离。重量增加、举枪变慢。'],
+  H01: ['短护木', '提供 1 个下导轨、1 个侧位，轻便。控制收益小。'],
+  H05: ['卡宾护木', '提供 1 个下导轨、1 个侧位。增加重量和成本。'],
+  S01: ['轻托', '轻量、快速举枪。连续控制弱于稳定托。'],
+  S02: ['稳定托', '降低连续射击散布增长。更重、举枪慢。'],
+  P01: ['轻握把', '快速举枪、轻。控制收益小。'],
+  P02: ['稳握把', '连续点射恢复好。重量与成本高。'],
+  F01: ['短前握', '适度控制、代价小。少量增重。'],
+  F03: ['斜握把', '转向后和移动后恢复快。持续控制较弱。'],
+  G01: ['加长匣', '容量提高到 24 发。换弹变慢、增重。'],
+  G10: ['快换匣', '容量 20 发，换弹快。减少连续射击时间。'],
+  T01: ['激光器', '近距离腰射更集中。开启时增加被正面敌人发现的风险。'],
+  T05: ['泛光灯', '较宽的近距可交互物轮廓提示。照亮范围也会暴露自己。'],
+  A07: ['顶基座', '开放顶部导轨，并让半自动卡宾枪能装远距瞄具。增重。'],
+};
+const attachmentItem = (id: string, [short, description]: readonly [string, string]): ItemDef => {
+  const a = ATTACHMENTS[id];
+  return item(id, a.name, short, a.w, a.h, a.weight, 1, a.buy, a.sell, 'attachment', description, 0x8a9692);
+};
 
 export const ITEMS: Record<string, ItemDef> = {
   knife: item('knife', '水手匕首', '匕首', 1, 2, 0.35, 1, 0, 0, 'weapon', '随身携带的旧匕首。撤离失败也不会丢失。', 0xb4c3bf),
@@ -96,6 +130,7 @@ export const ITEMS: Record<string, ItemDef> = {
   ledger: item('ledger', '港口船册', '船册', 2, 1, 0.45, 1, 0, 130, 'quest', '旧渔港的值班船册，用于任务「未归的第七艘船」。', 0xd2c396),
   gb17: gunItem('gb17', 'G17', '使用 9 毫米弹，弹匣容量 17 发。轻便的通用手枪，能装微型瞄具、枪口件和手枪侧挂设备。', 0x8a9390),
   mb4a1: gunItem('mb4a1', 'M4A1', '使用卡宾枪弹，弹匣容量 30 发，全自动。模块化步枪，护木、枪托、握把和弹匣都能更换。', 0x7c8775),
+  ...Object.fromEntries(Object.entries(ATTACHMENT_ITEMS).map(([id, text]) => [id, attachmentItem(id, text)])),
 };
 
 /** Distances are world pixels; cooldown/reload are seconds; spread is radians. */
@@ -148,6 +183,23 @@ const isObject = (value: unknown): value is Record<string, any> => !!value && ty
  * rules can read it; the knife, enemy weapon looks and catalog guns that are not items yet (M3) are not guns here.
  */
 export const isGun = (id: unknown): id is GunId => typeof id === 'string' && id !== 'knife' && Object.hasOwn(WEAPONS, id);
+/** Is `id` a gunsmith attachment that is an item (#28 M2-02): its item id is its catalog id (ATTACHMENTS). */
+export const isAttachment = (id: unknown): id is string => typeof id === 'string' && Object.hasOwn(ITEMS, id) && ITEMS[id].kind === 'attachment';
+/**
+ * What the item details add for an attachment (ATTACHMENTS.md: the brand shows only in the details): its maker, and
+ * the names of the guns a player can own that it can go on, at once or once a base, handguard or barrel it needs is
+ * installed (compat checkInstall on a bare gun: placed, or only an opener or a prerequisite missing). Null for any
+ * other item. M2-08 adds whether the stash holds such a gun and which base is missing.
+ */
+export function attachmentFacts(id: string): { brand: string; guns: string[] } | null {
+  if (!isAttachment(id)) return null;
+  const guns = Object.keys(GUNS).filter(gun => {
+    if (!isGun(gun)) return false;
+    const fit = checkInstall({ gun, parts: [] }, id);
+    return fit.ok || fit.code === 'opener' || fit.code === 'needs';
+  });
+  return { brand: BRAND_NAMES[ATTACHMENTS[id].brand], guns: guns.map(gun => WEAPONS[gun].name) };
+}
 /** The equipped slot as the gun readers below take it: a profile's equipment or a raid loadout. */
 type GunSlot = Pick<Equipment, 'weapon' | 'weaponUid' | 'gun' | 'relief'>;
 /**

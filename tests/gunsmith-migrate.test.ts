@@ -350,6 +350,7 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         ['an old slot holding a gun state', p => { p.equipment.gun = null; }],
         ['a catalog gun no old save can hold', p => { p.stash.items.push({ uid: 'x1', id: 'gb17', qty: 1, x: 0, y: 5 }); }],
         ['an equipped catalog gun no old save can hold', p => { p.equipment.weapon = 'mb4a1'; }],
+        ['an attachment no old save can hold (M2-02)', p => { p.stash.items.push({ uid: 'x1', id: 'O03', qty: 1, x: 0, y: 5 }); }],
         ['an equipped knife', p => { p.equipment.weapon = 'knife'; }], ['the sample rifle', p => { p.equipment.weapon = 'm4a1'; }],
         ['a prototype name', p => { p.equipment.weapon = '__proto__'; }], ['no equipped field', p => { delete p.equipment.weapon; }],
         ['no stash', p => { delete p.stash; }], ['items not a list', p => { p.bag.items = {}; }], ['an item not an object', p => { p.safe.items.push(7); }],
@@ -380,6 +381,7 @@ test('old formats holding gun fields, and unknown or malformed inputs, are refus
         ['an old crate item holding a state', r => { crate(r).inventory.items[0].gun = factoryState(); }],
         ['an old loadout holding a uid', r => { r.expansion.raid.loadout.weaponUid = 'x1'; }],
         ['a loadout gun no old save can hold', r => { r.expansion.raid.loadout.weapon = 'mb4a1'; }],
+        ['an old crate holding an attachment (M2-02)', r => { crate(r).inventory.items[0].id = 'S01'; crate(r).inventory.items[0].qty = 1; }],
         ['a charm that is a gun', r => { r.expansion.charm = { uid: 'c1', id: 'pistol', qty: 1, x: 0, y: 0 }; }],
         ['a charm sharing a stored gun\'s uid', r => { r.expansion.charm = { uid: r.profile.stash.items.find((i: any) => i.id === 'carbine').uid, id: 'luckyCharm', qty: 1, x: 0, y: 0 }; }],
     ];
