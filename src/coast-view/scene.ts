@@ -20,7 +20,7 @@ import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
 import { MALL_V2_REGIONS } from '../mall-layout-v2';
 import { releaseManagedSlots } from './renderer-lifetime';
-import { aimLead, pointerLead, snapAxis, stepLead, type AxisHold, type Lead } from './camera';
+import { aimLead, leadRoom, pointerLead, snapAxis, stepLead, type AxisHold, type CameraBounds, type Lead } from './camera';
 import { viewScale, type ViewScaleMode } from './view-scale';
 
 export const AIM_H = 22;
@@ -977,7 +977,7 @@ export class CoastView {
   /** Half the docked panel's height, world px: the camera centres the player that much higher. */
   private inset() { return this.panelInset * this.view.dpr / this.view.s / 2; }
   /** The camera's allowed top-left range. Mall floors end in hoarding or the drop at the map edge: no margin beyond it. */
-  private camBounds() {
+  private camBounds(): CameraBounds {
     const b = this.map!.bounds, pad = this.map!.key.mapId === 'coast' || isMall(this.map!) ? 0 : 96, top = this.hudTop * this.view.dpr / this.view.s;
     return { x0: b.x - pad, x1: b.x + b.w + pad - this.view.w, y0: b.y - pad - (pad ? 40 : 0) - top, y1: b.y + b.h + pad - this.view.h };
   }
@@ -992,23 +992,26 @@ export class CoastView {
     return pointerLead(c.x - this.view.w / 2, c.y - (this.view.h / 2 - this.inset()), precise);
   }
   private camera(f: ViewFrame, dt: number, follow = dt) {
-    const p = f.player, k = 1 - Math.exp(-follow * 8);
+    const p = f.player, k = 1 - Math.exp(-follow * 8), bd = this.camBounds();
     // The follow eases toward the player's chest; the look-ahead goes on top. With a mouse it comes from the pointer's
-    // place on screen (pointerLead / stepLead: no feedback from the aim); on touch it eases toward the aim's lead.
+    // place on screen (pointerLead / stepLead: no feedback from the aim) and stops on the map edge (leadRoom); on touch it
+    // eases toward the aim's lead.
     const mx = (p.x - this.view.w / 2 - this.camF.x) * k, my = (p.y - AIM_H - this.view.h / 2 + this.inset() - this.camF.y) * k;
+    const fx = this.camF.x + mx, fy = this.camF.y + my;
     const old = this.camF.lead ?? { m: 0, ux: 1, uy: 0 }, ox = old.m * old.ux, oy = old.m * old.uy;
     let lead: Lead;
-    if (this.pointer) lead = stepLead(old, this.pointerWant(this.pointer, p.state.precise), k);
-    else {
+    if (this.pointer) {
+      const want = this.pointerWant(this.pointer, p.state.precise);
+      lead = stepLead(old, want, k, leadRoom(fx, fy, want.ux, want.uy, bd));
+    } else {
       const t = aimLead(p.aim, p.state.precise), lx = ox + (t.x - ox) * k, ly = oy + (t.y - oy) * k, m = Math.hypot(lx, ly);
       lead = m > 1e-9 ? { m, ux: lx / m, uy: ly / m } : { m: 0, ux: 1, uy: 0 };
     }
     const lx = lead.m * lead.ux, ly = lead.m * lead.uy;
-    this.camF = { ...this.camF, x: this.camF.x + mx, y: this.camF.y + my, lead };
-    const bd = this.camBounds();
+    this.camF = { ...this.camF, x: fx, y: fy, lead };
     // Whole-pixel camera on the player's own rounding: a steady walk keeps the player still on screen (playtest F-04).
-    const X = snapAxis(this.camF.x + lx, p.x, bd.x0, bd.x1, this.camF.hx, mx + lx - ox);
-    const Y = snapAxis(this.camF.y + ly, p.y, bd.y0, bd.y1, this.camF.hy, my + ly - oy);
+    const X = snapAxis(fx + lx, p.x, bd.x0, bd.x1, this.camF.hx, mx + lx - ox);
+    const Y = snapAxis(fy + ly, p.y, bd.y0, bd.y1, this.camF.hy, my + ly - oy);
     this.camF.hx = { held: X.held, raw: X.raw }; this.camF.hy = { held: Y.held, raw: Y.raw };
     this.shake = Math.max(0, this.shake - dt * 30);
     const settle = Math.exp(-dt * 16); this.recoil.x *= settle; this.recoil.y *= settle;
@@ -1075,13 +1078,18 @@ export class CoastView {
    * The aim of a pointer: from the player's chest to the world point under it. It reads through the smoothed camera
    * (follow plus the look-ahead this pointer is about to ask for), without the whole-pixel rounding, the recoil kick and
    * the shake, which are drawing only (a kick moved the aim up to 2.6 px; the rounding moves the drawn world under 1 px).
-   * Easing the look-ahead's length then slides the camera along the pointer's line and leaves the aim as it is (PR #39).
+   * Easing the look-ahead's length then slides the camera along the pointer's line and leaves the aim as it is (PR #39);
+   * the length stops where the camera meets the map edge (leadRoom, #80), so the clamp below never holds one axis of it.
    * Touch never aims through here.
    */
   aimFromClient(clientX: number, clientY: number): number | null {
     const p = this.last?.player; if (!p) return null;
     const at = this.canvasPoint(clientX, clientY), old = this.camF.lead ?? { m: 0, ux: 1, uy: 0 }, bd = this.camBounds();
-    const next = this.pointer ? stepLead(old, this.pointerWant({ x: clientX, y: clientY }, p.state.precise), 0) : old;
+    let next = old;
+    if (this.pointer) {
+      const want = this.pointerWant({ x: clientX, y: clientY }, p.state.precise);
+      next = stepLead(old, want, 0, leadRoom(this.camF.x, this.camF.y, want.ux, want.uy, bd));
+    }
     const clamp = (v: number, lo: number, hi: number) => lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v));
     const cx = clamp(this.camF.x + next.m * next.ux, bd.x0, bd.x1), cy = clamp(this.camF.y + next.m * next.uy, bd.y0, bd.y1);
     return Math.atan2(at.y + cy + AIM_H - p.y, at.x + cx - p.x);
