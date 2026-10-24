@@ -4,7 +4,7 @@
 
 当前任务从 [WORK-QUEUE 顶部](docs/WORK-QUEUE.md) 和相关 PR 的最新 head/检查接手。读代码先用 [CODEMAP](docs/CODEMAP.md)；每个在途交付维护一份[短摘要](docs/TASK-HANDOFF-TEMPLATE.md)，不把本文件全部放入默认上下文。
 
-- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96) 原分支续作：同步 main `4141503`，按维护者“允许像素工具返修，保留原图”完成七类 `pixel-v1` 规范图集（70 个受击／恢复姿态），8 张 image_gen 原图和实际提示词完整保留。[本轮摘要](docs/hit-feel-art/README.md#2026-10-24-像素规范版)、[独立像素检查](docs/hit-feel-art/pixel-audit.json)及1倍／3倍审图和GIF：画布、站立列、肩线、脚部固定区、轮廓差异与配色检查7张／35朝向／70姿态全部通过，35张参考哈希仍匹配最新来源。美术交付完成；下一步接入PR从规范版导出运行帧，验证实际播放和两档分辨率；B组依赖#81。本PR仍草稿、未合并，游戏源码与产物相对main不变。
+- 2026-10-24 · [受击姿态美术 PR #96](https://github.com/xuys2025/escape-bincov/pull/96)：在原分支按维护者评论完成七张 pixel-v2 返工稿，只改人形 S/N 膝部24格及生物 E/SE/NE 缩头6格；35站立格和40个其他动作格不变，v1与生成原图保留。[当前返工摘要](docs/hit-feel-art/README.md#2026-10-24-v2-返工)、[v2检查](docs/hit-feel-art/pixel-audit-v2.json)与[有效v1负对照](docs/hit-feel-art/pixel-v1-rework-negative.json)记录无新增洞、腿部不开缝和原有锚点检查；生物固定足底与整帧最右边界的3条指标冲突待核定，不能记为全部验收通过。653单测、package通过，产物相对main `4141503`不变；游戏接入另PR，保持草稿、未合并，等待独立复验。
 
 - 2026-10-24 · [#75](https://github.com/xuys2025/escape-bincov/issues/75) 命中确认（`feat/hit-confirm`，起点 main `edb02f2`）：
   - **画面**：`CoastView.present()` 在画角色之前先处理本批的受击事件（`blow`），闪白和抖动从命中当帧画起，帧数不变（60/30/15/12/10 帧/秒为 4/2/1/1/1 帧）；本批才第一次出现的身体仍从下一帧开始。

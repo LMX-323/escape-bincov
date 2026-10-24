@@ -1,6 +1,54 @@
 # 受击姿态美术需求（#75 打击感）
 
-七类角色的受击／恢复**像素规范版已完成并通过素材检查**；8 张 image_gen 原图与实际提示词完整保留。PR 仍保留草稿，游戏接入另开代码 PR；本次没有改 `src/`、现有运行图或运行素材清单。
+七类角色的受击／恢复 **pixel-v2 返工稿已交，待独立复验**；v1、8 张 image_gen 原图与实际提示词完整保留。PR 仍保留草稿、不合并，游戏接入另开代码 PR；本次没有改 `src/`、现有运行图或运行素材清单。生物“头部前缘”的统计范围与固定足底存在冲突，见下方记录，不将该争议指标记为验收通过。
+
+## 2026-10-24 v2 返工
+
+按维护者的[两项返工要求](https://github.com/xuys2025/escape-bincov/pull/96#issuecomment-6379082043)，以 `34e1dea` 的 pixel-v1 为基线，仅修改指定的 **30 格**：六类人形 S／N 受击、恢复共 24 格；生物 E／SE／NE 受击、恢复共 6 格。其余 40 个动作格及 35 个站立格逐像素保持 v1，v1 与生成原图的 28 张 PNG／GIF 原始字节全部不变。最新 main 仍为 `4141503`；#81 head `71cf986` 的参考图核对仍 35/35 一致。
+
+| 角色 | 本轮 v2 图集 |
+| --- | --- |
+| 拾荒者 | [scav-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/scav-hurt-sheet-pixel-v2.png) |
+| 盐枭 | [salt-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/salt-hurt-sheet-pixel-v2.png) |
+| 守潮人 | [elite-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/elite-hurt-sheet-pixel-v2.png) |
+| 潮蚀生物 | [creature-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/creature-hurt-sheet-pixel-v2.png) |
+| 近身掠夺者 | [raider-melee-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/raider-melee-hurt-sheet-pixel-v2.png) |
+| 拾荒枪手 | [raider-gunner-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/raider-gunner-hurt-sheet-pixel-v2.png) |
+| 望风者 | [raider-lookout-hurt-sheet-pixel-v2.png](../../assets/hit-feel/sources/raider-lookout-hurt-sheet-pixel-v2.png) |
+
+人形正面、背面的膝部改用原裤装颜色绘制膝盖亮面与屈曲褶皱，恢复帧用较轻的明暗变化；第 33 行以下的透明轮廓与站立帧相同，两腿不再外分，不是只把洞涂掉。原有头部、肩点和脚部不动。24 格都没有新增封闭透明洞，内侧第 15／16 列原来不透明的腿部行继续不透明；膝部每格实际改变 5–18 个逻辑像素，整体水平重心偏移最大约 0.082 像素。
+
+生物在壳体下压基础上，将右侧头部与前肢上段的连通像素向壳内收 2／1 像素；保留壳脊和足底，不裁切整帧、不移动脚点。六格没有洞或新增散点，仍为一个连通身体；生物 S／N 两行完全沿用 v1。
+
+### 生物前缘测区仍需确认
+
+返工要求同时写了“头部前缘（最右侧不透明列）”和“第 24–27 行足底完全不变”。但 SE 原足底第 24–25 行到 x=38，NE 第 24 行到 x=35；因此若统计整帧，无法同时达到 SE 受击 ≤36／恢复 ≤37、NE 受击 ≤34。此处没有修改脚底来追数值，也没有把检查范围的解释当作维护者已经同意。
+
+当前同时记录两组实际数值，**第 24 行以上仅作为待确认的头部／前肢上段测区**：
+
+| 方向 | 要求受击／恢复 | v2 第 0–23 行受击／恢复 | v2 整帧受击／恢复 |
+| --- | --- | --- | --- |
+| E | ≤36／≤37 | 35／37 | 35／37 |
+| SE | ≤36／≤37 | 34／36 | 38／38（由固定足底决定） |
+| NE | ≤34／≤35 | 33／35 | 35／35（受击整帧由固定足底决定） |
+
+绘图已按“缩头、收前肢、足底不动”交付，最终统计区域待维护者／复验者明确。报告中的 `status: PASS` 仅指已经定义的像素约束；`reviewAcceptance: PENDING_HEAD_REGION_DEFINITION` 和 3 条 `wholeFrameMetricConflicts` 明确保留上述问题，不能据此声称全部返工验收通过。
+
+### v2 验证与审看入口
+
+- 可复现绘制：`python docs/hit-feel-art/author-pixel-poses.py --edition v2`；[v2 登记与 SHA-256](../../assets/hit-feel/sources/pixel-editions-v2.json)包含每张 v1 来源哈希。重复运行七张 v2 的图像哈希和登记内容完全一致。
+- 独立检查：`python docs/hit-feel-art/audit-pixel-poses.py --edition v2`；[实际 v2 报告](pixel-audit-v2.json)。7 图集／35 朝向／70 姿态的像素检查 0 失败，3 条整帧前缘／足底指标冲突待核定。增加了四邻域透明洞、内侧腿部不透明、膝部改动、水平重心 ≤0.5、原有部件连通和非目标格不变检查。
+- 有效负对照：把同样返工检查用于未修改的 v1，实际得到 52 项失败（24 格膝洞与腿内侧共 48 项，头部区域前缘 4 项）；[失败摘要](pixel-v1-rework-negative.json)保留准确命令与问题，没有修改旧报告或放宽断言。
+- Windows / Node 24.19.0 / pnpm 11.19.0：本轮 `pnpm test` 653/653、`pnpm package` 通过；两份 HTML、两份 ZIP 与发布清单相对 main `4141503` 逐字节不变。本地游戏浏览器套件未运行，准确 head CI 以本 PR 最新检查为准。
+- 完整审图：[A 组 1 倍／3 倍](pixel-preview-a-v2.png)、[B 组 1 倍／3 倍](pixel-preview-b-v2.png)、[固定脚点慢放 GIF](pixel-preview-v2.gif)。这些是美术预览，不是游戏截图或实际播放验收。
+
+![v1／v2 对照：站立、v1受击、v2受击、v1恢复、v2恢复](pixel-rework-comparison-v2.png)
+
+游戏内接入、运行帧与两档分辨率验收继续由后续接入 PR 承接。当前返工稿只提交原分支，保持草稿、未合并；独立复验结论以维护者后续评论为准。
+
+## 工具依赖
+
+本目录的 Python 脚本是**可选的本地美术编辑／审图工具**，使用 Python 3 和 Pillow；游戏运行、离线包、Node 构建和 CI 不依赖 Pillow。本轮本机使用 Pillow 11.0.0，其分发元数据标为 `MIT-CMU`，随包 LICENSE 说明为 HPND，原文见 [Pillow 11.0.0 LICENSE](https://github.com/python-pillow/Pillow/blob/11.0.0/LICENSE)。没有新增游戏依赖或修改锁文件，也没有把 Pillow 打包到游戏中。
 
 ## 2026-10-24 像素规范版
 

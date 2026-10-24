@@ -8,6 +8,7 @@ Requires Pillow. Does not export runtime assets or change their manifest.
 """
 import hashlib
 import json
+import argparse
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -92,26 +93,97 @@ def creature(idle, phase):
     return out
 
 
-def main():
+def joined_knees(id, idle, pose, direction, phase):
+    """Front/back flex is drawn with knee shading, keeping the idle leg mask."""
+    out = pose.copy()
+    first, last = PLANS[id]['kneeRows']
+    fixed_foot = PLANS[id]['fixedFootFrom']
+    out.paste(idle.crop((0, 33, 32, fixed_foot)), (0, 33))
+    for left, right in [(0, 16), (16, 32)]:
+        colours = {}
+        for y in range(33, fixed_foot):
+            for x in range(left, right):
+                p = idle.getpixel((x, y))
+                if p[3]:
+                    colours.setdefault(p[3], set()).add(p)
+        for alpha, palette in colours.items():
+            colours[alpha] = sorted(palette, key=lambda p: 299 * p[0] + 587 * p[1] + 114 * p[2])
+        # Patella highlight followed by a crease for S; the crease comes first
+        # at the back of the knee for N. Recovery retains only the softer crease.
+        rows = [first, min(first + 1, last - 1), last - 1] if phase == 2 else [first + (last - first) // 2]
+        for i, y in enumerate(dict.fromkeys(rows)):
+            active = [x for x in range(left, right) if idle.getpixel((x, y))[3]]
+            if not active:
+                continue
+            # Keep the side outline and its exact alpha. Edit the broad inner
+            # trouser clusters, not boots or the central seam's occupancy.
+            for x in active[1:-1] or active:
+                p = idle.getpixel((x, y))
+                palette = colours[p[3]]
+                light = (i < 2) if direction == 'S' else (i == 2)
+                quantile = (0.75 if light else 0.2) if phase == 2 else 0.35
+                out.putpixel((x, y), palette[round((len(palette) - 1) * quantile)])
+    return out
+
+
+def tucked_creature_head(pose, phase):
+    """Pull the right-facing head and upper front limb under the fixed shell.
+
+    Work only above the fixed support band. Move the connected head/upper-leg
+    clusters left by 2/1 logical pixels; do not trim a bounding box or move feet.
+    Shell ridge rows 0-11 and the bottom four rows are kept verbatim.
+    """
+    out = pose.copy()
+    first_x, first_y, foot_y = 26, 12, 24
+    for y in range(first_y, foot_y):
+        for x in range(first_x, 40):
+            out.putpixel((x, y), CLEAR)
+    for y in range(first_y, foot_y):
+        for x in range(first_x, 40):
+            p = pose.getpixel((x, y))
+            if p[3]:
+                out.putpixel((x - phase, y), p)
+    return out
+
+
+def main(edition='v1'):
     metadata = {'schema': 1, 'method': 'User-authorized part-based edits on the native logical grid, followed by exact 8x nearest-neighbour enlargement. Original generated sources preserved.', 'rowOrder': DIRS, 'columnOrder': ['idle', 'hurt', 'recovery'], 'plans': PLANS, 'sheets': []}
     previews = []
     for entry in TEMPLATES:
         id = entry['id']
         w, h = (40, 28) if id == 'creature' else (32, 48)
         template = Image.open(ROOT / entry['template']).convert('RGBA')
-        sheet = template.copy()
+        baseline_file = ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-pixel-v1.png'
+        sheet = template.copy() if edition == 'v1' else Image.open(baseline_file).convert('RGBA')
         logical = []
         for row, direction in enumerate(DIRS):
             idle = template.crop((0, row * h * 8, w * 8, (row + 1) * h * 8)).resize((w, h), Image.Resampling.NEAREST)
-            hurt, recovery = [creature(idle, phase) if id == 'creature' else humanoid(id, idle, direction, phase) for phase in [2, 1]]
+            if edition == 'v1':
+                hurt, recovery = [creature(idle, phase) if id == 'creature' else humanoid(id, idle, direction, phase) for phase in [2, 1]]
+            else:
+                hurt, recovery = [sheet.crop((col * w * 8, row * h * 8, (col + 1) * w * 8, (row + 1) * h * 8)).resize((w, h), Image.Resampling.NEAREST) for col in [1, 2]]
+                if id != 'creature' and direction in ['S', 'N']:
+                    hurt, recovery = [joined_knees(id, idle, pose, direction, phase) for pose, phase in [(hurt, 2), (recovery, 1)]]
+                elif id == 'creature' and direction in ['E', 'SE', 'NE']:
+                    hurt, recovery = [tucked_creature_head(pose, phase) for pose, phase in [(hurt, 2), (recovery, 1)]]
             for col, frame in enumerate([hurt, recovery], 1):
                 sheet.paste(frame.resize((w * 8, h * 8), Image.Resampling.NEAREST), (col * w * 8, row * h * 8))
             logical.append([idle, hurt, recovery])
-        destination = ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-pixel-v1.png'
+        destination = ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-pixel-{edition}.png'
         sheet.save(destination, optimize=True)
         metadata['sheets'].append({'id': id, 'template': entry['template'], 'file': destination.relative_to(ROOT).as_posix(), 'sha256': hashlib.sha256(destination.read_bytes()).hexdigest(), 'width': sheet.width, 'height': sheet.height, 'fixedFootFrom': 24 if id == 'creature' else PLANS[id]['fixedFootFrom']})
+        if edition == 'v2':
+            metadata['sheets'][-1]['baseFile'] = baseline_file.relative_to(ROOT).as_posix()
+            metadata['sheets'][-1]['baseSha256'] = hashlib.sha256(baseline_file.read_bytes()).hexdigest()
         previews.append((id, logical))
-    (ROOT / 'assets/hit-feel/sources/pixel-editions-v1.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8')
+    if edition == 'v2':
+        metadata['revision'] = 'Rework of 24 human S/N knee cells and 6 creature E/SE/NE head/upper-limb cells only; all other cells preserved from pixel-v1.'
+        metadata['review'] = 'https://github.com/xuys2025/escape-bincov/pull/96#issuecomment-6379082043'
+        metadata['humanEdit'] = 'S/N only: keep the standing lower-body alpha mask, use original trouser colours for patella/crease shading; head, shoulders and feet unchanged from v1.'
+        metadata['creatureEdit'] = 'E/SE/NE only: move connected head and upper-front-limb pixels at x>=26, 12<=y<24 left 2/1 pixels; shell ridge and support feet unchanged from v1.'
+        metadata['headMetricDefinitionPending'] = True
+    (ROOT / f'assets/hit-feel/sources/pixel-editions-{edition}.json').write_text(json.dumps(metadata, indent=2) + '\n', encoding='utf-8')
+    suffix = '' if edition == 'v1' else '-v2'
     # QA plates and animation are explicitly labelled art previews, not game UI.
     for group, selection in [('a', previews[:4]), ('b', previews[4:])]:
         scale, panel_w, panel_h = 3, 390, 234
@@ -127,7 +199,7 @@ def main():
                     plate.paste(enlarged, (x + c * 126 + 12, y + 78 + (48 - frame.height) * scale), enlarged)
                     # 1x copies provide a separate native-size readability check.
                     plate.paste(frame, (x + c * 126 + 44, y + 22 + (48 - frame.height)), frame)
-        plate.save(ROOT / f'docs/hit-feel-art/pixel-preview-{group}.png')
+        plate.save(ROOT / f'docs/hit-feel-art/pixel-preview-{group}{suffix}.png')
     animation = []
     for phase in [0, 1, 2, 0]:
         preview = Image.new('RGB', (7 * 164, 5 * 206 + 28), (24, 34, 34))
@@ -140,9 +212,28 @@ def main():
                 enlarged = frame.resize((frame.width * 4, frame.height * 4), Image.Resampling.NEAREST)
                 preview.paste(enlarged, (n * 164 + (164 - frame.width * 4) // 2, r * 206 + 44 + (48 - frame.height) * 4), enlarged)
         animation.append(preview)
-    animation[0].save(ROOT / 'docs/hit-feel-art/pixel-preview.gif', save_all=True, append_images=animation[1:], duration=[600, 240, 240, 300], loop=0, optimize=False, disposal=2)
-    print('Authored 7 separate pixel sheets, metadata, 2 review plates and 1 preview GIF; image_gen originals unchanged.')
+    animation[0].save(ROOT / f'docs/hit-feel-art/pixel-preview{suffix}.gif', save_all=True, append_images=animation[1:], duration=[600, 240, 240, 300], loop=0, optimize=False, disposal=2)
+    if edition == 'v2':
+        examples = [('scav', 'S'), ('elite', 'N'), ('raider-melee', 'S'), ('creature', 'E'), ('creature', 'SE'), ('creature', 'NE')]
+        plate = Image.new('RGB', (920, 6 * 224 + 32), (24, 34, 34))
+        draw = ImageDraw.Draw(plate)
+        draw.text((8, 5), 'REWORK ART PREVIEW / idle | v1 hurt | v2 hurt | v1 recovery | v2 recovery', fill=(220, 225, 209))
+        current = dict(previews)
+        for n, (id, direction) in enumerate(examples):
+            r = DIRS.index(direction)
+            frames = current[id][r]
+            w, h = frames[0].size
+            base = Image.open(ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-pixel-v1.png').convert('RGBA').resize((w * 3, h * 5), Image.Resampling.NEAREST)
+            before = [base.crop((c * w, r * h, (c + 1) * w, (r + 1) * h)) for c in [1, 2]]
+            draw.text((8, 32 + n * 224), f'{id} {direction}', fill=(220, 225, 209))
+            for c, frame in enumerate([frames[0], before[0], frames[1], before[1], frames[2]]):
+                enlarged = frame.resize((w * 4, h * 4), Image.Resampling.NEAREST)
+                plate.paste(enlarged, (c * 184 + (184 - w * 4) // 2, 56 + n * 224 + (48 - h) * 4), enlarged)
+        plate.save(ROOT / 'docs/hit-feel-art/pixel-rework-comparison-v2.png')
+    print(f'Authored 7 {edition} pixel sheets, metadata, 2 review plates and 1 preview GIF; originals unchanged.')
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--edition', choices=['v1', 'v2'], default='v1')
+    main(parser.parse_args().edition)
