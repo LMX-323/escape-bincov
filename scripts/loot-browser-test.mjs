@@ -175,6 +175,17 @@ async function suite(viewport) {
     assert.equal((await snapshot()).context.containerId, id); await page.locator('.coast-sample [data-grid="container"]').waitFor();
   }
   const drag = (source, uid, target, x, y) => dragOn(page, source, uid, target, x, y);
+  /**
+   * Hold A, which leaves an open loot window (issue #26 F13), until the player has walked 8 px west of `x` (sprinting if
+   * asked; the fixture crate's west side is open), then let go.
+   */
+  async function walkWest(x, sprint = false) {
+    await page.keyboard.down('a');
+    try {
+      await waitPanel(page, null);
+      await page.waitForFunction(([x, sprint]) => { const p = window.__bincovSample.host.lastBatch.frame.player; return p.x < x - 8 && (!sprint || p.state.sprinting); }, [x, sprint], { timeout: 15000 });
+    } finally { await page.keyboard.up('a'); }
+  }
   async function failStorage(on) {
     await page.evaluate(({ on, key }) => {
       window.__lootRealWrite ??= Storage.prototype.setItem;
@@ -306,7 +317,7 @@ async function suite(viewport) {
       await waitPanel(page, 'pause'); assert.equal((await snapshot()).context, null);
       assert.deepEqual(participants(await snapshot()), before); await close();
     });
-    await step('loot suppresses movement, fire, reload and quick-use while clock and AI continue', async () => {
+    await step('loot suppresses fire, reload, quick-use and sprint while clock and AI continue', async () => {
       const c = await fixture({ bag: [item('input-bandage', 'bandage', 2), item('input-ammo', 'ammo9', 10, 1)] }); await open(c.id);
       // A patrolling club enemy far down the road shows that the AI keeps running behind the panel.
       const scav = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.actors.find(e => e.alive && e.kind === 'scav').uid);
@@ -316,8 +327,9 @@ async function suite(viewport) {
       await drive(page, 'vitals', { hp: 70 }); await drive(page, 'magazine', 3); await drive(page, 'freezeAI', false); await frames(page, 2);
       const timer = () => page.evaluate(uid => { const r = window.__bincov.saveSession.captureExpansion().raid; return r.maps[r.currentMap].enemies.find(e => e.uid === uid).timer; }, scav);
       const before = await snapshot(), enemyBefore = await timer();
-      await page.keyboard.down('d'); await page.keyboard.press('r'); await page.keyboard.press('q'); await page.mouse.down();
-      // At least 0.35 s of world time and 0.3 s off the enemy's patrol timer with D and the button held. The two were read
+      // A movement key leaves loot (issue #26 F13, next step); Shift, R, Q and the left button stay with the panel.
+      await page.keyboard.down('Shift'); await page.keyboard.press('r'); await page.keyboard.press('q'); await page.mouse.down();
+      // At least 0.35 s of world time and 0.3 s off the enemy's patrol timer with Shift and the button held. The two were read
       // in separate round trips, and on a slow runner a whole frame can fall between them, so wait on both.
       await page.waitForFunction(([t, uid, timer]) => {
         const r = window.__bincov.saveSession.captureExpansion().raid;
@@ -326,18 +338,74 @@ async function suite(viewport) {
       const after = await snapshot(); assert.equal(after.x, before.x); assert.equal(after.y, before.y); assert.equal(after.mag, before.mag); assert.equal(after.hp, before.hp);
       assert.equal(after.panel, 'loot'); assert.deepEqual(after.loadout, before.loadout); assert.ok(after.elapsed > before.elapsed + .3);
       assert.ok(await timer() < enemyBefore - .3, 'enemy AI keeps running while the player loots');
-      // Six published frames with D and the left button still held: closing the panel does not hand them to the raid.
+      // Six published frames with Shift and the left button still held: closing the panel does not hand them to the raid.
       await page.keyboard.press('Escape'); await waitPanel(page, null); await frames(page, 6);
       const held = await snapshot(); assert.equal(held.x, before.x); assert.equal(held.mag, before.mag);
-      await page.mouse.up(); await page.keyboard.up('d'); await quiet();
+      await page.mouse.up(); await page.keyboard.up('Shift'); await quiet();
     });
-    await step('actual enemy damage keeps loot open', async () => {
+    await step('a movement key leaves loot at once and walks; a key held into the window, typing, drags and other panels keep their rules (issue #26 F13)', async () => {
+      const c = await fixture({ items: [item('f13-drag', 'fuse')], bag: [item('f13-ammo', 'ammo9', 10)] });
+      // Walking into the crate with W held, E opens it: that W and its repeats (Playwright sends a second down as one)
+      // neither leave the window nor walk, and Esc hands no held W to the raid.
+      await page.keyboard.down('w');
+      try {
+        await page.keyboard.press('e', { delay: 30 }); await waitPanel(page, 'loot');
+        assert.equal((await snapshot()).context?.containerId, c.id);
+        const held = await snapshot();
+        for (let i = 0; i < 3; i++) { await page.keyboard.down('w'); await frames(page, 2); }
+        let s = await snapshot(); assert.equal(s.panel, 'loot'); assert.deepEqual([s.x, s.y], [held.x, held.y]);
+        await page.keyboard.press('Escape'); await waitPanel(page, null); await frames(page, 6);
+        s = await snapshot(); assert.deepEqual([s.x, s.y], [held.x, held.y], 'W held into the loot window walked after it closed');
+      } finally { await page.keyboard.up('w'); }
+      // A fresh press closes the window at once and walks while held; letting go stops the walk.
+      await open(c.id);
+      const kept = participants(await snapshot()), start = await snapshot();
+      await walkWest(start.x);
+      assert.equal((await snapshot()).context, null);
+      await frames(page, 3); const stopped = await snapshot(); await frames(page, 6);
+      assert.equal((await snapshot()).x, stopped.x, 'releasing A stops the walk');
+      assert.deepEqual(participants(await snapshot()), kept);
+      // Shift pressed in the window makes the escape a sprint.
+      await fixture({ items: [item('f13-drag', 'fuse')], bag: [item('f13-ammo', 'ammo9', 10)] }); await open(c.id);
+      await page.keyboard.down('Shift');
+      try { await walkWest((await snapshot()).x, true); } finally { await page.keyboard.up('Shift'); }
+      // Typing in the split count stays typing; Esc then leaves the field and the window.
+      await fixture({ items: [item('f13-drag', 'fuse')], bag: [item('f13-ammo', 'ammo9', 10)] }); await open(c.id);
+      assert.match(await page.locator('.coast-sample .cs-inv-head .cs-sub').innerText(), /WASD/, 'the loot window names the quick way out');
+      await page.locator('.coast-sample [data-source="bag"][data-uid="f13-ammo"]').click();
+      await page.locator('.coast-sample [data-split]').focus();
+      const typing = await snapshot(); await page.keyboard.press('w'); await page.keyboard.press('a'); await frames(page, 4);
+      let s = await snapshot(); assert.equal(s.panel, 'loot'); assert.deepEqual([s.x, s.y], [typing.x, typing.y]);
+      await page.keyboard.press('Escape'); await waitPanel(page, null);
+      // Mid-drag the drag is cancelled with the window: nothing moves, and the held button fires no shot afterwards.
+      await open(c.id);
+      const dragging = await snapshot(), before = participants(dragging), dragFrom = await page.locator('.coast-sample [data-uid="f13-drag"]').boundingBox();
+      const bag = await page.locator('.coast-sample [data-grid="bag"]').boundingBox();
+      await page.mouse.move(dragFrom.x + 6, dragFrom.y + 6); await page.mouse.down();
+      try {
+        await page.mouse.move(dragFrom.x + 22, dragFrom.y + 22, { steps: 4 }); await page.mouse.move(bag.x + 6, bag.y + 6, { steps: 6 });
+        await page.locator('.coast-sample .cs-ghost').waitFor();
+        await walkWest(dragging.x);
+        assert.equal(await page.locator('.coast-sample .cs-ghost, .coast-sample .drop-preview').count(), 0, 'no ghost or preview outlives the window');
+      } finally { await page.mouse.up(); }
+      await frames(page, 3); s = await snapshot();
+      assert.deepEqual(participants(s), before, 'a cancelled drag moves nothing'); assert.equal(s.mag, dragging.mag, 'the held button fires no shot');
+      // The bag and the map keep their keys: W neither closes them nor walks.
+      for (const [key, kind] of [['Tab', 'inventory'], ['m', 'map']]) {
+        const at = await snapshot(); await page.keyboard.press(key); await waitPanel(page, kind);
+        await page.keyboard.press('w'); await frames(page, 4);
+        s = await snapshot(); assert.equal(s.panel, kind); assert.deepEqual([s.x, s.y], [at.x, at.y]);
+        await page.keyboard.press('Escape'); await waitPanel(page, null);
+      }
+    });
+    await step('actual enemy damage keeps loot open; a movement key gets the player out (issue #26 F13)', async () => {
       const c = await fixture(); await open(c.id);
       await page.evaluate(() => {
         const { driver, host } = window.__bincovSample, f = host.lastBatch.frame, e = f.actors.find(e => e.alive && e.kind === 'scav');
         driver.placeEnemy(e.uid, { x: f.player.x, y: f.player.y }); driver.freezeAI(false);
       });
-      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.hp < 100); assert.equal((await snapshot()).panel, 'loot'); await screenshot('under-attack'); await close(); await quiet();
+      await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.hp < 100); assert.equal((await snapshot()).panel, 'loot'); await screenshot('under-attack');
+      await walkWest((await snapshot()).x); assert.equal((await snapshot()).context, null); await quiet();
     });
     await step('invalid range and rising tide close external inventory', async () => {
       const c = await fixture(); await open(c.id);
@@ -364,6 +432,9 @@ async function suite(viewport) {
         for (const [source, target] of [['container', destination], [destination, 'container']]) {
           const before = participants(await snapshot()); await failStorage(true); await drag(source, uid, target, 0, 0);
           await waitPanel(page, 'pause'); await page.locator('.coast-sample [data-do="retry-save"]').waitFor();
+          // The save-error pause keeps movement keys: W neither resumes the raid nor walks (F13 is for the loot window only).
+          const paused = await snapshot(); await page.keyboard.press('w'); await frames(page, 3);
+          const still = await snapshot(); assert.equal(still.panel, 'pause'); assert.deepEqual([still.x, still.y], [paused.x, paused.y]);
           assert.ok(await page.evaluate(() => window.__lootFailedWrites) > 0, 'The trusted pointer release reached the failing session write');
           assert.equal((await snapshot()).storage, await page.evaluate(() => window.__lootStorageAtFault), 'Failed transaction leaves exact session bytes untouched');
           assert.deepEqual(participants(await snapshot()), before); assert.equal((await snapshot()).context, null);
@@ -551,6 +622,7 @@ async function mobileSuite() {
     await check('trusted touch interaction opens the same live source and character grids', async () => {
       await page.locator('.coast-sample [data-act]').tap(); await waitPanel(page, 'loot');
       assert.equal((await state()).lootContext.containerId, id);
+      assert.doesNotMatch(await page.locator('.coast-sample .cs-inv-head .cs-sub').innerText(), /WASD/, 'the touch loot window names no keys');
       const b = await page.locator('.coast-sample .cs-inv-head [data-do="close"]').boundingBox();
       assert.ok(b && b.x >= 0 && b.x + b.width <= viewport.width && b.y >= 0 && b.y + b.height <= viewport.height);
       await shot('open');

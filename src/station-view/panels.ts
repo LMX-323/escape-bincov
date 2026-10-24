@@ -1,5 +1,7 @@
 import * as D from '../domain';
-import type { CartView, FacilityInfo, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
+import { countyMapHtml, deploymentRegion, deploymentWorld, regionBriefHtml, type CountyArt } from './deploy-map';
+import type { Attribute, CartView, FacilityInfo, HideoutSnapshot, PerkBoard, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
+import { ATTRIBUTE_NAMES, PERK_UI, critContext, critView, perkPanel, perkWaiting, type CritView, type PerkCardView, type PerkPanelView, type PerkPreviewView } from '../perk-copy';
 import { RECIPES } from '../expansion-state';
 import { shopQuote, type ShopQuote, type ShopSource } from '../shop';
 import { itemArt } from './items';
@@ -134,12 +136,8 @@ export function generatorHtml(s: HideoutSnapshot) {
   ${done ? `<p class="muted">${esc(q.radio)}</p>` : `<ul class="needs">${needs.map(x => `<li class="${x.have >= x.n ? 'ok' : ''}">${icon(x.item, 24)}<span>${esc(D.ITEMS[x.item].name)}</span><b>${Math.min(x.have, x.n)} / ${x.n}</b></li>`).join('')}</ul>${btn('交付维修物资', 'quest:repair', ready ? 'primary wide' : 'wide', ready ? '' : 'disabled')}`}</div>`;
 }
 
-const WORLDS: { id: RunWorld; name: string; note: string }[] = [
-  { id: 'coast', name: '沿海封锁区', note: '经典规则 · 每局 10 分钟' },
-  { id: 'buildings', name: '沿海街区', note: '居民楼 · 可进入建筑' },
-  { id: 'mall', name: '滨湾商场', note: '两层与露台' },
-];
-export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string, worlds: readonly RunWorld[]) {
+export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight: number; carry: number }, world: RunWorld, seed: string, worlds: readonly RunWorld[], preview: string | null, art: CountyArt['regions'], narrow: boolean) {
+  const region = deploymentRegion(worlds, world, preview), canDeploy = deploymentWorld(region, worlds) !== null;
   const p = s.profile, e = p.equipment, w = D.WEAPONS[e.weapon || 'knife'];
   const meds = D.count(p.bag, 'bandage') + D.count(p.bag, 'medkit');
   const checks = [
@@ -149,11 +147,12 @@ export function deployHtml(s: HideoutSnapshot, dep: { warnings: string[]; weight
     { ok: dep.weight <= dep.carry, label: `携行重量 · ${dep.weight.toFixed(1)} / ${dep.carry.toFixed(1)} kg` },
     { ok: s.body.hp >= s.body.hpMax, label: `生命 · ${Math.floor(s.body.hp)} / ${s.body.hpMax}` },
   ];
-  return `<div class="deploy"><h3>行动区域</h3><div class="worlds">${WORLDS.filter(x => worlds.includes(x.id)).map(x => `<label class="world ${x.id === world ? 'on' : ''}"><input type="radio" name="world" value="${x.id}" ${x.id === world ? 'checked' : ''}><b>${x.name}</b><small>${x.note}</small></label>`).join('')}</div>
-  <label class="seedrow">行动种子 <input id="seed" maxlength="16" placeholder="留空随机" value="${esc(seed)}" aria-label="行动种子"><small>输入相同的数字或文字，可重现本局初始配置。</small></label>
-  <h3>出发前检查</h3><ul class="checks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'bad'}"><i></i>${esc(c.label)}</li>`).join('')}</ul>
-  <p class="rule">撤离失败会丢失背包物资和主武器，安全箱保留。出击即写入存档，院门打开后不能撤回。</p>
-  <div class="go"><span>${dep.warnings.length ? esc(dep.warnings.join(' · ')) : '装备与快捷补给已备齐'}</span>${btn('开门出击 <span aria-hidden="true">→</span>', 'deploy', 'primary big')}</div></div>`;
+  const ready = checks.filter(c => c.ok).length, clear = canDeploy && !dep.warnings.length;
+  return `<div class="deploy county-deploy">${countyMapHtml(region, worlds, narrow)}<aside class="county-briefing" aria-label="区域情报与出击准备">
+  ${regionBriefHtml(region, worlds, art)}<div class="county-preflight"><h3>出发前检查<span class="${ready === checks.length ? 'ok' : 'bad'}">${ready} / ${checks.length}</span></h3><ul class="checks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'bad'}"><i></i>${esc(c.label)}</li>`).join('')}</ul>
+  <p class="rule">撤离失败会丢失背包物资和主武器，安全箱保留。出击即写入存档。</p></div>
+  <div class="go"><span class="${clear ? 'ok' : ''}">${canDeploy ? dep.warnings.length ? esc(dep.warnings.join(' · ')) : '装备与快捷补给已备齐' : '选择地图上已开放的区域即可出击。'}</span><div class="go-row">
+  <label class="seedrow" title="相同种子可重现初始配置">种子 <input id="seed" maxlength="16" placeholder="留空随机" value="${esc(seed)}" aria-label="行动种子"></label>${btn(canDeploy ? '开门出击 <span aria-hidden="true">→</span>' : '暂未开发', 'deploy', 'primary big', canDeploy ? '' : 'disabled')}</div></div></aside></div>`;
 }
 
 export function trainingHint(t: TrainingProgress): string {
@@ -190,13 +189,36 @@ export function facilityHtml(f: FacilityInfo, s: HideoutSnapshot, training: Trai
 }
 const fmt = (sec: number) => sec >= 60 ? `${Math.floor(sec / 60)} 分 ${Math.floor(sec % 60)} 秒` : `${Math.ceil(sec)} 秒`;
 
-export function bodyHtml(s: HideoutSnapshot) {
-  const b = s.body, names = { strength: '力量', constitution: '体质', technique: '技巧' } as const;
+const EFFECT_NAMES: Record<string, string> = { pain: '疼痛', energized: '精力充沛', analgesia: '镇痛', focus: '专注', strength: '力量增强', constitution: '体质增强', technique: '技巧增强', injectionFatigue: '注射后疲劳', luck: '香包余韵' };
+/** Body and growth: vitals, attributes, the perk board of one attribute (spec 5) and the static critical display (spec 2.3). */
+export function bodyHtml(s: HideoutSnapshot, board: PerkBoard, attribute: Attribute) {
+  const b = s.body;
   const bar = (label: string, v: number, max: number, cls = '') => `<div class="stat ${cls}"><span>${label}</span><b>${v.toFixed(0)}${max !== 100 || label === '生命' || label === '耐力' ? ` / ${max}` : ''}</b><i style="width:${Math.min(100, v / max * 100)}%"></i></div>`;
   return `<div class="body"><div class="stats2">${bar('生命', b.hp, b.hpMax, 'hp')}${bar('耐力', b.stamina, b.staminaMax)}${bar('精神', b.mental, 100)}${bar('水分', b.water, 100)}${bar('饱食', b.satiety, 100)}${bar('污染', b.pollution, 100, 'pol')}</div>
-  <div class="attrs">${(Object.keys(names) as (keyof typeof names)[]).map(a => `<div><span>${names[a]}</span><b>${b.attributes[a].effective}</b><small>成长 ${(b.attributes[a].progress * 100).toFixed(1)}%</small></div>`).join('')}</div>
-  ${b.effects.length ? `<p class="muted">状态：${b.effects.map(e => `${esc(e.name)} ${Math.ceil(e.seconds / 60)} 分`).join(' · ')}</p>` : ''}
+  <div class="attrs">${(Object.keys(ATTRIBUTE_NAMES) as Attribute[]).map(a => `<div><span>${ATTRIBUTE_NAMES[a]}</span><b>${b.attributes[a].effective}</b><small>成长 ${(b.attributes[a].progress * 100).toFixed(1)}%</small></div>`).join('')}</div>
+  ${perksHtml(perkPanel(board, attribute))}${critHtml(critView(critContext(s, board)))}
+  ${b.effects.length ? `<p class="muted">状态：${b.effects.map(e => `${esc(EFFECT_NAMES[e.name] ?? e.name)} ${Math.ceil(e.seconds / 60)} 分`).join(' · ')}</p>` : ''}
   <p class="muted">负重上限 ${b.carry.toFixed(1)} kg。在站里休息会慢慢恢复，休息区和医疗区的等级越高恢复越快。</p></div>`;
+}
+/** Only an open card on an unblocked board is a button; chosen, other-side and locked cards are plain text. */
+const perkCard = (c: PerkCardView) => {
+  const inner = `<b>${esc(c.name)}</b><span>${esc(c.effect)}</span>${c.status ? `<em>${esc(c.status)}</em>` : ''}`;
+  return c.state === 'open' ? `<button class="pcard open" data-act="perk:${c.id}" ${c.enabled ? '' : 'disabled'}>${inner}</button>` : `<div class="pcard ${c.state}">${inner}</div>`;
+};
+function perksHtml(v: PerkPanelView) {
+  const tabs = v.tabs.map(t => btn(`${t.name} <small>${esc(t.detail)}</small>`, `perk-attr:${t.attribute}`, t.attribute === v.attribute ? 'on' : '', `aria-pressed="${t.attribute === v.attribute}"`)).join('');
+  return `<section class="perks"><h4>${PERK_UI.title} <small>${PERK_UI.hint}</small></h4><nav class="seg perk-tabs" aria-label="${PERK_UI.switcher}">${tabs}</nav>
+  ${v.blocked ? `<p class="warn" data-perk-blocked>${esc(v.blocked)}</p>` : ''}${v.tiers.map(t => `<div class="ptier"><b>${t.tier}<small>级</small></b>${t.cards.map(perkCard).join('')}</div>`).join('')}
+  <div class="preset">${btn(esc(v.reset.label), `perk-reset:${v.attribute}`, 'danger', v.reset.enabled ? '' : 'disabled')}<small>${esc(v.reset.reason ?? PERK_UI.resetHint)}</small></div></section>`;
+}
+function critHtml(c: CritView) {
+  return `<section class="crit"><h4>${esc(c.title)}${c.total ? ` <b>${esc(c.total)}</b>` : ''}</h4>${c.rows.length ? `<ul>${c.rows.map(r => `<li><span>${esc(r.label)}</span><b>${esc(r.text)}</b></li>`).join('')}</ul>` : ''}${c.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}</section>`;
+}
+/** Choice or reset preview from the Runtime; the confirm commits exactly what it shows (token). */
+export function perkConfirmHtml(v: PerkPreviewView, reset: boolean) {
+  return `<div class="confirm perk-confirm"><p class="ptitle"><b>${esc(v.title)}</b><small>${esc(v.subtitle)}</small></p>${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}${v.note ? `<p class="muted">${esc(v.note)}</p>` : ''}
+  ${v.changes.length ? `<ul class="pchanges">${v.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}${v.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('')}
+  <div class="acts">${btn(esc(v.confirm), 'perk-ok', reset ? 'danger' : 'primary')}${btn(PERK_UI.cancel, 'close', 'perk-cancel')}</div></div>`;
 }
 
 export function boardHtml() {
@@ -228,10 +250,13 @@ export function resetConfirmHtml() {
   return `<div class="confirm"><p>除音量设置外，现金、物资、仓库扩容、任务、设施、身体、成长和出击记录都会回到新开局。</p><p class="muted">确认后会先下载一份当前存档的备份，本机也会另存一份，需要时可在菜单「恢复清空前的存档」找回。本机只保存一份；当前存档如果还是没动过的新开局，就不另存，原来那一份保留。</p><div class="acts">${btn('下载备份并清空', 'reset-confirm', 'danger')}${btn('再想想', 'close')}</div></div>`;
 }
 
-/** Save failed or another window took the save over: nothing else can be done until it is resolved. */
-export function storageHtml(s: HideoutSnapshot) {
+/**
+ * Save failed or another window took the save over: nothing else can be done until it is resolved. `pending` names a
+ * perk change whose write failed: the Runtime keeps it, and only the retry writes it (once).
+ */
+export function storageHtml(s: HideoutSnapshot, pending = '') {
   const conflict = s.storage.conflict;
-  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
+  return `<div class="storage"><p>${conflict ? '另一个窗口已经接管了存档，本页不能再写入。请先导出需要保留的进度，再刷新本页。' : pending ? esc(perkWaiting(pending)) : '最近一次操作没能写入浏览器存档，已经回滚；训练和基地进度还保留在本页，重试成功前不会丢失。'}</p>
   <div class="acts">${conflict ? '' : btn('重试保存', 'retry-save', 'primary')}${btn('导出存档', 'export')}${conflict ? btn('刷新页面', 'reload') : ''}</div>
   <p class="muted">${conflict ? '刷新后会读取最新的存档。' : '也可以先导出备份，再检查浏览器存储空间或隐私设置。'}</p></div>`;
 }

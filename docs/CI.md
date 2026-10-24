@@ -1,12 +1,14 @@
 # CI 分流与浏览器分组
 
+按改动风险查本地检查、前置与独立诊断，使用[检查导航](CHECKS.md)（`pnpm checks --risk=save,input`）。导航从本页所指的既有分组读取 CI 归属，不改变跳测、分组或发布策略；检查元数据及脚本分类的守卫随现有策略单测运行。
+
 2026-10-15 更新（#61 首批，基线 a2d716d）；2026-10-22 浏览器 job 的主机包改走缓存、WebGL 改用 lavapipe（见“浏览器 job 的主机环境”）。流程入口为 [ci-pages.yml](../.github/workflows/ci-pages.yml)。前次 #54 基线 `5a11e3d`，纯文档 PR #51 的检查为 24 分 40 秒、合并后为 31 分 06 秒；当次构建任务只用 34 秒，主要时间在浏览器组内串行测试。
 
 ## 每次仍然执行的检查
 
 PR、main push 和手动运行都执行纯规则/世界/存档单测、CI 策略测试、严格类型检查、构建和打包。重新生成的两份 HTML、两份 ZIP 和发布清单必须与提交一致。只构建一次，浏览器任务下载同一制品并校验 SHA-256。
 
-CI 策略测试还守住三件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；其余两件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
+CI 策略测试还守住四件事。[entry-docs.test.mjs](../scripts/ci/entry-docs.test.mjs) 要求 AGENTS、README、CODEMAP、开发手册、架构、本页和任务清单当前入口里的链接、标题锚点与反引号路径都存在；其余三件：[browser-suites.mjs](../scripts/ci/browser-suites.mjs) 里每条 `test:*` 不是排进下面的八组，就是登记在同文件的手动表并写明原因（policy.test.mjs），套件不会悄悄掉出两边；[source-health.test.mjs](../scripts/ci/source-health.test.mjs) 拒绝无使用者的导出、新的运行时 import 环和规则模块的 DOM 依赖；[game-bundle.test.mjs](../scripts/ci/game-bundle.test.mjs) 构建堆诊断换进打包页的未压缩带探针游戏脚本，并拒绝在 [game-bundle.mjs](../scripts/game-bundle.mjs) 之外复制游戏脚本的 esbuild 配置（#60 Q-B06）。它只证明这些诊断能构建，不代表诊断通过。手动套件不在 CI 里跑，改动对应区域时按表中原因自行运行。
 
 `Build and test` 是保持名称不变的必需检查。它在依赖失败或跳过后也运行，只接受：
 
@@ -34,7 +36,7 @@ CI 策略测试还守住三件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ## 八组分配
 
-各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **39** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3）、2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒），以及同日射击改造（#39）新增的两条：`test:shooting`（静止指针下瞄准不漂、开枪不动瞄准、枪口火光与曳光对齐枪管、贴墙与门角挡弹、隐藏房间不漏曳光、开火方式）排在 batch-1 末尾，试枪场 `test:range` 排在 batch-5 末尾。两条起初都放在 batch-2，但 PR 运行里 batch-2 原有五条已要约 22 分钟，加上这两条（CI 上 `test:shooting` 约 8 分钟、`test:range` 约 2.5 分钟）后，遇到安装步骤慢的 runner 就超过 45 分钟被取消；batch-1 与 batch-5 是 2026-10-22 几次运行中耗时最短的两组（套件合计约 8–17 分钟）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前完整保留 **39** 条浏览器命令，包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3）、2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒），以及同日射击改造（#39）新增的两条：`test:shooting`（静止指针下瞄准不漂、开枪不动瞄准、枪口火光与曳光对齐枪管、贴墙与门角挡弹、隐藏房间不漏曳光、开火方式、受击闪白与抖动从命中当帧画起且慢帧至少一帧、抖动顺着子弹方向而血迹朝射手、暴击与击杀的命中标记和击杀确认音）排在 batch-1 末尾，试枪场 `test:range` 排在 batch-5 末尾。两条起初都放在 batch-2，但 PR 运行里 batch-2 原有五条已要约 22 分钟，加上这两条（CI 上 `test:shooting` 约 8 分钟、`test:range` 约 2.5 分钟）后，遇到安装步骤慢的 runner 就超过 45 分钟被取消；batch-1 与 batch-5 是 2026-10-22 几次运行中耗时最短的两组（套件合计约 8–17 分钟）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，没有拆分套件、减少断言、调整原浏览器参数或真实训练计时。
 
 [scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
 

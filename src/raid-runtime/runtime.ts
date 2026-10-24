@@ -6,13 +6,15 @@ import { WORLD_VERSION, type ActorState, type RaidCheckpoint, type EnemyState as
 import { mapPresentation, buildingRunConfig } from '../building-world';
 import { isMallWorld, mallRunConfig } from '../mall-world';
 import { resolveExpansionWorld } from '../expansion-worlds';
-import { derivedLimits, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
+import { derivedLimits, effectiveAttributes, entityUid, type ExpansionState, type WorldDefinition, type EndReason } from '../expansion-state';
 import { activeRaidCheckpoint, applyActiveRaidSnapshot, type ActiveRaidSnapshot } from '../raid-state-projection';
-import { advanceRaidBody, enemyDamage, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
+import { advanceRaidBody, enemyDamage, perkEffects, recordMotion, rpgMultipliers, useRpgItemResult } from '../rpg';
 import { corridor, doorAnchor, interactionTarget, spacePath, toggleDoor, traversable, type Interaction as SpatialInteraction, type SpaceContext } from '../spatial';
-import { advanceLayerShots, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
+import { advanceLayerShots, aimTarget, changeLayer, damageLayerEnemy, type ShotObservation } from '../layer-transition';
+import { critMultiplier, critSources, type CritSnapshot } from '../perks';
+import { advanceBreath, breathChance, clearBreath, idleBreath } from '../breath';
 import { advancePursuits } from '../pursuit';
-import { advanceAim, coneOf, drawAim, driftOf, handlingOf, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
+import { advanceAim, coneOf, drawAim, driftOf, handlingOf, preciseHeld, recoil, turnAim, unsteadyAim, SAMPLE_GUNS, SWAY, type AimState, type Motion } from '../shooting';
 import { ActiveClock, idleFrame, type InputFrame } from '../input';
 import { SaveSession, type SessionState, type ExpansionTransaction, type MutationResult } from '../session';
 import type { LootContainer, LootTransfer } from '../loot';
@@ -65,6 +67,16 @@ export class CoastRaidRuntime implements RaidRuntime {
      */
     handling: AimState = unsteadyAim();
     /**
+     * The breath charge of technique-15-a (src/breath.ts): the enemy a precise aim rests on and the effective seconds
+     * aimed at it. Runtime-only and never saved, like `handling`: a Runtime built from a checkpoint (page load,
+     * reloadCommitted) starts idle, the internal restoreExpansion syncs keep it, and the interrupts of spec section 4.2
+     * clear it: releaseInput (every panel and pause, blur, a stall, the conflict lock, reloadCommitted, the raid's end),
+     * suppressHeldInput (opening loot, a door), a layer change (commitLayer), a successful shot (shoot), drawing another
+     * weapon (draw), starting a reload, real health loss and the target's death. Leaving the precise aim, sprinting and
+     * losing sight clear it in advanceBreath.
+     */
+    readonly breath = idleBreath();
+    /**
      * The trigger as the last frame's intent left it. Held fire covers a frame's interval only when that frame's own
      * sample still holds it, so a release is never followed by a shot; a click or a new hold takes effect at its frame's
      * own time (see pull). Input that changes on frame boundaries then fires at the same raid times at any display rate.
@@ -72,6 +84,8 @@ export class CoastRaidRuntime implements RaidRuntime {
     private trigger = { held: false, touch: false };
     /** Seconds a click that found the gun busy may still fire: one click, never a queue. */
     private clickLeft = 0;
+    /** Remaining flight time for rounds born in this substep. Consumed before flight, never part of a checkpoint. */
+    private newbornFlight: Map<string, number> | null = null;
     /** Playtest sample gun with its own magazine; the loadout keeps the real weapon and its rounds (`base`). */
     private sample: { def: D.WeaponDef; base: { mag: number; relief: number } } | null = null;
     extractTime = 0;
@@ -182,15 +196,19 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.suppressInteract ||= this.intent.interactHeld;
         this.trigger = { held: false, touch: false };
         this.clickLeft = 0;
+        this.newbornFlight = null;
         this.intent = emptyIntent();
         this.inputFrame = idleFrame();
         this.clock.reset();
         this.extractTime = 0;
         this.sprinting = false;
+        clearBreath(this.breath);
     }
+    /** Held input stops counting for the rest of the frame; the precise aim with it, so the breath charge goes at once. */
     suppressHeldInput() {
         this.suppressFire ||= this.intent.fireHeld; this.suppressInteract ||= this.intent.interactHeld;
         this.trigger = { held: false, touch: false }; this.clickLeft = 0; this.extractTime = 0; this.inputSuppressed = true;
+        clearBreath(this.breath);
     }
     private setOverlay(value: string) {
         if (this.overlay === 'checkpoint-error' && !this.session.storageOK && value !== 'checkpoint-error')
@@ -277,8 +295,11 @@ export class CoastRaidRuntime implements RaidRuntime {
                 }
                 else {
                     seconds = tick.seconds;
-                    this.elapsed += seconds;
-                    if (this.elapsed >= this.config.duration) {
+                    const startedAt = this.elapsed, endsAt = startedAt + seconds;
+                    // Timeout wins over this frame's input. Otherwise each substep sees its own time: using endsAt
+                    // throughout would let a late-arriving pursuit attack for the whole frame and advance tides early.
+                    if (endsAt >= this.config.duration) {
+                        this.elapsed = endsAt;
                         this.extracted = true;
                         this.finish('timeout');
                     }
@@ -301,6 +322,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                         for (let i = 0; i < tick.steps; i++) {
                             if (this.session.state !== 'run' || this.paused || this.ending)
                                 break;
+                            // Derive from the frame origin rather than accumulating rounding error. A failed commit
+                            // can pause mid-frame; the snapshot then retains exactly the substeps that ran.
+                            this.elapsed = startedAt + seconds * ((i + 1) / tick.steps);
                             this.inputFrame = i === 0 ? frame : { ...frame, actions: new Set(), firePressed: false, fireHeld: false };
                             if (this.inputSuppressed)
                                 this.inputFrame = { ...this.inputFrame, x: 0, y: 0, sprint: false, aim: null, firePressed: false, fireHeld: false, interactHeld: false, actions: new Set() };
@@ -387,6 +411,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const sync = <T extends {
             uid: string;
         }>(old: T[], values: T[]) => values.map(v => Object.assign(old.find(e => e.uid === v.uid) ?? {} as T, structuredClone(v)));
+        // Layered simulation may restore during an AI iteration (for example an enemy opening a door). Preserve
+        // actor identity by uid so the iterator keeps updating the live actor, not a detached pre-transaction copy.
         this.enemies = this.layered ? sync(this.enemies, c.enemies) : structuredClone(c.enemies);
         this.loot = this.layered ? sync(this.loot, c.loot) : structuredClone(c.loot);
         this.bullets = this.layered ? sync(this.bullets, c.bullets) : structuredClone(c.bullets);
@@ -493,7 +519,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     equipItem(uid: string) {
         this.setSampleGun(null);
         return this.transaction('equip', () => {
-            drawAim(this.handling, SWAY);
+            this.draw();
             this.syncMagazine();
             if (!D.equipRun(this.session.loadout!, uid))
                 return false;
@@ -676,9 +702,11 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.sample) { this.mag = this.sample.def.magazine; this.magRelief = 0; }
         this.knife = false;
         this.reloadLeft = 0;
-        drawAim(this.handling, SWAY);
+        this.draw();
         this.dirty = true;
     }
+    /** Another weapon comes to hand: the aim starts from the hip again (drawAim) and the breath charge is gone. */
+    private draw() { drawAim(this.handling, SWAY); clearBreath(this.breath); }
     carriedWeight() { const l = this.session.loadout!, w = D.WEAPONS[l.weapon || 'knife']; return D.weight(l.bag) + D.weight(l.safe) + (l.weapon ? D.ITEMS[l.weapon].weight : 0) + D.ITEMS.knife.weight + (w.ammo ? D.ITEMS[w.ammo].weight * (this.sample?.base.mag ?? this.mag) : 0) + (this.layered?.charm ? D.ITEMS[this.layered.charm.id].weight : 0); }
     carryLimit() { return this.layered ? derivedLimits(this.layered).carry : B.carryLimit; }
     useItem(id: string, inv: D.Inventory = this.session.loadout!.bag, itemUid?: string) {
@@ -751,6 +779,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         if (this.walkable(sprite.x, sprite.y + dy, high, 10))
             sprite.y += dy;
     }
+    /** Seconds a reload of the held weapon takes: the reload perks (technique-20-b, 30-b) shorten it in a v3 raid. */
+    get reloadTime() { return this.currentWeapon.reload * perkEffects(this.layered).reload; }
     startReload() {
         const w = this.currentWeapon;
         if (w.ammo && !this.reloadLeft && this.mag < w.magazine) {
@@ -758,10 +788,25 @@ export class CoastRaidRuntime implements RaidRuntime {
                 this.say('背包中没有适用的备用弹药。');
                 return;
             }
-            this.reloadLeft = w.reload;
+            this.reloadLeft = this.reloadTime;
+            // Starting a reload interrupts the breath charge (spec 4.2); a click that finds no rounds to load does not.
+            clearBreath(this.breath);
         }
     }
+    /** The raid owns technique-15-a: a v3 raid whose selection holds it. v1, v2 and classic raids never charge. */
+    get breathOwned() { return this.layered?.raid?.version === 3 && perkEffects(this.layered).breath; }
+    /**
+     * aimTarget (layer-transition.ts) for the body, aim, tide and enemies as they stand now: the current layer read from
+     * the live Runtime fields, its own enemies and the pursuers it still owns together as `enemies` holds them, and the
+     * reach of a round from the gun in hand. Allocates two small objects; nothing is cloned or written.
+     */
+    private breathSight(): string | null {
+        const raid = this.layered!.raid!, mapId = raid.currentMap;
+        const live = { ...raid, player: this.player, highTide: this.highTide, pursuits: [], maps: { [mapId]: { ...raid.maps[mapId], enemies: this.enemies } } };
+        return aimTarget(live, this.layeredWorld!, this.currentWeapon.range + MUZZLE);
+    }
     step(dt: number) {
+        this.newbornFlight = new Map();
         const tideFlipped = !this.tideChanged && this.elapsed >= this.config.tideAt;
         if (this.layered?.raid) {
             const layer = this.layered.raid.maps[this.layered.raid.currentMap];
@@ -805,12 +850,12 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (frame.actions.has('heal'))
                 this.heal();
             if (frame.actions.has('primary')) {
-                if (this.knife) drawAim(this.handling, SWAY);
+                if (this.knife) this.draw();
                 this.knife = false;
                 this.reloadLeft = 0;
             }
             if (frame.actions.has('knife')) {
-                if (!this.knife) drawAim(this.handling, SWAY);
+                if (!this.knife) this.draw();
                 this.knife = true;
                 this.reloadLeft = 0;
             }
@@ -825,7 +870,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         const limits = this.layered ? derivedLimits(this.layered) : { hp: B.maxHealth, stamina: B.maxStamina, carry: B.carryLimit };
         const moving = !!(dx || dy), over = Math.max(0, this.carriedWeight() - limits.carry), sprint = input && frame.sprint && moving && !this.exhausted;
         this.sprinting = sprint;
-        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg) * (this.layered ? rpgMultipliers(this.layered).movement : 1);
+        // The heavy-stride perk (strength-20-a) scales only this slowdown, never the overweight stamina cost.
+        const speed = (sprint ? B.sprintSpeed : B.walkSpeed) * (this.inputFrame.precise && !sprint ? B.aimSpeedFactor : 1) / Math.max(1, 1 + over * B.overloadSlowdownPerKg * perkEffects(this.layered).overweight) * (this.layered ? rpgMultipliers(this.layered).movement : 1);
         if (moving) {
             const len = Math.max(1, Math.hypot(dx, dy));
             this.move(this.player, dx / len * speed * dt, dy / len * speed * dt, true);
@@ -857,8 +903,15 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         const walked = Math.hypot(this.player.x - beforeMove.x, this.player.y - beforeMove.y);
         const steady = input && !this.inputSuppressed, stick = steady && this.intent.source === 'touch' && this.intent.aimHeld;
+        // The breath charge (technique-15-a) grows over this substep on the enemy the aim rests on now, a gun in hand.
+        // Health drained over the substep (bleeding, thirst, hunger, pollution) is real damage (spec 4.2) and leaves it
+        // empty for the whole substep; a lower limit's clip is no damage (spec 3.4). Classic raids, which drain after the
+        // trigger, never charge.
+        const drained = Object.entries(environment).some(([cause, amount]) => cause !== 'limit-change' && amount! > 0);
+        if (drained) clearBreath(this.breath);
+        const owned = this.breathOwned && !!this.currentWeapon.ammo;
         this.runTrigger(dt, beforeMove, { pace: dt > 0 ? walked / (B.walkSpeed * dt) : 0, sprint, precise: steady && frame.precise,
-            hold: stick ? this.intent.fireHeld ? 'fire' : 'aim' : undefined }, turned);
+            hold: stick ? this.intent.fireHeld ? 'fire' : 'aim' : undefined }, turned, { owned, sight: owned && !drained ? this.breathSight() : null });
         const flooded = this.mapData.tiles[Math.floor(this.player.y / TILE)]?.[Math.floor(this.player.x / TILE)] === 4;
         if (!this.layered) {
             this.pollution = clamp(this.pollution + (flooded ? (this.highTide ? B.pollutionHighTide : B.pollutionLowTide) : -B.pollutionRecovery) * dt, 0, 100);
@@ -1034,6 +1087,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         this.pendingLayer = null;
         this.queue.push(...pending.events.map(e => ({ ...e, durability: 'committed' as const })));
         if (pending.from !== this.worldKey().mapId) {
+            // A layer change interrupts the breath charge (spec 4.2); its target stayed on the layer left behind.
+            clearBreath(this.breath);
             this.epoch++;
             this.revelation.reset();
             this.emit({ type: 'layer', from: pending.from, to: this.worldKey().mapId, via: pending.action.replace('entry:', '') }, 'committed');
@@ -1063,12 +1118,14 @@ export class CoastRaidRuntime implements RaidRuntime {
     /**
      * The trigger over one substep of `dt` seconds: the cooldown, a reload and the aim advance, and each shot falls due at
      * its own instant (when the gun is ready and the trigger wants it), fired from where the body was then. `from` is
-     * the body before this substep's move; the body moved in a straight line to where it is now.
+     * the body before this substep's move; the body moved in a straight line to where it is now. `breath` says whether
+     * the breath charge may grow (`owned`: technique-15-a and a gun in hand) and on which enemy (`sight`) over the
+     * substep, so it is split at each shot exactly as the aim is; pull's zero-length call passes none and charges nothing.
      */
-    private runTrigger(dt: number, from: Point, motion: Motion, turned: number) {
+    private runTrigger(dt: number, from: Point, motion: Motion, turned: number, breath?: { owned: boolean; sight: string | null }) {
         if (turned)
             turnAim(this.handling, SWAY, turned);
-        const to = { x: this.player.x, y: this.player.y };
+        const to = { x: this.player.x, y: this.player.y }, aiming = preciseHeld(motion);
         let t = 0;
         const pass = (s: number) => {
             if (s <= 0)
@@ -1078,6 +1135,8 @@ export class CoastRaidRuntime implements RaidRuntime {
             this.clickLeft = Math.max(0, this.clickLeft - s);
             this.reloadLeft = Math.max(0, this.reloadLeft - s);
             advanceAim(this.handling, this.grip, SWAY, s, motion);
+            if (breath)
+                advanceBreath(this.breath, s, breath.owned, aiming, breath.sight);
         };
         for (;;) {
             // An event due at the very end of the substep (within rounding) belongs to it, at every display rate.
@@ -1096,7 +1155,7 @@ export class CoastRaidRuntime implements RaidRuntime {
             pass(Math.min(due, dt - t));
             this.fireCooldown = 0;
             const k = dt > 0 ? t / dt : 1;
-            if (!this.shoot({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }))
+            if (!this.shoot({ x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }, Math.max(0, dt - t)))
                 break;
         }
         pass(dt - t);
@@ -1125,8 +1184,9 @@ export class CoastRaidRuntime implements RaidRuntime {
     /**
      * One shot or knife swing from `at` (default: where the body stands); false when the magazine is empty, which starts
      * a reload if the bag has rounds and otherwise waits for a new pull. The caller decides that the gun is ready.
+     * runTrigger supplies this substep's remaining flight seconds; a frame-end pull has no active flight batch.
      */
-    shoot(at: Point = this.player): boolean {
+    shoot(at: Point = this.player, flightSeconds?: number): boolean {
         const w = this.currentWeapon, h = this.grip;
         this.clickLeft = 0;
         if (w.ammo && this.mag <= 0) {
@@ -1142,13 +1202,16 @@ export class CoastRaidRuntime implements RaidRuntime {
                 && this.sight(at, e, this.highTide, this.space ? 10 : 0));
             this.emit({ type: 'melee', attacker: 'player', angle: this.player.rotation, range: w.range, hit: hit?.uid ?? null });
             if (hit)
-                this.damageEnemy(hit, w.damage);
+                this.damageEnemy(hit, w.damage * perkEffects(this.layered).knifeDamage);
             return true;
         }
         this.mag--;
         if (this.magRelief > 0)
             this.magRelief--;
         this.syncMagazine();
+        // The round is spent: the shot's one critical snapshot is taken now, the breath charge included, and every pellet
+        // carries its own copy.
+        const crit = this.shotCrit(w, { chance: breathChance(this.breath.seconds), target: this.breath.target });
         this.shotNoise = { x: at.x, y: at.y };
         this.noiseRadius = B.gunNoiseRange;
         this.noiseTime = .6;
@@ -1159,14 +1222,33 @@ export class CoastRaidRuntime implements RaidRuntime {
         for (let i = 0; i < w.pellets; i++) {
             const angle = centre + (this.random() - .5) * cone;
             const b = { uid: this.allocateEntityUid(), x: at.x, y: at.y,
-                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false };
+                rotation: wrap(angle), vx: Math.cos(angle) * 760, vy: Math.sin(angle) * 760, left: w.range + MUZZLE, damage: w.damage, enemy: false,
+                ...(crit ? { crit: structuredClone(crit) } : {}) };
             this.bullets.push(b);
+            if (flightSeconds !== undefined) this.newbornFlight?.set(b.uid, flightSeconds);
             pellets.push(b);
             angles.push(angle);
         }
-        recoil(this.handling, h);
+        // The charge went into this shot (spec 4.2): a precise aim held on charges again from zero, hit or miss.
+        clearBreath(this.breath);
+        recoil(this.handling, h, perkEffects(this.layered).recoil);
         this.shotEvent('player', this.weaponLook, pellets, angles);
         return true;
+    }
+    /**
+     * The critical snapshot of a gun shot fired now (docs/tasks/critical-perk-contract.md section 3), in v3 raids only:
+     * the effective technique (the technique drug included), the gun fired `w` (a sample gun included), the owned perks
+     * and whether the focus drug lasts, all as they are at this instant, plus the breath charge `breath` with the enemy
+     * it rests on (a charge without a target counts nothing). Classic, v1 and v2 raids keep their own rules: undefined;
+     * so does the knife. The HUD (presentation.ts, HudView.crit) reads the same snapshot, so it prints what a shot takes.
+     * Reads only; draws no random number.
+     */
+    shotCrit(w: D.WeaponDef, breath: { chance: number; target: string | null }): CritSnapshot | undefined {
+        const state = this.layered;
+        if (state?.raid?.version !== 3) return undefined;
+        const perks = state.growth.perks ?? [], charge = breath.target === null ? 0 : breath.chance;
+        const sources = critSources({ technique: effectiveAttributes(state).technique, weapon: w, perks, focus: state.body.effects.focus > 0, breath: charge });
+        return sources ? { sources, multiplier: critMultiplier(perks), target: sources.some(s => s.id === 'technique-15-a') ? breath.target : null } : undefined;
     }
     damageEnemy(e: Enemy, damage: number, incomingAngle = Math.atan2(this.player.y - e.y, this.player.x - e.x)) {
         if (e.hp <= 0)
@@ -1199,9 +1281,13 @@ export class CoastRaidRuntime implements RaidRuntime {
         const now = this.enemies.find(a => a.uid === e.uid)!;
         this.hurtTimers.set(e.uid, .07);
         this.emit({ type: 'hurt', cause: 'blow', uid: e.uid, at: { x: e.x, y: e.y }, damage: hp - now.hp, critical: false, angle });
-        if (now.hp <= 0)
+        if (now.hp <= 0) {
             this.emit({ type: 'death', uid: e.uid, corpseAngle: now.rotation - (this.layered ? 0 : Math.PI / 2), containerId: `corpse-${e.uid}` });
+            this.targetDied(e.uid);
+        }
     }
+    /** The breath charge's target died (spec 4.2): the charge goes now, not when the next substep finds no live enemy there. */
+    private targetDied(uid: string) { if (uid === this.breath.target) clearBreath(this.breath); }
     /** Attribute actual aggregate HP loss without changing damage, clock, or RNG. */
     private environmentHurt(damage: number, losses: Partial<Record<HurtCause, number>>) {
         const parts = Object.entries(losses).filter(([, amount]) => amount! > 0) as [HurtCause, number][];
@@ -1239,6 +1325,9 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (this.random() < B.bleedChance)
                 this.bleeding = 1;
         }
+        // Real damage interrupts the breath charge (spec 4.2); a blow that took no health does not.
+        if (this.hp < hp)
+            clearBreath(this.breath);
         this.extractTime = 0;
         this.emit({ type: 'hurt', cause: 'blow', uid: 'player', at: { ...this.player }, damage: hp - this.hp, critical: false,
             angle: source ? Math.atan2(source.y - this.player.y, source.x - this.player.x) : null });
@@ -1254,27 +1343,34 @@ export class CoastRaidRuntime implements RaidRuntime {
             if (e.dead) {
                 const enemy = this.enemies.find(a => a.uid === e.target);
                 this.emit({ type: 'death', uid: e.target, corpseAngle: enemy?.rotation ?? this.player.rotation, containerId: e.target === 'player' ? null : `corpse-${e.target}` });
+                this.targetDied(e.target);
             }
         }
     }
     updateBullets(dt: number) {
+        const newborn = this.newbornFlight;
+        this.newbornFlight = null;
+        const flightSeconds = (bullet: BulletState) => newborn?.get(bullet.uid) ?? dt;
         if (this.layered) {
-            const state = this.snapshotExpansion();
-            advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, undefined, source => { this.showIncomingHit(source); this.extractTime = 0; }, e => this.observeShot(e));
+            const hp = this.hp, state = this.snapshotExpansion();
+            advanceLayerShots(state, this.layeredWorld!, state.raid!.currentMap, dt, undefined, source => { this.showIncomingHit(source); this.extractTime = 0; }, e => this.observeShot(e), flightSeconds);
             this.restoreExpansion(state);
+            // An enemy round that took health is real damage (spec 4.2), as a blow through hurt is.
+            if (this.hp < hp)
+                clearBreath(this.breath);
             if (this.hp <= 0)
                 this.finish('death');
             return;
         }
         // Classic sampling, reverse bullet order and first live array hit are deliberately retained.
         for (let i = this.bullets.length - 1; i >= 0; i--) {
-            const b = this.bullets[i], speed = Math.hypot(b.vx, b.vy), steps = Math.ceil(speed * dt / 7);
+            const b = this.bullets[i], seconds = flightSeconds(b), speed = Math.hypot(b.vx, b.vy), steps = Math.ceil(speed * seconds / 7);
             let remove = false;
             for (let j = 0; j < steps; j++) {
                 const previous = { x: b.x, y: b.y }, previousTile = this.mapData.tiles[Math.floor(b.y / TILE)]?.[Math.floor(b.x / TILE)];
-                b.x += b.vx * dt / steps;
-                b.y += b.vy * dt / steps;
-                b.left -= speed * dt / steps;
+                b.x += b.vx * seconds / steps;
+                b.y += b.vy * seconds / steps;
+                b.left -= speed * seconds / steps;
                 const x = Math.floor(b.x / TILE), y = Math.floor(b.y / TILE), tile = this.mapData.tiles[y]?.[x];
                 if (tile === 3 || tile === undefined || b.left <= 0) {
                     const startBlocked = previousTile === 3 || previousTile === undefined;

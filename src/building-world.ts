@@ -93,7 +93,8 @@ export function initializeBuildingRaid(state: ExpansionState, loadout: D.RunLoad
         maps.coast.containers.push({ id: entry.id, runId: loadout.runId!, kind: 'crate', name: entry.name, ...point, inventory });
     });
     state.base.location = 'raid'; state.base.restSeconds = 0; state.base.energizedGranted = false;
-    state.raid = { version: 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
+    // The raid's rules follow the expansion it starts from: v3 (perks, new critical rules) only from a v3 expansion.
+    state.raid = { version: state.version === 3 ? 3 : 2, worldVersion: world.id, layoutRevision: world.revision, seed: config.seed, runId: loadout.runId!, shockAt: -10,
         currentMap: world.spawnMap, player: { ...config.spawn, rotation: 0 }, loadout: structuredClone(loadout), elapsed: 0,
         initialHigh: config.initialHigh, highTide: config.initialHigh, warned: false, tideChanged: false, kills: 0, rng: (config.seed + 771) >>> 0,
         nextEntity: serial, maps, pursuits: [], training: newTraining(), reloadLeft: 0, fireCooldown: 0, knife: false, hitTime: 0,

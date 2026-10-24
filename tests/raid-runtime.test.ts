@@ -13,6 +13,7 @@ import { resolveLayerShot } from '../src/layer-transition';
 import type { ShotObservation } from '../src/layer-transition';
 import { entityUid } from '../src/expansion-state';
 import { createCoastRaidHost } from '../src/raid-runtime/host';
+import { plainCrit } from './fixtures/layered';
 import { coneOf, handlingOf, unsteadyAim } from '../src/shooting';
 
 function fixture(layered = false, seed = 42) {
@@ -203,7 +204,7 @@ test('shared layered observation is side-effect-free for hits and departure', ()
     const f = fixture(true), original = f.runtime.snapshotExpansion();
     original.raid!.currentMap = 'resident-f2'; original.raid!.player = { x: 80, y: 80, rotation: 0 };
     const layer = original.raid!.maps['resident-f2']; layer.enemies[0].x = 160; layer.enemies[0].y = 80;
-    layer.bullets = [{ uid: 'entity-test', x: 100, y: 80, rotation: 0, vx: 760, vy: 0, left: 500, damage: 20, enemy: false }];
+    layer.bullets = [{ uid: 'entity-test', x: 100, y: 80, rotation: 0, vx: 760, vy: 0, left: 500, damage: 20, enemy: false, crit: plainCrit() }];
     const a = structuredClone(original), b = structuredClone(original), events: unknown[] = [];
     advanceLayerShots(a, BUILDING_WORLD, 'resident-f2', .2);
     advanceLayerShots(b, BUILDING_WORLD, 'resident-f2', .2, undefined, undefined, e => events.push(e));
@@ -261,7 +262,7 @@ test('failed departure discards source hit effects; retry emits source stamp and
     const c = r.snapshot(), enemy = c.enemies[0];
     Object.assign(enemy, { x: 500, y: 300, home: { x: 500, y: 300 }, target: { x: 500, y: 300 }, hp: 1, path: [] });
     const serial = c.nextEntity++;
-    c.bullets = [{ uid: entityUid(r.layered!.raid!, serial), x: 450, y: 300, rotation: 0, vx: 760, vy: 0, left: 100, damage: 1000, enemy: false }];
+    c.bullets = [{ uid: entityUid(r.layered!.raid!, serial), x: 450, y: 300, rotation: 0, vx: 760, vy: 0, left: 100, damage: 1000, enemy: false, crit: plainCrit() }];
     r.restore(c); const initial = r.snapshotExpansion(), epoch = r.epoch;
     f.fail(true); const failed = r.advance(0, intent({ interactPressed: true }));
     assert.ok(!failed.events.some(e => e.type === 'death')); assert.equal(r.enemies[0].hp, 1);

@@ -1,0 +1,109 @@
+{
+  "startedAt": "2026-10-23T04:42:58.889Z",
+  "browser": "156.0.8078.48",
+  "entry": "dist/index.html",
+  "method": "Offline Chromium, real CDP mouse (1280x720) and multi-touch (844x390, DPR 2) on the 2.5D raid host, seed 42, layered coast map. Fixtures place the player and enemies, hand weapons and freeze AI.",
+  "steps": [
+    {
+      "id": "g",
+      "name": "a blow's flash and kick are drawn on slow frames",
+      "status": "passed",
+      "detail": {
+        "cases": [
+          {
+            "hz": 60,
+            "enemy": "scav enemy-2",
+            "flashFrames": 4,
+            "kickFrames": 4,
+            "fromFirstFrame": true,
+            "kicksPx": [
+              "-2,0"
+            ],
+            "drawn": true,
+            "hitFrame": {
+              "flash": false,
+              "kickPx": "0,0"
+            },
+            "flashByFrame": "111100000000000",
+            "kickByFrame": "111100000000000"
+          },
+          {
+            "hz": 30,
+            "enemy": "scav enemy-2",
+            "flashFrames": 2,
+            "kickFrames": 2,
+            "fromFirstFrame": true,
+            "kicksPx": [
+              "-2,0"
+            ],
+            "drawn": true,
+            "hitFrame": {
+              "flash": false,
+              "kickPx": "0,0"
+            },
+            "flashByFrame": "11000000",
+            "kickByFrame": "11000000"
+          },
+          {
+            "hz": 15,
+            "enemy": "scav enemy-2",
+            "flashFrames": 1,
+            "kickFrames": 1,
+            "fromFirstFrame": true,
+            "kicksPx": [
+              "-2,0"
+            ],
+            "drawn": true,
+            "hitFrame": {
+              "flash": false,
+              "kickPx": "0,0"
+            },
+            "flashByFrame": "1000",
+            "kickByFrame": "1000"
+          },
+          {
+            "hz": 12,
+            "enemy": "scav enemy-2",
+            "flashFrames": 1,
+            "kickFrames": 1,
+            "fromFirstFrame": true,
+            "kicksPx": [
+              "-2,0"
+            ],
+            "drawn": true,
+            "hitFrame": {
+              "flash": false,
+              "kickPx": "0,0"
+            },
+            "flashByFrame": "100",
+            "kickByFrame": "100"
+          },
+          {
+            "hz": 10,
+            "enemy": "scav enemy-2",
+            "flashFrames": 1,
+            "kickFrames": 1,
+            "fromFirstFrame": true,
+            "kicksPx": [
+              "-2,0"
+            ],
+            "drawn": true,
+            "hitFrame": {
+              "flash": false,
+              "kickPx": "0,0"
+            },
+            "flashByFrame": "100",
+            "kickByFrame": "100"
+          }
+        ]
+      },
+      "seconds": 0.1
+    }
+  ],
+  "stallResumes": {
+    "desktop": 0,
+    "phone": 0
+  },
+  "finishedAt": "2026-10-23T04:43:01.881Z",
+  "status": "passed"
+}

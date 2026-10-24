@@ -4,21 +4,19 @@
  * HUD never registers a second set of gameplay inputs.
  *
  * Panels follow the original split: pause (world frozen, checkpoint written by the Runtime) versus blocking
- * (inventory/loot/map/reading: world keeps running, gameplay input ignored). Every transition suppresses held
- * controls until they are released. Item and save operations go only through the Runtime services, or through
- * SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
+ * (inventory/loot/map/reading: world keeps running, gameplay input ignored; a movement key leaves loot instead). Every
+ * transition suppresses held controls until they are released. Item and save operations go only through the Runtime
+ * services, or through SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
  */
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
-import { SURVIVAL } from '../balance';
-import { derivedLimits } from '../expansion-state';
 import { exitBearing, questProgress } from '../qol';
-import type { MutationResult, SaveSession, SessionState } from '../session';
-import type { HurtCause, Interaction, PublishedView, RaidRuntime, StampedEvent, TargetRef } from '../raid-runtime/contract';
-import type { LootTransfer } from '../loot';
+import type { SaveSession, SessionState } from '../session';
+import type { CoastHandle, HudView, HurtCause, Interaction, PublishedView, StampedEvent, TargetRef } from '../raid-runtime/contract';
+import { critHud } from '../perk-copy';
 import { CoastView, AIM_H, type ViewOptions } from './scene';
 import { actorShown } from './structure-guide';
-import { InputState, inputKey } from './input';
+import { InputState, inputKey, isMoveKey } from './input';
 import { InventoryPanel } from './inventory';
 import { drawMap, mapPanelHtml, type MapLayout } from './map';
 import { Scope, lifecycle } from './scope';
@@ -29,30 +27,6 @@ import { SampleSound } from './sound';
 import { playtestMarks } from '../shooting';
 import { esc } from '../html';
 
-export interface CoastServices {
-  cancelStart(): void;
-  activate(ref: TargetRef): boolean;
-  transferLoot(ref: TargetRef, request: LootTransfer): MutationResult;
-  useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
-  equipItem(uid: string): MutationResult;
-  dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
-  /**
-   * Carried kg, live, as the Runtime uses it for movement, overload and stamina (worn charm and loaded rounds
-   * included). The HUD and the inventory only format this value; they never re-derive it.
-   */
-  carriedWeight(): number;
-  retrySave(): boolean;
-  retrySettlement(): boolean;
-  settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
-  abandon(): void;
-  checkpoint(): boolean;
-  lootContext(): { containerId: string; runId: string } | null;
-  lootInventory(ref: TargetRef): D.Inventory | null;
-  /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
-  sampleGun(id: 'm4a1' | null): void;
-}
-
-export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
 export type SampleExit = { kind: 'settled' };
 type Panel = null | 'pause' | 'inventory' | 'loot' | 'map' | 'reading' | 'ending';
 
@@ -111,7 +85,8 @@ const HTML = `
     <div data-where class="cs-where"></div>
   </section>
   <section class="cs-clock"><b data-time></b><small data-tide></small></section>
-  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div></section>
+  <section class="cs-arms" data-weapon><img data-weapon-icon alt="" width="64" height="64"><div class="cs-arms-text"><span data-weapon-name></span><b data-mag></b><small><span data-reserve></span> <em data-mode></em></small></div><div class="cs-heal"><kbd>Q</kbd>医疗 <b data-heals></b></div>
+    <div class="cs-crit" data-crit hidden><div><span data-crit-label></span><b data-crit-chance></b><em data-crit-target aria-hidden="true"></em></div><div class="cs-breath" data-breath hidden aria-hidden="true"><span data-breath-label></span><i><b data-breath-bar></b></i><small data-breath-time></small></div></div></section>
   <div data-radio class="cs-radio" hidden></div>
   <section class="cs-info">
     <button type="button" data-do="map" data-exit-nav>选择撤离点</button>
@@ -190,7 +165,6 @@ export class CoastSampleHost {
         lootRef: () => this.lootRef(), touch: () => this.input.touch, toast: (t, bad) => this.toast(t, bad),
         saveFailed: () => { if (!this.services.checkpoint()) this.lastRejected = 'checkpoint'; },
         close: () => this.closePanel(true),
-        carryLimit: () => this.session.expansion?.version === 2 ? derivedLimits(this.session.expansion).carry : SURVIVAL.carryLimit,
         magazine: () => this.last?.frame.hud.weapon.mag ?? 0,
         used: () => this.sound.used(),
       });
@@ -274,6 +248,9 @@ export class CoastSampleHost {
   private kick = 0;
   private markT = 0;
   private markAt = { x: 0, y: 0 };
+  /** Whom the hit marker is up for, and whom it shows a critical hit on ('' none): a kill of that target keeps it. */
+  private markUid = '';
+  private critUid = '';
   /** Feedback for one new event. Hits are marked only where the hit point is in a revealed area (or outdoors). */
   private feedback(e: StampedEvent, b: PublishedView) {
     const f = b.frame, shown = (p: { x: number; y: number }) => this.view.shownAt(p, f.revealed);
@@ -294,6 +271,8 @@ export class CoastSampleHost {
       if (e.cause === 'blow') { this.hurtPulse = Math.min(1, this.hurtPulse + .45 + e.damage / 40); if (this.panel === 'loot') this.lootHitT = 1.2; }
       else this.drains[e.cause].acc += e.damage;
     }
+    // Only the player's rounds crit, and their impact comes first in the batch: the marker it put up turns critical.
+    else if (e.type === 'hurt' && e.critical && e.uid === this.markUid && this.markT > 0) this.critMark();
     else if (e.type === 'shot' && e.shooter !== 'player') {
       // A shot from off screen by someone standing in the open or in a revealed room: mark the edge toward them.
       const a = f.actors.find(x => x.uid === e.shooter);
@@ -343,7 +322,16 @@ export class CoastSampleHost {
     this.recentHits.set(uid, performance.now());
     if (this.recentHits.size > 40) this.recentHits.delete(this.recentHits.keys().next().value!);
     this.markT = kill ? .42 : .2; this.markAt = { ...at };
-    const el = this.q('[data-hitpop]'); el.classList.toggle('kill', kill); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    // A kill of the target the marker shows a critical hit on stays critical; any other mark starts plain.
+    const crit = kill && uid === this.critUid; this.markUid = uid; if (!crit) this.critUid = '';
+    const el = this.q('[data-hitpop]'); el.classList.toggle('kill', kill); el.classList.toggle('crit', crit); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    // The kill marker's own attribution decides the confirm sound, so the two never disagree (#75).
+    if (kill) this.sound.killed();
+  }
+  /** The marker just put up for markUid becomes a critical one: gold, a bigger pop and at least 0.3 s (#75). */
+  private critMark() {
+    this.critUid = this.markUid; this.markT = Math.max(this.markT, .3);
+    const el = this.q('[data-hitpop]'); el.classList.add('crit'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   }
   /** The game's synth audio, driven from this host's batches (see sound.ts). */
   private readonly sound: SampleSound;
@@ -383,6 +371,13 @@ export class CoastSampleHost {
       if (k === 'escape') { if (this.blocking()) this.closePanel(true); else if (this.panel === 'pause') { if (this.guideOpen) this.showPause(); else this.resume(); } else if (!this.panel) this.pause(); return; }
       if (k === 'tab') { if (this.blocking()) this.closePanel(true); else if (!this.panel) this.openInventory(); return; }
       if (k === 'e' && (this.panel === 'loot' || this.panel === 'reading')) { this.closePanel(true); return; }
+      // A movement key leaves the loot window and walks at once (issue #26 F13), so a looter under fire need not reach for
+      // E or Esc. Loot only: the bag, map, note and pause keep their keys. A held key's repeats (above) and browser
+      // shortcuts do not count; a Shift pressed in the window makes the walk a sprint, as it would outside.
+      if (this.panel === 'loot' && isMoveKey(inputKey(e)) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        this.closePanel(true);
+        if (e.shiftKey) this.input.key('shift', true);
+      }
       if (k === 'm') { if (this.panel === 'map') this.closePanel(true); else if (!this.panel || this.blocking()) { if (this.panel) this.closePanel(true); this.openMap(); } return; }
       if (this.panel) return;
       this.input.key(inputKey(e), true);
@@ -532,7 +527,7 @@ export class CoastSampleHost {
   }
   /** Controls for this device, the guide the original pause offered. */
   private showGuide() {
-    const keys: [string, string][] = [['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
+    const keys: [string, string][] = [['W A S D', '移动 / 离开搜刮'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']];
     const body = this.input.touch
       ? '<p>左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>'
       : `<div class="cs-guide">${keys.map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div>`;
@@ -665,6 +660,7 @@ export class CoastSampleHost {
     q('[data-weapon]').classList.toggle('empty', !!w.magSize && w.mag === 0 && !w.reloading);
     q('[data-weapon]').classList.toggle('reloading', w.reloading);
     q('[data-heals]').textContent = String(h.heals);
+    this.critLines(h);
     q('.cs-status').classList.toggle('low', h.hp / h.maxHp < .35);
     if ((this.stats.frames & 7) === 0) this.slowHud(b);
     const region = this.view.regionName();
@@ -725,6 +721,30 @@ export class CoastSampleHost {
       fan.style.transform = `translate(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px) rotate(${(p.aim + a.drift).toFixed(4)}rad)`;
       fan.style.setProperty('--half', `${(a.cone / 2).toFixed(4)}rad`);
     }
+  }
+  /** The critical lines and the breath bar as last written (critLines rewrites them only when they change). */
+  private critShown = '';
+  private critBar = '';
+  /**
+   * The gun in hand's critical chance at the foot of the weapon card (CP-T09, docs/CRITICAL-PERK-DESIGN.md 2.3): the
+   * static chance, the knife's or an old raid's note, and with the breath perk the charge's progress and the chance on
+   * the enemy it holds. Read-only and in place: it never opens, moves or covers anything while a fight goes on. The
+   * numbers are the Runtime's own (HudView.crit and .breath, through perk-copy's critHud); nothing here derives a chance.
+   */
+  private critLines(h: HudView) {
+    const c = critHud(h.crit, h.breath), box = this.q('[data-crit]'), breath = this.q('[data-breath]');
+    const text = c ? [c.label, c.chance, c.breath?.label, c.breath?.time, c.breath?.target].join('|') : '';
+    if (text !== this.critShown) {
+      this.critShown = text; box.hidden = !c;
+      if (c) {
+        this.q('[data-crit-label]').textContent = c.label; this.q('[data-crit-chance]').textContent = c.chance ?? '';
+        this.q('[data-crit-target]').textContent = c.breath?.target ?? ''; breath.hidden = !c.breath; box.classList.toggle('breath', !!c.breath);
+        if (c.breath) { this.q('[data-breath-label]').textContent = c.breath.label; this.q('[data-breath-time]').textContent = c.breath.time; }
+      }
+    }
+    const charge = c?.breath ?? null, bar = charge ? `${(charge.share * 100).toFixed(1)}%` : '', key = charge ? `${bar}|${charge.full}` : '';
+    if (charge && key !== this.critBar) { this.q('[data-breath-bar]').style.width = bar; breath.classList.toggle('full', charge.full); }
+    this.critBar = key;
   }
   /** A blow while looting: the panel's danger line says so for a moment (the world keeps running). */
   private lootHitT = 0;
@@ -818,6 +838,7 @@ export class CoastSampleHost {
   /** Lower-rate HUD: status, carried weight, exit bearing and quests (the original refreshes these every 0.1 s). */
   private slowHud(b: PublishedView) {
     this.placeRadio(); // the task card may have opened or the screen turned since the line came up
+    if (this.panel === 'inventory' || this.panel === 'loot') this.inv.refreshWeight();
     const h = b.frame.hud, l = this.session.loadout, body = this.session.expansion?.body;
     const status = [h.bleeding ? '流血' : '', h.pollution > 10 ? `污染 ${Math.round(h.pollution)}%` : '',
       body && this.session.expansion?.raid ? `精神 ${Math.round(body.mental)} · 水分 ${Math.round(body.water)} · 饱食 ${Math.round(body.satiety)}` : ''].filter(Boolean).join(' · ') || '状态正常';

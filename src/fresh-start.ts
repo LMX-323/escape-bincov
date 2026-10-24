@@ -19,14 +19,14 @@ import type { HideoutRuntime, Result } from './hideout-runtime/contract';
 export const RESET_COPY_KEY = 'escape-bincov.reset-copy.v1';
 type CopyStorage = () => D.StorageLike;
 
-/** A complete version-4 record equal to a new player's, keeping only the volume setting. */
+/** A complete current-version record (v5, expansion v3) equal to a new player's, keeping only the volume setting. */
 export function freshStartRecord(volume: number, now: number): SessionRecord {
   const profile = D.newSave(); profile.settings.volume = volume;
   // The fresh record is already past the station-boundary upgrade, as after SaveSession.enableRpg.
   const expansion = newExpansion(now);
   upgradeToRpg(expansion, now);
-  return { format: 'escape-bincov-session', version: 4, revision: 1, savedAt: now, profile, raid: null, terminal: null,
-    legacyBackup: null, migrationBackup: null, expansion, systemsBackup: null };
+  return { format: 'escape-bincov-session', version: 5, revision: 1, savedAt: now, profile, raid: null, terminal: null,
+    legacyBackup: null, migrationBackup: null, expansion, systemsBackup: null, perksBackup: null };
 }
 /** Portable backup text for the import pipeline; encoding validates the record with the strict session decoder. */
 export function freshStartText(volume: number, now: number): string { return encodeRecoveryBackup(freshStartRecord(volume, now)); }

@@ -41,7 +41,7 @@ jobs:
       - name: Domain, world and save tests
         run: pnpm test
       - name: CI selection and coverage safeguards
-        run: node --test scripts/ci/*.test.mjs
+        run: pnpm check:ci
       - name: Build and package
         run: pnpm package
       - name: Verify committed game matches source
@@ -163,6 +163,8 @@ jobs:
         run: |
           mkdir -p test-results
           curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/07b1414da9f1ac4c3ad13a23ec914630ccbd7fbb/dist/index.html --output test-results/pre-m0.html
+          # The last client before session v5 (perks): test:expansion checks it refuses v5 without overwriting it.
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/xuys2025/escape-bincov/44494eaccc45315dc0c5b36b9e66c4e92f463308/dist/index.html --output test-results/pre-perk.html
       - name: Run browser suites with timing evidence
         env:
           BROWSER_GROUP: ${{ matrix.group }}

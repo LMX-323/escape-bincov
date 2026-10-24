@@ -2,6 +2,7 @@ import type { Application } from 'pixi.js';
 import * as D from '../domain';
 import type { HideoutEvent, HideoutRuntime, HideoutSnapshot, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
 import { trainingHint, trainingSeconds } from './panels';
+import { COUNTY_ART } from './county-art';
 import { Scope, lifecycle } from '../coast-view/scope';
 import { DOORWAYS, ROOMS, SHED, SITTERS, STATIONS, T, TRAINING_ZONE, WALKERS, WALL_H, domainAt, floors, inRect, type Doorway, type PropDef, type RoomId, type Station, type StationId } from './layout';
 import { HideoutScene, type ActorView, type SceneState } from './scene';
@@ -111,7 +112,7 @@ export class StationHost {
       title: () => this.leaveFor('title'),
       exportSave: () => hooks.exportSave(),
       imported: () => hooks.imported(),
-    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds });
+    }, this.scope, { world: opts.world, seed: opts.seed, worlds: opts.worlds, countyArt: COUNTY_ART });
     this.ui.volume = opts.volume;
     this.ui.setTouch(opts.touch);
     const unsubscribe = rt.subscribe(e => this.event(e));
@@ -254,7 +255,8 @@ export class StationHost {
     if (e.type === 'facility-built') this.colKey = '';
     if (e.type === 'production-complete') { this.ui.toast('工作台：一批成品可以领取了。', 'ok'); this.audio.cue('ok'); }
     if (e.type === 'practice-credited') { this.ui.toast(`练习收益 +${(e.amount * 100).toFixed(1)}% 成长`, 'ok'); this.audio.cue('credit'); this.trainingFlash = 1; }
-    if (e.type === 'save-failed') { this.ui.toast('存档没有写入，操作已撤销。', 'error'); this.ui.showStorage(); }
+    // A failed perk write is kept for the retry, not undone: the body panel reports it itself.
+    if (e.type === 'save-failed') { if (!e.action.startsWith('perk-')) this.ui.toast('存档没有写入，操作已撤销。', 'error'); this.ui.showStorage(); }
     this.ui.updateHud(this.snap);
     if (e.type === 'committed' && this.ui.open) this.ui.refresh();
   }

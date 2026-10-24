@@ -1,3 +1,6 @@
+// Historical R6 experiment, not a current regression gate. Same-source native output can exceed the old ±20%
+// threshold; the hard-coded baseline/environment and generated death-muted page need a task-specific review.
+// Retained for provenance (docs/CHECKS.md); do not count this result as current audio acceptance.
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -6,10 +9,11 @@ import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
 import {executablePath} from './browser-options.mjs';
+import {buildGameScript,withGameScript} from './game-bundle.mjs';
 const root=resolve('test-results/sol-r6-20261009'),out=resolve(root,'audio-controls');await mkdir(out,{recursive:true});const hash=s=>createHash('sha256').update(s).digest('hex');
 const current=await readFile('src/audio.ts','utf8'),g=spawnSync('git',['-c','safe.directory=D:/bincov/pr22-runtime','show','origin/main:src/audio.ts']);assert.equal(g.status,0);const main=g.stdout.toString();
 const formal=await readFile('dist/index.html','utf8'),from="death(): void { this.tone(170, 1.5, 0.18, 'triangle', 24); this.hiss(0.8, 0.22, 100); }";assert.equal(current.split(from).length,2);
-const control=await build({entryPoints:['src/main.ts'],bundle:true,write:false,minify:true,target:'es2020',format:'iife',loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'negative-control-only-mute-death',setup(b){b.onLoad({filter:/[\\/]src[\\/]audio\.ts$/},args=>({contents:current.replace(from,'death(): void {}'),loader:'ts',resolveDir:resolve('src')}));}}]});const at=formal.lastIndexOf('<script>'),end=formal.lastIndexOf('</script>');const negative=formal.slice(0,at+8)+control.outputFiles[0].text.replace(/<\/script/gi,'<\\/script')+formal.slice(end);await writeFile(resolve(out,'death-muted.html'),negative);
+const control=await buildGameScript({plugins:[{name:'negative-control-only-mute-death',setup(b){b.onLoad({filter:/[\\/]src[\\/]audio\.ts$/},args=>({contents:current.replace(from,'death(): void {}'),loader:'ts',resolveDir:resolve('src')}));}}]});const negative=withGameScript(formal,control);await writeFile(resolve(out,'death-muted.html'),negative);
 const report={startedAt:new Date().toISOString(),node:process.version,method:'Same shared SynthAudio source from current/main compiled in isolated browser. Four original public cues after real click/resume; no autoplay override. Seeded noise, native destination output. Service-level volume comparison (not four Phaser gameplay triggers). Separate detached negative control mutes death() only; original audio gate/assertions unchanged.',formalSHA256:hash(formal),negativeControl:{htmlSHA256:hash(negative),change:from+' -> death(): void {}',sourceSHA256:hash(current)},sources:{current:hash(current),main:hash(main)},runs:[],errors:[]};
 const b=await chromium.launch({executablePath,headless:true,args:['--disable-background-timer-throttling','--disable-renderer-backgrounding']});report.browser=b.version();
 try{for(const [id,source]of [['main',main],['current',current]]){const bundle=await build({stdin:{contents:source+'\nglobalThis.__audio=new SynthAudio();',loader:'ts'},bundle:true,write:false,minify:false,format:'iife'});

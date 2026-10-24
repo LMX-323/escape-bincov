@@ -19,7 +19,9 @@
 
 [app.ts](../src/app.ts) 组装 `saveSession`、`hideoutRuntime`、音效和宿主引用（`coastSample`、`station`）。`SessionState` 是共享数据，调用者应在事务后重新读取 `save` / `loadout`，不要长期缓存可能被回滚或恢复替换的对象。
 
-新行动的公开端口在 [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)，[host.ts](../src/raid-runtime/host.ts) 绑定 Runtime 和事务服务；据点端口在 [hideout-runtime/contract.ts](../src/hideout-runtime/contract.ts)。这是现有边界，尚非完全隔离：旧 UI 仍负责部分路由，coast 库存仍接收会话，站内路由复用 coast 的 Pixi 生命周期。后续收敛应逐步缩窄这些依赖，不能据此假设视图已完全只读。
+新行动的公开端口和画面服务类型 `CoastHandle` / `CoastServices` 在 [raid-runtime/contract.ts](../src/raid-runtime/contract.ts)，[host.ts](../src/raid-runtime/host.ts) 绑定 Runtime 和事务服务并在工厂检查类型；据点端口在 [hideout-runtime/contract.ts](../src/hideout-runtime/contract.ts)。这是现有边界，尚非完全隔离：旧 UI 仍负责部分路由，coast 库存仍接收会话并直接通过 `SaveSession.mutate` 整理包内物品；场景无关的 `Scope` / 渲染资源工具还存放在 coast 目录。后续收敛应逐步缩窄这些依赖，不能据此假设视图已完全只读。
+
+行动期间区分三种状态：Runtime 的实时模拟、Session 最近提交后的检查点、失败后保留的候选。`captureExpansion()` 取得实时状态的独立副本；`session.expansion` 本身不随每个模拟子步更新。负重及上限由 Runtime 的只读服务提供，视图不能从最近检查点重新计算临时效果。编译期类型只约束调用端；外部 JSON 仍须严格运行时校验，字符串 ID 通过 `hasOwnStringKey` 拒绝原型键与数组隐式转换。
 
 ## 写入、回滚与发布
 
@@ -37,7 +39,7 @@
 
 事务回调为同步规则操作；不得在其中发网络请求、换场景或修改未参与回滚的外部对象。`MutationResult` 区分 `committed`、`rejected`、`blocked`、`save-failed`。UI 只在 `committed` 后发成功反馈，冲突与待结算状态不能当一般失败强行重试。
 
-现有商店有两条适配路径，但共用 `Shop.settleCartResult`：水产站 `RealHideoutRuntime.openShop` → `transaction`，旧页签 `checkout` → `SaveSession.mutate`。购物车 `place` 只改临时清单，`settle` 才提交；新增交易规则应放纯规则层，并检查两个调用端。不能把旧 `D.buy` 的简例当作所有新交易的接线模板。
+现有商店有两条适配路径，但共用 `Shop.settleCartResult`：水产站 `RealHideoutRuntime.openShop` → `transaction`，旧页签 `checkout` → `SaveSession.mutate`。购物车 `place` 只改临时清单，`settle` 才提交；新增交易规则应放纯规则层，并检查两个调用端。领域层没有绕过购物车的单件买卖函数，新交易也不要另开结算路径。
 
 `RealHideoutRuntime.retrySave` 对保留的基地检查点重试原票据；普通库存/购物失败已回滚，不会因点击“重试保存”自动重做购买。`backupRecord` 和据点 `exportBackup` 保留完整待保存状态，而非只导出库存。
 
@@ -53,17 +55,17 @@
 
 ## 格式与恢复兼容
 
-主键仍是 `escape-bincov.session.v2`，旧 `escape-bincov.save.v1` 只作首次迁移来源。单条记录包含 profile 与检查点/扩展状态；`legacyBackup`、`migrationBackup`、`systemsBackup` 分别保留相应升级前原字节。它们不能被反复嵌套的新备份替代。
+主键仍是 `escape-bincov.session.v2`，旧 `escape-bincov.save.v1` 只作首次迁移来源。单条记录包含 profile 与检查点/扩展状态；`legacyBackup`、`migrationBackup`、`systemsBackup`、`perksBackup` 分别保留相应升级前原字节（`perksBackup` 是首次写 v5 时被替换的 v4 记录原文）。它们不能被反复嵌套的新备份替代。
 
-profile/已结算备份版本、session/完整备份封套版本、`ExpansionState.version`、`worldVersion` 与 `layoutRevision` 各自保护不同边界。当前 profile 为 v2；无扩展会话为 v3，有扩展会话为 v4；扩展 v1/v2 均有兼容路径。不能为了统一命名而合并版本或重写活动行动的世界/布局。
+profile/已结算备份版本、session/完整备份封套版本、`ExpansionState.version`、`LayeredRaid.version`、`worldVersion` 与 `layoutRevision` 各自保护不同边界。当前 profile 为 v2；无扩展会话为 v3，扩展 v1/v2 的会话为 v4，扩展 v3（v2 加 Perk 选择）的会话为 v5；扩展 v1/v2 均有兼容路径。分层行动的版本是规则身份：v1 无暴击、v2 旧暴击、v3 只从扩展 v3 出击，各自保持到结算。普通提交不会把 v5 降写为 v4，只有确认导入的旧备份可以，下一次据点边界再升级。不能为了统一命名而合并版本或重写活动行动的世界/布局。
 
-[expansion-worlds.ts](../src/expansion-worlds.ts) 已登记正式建筑和商场布局，M0 两图原型只在测试夹具中。普通据点边界会通过 `ensureRpg` 启用成长；活动旧行动不会被强转。多层快照保存每图的门、实体、弹丸、噪声与本地时间，RNG、身体、成长和队列随同一候选提交。
+[expansion-worlds.ts](../src/expansion-worlds.ts) 已登记正式建筑和商场布局，M0 两图原型只在测试夹具中。普通据点边界（`ensureRpg`、出击、院子导入、重开）通过唯一的 `upgradeToRpg` 升级到当前扩展版本；活动旧行动不会被强转，结算后的下一次据点边界才升级。多层快照保存每图的门、实体、弹丸、噪声与本地时间，RNG、身体、成长和队列随同一候选提交。
 
 旧 `coast-v1` 检查点继续恢复原地面物资；带容器的 `coast-v2` 保存稳定容器/行动身份，恢复时不重生掉落。没有检查点的历史旧行动仍沿用中断失败规则。新版刷新恢复最近成功检查点，不等于恢复尚未写入的内存进度。
 
 导入先经 `decodePortableBackup` 分流，再由 `decodeSession` / `decodeBackup` 严格校验。备份文件、会话里的 profile、旧键和经典行动的携带物共用 [profile-codec.ts](../src/profile-codec.ts) 的 profile/物品栏规则（1 MiB 上限对嵌入的 profile 按紧凑 JSON 计），`checkpoint`、`recovery-store`、`save-backup` 只单向调用它；`importRecord` 依赖已验证的完整记录，类型断言不能代替解码。水产站 `previewImport` / `importBackup` 的确认绑定原始文本和会话 revision；据点已启用成长时拒绝无扩展的降级覆盖。`fresh-start.ts` 的 `confirmImport` 在玩家实际确认时重新预览，仍受 Runtime 守卫和写前比对约束。
 
-`freshStartRecord` 也是完整 v4 新档构造入口，仅保留音量；`startOver` 通过同一确认导入路径替换主档。重开前的本机恢复副本使用单独的 `escape-bincov.reset-copy.v1` 槽位，不是第二个正在运行的会话。新增持久字段必须同时检查新建、升级、导入、重开、结算候选和两执行器捕获/恢复。
+`freshStartRecord` 也是完整 v5 新档构造入口，仅保留音量；`startOver` 通过同一确认导入路径替换主档。重开前的本机恢复副本使用单独的 `escape-bincov.reset-copy.v1` 槽位，不是第二个正在运行的会话。新增持久字段必须同时检查新建、升级、导入、重开、结算候选和同一 Runtime 的经典/分层捕获恢复路径。
 
 多窗口保护由 `ownSession` 的页面生命周期锁和 `RecoveryStore.commit` 写前记录比对共同承担。`markConflict` 禁止后续持久化；窗口事件负责锁定画面并提示刷新/导出，不得用强制覆盖或改存档键消除冲突。
 
@@ -71,6 +73,6 @@ profile/已结算备份版本、session/完整备份封套版本、`ExpansionSta
 
 调用者必须知道的副作用、单位、提交点、引用失效和兼容条件贴在正式类型/方法旁；本页维护跨模块责任与格式边界，CODEMAP 维护定位路径，验收结果留在对应 PR/报告。价格、字段清单和全部函数签名不在三处重复。
 
-按职责和可验证边界拆分文件；只有代码变短、依赖仍共同写一组状态时，并未降低接手成本。共享模拟内核、路由解耦和更窄的视图端口仍是后续目标，不能把当前两执行器写成已统一。
+按职责和可验证边界拆分文件；只有代码变短、依赖仍共同写一组状态时，并未降低接手成本。当前只有一个行动 Runtime，存档 codec 与视图路由的已登记运行时 import 环已消除；剩余重点是背包有限服务、事务失败分类以及内容身份与文案分离，不再按旧的“双执行器”计划开发。
 
 PR #2/#3/M0 的原始叙述见[本轮更新前的固定版本](https://github.com/xuys2025/escape-bincov/blob/773dcdf37c69c9441f7687627b89b582087eb021/docs/ARCHITECTURE.md)。历史验收只证明其受检提交；当前修改的验证从 [CODEMAP](CODEMAP.md) 和[开发手册](AGENT-HANDBOOK.md#4-按风险验证)选择。

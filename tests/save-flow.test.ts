@@ -7,7 +7,8 @@ import { initialCheckpoint } from '../src/checkpoint';
 import { generateRun } from '../src/world';
 const read = () => new RecoveryStore(localStorage).load().save;
 function begin() { saveSession.beginRun(42); return app.loadout!; }
-import { retrySettlement, mutate, importSave, setOverlay } from '../src/ui';
+import { retrySettlement, mutate, importSave, setOverlay, render } from '../src/ui';
+import * as Shop from '../src/shop';
 import { toast } from '../src/toast';
 import { decodeBackup, decodePortableBackup, encodeBackup, encodeRecoveryBackup } from '../src/save-backup';
 import { PROFILE_MAX_BYTES } from '../src/profile-codec';
@@ -41,7 +42,7 @@ beforeEach(() => {
     getItem: (key: string) => key === SESSION_KEY ? stored : null,
     setItem: (_key: string, value: string) => { if (failWrites) throw new Error('quota exceeded'); stored = value; writes++; },
   } });
-  Object.assign(app, { checkpoint: null, pendingRecoveryImport: null, storageError: '', lastSavedAt: 0, save: D.newSave(), state: 'hideout', loadout: null, tab: 'gear', overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
+  Object.assign(app, { checkpoint: null, pendingRecoveryImport: null, storageError: '', lastSavedAt: 0, save: D.newSave(), state: 'hideout', loadout: null, tab: 'gear', shop: null, overlay: '', selected: '', selectedSource: '', pendingSettlement: null, pendingImport: null, result: null, storageOK: true, recovery: false, conflict: false });
   saveSession.initialize(); writes = 0;
 });
 afterEach(() => {
@@ -89,16 +90,30 @@ for (const outcome of ['extract', 'death', 'timeout'] as const) test(`${outcome}
 
 test('merchant purchases and quest submission roll back cash, items and rewards on storage failure', () => {
   D.addItem(app.save.stash, 'sample');
-  const original = structuredClone(app.save);
+  const original = structuredClone(app.save), pack = D.buyQuantity('ammo9');
+  // The tab page's 统一结算 button: checkout() settles the cart inside mutate().
+  const checkout: (typeof buttons)[number] = { dataset: { action: 'checkout' } };
+  buttons = [checkout]; app.tab = 'arms'; render();
+  const cart = app.shop!;
+  assert.ok(Shop.moveShopItem(cart, 'merchant', 'buy', cart.catalog.items.find(i => i.id === 'ammo9')!.uid, 0, 0));
   failWrites = true;
-  assert.equal(mutate(() => D.buy(app.save, 'ammo9', 'arms')), false);
+  checkout.onclick!();
   assert.deepEqual(app.save, original);
+  assert.equal(notification.textContent, '保存失败，物资和进度已恢复到操作前。请检查浏览器存储设置后重试。');
+  assert.equal(app.shop, cart, 'the unsaved cart stays for another try');
   assert.equal(mutate(() => D.submitQuest(app.save, 'sample')), false);
   assert.deepEqual(app.save, original);
   failWrites = false;
+  checkout.onclick!();
+  assert.equal(writes, 1, 'the retried checkout is written once');
+  assert.equal(notification.textContent, '交易完成，物资已存入仓库。');
+  assert.notEqual(app.shop, cart, 'a committed checkout starts a new cart');
+  assert.equal(read().cash, original.cash - pack * D.ITEMS.ammo9.buy);
+  assert.equal(D.count(read().stash, 'ammo9'), D.count(original.stash, 'ammo9') + pack);
+  const paid = app.save.cash;
   assert.equal(mutate(() => D.submitQuest(app.save, 'sample')), true);
   assert.equal(read().quests.sample, true);
-  assert.equal(app.save.cash, original.cash + D.QUESTS.sample.reward);
+  assert.equal(app.save.cash, paid + D.QUESTS.sample.reward);
 });
 
 // In-raid transfers and medical use are Runtime transactions now (raid-runtime.test.ts: ground pickup and medical

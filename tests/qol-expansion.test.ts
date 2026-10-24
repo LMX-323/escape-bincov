@@ -29,7 +29,7 @@ test('RPG shop keeps cloth and medicines in atomic carts; classic shop cannot bu
         assert.equal(f.bytes, before); assert.equal(f.state.save.cash, cash); assert.equal(D.count(f.state.save.stash, id), count);
         f.deny(false); assert.equal(f.session.mutate(() => Shop.settleCartResult(f.state.save, cart, true).ok), 'committed');
         assert.equal(f.state.save.cash, cash - D.ITEMS[id].buy); assert.equal(D.count(f.state.save.stash, id), count + 1);
-        assert.equal(decodeSession(f.bytes).expansion!.version, 2);
+        assert.equal(decodeSession(f.bytes).expansion!.version, 3);
         assert.equal(f.session.mutate(() => Shop.settleCartResult(f.state.save, cart, true).ok), 'rejected');
     }
 });

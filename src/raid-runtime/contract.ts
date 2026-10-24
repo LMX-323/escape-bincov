@@ -1,4 +1,34 @@
 /** Opus v1 with additive R6 facts (2026-10-09); no simulation or save schema changes. */
+import type { Inventory } from '../domain';
+import type { LootTransfer } from '../loot';
+import type { CritBreakdown } from '../perks';
+import type { MutationResult } from '../session';
+
+/** Durable actions and detached reads offered to a raid view. Implemented by raid-runtime/host, never by a view.
+ * Read again after any transaction: rollback/restore may replace loadout and world objects. */
+export interface CoastServices {
+    cancelStart(): void;
+    activate(ref: TargetRef): boolean;
+    transferLoot(ref: TargetRef, request: LootTransfer): MutationResult;
+    useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
+    equipItem(uid: string): MutationResult;
+    dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
+    /** Live carried kg, including worn charm and loaded rounds; views only format this value. */
+    carriedWeight(): number;
+    /** Live movement limit in kg. Session expansion is the last checkpoint and can still contain expired buffs. */
+    carryLimit(): number;
+    retrySave(): boolean;
+    retrySettlement(): boolean;
+    settlement(): { reason: 'extract' | 'death' | 'timeout' | 'abandon' | null; committed: boolean; retryable: boolean; result: unknown };
+    abandon(): void;
+    checkpoint(): boolean;
+    lootContext(): { containerId: string; runId: string } | null;
+    lootInventory(ref: TargetRef): Inventory | null;
+    /** Playtest sample gun, only from an explicit URL mark (see playtestMarks). */
+    sampleGun(id: 'm4a1' | null): void;
+}
+export interface CoastHandle { runtime: RaidRuntime; services: CoastServices }
+
 export type Point = Readonly<{
     x: number;
     y: number;
@@ -202,6 +232,36 @@ export type AimView = Readonly<{
     sway: number;
     bloom: number;
 }>;
+/**
+ * The breath charge (technique-15-a, src/breath.ts) as the next shot would snapshot it. Display only: the Runtime times
+ * the charge and decides every shot, and a view shows these numbers without deriving them again.
+ */
+export type BreathView = Readonly<{
+    /** Enemy uid the precise aim rests on, or null: no charge. */
+    target: string | null;
+    /** Effective seconds aimed at `target`, uncapped (0 without one). */
+    seconds: number;
+    /** The breath source's own chance, 0 to 0.3: 0.1 per second, full from 3 s on. It counts only on a hit on `target`. */
+    chance: number;
+    /** Seconds that charge it in full (3): a view's progress runs from 0 to this, and `seconds` beyond it adds nothing. */
+    full: number;
+}>;
+/**
+ * The critical chance of the gun in hand (docs/CRITICAL-PERK-DESIGN.md section 2.3) as a shot fired now would snapshot
+ * it: CoastRaidRuntime.shotCrit derives it for the HUD and for the shot alike, and a view prints these values without
+ * deriving them again. Display only: the Runtime decides every shot.
+ */
+export type CritChanceView = Readonly<{
+    /**
+     * 'v3': the new rule, independent sources multiplied (spec 2.1). 'old': a v1 or v2 raid keeps the critical rule it
+     * started with until it settles, so it shows no perk value.
+     */
+    rule: 'v3' | 'old';
+    /** v3 with a gun in hand: its static breakdown, the breath charge left out. Null with the knife (it never crits: not applicable) and in an old raid. */
+    gun: Readonly<CritBreakdown> | null;
+    /** v3 while the breath charge (HudView.breath) holds a target: the breakdown a shot fired now has on a hit on that enemy, the charge included. */
+    onTarget: Readonly<CritBreakdown> | null;
+}>;
 export type HudView = Readonly<{
     hp: number;
     maxHp: number;
@@ -221,6 +281,10 @@ export type HudView = Readonly<{
         reloading: boolean;
     }>;
     aim: AimView;
+    /** Null unless this raid owns technique-15-a (a v3 raid). With the knife drawn the charge stays empty. */
+    breath: BreathView | null;
+    /** Null in a classic raid, which has no such critical rule to show. */
+    crit: CritChanceView | null;
     heals: number;
     hitDirections: readonly Readonly<{
         angle: number | null;
@@ -280,6 +344,10 @@ export type ViewEventBody = {
     at: Point;
     damage: number;
     critical: boolean;
+    /**
+     * Radians from the hurt actor back toward the blow's source: against a bullet's flight, toward a melee attacker. Null
+     * when the source is unknown. The view sprays blood this way and knocks the body the opposite way.
+     */
     angle: number | null;
 } | {
     type: 'death';

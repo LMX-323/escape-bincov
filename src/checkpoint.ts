@@ -1,8 +1,9 @@
 import * as D from './domain';
 import { SURVIVAL as B } from './balance';
 import { WORLD, WORLD_W, WORLD_H, generateRun, type Point, type RunConfig } from './world';
-import { decodeStoredProfile, finite, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
+import { decodeStoredProfile, finite, hasOwnStringKey, validInventory, whole, COUNT_MAX, UINT32_MAX } from './profile-codec';
 import type { LootContainer } from './loot';
+import type { CritSnapshot } from './perks';
 
 export const WORLD_VERSION = 'coast-v2';
 export interface ActorState extends Point { rotation: number }
@@ -12,7 +13,14 @@ export interface EnemyState extends ActorState {
   timer: number; cooldown: number; path: Point[]; repath: number; alert: number;
 }
 export interface LootState extends Point { uid: string; id: string; qty: number; relief: boolean }
-export interface BulletState extends ActorState { uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string }
+export interface BulletState extends ActorState {
+  uid: string; vx: number; vy: number; left: number; damage: number; enemy: boolean; owner?: string;
+  /**
+   * The shot's critical snapshot (src/perks.ts): on every player round of a v3 layered raid, taken when the shot was
+   * fired and never changed in flight. Enemy rounds, classic raids and v1/v2 raids never carry it.
+   */
+  crit?: CritSnapshot;
+}
 export interface RaidCheckpoint {
   version: 2; worldVersion: typeof WORLD_VERSION; seed: number; runId: string;
   loadout: D.RunLoadout; player: ActorState;
@@ -93,7 +101,7 @@ export function validateCheckpoint(value: unknown, profile: D.SaveDataV1, legacy
   if (!Array.isArray(c.loot) || c.loot.length > 4000 || !Array.isArray(c.bullets) || c.bullets.length > 1000) fail();
   for (const l of c.loot) {
     id(l.uid);
-    if (!point(l) || !Object.hasOwn(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
+    if (!point(l) || !hasOwnStringKey(D.ITEMS, l.id) || !whole(l.qty, 1, D.ITEMS[l.id].stack) || !bool(l.relief)) fail();
   }
   for (const b of c.bullets) {
     id(b.uid);

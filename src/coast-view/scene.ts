@@ -72,6 +72,8 @@ interface ActorGfx {
   /** Player only: faint warm outline so the player separates from dark asphalt (not the occlusion rim). */
   edge: Sprite | null;
   walk: number; dir: number; flashT: number; deathT: number; kick: Point; kickT: number; seen: boolean; swingT: number;
+  /** A blow not drawn yet: the next syncActor draws its flash and kick even when that frame's delta outlives them. */
+  hit: boolean;
   /** Walk-cycle direction from the gait rule: 1 forward, -1 reversed while backpedalling (F08). */
   sense: 1 | -1;
   /** Half-cycles of the walk, to put a puff of dust under each sprinting step. */
@@ -240,6 +242,13 @@ export class CoastView {
     // frame turns the body into a corpse. Only this map/epoch counts: a rebuild (load, layer change) never replays a fall.
     const current = (e: StampedEvent) => worldKeyString(e.stamp.world) === this.mapKey && e.stamp.epoch === this.epoch;
     const fallen = new Set(batch.events.flatMap(e => e.type === 'death' && current(e) ? [e.uid] : []));
+    // A blow flashes and kicks its body on the frame that brings it, so it is set before the body is drawn (#75); the
+    // blood still comes with the event below. A body drawn for the first time in this batch gets it from the next frame.
+    const blown = new Set<string>();
+    for (const e of batch.events) {
+      if (e.type !== 'hurt' || e.cause !== 'blow' || !current(e)) continue;
+      const g = this.actors.get(e.uid); if (g) { this.blow(g, e.angle); blown.add(e.uid); }
+    }
     this.tide.sync(f.flooded, dt, this.time);
     const seen = new Set<string>();
     for (const a of [f.player, ...f.actors]) { seen.add(a.uid); this.syncActor(a, dt, visible(a.regionId), fallen.has(a.uid)); }
@@ -249,7 +258,7 @@ export class CoastView {
     for (const e of batch.events) {
       this.stats.events++;
       if (!current(e)) { this.stats.droppedEvents++; continue; }
-      this.onEvent(e, f);
+      this.onEvent(e, f, blown);
     }
     this.bakeAhead(dt);
     this.fx.update(dt);
@@ -528,7 +537,13 @@ export class CoastView {
     }
   }
 
-  private onEvent(e: StampedEvent, f: ViewFrame) {
+  /** A blow's 70 ms flash and 80 ms kick: 2 px the way it travelled, as its angle points back at the source (#75). */
+  private blow(g: ActorGfx, angle: number | null) {
+    g.flashT = .07; g.kick = angle === null ? { x: 0, y: 0 } : { x: -Math.cos(angle) * 2, y: -Math.sin(angle) * 2 }; g.kickT = .08; g.hit = true;
+  }
+
+  /** `blown`: bodies whose blow present() already set before drawing them. */
+  private onEvent(e: StampedEvent, f: ViewFrame, blown: ReadonlySet<string>) {
     const all = [f.player, ...f.actors], actor = (uid: string) => all.find(a => a.uid === uid);
     // Rooms may overlap: a point is shown only when every room containing it is revealed (the Runtime's rule).
     const regionAt = (p: Point) => regionAtClosed(this.map!, f.revealed, p);
@@ -588,9 +603,9 @@ export class CoastView {
         // Only blows (any size) flash, kick and spray blood; bleeding, pollution, thirst, hunger and a lowered health
         // limit are shown by the host's HUD, not on the body.
         const g = this.actors.get(e.uid); if (!g || e.cause !== 'blow') break;
-        const ang = e.angle ?? 0;
-        g.flashT = .07; g.kick = e.angle === null ? { x: 0, y: 0 } : { x: Math.cos(ang) * 2, y: Math.sin(ang) * 2 }; g.kickT = .08;
-        const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, ang, this.rnd);
+        if (!blown.has(e.uid)) this.blow(g, e.angle);
+        // The angle points back at the blow's source, and the blood sprays that way.
+        const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, e.angle ?? 0, this.rnd);
         break;
       }
       case 'door': { const d = this.map!.doors.find(x => x.id === e.id); if (d) this.fx.dust(d.x * 32 + 16, d.y * 32 + 30, this.rnd, 4); break; }
@@ -608,7 +623,7 @@ export class CoastView {
       const mk = () => { const s = new Sprite(); s.anchor.set(.5, 1); return s; };
       const arm = () => { const s = new Sprite(this.tex.arm(a.kind)); s.anchor.set(0, .5); return s; };
       g = { kind: a.kind, body: mk(), weapon: new Sprite(), flash: mk(), rim: new Sprite(), wrim: new Sprite(), shadow: new Sprite(this.tex.blob(20, 7)), corpse: null, corpseKey: '',
-        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, step: 0, sense: 1 };
+        arms: [arm(), arm()], wade: new Sprite(this.tex.ensure('tide:wade', paintWade)), edge: a.kind === 'player' ? new Sprite() : null, walk: 0, dir: dirOf(a.aim), flashT: 0, deathT: 0, kick: { x: 0, y: 0 }, kickT: 0, seen: false, swingT: 0, hit: false, step: 0, sense: 1 };
       g.flash.blendMode = 'add'; g.rim.anchor.set(.5, (48 + 1) / 50); g.shadow.anchor.set(.5); g.wade.anchor.set(.5, .5); g.wade.visible = false;
       this.sorted.addChild(g.body, ...g.arms, g.weapon, g.flash, g.wade); this.xray.addChild(g.rim, g.wrim);
       if (g.edge) { g.edge.anchor.set(.5, (48 + 1) / 50); g.edge.tint = 0xf3dfa8; g.edge.alpha = .38; this.sorted.addChild(g.edge); } this.shadows.addChild(g.shadow);
@@ -622,12 +637,16 @@ export class CoastView {
     // Backpedalling plays reversed steps on the aim's body; strafing turns the hips toward the movement (F08). The dead
     // and the falling face the aim as before: a death batch still carries the velocity of the step the actor died in.
     const gt = gait(a.aim, a.vx, a.vy, speed > 5 && a.alive, g.sense); g.sense = gt.sense; g.dir = gt.dir;
+    // A blow's 70 ms flash and 80 ms kick age from the first frame that draws them: the hit's own (present sets them
+    // before drawing), or the next for a body first drawn with the blow. Below about 14 frames a second (12.5 for the
+    // kick) that frame's delta outlives them, so it draws them at least once (#75).
+    const hit = g.hit; g.hit = false;
     g.flashT = Math.max(0, g.flashT - dt); g.kickT = Math.max(0, g.kickT - dt); g.swingT = Math.max(0, g.swingT - dt);
     if (g.deathT > 0) g.deathT += dt;
     const dying = !a.alive && g.deathT > 0 && g.deathT < FALL_T;
     const frame = dying ? 0 : speed > 5 ? walkFrame(g.walk, g.sense) : 0;
     const dead = !a.alive && !dying;
-    const kx = g.kickT > 0 ? g.kick.x : 0, ky = g.kickT > 0 ? g.kick.y : 0;
+    const kicked = g.kickT > 0 || hit, kx = kicked ? g.kick.x : 0, ky = kicked ? g.kick.y : 0;
     const x = Math.round(a.x + kx), y = Math.round(a.y + ky);
     for (const s of [g.body, g.weapon, g.flash, g.shadow, ...g.arms]) s.visible = shown && !dead;
     if (g.edge) g.edge.visible = shown && !dead;
@@ -659,7 +678,7 @@ export class CoastView {
     const bx = x - Math.round(side * FALL_SLIDE * fall), by = y + Math.round(4 * fall);
     g.body.texture = this.tex.actor(a.kind, g.dir, frame); g.body.position.set(bx, by); g.body.zIndex = a.y; g.body.rotation = tilt;
     if (g.edge) { g.edge.texture = this.tex.actorEdge(a.kind, g.dir, frame); g.edge.position.set(bx, by + 1); g.edge.rotation = tilt; g.edge.zIndex = a.y - .002; }
-    g.flash.texture = this.tex.actorFlash(a.kind, g.dir, frame); g.flash.position.set(bx, by); g.flash.zIndex = a.y + .01; g.flash.visible = shown && g.flashT > 0; g.flash.alpha = .5; g.flash.rotation = tilt;
+    g.flash.texture = this.tex.actorFlash(a.kind, g.dir, frame); g.flash.position.set(bx, by); g.flash.zIndex = a.y + .01; g.flash.visible = shown && (g.flashT > 0 || hit); g.flash.alpha = .5; g.flash.rotation = tilt;
     g.shadow.position.set(x + 2, y - 1);
     // Caught by the tide: the water covers the boots; the shadow drowns. Only for an actor that is drawn at all.
     const wading = shown && !dying && this.tide.wet(a.x, a.y);

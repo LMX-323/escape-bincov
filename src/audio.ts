@@ -188,6 +188,15 @@ export class SynthAudio {
     this.tone(78 + Math.random() * 22, 0.08, 0.07, 'triangle', 40);
   }
   hit(spot?: Spot): void { this.hiss(0.16, 0.6, 80, 0, spot); this.tone(110, 0.17, 0.15, 'sawtooth', 30, 0, spot); }
+  /**
+   * The player's own body taking a blow, centred: a short falling grunt over a close smack, one onset like the other
+   * cues. Its harmonics and the smack carry on small speakers, where a low sine thump alone would not.
+   */
+  pain(): void { this.tone(150, 0.16, 0.2, 'sawtooth', 70); this.hiss(0.12, 0.62, 240); }
+  /** A critical hit confirmed: two quick bright ticks over the blow's own sound. */
+  crit(spot?: Spot): void { this.tone(1700, 0.035, 0.16, 'square', 1300, 0, spot); this.tone(2300, 0.05, 0.11, 'triangle', 2100, 0.03, spot); }
+  /** A kill confirmed: a short low thunk with a falling tail, centred like the kill marker it comes with. */
+  kill(): void { this.tone(150, 0.2, 0.22, 'triangle', 55); this.tone(300, 0.06, 0.09, 'square', 160); this.hiss(0.12, 0.22, 500, 0.02); }
   pickup(): void { this.tone(660, 0.08, 0.08, 'triangle', 880); this.tone(990, 0.1, 0.06, 'sine', 1100, 0.07); }
   /** An item going into the bag: a short cloth rustle under the pickup chime, so looting reads clearly over the sea. */
   stow(): void { this.hiss(0.07, 0.24, 1700); this.hiss(0.05, 0.14, 2800, 0.05); this.pickup(); }

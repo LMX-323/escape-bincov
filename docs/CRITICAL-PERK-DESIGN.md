@@ -1,6 +1,6 @@
 # 暴击与三属性 Perk 设计规格
 
-> **状态：已排期，待实现。** 2026-10-22 可行性分析及 CP-T01～T10 已登记 [Issue #77](https://github.com/xuys2025/escape-bincov/issues/77)，见[实施安排](tasks/critical-perk-plan.md)。PR #40 交付设计与排期；合并不表示玩法已经实现，不改变游戏规则、存档或发布产物。数值是首版提案，尚未经过真人平衡验证。
+> **状态：实现中，未合并。** 2026-10-23 起 CP-T01～T09 在实现分支 `agent/critical-perk` 完成，集成验收进行中，实现契约与取舍见[实现契约](tasks/critical-perk-contract.md)。2026-10-22 可行性分析及 CP-T01～T10 已登记 [Issue #77](https://github.com/xuys2025/escape-bincov/issues/77)，见[实施安排](tasks/critical-perk-plan.md)。PR #40 交付设计与排期；合并不表示玩法已经实现，不改变游戏规则、存档或发布产物。数值是首版提案，尚未经过真人平衡验证。
 
 原设计日期：2026-10-12。原核对主线：`64505046fb737af195bc808d2f8e4274df21cf24`。本规格与 [RPG 总设计](RPG-SYSTEM-DESIGN.md)共同定义暴击修订；原中心接近度规则仅用于旧行动兼容及历史验收，不再作为新行动目标。
 

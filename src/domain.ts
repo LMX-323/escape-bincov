@@ -7,6 +7,8 @@ export interface ItemDef {
 export interface WeaponDef {
   id: string; name: string; ammo: string | null; magazine: number; damage: number;
   range: number; cooldown: number; reload: number; pellets: number; spread: number;
+  /** The gun's own independent critical source, 0 to 1 (docs/CRITICAL-PERK-DESIGN.md section 2.1). Every new weapon sets it; the knife never crits. */
+  crit: number;
 }
 export interface EnemyDef {
   id: string; name: string; hp: number; speed: number; damage: number; range: number;
@@ -74,10 +76,10 @@ export const ITEMS: Record<string, ItemDef> = {
 
 /** Distances are world pixels; cooldown/reload are seconds; spread is radians. */
 export const WEAPONS: Record<string, WeaponDef> = {
-  knife: { id: 'knife', name: '水手匕首', ammo: null, magazine: 0, damage: 30, range: 48, cooldown: 0.46, reload: 0, pellets: 1, spread: 0 },
-  pistol: { id: 'pistol', name: '旧式手枪', ammo: 'ammo9', magazine: 8, damage: 27, range: 440, cooldown: 0.29, reload: 1.25, pellets: 1, spread: 0.07 },
-  shotgun: { id: 'shotgun', name: '双管霰弹枪', ammo: 'shell', magazine: 2, damage: 15, range: 290, cooldown: 0.72, reload: 1.9, pellets: 6, spread: 0.27 },
-  carbine: { id: 'carbine', name: '半自动卡宾枪', ammo: 'ammoR', magazine: 12, damage: 39, range: 660, cooldown: 0.24, reload: 1.65, pellets: 1, spread: 0.035 },
+  knife: { id: 'knife', name: '水手匕首', ammo: null, magazine: 0, damage: 30, range: 48, cooldown: 0.46, reload: 0, pellets: 1, spread: 0, crit: 0 },
+  pistol: { id: 'pistol', name: '旧式手枪', ammo: 'ammo9', magazine: 8, damage: 27, range: 440, cooldown: 0.29, reload: 1.25, pellets: 1, spread: 0.07, crit: 0.05 },
+  shotgun: { id: 'shotgun', name: '双管霰弹枪', ammo: 'shell', magazine: 2, damage: 15, range: 290, cooldown: 0.72, reload: 1.9, pellets: 6, spread: 0.27, crit: 0.03 },
+  carbine: { id: 'carbine', name: '半自动卡宾枪', ammo: 'ammoR', magazine: 12, damage: 39, range: 660, cooldown: 0.24, reload: 1.65, pellets: 1, spread: 0.035, crit: 0.08 },
 };
 export const ENEMIES: Record<string, EnemyDef> = {
   scav: { id: 'scav', name: '拾荒者', hp: 56, speed: 69, damage: 11, range: 30, vision: 220, cooldown: 0.9, color: 0xab9370 },
@@ -386,29 +388,6 @@ export function grantRelief(save: SaveDataV1): boolean {
 }
 /** Purchases enter the stash. Ammo is bought in packs; prices are still per round. */
 export function buyQuantity(id: string): number { return id === 'ammo9' ? 12 : id === 'shell' ? 4 : id === 'ammoR' ? 10 : 1; }
-export function buy(save: SaveDataV1, id: string, merchant: 'arms' | 'med'): boolean {
-  const def = Object.hasOwn(ITEMS, id) ? ITEMS[id] : undefined;
-  if (save.activeRun || !def || !MERCHANTS[merchant]?.stock.includes(id) || def.buy <= 0) return false;
-  const qty = buyQuantity(id), cost = def.buy * qty;
-  if (save.cash < cost) return false;
-  const stash = clone(save.stash);
-  if (addItem(stash, id, qty) > 0) return false;
-  save.stash = stash;
-  save.cash -= cost;
-  return true;
-}
-export function sell(save: SaveDataV1, itemUid: string): boolean {
-  if (save.activeRun) return false;
-  for (const inv of [save.stash, save.bag, save.safe]) {
-    const entry = inv.items.find(i => i.uid === itemUid);
-    if (!entry) continue;
-    if (entry.relief || ITEMS[entry.id].sell <= 0) return false;
-    save.cash += ITEMS[entry.id].sell * entry.qty;
-    inv.items.splice(inv.items.indexOf(entry), 1);
-    return true;
-  }
-  return false;
-}
 export function equip(save: SaveDataV1, itemUid: string): boolean {
   if (save.activeRun) return false;
   for (const inv of [save.bag, save.stash]) {
@@ -479,16 +458,10 @@ export function upgradeStash(save: SaveDataV1): boolean {
   save.stash.h = 9;
   return true;
 }
-/** Returns total loaded rounds after consuming exactly the missing reserve ammunition. */
-export function reload(weaponId: string, current: number, bag: Inventory): number {
-  const weapon = Object.hasOwn(WEAPONS, weaponId) ? WEAPONS[weaponId] : undefined;
-  if (!weapon || !weapon.ammo) return 0;
-  const loaded = Math.min(weapon.magazine, integer(current));
-  const taken = Math.min(weapon.magazine - loaded, count(bag, weapon.ammo));
-  removeItem(bag, weapon.ammo, taken);
-  return loaded + taken;
-}
-/** Relief rounds are loaded first and retain their identity, independently of the gun's origin. */
+/**
+ * Takes exactly the missing rounds of the gun's own ammunition out of `bag` (edited in place). Relief rounds are
+ * loaded first and retain their identity, independently of the gun's origin.
+ */
 export function reloadMagazine(weaponId: string, current: number, currentRelief: number, bag: Inventory): Magazine {
   const magazine = cleanMagazine(weaponId, current, currentRelief);
   if (!isGun(weaponId)) return magazine;
