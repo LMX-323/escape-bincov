@@ -615,8 +615,11 @@ function playSeed(seed: number, stats: Stats) {
 
 test('M1-07: random legal play keeps every gun, part, round and coin, through failed writes, retries and backups', t => {
     const stats: Stats = { done: new Map(), failed: new Map() }, clock = Date.now;
-    // Item uids carry the clock; a fixed one makes a run repeat exactly (GUNSMITH_SEEDS reruns a seed alone).
-    Date.now = () => NOW;
+    // Item uids carry the clock (D.uid; the sessions and Runtimes take NOW). A clock that ticks once per read sorts every
+    // new uid after the earlier ones, so uids compare in the order they were made, as with a real clock, and a seed replays
+    // the same steps whether it runs alone (GUNSMITH_SEEDS) or after others.
+    let tick = 0;
+    Date.now = () => NOW + tick++;
     try { for (const seed of seedList(process.env.GUNSMITH_SEEDS ?? '1-200')) playSeed(seed, stats); } finally { Date.now = clock; }
     t.diagnostic(`done: ${[...stats.done].sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
     t.diagnostic(`failed and retried: ${[...stats.failed].sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
