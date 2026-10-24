@@ -34,6 +34,10 @@ export class Textures {
     const style = this.actorStyle(kind, variant), key = `actor:${style}:${dir}:${frame}`;
     return this.ensure(key, () => (this.art && solActorFrame(this.art, style, dir, frame)) || paintActorFrame(kind, dir, frame));
   }
+  /** Whether the art has this body frame in the style actor() draws: the archetype's own when it has one, else the kind's. */
+  hasBodyFrame(kind: ActorKind, frame: number, variant?: string): boolean {
+    return !!this.art?.has(`coast-${this.actorStyle(kind, variant)}-body-e-f${frame}-v1`);
+  }
   actorFlash(kind: ActorKind, dir: number, frame: number, variant?: string): Texture {
     const base = `actor:${this.actorStyle(kind, variant)}:${dir}:${frame}`; this.actor(kind, dir, frame, variant);
     return this.ensure(`${base}|white`, () => silhouette(this.canvas(base)));
