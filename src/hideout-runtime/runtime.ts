@@ -11,11 +11,20 @@ import { equipCharm, unequipCharm } from '../reputation-luck';
 import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
 import { generateRun } from '../world';
 import { SaveSession, type SessionState, type ExpansionDraft, type ExpansionTransaction } from '../session';
+import { locateGun, planGunEdit, type GunEdit, type GunEditFault, type GunEditPlan, type GunEditPreview } from '../gunsmith/edit';
 import { validPractice } from './training';
 import type * as C from './contract';
 const ok = (): C.Result => ({ ok: true });
 const fail = (reason: C.FailReason, message = '操作未完成，请检查条件后重试。'): C.Result => ({ ok: false, reason, message });
 const source = (s: string): s is C.Source => ['stash', 'bag', 'safe'].includes(s);
+
+/** How the workbench's refusals answer (planGunEdit's codes); every other code is a rule the edit breaks. */
+const GUNSMITH_FAILS: Partial<Record<GunEditFault, C.FailReason>> = {
+    raid: 'locked', 'missing-gun': 'missing-item', 'missing-part': 'missing-item', unowned: 'missing-item', space: 'space', footprint: 'space', unchanged: 'no-effect',
+};
+const gunsmithFail = (code: GunEditFault, message: string) => fail(GUNSMITH_FAILS[code] ?? 'rule', message);
+/** A confirm the base moved under; and one whose token is not the latest preview's (or a preview that cannot be confirmed). */
+const STALE_EDIT = '仓库或装备已改变，请重新预览改装。', OLD_PREVIEW = '请按最新的改装预览确认。';
 
 /** The fee for resetting one attribute's perks (docs/CRITICAL-PERK-DESIGN.md section 5). */
 const PERK_RESET_COST = 500;
@@ -147,7 +156,7 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
             seconds = this.applySamples(draft);
             const result = apply(draft);
             if (result === false || typeof result === 'object' && !result.ok) { rejection = result === false ? fail('rule') : result; return false; }
-            if (['move', 'quick-move', 'secure', 'equip', 'unequip', 'shop', 'quest', 'stash-upgrade'].includes(action)) D.grantRelief(draft.profile);
+            if (['move', 'quick-move', 'secure', 'equip', 'unequip', 'shop', 'quest', 'stash-upgrade', 'gunsmith'].includes(action)) D.grantRelief(draft.profile);
             candidate = structuredClone(draft); return true;
         }); } catch { return fail('rule', '操作数据无效，当前进度未改动。'); }
         if (!ticket) return rejection;
@@ -476,6 +485,53 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
                 if (result.ok) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } return result;
             },
             reset: () => { if (!this.guard()) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } },
+        };
+    }
+    /**
+     * The workbench for one gun (#28 M2-04), shaped like the shop's cart: the player's preview stays private to the
+     * session and is written only by confirm, through `transaction` (one SaveSession commit, nothing kept after a
+     * failed write). planGunEdit does the rules on the committed profile; the session binds each preview to the
+     * equipped slot and the three containers as they were (the positions of the gun and of every part) and to a
+     * one-use token. Contract: C.GunsmithSession.
+     */
+    openGunsmith(gun: string): C.GunsmithSession {
+        const inventory = () => { const p = this.state.save; return JSON.stringify([p.equipment, p.stash, p.bag, p.safe]); };
+        let shown: { edits: GunEdit[]; preview: GunEditPreview; key: string; token: string | null } | null = null;
+        const stale = () => !!shown && shown.key !== inventory();
+        return {
+            view: () => {
+                this.sync();
+                const found = locateGun(this.state.save, gun), old = stale();
+                return structuredClone({ gun: found && { uid: gun, id: found.id, relief: found.relief, where: found.where, state: found.state },
+                    edits: shown?.edits ?? [], preview: shown?.preview ?? null, token: old ? null : shown?.token ?? null, stale: old });
+            },
+            preview: edits => {
+                this.sync(); const blocked = this.guard(); if (blocked) return blocked;
+                let requested: GunEdit[], plan: GunEditPlan;
+                try { requested = structuredClone([...edits]); plan = planGunEdit(this.state.save, gun, requested); } catch { return fail('rule', '改装数据无效，当前进度未改动。'); }
+                if (!plan.ok && !plan.preview) return { ...gunsmithFail(plan.code, plan.reason), ...(plan.edit === null ? {} : { edit: plan.edit }) };
+                const token = plan.ok ? `gunsmith-${++this.serial}` : null;
+                shown = { edits: requested, preview: plan.preview!, key: inventory(), token };
+                return { ok: true, ...(token ? { token } : {}), preview: structuredClone(plan.preview!) };
+            },
+            confirm: token => {
+                this.sync(); const blocked = this.guard(); if (blocked) return blocked;
+                const previewed = shown;
+                if (!previewed?.token || previewed.token !== token) return fail('stale', OLD_PREVIEW);
+                if (stale()) return fail('stale', STALE_EDIT);
+                const result = this.transaction('gunsmith', d => {
+                    const plan = planGunEdit(d.profile, gun, previewed.edits);
+                    if (!plan.ok) return gunsmithFail(plan.code, plan.reason);
+                    if (JSON.stringify(plan.preview) !== JSON.stringify(previewed.preview)) return fail('stale', STALE_EDIT);
+                    const { equipment, stash, bag, safe } = plan.profile;
+                    Object.assign(d.profile, { equipment, stash, bag, safe });
+                    return true;
+                });
+                if (!result.ok) return result;
+                if (shown === previewed) shown = null;
+                return { ok: true, message: '改装已保存。' };
+            },
+            reset: () => { shown = null; },
         };
     }
 }

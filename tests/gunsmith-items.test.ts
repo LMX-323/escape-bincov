@@ -12,7 +12,7 @@ import { decodeStoredProfile } from '../src/profile-codec';
 import { arm, benchRaid, mouseHold, replay } from './fixtures/shooting-bench';
 
 // #28 M2-01: G17 and M4A1 are real guns, and every "is it a gun" check reads one answer, D.isGun.
-// #28 M2-02: the 20 sample attachments are items; only the workbench (M2-04) will put one on a gun.
+// #28 M2-02: the 20 sample attachments are items; only the workbench (M2-04, src/gunsmith/edit.ts) puts one on a gun.
 
 const sources = (dir: string): string[] => readdirSync(dir).flatMap(name => {
     const path = join(dir, name);
