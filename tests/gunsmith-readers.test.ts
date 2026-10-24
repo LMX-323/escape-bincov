@@ -88,9 +88,10 @@ test('reloads and stored magazines stop at the effective capacity exactly where 
 });
 
 test('the Runtime reads the effective stats: the old three fire, reload, weigh and show exactly as before', () => {
-    const recoil: PerkId[] = ['technique-15-b', 'technique-20-b', 'technique-25-b', 'technique-30-b'];
-    for (const b of [benchRaid(), perkBench(recoil, 30)]) {
+    const handling: PerkId[] = ['technique-15-b', 'technique-20-b', 'technique-25-b', 'technique-30-b'];
+    for (const [b, reload] of [[benchRaid(), 1], [perkBench(handling, 30), .85 * .8]] as const) {
         const r = b.runtime, perks = perkEffects(r.layered);
+        assert.equal(perks.reload, reload, 'the second raid holds both reload perks');
         for (const id of FACTORY) {
             arm(b, id);
             const w = r.currentWeapon, h = r.grip, row = D.WEAPONS[id];

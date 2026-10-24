@@ -67,7 +67,7 @@
 - [src/gunsmith/compat.ts](../../src/gunsmith/compat.ts)：兼容判定。`checkInstall` 判一次安装，`validateBuild` 判一整棵配件树，`removalCascade` 列出随父件进待卸的件。
 - 两个文件都是纯规则，已加入 `scripts/ci/source-health.test.mjs` 的 `PURE`。运行时只互相引用，对 `domain.ts` 只有 `import type`。以后由 domain 单向引用它们，不会成环。
 - 不引用 `shooting.ts`。`GunHandling` 和 `Handling` 字段一一对应，测试里两种类型互相赋值，一边改了字段另一边就编译不过。
-- 现在只有测试读它们。`ITEMS`、`WEAPONS`、存档、Runtime、界面和生成物都没改。M0-04 在它们上面算有效属性，M1 才接入游戏。
+- M0 时只有测试读它们，`ITEMS`、`WEAPONS`、存档、Runtime、界面和生成物都没改。M0-04 在它们上面算有效属性；M1-05 起游戏经 `domain.ts` 读它们，见[有效属性](#有效属性m0-04)的「Runtime 怎么接（M1-05）」。
 - 测试：[gunsmith-catalog.test.ts](../../tests/gunsmith-catalog.test.ts)、[gunsmith-compat.test.ts](../../tests/gunsmith-compat.test.ts)。两份测试经 [fixtures/gunsmith-docs.ts](../../tests/fixtures/gunsmith-docs.ts) 自己解析 WEAPONS.md、ATTACHMENTS.md 和 PLAN 第 4 节，再和模块比对，不借用模块的数据。
 
 ### 内部 ID
@@ -215,7 +215,7 @@
 
 - [src/gunsmith/stats.ts](../../src/gunsmith/stats.ts)：纯规则，已加入 `PURE`。运行时只引用 catalog 和 compat，对 `domain.ts` 只有 `import type`。不读角色、行动和存档。
 - `effectiveStats(build, on)`：一种枪加一套配置在战斗里的数值。`on` 是开着的设备的 uid。
-- `effectiveWeapon(build)`、`effectiveHandling(build)`：给 Runtime 的入口，M1-05 用它们替换 `WEAPONS[id]` 和 `handlingOf(id)`。
+- `effectiveWeapon(build)`、`effectiveHandling(build)`：替换 `WEAPONS[id]` 和 `handlingOf(id)` 的入口。M1-05 里 domain 的 `equippedWeapon` 用 `effectiveWeapon`；Runtime 从 `effectiveStats` 一次取 `weapon` 和 `handling` 并缓存。
 - `combineFactors(list)` 是第 3、4 步，`GUARDRAILS` 是逐项护栏表，`CONE_FLOOR` 是锥级护栏。三者都导出，以后工作台界面比较数值可以直接用。
 - 测试：[gunsmith-stats.test.ts](../../tests/gunsmith-stats.test.ts)。覆盖 20 把枪的原厂值、每条护栏（含锥级护栏）、安装顺序、设备开关、弹量替换、枪声下限、角色状态无关，以及固定种子经 compat 生成的 2560 个合法配置。
 
