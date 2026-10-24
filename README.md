@@ -205,6 +205,7 @@ PR 经 CI 验证、维护者确认合并后，`main` 的 CI 成功才会更新 G
 | 游戏规则、物品与搜刮 | [游玩手册](docs/PLAYING.md) · [搜刮说明](docs/LOOTING.md) |
 | 成长、基地、建筑与商场设计 | [RPG 系统](docs/RPG-SYSTEM-DESIGN.md) · [暴击与 Perk（已排期，待实现）](docs/CRITICAL-PERK-DESIGN.md) · [可行性与实施安排](docs/tasks/critical-perk-plan.md) · [建筑逻辑](docs/BUILDING-LOGIC.md) · [商场地图](docs/MALL-VALIDATION-MAP.md) |
 | 现有四类敌人素材（已接入）、十八原型体系（开发中） | [素材与验收](docs/enemy-art/README.md) · [敌人详细设定](docs/ENEMY-DESIGN.md) · [实施进度 #78](https://github.com/xuys2025/escape-bincov/issues/78) |
+| 改枪系统：20 枪、100 配件（已排期，M0 进行中） | [改枪计划](docs/gunsmith/README.md) · [任务与排期](docs/gunsmith/TASKS.md) · [进度 #80](https://github.com/xuys2025/escape-bincov/issues/80) |
 | 世界观与长线故事（文稿已合入，后续玩法待开发） | [世界与主线](docs/WORLD-REGIONS-STORY.md) · [《等海退去》](docs/MAIN-STORY.md) · [文学改写记录](docs/story/GEMINI-REWRITE-20261014.md) |
 | 地图、主线与人物结局的后续实施 | [十二地区 #82](https://github.com/xuys2025/escape-bincov/issues/82) · [市场首批 #83](https://github.com/xuys2025/escape-bincov/issues/83) · [后续主线 #84](https://github.com/xuys2025/escape-bincov/issues/84) · [人物与结局 #85](https://github.com/xuys2025/escape-bincov/issues/85) |
 | 技术架构与贡献流程 | [架构](docs/ARCHITECTURE.md) · [贡献指南](CONTRIBUTING.md) · [任务清单](docs/WORK-QUEUE.md) |
