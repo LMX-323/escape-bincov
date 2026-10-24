@@ -9,7 +9,7 @@ const groups = [
     'browser-options.mjs', 'canvas-click.mjs', 'font-characters.mjs', 'game-bundle.mjs', 'inventory-actions.mjs',
     'pixi-managed-gate.mjs', 'stall-resume.mjs', 'step-filter.mjs', 'storage-fault.mjs', 'title-edge-check.mjs', 'yard-entry.mjs',
     'check-catalog.mjs', 'script-inventory.mjs', 'enemy-catalog-data.ts',
-    'shop-touch-cases.mjs', 'station-acceptance-gates.mjs',
+    'shop-touch-cases.mjs', 'station-acceptance-gates.mjs', 'enemy-mall-browser.mjs',
   ] },
   { kind: 'tool', reason: '素材生成、导入或交付工具；会写源码或资产，不能当作只读测试执行。开工前检查输入清单、哈希、字体环境和输出。', files: [
     'coast-import-assets.mjs', 'mall-assets.mjs', 'opening-assets.mjs', 'station-assets.mjs', 'subset-font.py', 'build-coast-runtime.mjs',

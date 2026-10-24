@@ -104,6 +104,8 @@
 
 新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `LayeredRaid` v5，同时保留历史敌人 v4 和 Perk v3 的规则；记录层 #81 原用 `SessionRecord` 6/7，改枪后统一为 v8，敌人规则以 `enemyBackup` 键表示（[记录版本 v8 与敌人规则](gunsmith/CONTRACTS.md#记录版本-v8-与敌人规则与-81-合并)）；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
+[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
+
 方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
 [enemy-posts.ts](../src/enemy-posts.ts) 拥有市场据点的固定岗位、短巡查与备用位置，target/path/timer/stance 保存在既有敌人字段；其近身护卫不跨层追击。布置、经济守恒和绕行证据见[据点记录](tasks/enemy-market.md)。
