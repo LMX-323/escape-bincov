@@ -508,10 +508,10 @@ const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1]
 const POSE_FRAMES = { 60: 'HHHHHRRR', 30: 'HHRR', 15: 'HR', 12: 'H', 10: 'H' };
 /** Bullets for g: flying east at every rate in BLOW_FRAMES, and south at 60 Hz so that each axis of the kick is checked. */
 const BLOWS = [...Object.keys(BLOW_FRAMES).map(Number).reverse().map(hz => ({ hz, dir: 'east', vx: 1, vy: 0 })), { hz: 60, dir: 'south', vx: 0, vy: 1 }];
-/** More bullets for g, east at 60 Hz, on the enemy drawn as one of #81's archetypes (#75): group B's three have their own
- *  hurt and recovery bodies; the raider boss has its own body but no poses, so it keeps its own frames throughout. */
-const STYLED_BLOWS = [['raider-melee', POSE_FRAMES[60]], ['raider-gunner', POSE_FRAMES[60]], ['raider-lookout', POSE_FRAMES[60]], ['raider-boss', '']]
-  .map(([style, pose]) => ({ hz: 60, dir: 'east', vx: 1, vy: 0, style, pose }));
+/** More bullets for g, east at 60 Hz, on the enemy drawn as one of #81's archetypes (#75), all of which have their own hurt
+ *  and recovery bodies: group B's three, and from group C an armed, an unarmed and a beast archetype plus the raider boss. */
+const STYLED_BLOWS = ['raider-melee', 'raider-gunner', 'raider-lookout', 'raider-boss', 'mercenary-assault', 'salt-hulk', 'saltback-dog']
+  .map(style => ({ hz: 60, dir: 'east', vx: 1, vy: 0, style, pose: POSE_FRAMES[60] }));
 /** g. A blow on slow frames: copies of the live batch, one living enemy 64 px east of the player and hit by a bullet from
  *  BLOWS (drawn in its kind's style) or STYLED_BLOWS, are presented at each rate's fixed delta with the ticker stopped (the
  *  Runtime, input and save never see them). */
