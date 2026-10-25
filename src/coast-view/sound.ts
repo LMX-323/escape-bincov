@@ -13,6 +13,10 @@ import type { Spot, SynthAudio } from '../audio';
 import type { PublishedView, StampedEvent } from '../raid-runtime/contract';
 import { insideFootprint } from './mall-dressing';
 import { enemyVoice } from './enemy-motion';
+import { timbreOfLook } from '../gun-timbre';
+
+/** Other people's gunfire is quieter than the player's own, as the single shared report was (#75 H-02). */
+const ENEMY_SHOT = .55;
 
 export type SoundOut = Pick<SynthAudio, 'start' | 'stop' | 'shot' | 'step' | 'hit' | 'pickup' | 'click' | 'radio' | 'extract' | 'death'
   | 'whiz' | 'impact' | 'dry' | 'heartbeat' | 'setRoomTone' | 'stow' | 'enemy'>;
@@ -41,7 +45,8 @@ export class SampleSound {
   private enemyStates = new Map<string, { phase: string; stance: string; archetype: string }>();
   private enemyMap = '';
 
-  constructor(private readonly out: SoundOut & HitCueOut) {}
+  /** `feel` is read at every shot: the range's A/B switch (ViewOptions.feel). */
+  constructor(private readonly out: SoundOut & HitCueOut, private readonly feel: () => 'enhanced' | 'classic' = () => 'enhanced') {}
 
   /** Stereo position and level of a sound at world (x, y) for the player standing at the listener. */
   spot(x: number, y: number): Spot {
@@ -124,10 +129,12 @@ export class SampleSound {
     const at = (uid: string) => { const p = this.where.get(uid); return p ? this.spot(p.x, p.y) : undefined; };
     switch (e.type) {
       case 'shot': {
-        if (e.shooter === 'player') { this.out.shot(e.weapon); break; }
+        // Each gun family's own report (#75 H-02); the classic A/B setting plays the one report every gun shared before.
+        const timbre = this.feel() === 'classic' ? null : timbreOfLook(e.weapon);
+        if (e.shooter === 'player') { this.out.shot(timbre ?? (e.weapon === 'shotgun' ? 'shotgun' : 'pistol')); break; }
         const s = at(e.shooter) ?? (e.pellets[0] ? this.spot(e.pellets[0].origin.x, e.pellets[0].origin.y) : undefined);
         if (this.spitters.has(e.shooter)) { if (actorShown(e.shooter)) this.out.shot('spit', s); break; }
-        if (s) this.out.shot('enemy', s); else this.out.shot('enemy');
+        if (timbre) this.out.shot(timbre, s, ENEMY_SHOT); else if (s) this.out.shot('enemy', s); else this.out.shot('enemy');
         break;
       }
       case 'melee': if (e.attacker === 'player') this.out.shot('knife'); break;

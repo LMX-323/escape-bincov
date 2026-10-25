@@ -24,6 +24,7 @@ const markup = (exit: string) => `<section class="rg" aria-label="试枪场">
 <div class="rg-label">枪械</div>
 <div class="rg-grid">${RANGE_WEAPONS.map(w => `<button type="button" data-gun="${w}" aria-pressed="false"${w === 'm4a1' ? ' class="rg-wide"' : ''}>${WEAPON_NAMES[w]}</button>`).join('')}</div>
 <div class="rg-grid two rg-gap"><button type="button" data-act="mover" aria-pressed="true">移动目标：开</button><button type="button" data-act="reset">重新开始</button></div>
+<div class="rg-grid rg-gap"><button type="button" data-act="feel" class="rg-full" aria-pressed="true">打击感：新版</button></div>
 <table><thead><tr><th>目标</th><th>命中</th></tr></thead>
 <tbody>${[...TARGETS.map(t => [t.id, `${t.tiles} 格`]), [MOVER.id, '移动目标']].map(([id, label]) => `<tr><td>${label}</td><td data-hits="${id}">0</td></tr>`).join('')}</tbody>
 <tfoot><tr><td>射击</td><td data-shots>0</td></tr></tfoot></table>
@@ -60,6 +61,8 @@ export class RangePanel {
         if (gun) this.range.arm(gun as RangeWeapon);
         else if (act === 'mover') this.range.setMoving(!this.range.moving);
         else if (act === 'reset') this.range.reset();
+        // A/B for #75's hit-feel rounds (ViewOptions.feel): the next shot already sounds the other way.
+        else if (act === 'feel') this.host.opts.feel = this.host.opts.feel === 'classic' ? 'enhanced' : 'classic';
         else if (act === 'fold') this.fold(!this.box.classList.contains('folded'));
         button.blur();
     }
@@ -98,6 +101,8 @@ export class RangePanel {
         for (const id of RANGE_WEAPONS) press(this.q(`[data-gun="${id}"]`), w.id === id);
         const mover = this.q('[data-act="mover"]');
         press(mover, this.range.moving); text(mover, this.range.moving ? '移动目标：开' : '移动目标：关');
+        const feel = this.q('[data-act="feel"]'), classic = this.host.opts.feel === 'classic';
+        press(feel, !classic); text(feel, classic ? '打击感：旧版' : '打击感：新版');
         for (const [id, hits] of Object.entries(stats.hits)) text(this.q(`[data-hits="${id}"]`), String(hits));
         text(this.q('[data-shots]'), String(stats.shots));
         this.q('[data-tip]').hidden = w.id !== 'shotgun';

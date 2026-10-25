@@ -105,6 +105,12 @@ export interface ViewOptions {
   weather: WeatherKind;
   /** Device px per world px (view-scale.ts): default 'whole'; ?crisp=1 'near' (closer whole number); ?crisp=0 'fit' (the old fractional picture). */
   scale?: ViewScaleMode;
+  /**
+   * The range's A/B switch for #75's hit-feel rounds (docs/hit-feel/TASKS.md H-01): 'classic' plays and draws what each
+   * round replaced, 'enhanced' (default) the new version. Read live, so the range panel can switch it mid-raid; today
+   * only the gunshot families (H-02) read it.
+   */
+  feel?: 'enhanced' | 'classic';
 }
 
 export class CoastView {
