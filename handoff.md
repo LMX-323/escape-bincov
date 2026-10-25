@@ -2,7 +2,7 @@
 
 基线 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`，承接 #60 Q-E08。`scripts/ci/resource-helpers.test.mjs` 只导入原 `astra-r7-heap-graph.test.mjs` 与 `station-resource-probe.test.mjs`，让现有 `check:ci` glob 执行四项纯 Node 回归；原文件、算法、阈值与断言不改、不复制。范围是合成有向图的支配关系与独立移点可达性 oracle，以及缺少资源表、故意保留未销毁对象的负对照。两份旧测试从 review 登记为 support，浏览器 probe/trend 等其余 review 工具保持待确认。
 
-直接运行原两文件 4/4 通过，Node 报告 224 ms、进程墙钟 0.302 s；无硬编码环境或输出写入，临时 window fixture 在 finally 恢复。聚合入口单独运行 4/4、168 ms；完整 `pnpm test` 874/874、`pnpm check:ci` 68/68、`pnpm package` 全部通过，入口文档检查与 `git diff --check` 通过，HTML/两个 ZIP 与基线发行哈希一致。没有启动浏览器、trend 或 F20，四项通过不代表资源签收。本轮未推送、未开 PR、未合并或发布，交由 root 审阅。
+直接运行原两文件 4/4 通过，Node 报告 224 ms、进程墙钟 0.302 s；无硬编码环境或输出写入，临时 window fixture 在 finally 恢复。聚合入口单独运行 4/4、168 ms；完整 `pnpm test` 874/874、`pnpm check:ci` 68/68、`pnpm package` 全部通过，入口文档检查与 `git diff --check` 通过，HTML/两个 ZIP 与基线发行哈希一致。没有启动浏览器、trend 或 F20，四项通过不代表资源签收。root 已审阅；后续仅移除元数据测试对中文说明文字的无关约束，保留分类断言，并复验检查导航测试与入口文档。本地实现已完成，远端 PR 与准确 head 以交付消息为准；未合并或发布。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 

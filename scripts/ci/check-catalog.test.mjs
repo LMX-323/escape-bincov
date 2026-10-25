@@ -69,7 +69,6 @@ test('all script files are classified; unknown and stale entries fail without de
   for (const path of ['scripts/astra-r7-heap-graph.test.mjs', 'scripts/station-resource-probe.test.mjs']) {
     const item = inventory.find(item => item.path === path);
     assert.equal(item.kind, 'support');
-    assert.match(item.reason, /resource-helpers\.test\.mjs.*四项纯 Node/);
   }
   for (const path of ['scripts/station-resource-probe.mjs', 'scripts/station-resource-trend.mjs']) {
     assert.equal(inventory.find(item => item.path === path).kind, 'review', 'importing the pure tests does not promote their browser tools');
