@@ -6,11 +6,25 @@
 
 新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；产品改动已由 root 与独立审阅者复核，获准推送并创建关联 #75 的草稿 PR；不自行合并或发布，最终 head 与 CI 以 PR 正文为准。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
 
+同步 main `ae2ad6b`（#120、#121 已合入）：唯一冲突在 `sound.ts` 的 `case 'shot'` 开头，按 [PR 评论](https://github.com/xuys2025/escape-bincov/pull/113#issuecomment-6398609630)保留 #121 的音色选择（`timbre`）和本 PR 的弹丸登记，玩家开枪按音色族播放；任务清单 #75 一行改掉“分枪种枪声未排期”的过时说法。合并后单测 887/887（含本 PR 10 项）、`pnpm package` 通过，`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）。浏览器、试听和真机仍未运行。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
 
 本地 874 单测（同步 #103 后）、`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）、`pnpm package`、`test:portable` 通过；游戏 HTML 与 main 提交的逐字节相同，便携 ZIP 只因游玩说明一句话变化。发布 job 只能在 main 上运行，本地只用假 gh 走过首次创建与替换两条路径。维护者确认仓库外的服务器镜像会从提交读清单/HTML，合并前要先改：CI 打包时清单加上 `commit`、`run`，镜像改读发布页清单，核对方法见 CI 说明；以后新增固定旧客户端的取法待定。准确 head、CI 与维护者确认见 [PR #105](https://github.com/xuys2025/escape-bincov/pull/105)。
+
+## 2026-10-25 #75：打击感剩余排期与 C 组美术任务书（`docs/hit-feel-schedule`）
+
+维护者要求把 #75 剩下的改进排期、准备制作，美术写任务书交 Sol。基线 main `974a3a8`。[任务与排期](docs/hit-feel/TASKS.md)按改枪任务页的格式列出起点、在途 PR、要维护者定的事、四个实现 PR 和 H-01～H-10，合入即表示已排期；分枪种枪声排最前，因为改枪 M2-11（11-13）要在它上面加消音变体。[C 组任务书](docs/hit-feel-art/TASK-C.md)覆盖 #81 其余 15 类原型（9 类持械人形守肩线，3 类徒手人形和 3 类兽形不画手臂、不受肩线限制），验收条件与 A/B 组单测一致。
+
+15 张模板 `assets/hit-feel/templates/<id>-hurt-template-v1.png` 用 Node 逐像素放大 8 倍生成，不经过浏览器画布，第 0 列回读与运行站立帧逐像素一致；来源帧与哈希在 `sources-c.json`。B 组上次第 0 列有 1 级颜色误差，原因正是当时的模板经过了画布。#113、#119 都改了任务清单 #75 一行和本文件开头，本批另起一行、插在这里，避免冲突。只改文档和不进游戏的模板，没有代码、存档或构建变化。
+
+## 2026-10-25 #75 PR ①：分枪种枪声与试枪场新旧对比（`feat/hit-feel-sounds`）
+
+按[排期](docs/hit-feel/TASKS.md) H-01、H-02，基线 main `dfa1199`（#120 已合入）。`SynthAudio.shot` 新增 11 个音色族的配方（`REPORTS`：起音、主体、低频、尾音、机械声），[gun-timbre.ts](src/gun-timbre.ts) 给改枪目录 20 把枪各定一族，给 M2-11 用；现有开火事件只带外观，所以 `sound.ts` 先按外观取族，手枪、卡宾、双管、M4A1 样本各不相同。他人开枪按 0.55 倍。旧的 `pistol` / `shotgun` / `enemy` 三种保留，试枪场面板“打击感：新版 / 旧版”切换 `ViewOptions.feel`，旧版就是改动前的声音。新音色仍走 `shot()` 这个名字，#113 按调用名统计开枪声的测试不受影响。
+
+离线测得前 150 ms 响度：手枪 −5%、卡宾 −4%、M4A1 −7%、双管 +2%（相对改动前）。单测 877/877、`coast-audio-test` 14/14、`test:range` 2/2（含开关检查）。试听 WAV 在临时分支 `preview/hit-feel-sounds`，听完删除；方法与数据见[证据](docs/evidence/issue75-gun-sounds/README.md)。真机和真人试听未做；准确 head 与 CI 见 PR。
 
 ## 2026-10-24 EN-19商场二层遭遇续作
 
