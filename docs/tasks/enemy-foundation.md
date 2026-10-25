@@ -1,5 +1,7 @@
 # 敌人体系实施：首批基础能力
 
+2026-10-24：#81街区阶段已获授权合并为 `67a7468`，完整主线CI和Pages成功。后续 EN-19 的现有商场二层局部遭遇见[商场记录](enemy-mall.md)，由 `feat/enemy-mall-r06` 承接；该批复用 7/3/5 与 actor v1，不将其余地区或 EN-19～22 标作完成。下面保留原基础批及街区阶段历史。
+
 承接 [Issue #78](https://github.com/xuys2025/escape-bincov/issues/78) 和已合入的设计 [PR #67](https://github.com/xuys2025/escape-bincov/pull/67)。实施分支 `feat/enemy-foundation`，续作[草稿 PR #81](https://github.com/xuys2025/escape-bincov/pull/81)。起点为 main `8ef783f`；2026-10-23 正常合入 `76adbd6`，随后同步 `b38f23d`，包含射击 #39、Perk 设计 #40、README #86、契约审计 #79 与受击慢帧修复 #88。准确提交与 CI 以 PR 为准。
 
 ## 当前交付

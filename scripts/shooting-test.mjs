@@ -507,24 +507,34 @@ const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1]
 const POSE_FRAMES = { 60: 'HHHHHRRR', 30: 'HHRR', 15: 'HR', 12: 'H', 10: 'H' };
 /** Bullets for g: flying east at every rate in BLOW_FRAMES, and south at 60 Hz so that each axis of the kick is checked. */
 const BLOWS = [...Object.keys(BLOW_FRAMES).map(Number).reverse().map(hz => ({ hz, dir: 'east', vx: 1, vy: 0 })), { hz: 60, dir: 'south', vx: 0, vy: 1 }];
+/** More bullets for g, east at 60 Hz, on the enemy drawn as one of #81's archetypes (#75): group B's three have their own
+ *  hurt and recovery bodies; the raider boss has its own body but no poses, so it keeps its own frames throughout. */
+const STYLED_BLOWS = [['raider-melee', POSE_FRAMES[60]], ['raider-gunner', POSE_FRAMES[60]], ['raider-lookout', POSE_FRAMES[60]], ['raider-boss', '']]
+  .map(([style, pose]) => ({ hz: 60, dir: 'east', vx: 1, vy: 0, style, pose }));
 /** g. A blow on slow frames: copies of the live batch, one living enemy 64 px east of the player and hit by a bullet from
- *  BLOWS, are presented at each rate's fixed delta with the ticker stopped (the Runtime, input and save never see them). */
+ *  BLOWS (drawn in its kind's style) or STYLED_BLOWS, are presented at each rate's fixed delta with the ticker stopped (the
+ *  Runtime, input and save never see them). */
 async function blowOnSlowFrames(page) {
   const runs = await page.evaluate(blows => {
     const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
     if (!foe) return null;
-    const at = { x: Math.round(p.x) + 64, y: Math.round(p.y) }, moved = { ...foe, ...at, vx: 0, vy: 0, regionId: p.regionId };
-    const batch = events => ({ ...b, events, frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } });
+    const { tactics: _, ...plain } = foe, at = { x: Math.round(p.x) + 64, y: Math.round(p.y) };
     h.app.ticker.stop();
     try {
-      return blows.map(({ hz, dir, vx, vy }) => {
+      return blows.map(({ hz, dir, vx, vy, style, pose: want }) => {
+        // A styled enemy carries the tactics fields the view reads, with that archetype.
+        const tactics = style ? { tactics: { archetype: style, name: style, phase: 'idle', stance: 'idle', awareness: 0, left: 0, total: 1, range: 30, aim: Math.PI, warningLeft: 0, boundary: null } } : {};
+        const moved = { ...plain, ...at, vx: 0, vy: 0, regionId: p.regionId, ...tactics };
+        const batch = events => ({ ...b, events, frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } });
         // The Runtime's angle for a bullet's hit (layer-transition.ts): atan2(-vy, -vx), back toward the shooter.
         const hit = { type: 'hurt', cause: 'blow', uid: foe.uid, at, damage: 10, critical: false, angle: Math.atan2(-vy, -vx), seq: 0, stamp: b.stamp, durability: 'accepted' };
         const dt = 1 / hz;
         // Idle frames age any earlier flash or kick away; the body then stands where no kick puts it.
         for (let i = 0; i < 3; i++) v.present(batch([]), .1);
         const g = v.actors.get(foe.uid), rest = { x: g.body.x, y: g.body.y }, before = new Set(v.fx.live);
-        const pose = () => g.body.texture === v.tex.actor(foe.kind, g.dir, 5) ? 'H' : g.body.texture === v.tex.actor(foe.kind, g.dir, 6) ? 'R' : '-';
+        // H hurt, R recovery, - one of the body's own idle and walk frames, ? anything else (another style, the placeholder).
+        const own = n => g.body.texture === v.tex.actor(moved.kind, g.dir, n, style);
+        const pose = () => own(5) ? 'H' : own(6) ? 'R' : [0, 1, 2, 3, 4].some(own) ? '-' : '?';
         const read = () => ({ body: g.body.visible, flash: g.flash.visible, kick: [g.body.x - rest.x, g.body.y - rest.y], pose: pose() });
         v.present(batch([hit]), dt);
         // The blow's blood drops, still in the air after one frame: each one's speed along the bullet (px/s).
@@ -532,21 +542,21 @@ async function blowOnSlowFrames(page) {
         // The hit's own frame first, then a quarter of a second.
         const frames = [read()];
         for (let i = 1; i * dt < .25; i++) { v.present(batch([]), dt); frames.push(read()); }
-        return { hz, dir, bullet: [vx, vy], uid: foe.uid, kind: foe.kind, frames, blood };
+        return { hz, dir, style, want, bullet: [vx, vy], uid: foe.uid, kind: foe.kind, frames, blood };
       });
     } finally { h.app.ticker.start(); }
-  }, BLOWS);
+  }, [...BLOWS, ...STYLED_BLOWS]);
   check(runs, 'no living enemy to hit');
   const cases = runs.map(r => {
     const flash = r.frames.map(q => q.flash), kick = r.frames.map(q => q.kick[0] !== 0 || q.kick[1] !== 0);
     const count = s => s.filter(Boolean).length, leading = s => s.slice(0, count(s)).every(Boolean);
-    return { hz: r.hz, dir: r.dir, enemy: `${r.kind} ${r.uid}`, flashFrames: count(flash), kickFrames: count(kick), fromFirstFrame: leading(flash) && leading(kick),
+    return { hz: r.hz, dir: r.dir, style: r.style ?? null, enemy: `${r.kind} ${r.uid}`, flashFrames: count(flash), kickFrames: count(kick), fromFirstFrame: leading(flash) && leading(kick),
       kicksPx: [...new Set(r.frames.filter((q, i) => kick[i]).map(q => q.kick.join(',')))], wantPx: r.bullet.map(d => d * 2).join(','), drawn: r.frames.every(q => q.body),
       hitFrame: { flash: r.frames[0].flash, kickPx: r.frames[0].kick.join(',') }, flashByFrame: flash.map(Number).join(''), kickByFrame: kick.map(Number).join(''),
-      bloodAlongBullet: r.blood, poseByFrame: r.frames.map(q => q.pose).join(''), wantPose: POSE_FRAMES[r.hz].padEnd(r.frames.length, '-') };
+      bloodAlongBullet: r.blood, poseByFrame: r.frames.map(q => q.pose).join(''), wantPose: (r.want ?? POSE_FRAMES[r.hz]).padEnd(r.frames.length, '-') };
   });
   const fail = cases.flatMap(c => {
-    const [flash, kick] = BLOW_FRAMES[c.hz], out = [], at = `${c.hz} Hz ${c.dir}`;
+    const [flash, kick] = BLOW_FRAMES[c.hz], out = [], at = `${c.hz} Hz ${c.dir}${c.style ? ` as ${c.style}` : ''}`;
     if (!c.drawn) out.push(`${at}: the enemy was not drawn`);
     if (c.flashFrames !== flash || c.kickFrames !== kick || !c.fromFirstFrame) out.push(`${at}: flash on ${c.flashFrames} and kick on ${c.kickFrames} frames, by frame ${c.flashByFrame} / ${c.kickByFrame} (want ${flash} and ${kick} from the hit's own frame)`);
     // Knocked 2 px the way the bullet flew (#75), while the blood still sprays back toward the shooter.
