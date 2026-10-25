@@ -4,7 +4,7 @@
 
 `hurt.bullet` 只增加临时展示关联，经典与分层执行器都从真实弹丸传 UID；`SampleSound` 用已有 `shot.pellets` 按开火与目标去重，后来暴击可补一次提示，不改变击杀标记或声音。缓存仅保留活动弹丸和本批引用的弹丸；末弹的 impact 后仍可处理 hurt，下一无引用帧释放，run/world/layout/map/epoch 切换清空。刷新旧弹和近战没有已见开火来源时继续按批次降级，不猜事件邻接、不加持久字段或版本。
 
-新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；不推送、开 PR、合并或发布，先交 root 审阅。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
+新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；产品改动已由 root 与独立审阅者复核，获准推送并创建关联 #75 的草稿 PR；不自行合并或发布，最终 head 与 CI 以 PR 正文为准。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
