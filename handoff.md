@@ -1,3 +1,9 @@
+## 2026-10-25 改枪 M2 原 PR 仅同步主线（#106）
+
+原 head `9869528` / `feat/gunsmith-m2` 正常合并 main `974a3a8` 为 `03310ba`，只处理 README 与五个生成物的冲突：保留 #105 删除，并保留本地先构建、M4A1/G17 已是正式枪械的说明。其他文件均为两亲自动合并结果；M2 功能、任务完成状态及合同未额外改动，继续原草稿 PR。
+
+本轮 Linux / Node 24.19.0 / pnpm 11.25.0 单测 883/883、CI 守卫 64/64、package 通过，生成物未提交。原 head 的 16 套浏览器属于历史证据；本次同步后的浏览器验证以 [PR #106](https://github.com/xuys2025/escape-bincov/pull/106) 的准确 head 完整 CI 为准，不自行合并或发布。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
