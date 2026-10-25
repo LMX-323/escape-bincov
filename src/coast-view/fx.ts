@@ -24,15 +24,30 @@ export class Fx {
     this.live.push({ region: [], s, x: o.x, y: o.y, h: o.h, vx: o.vx, vy: o.vy, vh: o.vh, age: 0, ttl: o.ttl, g: o.g ?? 520, settle: o.settle ?? 'fade', color: o.color });
   }
 
-  sparks(x: number, y: number, h: number, nx: number, ny: number, rnd: () => number) {
-    for (let i = 0; i < 7; i++) {
+  /**
+   * A round stopped by a surface: warm sparks and drifting grey chips along the normal. Given its surface (#75 H-05), a
+   * wall also puffs pale dust, and a door throws a few sparks and falling wooden splinters instead. Without one (null:
+   * the classic A/B setting, or an unknown surface) it is the one spray every surface shared before.
+   */
+  sparks(x: number, y: number, h: number, nx: number, ny: number, rnd: () => number, surface: 'wall' | 'door' | 'actor' | null = null) {
+    const door = surface === 'door';
+    for (let i = 0; i < (door ? 3 : 7); i++) {
       const a = Math.atan2(ny, nx) + (rnd() - .5) * 2.2, v = 60 + rnd() * 120;
       this.spawn({ x, y, h, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6, vh: 40 + rnd() * 90, ttl: .18 + rnd() * .22, color: i % 3 ? 0xffd27a : 0xfff1c8, add: true });
     }
+    if (door) {
+      for (let i = 0; i < 6; i++) {
+        const a = Math.atan2(ny, nx) + (rnd() - .5) * 1.6, v = 40 + rnd() * 70;
+        this.spawn({ x, y, h, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6, vh: 30 + rnd() * 50, ttl: .5 + rnd() * .3, color: i % 2 ? 0x7a5a3c : 0x5e4630, g: 360, size: rnd() < .4 ? 2 : 1 });
+      }
+      return;
+    }
     for (let i = 0; i < 4; i++) this.spawn({ x, y, h, vx: nx * 20 + (rnd() - .5) * 30, vy: ny * 12 + (rnd() - .5) * 10, vh: 10 + rnd() * 20, ttl: .45 + rnd() * .3, color: 0x8d8576, g: 30, size: 2 });
+    if (surface === 'wall') for (let i = 0; i < 3; i++) this.spawn({ x: x + nx * 2, y: y + ny * 2, h, vx: nx * 10 + (rnd() - .5) * 12, vy: ny * 6 + (rnd() - .5) * 6, vh: 6 + rnd() * 10, ttl: .6 + rnd() * .3, color: 0xa39b8a, g: -4, size: 2 });
   }
-  blood(x: number, y: number, h: number, angle: number, rnd: () => number) {
-    for (let i = 0; i < 6; i++) {
+  /** `drops`: how many (#75 H-04 sprays once per blow, more for more rounds; 6 is one round's). */
+  blood(x: number, y: number, h: number, angle: number, rnd: () => number, drops = 6) {
+    for (let i = 0; i < drops; i++) {
       const a = angle + (rnd() - .5) * 1.2, v = 40 + rnd() * 70;
       this.spawn({ x, y, h, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .7, vh: rnd() * 60, ttl: 1.5, color: i % 2 ? 0x6e2f2a : 0x8c3b33, settle: 'decal', size: rnd() < .3 ? 2 : 1 });
     }

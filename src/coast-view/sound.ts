@@ -178,7 +178,8 @@ export class SampleSound {
         if (this.spitters.has(e.owner ?? '')) {
           if (shown(e.lastFree)) this.out.shot('acid-hit', this.spot(e.lastFree.x, e.lastFree.y));
         } else if (e.reason === 'blocked' && (e.surface === 'wall' || e.surface === 'door') && shown(e.lastFree)) {
-          const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s);
+          // Stone or wood (#75 H-05); the classic A/B setting plays the one cue both shared before.
+          const s = this.spot(e.lastFree.x, e.lastFree.y); if (s.gain > .3) this.out.impact(s, this.feel() === 'classic' ? undefined : e.surface);
         }
         break;
       case 'looted': this.out.stow(); break;
