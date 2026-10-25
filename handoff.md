@@ -10,6 +10,12 @@
 
 15 张模板 `assets/hit-feel/templates/<id>-hurt-template-v1.png` 用 Node 逐像素放大 8 倍生成，不经过浏览器画布，第 0 列回读与运行站立帧逐像素一致；来源帧与哈希在 `sources-c.json`。B 组上次第 0 列有 1 级颜色误差，原因正是当时的模板经过了画布。#113、#119 都改了任务清单 #75 一行和本文件开头，本批另起一行、插在这里，避免冲突。只改文档和不进游戏的模板，没有代码、存档或构建变化。
 
+## 2026-10-25 #75 PR ①：分枪种枪声与试枪场新旧对比（`feat/hit-feel-sounds`）
+
+按[排期](docs/hit-feel/TASKS.md) H-01、H-02，基线 main `dfa1199`（#120 已合入）。`SynthAudio.shot` 新增 11 个音色族的配方（`REPORTS`：起音、主体、低频、尾音、机械声），[gun-timbre.ts](src/gun-timbre.ts) 给改枪目录 20 把枪各定一族，给 M2-11 用；现有开火事件只带外观，所以 `sound.ts` 先按外观取族，手枪、卡宾、双管、M4A1 样本各不相同。他人开枪按 0.55 倍。旧的 `pistol` / `shotgun` / `enemy` 三种保留，试枪场面板“打击感：新版 / 旧版”切换 `ViewOptions.feel`，旧版就是改动前的声音。新音色仍走 `shot()` 这个名字，#113 按调用名统计开枪声的测试不受影响。
+
+离线测得前 150 ms 响度：手枪 −5%、卡宾 −4%、M4A1 −7%、双管 +2%（相对改动前）。单测 877/877、`coast-audio-test` 14/14、`test:range` 2/2（含开关检查）。试听 WAV 在临时分支 `preview/hit-feel-sounds`，听完删除；方法与数据见[证据](docs/evidence/issue75-gun-sounds/README.md)。真机和真人试听未做；准确 head 与 CI 见 PR。
+
 ## 2026-10-24 EN-19商场二层遭遇续作
 
 原PR104、feat/enemy-mall-r06；维护者已明确“授权104”，检查通过后可正常合并，不反复索取授权。执行合并时#98刚合入，已正常同步main49894e9（含#102），双方源码自动合并，生成物经正式package重建；没有强推、推main或绕过检查。

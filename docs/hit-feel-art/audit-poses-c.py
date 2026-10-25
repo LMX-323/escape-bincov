@@ -192,6 +192,7 @@ def main(edition='v1'):
     report['reviewStatus'] = 'DRAFT_AWAITING_INDEPENDENT_ART_AND_SOURCE_CENTRE_REVIEW'
     report['centreInterpretation'] = 'Anchor remains (16,48); no global translation. Alpha-centroid shift <= 1 is tested. Absolute alpha-centroid 16+/-1 is NOT claimed: original templates already violate it, especially blockade-patrol. Cell anchor, anatomical centre and alpha centroid differ. Independent reviewer must confirm the intended centre metric; neither source columns nor locked foot/shoulder pixels were altered to conceal this.'
     if edition == 'v2':
+        report['authoringBase'] = V1_HEAD
         report['review'] = REVIEW
         report['reviewStatus'] = '13_SPECIES_ACCEPTED_AWAITING_TWO_SPECIES_V2_VISUAL_RECHECK'
         report['centreInterpretation'] = 'Independent review accepted the relative criterion: horizontal centroid shift from the same-direction idle frame <= 1 logical pixel. This is the existing centreShiftWithinOne check. Source absolute-centre exceptions are diagnostics only, not a pending acceptance condition.'

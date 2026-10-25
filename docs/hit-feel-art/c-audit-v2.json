@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "templateMain": "974a3a8d1ad2a7662c3a828226295d6c9b31eb64",
-  "authoringBase": "dfa1199b29efd2628a8029d750f80156a1b5051d",
+  "authoringBase": "aff5d48efdbaa76b499fbc70f68adcb8f43ae89a",
   "method": "Independent RGBA checks on saved 8x PNGs, all 75 current runtime sources and 15 template hashes. Fixed contour foot band uses source bbox bottom - 4, not blindly canvas rows 44-47.",
   "sheets": [
     {

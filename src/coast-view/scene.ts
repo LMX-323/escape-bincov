@@ -93,6 +93,12 @@ const dirOf = (a: number) => ((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8;
 
 export interface ViewOptions {
   debug: boolean; xray: boolean; mood: number; reducedMotion: boolean;
+  /**
+   * The range's A/B switch for #75's hit-feel rounds (docs/hit-feel/TASKS.md H-01): 'classic' plays and draws what each
+   * round replaced, 'enhanced' (default) the new version. Read live, so the range panel can switch it mid-raid; today
+   * only the gunshot families (H-02) read it.
+   */
+  feel?: 'enhanced' | 'classic';
   viewTiles: 24 | 28;
   collapseTall: boolean;
   /** Decoded Sol samples; null keeps the procedural placeholders. */
