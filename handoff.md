@@ -1,3 +1,11 @@
+## 2026-10-25 #75：双管命中音按开火与目标聚合
+
+独立分支 `fix/shotgun-hit-sounds`，基线 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`。真实 Runtime 反例：60 Hz / 靶距 88 px、120 Hz / 76 px、240 Hz / 80 px 的同一枪六弹丸落在相邻两批，旧音效响两次；另一次合法一秒长帧内两枪十二次命中，旧音效反而只响一次。四项新增断言在旧代码全部失败。开枪事件、枪声与枪口原本就是一枪一次，本批没有改它们。
+
+`hurt.bullet` 只增加临时展示关联，经典与分层执行器都从真实弹丸传 UID；`SampleSound` 用已有 `shot.pellets` 按开火与目标去重，后来暴击可补一次提示，不改变击杀标记或声音。缓存仅保留活动弹丸和本批引用的弹丸；末弹的 impact 后仍可处理 hurt，下一无引用帧释放，run/world/layout/map/epoch 切换清空。刷新旧弹和近战没有已见开火来源时继续按批次降级，不猜事件邻接、不加持久字段或版本。
+
+新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；不推送、开 PR、合并或发布，先交 root 审阅。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
