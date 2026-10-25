@@ -1,3 +1,11 @@
+## 2026-10-25 #75：枪身回缩私有候选（未视觉签收）
+
+独立 `feat/weapon-retraction-prototype` 从 fetch 后 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64` 开始，不改 #113/#106 或私有整合树，先本地验证，再由 root 审阅决定公开交付。root 选择纯表现 B 候选：真实 shot 当帧原位置；之后无新 shot 的帧按现有 scene 时间先扣除 80 ms 剩余，再投影最多 3 世界像素轴向回缩。两数是待试玩候选，未改变 Runtime origin、角度、弹道、存档或枪械手感。超过时段直接零，不保证低帧看见运动，不排逐枪补播队列。
+
+袖管和武器描边继续从最终 weapon transform 跟随；短暂火光后续跟当前实际像素枪口，tracer 保留发射时 from/off 快照。隐藏、武器外观切换、死亡、reducedMotion 清脉冲，actor/map/epoch 释放所有短期状态；未知旧弹无 shot 不造动作。Node 时序与投影回归、实际离线同 packet A/B 和 S1 回归的最终结果见[本候选证据目录](docs/evidence/issue75-weapon-retraction/README.md)；首版“下一无 shot 帧强画峰值”已按 root 指正移除，避免长间隔后补播过期动作。
+
+尚未真人试玩、真机或最终视觉签收；本地完整领域 880/880、工程守卫 64/64、12AB、原射击套件 10/10 与最终类型/打包通过；最后注释后实际制品哈希相同，准确制品和起止见证据摘要。root 已审源码与四张截图，授权正常推送并建立独立草稿 PR；仍未动态手感/真机签收，不转 Ready、不自行合并或发布。#75 其余事项和 #106 M2 原归属保持。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
