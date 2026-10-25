@@ -6,7 +6,7 @@
 
 新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；产品改动已由 root 与独立审阅者复核，获准推送并创建关联 #75 的草稿 PR；不自行合并或发布，最终 head 与 CI 以 PR 正文为准。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
 
-同步 main `ae2ad6b`（#120、#121 已合入）：唯一冲突在 `sound.ts` 的 `case 'shot'` 开头，按 [PR 评论](https://github.com/xuys2025/escape-bincov/pull/113#issuecomment-6398609630)保留 #121 的音色选择（`timbre`）和本 PR 的弹丸登记，玩家开枪按音色族播放；任务清单 #75 一行改掉“分枪种枪声未排期”的过时说法。合并后单测 887/887（含本 PR 10 项）、`pnpm package` 通过，`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）。浏览器、试听和真机仍未运行。
+同步 main `ae2ad6b`（#120、#121 已合入）：唯一冲突在 `sound.ts` 的 `case 'shot'` 开头，按 [PR 评论](https://github.com/xuys2025/escape-bincov/pull/113#issuecomment-6398609630)保留 #121 的音色选择（`timbre`）和本 PR 的弹丸登记，玩家开枪按音色族播放；任务清单 #75 一行改掉“分枪种枪声未排期”的过时说法。合并后单测 887/887（含本 PR 10 项）、`pnpm package` 通过，`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）。之后又同步 main `7d1827c`（#122，C 组姿态图集，只有素材和文档），没有冲突，单测 887/887、`pnpm package` 通过，HTML 与上次逐字节相同。浏览器、试听和真机仍未运行。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
