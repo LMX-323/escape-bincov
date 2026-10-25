@@ -6,6 +6,8 @@ than silently recentering asymmetric source art to make an absolute test pass.
 """
 import hashlib
 import json
+import argparse
+import subprocess
 from collections import deque
 from pathlib import Path
 
@@ -13,6 +15,9 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 ENTRIES = json.loads((ROOT / 'assets/hit-feel/templates/sources-c.json').read_text(encoding='utf-8'))['templates']
+REWORKED = {'saltback-dog', 'sac-spitter'}
+REVIEW = 'https://github.com/xuys2025/escape-bincov/pull/122#issuecomment-6398466408'
+V1_HEAD = 'aff5d48efdbaa76b499fbc70f68adcb8f43ae89a'
 
 
 def exact(a, b):
@@ -78,12 +83,37 @@ def pose_checks(idle, pose, phase, armed):
     return checks
 
 
-def main():
+def geometry(idle, pose):
+    before, after = [im.getchannel('A').getbbox() for im in [idle, pose]]
+    measures = {}
+    for key, threshold in [('visiblePixelArea', 1), ('solidPixelArea', 128)]:
+        original = sum(p[3] >= threshold for p in idle.getdata())
+        current = sum(p[3] >= threshold for p in pose.getdata())
+        measures[key] = {'idle': original, 'pose': current, 'ratio': current / original}
+    original_mass = sum(p[3] for p in idle.getdata())
+    mass = sum(p[3] for p in pose.getdata())
+    measures['alphaMass'] = {'idle': original_mass, 'pose': mass, 'ratio': mass / original_mass}
+    measures['idleWidth'] = before[2] - before[0]
+    measures['poseWidth'] = after[2] - after[0]
+    return measures
+
+
+def size_checks(measures):
+    return {
+        'widthLossAtMostOne': measures['poseWidth'] >= measures['idleWidth'] - 1,
+        'visibleAreaRetainedAtLeast90Percent': measures['visiblePixelArea']['pose'] * 10 >= measures['visiblePixelArea']['idle'] * 9,
+        'solidAreaRetainedAtLeast90Percent': measures['solidPixelArea']['pose'] * 10 >= measures['solidPixelArea']['idle'] * 9,
+        'alphaMassRetainedAtLeast90Percent': measures['alphaMass']['pose'] * 10 >= measures['alphaMass']['idle'] * 9,
+    }
+
+
+def main(edition='v1'):
     report = {'schema': 1, 'templateMain': '974a3a8d1ad2a7662c3a828226295d6c9b31eb64', 'authoringBase': 'dfa1199b29efd2628a8029d750f80156a1b5051d', 'method': 'Independent RGBA checks on saved 8x PNGs, all 75 current runtime sources and 15 template hashes. Fixed contour foot band uses source bbox bottom - 4, not blindly canvas rows 44-47.', 'sheets': [], 'failures': [], 'sourceCentreExceptions': [], 'negativeControls': []}
     sample = None
     for entry in ENTRIES:
         id = entry['id']
-        path = ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-v1.png'
+        version = 'v2' if edition == 'v2' and id in REWORKED else 'v1'
+        path = ROOT / f'assets/hit-feel/sources/{id}-hurt-sheet-{version}.png'
         sheet = Image.open(path).convert('RGBA')
         template_path = ROOT / entry['template']
         template = Image.open(template_path).convert('RGBA')
@@ -110,9 +140,14 @@ def main():
             for col, (phase, name) in enumerate([(2, 'hurt'), (1, 'recovery')], 1):
                 pose = small.crop((col * 32, row * 48, (col + 1) * 32, (row + 1) * 48))
                 required = pose_checks(idle, pose, phase, entry['group'] == 'armed')
+                shape = geometry(idle, pose) if edition == 'v2' and id in REWORKED else None
+                if shape:
+                    required.update(size_checks(shape))
                 failures = [key for key, result in required.items() if not result]
                 report['failures'].extend(f"{id}/{frame['dir']}/{name}: {key}" for key in failures)
                 phases.append({'phase': name, 'checks': required, 'top': pose.getchannel('A').getbbox()[1], 'sourceTop': original_top, 'footBandFrom': idle.getchannel('A').getbbox()[3] - 4, 'centroidX': round(centroid(pose), 4), 'centreShift': round(centroid(pose) - idle_centre, 4), 'changedLogicalPixels': sum(a != b for a, b in zip(idle.getdata(), pose.getdata())), 'opaqueComponents': components(pose), 'sourceOpaqueComponents': components(idle), 'holes': sorted(holes(pose)), 'sourceHoles': sorted(holes(idle))})
+                if shape:
+                    phases[-1]['geometry'] = shape
                 if sample is None and entry['group'] == 'armed' and phase == 2:
                     sample = (idle.copy(), pose.copy())
             closer = phases[1]['changedLogicalPixels'] < phases[0]['changedLogicalPixels']
@@ -156,13 +191,46 @@ def main():
     report['pixelStatus'] = 'PASS' if not report['failures'] else 'FAIL'
     report['reviewStatus'] = 'DRAFT_AWAITING_INDEPENDENT_ART_AND_SOURCE_CENTRE_REVIEW'
     report['centreInterpretation'] = 'Anchor remains (16,48); no global translation. Alpha-centroid shift <= 1 is tested. Absolute alpha-centroid 16+/-1 is NOT claimed: original templates already violate it, especially blockade-patrol. Cell anchor, anatomical centre and alpha centroid differ. Independent reviewer must confirm the intended centre metric; neither source columns nor locked foot/shoulder pixels were altered to conceal this.'
-    destination = ROOT / 'docs/hit-feel-art/c-audit-v1.json'
+    if edition == 'v2':
+        report['review'] = REVIEW
+        report['reviewStatus'] = '13_SPECIES_ACCEPTED_AWAITING_TWO_SPECIES_V2_VISUAL_RECHECK'
+        report['centreInterpretation'] = 'Independent review accepted the relative criterion: horizontal centroid shift from the same-direction idle frame <= 1 logical pixel. This is the existing centreShiftWithinOne check. Source absolute-centre exceptions are diagnostics only, not a pending acceptance condition.'
+        original = json.loads((ROOT / 'assets/hit-feel/sources/editions-c-v1.json').read_text(encoding='utf-8'))
+        paths = [s['file'] for s in original['sheets']] + original['artReviewPlates'] + ['assets/hit-feel/sources/editions-c-v1.json', 'docs/hit-feel-art/c-audit-v1.json']
+        report['preservedV1Files'] = []
+        for file in paths:
+            baseline = subprocess.check_output(['git', 'show', f'{V1_HEAD}:{file}'], cwd=ROOT)
+            current = (ROOT / file).read_bytes()
+            png = file.endswith('.png')
+            # Git stores these JSONs as LF, while the Windows checkout has
+            # CRLF. PNG preservation is always raw bytes, never normalized.
+            same = baseline == current if png else baseline.replace(b'\r\n', b'\n') == current.replace(b'\r\n', b'\n')
+            report['preservedV1Files'].append({'file': file, 'unchanged': same, 'comparison': 'exact PNG bytes' if png else 'Git text with CRLF normalized to LF', 'sha256': hashlib.sha256(current).hexdigest()})
+            if not same:
+                report['failures'].append('Original v1 file changed: ' + file)
+        report['rejectedOriginalV1Hurt'] = []
+        for entry in [e for e in ENTRIES if e['id'] in REWORKED]:
+            old = Image.open(ROOT / f"assets/hit-feel/sources/{entry['id']}-hurt-sheet-v1.png").convert('RGBA').resize((96, 240), Image.Resampling.NEAREST)
+            for row, source in enumerate(entry['frames']):
+                idle = Image.open(ROOT / source['file']).convert('RGBA')
+                pose = old.crop((32, row * 48, 64, (row + 1) * 48))
+                checks = size_checks(geometry(idle, pose))
+                rejected = not all(checks.values())
+                report['rejectedOriginalV1Hurt'].append({'id': entry['id'], 'dir': source['dir'], 'rejected': rejected, 'geometry': geometry(idle, pose), 'checks': checks})
+                if not rejected:
+                    report['failures'].append(f"Original undersized v1 negative control not rejected: {entry['id']}/{source['dir']}")
+        report['pixelStatus'] = 'PASS' if not report['failures'] else 'FAIL'
+    destination = ROOT / f'docs/hit-feel-art/c-audit-{edition}.json'
     destination.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(f"{report['pixelStatus']}: 15 sheets / 75 directions / 150 poses; {len(report['failures'])} failures; {len(report['sourceCentreExceptions'])} pre-existing source centroid exceptions; {sum(n['rejected'] for n in report['negativeControls'])}/7 negative controls rejected")
+    if edition == 'v2':
+        print(f"V2 size checks: 20 poses; 21 original PNGs byte-identical, 2 original JSONs Git-text identical; {sum(n['rejected'] for n in report['rejectedOriginalV1Hurt'])}/10 original undersized hurt poses rejected")
     for failure in report['failures']:
         print(failure)
     raise SystemExit(bool(report['failures']))
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--edition', choices=['v1', 'v2'], default='v1')
+    main(parser.parse_args().edition)
