@@ -38,7 +38,7 @@ export class Fx {
     if (door) {
       for (let i = 0; i < 6; i++) {
         const a = Math.atan2(ny, nx) + (rnd() - .5) * 1.6, v = 40 + rnd() * 70;
-        this.spawn({ x, y, h, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6, vh: 30 + rnd() * 50, ttl: .5 + rnd() * .3, color: i % 2 ? 0x7a5a3c : 0x5e4630, g: 360, size: rnd() < .4 ? 2 : 1 });
+        this.spawn({ x, y, h, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .6, vh: 30 + rnd() * 50, ttl: .5 + rnd() * .3, color: i % 2 ? 0xb48c5e : 0x8c6a46, g: 360, size: rnd() < .4 ? 2 : 1 });
       }
       return;
     }

@@ -290,7 +290,7 @@ export class SynthAudio {
    */
   impact(spot?: Spot, surface?: 'wall' | 'door'): void {
     if (surface === 'wall') { this.hiss(0.05, 0.2, 1900, 0, spot); this.tone(1150, 0.03, 0.06, 'square', 420, 0, spot); this.hiss(0.1, 0.06, 700, 0.02, spot); return; }
-    if (surface === 'door') { this.tone(240, 0.07, 0.12, 'triangle', 110, 0, spot); this.hiss(0.06, 0.13, 600, 0, spot); this.tone(520, 0.025, 0.04, 'square', 300, 0.01, spot); return; }
+    if (surface === 'door') { this.tone(240, 0.07, 0.075, 'triangle', 110, 0, spot); this.hiss(0.06, 0.09, 600, 0, spot); this.tone(520, 0.025, 0.03, 'square', 300, 0.01, spot); return; }
     this.tone(820, 0.035, 0.06, 'square', 260, 0, spot); this.hiss(0.05, 0.16, 1400, 0, spot);
   }
   /** Trigger on an empty chamber. */
