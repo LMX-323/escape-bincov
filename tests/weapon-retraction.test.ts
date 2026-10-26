@@ -1,8 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { heldWeaponOffset, idleRetraction, stepRetraction, WEAPON_RETRACTION_PX, WEAPON_RETRACTION_SECONDS } from '../src/coast-view/weapon-retraction';
+import { heldWeaponOffset, idleRetraction, RETRACTION, retractionOf, stepRetraction } from '../src/coast-view/weapon-retraction';
+import { GUN_TIMBRES, TIMBRE_OF_GUN } from '../src/gun-timbre';
+import { GUNS } from '../src/gunsmith/catalog';
 import { arm, benchRaid } from './fixtures/shooting-bench';
 import { emptyIntent } from '../src/raid-runtime/runtime';
+
+test('each gun family pulls back by its own amount (#75 H-09): pistols least, shotguns most, rifles as #119 signed off', () => {
+    assert.deepEqual(Object.keys(RETRACTION).sort(), [...GUN_TIMBRES].sort());
+    for (const [look, family] of [['pistol', 'pistol9'], ['carbine', 'carbine'], ['rifle', 'rifle'], ['shotgun', 'shotgun-double']] as const) {
+        const state = idleRetraction(), { px, seconds } = RETRACTION[family];
+        assert.equal(retractionOf(look), RETRACTION[family]);
+        stepRetraction(state, look, 0, true, { seq: 1, weapon: look });
+        assert.equal(stepRetraction(state, look, 0, true), px);
+        assert.ok(Math.abs(stepRetraction(state, look, seconds / 2, true) - px / 2) < 1e-9, 'it recovers linearly');
+        assert.equal(stepRetraction(state, look, seconds / 2, true), 0, 'and is home when its pulse ends');
+    }
+    for (const look of ['knife', 'club', 'claw'] as const) assert.equal(retractionOf(look), null);
+    const r = RETRACTION;
+    assert.ok(r.pistol9.px < r.carbine.px && r.carbine.px < r['shotgun-double'].px && r.pistol9.seconds < r.carbine.seconds && r.carbine.seconds < r['shotgun-double'].seconds);
+    assert.deepEqual([r.carbine, r.rifle], [{ px: 3, seconds: .08 }, { px: 3, seconds: .08 }]);
+    for (const family of GUN_TIMBRES) assert.ok(r[family].px > 0 && r[family].px <= 5 && r[family].seconds > 0 && r[family].seconds <= .13, family);
+    // A pulse ends before the next automatic shot of any gun of its family, so a held trigger never stacks one.
+    for (const gun of Object.values(GUNS)) assert.ok(r[TIMBRE_OF_GUN[gun.id]].seconds < gun.stats.cooldown, gun.id);
+});
 
 test('a shot frame keeps the old grip pixel exactly; subsequent frames recover without rotating the gun', () => {
     for (let dir = 0; dir < 8; dir++) for (const forward of [0, 8]) for (const off of [-4, 0, 4]) {
@@ -14,7 +35,7 @@ test('a shot frame keeps the old grip pixel exactly; subsequent frames recover w
             y: Math.round(Math.sin(angle) * forward - Math.cos(angle) * off),
         });
         const peak = stepRetraction(state, 'pistol', 0, true);
-        assert.equal(peak, WEAPON_RETRACTION_PX);
+        assert.equal(peak, RETRACTION.pistol9.px);
         const base = heldWeaponOffset(angle, forward, off, 0), grip = heldWeaponOffset(angle, forward, off, peak);
         assert.ok(Math.hypot(grip.x - base.x + peak * Math.cos(angle), grip.y - base.y + peak * Math.sin(angle)) <= Math.SQRT2);
         assert.ok(stepRetraction(state, 'pistol', .04, true) > 0);
@@ -23,10 +44,11 @@ test('a shot frame keeps the old grip pixel exactly; subsequent frames recover w
 });
 
 test('long frame and pause gaps expire the pulse; a new shot always resets to zero', () => {
+    // .15 s: a frame longer than the double-barrel's whole pulse (RETRACTION['shotgun-double'], 0.13 s).
     const state = idleRetraction();
-    assert.equal(stepRetraction(state, 'shotgun', .1, true, { seq: 1, weapon: 'shotgun' }), 0);
-    assert.equal(stepRetraction(state, 'shotgun', .1, true), 0);
-    assert.equal(stepRetraction(state, 'shotgun', .1, true), 0);
+    assert.equal(stepRetraction(state, 'shotgun', .15, true, { seq: 1, weapon: 'shotgun' }), 0);
+    assert.equal(stepRetraction(state, 'shotgun', .15, true), 0);
+    assert.equal(stepRetraction(state, 'shotgun', .15, true), 0);
     stepRetraction(state, 'shotgun', 0, true, { seq: 2, weapon: 'shotgun' });
     stepRetraction(state, 'shotgun', .01, true);
     assert.equal(stepRetraction(state, 'shotgun', .01, true, { seq: 3, weapon: 'shotgun' }), 0);
@@ -34,7 +56,7 @@ test('long frame and pause gaps expire the pulse; a new shot always resets to ze
     assert.equal(stepRetraction(state, 'shotgun', 1, true), 0, 'a long pause cannot defer a peak until rendering resumes');
     assert.equal(stepRetraction(state, 'shotgun', 1, true, { seq: 4, weapon: 'shotgun' }), 0, 'fresh shot inside a long packet still draws its original muzzle');
     assert.ok(stepRetraction(state, 'shotgun', 1 / 60, true) > 0, 'the fresh publication starts one bounded pulse');
-    assert.equal(stepRetraction(state, 'shotgun', .1, true), 0);
+    assert.equal(stepRetraction(state, 'shotgun', .15, true), 0);
 });
 
 test('hidden, reduced-motion, dead, melee and mismatched weapon frames cannot retain a pulse for later', () => {
@@ -55,8 +77,8 @@ test('hidden, reduced-motion, dead, melee and mismatched weapon frames cannot re
 test('replaying a packet cannot restart an aged pulse; many same-packet shots retain one bounded latest pulse', () => {
     const state = idleRetraction();
     for (let seq = 1; seq <= 100; seq++) assert.equal(stepRetraction(state, 'rifle', .001, true, { seq, weapon: 'rifle' }), 0);
-    assert.equal(stepRetraction(state, 'rifle', 0, true), 3);
-    assert.equal(stepRetraction(state, 'rifle', WEAPON_RETRACTION_SECONDS, true), 0);
+    assert.equal(stepRetraction(state, 'rifle', 0, true), RETRACTION.rifle.px);
+    assert.equal(stepRetraction(state, 'rifle', RETRACTION.rifle.seconds, true), 0);
     assert.equal(stepRetraction(state, 'rifle', 0, true, { seq: 100, weapon: 'rifle' }), 0);
     assert.equal(stepRetraction(state, 'rifle', 0, true), 0);
     stepRetraction(state, 'rifle', 0, true, { seq: 101, weapon: 'rifle' });

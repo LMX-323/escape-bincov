@@ -253,6 +253,8 @@ export class CoastView {
       this.onRebuild?.(reason);
     }
     const f = batch.frame; this.last = f; this.time += dt;
+    // Particles far from the player are the first to go when a fight spends the budget (#75 H-07).
+    this.fx.focus = { x: f.player.x, y: f.player.y };
     const visible = (region: string | null) => region === null || f.revealed[region] === true;
 
     for (const [id, occ] of this.doors) {
