@@ -4,8 +4,11 @@
 import type { Inventory, Item, RunSummary, SaveDataV1 } from '../domain';
 import type { Attribute, Facility } from '../expansion-state';
 import type { PerkId, PerkModifiers, PerkTier } from '../perks';
+import type { GunEdit, GunEditPreview, GunPlace } from '../gunsmith/edit';
+import type { GunState } from '../gunsmith/instance';
 export type { Attribute, Facility } from '../expansion-state';
 export type { PerkId, PerkModifiers, PerkTier } from '../perks';
+export type { GunEdit, GunEditPreview, GunPlace } from '../gunsmith/edit';
 export type Recipe = 'bandage' | 'medkit' | 'antidote';
 export type Source = 'stash' | 'bag' | 'safe';
 export type ShopSource = 'merchant' | 'buy' | 'sell' | 'stash';
@@ -64,6 +67,44 @@ export interface ShopSession {
     placementError(from: ShopSource, to: ShopSource, uid: string, x: number, y: number): string | null;
     place(from: ShopSource, to: ShopSource, uid: string, x: number, y: number): Result;
     settle(confirmation?: string): Result;
+    reset(): void;
+}
+/** The workbench for one gun (#28 M2-04), as openGunsmith returns it. Detached and read-only; reading writes nothing. */
+export interface GunsmithView {
+    /** The gun as committed, wherever the base holds it (equipped, stash, bag or safe); null once it has left the base. */
+    gun: { uid: string; id: string; relief: boolean; where: GunPlace; state: GunState } | null;
+    /** The edits of the preview below, in order; empty without one. */
+    edits: GunEdit[];
+    /** The latest preview the session accepted: the candidate and what it changes, or null. */
+    preview: GunEditPreview | null;
+    /** Confirms exactly that preview, once; null while it cannot be committed (preview.refusal says why) or is stale. */
+    token: string | null;
+    /** The equipped slot, stash, bag or safe changed since the preview: confirm refuses it; preview again. */
+    stale: boolean;
+}
+/**
+ * The workbench's edit transaction (#28 M2-04; rules in gunsmith/edit.ts planGunEdit), shaped like ShopSession: a
+ * private preview the player builds, never written, then one commit. Only at the base, never during a raid.
+ */
+export interface GunsmithSession {
+    view(): GunsmithView;
+    /**
+     * Work out `edits` on the committed state and make them the session's preview; never writes. An edit that cannot
+     * be made (a part that does not fit, a part no longer there) is refused with its reason and its index (`edit`), and
+     * the previous preview stays. A candidate that cannot be committed (a part not owned, no room in the stash, a gun
+     * that would no longer fit where it lies, no change at all) is still previewed, with preview.refusal and no token.
+     * Each preview that can be committed gets a new token and retires the one before.
+     */
+    preview(edits: readonly GunEdit[]): Result & { token?: string; preview?: GunEditPreview; edit?: number };
+    /**
+     * Commit the previewed edits in one write: they are planned again on the committed state, and the commit is
+     * refused as `stale` when the token is not the latest preview's, when the equipped slot or a container changed
+     * since the preview (the revision may move for base-time checkpoints and retries, which change neither), or when
+     * the plan differs. A failed write changes nothing and keeps the preview and its token: once retrySave succeeds the
+     * same confirm commits it, once. Success clears the session's preview.
+     */
+    confirm(token: string): Result;
+    /** Drop the preview (cancel); nothing was written. */
     reset(): void;
 }
 export interface FacilityInfo {
@@ -148,6 +189,8 @@ export interface HideoutRuntime {
     upgradeStash(): Result;
     claimRelief(): Result;
     openShop(merchant: Merchant): ShopSession;
+    /** The workbench for the gun whose item uid is `gun`, wherever it is at the base; any number may be open. */
+    openGunsmith(gun: string): GunsmithSession;
     submitQuest(id: string): Result;
     facility(id: Facility): FacilityInfo;
     build(id: Facility): Result;
