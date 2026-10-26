@@ -11,6 +11,7 @@ import { gait, walkFrame } from '../gait';
 import { Lighting, MOODS, lamp } from './lighting';
 import { Textures } from './textures';
 import { enemyMotion } from './enemy-motion';
+import { BLOW_TIERS, REDUCED_KICK, ShotBlows, bloodDrops, blowTier, pushCamera, type BlowTier } from './blow-feel';
 import { lifecycle } from './scope';
 import { Weather, type RoofArea, type WeatherKind } from './weather';
 import { Tide, paintWade } from './tide';
@@ -95,8 +96,9 @@ export interface ViewOptions {
   debug: boolean; xray: boolean; mood: number; reducedMotion: boolean;
   /**
    * The range's A/B switch for #75's hit-feel rounds (docs/hit-feel/TASKS.md H-01): 'classic' plays and draws what each
-   * round replaced, 'enhanced' (default) the new version. Read live, so the range panel can switch it mid-raid; today
-   * only the gunshot families (H-02) read it.
+   * round replaced, 'enhanced' (default) the new version. Read live, so the range panel can switch it mid-raid. Read by
+   * the gunshot families (H-02), the blow tiers and per-shot blows (H-03, H-04, blow-feel.ts), the wall and door
+   * impacts (H-05) and the camera push on the player's blows (H-06).
    */
   feel?: 'enhanced' | 'classic';
   viewTiles: 24 | 28;
@@ -166,6 +168,11 @@ export class CoastView {
   pointer: Point | null = null;
   /** Camera kick opposite the player's shot, settling back within a few frames. */
   private recoil = { x: 0, y: 0 };
+  /** Which shot fired each round and which shot last struck each body (#75 H-04); cleared with the scene. */
+  private shots = new ShotBlows();
+  /** This batch's blows by `${body}|${shot}`: rounds that struck, the tier and angle, whether the shot was already shown on
+   *  that body, and whether this batch has drawn its blow and blood yet. */
+  private blowGroups = new Map<string, { pellets: number; tier: BlowTier; angle: number | null; again: boolean; blown: boolean; bled: boolean }>();
   /** Crate whose loot panel is open (set by the host): drawn with its lid up. */
   openContainer: string | null = null;
   view = { w: 0, h: 0, s: 1, k: 1, dpr: 1, W: 0, H: 0 };
@@ -257,10 +264,12 @@ export class CoastView {
     // A blow flashes and kicks its body on the frame that brings it, so it is set before the body is drawn (#75); the
     // blood still comes with the event below. A body drawn for the first time in this batch gets it from the next frame.
     const blown = new Set<string>();
-    for (const e of batch.events) {
-      if (e.type !== 'hurt' || e.cause !== 'blow' || !current(e)) continue;
-      const g = this.actors.get(e.uid); if (g) { this.blow(g, e.angle); blown.add(e.uid); }
-    }
+    if (this.opts.feel === 'classic') {
+      for (const e of batch.events) {
+        if (e.type !== 'hurt' || e.cause !== 'blow' || !current(e)) continue;
+        const g = this.actors.get(e.uid); if (g) { this.blow(g, e.angle); blown.add(e.uid); }
+      }
+    } else this.landBlows(batch, current, fallen, blown, dt);
     this.tide.sync(f.flooded, dt, this.time);
     const seen = new Set<string>();
     for (const a of [f.player, ...f.actors]) { seen.add(a.uid); this.syncActor(a, dt, visible(a.regionId), fallen.has(a.uid)); }
@@ -303,7 +312,7 @@ export class CoastView {
 
   private clearScene() {
     for (const layer of [this.groundLayer, this.flat, this.shadows, this.sorted, this.xray, this.overhead]) for (const c of layer.removeChildren()) c.destroy();
-    this.fx?.clear();
+    this.fx?.clear(); this.shots.clear(); this.blowGroups.clear();
     this.occluders = []; this.openingGuides = []; this.pendingChunks = []; this.doors.clear(); this.doorGuides.clear(); this.stairLabels.clear(); this.actors.clear(); this.bullets.clear(); this.crates.clear(); this.loot.clear(); this.muzzles = []; this.swings = [];
     this.debugG.clear();
   }
@@ -550,12 +559,48 @@ export class CoastView {
   }
 
   /**
-   * A blow's 70 ms flash and 80 ms kick: 2 px the way it travelled, as its angle points back at the source (#75); and its
-   * hurt and recovery pose, which syncActor shows where the art has those frames.
+   * A blow's flash and kick, the way it travelled as its angle points back at the source (#75), and its hurt and
+   * recovery pose, which syncActor shows where the art has those frames. Tier 0 is the 70 ms flash and the 2 px, 80 ms
+   * kick; heavier tiers (blow-feel.ts) kick further, last longer and hold the hurt pose a moment longer.
    */
-  private blow(g: ActorGfx, angle: number | null) {
-    g.flashT = .07; g.kick = angle === null ? { x: 0, y: 0 } : { x: -Math.cos(angle) * 2, y: -Math.sin(angle) * 2 }; g.kickT = .08; g.hit = true;
-    g.hurtT = HURT_POSE + RECOVERY_POSE;
+  private blow(g: ActorGfx, angle: number | null, tier: BlowTier = 0) {
+    const t = BLOW_TIERS[tier], k = this.opts.reducedMotion ? Math.min(t.kick, REDUCED_KICK) : t.kick;
+    g.flashT = t.flash; g.kick = angle === null ? { x: 0, y: 0 } : { x: -Math.cos(angle) * k, y: -Math.sin(angle) * k }; g.kickT = t.kickT; g.hit = true;
+    g.hurtT = HURT_POSE + RECOVERY_POSE + t.hold;
+  }
+
+  /**
+   * This batch's blows (#75 H-03, H-04, H-06): the rounds of one shot that struck one body are one blow, its tier from
+   * how many struck, whether one was critical and whether it killed. Rounds of a shot already shown on that body (pellets
+   * split over two batches) add blood only. Melee blows and rounds of an unknown shot group by body. The player's blow
+   * also pushes the camera, unless motion is reduced. `blown` gets the bodies blown here; a body first drawn in this
+   * batch is blown from onEvent with the same group.
+   */
+  private landBlows(batch: PublishedView, current: (e: StampedEvent) => boolean, fallen: ReadonlySet<string>, blown: Set<string>, dt: number) {
+    const named = new Set<string>();
+    for (const e of batch.events) {
+      if (!current(e)) continue;
+      // A shot's rounds can land in the batch that fires them.
+      if (e.type === 'shot') this.shots.shot(e.shotId, e.pellets.map(p => p.bullet));
+      if (e.type === 'impact') named.add(e.bullet); else if (e.type === 'hurt' && e.bullet) named.add(e.bullet);
+    }
+    const groups = new Map<string, { uid: string; shot: string | null; pellets: number; critical: boolean; angle: number | null }>();
+    for (const e of batch.events) {
+      if (e.type !== 'hurt' || e.cause !== 'blow' || !current(e)) continue;
+      const shot = this.shots.of(e.bullet), key = `${e.uid}|${shot ?? ''}`;
+      const b = groups.get(key) ?? { uid: e.uid, shot, pellets: 0, critical: false, angle: e.angle };
+      b.pellets++; b.critical ||= e.critical; b.angle = e.angle ?? b.angle; groups.set(key, b);
+    }
+    this.blowGroups.clear();
+    for (const [key, b] of groups) {
+      const again = this.shots.seen(b.uid, b.shot), tier = blowTier(b.pellets, b.critical, fallen.has(b.uid));
+      const group = { pellets: b.pellets, tier, angle: b.angle, again, blown: again, bled: false };
+      this.blowGroups.set(key, group);
+      const g = this.actors.get(b.uid); if (!g || again) continue;
+      this.blow(g, b.angle, tier); blown.add(b.uid); this.shots.mark(b.uid, b.shot); group.blown = true;
+      if (b.uid === 'player' && b.angle !== null && !this.opts.reducedMotion) this.recoil = pushCamera(this.recoil, b.angle, BLOW_TIERS[tier].pulse);
+    }
+    this.shots.prune(new Set(batch.frame.bullets.map(x => x.uid)), named, dt);
   }
 
   /**
@@ -622,7 +667,8 @@ export class CoastView {
         if (e.reason === 'blocked') {
           const b = this.bullets.get(e.bullet), v = b ? Math.hypot(b.vx, b.vy) || 1 : 1;
           const n = e.normal ?? (b ? { x: -b.vx / v, y: -b.vy / v } : { x: 0, y: 1 });
-          this.fx.sparks(e.lastFree.x, e.lastFree.y + .5, AIM_H, n.x, n.y, this.rnd);
+          // Wall and door look different (#75 H-05); the classic A/B setting keeps the one shared spray.
+          this.fx.sparks(e.lastFree.x, e.lastFree.y + .5, AIM_H, n.x, n.y, this.rnd, this.opts.feel === 'classic' ? null : e.surface);
           this.light.lights.push({ x: e.lastFree.x, y: e.lastFree.y, r: 34, color: 0xd9a860, k: .6, ttl: .06, region: regionAt(e.lastFree) });
         } else if (e.reason === 'start-blocked') this.fx.dust(e.lastFree.x, e.lastFree.y, this.rnd, 4);
         break;
@@ -631,9 +677,14 @@ export class CoastView {
         // Only blows (any size) flash, kick and spray blood; bleeding, pollution, thirst, hunger and a lowered health
         // limit are shown by the host's HUD, not on the body.
         const g = this.actors.get(e.uid); if (!g || e.cause !== 'blow') break;
-        if (!blown.has(e.uid)) this.blow(g, e.angle);
-        // The angle points back at the blow's source, and the blood sprays that way.
-        const a = actor(e.uid); if (a && shown(a)) this.fx.blood(a.x, a.y + .5, AIM_H, e.angle ?? 0, this.rnd);
+        // The classic A/B setting blows and bleeds per round, as before #75 H-03/H-04; otherwise per landBlows group.
+        const shot = this.shots.of(e.bullet), group = this.opts.feel === 'classic' ? undefined : this.blowGroups.get(`${e.uid}|${shot ?? ''}`);
+        if (!group) { if (!blown.has(e.uid)) this.blow(g, e.angle); }
+        else if (!group.blown) { this.blow(g, group.angle, group.tier); this.shots.mark(e.uid, shot); group.blown = true; }
+        // The angle points back at the blow's source, and the blood sprays that way: one spray per group, more for more rounds.
+        const a = actor(e.uid), drops = !group ? 6 : group.bled ? 0 : bloodDrops(group.pellets, group.again);
+        if (group) group.bled = true;
+        if (a && shown(a) && drops) this.fx.blood(a.x, a.y + .5, AIM_H, e.angle ?? 0, this.rnd, drops);
         break;
       }
       case 'door': { const d = this.map!.doors.find(x => x.id === e.id); if (d) this.fx.dust(d.x * 32 + 16, d.y * 32 + 30, this.rnd, 4); break; }

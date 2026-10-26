@@ -284,8 +284,15 @@ export class SynthAudio {
   click(spot?: Spot): void { this.tone(480, 0.045, 0.07, 'square', 240, 0, spot); }
   /** A round passing close by: a short airy crack falling in pitch. */
   whiz(spot?: Spot): void { this.hiss(0.1, 0.22, 2600, 0, spot); this.tone(1900, 0.08, 0.035, 'sawtooth', 520, 0, spot); }
-  /** A round striking a wall or door. */
-  impact(spot?: Spot): void { this.tone(820, 0.035, 0.06, 'square', 260, 0, spot); this.hiss(0.05, 0.16, 1400, 0, spot); }
+  /**
+   * A round striking a wall or door. Given its surface (#75 H-05), a wall cracks like stone (a bright snap and grit) and
+   * a door knocks like wood (a low hollow thud); without one it is the single cue both shared before.
+   */
+  impact(spot?: Spot, surface?: 'wall' | 'door'): void {
+    if (surface === 'wall') { this.hiss(0.05, 0.2, 1900, 0, spot); this.tone(1150, 0.03, 0.06, 'square', 420, 0, spot); this.hiss(0.1, 0.06, 700, 0.02, spot); return; }
+    if (surface === 'door') { this.tone(240, 0.07, 0.075, 'triangle', 110, 0, spot); this.hiss(0.06, 0.09, 600, 0, spot); this.tone(520, 0.025, 0.03, 'square', 300, 0.01, spot); return; }
+    this.tone(820, 0.035, 0.06, 'square', 260, 0, spot); this.hiss(0.05, 0.16, 1400, 0, spot);
+  }
   /** Trigger on an empty chamber. */
   dry(): void { this.tone(1500, 0.022, 0.05, 'square', 1100); this.tone(320, 0.03, 0.04, 'triangle', 200, 0.012); }
   /** One heartbeat (two low thumps), for very low health. */

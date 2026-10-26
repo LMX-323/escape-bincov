@@ -88,6 +88,17 @@ test('样板音效：开枪、近战、受击、拾取与开门按原 RaidScene 
   assert.deepEqual(calls, ['shot:shotgun-double', 'shot:rifle,,0.55', 'shot:knife', 'pain', 'stow', 'click']);
 });
 
+test('墙和门（#75 H-05）：子弹打墙和打门是两种撞击声；试枪场的旧版设置回到原来共用的一种', () => {
+  let feel: 'enhanced' | 'classic' = 'enhanced';
+  const { calls, out } = recorder(), s = new SampleSound(out, () => feel);
+  s.frame(batch(), 1 / 60); calls.length = 0;
+  const hit = (surface: string) => s.event(ev({ type: 'impact', reason: 'blocked', surface, lastFree: { x: 420, y: 300 } }), 'coast');
+  hit('wall'); hit('door');
+  assert.deepEqual(calls, ['impact:spot,wall', 'impact:spot,door']);
+  calls.length = 0; feel = 'classic'; hit('wall'); hit('door');
+  assert.deepEqual(calls, ['impact:spot,', 'impact:spot,'], 'the cue both shared before');
+});
+
 test('分枪种枪声（#75 H-02）：按外观取音色族，他人开枪更轻；试枪场的旧版设置回到原来所有枪共用的枪声', () => {
   let feel: 'enhanced' | 'classic' = 'enhanced';
   const { calls, out } = recorder(), s = new SampleSound(out, () => feel);
