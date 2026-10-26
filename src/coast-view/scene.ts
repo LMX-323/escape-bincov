@@ -101,7 +101,8 @@ export interface ViewOptions {
    * The range's A/B switch for #75's hit-feel rounds (docs/hit-feel/TASKS.md H-01): 'classic' plays and draws what each
    * round replaced, 'enhanced' (default) the new version. Read live, so the range panel can switch it mid-raid. Read by
    * the gunshot families (H-02), the blow tiers and per-shot blows (H-03, H-04, blow-feel.ts), the wall and door
-   * impacts (H-05) and the camera push on the player's blows (H-06).
+   * impacts (H-05), the camera push on the player's blows (H-06) and the gun's retraction after a shot (#119,
+   * weapon-retraction.ts).
    */
   feel?: 'enhanced' | 'classic';
   viewTiles: 24 | 28;
@@ -116,7 +117,8 @@ export interface ViewOptions {
   weather: WeatherKind;
   /** Device px per world px (view-scale.ts): default 'whole'; ?crisp=1 'near' (closer whole number); ?crisp=0 'fit' (the old fractional picture). */
   scale?: ViewScaleMode;
-  /** Private comparison hook: false preserves the original gun and fixed-world flash presentation. */
+  /** The retraction probe's own switch (docs/evidence/issue75-weapon-retraction): false keeps the original gun and
+   *  fixed-world flash even with the enhanced feel. Players compare through `feel` only. */
   weaponRetraction?: boolean;
 }
 
@@ -301,7 +303,7 @@ export class CoastView {
       if (m.t === null) { m.t = 0; continue; }
       // Keep a live flash on its gun while the grip recovers. A tracer keeps its original shot-time from/off snapshot.
       // Follow/visibility and expiry finish in this loop before render(): even a long dt cannot draw an expired sprite.
-      if (this.opts.weaponRetraction !== false && m.shooter) {
+      if (this.opts.weaponRetraction !== false && this.opts.feel !== 'classic' && m.shooter) {
         const a = [f.player, ...f.actors].find(a => a.uid === m.shooter);
         const tip = a && a.alive && a.weapon === m.weapon && shownAt(this.map!, f.revealed, a) ? this.muzzleOf(a) : null;
         if (!tip) { m.s.destroy(); this.muzzles.splice(i, 1); continue; }
@@ -735,7 +737,8 @@ export class CoastView {
       this.actors.set(a.uid, g);
     }
     g.kind = a.kind;
-    const back = stepRetraction(g.retraction, a.weapon, dt, this.opts.weaponRetraction !== false && !this.opts.reducedMotion
+    // The classic feel draws the gun as before #119; switching to it mid-pulse drops the pulse.
+    const back = stepRetraction(g.retraction, a.weapon, dt, this.opts.weaponRetraction !== false && this.opts.feel !== 'classic' && !this.opts.reducedMotion
       && a.alive && shownAt(this.map!, this.last!.revealed, a) && a.tactics?.archetype !== 'sac-spitter', shot);
     // The same room visibility as the body owns every cue. Never reveal an attack in a hidden room.
     g.telegraph.clear(); g.telegraph.visible = shown && a.alive && !!a.tactics;
