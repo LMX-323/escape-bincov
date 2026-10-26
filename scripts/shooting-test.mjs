@@ -17,7 +17,10 @@
  *      30 and 15 frames a second and on one at 12 and 10; the kick goes 2 px the way the bullet flew (east and south) and
  *      the blood sprays back toward the shooter; the enemy's body shows its hurt frame, then its recovery frame;
  *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
- *      asks for one kill confirm sound.
+ *      asks for one kill confirm sound;
+ *   i. heavier blows kick further and hold longer, one shot is one blow, and the player's blow pushes the camera;
+ *   j. after the shot frame the gun pulls back along the barrel and is home within 80 ms, its flash on the barrel (#119);
+ *      the range's classic setting and reduced motion keep it still.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -634,6 +637,56 @@ async function blowTiers(page) {
   return r;
 }
 
+/** j. The gun pulls back after a shot (#119): copies of the live batch carrying one shot of the player's pistol, presented
+ *  at 60 Hz with the ticker stopped, aimed east, south, west and north. The shot's own frame draws the gun where it was
+ *  (step c's alignment), the next frames pull it back along the barrel by 2-3 px and it is home within 80 ms; the flash
+ *  stays on the barrel meanwhile. The range's classic setting and reduced motion never move it. The Runtime, input and
+ *  save never see these events. */
+async function gunRetraction(page) {
+  await drive(page, 'weapon', 'pistol'); await running(page);
+  const r = await page.evaluate(() => {
+    const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get('player');
+    let seq = 1e9; // above every published event's, so each copy is a new shot
+    const copy = (aim, events) => ({ ...b, events, frame: { ...b.frame, player: { ...p, aim } } });
+    const shot = () => ({ type: 'shot', shotId: `retract-${seq}`, shooter: 'player', weapon: p.weapon, pellets: [], seq: seq++, stamp: b.stamp, durability: 'accepted' });
+    // The gun against the body's whole pixel (the shadow sits at a fixed offset from it).
+    const grip = () => ({ x: g.weapon.x - g.shadow.x, y: g.weapon.y - g.shadow.y });
+    const run = aim => {
+      for (let i = 0; i < 6; i++) v.present(copy(aim, []), .1);
+      const rest = grip(), c = Math.cos(g.weapon.rotation), s = Math.sin(g.weapon.rotation), back = [], across = [], flash = [];
+      let m = null, first = null;
+      for (let i = 0; i < 8; i++) {
+        v.present(copy(aim, i === 0 ? [shot()] : []), 1 / 60);
+        if (i === 0) m = v.muzzles.at(-1) ?? null;
+        const q = grip(), dx = q.x - rest.x, dy = q.y - rest.y;
+        back.push(Math.round(-(dx * c + dy * s) * 100) / 100); across.push(Math.abs(-dx * s + dy * c));
+        if (m && v.muzzles.includes(m)) { const o = { x: m.s.x - g.weapon.x, y: m.s.y - g.weapon.y }; first ??= o; flash.push(Math.hypot(o.x - first.x, o.y - first.y)); }
+      }
+      return { back, across: Math.round(Math.max(...across) * 100) / 100, flashFrames: flash.length, flashDrift: Math.max(0, ...flash) };
+    };
+    const { feel, reducedMotion } = v.opts;
+    h.app.ticker.stop();
+    try {
+      const out = { weapon: p.weapon };
+      for (const deg of [0, 90, 180, 270]) out[`aim${deg}`] = run(deg * Math.PI / 180);
+      v.opts.feel = 'classic'; out.classic = run(0);
+      v.opts.feel = 'enhanced'; v.opts.reducedMotion = true; out.reduced = run(0);
+      return out;
+    } finally { v.opts.feel = feel; v.opts.reducedMotion = reducedMotion; h.app.ticker.start(); }
+  });
+  const fail = [];
+  for (const deg of [0, 90, 180, 270]) {
+    const q = r[`aim${deg}`], peak = Math.max(...q.back), falling = q.back.slice(1).every((x, i, a) => i === 0 || x <= a[i - 1]);
+    if (q.back[0] !== 0 || peak < 2 || peak > 3 || !falling || Math.min(...q.back) < 0 || q.back.slice(5).some(x => x !== 0) || q.across > 1)
+      fail.push(`aim ${deg}: back ${q.back.join(',')} across ${q.across} (want 0 on the shot frame, 2-3 px next, falling to 0 by the 5th frame, at most 1 px across)`);
+    if (q.flashFrames !== 5 || q.flashDrift !== 0) fail.push(`aim ${deg}: flash on ${q.flashFrames} frames, ${q.flashDrift} px off the barrel (want 5 frames, 0 px)`);
+  }
+  for (const k of ['classic', 'reduced']) if (r[k].back.some(x => x !== 0)) fail.push(`${k}: the gun moved ${r[k].back.join(',')}`);
+  check(r.weapon === 'pistol' && !fail.length, fail.join('; ') || `held ${r.weapon}, not the pistol`, r);
+  await running(page);
+  return r;
+}
+
 /** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
  *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
  *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
@@ -680,6 +733,7 @@ try {
   await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);
   await step('h', 'a critical hit turns the hit marker critical; each kill marker asks for one confirm sound', desktop, hitConfirm);
   await step('i', 'heavier blows kick further and hold longer; one shot is one blow; the player\'s blow pushes the camera', desktop, blowTiers);
+  await step('j', 'the gun pulls back after the shot frame and is home within 80 ms; classic and reduced motion keep it still', desktop, gunRetraction);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
   desktop.stallResumes = await stallResumes(desktop.page);
