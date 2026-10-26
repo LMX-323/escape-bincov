@@ -19,8 +19,8 @@
  *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
  *      asks for one kill confirm sound;
  *   i. heavier blows kick further and hold longer, one shot is one blow, and the player's blow pushes the camera;
- *   j. after the shot frame the gun pulls back along the barrel and is home within 80 ms, its flash on the barrel (#119);
- *      the range's classic setting and reduced motion keep it still.
+ *   j. after the shot frame the gun pulls back along the barrel, a pistol least and a shotgun most, and is home when its
+ *      pulse ends, its flash on the barrel (#119, #75 H-09); the range's classic setting and reduced motion keep it still.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -637,51 +637,58 @@ async function blowTiers(page) {
   return r;
 }
 
-/** j. The gun pulls back after a shot (#119): copies of the live batch carrying one shot of the player's pistol, presented
- *  at 60 Hz with the ticker stopped, aimed east, south, west and north. The shot's own frame draws the gun where it was
- *  (step c's alignment), the next frames pull it back along the barrel by 2-3 px and it is home within 80 ms; the flash
- *  stays on the barrel meanwhile. The range's classic setting and reduced motion never move it. The Runtime, input and
- *  save never see these events. */
+/** How far (world px) and for how long (s) each held look's family pulls back after a shot (#75 H-09). */
+const RETRACT = { pistol: [2, .06], carbine: [3, .08], rifle: [3, .08], shotgun: [5, .13] };
+/** j. The gun pulls back after a shot (#119), by its family's amount (#75 H-09): copies of the live batch carrying one
+ *  shot of the player's, the held look swapped in the copy, presented at 60 Hz with the ticker stopped. The pistol is
+ *  aimed east, south, west and north; the carbine, the M4A1 sample (rifle) and the double-barrel east. The shot's own
+ *  frame draws the gun where it was (step c's alignment); the next frame pulls it back along the barrel by its pulse
+ *  less one frame, give or take the whole-pixel rounding (pistol 1-2 px, carbine and rifle 2-3, shotgun 4-5), and it is
+ *  home when its pulse ends; the flash stays on the barrel meanwhile. The range's classic setting and reduced motion
+ *  never move it. The Runtime, input and save never see these events. */
 async function gunRetraction(page) {
   await drive(page, 'weapon', 'pistol'); await running(page);
   const r = await page.evaluate(() => {
     const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, p = b.frame.player, g = v.actors.get('player');
     let seq = 1e9; // above every published event's, so each copy is a new shot
-    const copy = (aim, events) => ({ ...b, events, frame: { ...b.frame, player: { ...p, aim } } });
-    const shot = () => ({ type: 'shot', shotId: `retract-${seq}`, shooter: 'player', weapon: p.weapon, pellets: [], seq: seq++, stamp: b.stamp, durability: 'accepted' });
+    const copy = (aim, look, events) => ({ ...b, events, frame: { ...b.frame, player: { ...p, aim, weapon: look } } });
+    const shot = look => ({ type: 'shot', shotId: `retract-${seq}`, shooter: 'player', weapon: look, pellets: [], seq: seq++, stamp: b.stamp, durability: 'accepted' });
     // The gun against the body's whole pixel (the shadow sits at a fixed offset from it).
     const grip = () => ({ x: g.weapon.x - g.shadow.x, y: g.weapon.y - g.shadow.y });
-    const run = aim => {
-      for (let i = 0; i < 6; i++) v.present(copy(aim, []), .1);
+    const run = (aim, look) => {
+      for (let i = 0; i < 6; i++) v.present(copy(aim, look, []), .1);
       const rest = grip(), c = Math.cos(g.weapon.rotation), s = Math.sin(g.weapon.rotation), back = [], across = [], flash = [];
       let m = null, first = null;
-      for (let i = 0; i < 8; i++) {
-        v.present(copy(aim, i === 0 ? [shot()] : []), 1 / 60);
+      for (let i = 0; i < 10; i++) {
+        v.present(copy(aim, look, i === 0 ? [shot(look)] : []), 1 / 60);
         if (i === 0) m = v.muzzles.at(-1) ?? null;
         const q = grip(), dx = q.x - rest.x, dy = q.y - rest.y;
         back.push(Math.round(-(dx * c + dy * s) * 100) / 100); across.push(Math.abs(-dx * s + dy * c));
         if (m && v.muzzles.includes(m)) { const o = { x: m.s.x - g.weapon.x, y: m.s.y - g.weapon.y }; first ??= o; flash.push(Math.hypot(o.x - first.x, o.y - first.y)); }
       }
-      return { back, across: Math.round(Math.max(...across) * 100) / 100, flashFrames: flash.length, flashDrift: Math.max(0, ...flash) };
+      return { look, back, across: Math.round(Math.max(...across) * 100) / 100, flashFrames: flash.length, flashDrift: Math.max(0, ...flash) };
     };
     const { feel, reducedMotion } = v.opts;
     h.app.ticker.stop();
     try {
-      const out = { weapon: p.weapon };
-      for (const deg of [0, 90, 180, 270]) out[`aim${deg}`] = run(deg * Math.PI / 180);
-      v.opts.feel = 'classic'; out.classic = run(0);
-      v.opts.feel = 'enhanced'; v.opts.reducedMotion = true; out.reduced = run(0);
+      const out = { weapon: p.weapon, cases: {} };
+      for (const deg of [0, 90, 180, 270]) out.cases[`pistol${deg}`] = run(deg * Math.PI / 180, 'pistol');
+      for (const look of ['carbine', 'rifle', 'shotgun']) out.cases[`${look}0`] = run(0, look);
+      v.opts.feel = 'classic'; out.classic = [run(0, 'pistol'), run(0, 'shotgun')];
+      v.opts.feel = 'enhanced'; v.opts.reducedMotion = true; out.reduced = [run(0, 'pistol'), run(0, 'shotgun')];
       return out;
     } finally { v.opts.feel = feel; v.opts.reducedMotion = reducedMotion; h.app.ticker.start(); }
   });
   const fail = [];
-  for (const deg of [0, 90, 180, 270]) {
-    const q = r[`aim${deg}`], peak = Math.max(...q.back), falling = q.back.slice(1).every((x, i, a) => i === 0 || x <= a[i - 1]);
-    if (q.back[0] !== 0 || peak < 2 || peak > 3 || !falling || Math.min(...q.back) < 0 || q.back.slice(5).some(x => x !== 0) || q.across > 1)
-      fail.push(`aim ${deg}: back ${q.back.join(',')} across ${q.across} (want 0 on the shot frame, 2-3 px next, falling to 0 by the 5th frame, at most 1 px across)`);
-    if (q.flashFrames !== 5 || q.flashDrift !== 0) fail.push(`aim ${deg}: flash on ${q.flashFrames} frames, ${q.flashDrift} px off the barrel (want 5 frames, 0 px)`);
+  for (const [id, q] of Object.entries(r.cases)) {
+    // The frame after the shot shows the pulse less one frame; each of the two grips it is measured between rounds by up to 0.5 px.
+    const [px, sec] = RETRACT[q.look], next = px * (1 - 1 / 60 / sec), lo = Math.ceil(next - 1), hi = Math.min(Math.floor(next + 1), Math.ceil(px)), home = Math.ceil(sec * 60 - 1e-9);
+    const peak = Math.max(...q.back), falling = q.back.slice(1).every((x, i, a) => i === 0 || x <= a[i - 1]);
+    if (q.back[0] !== 0 || q.back[1] !== peak || peak < lo || peak > hi || !falling || Math.min(...q.back) < 0 || q.back.slice(home).some(x => x !== 0) || q.across > 1)
+      fail.push(`${id}: back ${q.back.join(',')} across ${q.across} (want 0 on the shot frame, ${lo}-${hi} px next, falling to 0 by frame ${home}, at most 1 px across)`);
+    if (q.flashFrames !== 5 || q.flashDrift !== 0) fail.push(`${id}: flash on ${q.flashFrames} frames, ${q.flashDrift} px off the barrel (want 5 frames, 0 px)`);
   }
-  for (const k of ['classic', 'reduced']) if (r[k].back.some(x => x !== 0)) fail.push(`${k}: the gun moved ${r[k].back.join(',')}`);
+  for (const k of ['classic', 'reduced']) for (const q of r[k]) if (q.back.some(x => x !== 0)) fail.push(`${k} ${q.look}: the gun moved ${q.back.join(',')}`);
   check(r.weapon === 'pistol' && !fail.length, fail.join('; ') || `held ${r.weapon}, not the pistol`, r);
   await running(page);
   return r;
@@ -807,7 +814,7 @@ try {
   await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);
   await step('h', 'a critical hit turns the hit marker critical; each kill marker asks for one confirm sound', desktop, hitConfirm);
   await step('i', 'heavier blows kick further and hold longer; one shot is one blow; the player\'s blow pushes the camera', desktop, blowTiers);
-  await step('j', 'the gun pulls back after the shot frame and is home within 80 ms; classic and reduced motion keep it still', desktop, gunRetraction);
+  await step('j', 'the gun pulls back after the shot frame, a pistol least and a shotgun most, and is home when its pulse ends; classic and reduced motion keep it still', desktop, gunRetraction);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
   await step('k', 'a crowded fight stays within the particle and voice budget; the player\'s own blood and cues still come through', desktop, crowdBudget);
