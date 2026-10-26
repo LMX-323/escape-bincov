@@ -71,6 +71,8 @@
 
 **验证入口。**
 
+- #75 的枪身回缩候选（#119）由 [scene.ts](../src/coast-view/scene.ts) 调用 [weapon-retraction.ts](../src/coast-view/weapon-retraction.ts)：shot 当帧保持原握枪位置，之后沿原枪轴恢复，袖管/描边跟随最终 transform；火光跟当前枪口，曳光保留发射快照。3 世界像素/80 ms 经维护者试玩认可（按枪种调幅度是 H-09），超过可见时段直接归零，低帧可能完全没有回缩，不改变 Runtime 或存档。试枪场“打击感：旧版”（`ViewOptions.feel`）和减弱动效不回缩。时序/投影边界见 [weapon-retraction.test.ts](../tests/weapon-retraction.test.ts)，场景接入见 [shooting-test.mjs](../scripts/shooting-test.mjs) 的 j 项。
+
 - [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands reach only the first substep`、`blocked panels advance the world`。
