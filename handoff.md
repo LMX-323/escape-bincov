@@ -2,7 +2,7 @@
 
 `feat/weapon-retraction-prototype` 同步 main `1a4fe66`（#121、#122、#123、#125 已合入）。只有本文件和任务清单冲突：本文件保留双方开头小节，任务清单取 main。`scene.ts` 自动合并，回缩钩子位于 `landBlows()` 之后，类型检查通过。按 H-01“关掉时回到改动前的画面”，回缩和火光跟随枪口归入 `ViewOptions.feel`：试枪场“打击感：旧版”和减弱动效不回缩，中途切到旧版即清掉脉冲；`weaponRetraction` 只留给证据探针。`test:shooting` 新增 j 项，检查新版四个方向逐帧回缩、第 5 帧回位、火光不离枪口，以及旧版和减弱动效保持不动。
 
-本机 Windows 实测：单测 898/898，类型检查、build、package 通过（worktree 里 pnpm 11 会因 node_modules 是链接而尝试重装，故直接用 node 跑相同脚本），`test:shooting` 12/12，`test:range` 通过，证据探针 12 组 A/B 和边界检查通过。工程守卫 63/64，唯一失败是本机便携 Git 的已知环境问题，CI 上通过。真人试玩、真机和最终观感仍未签收，去留由维护者在 #119 定；H-09 按枪种调幅度在合入后再做。
+本机 Windows 实测：单测 898/898，类型检查、build、package 通过（worktree 里 pnpm 11 会因 node_modules 是链接而尝试重装，故直接用 node 跑相同脚本），`test:shooting` 12/12，`test:range` 通过，证据探针 12 组 A/B 和边界检查通过。工程守卫 63/64，唯一失败是本机便携 Git 的已知环境问题，CI 上通过。维护者 10-26 在试枪场试玩后认可新版，同意合并，#119 转为 Ready；真机未另行确认。H-09 按枪种调幅度在合入后再做。
 
 ## 2026-10-25 #75：枪身回缩私有候选（未视觉签收）
 

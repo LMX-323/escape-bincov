@@ -40,4 +40,4 @@ env -u BINCOV_CHROME PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright \
 
 ## 同步 main 之后（2026-10-26）
 
-上面的截图和报告来自同步前的 head `8cfe4d4`。同步 main `1a4fe66`（#121 枪声与新版/旧版开关、#123 C 组姿态、#125 受击档位与镜头推动）后，回缩改由试枪场“打击感：新版 / 旧版”开关（`ViewOptions.feel`）控制：旧版不回缩，火光留在开枪位置；`weaponRetraction` 只留给本探针。本机 Windows、系统 Chrome 156 上重跑本探针，12 组 A/B 和边界检查全部通过，制品 SHA-256 `63e05f3207e6487985150ff9260cc8a08d0fb56f7466a83d60e3513d765d0035`。场景接入另由 `test:shooting` 的 j 项进 CI：新版四个方向逐帧回缩 2–3 px、第 5 帧回位、火光不离枪口；旧版和减弱动效不动。截图未重拍：新版的画面与同步前相同。
+上面的截图和报告来自同步前的 head `8cfe4d4`。同步 main `1a4fe66`（#121 枪声与新版/旧版开关、#123 C 组姿态、#125 受击档位与镜头推动）后，回缩改由试枪场“打击感：新版 / 旧版”开关（`ViewOptions.feel`）控制：旧版不回缩，火光留在开枪位置；`weaponRetraction` 只留给本探针。本机 Windows、系统 Chrome 156 上重跑本探针，12 组 A/B 和边界检查全部通过，制品 SHA-256 `63e05f3207e6487985150ff9260cc8a08d0fb56f7466a83d60e3513d765d0035`。场景接入另由 `test:shooting` 的 j 项进 CI：新版四个方向逐帧回缩 2–3 px、第 5 帧回位、火光不离枪口；旧版和减弱动效不动。截图未重拍：新版的画面与同步前相同。维护者 10-26 在试枪场试玩后认可新版，同意合并。
