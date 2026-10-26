@@ -1,5 +1,6 @@
 /** Opus v1 with additive R6 facts (2026-10-09); no simulation or save schema changes. */
 import type { Inventory } from '../domain';
+import type { GunClass } from '../gunsmith/catalog';
 import type { LootTransfer } from '../loot';
 import type { CritBreakdown } from '../perks';
 import type { MutationResult } from '../session';
@@ -266,6 +267,27 @@ export type CritChanceView = Readonly<{
     /** v3 while the breath charge (HudView.breath) holds a target: the breakdown a shot fired now has on a hit on that enemy, the charge included. */
     onTarget: Readonly<CritBreakdown> | null;
 }>;
+/**
+ * The tactical devices of the gun in hand (#28 M2-03), display only: the Runtime decides every effect, and a view draws
+ * these values without deriving them again. Points are on the ground plane; the beam travels at chest height.
+ */
+export type DevicesView = Readonly<{
+    /** Each device part on the gun, in install order: its name, the effects it has (both for a combiner) and its switch. */
+    parts: readonly Readonly<{ uid: string; name: string; laser: boolean; light: boolean; on: boolean }>[];
+    /**
+     * The laser while it is on: where its beam stops (a wall, a closed door, a body shown, the edge of a room not
+     * revealed, or twice its range), whether it lands on a surface or body there (`hit`, the dot), and whether it rests
+     * on a body within the laser's range (`inRange`), when a shot from the hip takes the laser's tighter cone.
+     */
+    laser: Readonly<{ to: Point; hit: boolean; inRange: boolean }> | null;
+    /**
+     * The light while it is on: its reach (px) and arc (radians) along the aim, and the ids of the containers and ground
+     * items it outlines now: within reach and arc, in line of sight, on this floor and outdoors or in a revealed room.
+     */
+    light: Readonly<{ radius: number; arc: number; lit: readonly string[] }> | null;
+    /** How much farther enemies in front of the gun notice the player now: the spot factors of the devices on; 1 with none. */
+    spot: number;
+}>;
 export type HudView = Readonly<{
     hp: number;
     maxHp: number;
@@ -289,6 +311,8 @@ export type HudView = Readonly<{
     breath: BreathView | null;
     /** Null in a classic raid, which has no such critical rule to show. */
     crit: CritChanceView | null;
+    /** Null with the knife drawn, without a gun, or with a gun that has no device. */
+    devices: DevicesView | null;
     heals: number;
     hitDirections: readonly Readonly<{
         angle: number | null;
@@ -324,6 +348,13 @@ export type ViewEventBody = {
     shooter: string;
     weapon: WeaponLook;
     pellets: readonly PelletView[];
+    /**
+     * The player's gun (#28 M2-11): its catalog id and class, so the view picks the shot's sound by the gun and not only
+     * by how it is drawn (#75 keys its per-gun recipes on these). Enemy shots and older events omit it.
+     */
+    gun?: Readonly<{ id: string; cls: GunClass }>;
+    /** A suppressor muffles this shot (#28 M2-11): the view plays the quiet recipe. Enemy shots and older events omit it. */
+    suppressed?: boolean;
 } | {
     type: 'melee';
     attacker: string;
@@ -433,7 +464,8 @@ export type RaidIntent = Readonly<{
     aimHeld: boolean;
     interactPressed: boolean;
     interactHeld: boolean;
-    commands: readonly ('reload' | 'heal' | 'primary' | 'knife')[];
+    /** `laser` and `light` flip the switch of the device part with that effect on the gun in hand (#28 M2-03). */
+    commands: readonly ('reload' | 'heal' | 'primary' | 'knife' | 'laser' | 'light')[];
     selectTarget: string | null;
     source: 'mouse-keyboard' | 'touch';
 }>;

@@ -99,7 +99,7 @@ test('range: a target taken down within one long frame stands up again and check
 test('range: every weapon can be armed, the M4A1 fires automatically and the bag never runs dry', () => {
     const r = open();
     let t = 0;
-    const ids: Record<string, string> = { pistol: 'pistol', carbine: 'carbine', shotgun: 'shotgun', mb4a1: 'mb4a1', knife: 'knife' };
+    const ids: Record<string, string> = { pistol: 'pistol', gb17: 'gb17', carbine: 'carbine', shotgun: 'shotgun', mb4a1: 'mb4a1', knife: 'knife' };
     for (const weapon of [...RANGE_WEAPONS, 'pistol', 'knife', 'mb4a1', 'knife', 'mb4a1'] as const) {
         r.range.arm(weapon);
         const b = frame(r, t += .02);

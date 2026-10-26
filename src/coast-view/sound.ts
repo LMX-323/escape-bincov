@@ -14,7 +14,7 @@ import type { PublishedView, StampedEvent } from '../raid-runtime/contract';
 import { worldKeyString } from '../raid-runtime/contract';
 import { insideFootprint } from './mall-dressing';
 import { enemyVoice } from './enemy-motion';
-import { timbreOfLook } from '../gun-timbre';
+import { timbreOfGun, timbreOfLook } from '../gun-timbre';
 
 /** Other people's gunfire is quieter than the player's own, as the single shared report was (#75 H-02). */
 const ENEMY_SHOT = .55;
@@ -49,6 +49,9 @@ export class SampleSound {
   private shotScope = '';
   private bulletShots = new Map<string, string>();
   private shotHits = new Map<string, HeardHits>();
+  /** The device parts of the gun in hand last frame (uids) and their switches (#28 M2-03). */
+  private deviceParts = '';
+  private switches = '';
 
   /** `feel` is read at every shot: the range's A/B switch (ViewOptions.feel). */
   constructor(private readonly out: SoundOut & HitCueOut, private readonly feel: () => 'enhanced' | 'classic' = () => 'enhanced') {}
@@ -124,6 +127,10 @@ export class SampleSound {
     } else this.stepLeft = 0;
     // Reload start and finish each click, as in the original.
     if (w.reloading !== this.reloading) { this.reloading = w.reloading; this.out.click(); }
+    // A device switched on the same gun clicks too (#28 M2-03); drawing another weapon or gun does not.
+    const devices = f.hud.devices, parts = devices ? devices.parts.map(d => d.uid).join() : '', switches = devices ? devices.parts.map(d => +d.on).join('') : '';
+    if (parts && parts === this.deviceParts && switches !== this.switches) this.out.click();
+    this.deviceParts = parts; this.switches = switches;
     // A heal (Q) spends a supply: the original plays the pickup cue for any used supply.
     if (this.heals !== null && f.hud.heals < this.heals) this.out.pickup();
     this.heals = f.hud.heals;
@@ -152,13 +159,19 @@ export class SampleSound {
     const at = (uid: string) => { const p = this.where.get(uid); return p ? this.spot(p.x, p.y) : undefined; };
     switch (e.type) {
       case 'shot': {
-        // Each gun family's own report (#75 H-02); the classic A/B setting plays the one report every gun shared before.
-        const timbre = this.feel() === 'classic' ? null : timbreOfLook(e.weapon);
+        // Each gun family's own report (#75 H-02): the gun the event names picks it (#28 M2-11), older events and enemies
+        // go by look; the classic A/B setting plays the one report every gun shared before. A suppressor muffles the
+        // player's shot on top of its family's report.
+        const timbre = this.feel() === 'classic' ? null : timbreOfGun(e.gun?.id) ?? timbreOfLook(e.weapon);
         if (this.scope(e.stamp) === this.shotScope && e.pellets?.length) {
           if (!this.shotHits.has(e.shotId)) this.shotHits.set(e.shotId, { hit: new Set(), crit: new Set() });
           for (const pellet of e.pellets) this.bulletShots.set(pellet.bullet, e.shotId);
         }
-        if (e.shooter === 'player') { this.out.shot(timbre ?? (e.weapon === 'shotgun' ? 'shotgun' : 'pistol')); break; }
+        if (e.shooter === 'player') {
+          const kind = timbre ?? (e.weapon === 'shotgun' ? 'shotgun' : 'pistol');
+          if (e.suppressed) this.out.shot(kind, undefined, 1, true); else this.out.shot(kind);
+          break;
+        }
         const s = at(e.shooter) ?? (e.pellets[0] ? this.spot(e.pellets[0].origin.x, e.pellets[0].origin.y) : undefined);
         if (this.spitters.has(e.shooter)) { if (actorShown(e.shooter)) this.out.shot('spit', s); break; }
         if (timbre) this.out.shot(timbre, s, ENEMY_SHOT); else if (s) this.out.shot('enemy', s); else this.out.shot('enemy');

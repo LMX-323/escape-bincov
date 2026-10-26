@@ -110,7 +110,7 @@ test('effect quotas follow the device names and the device effects', () => {
 });
 
 const FACTORS = ['hip', 'precise', 'raise', 'sway', 'bloom', 'kick', 'settle', 'recover', 'spread', 'range', 'reload'] as const;
-const FIELDS = new Set<string>([...FACTORS, 'magazine', 'weight', 'noise', 'grow', 'view', 'braced', 'laser', 'light', 'spot']);
+const FIELDS = new Set<string>([...FACTORS, 'magazine', 'weight', 'noise', 'suppressor', 'grow', 'view', 'braced', 'laser', 'light', 'spot']);
 /** The plan's per-attachment guardrails: the lowest factor allowed (40% better at most, handling time 65%, noise 40%). */
 const FLOOR: Partial<Record<keyof Factors, number>> = { hip: .6, precise: .6, sway: .6, bloom: .6, kick: .6, settle: .6, spread: .6, raise: .65, reload: .65 };
 
@@ -126,8 +126,11 @@ test('modifiers stay in the schema and inside the per-attachment guardrails; non
     for (const a of parts) {
         const m = a.mods;
         for (const key of Object.keys(m)) assert.ok(FIELDS.has(key), `${a.id}: unknown field ${key}`);
-        const { magazine, weight, noise, grow, view, braced, laser, light, spot, ...factors } = m;
+        const { magazine, weight, noise, suppressor, grow, view, braced, laser, light, spot, ...factors } = m;
         inside(a.id, factors);
+        // The suppressors, and only they, sound muffled (M2-11); each also cuts the hearing radius.
+        assert.equal(suppressor, /消音器/.test(a.name) ? true : undefined, `${a.id}: suppressor`);
+        if (suppressor) assert.ok(noise !== undefined && noise < 1, a.id);
         if (braced) { inside(a.id, braced); assert.equal(a.mount, 'bipod', a.id); }
         assert.equal(magazine !== undefined, a.cat === 'mag', a.id);
         if (magazine !== undefined) assert.ok(Number.isInteger(magazine) && magazine > 0, a.id);

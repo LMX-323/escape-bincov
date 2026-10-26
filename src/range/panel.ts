@@ -10,7 +10,7 @@ import type { PublishedView } from '../raid-runtime/contract';
 import type { CoastSampleHost } from '../coast-view/host';
 import { MOVER, RANGE_WEAPONS, TARGETS, type RangeWeapon, type ShootingRange } from './raid';
 
-const WEAPON_NAMES: Record<RangeWeapon, string> = { pistol: '手枪', carbine: '卡宾枪', shotgun: '霰弹枪', mb4a1: 'M4A1 步枪', knife: '匕首' };
+const WEAPON_NAMES: Record<RangeWeapon, string> = { pistol: '手枪', gb17: 'G17', carbine: '卡宾枪', shotgun: '霰弹枪', mb4a1: 'M4A1 步枪', knife: '匕首' };
 /** Aim angles are radians (contract AimView); the panel shows degrees and shares as percentages. */
 const degrees = (radians: number) => `${(radians * 180 / Math.PI).toFixed(1)} 度`;
 const percent = (share: number) => `${Math.round(share * 100)}%`;
