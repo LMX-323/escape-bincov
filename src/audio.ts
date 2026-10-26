@@ -1,4 +1,5 @@
 import type { GunTimbre } from './gun-timbre';
+import { VOICE_BUDGET, admit } from './feedback-budget';
 
 /**
  * Where a cue happens relative to the listener: stereo position (-1 left .. 1 right) and level (0..1). Omitted, a cue
@@ -44,8 +45,11 @@ export class SynthAudio {
   private noise?: AudioBuffer;
   private lastStep = 0;
   private ambientNodes: AudioNode[] = [];
-  private voices = new Map<AudioScheduledSourceNode, AudioNode[]>();
-  private readonly maxVoices = 96;
+  /** Live voices in start order; `decor` ones go first when a crowded fight spends the budget (#75 H-07). */
+  private voices = new Map<AudioScheduledSourceNode, { nodes: AudioNode[]; decor: boolean }>();
+  private decorVoices = 0;
+  /** Voices the budget refused or cut short since the page loaded, by kind, for the acceptance measurements. */
+  dropped = { decor: 0, core: 0 };
   /**
    * resume() is asynchronous: until it settles the context still reports 'suspended'. Cues asked for in that window are
    * scheduled anyway (they start the moment the context runs) instead of being dropped; the window is bounded in time
@@ -120,12 +124,13 @@ export class SynthAudio {
 
   stop(): void {
     try { this.ambience?.stop(); this.swell?.stop(); } catch { /* Already stopped. */ }
-    for (const [voice, nodes] of this.voices) {
+    for (const [voice, { nodes }] of this.voices) {
       voice.onended = null;
       try { voice.stop(); } catch { /* Already stopped. */ }
       for (const node of nodes) node.disconnect();
     }
     this.voices.clear();
+    this.decorVoices = 0;
     for (const node of this.ambientNodes) node.disconnect();
     this.ambientNodes = [];
     this.ambience = undefined;
@@ -135,20 +140,40 @@ export class SynthAudio {
     if (this.context) void this.context.suspend().catch(() => undefined);
   }
 
-  private trackVoice(source: AudioScheduledSourceNode, nodes: AudioNode[]): void {
-    this.voices.set(source, nodes);
-    source.onended = () => {
-      this.voices.delete(source);
-      for (const node of nodes) node.disconnect();
-      source.onended = null;
-    };
+  private trackVoice(source: AudioScheduledSourceNode, nodes: AudioNode[], decor: boolean): void {
+    this.voices.set(source, { nodes, decor });
+    if (decor) this.decorVoices++;
+    source.onended = () => this.release(source);
   }
 
-  /** Whether a cue may be scheduled now: running, or inside a fresh resume window (with a smaller voice budget). */
-  private ready(): boolean {
+  private release(source: AudioScheduledSourceNode): void {
+    const voice = this.voices.get(source);
+    if (!voice) return;
+    this.voices.delete(source);
+    if (voice.decor) this.decorVoices--;
+    source.onended = null;
+    for (const node of voice.nodes) node.disconnect();
+  }
+
+  /**
+   * Whether a cue may be scheduled now: running and within the voice budget (feedback-budget.ts; at the limit a core cue
+   * cuts the oldest decorative voice short), or inside a fresh resume window (with a smaller budget).
+   */
+  private ready(decor: boolean): boolean {
     if (!this.context || !this.master) return false;
-    if (this.context.state === 'running') return this.voices.size < this.maxVoices;
-    return this.resumeAt >= 0 && performance.now() - this.resumeAt < 1000 && this.voices.size < 16;
+    if (this.context.state !== 'running') return this.resumeAt >= 0 && performance.now() - this.resumeAt < 1000 && this.voices.size < 16;
+    const verdict = admit(this.voices.size, decor, this.decorVoices, VOICE_BUDGET.soft, VOICE_BUDGET.hard);
+    if (verdict === 'drop') { this.dropped[decor ? 'decor' : 'core']++; return false; }
+    if (verdict === 'evict') {
+      for (const [source, voice] of this.voices) {
+        if (!voice.decor) continue;
+        try { source.stop(); } catch { /* Already stopped. */ }
+        this.release(source);
+        break;
+      }
+      this.dropped.decor++;
+    }
+    return true;
   }
 
   /** Output for one voice: straight to the master, or through its own level and stereo position. */
@@ -164,8 +189,10 @@ export class SynthAudio {
     return level;
   }
 
-  private tone(frequency: number, length: number, gain: number, type: OscillatorType = 'sine', endFrequency = frequency, delay = 0, spot?: Spot): void {
-    if (!this.ready()) return;
+  /** `decor`: a decorative layer (report tail, action clicks, footsteps); a cue placed far away is decorative anyway. */
+  private tone(frequency: number, length: number, gain: number, type: OscillatorType = 'sine', endFrequency = frequency, delay = 0, spot?: Spot, decor = false): void {
+    decor ||= spot !== undefined && spot.gain < VOICE_BUDGET.far;
+    if (!this.ready(decor)) return;
     const ctx = this.context!;
     const at = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
@@ -178,13 +205,14 @@ export class SynthAudio {
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length);
     const nodes: AudioNode[] = [oscillator, envelope];
     oscillator.connect(envelope).connect(this.route(nodes, spot));
-    this.trackVoice(oscillator, nodes);
+    this.trackVoice(oscillator, nodes, decor);
     oscillator.start(at);
     oscillator.stop(at + length + 0.025);
   }
 
-  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot): void {
-    if (!this.noise || !this.ready()) return;
+  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot, decor = false): void {
+    decor ||= spot !== undefined && spot.gain < VOICE_BUDGET.far;
+    if (!this.noise || !this.ready(decor)) return;
     const ctx = this.context!, at = ctx.currentTime + delay;
     const source = ctx.createBufferSource();
     source.buffer = this.noise;
@@ -196,7 +224,7 @@ export class SynthAudio {
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length);
     const nodes: AudioNode[] = [source, filter, envelope];
     source.connect(filter).connect(envelope).connect(this.route(nodes, spot));
-    this.trackVoice(source, nodes);
+    this.trackVoice(source, nodes, decor);
     source.start(at, Math.random() * 2);
     source.stop(at + length + 0.02);
   }
@@ -228,8 +256,9 @@ export class SynthAudio {
     this.hiss(bl, bg * level, bc, 0, spot);
     this.tone(from, bl * .85, tg * level, 'triangle', to, 0, spot);
     this.tone(of, ol, og * level, 'sine', ot, .02, spot);
-    this.hiss(tl, tgain * level, tc, .04, spot);
-    for (const [f, t, l, g, d] of r.action) this.tone(f, l, g * level, 'square', t, d, spot);
+    // In a crowded fight the tail and the action's clicks go first; the crack, body and boom are the shot itself.
+    this.hiss(tl, tgain * level, tc, .04, spot, true);
+    for (const [f, t, l, g, d] of r.action) this.tone(f, l, g * level, 'square', t, d, spot, true);
   }
 
   /** Short, positional enemy action cues; shared timbres keep simultaneous encounters within the voice budget. */
@@ -265,8 +294,8 @@ export class SynthAudio {
   step(): void {
     if (!this.context || this.context.currentTime - this.lastStep < 0.17) return;
     this.lastStep = this.context.currentTime;
-    this.hiss(0.06, 0.18, 180);
-    this.tone(78 + Math.random() * 22, 0.08, 0.07, 'triangle', 40);
+    this.hiss(0.06, 0.18, 180, 0, undefined, true);
+    this.tone(78 + Math.random() * 22, 0.08, 0.07, 'triangle', 40, 0, undefined, true);
   }
   hit(spot?: Spot): void { this.hiss(0.16, 0.6, 80, 0, spot); this.tone(110, 0.17, 0.15, 'sawtooth', 30, 0, spot); }
   /**
