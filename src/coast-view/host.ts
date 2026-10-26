@@ -136,7 +136,7 @@ export class CoastSampleHost {
 
   constructor(readonly handle: CoastHandle, private session: SessionState, private saves: SaveSession, readonly opts: ViewOptions,
     private onExit: (o: SampleExit) => void, private exportBackup: () => void) {
-    this.sound = new SampleSound(audio);
+    this.sound = new SampleSound(audio, () => this.opts.feel ?? 'enhanced');
   }
 
   get runtime() { return this.handle.runtime; }

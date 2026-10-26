@@ -3,7 +3,7 @@
  * page's read-only ?test=1 hook (window.__bincovRange) is only read, never driven. The page must leave browser storage
  * alone; every gun must land hits on the 5-tile target and the panel must count them; the M4A1 must fire while
  * the button is held; presses on the panel must never fire or turn the
- * aim; the panel must fit 1280x720 and 1920x1080; abandoning settles in memory and reloads a fresh range. A phone page
+ * aim; the hit-feel A/B switch must flip the view option and its label; the panel must fit 1280x720 and 1920x1080; abandoning settles in memory and reloads a fresh range. A phone page
  * without ?test=1 checks the touch layout and that no test hook exists there.
  */
 import assert from 'node:assert/strict';
@@ -194,6 +194,18 @@ try {
       await p.locator(selector).click();
       await frames(p, 2);
     }
+    // The hit-feel A/B switch (#75 H-01) flips the view option the sound layer reads at every shot, and back.
+    const feel = () => p.evaluate(() => {
+      const button = document.querySelector('.range-panel').shadowRoot.querySelector('[data-act="feel"]');
+      return [window.__bincovRange.host.opts.feel ?? 'enhanced', button.textContent, button.getAttribute('aria-pressed')];
+    });
+    const feels = [await feel()];
+    for (let i = 0; i < 2; i++) {
+      await p.locator('[data-act="feel"]').click();
+      await frames(p, 2);
+      feels.push(await feel());
+    }
+    assert.deepEqual(feels, [['enhanced', '打击感：新版', 'true'], ['classic', '打击感：旧版', 'false'], ['enhanced', '打击感：新版', 'true']]);
     await simulated(p, .3);
     const after = await state(p);
     assert.equal(after.stats.shots, before.stats.shots, 'a panel press fired');
@@ -239,7 +251,7 @@ try {
     const fresh = await state(p);
     assert.equal(fresh.weapon.id, 'pistol', 'the reloaded range starts over');
     assert.deepEqual(fresh.stats, { shots: 0, hits: { d5: 0, d10: 0, d15: 0, d20: 0, mover: 0 } });
-    return { guns, rifle, sizes, reloaded: fresh.weapon.id };
+    return { guns, rifle, feels, sizes, reloaded: fresh.weapon.id };
   });
 
   await test('range: phone layout without the test hook, by touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }, '?range=1', async p => {
