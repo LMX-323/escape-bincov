@@ -17,10 +17,7 @@
  *      30 and 15 frames a second and on one at 12 and 10; the kick goes 2 px the way the bullet flew (east and south) and
  *      the blood sprays back toward the shooter; the enemy's body shows its hurt frame, then its recovery frame;
  *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
- *      asks for one kill confirm sound;
- *   i. heavier blows kick further and hold longer, one shot is one blow, and a blow on the player pushes the camera;
- *   j. in a crowded fight live particles and sound voices stay within the budget, and the player's own blood, report,
- *      kill confirm and pain still come through (#75 H-07).
+ *      asks for one kill confirm sound.
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -637,9 +634,43 @@ async function blowTiers(page) {
   return r;
 }
 
+/** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
+ *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
+ *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
+ *  asks for one confirm sound. The Runtime and the save never see these events. */
+async function hitConfirm(page) {
+  const r = await page.evaluate(() => {
+    const h = window.__bincovSample.host, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
+    if (!foe) return null;
+    const at = { x: Math.round(p.x) + 48, y: Math.round(p.y) }, moved = { ...foe, ...at, vx: 0, vy: 0, regionId: p.regionId };
+    const copy = { ...b, events: [], frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } };
+    const ev = body => ({ ...body, seq: 0, stamp: b.stamp, durability: 'accepted' });
+    const impact = ev({ type: 'impact', bullet: 'probe-bullet', owner: 'player', reason: 'hit-actor', lastFree: at, contact: at, normal: null, surface: 'actor', target: foe.uid });
+    const hurt = critical => ev({ type: 'hurt', cause: 'blow', uid: foe.uid, at, damage: 10, critical, angle: Math.PI });
+    const death = ev({ type: 'death', uid: foe.uid, corpseAngle: 0, containerId: null });
+    const pop = document.querySelector('[data-hitpop]'), out = h.sound.out, kill = out.kill;
+    let kills = 0;
+    out.kill = function (...a) { kills++; return kill.apply(this, a); };
+    const read = () => ({ on: pop.classList.contains('on'), crit: pop.classList.contains('crit'), kill: pop.classList.contains('kill'), markT: Math.round(h.markT * 100) / 100, kills });
+    const feed = (...events) => { for (const e of events) h.feedback(e, copy); return read(); };
+    try {
+      return { plain: feed(impact, hurt(false)), crit: feed(impact, hurt(true)), critKill: feed(death),
+        plainAgain: feed(impact, hurt(false)), plainKill: feed(death) };
+    } finally { out.kill = kill; }
+  });
+  check(r, 'no living enemy to mark');
+  const want = { plain: [false, false, .2, 0], crit: [true, false, .3, 0], critKill: [true, true, .42, 1], plainAgain: [false, false, .2, 1], plainKill: [false, true, .42, 2] };
+  const fail = Object.entries(want).flatMap(([k, [crit, kill, markT, kills]]) => {
+    const s = r[k];
+    return s.on && s.crit === crit && s.kill === kill && s.markT === markT && s.kills === kills ? [] : [`${k}: ${JSON.stringify(s)} (want crit ${crit}, kill ${kill}, ${markT} s, ${kills} confirm sounds)`];
+  });
+  check(!fail.length, fail.join('; '), r);
+  return r;
+}
+
 /** Feedback budget (src/feedback-budget.ts): live particles and sound voices a crowded fight may not pass. */
 const BUDGET = { particles: 320, voices: 96 };
-/** j. A crowded fight stays within the feedback budget (#75 H-07): copies of the live batch with twelve gunmen 90-240 px
+/** k. A crowded fight stays within the feedback budget (#75 H-07): copies of the live batch with twelve gunmen 90-240 px
  *  around the player and six more 700 px away, presented at 60 Hz with the ticker stopped, one frame per animation frame
  *  so that the sound clock runs as in play, and heard through the host's own SampleSound. Every frame one near and one
  *  far gunman fire and a round strikes the wall beside the player. Live particles and voices stay within the budget,
@@ -711,40 +742,6 @@ async function crowdBudget(page) {
   return r;
 }
 
-/** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
- *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
- *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
- *  asks for one confirm sound. The Runtime and the save never see these events. */
-async function hitConfirm(page) {
-  const r = await page.evaluate(() => {
-    const h = window.__bincovSample.host, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
-    if (!foe) return null;
-    const at = { x: Math.round(p.x) + 48, y: Math.round(p.y) }, moved = { ...foe, ...at, vx: 0, vy: 0, regionId: p.regionId };
-    const copy = { ...b, events: [], frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a) } };
-    const ev = body => ({ ...body, seq: 0, stamp: b.stamp, durability: 'accepted' });
-    const impact = ev({ type: 'impact', bullet: 'probe-bullet', owner: 'player', reason: 'hit-actor', lastFree: at, contact: at, normal: null, surface: 'actor', target: foe.uid });
-    const hurt = critical => ev({ type: 'hurt', cause: 'blow', uid: foe.uid, at, damage: 10, critical, angle: Math.PI });
-    const death = ev({ type: 'death', uid: foe.uid, corpseAngle: 0, containerId: null });
-    const pop = document.querySelector('[data-hitpop]'), out = h.sound.out, kill = out.kill;
-    let kills = 0;
-    out.kill = function (...a) { kills++; return kill.apply(this, a); };
-    const read = () => ({ on: pop.classList.contains('on'), crit: pop.classList.contains('crit'), kill: pop.classList.contains('kill'), markT: Math.round(h.markT * 100) / 100, kills });
-    const feed = (...events) => { for (const e of events) h.feedback(e, copy); return read(); };
-    try {
-      return { plain: feed(impact, hurt(false)), crit: feed(impact, hurt(true)), critKill: feed(death),
-        plainAgain: feed(impact, hurt(false)), plainKill: feed(death) };
-    } finally { out.kill = kill; }
-  });
-  check(r, 'no living enemy to mark');
-  const want = { plain: [false, false, .2, 0], crit: [true, false, .3, 0], critKill: [true, true, .42, 1], plainAgain: [false, false, .2, 1], plainKill: [false, true, .42, 2] };
-  const fail = Object.entries(want).flatMap(([k, [crit, kill, markT, kills]]) => {
-    const s = r[k];
-    return s.on && s.crit === crit && s.kill === kill && s.markT === markT && s.kills === kills ? [] : [`${k}: ${JSON.stringify(s)} (want crit ${crit}, kill ${kill}, ${markT} s, ${kills} confirm sounds)`];
-  });
-  check(!fail.length, fail.join('; '), r);
-  return r;
-}
-
 /* ---------------------------------------------------------------- run ---------------------------------------------------------------- */
 
 let desktop, phone;
@@ -759,7 +756,7 @@ try {
   await step('i', 'heavier blows kick further and hold longer; one shot is one blow; the player\'s blow pushes the camera', desktop, blowTiers);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
-  await step('j', 'a crowded fight stays within the particle and voice budget; the player\'s own blood and cues still come through', desktop, crowdBudget);
+  await step('k', 'a crowded fight stays within the particle and voice budget; the player\'s own blood and cues still come through', desktop, crowdBudget);
   desktop.stallResumes = await stallResumes(desktop.page);
   phone = await context('phone', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   phone.touch = true;
