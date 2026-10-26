@@ -84,6 +84,7 @@
 
 **按需继续。**
 
+- 枪上的设备与枪声（#28 M2-03、M2-11）：F/G 发 `'light'`/`'laser'` 命令，开关规则在 [gunsmith/devices.ts](../src/gunsmith/devices.ts)；激光和暴露看 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `laserBeam`、`shotGrip`；枪声按 [gun-timbre.ts](../src/gun-timbre.ts) 的 `timbreOfGun` 选枪族，消音见 [audio.ts](../src/audio.ts) 的 `SUPPRESSED`。规则见[改枪实现契约](gunsmith/CONTRACTS.md#激光灯光与枪声m2-03m2-11)。
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
 - 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。县域选图展示在 [station-view/deploy-map.ts](../src/station-view/deploy-map.ts)（地标坐标、标签方向、路线与插图焦点，验证见 [deploy-map.test.ts](../tests/deploy-map.test.ts)）；`deploymentWorld` 只允许现有区域白名单，未开发区域的预览只存在于站内 UI，不创建世界或修改存档。地图与插图只由 [county-art.ts](../src/station-view/county-art.ts) 在渲染侧导入（构建按清单核对）；出击面板重绘经 [morph.ts](../src/station-view/morph.ts) 就地更新，换区的滑动与入场动画依赖元素保留，浏览器回归在 `test:raid-default` 的 R10/R11。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
