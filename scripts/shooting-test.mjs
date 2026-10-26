@@ -17,7 +17,10 @@
  *      30 and 15 frames a second and on one at 12 and 10; the kick goes 2 px the way the bullet flew (east and south) and
  *      the blood sprays back toward the shooter; the enemy's body shows its hurt frame, then its recovery frame;
  *   h. on the host, a critical hit turns the hit marker critical and a kill of that target keeps it; every kill marker
- *      asks for one kill confirm sound.
+ *      asks for one kill confirm sound;
+ *   i. heavier blows kick further and hold longer, one shot is one blow, and a blow on the player pushes the camera;
+ *   j. in a crowded fight live particles and sound voices stay within the budget, and the player's own blood, report,
+ *      kill confirm and pain still come through (#75 H-07).
  * Waits use raid time or published state; a stall pause resumed during a step (slow software GL) repeats that step.
  */
 import assert from 'node:assert/strict';
@@ -634,6 +637,80 @@ async function blowTiers(page) {
   return r;
 }
 
+/** Feedback budget (src/feedback-budget.ts): live particles and sound voices a crowded fight may not pass. */
+const BUDGET = { particles: 320, voices: 96 };
+/** j. A crowded fight stays within the feedback budget (#75 H-07): copies of the live batch with twelve gunmen 90-240 px
+ *  around the player and six more 700 px away, presented at 60 Hz with the ticker stopped, one frame per animation frame
+ *  so that the sound clock runs as in play, and heard through the host's own SampleSound. Every frame one near and one
+ *  far gunman fire and a round strikes the wall beside the player. Live particles and voices stay within the budget,
+ *  while in the middle of it a six-pellet shot of the player's still sprays all 14 drops of blood on the enemy it hits,
+ *  and the player's report, the kill confirm and the player's pain each get their voices. The Runtime, input and save
+ *  never see these events. */
+async function crowdBudget(page) {
+  const r = await page.evaluate(async () => {
+    const h = window.__bincovSample.host, v = h.view, sound = h.sound, out = sound.out, b = h.lastBatch, f = b.frame, p = f.player;
+    const foe = f.actors.find(a => a.alive);
+    if (!foe) return null;
+    const { tactics: _, ...plain } = foe, mapId = b.stamp.world.mapId;
+    const gunman = (uid, a, d) => ({ ...plain, uid, x: Math.round(p.x + Math.cos(a) * d), y: Math.round(p.y + Math.sin(a) * d), vx: 0, vy: 0, regionId: p.regionId, weapon: 'carbine' });
+    const near = Array.from({ length: 12 }, (_, i) => gunman(`crowd-near-${i}`, (i + .5) / 12 * Math.PI * 2, 90 + (i % 3) * 75));
+    const far = Array.from({ length: 6 }, (_, i) => gunman(`crowd-far-${i}`, i / 6 * Math.PI * 2, 700));
+    const target = { ...plain, x: Math.round(p.x) + 64, y: Math.round(p.y), vx: 0, vy: 0, regionId: p.regionId };
+    const actors = [...f.actors.map(a => a.uid === foe.uid ? target : a), ...near, ...far];
+    const batch = events => ({ ...b, events, frame: { ...f, actors } });
+    const ev = body => ({ ...body, seq: 0, stamp: b.stamp, durability: 'accepted' });
+    const crowdShot = a => ev({ type: 'shot', shotId: `${a.uid}-${Math.random()}`, shooter: a.uid, weapon: 'carbine', pellets: [] });
+    const wall = ev({ type: 'impact', bullet: 'crowd-round', owner: near[0].uid, reason: 'blocked', lastFree: { x: p.x - 30, y: p.y - 40 }, contact: { x: p.x - 30, y: p.y - 41 }, normal: { x: 0, y: 1 }, surface: 'wall', target: null });
+    const pellets = ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'];
+    const own = [ev({ type: 'shot', shotId: 'shot-j', shooter: 'player', weapon: 'shotgun', pellets: pellets.map(bullet => ({ bullet, origin: { x: p.x, y: p.y }, angle: 0 })) }),
+      ...pellets.map(bullet => ev({ type: 'hurt', cause: 'blow', uid: foe.uid, at: target, damage: 4, critical: false, angle: Math.PI, bullet }))];
+    const pain = ev({ type: 'hurt', cause: 'blow', uid: 'player', at: { x: p.x, y: p.y }, damage: 1, critical: false, angle: 0 });
+    const voices = () => out.voices;
+    // New voices while `fn` runs: the cues the budget let in.
+    const added = fn => { const before = new Set(voices().keys()); fn(); return [...voices().keys()].filter(k => !before.has(k)).length; };
+    const frame = () => new Promise(done => requestAnimationFrame(done));
+    const drops = { fx: { ...(v.fx.dropped ?? {}) }, voices: { ...(out.dropped ?? {}) } };
+    const peak = { particles: 0, voices: 0 }, result = { audio: out.context?.state ?? 'none', frames: 0 };
+    h.app.ticker.stop();
+    try {
+      for (let i = 0; i < 120; i++) {
+        const events = [crowdShot(near[i % near.length]), crowdShot(far[i % far.length]), wall];
+        let blood = null;
+        if (i === 72) {
+          const before = new Set(v.fx.live);
+          v.present(batch([...events, ...own]), 1 / 60);
+          blood = v.fx.live.filter(q => !before.has(q) && q.settle === 'decal').length;
+        } else v.present(batch(events), 1 / 60);
+        sound.frame(batch(events), 1 / 60);
+        if (i === 72) {
+          result.blood = blood;
+          result.report = added(() => sound.event(own[0], mapId));
+          result.hit = added(() => { for (const e of own.slice(1)) sound.event(e, mapId); });
+        } else for (const e of events) sound.event(e, mapId);
+        if (i === 84) result.kill = added(() => sound.killed());
+        if (i === 96) result.pain = added(() => sound.event(pain, mapId));
+        peak.particles = Math.max(peak.particles, v.fx.live.length); peak.voices = Math.max(peak.voices, voices().size);
+        result.frames++;
+        await frame();
+      }
+    } finally { h.app.ticker.start(); }
+    const gone = (now, then) => now ? { decor: now.decor - (then.decor ?? 0), core: now.core - (then.core ?? 0) } : null;
+    return { ...result, peak, dropped: { particles: gone(v.fx.dropped, drops.fx), voices: gone(out.dropped, drops.voices) } };
+  });
+  check(r, 'no living enemy to hit');
+  check(r.audio === 'running', `the sound context is ${r.audio}, so no voices can be counted`, r);
+  const fail = [];
+  if (r.peak.particles > BUDGET.particles) fail.push(`${r.peak.particles} live particles at the peak (budget ${BUDGET.particles})`);
+  if (r.peak.voices > BUDGET.voices) fail.push(`${r.peak.voices} voices at the peak (budget ${BUDGET.voices})`);
+  if (r.blood !== 14) fail.push(`the player's six-pellet blow sprayed ${r.blood} drops (want 14)`);
+  // A shotgun report's crack, body noise, body tone and boom; the hit's noise and tone; the kill's two tones and noise; the pain's tone and noise.
+  for (const [k, n] of [['report', 4], ['hit', 2], ['kill', 3], ['pain', 2]]) if (!(r[k] >= n)) fail.push(`the player's ${k} got ${r[k]} new voices (want at least ${n})`);
+  if (r.dropped.particles && r.dropped.particles.core) fail.push(`${r.dropped.particles.core} core particles dropped`);
+  check(!fail.length, fail.join('; '), r);
+  await running(page);
+  return r;
+}
+
 /** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
  *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
  *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
@@ -682,6 +759,7 @@ try {
   await step('i', 'heavier blows kick further and hold longer; one shot is one blow; the player\'s blow pushes the camera', desktop, blowTiers);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
+  await step('j', 'a crowded fight stays within the particle and voice budget; the player\'s own blood and cues still come through', desktop, crowdBudget);
   desktop.stallResumes = await stallResumes(desktop.page);
   phone = await context('phone', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   phone.touch = true;
