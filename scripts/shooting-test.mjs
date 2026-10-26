@@ -508,10 +508,10 @@ const BLOW_FRAMES = { 60: [4, 4], 30: [2, 2], 15: [1, 1], 12: [1, 1], 10: [1, 1]
 const POSE_FRAMES = { 60: 'HHHHHRRR', 30: 'HHRR', 15: 'HR', 12: 'H', 10: 'H' };
 /** Bullets for g: flying east at every rate in BLOW_FRAMES, and south at 60 Hz so that each axis of the kick is checked. */
 const BLOWS = [...Object.keys(BLOW_FRAMES).map(Number).reverse().map(hz => ({ hz, dir: 'east', vx: 1, vy: 0 })), { hz: 60, dir: 'south', vx: 0, vy: 1 }];
-/** More bullets for g, east at 60 Hz, on the enemy drawn as one of #81's archetypes (#75): group B's three have their own
- *  hurt and recovery bodies; the raider boss has its own body but no poses, so it keeps its own frames throughout. */
-const STYLED_BLOWS = [['raider-melee', POSE_FRAMES[60]], ['raider-gunner', POSE_FRAMES[60]], ['raider-lookout', POSE_FRAMES[60]], ['raider-boss', '']]
-  .map(([style, pose]) => ({ hz: 60, dir: 'east', vx: 1, vy: 0, style, pose }));
+/** More bullets for g, east at 60 Hz, on the enemy drawn as one of #81's archetypes (#75), all of which have their own hurt
+ *  and recovery bodies: group B's three, and from group C an armed, an unarmed and a beast archetype plus the raider boss. */
+const STYLED_BLOWS = ['raider-melee', 'raider-gunner', 'raider-lookout', 'raider-boss', 'mercenary-assault', 'salt-hulk', 'saltback-dog']
+  .map(style => ({ hz: 60, dir: 'east', vx: 1, vy: 0, style, pose: POSE_FRAMES[60] }));
 /** g. A blow on slow frames: copies of the live batch, one living enemy 64 px east of the player and hit by a bullet from
  *  BLOWS (drawn in its kind's style) or STYLED_BLOWS, are presented at each rate's fixed delta with the ticker stopped (the
  *  Runtime, input and save never see them). */
@@ -571,6 +571,69 @@ async function blowOnSlowFrames(page) {
   return { cases };
 }
 
+/** i. Blow tiers, one blow per shot and the camera push (#75 H-03, H-04, H-06): copies of the live batch, one living
+ *  enemy 64 px east of the player, presented at 60 Hz with the ticker stopped. A critical round and four pellets of one
+ *  shot are tier 1; six pellets of one shot split over two batches are one blow, the later three adding blood only; the
+ *  range's classic setting keeps the tier 0 blow; a blow on the player pushes the camera the way it travelled. The
+ *  Runtime, input and save never see these events. */
+async function blowTiers(page) {
+  const r = await page.evaluate(() => {
+    const h = window.__bincovSample.host, v = h.view, b = h.lastBatch, f = b.frame, p = f.player, foe = f.actors.find(a => a.alive);
+    if (!foe) return null;
+    const { tactics: _, ...plain } = foe, at = { x: Math.round(p.x) + 64, y: Math.round(p.y) }, moved = { ...plain, ...at, vx: 0, vy: 0, regionId: p.regionId };
+    // `flying`: rounds still in the air after this batch, as the Runtime publishes them until they land.
+    const batch = (events, flying = []) => ({ ...b, events, frame: { ...f, actors: f.actors.map(a => a.uid === foe.uid ? moved : a),
+      bullets: [...f.bullets, ...flying.map(uid => ({ uid, x: at.x - 24, y: at.y, vx: 900, vy: 0, enemy: false, owner: 'player' }))] } });
+    const ev = body => ({ ...body, seq: 0, stamp: b.stamp, durability: 'accepted' });
+    const hurt = (uid, extra) => ev({ type: 'hurt', cause: 'blow', uid, at, damage: 10, critical: false, angle: Math.PI, ...extra });
+    const shot = (shotId, bullets) => ev({ type: 'shot', shotId, shooter: 'player', weapon: 'shotgun', pellets: bullets.map(bullet => ({ bullet, origin: { x: p.x, y: p.y }, angle: 0 })) });
+    const g = () => v.actors.get(foe.uid), counted = new Set();
+    const drops = () => { const fresh = v.fx.live.filter(q => q.settle === 'decal' && !counted.has(q)); fresh.forEach(q => counted.add(q)); return fresh.length; };
+    // The first batch, a second one, then fourteen empty frames; frames are read from the first batch on.
+    const run = (first, second, feel, flying = []) => {
+      v.opts.feel = feel;
+      for (let i = 0; i < 4; i++) v.present(batch([]), .1);
+      drops();
+      const rest = { x: g().body.x, y: g().body.y }, dt = 1 / 60, frames = [], blood = [];
+      const read = () => { const q = g(), t = n => v.tex.actor(moved.kind, q.dir, n);
+        return { flash: q.flash.visible, kick: Math.round(Math.hypot(q.body.x - rest.x, q.body.y - rest.y)), pose: q.body.texture === t(5) ? 'H' : q.body.texture === t(6) ? 'R' : '-' }; };
+      for (let i = 0; i < 16; i++) { v.present(i === 0 ? batch(first, flying) : batch(i === 1 ? second : []), dt); if (i < 2) blood.push(drops()); frames.push(read()); }
+      return { flash: frames.filter(q => q.flash).length, kick: Math.max(...frames.map(q => q.kick)), poses: frames.map(q => q.pose).join(''), blood };
+    };
+    h.app.ticker.stop();
+    try {
+      const four = ['q1', 'q2', 'q3', 'q4'], six = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'];
+      const result = {
+        critical: run([hurt(foe.uid, { critical: true })], [], 'enhanced'),
+        fourPellets: run([shot('shot-q', four), ...four.map(bullet => hurt(foe.uid, { bullet }))], [], 'enhanced'),
+        splitShot: run([shot('shot-w', six), ...six.slice(0, 3).map(bullet => hurt(foe.uid, { bullet }))], six.slice(3).map(bullet => hurt(foe.uid, { bullet })), 'enhanced', six.slice(3)),
+        classic: run([hurt(foe.uid, { critical: true })], [], 'classic'),
+      };
+      // A blow from the east (its angle points back at the source) on the player pushes the camera west.
+      v.opts.feel = 'enhanced';
+      for (let i = 0; i < 10; i++) v.present(batch([]), .1);
+      const before = { ...v.recoil };
+      v.present(batch([hurt('player', { angle: 0 })]), 1 / 60);
+      result.push = { x: Math.round((v.recoil.x - before.x) * 100) / 100, y: Math.round((v.recoil.y - before.y) * 100) / 100 };
+      return result;
+    } finally { v.opts.feel = 'enhanced'; h.app.ticker.start(); }
+  });
+  check(r, 'no living enemy to hit');
+  const tier1 = { flash: 5, kick: 3, poses: 'HHHHHHHRRR------' };
+  const want = {
+    critical: { ...tier1, blood: [6, 0] },
+    fourPellets: { ...tier1, blood: [12, 0] },
+    splitShot: { ...tier1, blood: [10, 6] },
+    classic: { flash: 4, kick: 2, poses: 'HHHHHRRR--------', blood: [6, 0] },
+  };
+  const fail = Object.entries(want).filter(([k, w]) => JSON.stringify(r[k]) !== JSON.stringify(w)).map(([k, w]) => `${k}: ${JSON.stringify(r[k])} (want ${JSON.stringify(w)})`);
+  // The camera settles toward the follow point in the same frame (camera(): recoil x exp(-16 dt)), so less than the push.
+  if (!(r.push.x < -1.5 && r.push.x > -2.6 && Math.abs(r.push.y) < .1)) fail.push(`camera push ${JSON.stringify(r.push)} (want about -1.9, 0)`);
+  check(!fail.length, fail.join('; '), r);
+  await running(page);
+  return r;
+}
+
 /** h. Hit confirmation on the host (#75): the impact, hurt and death events a player's round publishes, for one living
  *  enemy moved next to the player, go through the host's own feedback (as coast-sample's marker checks do). A critical
  *  hit turns the marker critical, a kill of that target keeps it, a plain hit starts plain again, and every kill marker
@@ -616,6 +679,7 @@ try {
   await step('c', 'muzzle flash on the barrel tip; tracers leave the tip', desktop, muzzleAndTracers);
   await step('g', 'a blow\'s flash and kick are drawn on slow frames', desktop, blowOnSlowFrames);
   await step('h', 'a critical hit turns the hit marker critical; each kill marker asks for one confirm sound', desktop, hitConfirm);
+  await step('i', 'heavier blows kick further and hold longer; one shot is one blow; the player\'s blow pushes the camera', desktop, blowTiers);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
   desktop.stallResumes = await stallResumes(desktop.page);
