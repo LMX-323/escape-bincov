@@ -1,5 +1,5 @@
 /** Pure game rules. No renderer, browser globals, or wall-clock timers are required. */
-import { ATTACHMENTS, BRAND_NAMES, GUNS, type GunId } from './gunsmith/catalog';
+import { ATTACHMENTS, BRAND_NAMES, GUNS, partTier, type GunId, type PartTier } from './gunsmith/catalog';
 import { checkInstall } from './gunsmith/compat';
 import { effectiveWeapon } from './gunsmith/stats';
 import { buildOf, factoryState, gunSale, gunSize, gunUids, gunWeight, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
@@ -159,8 +159,17 @@ export const LOOT_TABLE: LootTable = [
   { id: 'watch', weight: 4, min: 1, max: 1 }, { id: 'pearl', weight: 2, min: 1, max: 1 },
   { id: 'pistol', weight: 2, min: 1, max: 1 }, { id: 'shotgun', weight: 1, min: 1, max: 1 },
 ];
+/** The attachments that are items, of one acquisition tier (the catalog's partTier), in item order. */
+const partsOf = (tier: PartTier): string[] => Object.keys(ATTACHMENT_ITEMS).filter(id => partTier(ATTACHMENTS[id]) === tier);
+/**
+ * Fixed stock, no rotation (that is #28 M4-01). The arms counter also stocks the G17 and every basic-tier attachment
+ * that is an item (#28 M2-13, PLAN section 10: basic parts are stocked steadily), after the old goods so their places
+ * in the catalog do not move. The catalog is one 6x5 page: every stocked pack must fit it, which
+ * tests/gunsmith-acquire.test.ts checks (catalog pages are M2-08).
+ */
 export const MERCHANTS: Record<'arms' | 'med', { name: string; subtitle: string; stock: string[] }> = {
-  arms: { name: '老栓', subtitle: '武器 · 零件', stock: ['pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'scrap', 'wire', 'fuse', 'battery'] },
+  arms: { name: '老栓', subtitle: '武器 · 零件', stock: ['pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'scrap', 'wire', 'fuse', 'battery',
+    'gb17', ...partsOf('basic')] },
   med: { name: '许医生', subtitle: '医疗用品 · 食品', stock: ['bandage', 'medkit', 'antidote', 'water', 'food'] },
 };
 export const QUESTS: Record<string, { name: string; description: string; needs: Record<string, number>; reward: number; radio: string }> = {
@@ -760,4 +769,39 @@ export function rollLoot(seed: number, amount: number, table: LootTable = LOOT_T
     const min = Math.max(1, integer(entry.min, 1)), max = Math.max(min, integer(entry.max, min));
     return { id: entry.id, qty: min + Math.floor(rng() * (max - min + 1)) };
   });
+}
+/**
+ * Gunsmith finds (#28 M2-13; the acquisition section of docs/gunsmith/CONTRACTS.md). The M4A1 and the common and rare
+ * attachments that are items come only out of the gun and valuable shares of the loot: each gun or valuable record or
+ * drop is a find with chance `share`, so quest, food, medicine and ammunition supply stays exactly what it was. A find
+ * from a gun record of a map's loot is the M4A1 with chance `rifle` (never on a corpse: an enemy's sidearm does not turn
+ * into a rifle); any other find is an attachment, rare with chance `rare` at a high-risk source (a flooded cache, an
+ * elite's corpse), common otherwise. Basic parts are the shop's (MERCHANTS). Proposals, tuned in M4-02.
+ */
+export const GUNSMITH_FINDS = { share: 1 / 6, rifle: 1 / 4, rare: 1 / 3 } as const;
+const FIND_PARTS = { common: partsOf('common'), rare: partsOf('rare') };
+/**
+ * What the record or drop `id` becomes, or null when it stays as it is. Draws from `random` only for a gun or a
+ * valuable, so a caller's own stream decides finds and nothing else. `risky`: a high-risk source; `rifle`: the find
+ * may be the M4A1.
+ */
+export function gunsmithFind(id: string, random: () => number, source: { risky: boolean; rifle: boolean }): string | null {
+  const carved = isGun(id) || Object.hasOwn(ITEMS, id) && ITEMS[id].kind === 'valuable';
+  if (!carved || random() >= GUNSMITH_FINDS.share) return null;
+  if (source.rifle && isGun(id) && random() < GUNSMITH_FINDS.rifle) return 'mb4a1';
+  const pool = FIND_PARTS[source.risky && random() < GUNSMITH_FINDS.rare ? 'rare' : 'common'];
+  return pool[Math.floor(random() * pool.length)];
+}
+/**
+ * A legacy enemy's corpse in a layered raid: the old roll (rollLoot: same seed, table and count), then each gun or
+ * valuable drop judged for a gunsmith find on a stream of its own, an elite's corpse being a high-risk source. Enemies
+ * with #81 tactics keep their own contents (their equipment, rounds and supplies); classic raids keep rollLoot.
+ */
+export function corpseLoot(seed: number, rolls: number, elite: boolean): { id: string; qty: number }[] {
+  const drops = rollLoot(seed, rolls), random = seededRandom(seed + 61211);
+  for (const drop of drops) {
+    const found = gunsmithFind(drop.id, random, { risky: elite, rifle: false });
+    if (found) { drop.id = found; drop.qty = 1; }
+  }
+  return drops;
 }

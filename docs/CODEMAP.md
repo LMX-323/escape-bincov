@@ -40,7 +40,7 @@
 
 **按需继续。**
 
-- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
+- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。改枪样板的获取（货架上的 G17 和基础件，行动里的发现 `D.gunsmithFind`、旧敌人尸体的 `D.corpseLoot`，配件档次 `partTier`）见[改枪契约](gunsmith/CONTRACTS.md#样板获取路径m2-13)。
 - 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
 - 物品重量只经 `D.itemWeight`（枪按 `gunWeight` 连配件算，和装备时一样）：`D.weight`、行动负重、出发负重和各面板的重量显示都读它。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。

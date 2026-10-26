@@ -237,6 +237,15 @@ export const GUNS: Readonly<Record<GunId, GunDef>> = {
 
 /** Loose attachments sell back for this share of the buy price, as weapons roughly do today (proposal). */
 const SELL_SHARE = .45;
+/**
+ * An attachment's acquisition tier (PLAN section 10, #28 M2-13): basic parts are stocked steadily, common ones come
+ * with progress and zone drops, rare ones from high-risk spots. ATTACHMENTS.md names no tier, so it is read from the
+ * buy price against the plan's trial bands: basic up to 150, common up to 450, rare above. Of the 100 that gives 20, 65
+ * and 15. A proposal: M4-01 and M4-03 retune tiers and prices together.
+ */
+export type PartTier = 'basic' | 'common' | 'rare';
+export const partTier = (part: Pick<AttachmentDef, 'buy'>): PartTier =>
+    part.buy <= 150 ? 'basic' : part.buy <= 450 ? 'common' : 'rare';
 type Extra = Partial<Pick<AttachmentDef, 'provides' | 'needs' | 'grants' | 'requires' | 'quota'>>;
 interface Draft { id: string; name: string; mount: Slot; guns: readonly GunId[] | null; weight: number; buy: number; mods: Partial<Modifiers>; extra: Extra }
 /** One row: id, name, slot, guns (null for rail parts), loose kg, buy price, modifiers. `mods.weight` defaults to the loose kg. */
