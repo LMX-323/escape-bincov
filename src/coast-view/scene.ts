@@ -20,7 +20,7 @@ import { paintMallGround } from './art/mall-ground';
 import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
 import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
-import { MALL_V2_REGIONS } from '../mall-layout-v2';
+import { mallRegionDressed } from '../mall-layout-v4';
 import { releaseManagedSlots } from './renderer-lifetime';
 import { aimLead, leadRoom, pointerLead, snapAxis, stepLead, type AxisHold, type CameraBounds, type Lead } from './camera';
 import { viewScale, type ViewScaleMode } from './view-scale';
@@ -1286,7 +1286,7 @@ export class CoastView {
     const p = this.last?.player, m = this.map;
     if (!p || !m || !this.mall) return null;
     const id = regionAtClosed(m, this.last!.revealed, p);
-    return id && !(MALL_V2_REGIONS as readonly string[]).includes(id) ? '样板外' : null;
+    return id && !mallRegionDressed(m.key.layoutRevision, id) ? '样板外' : null;
   }
   /** Player is on the coast map but outside the dressed village corner (generic placeholder rendering). */
   outsideSample(): boolean {
