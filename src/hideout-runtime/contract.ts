@@ -1,6 +1,7 @@
 /** Durable water-station contract, based on the approved prototype contract (2026-10-09).
  * Presentation, animation, pathfinding and assets belong to the host. No mock settlement exists here.
  */
+import type { PresetNode } from '../gunsmith/presets';
 import type { Inventory, Item, RunSummary, SaveDataV1 } from '../domain';
 import type { Attribute, Facility } from '../expansion-state';
 import type { PerkId, PerkModifiers, PerkTier } from '../perks';
@@ -191,6 +192,16 @@ export interface HideoutRuntime {
     openShop(merchant: Merchant): ShopSession;
     /** The workbench for the gun whose item uid is `gun`, wherever it is at the base; any number may be open. */
     openGunsmith(gun: string): GunsmithSession;
+    /**
+     * Save a workbench preset (#28 M2-07, gunsmith/presets.ts): gun type `gun` and a part tree of catalog ids and slots,
+     * named `name` (trimmed; null takes the default "M4A1 配装 1"). Refused past PRESET_LIMIT presets of the type, for a
+     * name too long or empty, and for a tree validateBuild refuses. Base only, one commit; the new preset's id on success.
+     */
+    savePreset(gun: string, parts: PresetNode[], name?: string | null): Result & { id?: string };
+    /** Give preset `id` a new name (same rules as savePreset). */
+    renamePreset(id: string, name: string): Result;
+    /** Remove preset `id`; the last one removed leaves the profile without the field. */
+    deletePreset(id: string): Result;
     submitQuest(id: string): Result;
     facility(id: Facility): FacilityInfo;
     build(id: Facility): Result;

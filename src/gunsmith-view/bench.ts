@@ -14,8 +14,9 @@ import { devicesOn } from '../gunsmith/devices';
 import type { GunEdit, GunEditPreview } from '../gunsmith/edit';
 import {
     FACTORY_NAMES, POSITION_NAMES, SCORE_ROWS, WHERE_NAMES, benchGuns, benchParts, benchStats, candidateBuild, candidates, capped,
-    positions, remountEdits, replaceEdits, without, type BenchGun, type BenchNumbers, type BenchScores, type Candidate, type Capped, type Position,
+    positions, presetEdits, remountEdits, replaceEdits, sourceOf, without, type BenchGun, type BenchNumbers, type BenchScores, type Candidate, type Capped, type Position,
 } from '../gunsmith/bench';
+import { PRESET_LIMIT, PRESET_NAME_MAX, presetIds, presetOf, type GunPreset } from '../gunsmith/presets';
 import { inventoryArtUrl } from '../art/item-images';
 import { esc } from '../html';
 
@@ -65,6 +66,12 @@ export class Workbench {
     private page: 'body' | 'parts' | 'stats' = 'body';
     private sheet = false;
     private phone = false;
+    /** Presets (M2-07): the one being renamed, the one whose delete waits for a second tap, the one listing its missing parts. */
+    private renaming: string | null = null;
+    private removing: string | null = null;
+    private opened: string | null = null;
+    /** A control the host focuses after the next paint, once (the rename field). */
+    private focusNext: string | null = null;
 
     constructor(private rt: HideoutRuntime, gun: string, private host: BenchHost) {
         this.gunUid = gun; this.session = rt.openGunsmith(gun);
@@ -87,8 +94,21 @@ export class Workbench {
         this.leave = { gun: null }; return false;
     }
 
-    act(act: string, arg: string): BenchOutcome {
+    /** The selector of a control to focus after this paint, handed out once. */
+    focusOnce(): string | null { const f = this.focusNext; this.focusNext = null; return f; }
+
+    /** `value` is the text field of the control's form (a preset's new name). */
+    act(act: string, arg: string, value = ''): BenchOutcome {
         switch (act) {
+            case 'preset-save': this.savePreset(); break;
+            case 'preset-apply': this.applyPreset(arg); break;
+            case 'preset-rename': this.renaming = arg; this.removing = null; this.focusNext = '.gs-rename input'; break;
+            case 'preset-name': if (this.result(this.rt.renamePreset(arg, value))) this.renaming = null; break;
+            case 'preset-rename-cancel': this.renaming = null; break;
+            case 'preset-delete':
+                if (this.removing !== arg) { this.removing = arg; this.renaming = null; break; }
+                this.removing = null; this.result(this.rt.deletePreset(arg)); break;
+            case 'preset-missing': this.opened = this.opened === arg ? null : arg; break;
             case 'gun': if (arg !== this.gunUid) { if (this.dirty) this.leave = { gun: arg }; else this.switchGun(arg); } break;
             // On a phone a position picked on the body page opens the parts page for it.
             case 'pos': this.at = arg; this.mode = 'slot'; this.refusal = null; if (this.phone) this.page = 'parts'; this.host.sound('pick'); break;
@@ -112,6 +132,32 @@ export class Workbench {
             }
         }
         return 'render';
+    }
+
+    /** A Runtime write's answer as a toast and a sound; a failed write goes to the host's storage dialog. True on success. */
+    private result(r: { ok: boolean; message?: string; reason?: string }): boolean {
+        if (r.ok) { if (r.message) this.host.toast(r.message, 'ok'); this.host.sound('ok'); return true; }
+        this.host.toast(r.message ?? '操作未完成。', 'error'); this.host.sound('error');
+        if (r.reason === 'storage' || r.reason === 'conflict') this.host.storage();
+        return false;
+    }
+
+    /** Save the preview (or, without one, the gun as it is) as a preset of this gun type, under the default name. */
+    private savePreset() {
+        const { gun, after } = this.states();
+        if (gun && after) this.result(this.rt.savePreset(gun.id, presetOf(after.parts), null));
+    }
+
+    /** Preview a preset on this gun: only when every part can be taken from this gun or the containers. */
+    private applyPreset(id: string) {
+        const preset = (this.rt.snapshot().profile.gunPresets ?? []).find(p => p.id === id), plan = preset && presetEdits(this.rt.snapshot().profile, this.gunUid, preset.parts);
+        if (!preset || !plan) return;
+        if (plan.missing.length) { this.refusal = { name: '', reason: `「${preset.name}」还缺 ${plan.missing.length} 件，凑齐了才能应用。` }; this.opened = id; this.host.sound('error'); return; }
+        const r = this.preview(plan.edits);
+        if (!r) return;
+        this.refusal = null;
+        if (!r.preview || r.preview.refusal?.code === 'unchanged') this.host.toast('枪上已经是这套配置。', 'info');
+        else this.host.sound('pick');
     }
 
     private switchGun(uid: string) {
@@ -244,7 +290,7 @@ export class Workbench {
 </div>`;
         }
         return `<div class="gs">
-  <section class="gs-col gs-left" aria-label="枪械"><h3><i>01</i>枪械 <small>点一把枪开始改</small></h3><div class="gs-guns">${this.gunsHtml(guns, changes)}</div></section>
+  <section class="gs-col gs-left" aria-label="枪械与预设"><h3><i>01</i>枪械 <small>点一把枪开始改</small></h3><div class="gs-guns">${this.gunsHtml(guns, changes)}</div>${this.presetsHtml(gun, preview)}</section>
   <section class="gs-col gs-mid" aria-label="枪身与属性">${this.bodyHtml(gun, list, at, preview, changes, mark)}${this.statsHtml(statsBefore, statsAfter, buildAfter)}</section>
   <section class="gs-col gs-right" aria-label="配件">${this.partsHtml(gun, buildAfter, at, list, statsAfter.scores)}</section>
   <footer class="gs-foot">${this.pendingHtml(preview)}${this.sumHtml(gun, preview)}${this.actsHtml(preview)}</footer>
@@ -257,6 +303,28 @@ export class Workbench {
         const changed = new Set([...(preview?.installs ?? []), ...(preview?.moves ?? [])].map(i => i.uid));
         const emptied = new Set((preview?.removals ?? []).map(r => { const q = before.parts.find(x => x.uid === r.uid); return q ? `${q.parent ?? 'gun'}/${q.slot}` : ''; }));
         return p => p.part ? changed.has(p.part.uid) : emptied.has(`${p.parent ?? 'gun'}/${p.slot}`);
+    }
+
+    /**
+     * The presets of this gun's type (M2-07): save the preview (or the gun as it is), and each preset with what applying
+     * it would take; one missing a part lists it and cannot be applied. Rename edits the name in place; delete asks once.
+     */
+    private presetsHtml(gun: BenchGun, preview: GunEditPreview | null) {
+        const profile = this.rt.snapshot().profile, all = profile.gunPresets ?? [], mine = all.filter(p => p.gun === gun.id);
+        const same = (p: GunPreset, parts: GunState['parts']) => JSON.stringify(p.parts) === JSON.stringify(presetOf(parts));
+        const cards = mine.map(p => {
+            const plan = presetEdits(profile, gun.uid, p.parts), missing = plan?.missing ?? [], count = presetIds(p.parts).length;
+            const state = same(p, gun.state.parts) ? '装着这套' : preview && same(p, (preview.after).parts) ? '预览中' : missing.length ? '' : '可以应用';
+            const lack = missing.length ? b(`缺 ${missing.length} 件${this.opened === p.id ? ' ▴' : ' ▾'}`, 'preset-missing', p.id, 'gs-lack', `aria-expanded="${this.opened === p.id}"`) : '';
+            const list = missing.length && this.opened === p.id ? `<ul class="gs-missing">${missing.map(id => `<li>${esc(partName(id))} · ${esc(sourceText(id))}</li>`).join('')}</ul>` : '';
+            const name = this.renaming === p.id
+                ? `<form class="gs-rename" data-gs-form><input name="gs-name" aria-label="预设名" maxlength="${PRESET_NAME_MAX}" value="${esc(p.name)}"><button type="submit" data-gs="preset-name" data-arg="${esc(p.id)}">保存</button>${b('取消', 'preset-rename-cancel', p.id)}</form>`
+                : `<b>${esc(p.name)}</b>`;
+            const acts = this.renaming === p.id ? '' : `<div class="gs-pacts">${b('应用', 'preset-apply', p.id, 'mini', missing.length || state === '装着这套' ? 'disabled' : '')}${b('改名', 'preset-rename', p.id, 'mini')}${b(this.removing === p.id ? '确认删除' : '删除', 'preset-delete', p.id, `mini${this.removing === p.id ? ' danger' : ''}`)}</div>`;
+            return `<div class="gs-preset${state === '装着这套' ? ' on' : ''}">${name}<small>${count} 件配件${state ? ` · ${state}` : ''}</small>${lack}${list}${acts}</div>`;
+        }).join('');
+        const full = mine.length >= PRESET_LIMIT, label = preview ? '把当前预览存成预设' : '把现在的配置存成预设';
+        return `<section class="gs-presets" aria-label="预设"><h3><i>02</i>预设 <small>${mine.length} / ${PRESET_LIMIT} 套</small></h3><p class="gs-dim gs-phint">只记配件种类。</p>${b(full ? `已存满 ${PRESET_LIMIT} 套` : label, 'preset-save', '', 'gs-wide', full ? 'disabled' : '')}${cards || '<p class="gs-dim gs-none">还没有预设。存下来的配置可以在同型号的枪上一键放进预览。</p>'}</section>`;
     }
 
     /** One position on the gun body (and a chip on the phone's parts page). */
@@ -280,7 +348,7 @@ export class Workbench {
             const on = g.uid === this.gunUid;
             return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${on && changes ? ` · ${changes} 处改动` : ''}</em></button>`;
         }).join('');
-        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${img(gun.id)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>`;
+        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${img(gun.id)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>${this.presetsHtml(gun, preview)}`;
     }
 
     /** The phone's fixed bar: what the preview changes (opens the sheet), why it cannot be confirmed, cancel and confirm. */
@@ -410,6 +478,7 @@ export class Workbench {
     }
 }
 
+const sourceText = (id: string) => sourceOf(id);
 const brandName = (brand: string) => ({ beidi: '北堤', yanwan: '盐湾', binji: '滨机' } as Record<string, string>)[brand] ?? '';
 function findPart(state: GunState, uid: string | null) {
     const walk = (nodes: GunState['parts']): GunState['parts'][number] | null => { for (const n of nodes) { if (n.uid === uid) return n; const c = walk(n.children); if (c) return c; } return null; };

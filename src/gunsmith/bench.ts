@@ -11,7 +11,8 @@ import { ATTACHMENTS, GUNS, SLOT_NAMES, type GunId, type Slot } from './catalog'
 import { checkInstall, removalCascade, type Build, type Part } from './compat';
 import { GUARDRAILS, effectiveStats, type GunStats } from './stats';
 import { buildOf, gunWeight, nodesOf, type GunState } from './instance';
-import type { GunEdit, GunPlace } from './edit';
+import { locateGun, type GunEdit, type GunPlace } from './edit';
+import type { PresetNode } from './presets';
 
 /** Short names on the gun body: what sits in a slot, rather than the rail's name (SLOT_NAMES is the details' wording). */
 export const POSITION_NAMES: Readonly<Record<Slot, string>> = {
@@ -202,6 +203,32 @@ export function remountEdits(before: Build, old: Part, uid: string, build: Build
         if (owned) { map.set(child.uid, child.uid); queue.push(...before.parts.filter(p => p.parent === child.uid)); }
     }
     return edits;
+}
+
+/**
+ * The edits that build preset `parts` on gun `gunUid` (#28 M2-07): every root part comes off, then each preset part goes
+ * on in tree order, taken from this gun first (a part already in its place stays there, net) and else from a loose
+ * copy in the stash, bag or safe, ordinary before relief. Parts on other guns are never taken (M0 decision 6). The ones
+ * with no copy to take are previewed by id and listed in `missing`; a preset with any is not applied (PLAN section 11).
+ * Null when the gun is not at the base.
+ */
+export function presetEdits(profile: Readonly<D.SaveDataV1>, gunUid: string, parts: readonly PresetNode[]): { edits: GunEdit[]; missing: string[] } | null {
+    const gun = locateGun(profile as D.SaveDataV1, gunUid);
+    if (!gun) return null;
+    const own = new Map<string, string[]>(), loose = looseParts(profile, new Set());
+    for (const n of nodesOf(gun.state.parts)) own.set(n.id, [...own.get(n.id) ?? [], n.uid]);
+    const edits: GunEdit[] = gun.state.parts.map(n => ({ kind: 'remove', uid: n.uid })), missing: string[] = [];
+    let unowned = 0;
+    const walk = (nodes: readonly PresetNode[], parent: string | null) => {
+        for (const n of nodes) {
+            const at = { parent, slot: n.slot }, uid = own.get(n.id)?.shift() ?? loose.get(n.id)?.shift()?.uid ?? null;
+            if (uid) { edits.push({ kind: 'install', uid, at }); walk(n.children, uid); continue; }
+            // planGunEdit names parts previewed by id unowned-1, unowned-2, ... in list order; children follow their parent.
+            missing.push(n.id); edits.push({ kind: 'install', id: n.id, at }); walk(n.children, `unowned-${++unowned}`);
+        }
+    };
+    walk(parts, null);
+    return { edits, missing };
 }
 
 // ---------- scores ----------

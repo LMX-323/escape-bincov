@@ -283,6 +283,49 @@ try {
     await tap(old('.gs-ctop [data-gs="close"]')); assert.equal(await page.locator('.gs-page').count(), 0);
   });
 
+  await step('B7-presets-save-apply-rename-missing-delete', async () => {
+    await open(); await openFromSlot();
+    const presets = () => page.evaluate(() => window.__bincov.hideoutRuntime.snapshot().profile.gunPresets ?? []);
+    const card = name => bench('.gs-preset').filter({ hasText: name });
+    // The preview saved as a preset: ids and slots, under the default name.
+    await pos('gun/top/0').click(); await part('O03').click(); await pos('gun/stock/0').click(); await part('S01').click();
+    await bench('[data-gs="preset-save"]').click();
+    assert.deepEqual((await presets()).map(p => [p.name, p.parts.map(n => n.id).sort()]), [['M4A1 配装 1', ['O03', 'S01']]]);
+    assert.match(await card('M4A1 配装 1').innerText(), /预览中/);
+    await bench('[data-gs="cancel"]').click();
+    assert.match(await card('M4A1 配装 1').innerText(), /可以应用/);
+    // Applying only previews; confirm commits.
+    await card('M4A1 配装 1').locator('[data-gs="preset-apply"]').click();
+    assert.match(await bench('.gs-badge').innerText(), /2 处改动/);
+    assert.deepEqual((await equipped()).gun.parts, []);
+    await bench('[data-gs="confirm"]').click();
+    await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().profile.equipment.gun.parts.length === 2);
+    assert.match(await card('M4A1 配装 1').innerText(), /装着这套/);
+    assert.equal(await card('M4A1 配装 1').locator('[data-gs="preset-apply"]').isDisabled(), true);
+    // Rename in place: the field takes the keyboard, Enter saves.
+    await card('M4A1 配装 1').locator('[data-gs="preset-rename"]').click();
+    const field = bench('.gs-rename input');
+    assert.equal(await field.evaluate(el => el.getRootNode().activeElement === el), true, 'the field has the keyboard');
+    await field.fill('轻快'); await field.press('Enter');
+    await card('轻快').waitFor();
+    assert.deepEqual((await presets()).map(p => p.name), ['轻快']);
+    // A preset with a part nobody has: listed, not applicable.
+    await page.evaluate(() => window.__bincov.hideoutRuntime.savePreset('mb4a1', [{ id: 'P02', slot: 'grip', children: [] }], '稳握'));
+    await bench('[data-gs="detail"]').click(); await bench('[data-gs="detail"]').click();
+    assert.match(await card('稳握').innerText(), /缺 1 件/);
+    assert.equal(await card('稳握').locator('[data-gs="preset-apply"]').isDisabled(), true);
+    await card('稳握').locator('[data-gs="preset-missing"]').click();
+    assert.match(await card('稳握').innerText(), /AR 稳握把/);
+    await shot('16-desktop-1280x720-presets');
+    // Delete asks once more.
+    await card('稳握').locator('[data-gs="preset-delete"]').click();
+    assert.equal((await presets()).length, 2, 'the first tap only asks');
+    await card('稳握').locator('[data-gs="preset-delete"]').click();
+    assert.deepEqual((await presets()).map(p => p.name), ['轻快']);
+    const raw = JSON.parse(await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2')));
+    assert.deepEqual(raw.profile.gunPresets.map(p => p.name), ['轻快'], 'written to the save');
+  });
+
   await step('B5-desktop-1920x1080', async () => {
     await open(fixture(), [1920, 1080]); await openFromSlot(); await fits();
     await pos('gun/top/0').click(); await bench('[data-gs="unowned"]').click(); await bench('[data-gs="detail"]').click();

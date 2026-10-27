@@ -10,6 +10,7 @@
  */
 import { ITEMS, WEAPONS, cleanOldSave, createInventory, equippedWeapon, fits, isGun, itemUids, migrateSave, type Inventory, type Item, type SaveDataV1 } from './domain';
 import { gunUids, validateGun } from './gunsmith/instance';
+import { validPresets } from './gunsmith/presets';
 import type { ProfileV2 } from './gunsmith/migrate';
 
 /** Upper bound for money, counters and quantities. Seeds and RNG states are 32-bit: UINT32_MAX. */
@@ -104,6 +105,8 @@ function checkProfile(raw: any): void {
   for (const [name, w, h] of [['stash', 10, raw.upgraded ? 9 : 6], ['bag', 6, 5], ['safe', 2, 2]] as const)
     if (!validInventory(raw[name], w, h, seen, rules)) invalid();
   if (!validEquipment(raw.equipment, seen, guns)) invalid();
+  // Presets (#28 M2-07) only in the gun format, never an empty list: no presets is no field.
+  if (Object.hasOwn(raw, 'gunPresets') && (!guns || !validPresets(raw.gunPresets) || !raw.gunPresets.length)) invalid();
 }
 
 /**

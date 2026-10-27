@@ -552,8 +552,13 @@ function bind() {
     ui().querySelectorAll<HTMLButtonElement>('[data-gs]').forEach(el => el.onclick = () => {
         if (!bench || el.disabled) return;
         audio.start(); audio.click();
-        if (bench.act(el.dataset.gs!, el.dataset.arg ?? '') === 'close') { bench = null; setOverlay(''); } else render();
+        const value = el.closest('[data-gs-form]')?.querySelector('input')?.value ?? '';
+        if (bench.act(el.dataset.gs!, el.dataset.arg ?? '', value) === 'close') { bench = null; setOverlay(''); } else render();
     });
+    // The workbench's rename field: Enter clicks its save button; the form itself never submits.
+    ui().querySelectorAll<HTMLFormElement>('form[data-gs-form]').forEach(form => form.onsubmit = e => e.preventDefault());
+    const once = bench?.focusOnce();
+    if (once) ui().querySelector<HTMLInputElement>(once)?.select();
     ui().querySelectorAll<HTMLElement>('[data-action]').forEach(el => el.onclick = () => {
         const a = el.dataset.action!, id = el.dataset.id!;
         if (app.conflict && !['export-save', 'export-original', 'refresh'].includes(a)) {

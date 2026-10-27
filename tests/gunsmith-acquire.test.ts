@@ -18,12 +18,14 @@ import { CoastRaidRuntime } from '../src/raid-runtime/runtime';
 import { createRuntimeTestDriver } from '../src/raid-runtime/test-support';
 import { TILE, WORLD, type RunConfig } from '../src/world';
 
-// #28 M2-13 (docs/gunsmith/CONTRACTS.md, 样板获取路径): the shop stocks the G17 and the basic parts; the M4A1 and the
-// common and rare parts are found, carved out of the gun and valuable shares of the loot only.
+// #28 M2-13 (docs/gunsmith/CONTRACTS.md, 样板获取路径): the shop stocks the G17, the basic parts and (M2 review
+// 2026-10-27) O01 and G01; the M4A1 and the other common and the rare parts are found, carved out of the gun and
+// valuable shares of the loot only.
 
 const PARTS = Object.keys(D.ITEMS).filter(id => D.isAttachment(id));
-const BASIC = ['P01', 'F01', 'A07'], RARE = ['O08', 'M03', 'B08'];
-const COMMON = PARTS.filter(id => !BASIC.includes(id) && !RARE.includes(id));
+const BASIC = ['P01', 'F01', 'A07'], RARE = ['O08', 'M03', 'B08'], SHELF_COMMON = ['O01', 'G01'];
+/** The common parts that are found: the shelf's two are not. */
+const COMMON = PARTS.filter(id => !BASIC.includes(id) && !RARE.includes(id) && !SHELF_COMMON.includes(id));
 const OLD_ARMS = ['pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'scrap', 'wire', 'fuse', 'battery'];
 type Unit = { id: string; qty: number };
 const records = (c: Pick<RunConfig, 'loot' | 'containers'>): Unit[] => [...c.loot, ...c.containers.flatMap(x => x.items)];
@@ -39,20 +41,22 @@ test('tiers: the price bands of PLAN section 10 sort the 100 parts 20/65/15, the
     assert.deepEqual([40, 150, 151, 450, 451, 1200].map(buy => partTier({ buy })), ['basic', 'basic', 'common', 'common', 'rare', 'rare']);
     assert.deepEqual(PARTS.filter(id => partTier(ATTACHMENTS[id]) === 'basic'), BASIC);
     assert.deepEqual(PARTS.filter(id => partTier(ATTACHMENTS[id]) === 'rare'), RARE);
-    assert.equal(COMMON.length, 14);
+    // 14 common samples: 12 found, and the G17's O01 and G01 on the shelf (M2 review 2026-10-27).
+    assert.deepEqual(PARTS.filter(id => partTier(ATTACHMENTS[id]) === 'common'), PARTS.filter(id => COMMON.includes(id) || SHELF_COMMON.includes(id)));
+    assert.deepEqual([COMMON.length, SHELF_COMMON.length], [12, 2]);
 });
 
-test('shop: 老栓 stocks the G17 and the three basic sample parts after his old goods, at the catalog\'s prices; the doctor is unchanged', () => {
+test('shop: 老栓 stocks the G17, the three basic sample parts, O01 and G01 after his old goods, at the catalog\'s prices; the doctor is unchanged', () => {
     for (const rpg of [false, true]) {
-        assert.deepEqual(Shop.merchantStock('arms', rpg), [...OLD_ARMS, 'gb17', ...BASIC, ...rpg ? ['cloth'] : []]);
+        assert.deepEqual(Shop.merchantStock('arms', rpg), [...OLD_ARMS, 'gb17', ...BASIC, ...SHELF_COMMON, ...rpg ? ['cloth'] : []]);
         assert.deepEqual(Shop.merchantStock('med', rpg), ['bandage', 'medkit', 'antidote', 'water', 'food', ...rpg ? ['analgesic', 'focus'] : []]);
     }
-    // The M4A1 and the common and rare parts are finds only.
+    // The M4A1, the found common parts and the rare parts are finds only.
     assert.ok(!Shop.merchantStock('arms', true).some(id => id === 'mb4a1' || COMMON.includes(id) || RARE.includes(id)));
     assert.deepEqual([D.ITEMS.gb17.buy, D.ITEMS.gb17.sell], [GUNS.gb17.buy, GUNS.gb17.sell]);
-    for (const id of BASIC) assert.deepEqual([D.ITEMS[id].buy, D.ITEMS[id].sell], [ATTACHMENTS[id].buy, ATTACHMENTS[id].sell], id);
+    for (const id of [...BASIC, ...SHELF_COMMON]) assert.deepEqual([D.ITEMS[id].buy, D.ITEMS[id].sell], [ATTACHMENTS[id].buy, ATTACHMENTS[id].sell], id);
     const cart = Shop.createCart(D.newSave(), 'arms');
-    for (const id of ['gb17', ...BASIC]) assert.deepEqual(Shop.shopQuote('merchant', cart.catalog.items.find(i => i.id === id)!), { side: 'buy', total: D.ITEMS[id].buy }, id);
+    for (const id of ['gb17', ...BASIC, ...SHELF_COMMON]) assert.deepEqual(Shop.shopQuote('merchant', cart.catalog.items.find(i => i.id === id)!), { side: 'buy', total: D.ITEMS[id].buy }, id);
 });
 
 test('shop: every stocked pack shows in the one 6x5 catalog page, both counters, with and without the RPG extras; old goods keep their cells', () => {
@@ -64,7 +68,7 @@ test('shop: every stocked pack shows in the one 6x5 catalog page, both counters,
     }
     const cells = Object.fromEntries(Shop.createCart(D.newSave(), 'arms', true).catalog.items.map(i => [i.id, [i.x, i.y]]));
     assert.deepEqual(cells, { pistol: [0, 0], shotgun: [2, 0], carbine: [0, 1], ammo9: [5, 0], shell: [3, 1], ammoR: [4, 1], scrap: [5, 1],
-        wire: [0, 2], fuse: [1, 2], battery: [2, 2], gb17: [3, 2], P01: [5, 2], F01: [0, 3], A07: [1, 3], cloth: [3, 3] });
+        wire: [0, 2], fuse: [1, 2], battery: [2, 2], gb17: [3, 2], P01: [5, 2], F01: [0, 3], A07: [1, 3], O01: [3, 3], G01: [4, 3], cloth: [5, 3] });
 });
 
 test('shop: the G17 and the basic parts settle into the stash at catalog prices: a factory G17 under a new uid, each part its own item', () => {

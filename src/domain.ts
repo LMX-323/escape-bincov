@@ -4,6 +4,7 @@ import { checkInstall } from './gunsmith/compat';
 import { effectiveWeapon } from './gunsmith/stats';
 import { buildOf, factoryState, gunSale, gunSize, gunUids, gunWeight, validateGun, type GunInstance, type GunState } from './gunsmith/instance';
 import { migrateProfile, type ProfileV2 } from './gunsmith/migrate';
+import { validPresets, type GunPreset } from './gunsmith/presets';
 
 /** `attachment`: a gunsmith part as a loose item (#28 M2-02); `part` stays the hideout's repair and crafting material. */
 export type ItemKind = 'weapon' | 'ammo' | 'medical' | 'food' | 'part' | 'valuable' | 'quest' | 'accessory' | 'attachment';
@@ -49,6 +50,12 @@ export interface SaveDataV1 {
   activeRun: null | { seed: number; runId?: string }; lastResult?: RunSummary;
   /** Undelivered relief supplies stay at the hideout; they never enter a raid automatically. */
   reliefSupplies?: { id: string; qty: number }[];
+  /**
+   * Saved workbench builds (#28 M2-07, gunsmith/presets.ts): absent when there are none, so a profile without presets
+   * is byte for byte what older clients wrote. An older client refuses a record holding them (its strict decode drops
+   * the field and the canonical comparison fails), never overwriting it.
+   */
+  gunPresets?: GunPreset[];
 }
 export interface RunLoadout extends Equipment { bag: Inventory; safe: Inventory; runId?: string }
 export interface StorageLike { getItem(key: string): string | null; setItem(key: string, value: string): void }
@@ -162,14 +169,19 @@ export const LOOT_TABLE: LootTable = [
 /** The attachments that are items, of one acquisition tier (the catalog's partTier), in item order. */
 const partsOf = (tier: PartTier): string[] => Object.keys(ATTACHMENT_ITEMS).filter(id => partTier(ATTACHMENTS[id]) === tier);
 /**
- * Fixed stock, no rotation (that is #28 M4-01). The arms counter also stocks the G17 and every basic-tier attachment
- * that is an item (#28 M2-13, PLAN section 10: basic parts are stocked steadily), after the old goods so their places
+ * Common parts the arms counter stocks as well (#28 M2 review 2026-10-27): the G17's micro sight and extended magazine,
+ * so a G17 bought there can be modified at once. Like the basic parts, they are the shop's and never a find.
+ */
+const SHELF_COMMON = ['O01', 'G01'];
+/**
+ * Fixed stock, no rotation (that is #28 M4-01). The arms counter also stocks the G17, every basic-tier attachment that
+ * is an item (#28 M2-13, PLAN section 10: basic parts are stocked steadily) and SHELF_COMMON, after the old goods so their places
  * in the catalog do not move. The catalog is one 6x5 page: every stocked pack must fit it, which
  * tests/gunsmith-acquire.test.ts checks (catalog pages are M2-08).
  */
 export const MERCHANTS: Record<'arms' | 'med', { name: string; subtitle: string; stock: string[] }> = {
   arms: { name: '老栓', subtitle: '武器 · 零件', stock: ['pistol', 'shotgun', 'carbine', 'ammo9', 'shell', 'ammoR', 'scrap', 'wire', 'fuse', 'battery',
-    'gb17', ...partsOf('basic')] },
+    'gb17', ...partsOf('basic'), ...SHELF_COMMON] },
   med: { name: '许医生', subtitle: '医疗用品 · 食品', stock: ['bandage', 'medkit', 'antidote', 'water', 'food'] },
 };
 export const QUESTS: Record<string, { name: string; description: string; needs: Record<string, number>; reward: number; radio: string }> = {
@@ -504,6 +516,7 @@ function cleanSave(raw: Record<string, any>, guns: boolean): SaveDataV1 | Profil
     stats: { runs: integer(stats.runs), extracts: integer(stats.extracts), kills: integer(stats.kills) },
     activeRun: isObject(raw.activeRun) ? { seed: integer(raw.activeRun.seed, 1, 0xffffffff), ...(typeof raw.activeRun.runId === 'string' ? { runId: raw.activeRun.runId } : {}) } : null,
   } as SaveDataV1 | ProfileV2;
+  if (guns && validPresets(raw.gunPresets) && raw.gunPresets.length) (save as SaveDataV1).gunPresets = structuredClone(raw.gunPresets);
   if (Array.isArray(raw.reliefSupplies)) {
     const pending = raw.reliefSupplies.filter(isObject);
     const supplies = ['ammo9', 'bandage'].map(id => ({ id, qty: Math.min(id === 'ammo9' ? 12 : 1, pending.reduce((sum, entry) => sum + (entry.id === id ? integer(entry.qty) : 0), 0)) })).filter(entry => entry.qty > 0);
@@ -779,7 +792,7 @@ export function rollLoot(seed: number, amount: number, table: LootTable = LOOT_T
  * elite's corpse), common otherwise. Basic parts are the shop's (MERCHANTS). Proposals, tuned in M4-02.
  */
 export const GUNSMITH_FINDS = { share: 1 / 6, rifle: 1 / 4, rare: 1 / 3 } as const;
-const FIND_PARTS = { common: partsOf('common'), rare: partsOf('rare') };
+const FIND_PARTS = { common: partsOf('common').filter(id => !SHELF_COMMON.includes(id)), rare: partsOf('rare') };
 /**
  * What the record or drop `id` becomes, or null when it stays as it is. Draws from `random` only for a gun or a
  * valuable, so a caller's own stream decides finds and nothing else. `risky`: a high-risk source; `rifle`: the find

@@ -12,6 +12,7 @@ import { decodePortableBackup, encodeRecoveryBackup } from '../save-backup';
 import { generateRun } from '../world';
 import { SaveSession, type SessionState, type ExpansionDraft, type ExpansionTransaction } from '../session';
 import { locateGun, planGunEdit, type GunEdit, type GunEditFault, type GunEditPlan, type GunEditPreview } from '../gunsmith/edit';
+import { PRESET_LIMIT, PRESET_NAME_MAX, defaultPresetName, presetName, validPreset, type GunPreset, type PresetNode } from '../gunsmith/presets';
 import { validPractice } from './training';
 import type * as C from './contract';
 const ok = (): C.Result => ({ ok: true });
@@ -494,6 +495,45 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
      * equipped slot and the three containers as they were (the positions of the gun and of every part) and to a
      * one-use token. Contract: C.GunsmithSession.
      */
+    /** Presets (#28 M2-07): one commit each, through `transaction`; nothing is kept after a failed write. Contract: C.HideoutRuntime. */
+    savePreset(gun: string, parts: PresetNode[], name: string | null = null): C.Result & { id?: string } {
+        const blocked = this.guard(); if (blocked) return blocked;
+        let id = '';
+        const r = this.transaction('gunsmith-preset', d => {
+            const list = d.profile.gunPresets ?? [];
+            if (!D.isGun(gun)) return fail('rule', '这不是能改装的枪。');
+            if (list.filter(p => p.gun === gun).length >= PRESET_LIMIT) return fail('rule', `每种枪最多存 ${PRESET_LIMIT} 套预设，先删掉一套。`);
+            const label = name === null ? defaultPresetName(list, gun) : presetName(name);
+            if (!label) return fail('rule', `预设名要 1 到 ${PRESET_NAME_MAX} 个字。`);
+            let n = 1; while (list.some(p => p.id === `preset-${n}`)) n++;
+            const preset: GunPreset = { id: `preset-${n}`, name: label, gun, parts: structuredClone(parts) };
+            if (!validPreset(preset)) return fail('rule', '预设里的配件结构无效。');
+            d.profile.gunPresets = [...list, preset]; id = preset.id;
+            return true;
+        });
+        return r.ok ? { ok: true, message: '预设已保存。', id } : r;
+    }
+    renamePreset(id: string, name: string): C.Result {
+        const blocked = this.guard(); if (blocked) return blocked;
+        const r = this.transaction('gunsmith-preset', d => {
+            const list = d.profile.gunPresets ?? [], at = list.findIndex(p => p.id === id), label = presetName(name);
+            if (at < 0) return fail('missing-item', '这套预设已不在了。');
+            if (!label) return fail('rule', `预设名要 1 到 ${PRESET_NAME_MAX} 个字。`);
+            d.profile.gunPresets = list.map((p, i) => i === at ? { ...p, name: label } : p);
+            return true;
+        });
+        return r.ok ? { ok: true, message: '预设已改名。' } : r;
+    }
+    deletePreset(id: string): C.Result {
+        const blocked = this.guard(); if (blocked) return blocked;
+        const r = this.transaction('gunsmith-preset', d => {
+            const list = d.profile.gunPresets ?? [], left = list.filter(p => p.id !== id);
+            if (left.length === list.length) return fail('missing-item', '这套预设已不在了。');
+            if (left.length) d.profile.gunPresets = left; else delete d.profile.gunPresets;
+            return true;
+        });
+        return r.ok ? { ok: true, message: '预设已删除。' } : r;
+    }
     openGunsmith(gun: string): C.GunsmithSession {
         const inventory = () => { const p = this.state.save; return JSON.stringify([p.equipment, p.stash, p.bag, p.safe]); };
         let shown: { edits: GunEdit[]; preview: GunEditPreview; key: string; token: string | null } | null = null;

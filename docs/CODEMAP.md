@@ -40,13 +40,14 @@
 
 **按需继续。**
 
-- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。改枪样板的获取（货架上的 G17 和基础件，行动里的发现 `D.gunsmithFind`、旧敌人尸体的 `D.corpseLoot`，配件档次 `partTier`）见[改枪契约](gunsmith/CONTRACTS.md#样板获取路径m2-13)。
+- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。改枪样板的获取（货架上的 G17、基础件和 O01、G01，行动里的发现 `D.gunsmithFind`、旧敌人尸体的 `D.corpseLoot`，配件档次 `partTier`）见[改枪契约](gunsmith/CONTRACTS.md#样板获取路径m2-13)。
 - 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
 - 物品重量只经 `D.itemWeight`（枪按 `gunWeight` 连配件算，和装备时一样）：`D.weight`、行动负重、出发负重和各面板的重量显示都读它。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
 - 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - Perk 选择与 500 现金重置：据点 Runtime 的 `perkBoard`、`previewPerk` → `choosePerk`、`previewPerkReset` → `resetPerks` → `transaction`，院子与旧页签共用。确认票据绑定的内容和失败重试写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，选择规则在 [perks.ts](../src/perks.ts)；验证见 [perk-base.test.ts](../tests/perk-base.test.ts)。界面入口是院子 [station-view/ui.ts](../src/station-view/ui.ts) 的 `confirmPerk` 和旧页签 [ui.ts](../src/ui.ts) 的 `confirmPerkTab`（写入失败只经 `retrySave` 重试）；Perk 名称、效果文案、预览行和静态暴击显示都在 [perk-copy.ts](../src/perk-copy.ts)，验证见 [perk-copy.test.ts](../tests/perk-copy.test.ts) 与 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs)。
 - 改枪工作台的改装事务（#28 M2-04）：据点 Runtime 的 `openGunsmith` 给出 `GunsmithSession`，仿照 `ShopSession`：`preview` 只算不写，`confirm` 按 token 经 `transaction` 一次写入，写入失败保留预览、经 `retrySave` 后再确认。规则在 [gunsmith/edit.ts](../src/gunsmith/edit.ts) 的 `planGunEdit`，过期判定和失败语义写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，契约见[改枪契约](gunsmith/CONTRACTS.md#改装事务m2-04)；验证见 [gunsmith-edit.test.ts](../tests/gunsmith-edit.test.ts) 与 [gunsmith-edit-conservation.test.ts](../tests/gunsmith-edit-conservation.test.ts)。
+- 改枪预设（#28 M2-07）：形状和校验在 [gunsmith/presets.ts](../src/gunsmith/presets.ts)，存在 profile 的可选字段 `gunPresets`（[profile-codec.ts](../src/profile-codec.ts) 的 `checkProfile` 严格检查），写入是据点 Runtime 的 `savePreset`、`renamePreset`、`deletePreset`，应用时的配件匹配是 [gunsmith/bench.ts](../src/gunsmith/bench.ts) 的 `presetEdits`；契约见[改枪契约](gunsmith/CONTRACTS.md#预设m2-07)，验证见 [gunsmith-presets.test.ts](../tests/gunsmith-presets.test.ts)。
 - 改枪工作台界面（#28 M2-05）：面板 [gunsmith-view/bench.ts](../src/gunsmith-view/bench.ts) 的 `Workbench`，院子 [ui.ts](../src/station-view/ui.ts) 的 `gunsmith` 面板和旧页签 [src/ui.ts](../src/ui.ts) 的浮层共用；列什么、怎么比由纯模型 [gunsmith/bench.ts](../src/gunsmith/bench.ts) 算。契约见[改枪契约](gunsmith/CONTRACTS.md#工作台界面m2-05)；验证见 [gunsmith-bench.test.ts](../tests/gunsmith-bench.test.ts) 与 `test:gunsmith-bench`。
 - 新增需要保存的购买记录：继续[存档卡](#存档)，不能只改商店类型。
 

@@ -121,6 +121,8 @@ export class UI {
       this.tags.appendChild(el); this.tagEls.set(s.id, el);
     }
     scope.on(this.root, 'click', this.click);
+    // The workbench's rename field: Enter clicks its save button; the form itself never submits.
+    scope.on(this.root, 'submit', (e: Event) => e.preventDefault());
     scope.on(this.root, 'input', this.input);
     scope.on(this.root, 'change', this.input);
     scope.add(() => { for (const t of this.timers) clearTimeout(t); this.timers.clear(); });
@@ -279,6 +281,8 @@ export class UI {
     el.hidden = false;
     if (focused) el.querySelector<HTMLElement>(`[data-act="${focused}"]`)?.focus({ preventScroll: true });
     if (gsFocus) el.querySelector<HTMLElement>(gsFocus)?.focus({ preventScroll: true });
+    const once = kind === 'gunsmith' ? this.bench?.focusOnce() : null;
+    if (once) el.querySelector<HTMLInputElement>(once)?.select();
     (center ? this.panel : this.modal).hidden = true;
     this.root.classList.toggle('has-panel', !center); this.root.classList.toggle('has-modal', center);
   }
@@ -493,7 +497,8 @@ export class UI {
     const gs = t.closest<HTMLElement>('[data-gs]');
     if (gs && this.bench && this.kind === 'gunsmith' && !this.dialog) {
       if ((gs as HTMLButtonElement).disabled) return;
-      if (this.bench.act(gs.dataset.gs!, gs.dataset.arg ?? '') === 'close') this.closeBench(); else this.render();
+      const value = gs.closest('[data-gs-form]')?.querySelector('input')?.value ?? '';
+      if (this.bench.act(gs.dataset.gs!, gs.dataset.arg ?? '', value) === 'close') this.closeBench(); else this.render();
       return;
     }
     const b = t.closest<HTMLElement>('[data-act]');
