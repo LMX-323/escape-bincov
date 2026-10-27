@@ -18,7 +18,7 @@
 
 商场布局：骨架与各版本世界在 [mall-world.ts](../src/mall-world.ts)（`mallWorldV2`～`mallWorldV4`），家具类型与二、三版家具表在 [mall-layout-v2.ts](../src/mall-layout-v2.ts)，四版家具表与“哪些区域已布置”在 [mall-layout-v4.ts](../src/mall-layout-v4.ts)；新出击选哪一版看 [raid-areas.ts](../src/raid-areas.ts) 的 `sampleMallLayout`。改碰撞要开新版本（已存行动按原版本恢复），只换图不用。画面按格选素材在 [coast-view/mall-dressing.ts](../src/coast-view/mall-dressing.ts)，没有素材的四版家具由 [art/mall-furniture.ts](../src/coast-view/art/mall-furniture.ts) 程序绘制；约束测试 [mall-layout-v2.test.ts](../tests/mall-layout-v2.test.ts)、[mall-layout-v4.test.ts](../tests/mall-layout-v4.test.ts)，记录见[商场 2.5D](mall-2-5d/README.md)。
 
-水产站玩家空手姿态由 [station-view/art/player.ts](../src/station-view/art/player.ts) 的 `paintStationPlayer` 补齐，接入在 `HideoutScene.playerTex`，回归见 [station-browser-test.mjs](../scripts/station-browser-test.mjs) 的 H15。
+水产站玩家空手姿态由 [station-view/art/player.ts](../src/station-view/art/player.ts) 的 `paintStationPlayer` 补齐，接入在 `HideoutScene.playerTex`，回归见 [station-browser-test.mjs](../scripts/station-browser-test.mjs) 的 H15（CI 入口 `test:station-hands`）。
 
 ## 交易
 
