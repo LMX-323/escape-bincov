@@ -240,14 +240,14 @@ export class UI {
     const sel = this.selected?.uid ?? null;
     switch (kind) {
       case 'gear': {
-        const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear');
+        const item = this.findSelected(s), details = P.detailsHtml(item, this.selected?.src ?? null, 'gear', [], s.profile);
         body = this.compact ? P.gearCompactHtml(s, cell, sel, this.rt.departure(), this.paneB, details) : P.gearHtml(s, cell, sel, this.rt.departure(), details); break;
       }
       case 'arms': case 'med': {
         const v = this.shop!.view(); const item = this.selected ? (v[this.selected.src === 'merchant' ? 'catalog' : this.selected.src as 'buy' | 'sell' | 'stash'].items.find(i => i.uid === this.selected!.uid) ?? null) : null;
         // Sellable stacks still in the bag or safe: this shop sells from the stash only, so its header says so.
         const outside = [s.profile.bag, s.profile.safe].reduce((n, inv) => n + inv.items.filter(i => !i.relief && (D.ITEMS[i.id]?.sell ?? 0) > 0).length, 0);
-        body = this.compact ? P.shopCompactHtml(v, cell, this.selected, s.profile.cash, this.shopMode, outside) : P.shopHtml(v, cell, sel, s.profile.cash, outside) + P.detailsHtml(item, this.selected?.src ?? null, 'shop', item ? questUses(s.profile, item.id) : []); break;
+        body = this.compact ? P.shopCompactHtml(v, cell, this.selected, s.profile.cash, this.shopMode, outside) : P.shopHtml(v, cell, sel, s.profile.cash, outside) + P.detailsHtml(item, this.selected?.src ?? null, 'shop', item ? questUses(s.profile, item.id) : [], s.profile); break;
       }
       case 'radio': body = P.questsHtml(s); break;
       case 'generator': body = P.generatorHtml(s); break;
@@ -524,6 +524,12 @@ export class UI {
       case 'sort-stash': if (this.result(this.rt.sortStash(), 'drop')) this.selected = null; this.render(); break;
       case 'relief': this.result(this.rt.claimRelief()); this.render(); break;
       case 'cart-reset': this.shop?.reset(); this.selected = null; this.host.sound('close'); this.render(); break;
+      // The catalog's filter and pages (#28 M2-08): a new catalog, so nothing in it stays selected.
+      case 'browse-kind': case 'browse-fits': case 'browse-page': {
+        const b = this.shop?.view().browse; if (!b) break;
+        this.shop!.browse(act === 'browse-kind' ? { kind: a1 as typeof b.kind, fits: b.fits, page: 0 } : act === 'browse-fits' ? { kind: b.kind, fits: !b.fits, page: 0 } : { kind: b.kind, fits: b.fits, page: Number(a1) });
+        this.selected = null; this.host.sound('pick'); this.render(); break;
+      }
       case 'cart-settle': this.settle(); break;
       case 'sale-confirm': if (this.dialog?.kind === 'sale') this.settle(this.dialog.token); break;
       case 'quest': this.result(this.rt.submitQuest(a1), 'deliver'); this.render(); break;

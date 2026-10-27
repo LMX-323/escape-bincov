@@ -1,3 +1,4 @@
+import { attachmentLines, gunPartsLine, saleLines, saleValue } from './gunsmith/item-facts';
 import { departureWarnings } from './qol';
 import * as Shop from './shop';
 import * as D from './domain';
@@ -114,9 +115,26 @@ function merchantPortrait(id: string): string {
     return url ? `<img class="merchant-portrait" width="48" height="48" alt="" draggable="false" src="${url}">` : '';
 }
 function shopping() { return app.state === 'hideout' && ['arms', 'med'].includes(app.tab); }
+/** The catalog's filter and page on this page (#28 M2-08); it holds across merchants and checkouts. */
+let shopBrowse: Shop.ShopBrowse = Shop.BROWSE_ALL;
 function cart() {
-    if (!app.shop || app.shop.merchant !== app.tab) app.shop = Shop.createCart(app.save, app.tab as Shop.Merchant, rpgEnabled(app.expansion));
+    if (!app.shop || app.shop.merchant !== app.tab) {
+        // A kind the other merchant does not stock falls back to all.
+        if (shopBrowse.kind !== 'all' && !Shop.stockKinds(app.tab as Shop.Merchant, rpgEnabled(app.expansion)).includes(shopBrowse.kind)) shopBrowse = Shop.BROWSE_ALL;
+        app.shop = Shop.createCart(app.save, app.tab as Shop.Merchant, rpgEnabled(app.expansion), shopBrowse);
+    }
     return app.shop;
+}
+/** The filter buttons above the catalog: all or one kind, only what fits the base's guns, the pages. */
+function shopBrowseBar(): string {
+    const merchant = app.tab as Shop.Merchant, rpg = rpgEnabled(app.expansion), kinds = Shop.stockKinds(merchant, rpg);
+    const page = Shop.catalogPage(app.save, merchant, rpg, shopBrowse);
+    if (kinds.length < 2 && page.pages < 2) return '';
+    const chip = (id: string, label: string, on: boolean) => btn(label, 'shop-browse', on ? 'active' : '', `data-id="${id}" aria-pressed="${on}"`);
+    const chips = ['all', ...kinds].map(k => chip(`kind:${k}`, k === 'all' ? '全部' : kindName[k as D.ItemKind], shopBrowse.kind === k)).join('');
+    const fits = kinds.includes('attachment') ? chip('fits', '只看适配我的枪', shopBrowse.fits) : '';
+    const pager = page.pages > 1 ? `${btn('←', 'shop-browse', '', `data-id="page:${page.page - 1}" ${page.page ? '' : 'disabled'}`)}<small>${page.page + 1} / ${page.pages}</small>${btn('→', 'shop-browse', '', `data-id="page:${page.page + 1}" ${page.page < page.pages - 1 ? '' : 'disabled'}`)}` : '';
+    return `<div class="shop-browse">${chips}${fits}${pager}</div>`;
 }
 function inventory(source: string): D.Inventory {
     if (shopping() && ['merchant', 'buy', 'sell', 'stash'].includes(source)) return Shop.shopInventory(cart(), source as Shop.ShopSource);
@@ -127,10 +145,13 @@ const kindName: Record<D.ItemKind, string> = {
     weapon: '武器', ammo: '弹药', medical: '医疗用品', food: '食品',
     part: '零件', valuable: '贵重物资', quest: '任务物品', accessory: '饰品', attachment: '配件',
 };
-/** The maker and the guns an attachment fits (D.attachmentFacts), one line under its description; '' for other items. */
-function attachmentLine(id: string, cls: string): string {
-    const facts = D.attachmentFacts(id);
-    return facts ? `<p class="${cls}">制造商：${esc(facts.brand)} · 适配：${esc(facts.guns.join('、') || '暂无')}</p>` : '';
+/**
+ * The gunsmith lines under an item's description (#28 M2-08): an attachment's maker and guns and, at the base, which
+ * gun there takes it; a gun's parts. '' for other items.
+ */
+function attachmentLine(item: Pick<D.Item, 'id' | 'gun'>, cls: string): string {
+    const parts = gunPartsLine(item), lines = [...attachmentLines(app.state === 'hideout' ? app.save : null, item.id), ...parts ? [parts] : []];
+    return lines.map(l => `<p class="${cls}">${esc(l)}</p>`).join('');
 }
 function occupied(inv: D.Inventory) {
     return inv.items.reduce((sum, item) => sum + D.ITEMS[item.id].w * D.ITEMS[item.id].h, 0);
@@ -179,7 +200,7 @@ function details() {
     const actions = `${D.isGun(item.id) && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${D.isGun(item.id) && app.state === 'hideout' ? btn('改装', 'gunsmith-open', '', `data-id="${item.uid}"`) : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
     const baseActions = app.state === 'hideout' && rpgEnabled(app.expansion) ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${SUPPLY_IDS.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
     const size = D.itemSize(item);
-    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${touchLayout() ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p>${attachmentLine(item.id, 'small item-maker')}<dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${D.itemWeight(item).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.isGun(item.id) && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
+    return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${touchLayout() ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p>${attachmentLine(item, 'small item-maker')}<dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${D.itemWeight(item).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${saleValue(item).value === null ? esc(saleValue(item).note ?? '不可出售') : '¥ ' + saleValue(item).value}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.isGun(item.id) && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
 }
 /** Host calls after a successful runtime.deploy and its animation. Uses the committed checkpoint. */
 export async function startPreparedHideoutRaid(runId: string): Promise<boolean> {
@@ -204,7 +225,7 @@ function checkout() {
 function shopDetails(item: D.Item | null | undefined) {
     if (!item) return `<aside class="details shop-details details-empty"><p>从商人拖到待买区，从仓库拖到待卖区。选中物品可查看用途，再点「移动格位」选择位置。</p></aside>`;
     const def = D.ITEMS[item.id], size = D.itemSize(item), buying = ['merchant', 'buy'].includes(app.selectedSource), uses = Shop.questUses(app.save, item.id);
-    return `<aside class="details shop-details"><h3>${def.name} × ${item.qty}</h3><p>${def.description}</p>${attachmentLine(item.id, 'item-maker')}<p>${size.w} × ${size.h} 格 · ${D.itemWeight(item).toFixed(2)} kg · ${buying ? '购买' : '出售'} ¥ ${(buying ? def.buy : def.sell) * item.qty}${item.relief ? ' · 救济，不可出售' : ''}</p>${uses.length ? `<p class="orange">任务用途：${uses.join('、')}</p>` : ''}<div class="item-actions">${btn('移动格位', 'place-item')}${btn('关闭详情', 'clear-selection')}</div></aside>`;
+    return `<aside class="details shop-details"><h3>${def.name} × ${item.qty}</h3><p>${def.description}</p>${attachmentLine(item, 'item-maker')}${!buying && saleLines(item) ? `<p class="item-maker">${saleLines(item)!.map(esc).join('<br>')}</p>` : ''}<p>${size.w} × ${size.h} 格 · ${D.itemWeight(item).toFixed(2)} kg · ${buying ? '购买' : '出售'} ¥ ${(buying ? def.buy : def.sell) * item.qty}${item.relief ? ' · 救济，不可出售' : ''}</p>${uses.length ? `<p class="orange">任务用途：${uses.join('、')}</p>` : ''}<div class="item-actions">${btn('移动格位', 'place-item')}${btn('关闭详情', 'clear-selection')}</div></aside>`;
 }
 export function render() {
     cancelInventoryDrag();
@@ -354,7 +375,7 @@ function renderHideout() {
     } else if (app.tab === 'facilities') { body = facilityPanel();
     } else if (app.tab === 'arms' || app.tab === 'med') {
         const c = cart(), merchant = D.MERCHANTS[c.merchant], totals = Shop.cartTotals(c);
-        body = `<div class="merchant-heading">${merchantPortrait(app.tab)}<div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>先选物品，再一起结算。放回原侧可取消。</p></div></div><div class="shop-layout" data-merchant="${app.tab}"><section><h3>商人物品 · 按包购买</h3>${grid(c.catalog, 'merchant', 54)}</section><section class="shop-buffer"><div><h3>待买 · ¥ ${totals.buy}</h3>${grid(c.buy, 'buy', 54)}</div><div><h3>待卖 · ¥ ${totals.sell}</h3>${grid(c.sell, 'sell', 54)}</div></section><section><h3>仓库 · 整组出售</h3>${grid(c.stash, 'stash', 54)}</section></div>${details()}`;
+        body = `<div class="merchant-heading">${merchantPortrait(app.tab)}<div><h3>${merchant.name}<span>${merchant.subtitle}</span></h3><p>先选物品，再一起结算。放回原侧可取消。</p></div></div><div class="shop-layout" data-merchant="${app.tab}"><section><h3>商人物品 · 按包购买</h3>${shopBrowseBar()}${grid(c.catalog, 'merchant', 54)}</section><section class="shop-buffer"><div><h3>待买 · ¥ ${totals.buy}</h3>${grid(c.buy, 'buy', 54)}</div><div><h3>待卖 · ¥ ${totals.sell}</h3>${grid(c.sell, 'sell', 54)}</div></section><section><h3>仓库 · 整组出售</h3>${grid(c.stash, 'stash', 54)}</section></div>${details()}`;
     } else if (app.tab === 'quests') {
         body = `<div class="quests">${Object.entries(D.QUESTS).map(([id, q], i) => {
             const complete = s.quests[id];
@@ -575,6 +596,13 @@ function bind() {
             case 'checkout': if (Shop.saleWarnings(app.save, cart()).length) setOverlay('shop-quest'); else checkout(); break;
             case 'checkout-confirm': checkout(); break;
             case 'cart-reset': app.shop = null; clearSelection(); render(); break;
+            case 'shop-browse': {
+                // Only the catalog is built again; the buy and sell lists stay (#28 M2-08).
+                const [what, value] = id.split(':');
+                shopBrowse = what === 'kind' ? { kind: value as Shop.ShopBrowse['kind'], fits: shopBrowse.fits, page: 0 } : what === 'fits' ? { ...shopBrowse, fits: !shopBrowse.fits, page: 0 } : { ...shopBrowse, page: Number(value) };
+                const page = Shop.catalogPage(app.save, app.tab as Shop.Merchant, rpgEnabled(app.expansion), shopBrowse);
+                shopBrowse = { ...shopBrowse, page: page.page }; cart().catalog = page.catalog; clearSelection(); render(); break;
+            }
             case 'shop-leave-confirm': {
                 const next = app.shopLeave; app.shopLeave = null; app.shop = null; app.overlay = ''; clearSelection();
                 if (next?.action === 'tab') { app.tab = next.id; render(); }

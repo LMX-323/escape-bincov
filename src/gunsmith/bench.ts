@@ -161,6 +161,26 @@ export function candidates(profile: Readonly<D.SaveDataV1>, gunUid: string, buil
     const rank = (c: Candidate) => c.refusal ? 2 : c.loose || c.current ? 0 : 1;
     return list.sort((a, b) => rank(a) - rank(b));
 }
+/**
+ * Which guns at the base an attachment item could go on (#28 M2-08, for the item details): each gun the part is made
+ * for, with `reason` null when it fits the gun as built now (a part already in that slot would be replaced) and
+ * otherwise what the gun lacks first (compat's wording: a base, handguard or barrel to install first, or the part
+ * that stands where the opener goes). Guns that can never take it are left out.
+ */
+export function partFits(profile: Readonly<D.SaveDataV1>, id: string): { uid: string; gun: string; where: GunPlace; reason: string | null }[] {
+    if (!D.isAttachment(id)) return [];
+    return benchGuns(profile).flatMap((g): { uid: string; gun: string; where: GunPlace; reason: string | null }[] => {
+        if (!eligible(g.id, id)) return [];
+        const build = buildOf({ id: g.id, parts: g.state.parts }), check = checkInstall(build, id);
+        if (check.ok) return [{ uid: g.uid, gun: g.name, where: g.where, reason: null }];
+        // Occupied: the part would replace what sits there, so it fits.
+        if (check.code === 'full') return [{ uid: g.uid, gun: g.name, where: g.where, reason: null }];
+        // A missing slot names only openers a player can own (closedReason), as the workbench does.
+        if (check.code === 'opener' || check.code === 'blocked') return [{ uid: g.uid, gun: g.name, where: g.where, reason: closedReason(build, ATTACHMENTS[id].mount) ?? check.reason }];
+        if (check.code === 'needs') return [{ uid: g.uid, gun: g.name, where: g.where, reason: check.reason }];
+        return [];
+    });
+}
 /** Where a part not owned comes from (M2-13): the arms counter's basic stock, else finds in a raid. */
 export function sourceOf(id: string): string {
     const a = ATTACHMENTS[id];

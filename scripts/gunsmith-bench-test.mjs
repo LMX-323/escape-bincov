@@ -380,6 +380,62 @@ try {
     return await caches();
   });
 
+  await step('S1-shop-filters-details-and-sale-preview', async () => {
+    // A G17 with a barrel group in the stash, so the shop can price it part by part.
+    const p = fixture();
+    const g17 = p.stash.items.find(i => i.id === 'gb17');
+    g17.gun = { parts: [{ uid: 's-b01', id: 'B01', slot: 'barrel', relief: false, children: [] }], devices: { laser: false, light: false } };
+    p.stash.items = p.stash.items.filter(i => i.id !== 'B01');
+    await open(p);
+    // Gear details: a modified gun lists its parts and sells as its body plus parts, not the factory price.
+    await quick('gear'); await yard(`[data-grid="stash"] [data-uid="${g17.uid}"]`).click();
+    const details = await yard('.details').innerText();
+    assert.match(details, /已装：九系精瞄枪管组/);
+    assert.match(details, new RegExp(`售价\\s*¥ ${D.ITEMS.gb17.sell + D.ITEMS.B01.sell}`), 'body plus part');
+    // An attachment's details name the gun at the base that takes it and what another lacks.
+    const f01 = (await snapshot()).profile.stash.items.find(i => i.id === 'F01').uid;
+    await yard(`[data-grid="stash"] [data-uid="${f01}"]`).click();
+    assert.match(await yard('.details').innerText(), /装在M4A1 模块步枪（装备中）上：需要 AR 短导轨护木/);
+    await shot('20-desktop-1280x720-part-details');
+    // The arms counter: all, one kind, only what fits; the lists stay.
+    await yard('[data-tab="arms"]').click(); await yard('.seg.browse').waitFor();
+    const catalog = () => page.evaluate(() => [...document.querySelector('#station-yard').shadowRoot.querySelectorAll('[data-grid="merchant"] .item')].map(e => e.dataset.uid));
+    const all = (await catalog()).length;
+    await yard('.seg.browse [data-act="browse-kind:attachment"]').click();
+    const parts = (await catalog()).length;
+    assert.ok(parts > 0 && parts < all, `${parts} of ${all}`);
+    await yard('.seg.browse [data-act="browse-fits"]').click();
+    const fitting = (await catalog()).length;
+    assert.ok(fitting > 0 && fitting < parts, 'A07 is the carbine\'s: it goes');
+    await shot('17-desktop-1280x720-shop-filter');
+    await yard('.seg.browse [data-act="browse-fits"]').click(); await yard('.seg.browse [data-act="browse-kind:all"]').click();
+    assert.equal((await catalog()).length, all, 'back to the whole stock');
+    // The sale preview: the G17 in the stash lists its body and part.
+    await yard(`[data-grid="stash"] [data-uid="${g17.uid}"]`).click();
+    const sale = await yard('.details').innerText();
+    assert.match(sale, /枪身 G17 通用手枪：¥ \d+/); assert.match(sale, /配件 九系精瞄枪管组：¥ \d+/);
+    await shot('18-desktop-1280x720-sale-preview');
+  });
+
+  await step('S2-tab-page-shop-filter-and-phone-shop', async () => {
+    await open();
+    await yard('[data-tabs]').click();
+    await page.locator('[data-action="tab"][data-id="arms"]').click();
+    await page.locator('.shop-browse').waitFor();
+    const count = () => page.locator('[data-grid="merchant"] .item').count(), all = await count();
+    await page.locator('.shop-browse [data-id="kind:ammo"]').click();
+    assert.equal(await count(), 3, 'the three rounds');
+    await page.locator('.shop-browse [data-id="kind:all"]').click();
+    assert.equal(await count(), all);
+    // Phones: the buy pane carries the same filter.
+    await open(fixture(), [844, 390]);
+    const tabs = yard('[data-quick="arms"]'); if (!await tabs.isVisible()) await tap(yard('[data-quickmenu]'));
+    await tap(tabs); await yard('.seg.browse').waitFor();
+    await tap(yard('.seg.browse [data-act="browse-kind:attachment"]'));
+    assert.ok(await yard('[data-grid="merchant"] .item').count() > 0);
+    await shot('19-phone-844x390-shop-filter');
+  });
+
   await step('B5-desktop-1920x1080', async () => {
     await open(fixture(), [1920, 1080]); await openFromSlot(); await fits();
     await pos('gun/top/0').click(); await bench('[data-gs="unowned"]').click(); await bench('[data-gs="detail"]').click();

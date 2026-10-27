@@ -2,7 +2,7 @@
  * Presentation, animation, pathfinding and assets belong to the host. No mock settlement exists here.
  */
 import type { PresetNode } from '../gunsmith/presets';
-import type { Inventory, Item, RunSummary, SaveDataV1 } from '../domain';
+import type { Inventory, Item, ItemKind, RunSummary, SaveDataV1 } from '../domain';
 import type { Attribute, Facility } from '../expansion-state';
 import type { PerkId, PerkModifiers, PerkTier } from '../perks';
 import type { GunEdit, GunEditPreview, GunPlace } from '../gunsmith/edit';
@@ -62,6 +62,8 @@ export interface CartView {
     stale: boolean;
     /** Buy slots are a shopping list; existing rules auto-place purchases into the stash. */
     placement: 'automatic-stash';
+    /** What the catalog shows (#28 M2-08): a kind or all, only what fits the base's guns, the page of `pages`; `kinds` are the stock's. */
+    browse: { kind: ItemKind | 'all'; fits: boolean; page: number; pages: number; kinds: ItemKind[] };
 }
 export interface ShopSession {
     view(): CartView;
@@ -69,6 +71,8 @@ export interface ShopSession {
     place(from: ShopSource, to: ShopSource, uid: string, x: number, y: number): Result;
     settle(confirmation?: string): Result;
     reset(): void;
+    /** Show another part of the catalog (#28 M2-08); the buy and sell lists and the stash stay as they are. */
+    browse(view: { kind: ItemKind | 'all'; fits: boolean; page: number }): void;
 }
 /** The workbench for one gun (#28 M2-04), as openGunsmith returns it. Detached and read-only; reading writes nothing. */
 export interface GunsmithView {

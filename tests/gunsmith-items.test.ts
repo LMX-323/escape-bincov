@@ -112,11 +112,10 @@ test('details: each attachment\'s maker and the guns a player can own that it fi
     assert.deepEqual(Object.keys(expected), SAMPLE_PARTS);
     for (const [id, [brand, guns]] of Object.entries(expected)) assert.deepEqual(D.attachmentFacts(id), { brand, guns }, id);
     for (const id of ['pistol', 'ammo9', 'O02', 'bandage']) assert.equal(D.attachmentFacts(id), null, id);
-    // The three detail panels print them (the old tabs, the yard, the raid bag).
-    for (const file of ['src/ui.ts', 'src/station-view/panels.ts', 'src/coast-view/inventory.ts']) {
-        const text = readFileSync(file, 'utf8');
-        assert.ok(text.includes('D.attachmentFacts(') && text.includes('制造商：'), file);
-    }
+    // The three detail panels print them (the old tabs, the yard, the raid bag) through the shared lines (M2-08).
+    const facts = readFileSync('src/gunsmith/item-facts.ts', 'utf8');
+    assert.ok(facts.includes('D.attachmentFacts(') && facts.includes('制造商：'));
+    for (const file of ['src/ui.ts', 'src/station-view/panels.ts', 'src/coast-view/inventory.ts']) assert.ok(readFileSync(file, 'utf8').includes('attachmentLines('), file);
 });
 
 test('saves: a loose attachment is a strictly checked plain item, its uid unique with every gun and part uid', () => {

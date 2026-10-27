@@ -458,14 +458,16 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
     }
     openShop(merchant: C.Merchant): C.ShopSession {
         if (!Object.hasOwn(D.MERCHANTS, merchant)) throw new Error('无效商人。');
-        let cart = Shop.createCart(this.state.save, merchant, true), confirmation: { token: string; key: string } | null = null;
+        let browse: Shop.ShopBrowse = Shop.BROWSE_ALL;
+        let cart = Shop.createCart(this.state.save, merchant, true, browse), confirmation: { token: string; key: string } | null = null;
         const warnings = () => Shop.saleWarnings(this.state.save, cart).map(w => `${w.quest}：${D.ITEMS[w.id].name}还需${w.needed}，出售后剩${w.remaining}`);
         const key = () => JSON.stringify([cart, warnings(), this.state.save.quests]);
         const validSource = (value: string) => ['merchant', 'buy', 'sell', 'stash'].includes(value);
         const stale = () => Shop.cartStale(this.state.save, cart);
         const rejected = (reason: Shop.CartRejection) => fail(reason, Shop.cartRejectionMessage[reason]);
         return {
-            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), stale: stale(), warnings: warnings(), placement: 'automatic-stash' }),
+            view: () => structuredClone({ merchant, ...D.MERCHANTS[merchant], catalog: cart.catalog, buy: cart.buy, sell: cart.sell, stash: cart.stash, totals: Shop.cartTotals(cart), dirty: Shop.cartDirty(cart), stale: stale(), warnings: warnings(), placement: 'automatic-stash',
+                browse: { ...browse, pages: Shop.catalogPage(this.state.save, merchant, true, browse).pages, kinds: Shop.stockKinds(merchant, true) } } as const),
             placementError: (from, to, uid, x, y) => stale() ? Shop.cartRejectionMessage.stale : validSource(from) && validSource(to) ? Shop.shopPlacementError(cart, from, to, uid, x, y) : '无效容器。',
             place: (from, to, uid, x, y) => {
                 const blocked = this.guard(); if (blocked) return blocked;
@@ -483,9 +485,16 @@ export class RealHideoutRuntime implements C.HideoutRuntime {
                     return { ok: false, reason: 'rule', message: '出售会消耗未完成任务，请确认。', confirmation: { kind: 'quest-sale', token: confirmation.token, warnings: list } };
                 }
                 const result = this.transaction('shop', d => { const r = Shop.settleCartResult(d.profile, cart, true); return r.ok ? true : rejected(r.reason); });
-                if (result.ok) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } return result;
+                if (result.ok) { cart = Shop.createCart(this.state.save, merchant, true, browse); confirmation = null; } return result;
             },
-            reset: () => { if (!this.guard()) { cart = Shop.createCart(this.state.save, merchant, true); confirmation = null; } },
+            reset: () => { if (!this.guard()) { cart = Shop.createCart(this.state.save, merchant, true, browse); confirmation = null; } },
+            browse: view => {
+                // Only the catalog changes: its packs are templates (buying copies one), so a new page loses nothing.
+                const kinds: string[] = ['all', ...Shop.stockKinds(merchant, true)];
+                const asked: Shop.ShopBrowse = { kind: kinds.includes(view?.kind) ? view.kind : 'all', fits: view?.fits === true, page: Number.isInteger(view?.page) ? view.page : 0 };
+                const page = Shop.catalogPage(this.state.save, merchant, true, asked);
+                cart.catalog = page.catalog; browse = { ...asked, page: page.page };
+            },
         };
     }
     /**

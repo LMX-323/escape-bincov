@@ -1,3 +1,4 @@
+import { attachmentLines, gunPartsLine, saleLines, saleValue } from '../gunsmith/item-facts';
 import * as D from '../domain';
 import { countyMapHtml, deploymentRegion, deploymentWorld, regionBriefHtml, type CountyArt } from './deploy-map';
 import type { Attribute, CartView, FacilityInfo, HideoutSnapshot, PerkBoard, RunWorld, TrainingProgress } from '../hideout-runtime/contract';
@@ -21,15 +22,21 @@ const total = (s: HideoutSnapshot, id: string) => [s.profile.stash, s.profile.ba
 const quoteText = (q: ShopQuote) => q.total === null ? '不可出售' : `${q.side === 'buy' ? '买入' : '卖出'} ¥ ${q.total}`;
 
 /** `uses` lists open quests that still need this item (shop mode); it joins the kind line so the height stays fixed. */
-export function detailsHtml(item: D.Item | null, source: string | null, mode: 'gear' | 'shop', uses: string[] = []) {
+/** `profile`: the base the details look at for the guns an attachment fits (#28 M2-08). */
+export function detailsHtml(item: D.Item | null, source: string | null, mode: 'gear' | 'shop', uses: string[] = [], profile: Readonly<D.SaveDataV1> | null = null) {
   if (!item) return `<aside class="details empty"><b>选中一件物品</b><span>单击查看${mode === 'gear' ? ' · 拖动整理 · 双击在仓库与背包间转移 · 拖动时按 R 旋转' : ' · 双击加入或放回 · 拖到待买或待卖，再统一结算'}</span></aside>`;
   const d = D.ITEMS[item.id], size = D.itemSize(item);
   const quote = mode === 'shop' ? shopQuote(source as ShopSource, item) : null;
   const usesText = uses.length ? ` · 任务用途：${esc(uses.join('、'))}` : '';
-  const price = quote ? `<dt>${quote.side === 'buy' ? '买入' : '卖出'}</dt><dd>${quote.total === null ? '不可出售' : `¥ ${quote.total}`}</dd>` : `<dt>售价</dt><dd>${item.relief ? '—' : `¥ ${d.sell * item.qty}`}</dd>`;
-  const gun = D.isGun(item.id), facts = D.attachmentFacts(item.id);
-  // An attachment's maker and the guns it fits, under its description (M2-08 extends it).
-  const maker = facts ? `<span class="dmaker">制造商：${esc(facts.brand)} · 适配：${esc(facts.guns.join('、') || '暂无')}</span>` : '';
+  // A gun sells as its body and parts (itemSale), never at the factory price (#28 M2-08).
+  const sale = saleValue(item);
+  const price = quote ? `<dt>${quote.side === 'buy' ? '买入' : '卖出'}</dt><dd>${quote.total === null ? '不可出售' : `¥ ${quote.total}`}</dd>` : `<dt>售价</dt><dd>${sale.value === null ? item.relief ? '—' : esc(sale.note ?? '') : `¥ ${sale.value}`}</dd>`;
+  const gun = D.isGun(item.id), parts = gunPartsLine(item), lines = saleLines(item);
+  // An attachment's maker, the guns it fits and which gun at the base takes it; a gun's parts; selling, each part's price.
+  // Selling a gun with parts: its composition on one line (the details keep a fixed height), in place of the parts line.
+  const selling = quote?.side === 'sell' && lines ? `出售构成：${lines.join(' · ')}` : null;
+  const maker = [...attachmentLines(profile, item.id), ...selling ? [] : parts ? [parts] : []].map(l => `<span class="dmaker">${esc(l)}</span>`).join('')
+    + (selling ? `<span class="dmaker dsale" title="${esc(selling)}">${esc(selling)}</span>` : '');
   const acts = mode === 'gear' ? [
     gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
     gun ? btn('改装', 'gunsmith') : '',
@@ -103,15 +110,29 @@ export function shopCompactHtml(c: CartView, cell: number, sel: { src: string; u
   return `<div class="cshop">
     <nav class="seg tabs2">${btn(`买入 <small>${c.buy.items.length} 件 · ¥ ${c.totals.buy}</small>`, 'mode:buy', mode === 'buy' ? 'on' : '')}${btn(`卖出 <small>${c.sell.items.length} 件 · ¥ ${c.totals.sell}</small>`, 'mode:sell', mode === 'sell' ? 'on' : '')}</nav>
     <div class="panes">
-      <section class="pane"><h3>${a[0]} <small>${picked(a[1], a[2]) ?? (mode === 'buy' ? '按包购买' : stashNote(outside))}</small></h3><div class="pane-scroll">${gridHtml(a[1], a[2], cell, selected)}</div></section>
+      <section class="pane"><h3>${a[0]} <small>${picked(a[1], a[2]) ?? (mode === 'buy' ? '按包购买' : stashNote(outside))}</small></h3>${mode === 'buy' ? browseBar(c) : ''}<div class="pane-scroll">${gridHtml(a[1], a[2], cell, selected, mode === 'buy' ? { empty: '没有符合条件的商品' } : {})}</div></section>
       <section class="pane"><h3>${b[0]} <small>${picked(b[1], b[2]) ?? `¥ ${mode === 'buy' ? c.totals.buy : c.totals.sell}${mode === 'buy' ? ` · ${checkoutNote}` : ''}`}</small></h3><div class="pane-scroll">${gridHtml(b[1], b[2], cell, selected, { empty: '拖到这里' })}</div></section>
     </div>
     <footer class="checkout compact"><div class="sum"><b class="${c.totals.net > cash ? 'bad' : ''}">${c.totals.net >= 0 ? `支出 ¥ ${c.totals.net}` : `收入 ¥ ${-c.totals.net}`}</b><small>结算后 ¥ ${(cash - c.totals.net).toLocaleString()}</small></div>${c.stale ? '<p class="warn">仓库已改变，请刷新清单后重新选择物品。</p>' : ''}${c.warnings.length ? `<p class="warn">${c.warnings.map(esc).join('<br>')}</p>` : ''}<div class="acts">${btn(c.stale ? '刷新清单' : '清空', 'cart-reset', 'mini', c.dirty || c.stale ? '' : 'disabled')}${btn('结算', 'cart-settle', 'primary', c.dirty && !c.stale ? '' : 'disabled')}</div></footer></div>`;
 }
 
+/** Short category names for the catalog's buttons. */
+const BROWSE_NAMES: Partial<Record<D.ItemKind, string>> = { weapon: '枪械', ammo: '弹药', part: '零件', attachment: '配件', medical: '医疗', food: '食品', valuable: '贵重', accessory: '饰品', quest: '任务' };
+/**
+ * The catalog's filter (#28 M2-08): all or one kind of the stock, only what fits the base's guns (when the stock has
+ * attachments), and the pages when there is more than one.
+ */
+function browseBar(c: CartView) {
+  const b = c.browse, kinds = ['all', ...b.kinds] as const;
+  if (b.kinds.length < 2 && b.pages < 2) return '';
+  const chips = kinds.map(k => btn(k === 'all' ? '全部' : BROWSE_NAMES[k] ?? k, `browse-kind:${k}`, k === b.kind ? 'on' : '', `aria-pressed="${k === b.kind}"`)).join('');
+  const fits = b.kinds.includes('attachment') ? btn('只看适配我的枪', 'browse-fits', b.fits ? 'on' : '', `aria-pressed="${b.fits}"`) : '';
+  const pager = b.pages > 1 ? `${btn('←', `browse-page:${b.page - 1}`, '', b.page ? 'aria-label="上一页"' : 'disabled aria-label="上一页"')}<small>${b.page + 1} / ${b.pages}</small>${btn('→', `browse-page:${b.page + 1}`, '', b.page < b.pages - 1 ? 'aria-label="下一页"' : 'disabled aria-label="下一页"')}` : '';
+  return `<nav class="seg browse" aria-label="商品分类">${chips}${fits}${pager}</nav>`;
+}
 export function shopHtml(c: CartView, cell: number, selected: string | null, cash: number, outside = 0) {
   return `<div class="shop">
-    <section><h3>商人物品 <small>按包购买</small></h3>${gridHtml(c.catalog, 'merchant', cell, selected)}</section>
+    <section><h3>商人物品 <small>按包购买</small></h3>${browseBar(c)}${gridHtml(c.catalog, 'merchant', cell, selected, { empty: '没有符合条件的商品' })}</section>
     <section class="buffer"><h3>待买 <small>¥ ${c.totals.buy}</small></h3>${gridHtml(c.buy, 'buy', cell, selected, { empty: '拖到这里' })}<h3>待卖 <small>¥ ${c.totals.sell}</small></h3>${gridHtml(c.sell, 'sell', cell, selected, { empty: '拖到这里' })}</section>
     <section><h3>仓库 <small>${stashNote(outside)}</small></h3>${gridHtml(c.stash, 'stash', cell, selected)}</section>
   </div>
