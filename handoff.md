@@ -74,6 +74,14 @@
 
 本地正式工厂10项+原负重11/11，完整884/884、工程守卫64/64、package/最终类型检查通过。浅读投影及错误部分quick两种副本回归均被断言拦下；两尺寸键鼠与保存失败/嵌套枪件的既有issue26定向case 3/3通过，页面异常/外网0，真实截图和[验证记录](docs/tasks/raid-inventory-services/validation.json)已归档；完整其余浏览器风险由准确head CI复核。10-25 已推送并建立 PR #115；不自行合并发布。
 
+## 2026-10-27 #61：PR 模板文档分类精确路径（续作 #108）
+
+沿 [PR #108](https://github.com/xuys2025/escape-bincov/pull/108) 原分支 `fix/ci-template-doc-path`，从原 head `2468d30c9b424a88429f55a47790f0590e75b256` 正常合入已接受 main `86add10b0b7afb96948ac667d176d19badfc406b`，仅任务清单和本交接冲突，保留主线商场及打击感记录。实际文件 `.github/pull_request_template.md` 被大写白名单遗漏；仍只修唯一精确路径及 CI 说明，不扩大白名单。
+
+前一轮 Windows 10 / Node 24.22.1 / pnpm 11.19.0：`pnpm test` 921/921、`pnpm check:ci` 65/65、`pnpm package` 通过。单测首跑受沙箱 `uv_os_get_passwd ENOMEM` 阻塞，正常宿主重跑通过。工程守卫首跑 64/65：测试写死系统级 Git Bash 目录，本机为用户级安装；改从当前 `git --exec-path` 定位 Bash 后，原门禁 75 组成功/失败/跳过组合全部实际执行，全守卫通过。主线策略配相同测试的负对照为 15/17，两处预期失败；候选全部通过。push/PR 仍只在同非文档指纹和完整成功 main 证据下复用，无证据、混入代码、可执行模式和未知大写路径继续全量。
+
+最终合并前按维护者授权，在 #115（`8c27ce2`）及 #129（`9400cf6`）合入后，从 #108 head `c82cc8b` 正常同步 main `9400cf6a4efdea4d8898c4d3adfdf9a61efab899`。仅本交接一处插入冲突，保留双方完整记录；与预演结果一致。同步后 Windows 同环境：939/939 单测、65/65 CI 守卫、打包通过；HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`。游戏源码/素材与本轮 main 无差异，生成物未提交。本地未重复浏览器游戏流程，准确 head CI、最终合并与部署结果以原 PR 正文为准。继续核对入口为 `scripts/ci/policy.mjs` 的 `isDocumentation` / `choosePlan`、`scripts/ci/policy.test.mjs` 与 [CI 合同](docs/CI.md#纯文档快速通道)。#61 其余耗时与分片、#95 落幕测试保持原归属。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
