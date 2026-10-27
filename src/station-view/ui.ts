@@ -150,8 +150,8 @@ export class UI {
     if (this.dialog) { this.closeDialog(); return; }
     if (!this.kind) return;
     if (this.kind === 'gunsmith' && this.bench) {
-      // Esc answers the bench's own question with "stay"; a waiting preview asks before the bench closes.
-      if (this.bench.asking) { this.bench.act('leave-stay', ''); this.render(); return; }
+      // Esc closes the bench's own sheet or answers its question with "stay"; a waiting preview asks before it closes.
+      if (this.bench.dismiss()) { this.render(); return; }
       if (!this.bench.requestClose()) { this.host.sound('error'); this.render(); return; }
       this.closeBench(); return;
     }

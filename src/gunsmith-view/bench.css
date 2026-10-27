@@ -132,9 +132,60 @@
 .gs-page .gs-host > .gs { flex: 1; }
 /* Wide screens: more room for the parts. */
 @media (min-width: 1600px) { .gs { grid-template-columns: 250px minmax(0, 1fr) 420px; } .gs-art img { height: 96px; } }
-/* Phones and short windows until M2-06 pages it: one scrolling column, the actions stay at the bottom. */
-.gs.gs-compact { display: flex; flex-direction: column; overflow: auto; }
-.gs.gs-compact .gs-col { border-right: 0; border-bottom: 1px solid var(--gs-line); overflow: visible; }
-.gs.gs-compact .gs-guns { flex-direction: row; overflow-x: auto; }
-.gs.gs-compact .gs-gun { min-width: 180px; }
-.gs.gs-compact .gs-foot { position: sticky; bottom: 0; grid-template-columns: 1fr; }
+/* Phones and short windows (M2-06): three pages under one header, cancel and confirm always in the bottom bar. */
+.gs.gs-compact { display: flex; flex-direction: column; overflow: hidden; }
+.gs-ctop { flex: none; display: flex; align-items: stretch; gap: 6px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--gs-line); background: var(--gs-bg2); }
+.gs-ctop > b { align-self: center; font-weight: 400; font-size: 15px; white-space: nowrap; }
+.gs-tabs { flex: 1; display: flex; min-width: 0; }
+.gs .gs-tabs button { flex: 1; min-width: 0; min-height: 40px; padding: 4px 6px; border: 0; border-bottom: 2px solid transparent; background: none; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs .gs-tabs button small { font-size: 11px; color: var(--gs-amber); }
+.gs .gs-tabs button.on { border-bottom-color: var(--gs-amber); color: var(--gs-amber); }
+.gs .gs-x { align-self: center; min-height: 34px; padding: 4px 12px; text-align: center; }
+.gs-cpage { flex: 1; min-height: 0; overflow: auto; padding: 8px 10px; scrollbar-width: thin; overscroll-behavior: contain; }
+.gs .gs-crow { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 6px; }
+.gs-compact .gs-gun { flex: none; display: flex; flex-direction: column; min-width: 128px; min-height: 40px; padding: 4px 10px; }
+.gs-compact .gs-gun b { font-size: 14px; }
+.gs-cbody { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; align-items: start; }
+.gs-cbody .gs-art { min-height: 60px; padding: 6px; border: 1px solid var(--gs-line); background: #151c1b; }
+.gs-cbody .gs-art img { height: 56px; width: auto; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+.gs-cpos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gs-compact .gs-pos { min-width: 0; max-width: none; min-height: 40px; }
+.gs-cinfo { margin: 6px 0 0; font-size: 12px; color: var(--gs-dim); }
+.gs-cinfo b { font-weight: 400; color: var(--gs-amber); }
+.gs-cparts { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 10px; align-items: start; }
+.gs-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.gs-chips .gs-pos span { display: none; }
+.gs-cright { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.gs-compact .gs-card { min-height: 44px; }
+.gs-compact .gs-tools button { min-height: 34px; }
+.gs-compact .gs-stats .gs-srow { grid-template-columns: 64px minmax(40px, 1fr) auto 44px; height: 26px; }
+.gs-compact .gs-sdet { margin-left: 0; }
+.gs-cfoot { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--gs-line); background: var(--gs-bg2); }
+.gs .gs-cfoot button { min-height: 40px; padding: 4px 14px; text-align: center; font-size: 15px; }
+.gs .gs-cfoot button.primary { border-color: var(--gs-amber); color: var(--gs-amber); background: #2a2618; }
+.gs .gs-cfoot .gs-sumbtn { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; font-size: 13px; min-width: 0; }
+.gs-sumbtn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-sumbtn small { color: var(--gs-amber); font-size: 12px; }
+.gs-cfoot .gs-block { grid-column: 1 / -1; margin: 0; font-size: 12px; color: var(--gs-bad); }
+.gs-sheet { max-height: calc(100% - 24px); overflow: auto; }
+.gs-sheet .gs-pend ul { max-height: none; }
+.gs-sheet .gs-pend li { white-space: normal; }
+.gs-sheet .gs-sum { margin-top: 8px; }
+.gs-page .gs-host.phone { inset: 0; border: 0; }
+/* Upright phones: the body stacks, the position chips scroll in one row above the list. */
+@media (orientation: portrait) {
+  .gs-cbody { grid-template-columns: minmax(0, 1fr); }
+  .gs-cbody .gs-art img { height: 72px; }
+  .gs-cpos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gs-cparts { grid-template-columns: minmax(0, 1fr); }
+  .gs-chips { display: flex; overflow-x: auto; padding-bottom: 4px; }
+  .gs-chips .gs-pos { flex: none; min-width: 96px; }
+  .gs-cfoot { grid-template-columns: minmax(0, 1fr) auto auto; }
+}
+/* Very short landscape windows: a tighter header and bar. */
+@media (max-height: 330px) {
+  .gs .gs-tabs button { min-height: 36px; }
+  .gs-cpage { padding: 6px 8px; }
+  .gs .gs-cfoot button { min-height: 36px; }
+  .gs-cfoot { padding-top: 4px; padding-bottom: 4px; }
+}

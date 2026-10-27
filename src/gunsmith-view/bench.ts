@@ -61,6 +61,10 @@ export class Workbench {
     private refusal: { name: string; reason: string } | null = null;
     /** Leaving with an unconfirmed preview asks first: to another gun, or closing the panel. */
     private leave: { gun: string | null } | null = null;
+    /** Phones (M2-06): the page shown, the pending-changes sheet, and whether the last paint was the phone layout. */
+    private page: 'body' | 'parts' | 'stats' = 'body';
+    private sheet = false;
+    private phone = false;
 
     constructor(private rt: HideoutRuntime, gun: string, private host: BenchHost) {
         this.gunUid = gun; this.session = rt.openGunsmith(gun);
@@ -70,8 +74,12 @@ export class Workbench {
     get gun() { return this.gunUid; }
     /** A preview with changes is waiting: leaving would drop it. */
     get dirty() { const p = this.session.view().preview; return !!p && p.refusal?.code !== 'unchanged'; }
-    /** The leave question is open (Esc answers it with "stay"). */
-    get asking() { return this.leave !== null; }
+    /** Close the leave question ("stay") or the pending sheet when one is open; true when something closed (Esc, Back). */
+    dismiss(): boolean {
+        if (this.leave) { this.leave = null; return true; }
+        if (this.sheet) { this.sheet = false; return true; }
+        return false;
+    }
 
     /** Ask before closing when a preview waits; true when the panel may close now. */
     requestClose(): boolean {
@@ -82,14 +90,17 @@ export class Workbench {
     act(act: string, arg: string): BenchOutcome {
         switch (act) {
             case 'gun': if (arg !== this.gunUid) { if (this.dirty) this.leave = { gun: arg }; else this.switchGun(arg); } break;
-            case 'pos': this.at = arg; this.mode = 'slot'; this.refusal = null; this.host.sound('pick'); break;
+            // On a phone a position picked on the body page opens the parts page for it.
+            case 'pos': this.at = arg; this.mode = 'slot'; this.refusal = null; if (this.phone) this.page = 'parts'; this.host.sound('pick'); break;
+            case 'page': if (arg === 'body' || arg === 'parts' || arg === 'stats') this.page = arg; break;
+            case 'sheet': this.sheet = !this.sheet; break;
             case 'part': this.choose(arg || null); break;
             case 'all': this.mode = this.mode === 'all' ? 'slot' : 'all'; this.refusal = null; break;
             case 'unowned': this.unowned = !this.unowned; break;
             case 'detail': this.detail = !this.detail; break;
             case 'refuse-ok': this.refusal = null; break;
-            case 'cancel': this.session.reset(); this.refusal = null; this.host.sound('drop'); break;
-            case 'confirm': this.confirm(); break;
+            case 'cancel': this.session.reset(); this.refusal = null; this.sheet = false; this.host.sound('drop'); break;
+            case 'confirm': if (this.confirm()) this.sheet = false; break;
             case 'close': if (this.requestClose()) return 'close'; break;
             case 'leave-stay': this.leave = null; break;
             case 'leave-discard': case 'leave-confirm': {
@@ -216,13 +227,68 @@ export class Workbench {
         const at = list.find(p => p.key === this.at) ?? null;
         const statsBefore = benchStats(buildBefore, devicesOn(before)), statsAfter = benchStats(buildAfter, devicesOn(after));
         const changes = preview ? preview.installs.length + preview.removals.length + preview.moves.length : 0;
-        return `<div class="gs${opts.compact ? ' gs-compact' : ''}">
-  <section class="gs-col gs-left" aria-label="枪械"><h3><i>01</i>枪械 <small>点一把枪开始改</small></h3><div class="gs-guns">${this.gunsHtml(guns, changes)}</div></section>
-  <section class="gs-col gs-mid" aria-label="枪身与属性">${this.bodyHtml(gun, buildBefore, list, at, preview, changes)}${this.statsHtml(statsBefore, statsAfter, buildAfter)}</section>
-  <section class="gs-col gs-right" aria-label="配件">${this.partsHtml(gun, buildAfter, at, list, statsAfter.scores)}</section>
-  ${this.footHtml(gun, preview)}
-  ${this.leave ? this.leaveHtml(guns, changes, !!this.session.view().token) : ''}
+        this.phone = opts.compact;
+        const mark = this.marks(buildBefore, preview), leave = this.leave ? this.leaveHtml(guns, changes, !!this.session.view().token) : '';
+        if (opts.compact) {
+            const page = this.page === 'body' ? this.phoneBodyHtml(gun, guns, list, at, preview, changes, mark)
+                : this.page === 'parts' ? `<div class="gs-cparts"><nav class="gs-chips" aria-label="位置">${list.map(p => this.posHtml(p, at, mark)).join('')}</nav><section class="gs-cright">${this.partsHtml(gun, buildAfter, at, list, statsAfter.scores)}</section></div>`
+                : this.statsHtml(statsBefore, statsAfter, buildAfter);
+            const tabs = ([['body', '枪身', ''], ['parts', '配件', at?.name ?? ''], ['stats', '属性', changes ? '●' : '']] as const)
+                .map(([id, name, sub]) => b(`${name}${sub ? ` <small>${sub}</small>` : ''}`, 'page', id, this.page === id ? 'on' : '', `role="tab" aria-selected="${this.page === id}"`)).join('');
+            return `<div class="gs gs-compact">
+  <header class="gs-ctop"><b>改枪</b><nav class="gs-tabs" role="tablist" aria-label="工作台分页">${tabs}</nav>${b('关闭', 'close', '', 'gs-x')}</header>
+  <div class="gs-cpage gs-p-${this.page}">${page}</div>
+  ${this.phoneFootHtml(preview)}
+  ${this.sheet ? `<div class="gs-veil"><section class="gs-dialog gs-sheet" role="dialog" aria-modal="true" aria-label="待改明细"><h3>待改明细</h3>${this.pendingHtml(preview)}${this.sumHtml(gun, preview)}<div class="gs-dacts">${b('收起', 'sheet', '', 'primary')}</div></section></div>` : ''}
+  ${leave}
 </div>`;
+        }
+        return `<div class="gs">
+  <section class="gs-col gs-left" aria-label="枪械"><h3><i>01</i>枪械 <small>点一把枪开始改</small></h3><div class="gs-guns">${this.gunsHtml(guns, changes)}</div></section>
+  <section class="gs-col gs-mid" aria-label="枪身与属性">${this.bodyHtml(gun, list, at, preview, changes, mark)}${this.statsHtml(statsBefore, statsAfter, buildAfter)}</section>
+  <section class="gs-col gs-right" aria-label="配件">${this.partsHtml(gun, buildAfter, at, list, statsAfter.scores)}</section>
+  <footer class="gs-foot">${this.pendingHtml(preview)}${this.sumHtml(gun, preview)}${this.actsHtml(preview)}</footer>
+  ${leave}
+</div>`;
+    }
+
+    /** Which positions the preview changes: a part going on or moving, or a part coming off where it sat. */
+    private marks(before: Build, preview: GunEditPreview | null): (p: Position) => boolean {
+        const changed = new Set([...(preview?.installs ?? []), ...(preview?.moves ?? [])].map(i => i.uid));
+        const emptied = new Set((preview?.removals ?? []).map(r => { const q = before.parts.find(x => x.uid === r.uid); return q ? `${q.parent ?? 'gun'}/${q.slot}` : ''; }));
+        return p => p.part ? changed.has(p.part.uid) : emptied.has(`${p.parent ?? 'gun'}/${p.slot}`);
+    }
+
+    /** One position on the gun body (and a chip on the phone's parts page). */
+    private posHtml(p: Position, at: Position | null, mark: (p: Position) => boolean) {
+        const label = p.part ? partName(p.part.id) : p.open ? FACTORY_NAMES[p.slot] ?? '空' : '未开放', m = mark(p);
+        const cls = ['gs-pos', p.key === at?.key ? 'on' : '', p.open ? '' : 'closed', p.part ? '' : 'empty', m ? 'changed' : ''].filter(Boolean).join(' ');
+        return `<button type="button" class="${cls}" data-gs="pos" data-arg="${esc(p.key)}" aria-pressed="${p.key === at?.key}" title="${esc(p.place)}${p.reason ? ` · ${esc(p.reason)}` : ''}"><small>${p.name}</small><b>${esc(label)}</b>${p.open ? '' : `<span>${esc(p.reason ?? '')}</span>`}${m ? '<i>改</i>' : ''}</button>`;
+    }
+
+    /** The gun's line under its name: where it is, the magazine, the weight and the footprint, before → after. */
+    private infoText(gun: BenchGun, preview: GunEditPreview | null) {
+        const mag = gun.magazine ? ` · 弹匣 ${gun.magazine.ammo} / ${arrow(String(preview?.capacity.before ?? gun.magazine.capacity), String(preview?.capacity.after ?? gun.magazine.capacity))} 发${ammoName(gun.id)}` : '';
+        const weight = arrow(kg(preview?.weight.before ?? gun.weight), kg(preview?.weight.after ?? gun.weight));
+        const size = preview ? arrow(sizeText(preview.size.before), sizeText(preview.size.after)) : sizeText(gunSize({ id: gun.id, parts: gun.state.parts }));
+        return `${WHERE_NAMES[gun.where]}${mag} · 枪重 ${weight} · 占格 ${size}`;
+    }
+
+    /** The phone's body page: the guns in a row, the gun and its positions, the info line. */
+    private phoneBodyHtml(gun: BenchGun, guns: BenchGun[], list: Position[], at: Position | null, preview: GunEditPreview | null, changes: number, mark: (p: Position) => boolean) {
+        const chips = guns.map(g => {
+            const on = g.uid === this.gunUid;
+            return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${on && changes ? ` · ${changes} 处改动` : ''}</em></button>`;
+        }).join('');
+        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${img(gun.id)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>`;
+    }
+
+    /** The phone's fixed bar: what the preview changes (opens the sheet), why it cannot be confirmed, cancel and confirm. */
+    private phoneFootHtml(p: GunEditPreview | null) {
+        const n = p?.unloaded ? p.unloaded.normal + p.unloaded.relief : 0;
+        const summary = p ? `待装 ${p.installs.length} · 待卸 ${p.removals.length}${n ? ` · 卸出 ${n} 发` : ''}` : '还没有改动';
+        const token = !!this.session.view().token, why = p?.refusal && p.refusal.code !== 'unchanged' ? `<p class="gs-block" role="alert">${esc(p.refusal.reason)}</p>` : '';
+        return `<footer class="gs-cfoot">${b(`<span>${summary}</span><small>明细</small>`, 'sheet', '', 'gs-sumbtn', p ? 'aria-haspopup="dialog"' : 'disabled')}${b('取消', 'cancel', '', '', p ? '' : 'disabled')}${b('确认', 'confirm', '', 'primary', token ? '' : 'disabled')}${why}</footer>`;
     }
 
     private gunsHtml(guns: BenchGun[], changes: number | null) {
@@ -232,22 +298,10 @@ export class Workbench {
         }).join('');
     }
 
-    private bodyHtml(gun: BenchGun, before: Build, list: Position[], at: Position | null, preview: GunEditPreview | null, changes: number) {
-        const changed = new Set([...(preview?.installs ?? []), ...(preview?.moves ?? [])].map(i => i.uid));
-        // Where a part comes off: that position (its parent and slot) shows as changed even when it is empty now.
-        const emptied = new Set((preview?.removals ?? []).map(r => { const q = before.parts.find(x => x.uid === r.uid); return q ? `${q.parent ?? 'gun'}/${q.slot}` : ''; }));
-        const box = (p: Position) => {
-            const label = p.part ? partName(p.part.id) : p.open ? FACTORY_NAMES[p.slot] ?? '空' : '未开放';
-            // A position whose part comes off (or whose factory part is replaced) is marked as changed too.
-            const mark = p.part ? changed.has(p.part.uid) : emptied.has(`${p.parent ?? 'gun'}/${p.slot}`);
-            const cls = ['gs-pos', p.key === at?.key ? 'on' : '', p.open ? '' : 'closed', p.part ? '' : 'empty', mark ? 'changed' : ''].filter(Boolean).join(' ');
-            return `<button type="button" class="${cls}" data-gs="pos" data-arg="${esc(p.key)}" aria-pressed="${p.key === at?.key}" title="${esc(p.place)}${p.reason ? ` · ${esc(p.reason)}` : ''}"><small>${p.name}</small><b>${esc(label)}</b>${p.open ? '' : `<span>${esc(p.reason ?? '')}</span>`}${mark ? '<i>改</i>' : ''}</button>`;
-        };
+    private bodyHtml(gun: BenchGun, list: Position[], at: Position | null, preview: GunEditPreview | null, changes: number, mark: (p: Position) => boolean) {
+        const box = (p: Position) => this.posHtml(p, at, mark);
         const top = list.filter(p => TOP.has(p.slot)), bottom = list.filter(p => !TOP.has(p.slot));
-        const mag = gun.magazine ? ` · 弹匣 ${gun.magazine.ammo} / ${arrow(String(preview?.capacity.before ?? gun.magazine.capacity), String(preview?.capacity.after ?? gun.magazine.capacity))} 发${ammoName(gun.id)}` : '';
-        const weight = arrow(kg(preview?.weight.before ?? gun.weight), kg(preview?.weight.after ?? gun.weight));
-        const size = preview ? arrow(sizeText(preview.size.before), sizeText(preview.size.after)) : sizeText(gunSize({ id: gun.id, parts: gun.state.parts }));
-        return `<header class="gs-head"><h3>${esc(gun.name)}${changes ? ` <span class="gs-badge">预览中 · ${changes} 处改动没确认</span>` : ''}</h3><p>${WHERE_NAMES[gun.where]}${mag} · 枪重 ${weight} · 占格 ${size}</p></header>
+        return `<header class="gs-head"><h3>${esc(gun.name)}${changes ? ` <span class="gs-badge">预览中 · ${changes} 处改动没确认</span>` : ''}</h3><p>${this.infoText(gun, preview)}</p></header>
 <div class="gs-stage"><div class="gs-row">${top.map(box).join('')}</div><div class="gs-art">${img(gun.id)}</div><div class="gs-row">${bottom.map(box).join('')}</div></div>
 <p class="gs-hint">点枪身上的位置挑配件；点配件只改预览，按「确认」才会改到枪上。</p>`;
     }
@@ -327,17 +381,26 @@ export class Workbench {
         return new Set(g ? nodesOf(g.state.parts).map(n => n.uid) : []);
     }
 
-    private footHtml(gun: BenchGun, p: GunEditPreview | null) {
+    /** The parts going on and coming off (and moving), as two lists. */
+    private pendingHtml(p: GunEditPreview | null) {
         const name = (uid: string | null) => { const n = p && (findPart(p.after, uid) ?? findPart(p.before, uid)); return n ? partName(n.id) : ''; };
         const adds = (p?.installs ?? []).map(i => `<li class="${i.from ? '' : 'missing'}"><i>+</i><b>${esc(partName(i.id))}</b><small>${POSITION_NAMES[i.slot]} · ${i.from ? `从${{ stash: '仓库', bag: '背包', safe: '安全箱' }[i.from]}取` : '未拥有，确认前要先买到'}</small></li>`).join('');
         const rems = (p?.removals ?? []).map(r => `<li class="${r.with ? 'cascade' : ''}"><i>−</i><b>${esc(partName(r.id))}</b><small>${r.with ? `随${esc(name(r.with))}拆下 · ` : `${POSITION_NAMES[ATTACHMENTS[r.id].mount]} · `}放回仓库</small></li>`).join('');
         const moves = (p?.moves ?? []).map(m => `<li><i>↔</i><b>${esc(partName(m.id))}</b><small>换到${esc(name(m.parent) || '枪身')}上</small></li>`).join('');
+        return `<div class="gs-pend"><h4>待装 <small>${p?.installs.length ?? 0} 件</small></h4><ul>${adds || '<li class="none">没有要装的配件</li>'}</ul></div>
+<div class="gs-pend"><h4>待卸 <small>${p?.removals.length ?? 0} 件</small></h4><ul>${rems || '<li class="none">没有要拆的配件</li>'}${moves}</ul></div>`;
+    }
+
+    /** Weight, magazine, unloaded rounds (equipped guns) and footprint, before → after. */
+    private sumHtml(gun: BenchGun, p: GunEditPreview | null) {
         const unload = p?.unloaded ? `卸出 ${p.unloaded.normal + p.unloaded.relief} 发${esc(D.ITEMS[p.unloaded.ammo]?.name ?? '')}，放进仓库${p.unloaded.relief ? `（其中救济 ${p.unloaded.relief} 发）` : ''}` : '不用卸弹';
-        const sum = p ? `<dl class="gs-sum"><div><dt>枪重</dt><dd>${arrow(kg(p.weight.before), kg(p.weight.after))}</dd></div><div><dt>弹匣</dt><dd>${arrow(`${p.capacity.before} 发`, `${p.capacity.after} 发`)}</dd></div>${gun.where === 'equipment' ? `<div><dt>子弹</dt><dd>${unload}</dd></div>` : ''}<div><dt>占格</dt><dd>${arrow(sizeText(p.size.before), sizeText(p.size.after))}</dd></div></dl>` : '<p class="gs-dim gs-sum">还没有改动。</p>';
+        return p ? `<dl class="gs-sum"><div><dt>枪重</dt><dd>${arrow(kg(p.weight.before), kg(p.weight.after))}</dd></div><div><dt>弹匣</dt><dd>${arrow(`${p.capacity.before} 发`, `${p.capacity.after} 发`)}</dd></div>${gun.where === 'equipment' ? `<div><dt>子弹</dt><dd>${unload}</dd></div>` : ''}<div><dt>占格</dt><dd>${arrow(sizeText(p.size.before), sizeText(p.size.after))}</dd></div></dl>` : '<p class="gs-dim gs-sum">还没有改动。</p>';
+    }
+
+    /** Why the preview cannot be confirmed (or what confirm does), then cancel and confirm. */
+    private actsHtml(p: GunEditPreview | null) {
         const token = !!this.session.view().token, why = p?.refusal && p.refusal.code !== 'unchanged' ? `<p class="gs-block" role="alert">${esc(p.refusal.reason)}</p>` : `<p class="gs-dim">${p ? '确认后一次保存；取消会回到当前配置。' : '改动只在预览里，确认前不会动到枪和仓库。'}</p>`;
-        return `<footer class="gs-foot"><div class="gs-pend"><h4>待装 <small>${p?.installs.length ?? 0} 件</small></h4><ul>${adds || '<li class="none">没有要装的配件</li>'}</ul></div>
-<div class="gs-pend"><h4>待卸 <small>${p?.removals.length ?? 0} 件</small></h4><ul>${rems || '<li class="none">没有要拆的配件</li>'}${moves}</ul></div>
-${sum}<div class="gs-acts">${why}<div>${b('取消', 'cancel', '', '', p ? '' : 'disabled')}${b('确认', 'confirm', '', 'primary', token ? '' : 'disabled')}</div></div></footer>`;
+        return `<div class="gs-acts">${why}<div>${b('取消', 'cancel', '', '', p ? '' : 'disabled')}${b('确认', 'confirm', '', 'primary', token ? '' : 'disabled')}</div></div>`;
     }
 
     private leaveHtml(guns: BenchGun[], changes: number, token: boolean) {

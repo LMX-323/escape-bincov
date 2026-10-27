@@ -47,7 +47,9 @@ function openBench(gun: string) {
     setOverlay('gunsmith');
 }
 function benchOverlayHtml(b: Workbench) {
-    return `<div class="overlay gs-page"><section class="panel modal gs-host" role="dialog" aria-modal="true" aria-label="改枪工作台"><header><h2>改枪工作台</h2><span>选好配件，按「确认」才会改到枪上</span><b>现金 ¥ ${app.save.cash.toLocaleString()}</b><button type="button" data-gs="close">关闭 <kbd>Esc</kbd></button></header>${b.html({ compact: touchLayout() })}</section></div>`;
+    // On phones the panel brings its own header with the page tabs and the close button.
+    const head = touchLayout() ? '' : `<header><h2>改枪工作台</h2><span>选好配件，按「确认」才会改到枪上</span><b>现金 ¥ ${app.save.cash.toLocaleString()}</b><button type="button" data-gs="close">关闭 <kbd>Esc</kbd></button></header>`;
+    return `<div class="overlay gs-page"><section class="panel modal gs-host${touchLayout() ? ' phone' : ''}" role="dialog" aria-modal="true" aria-label="改枪工作台">${head}${b.html({ compact: touchLayout() })}</section></div>`;
 }
 type InventoryDrag = { uid: string; source: string; token: number; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
@@ -391,8 +393,8 @@ function overlayHtml() {
 }
 export function closeOverlay() {
     if (app.overlay === 'gunsmith' && bench) {
-        // Esc answers the bench's own question with "stay"; a waiting preview asks before the bench closes.
-        if (bench.asking) { bench.act('leave-stay', ''); render(); return; }
+        // Esc closes the bench's own sheet or answers its question with "stay"; a waiting preview asks before it closes.
+        if (bench.dismiss()) { render(); return; }
         if (!bench.requestClose()) { render(); return; }
         bench = null;
     }

@@ -1,8 +1,10 @@
 /**
- * Gunsmith workbench (#28 M2-05): the packaged game offline, the real station yard and HideoutRuntime, mouse input.
+ * Gunsmith workbench (#28 M2-05, M2-06): the packaged game offline, the real station yard and HideoutRuntime, mouse input.
  * Opens the bench from the weapon slot, item details and the workbench facility; previews never write; confirm writes
  * once; replacing a handguard takes its rail parts along; a smaller magazine unloads into the stash; switching guns or
- * closing with a preview asks first. Screenshots at 1280x720 and 1920x1080. Fixtures use the session with ?test=1.
+ * closing with a preview asks first. Screenshots at 1280x720 and 1920x1080. Phones (M2-06, touch): three pages, cancel
+ * and confirm in the bottom bar at 844x390, 740x300, 640x300 and 390x844, every step a tap, rotation keeps the preview.
+ * Fixtures use the session with ?test=1.
  */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -21,7 +23,7 @@ await mkdir(out, { recursive: true });
 const browser = await chromium.launch(browserOptions);
 const report = { build: htmlPath, sha256: createHash('sha256').update(html).digest('hex'), browser: browser.version(), startedAt: new Date().toISOString(),
   methodology: 'Packaged HTML offline; real mouse input on the station yard, its HideoutRuntime, SaveSession and localStorage. Fixtures use the session transaction with ?test=1.', steps: [], errors: [], external: [], screenshots: [] };
-let context, page;
+let context, page, mobile = false;
 const yard = s => page.locator(`#station-yard ${s}`);
 const bench = s => yard(`.modal.k-gunsmith ${s}`);
 const snapshot = () => page.evaluate(() => window.__bincov.hideoutRuntime.snapshot());
@@ -51,7 +53,8 @@ async function seed(p) {
 }
 async function open(p = fixture(), size = [1280, 720]) {
   await context?.close();
-  context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1 });
+  mobile = size[0] < 900 || size[1] < 560;
+  context = await browser.newContext({ offline: true, viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 1, hasTouch: mobile, isMobile: mobile });
   await context.route('https://station.test/**', r => r.fulfill({ contentType: 'text/html', body: html }));
   context.on('request', r => { if (/^https?:/.test(r.url()) && !r.url().startsWith('https://station.test/')) report.external.push(r.url()); });
   page = await context.newPage(); page.setDefaultTimeout(12000);
@@ -59,14 +62,19 @@ async function open(p = fixture(), size = [1280, 720]) {
   page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
   await page.goto('https://station.test/?test=1'); await page.locator('[data-action="enter"]').click(); await ready(); await seed(p);
 }
+const tap = el => mobile ? el.tap() : el.click();
 async function quick(kind) {
-  const btn = yard(`[data-quick="${kind}"]`); if (!await btn.isVisible()) await yard('[data-quickmenu]').click();
-  await btn.click();
+  const btn = yard(`[data-quick="${kind}"]`); if (!await btn.isVisible()) await tap(yard('[data-quickmenu]'));
+  await tap(btn);
 }
 /** From the weapon slot of the gear panel. */
 async function openFromSlot() {
-  await quick('gear'); await yard(`[data-act="gunsmith:${GUN}"]`).click(); await bench('.gs').waitFor();
-  await page.evaluate(() => document.fonts.ready);
+  await quick('gear'); await tap(yard(`[data-act="gunsmith:${GUN}"]`)); await bench('.gs').waitFor();
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const m = document.querySelector('#station-yard').shadowRoot.querySelector('.modal.k-gunsmith');
+    await Promise.all(m.getAnimations().map(a => a.finished.catch(() => {})));
+  });
 }
 const pos = key => bench(`[data-gs="pos"][data-arg="${key}"]`);
 const part = id => bench(`.gs-list [data-gs="part"][data-arg="${id}"]`);
@@ -80,6 +88,21 @@ async function fits() {
   }
   assert.equal(await bench('.gs').evaluate(e => e.scrollWidth > e.clientWidth + 1), false, 'bench scrolls sideways');
 }
+/** Phones: the header, the page and the bottom bar inside the screen, nothing scrolls sideways, cancel and confirm are on top. */
+async function phoneFits() {
+  const size = page.viewportSize();
+  if (process.env.GS_BOXES) console.log(await page.evaluate(await readFile(process.env.GS_BOXES, 'utf8')));
+  for (const sel of ['.gs-ctop', '.gs-cfoot', '[data-gs="confirm"]', '[data-gs="cancel"]', '[data-gs="close"]']) {
+    const r = await bench(sel).boundingBox();
+    assert.ok(r && r.x >= -1 && r.y >= -1 && r.x + r.width <= size.width + 1 && r.y + r.height <= size.height + 1, `${sel} outside ${size.width}x${size.height}`);
+  }
+  for (const sel of ['.gs', '.gs-cpage']) assert.equal(await bench(sel).evaluate(e => e.scrollWidth > e.clientWidth + 1), false, `${sel} scrolls sideways`);
+  assert.ok(await bench('[data-gs="confirm"]').evaluate(el => {
+    const r = el.getBoundingClientRect(), hit = el.getRootNode().elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return hit === el || el.contains(hit);
+  }), 'confirm is covered');
+}
+const phonePage = async name => { await tap(bench(`.gs-tabs [data-gs="page"][data-arg="${name}"]`)); await bench(`.gs-cpage.gs-p-${name}`).waitFor(); };
 async function step(name, fn) {
   if (!filter.selects(name)) return;
   const row = { name }, errorStart = report.errors.length; report.steps.push(row);
@@ -191,6 +214,73 @@ try {
     await old('[data-gs="pos"][data-arg="gun/mag/0"]').click(); await old('.gs-list [data-gs="part"][data-arg="G10"]').click();
     await page.keyboard.press('Escape'); await old('.gs-dialog').waitFor();
     await old('[data-gs="leave-discard"]').click(); assert.equal(await page.locator('.gs-page').count(), 0);
+  });
+
+  await step('P1-phone-844x390-pages-taps-rotation', async () => {
+    await open(fixture(), [844, 390]); await openFromSlot();
+    assert.equal(await bench('.gs.gs-compact').count(), 1); await phoneFits();
+    assert.equal(await yard('.modal.k-gunsmith > .phead').isVisible(), false, 'the bench brings its own header');
+    await shot('07-phone-844x390-body');
+    // A position on the body page opens the parts page for it.
+    await tap(pos('gun/top/0')); await bench('.gs-cpage.gs-p-parts').waitFor();
+    assert.match(await bench('.gs-tabs [data-arg="parts"]').innerText(), /瞄具/);
+    await tap(part('O08')); await phoneFits();
+    assert.match(await bench('.gs-sumbtn').innerText(), /待装 1/);
+    await shot('08-phone-844x390-parts');
+    await phonePage('stats'); assert.match(await bench('.gs-stats').innerText(), /精度/); await phoneFits();
+    await tap(bench('.gs-sumbtn')); await bench('.gs-sheet').waitFor();
+    assert.match(await bench('.gs-sheet').innerText(), /轻型远距镜/);
+    await shot('09-phone-844x390-sheet');
+    await tap(bench('.gs-sheet [data-gs="sheet"]')); assert.equal(await bench('.gs-sheet').count(), 0);
+    // Turning the phone keeps the preview and the page.
+    await page.setViewportSize({ width: 390, height: 844 }); await bench('.gs.gs-compact').waitFor();
+    assert.match(await bench('.gs-sumbtn').innerText(), /待装 1/); await phoneFits();
+    await page.setViewportSize({ width: 844, height: 390 });
+    assert.equal((await equipped()).gun.parts.length, 0, 'nothing written yet');
+    await tap(bench('[data-gs="confirm"]'));
+    await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().profile.equipment.gun.parts.length === 1);
+    assert.equal((await equipped()).gun.parts[0].id, 'O08');
+  });
+
+  for (const size of [[740, 300], [640, 300]]) await step(`P2-phone-${size[0]}x${size[1]}-short`, async () => {
+    await open(fixture(), size); await openFromSlot(); await phoneFits();
+    await tap(pos('gun/mag/0')); await tap(part('G10')); await phoneFits();
+    assert.match(await bench('.gs-sumbtn').innerText(), /卸出 8 发/);
+    await shot(`10-phone-${size[0]}x${size[1]}-parts`);
+    await phonePage('body'); await phoneFits();
+    await shot(`11-phone-${size[0]}x${size[1]}-body`);
+    await tap(bench('[data-gs="cancel"]')); assert.match(await bench('.gs-sumbtn').innerText(), /还没有改动/);
+  });
+
+  await step('P3-phone-390x844-switch-and-close-ask', async () => {
+    await open(fixture(), [390, 844]); await openFromSlot(); await phoneFits();
+    await shot('12-phone-390x844-body');
+    await tap(pos('gun/handguard/0')); await tap(part('H01'));
+    await shot('13-phone-390x844-parts');
+    await phonePage('stats'); await tap(bench('[data-gs="detail"]')); await shot('14-phone-390x844-stats');
+    await phonePage('body');
+    const g17 = (await snapshot()).profile.stash.items.find(i => i.id === 'gb17').uid;
+    await tap(bench(`[data-gs="gun"][data-arg="${g17}"]`)); await bench('.gs-dialog').waitFor();
+    await tap(bench('[data-gs="leave-stay"]')); assert.match(await bench('.gs-sumbtn').innerText(), /待装 1/);
+    await tap(bench('.gs-ctop [data-gs="close"]')); await bench('.gs-dialog').waitFor();
+    await tap(bench('[data-gs="leave-discard"]')); assert.equal(await yard('.modal.k-gunsmith').isVisible(), false);
+  });
+
+  await step('P4-phone-390x844-old-tab-page', async () => {
+    await open(fixture(), [390, 844]);
+    const tabs = yard('[data-tabs]'); if (!await tabs.isVisible()) await tap(yard('[data-quickmenu]'));
+    // The phone tab page shows the equipment card under its own container tab.
+    await tap(tabs); await tap(page.locator('[data-action="container"][data-id="safe"]')); await tap(page.locator('[data-action="gunsmith-open"]').first());
+    const old = s => page.locator(`.gs-page ${s}`);
+    await old('.gs.gs-compact').waitFor();
+    await tap(old('[data-gs="pos"][data-arg="gun/top/0"]')); await tap(old('.gs-list [data-gs="part"][data-arg="O03"]'));
+    assert.match(await old('.gs-sumbtn').innerText(), /待装 1/);
+    const size = page.viewportSize(), r = await old('[data-gs="confirm"]').boundingBox();
+    assert.ok(r && r.y + r.height <= size.height + 1, 'confirm on screen');
+    await shot('15-phone-390x844-tab-page');
+    await tap(old('[data-gs="confirm"]'));
+    await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().profile.equipment.gun.parts.length === 1);
+    await tap(old('.gs-ctop [data-gs="close"]')); assert.equal(await page.locator('.gs-page').count(), 0);
   });
 
   await step('B5-desktop-1920x1080', async () => {

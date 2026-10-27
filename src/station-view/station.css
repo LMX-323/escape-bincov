@@ -100,7 +100,9 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; border: 1px solid 
 .modal.k-gunsmith { left: 12px; top: 12px; right: 12px; bottom: 12px; translate: none; width: auto; max-height: none; }
 .modal.k-gunsmith .pbody { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .modal.k-gunsmith .pbody > .gs { flex: 1; }
-.modal.compact.k-gunsmith { left: 0; top: 0; right: 0; bottom: 0; }
+.modal.compact.k-gunsmith { left: 0; top: 0; right: 0; bottom: 0; border: 0; }
+/* Phones: the bench's own header carries the page tabs and the close button. */
+.modal.compact.k-gunsmith > .phead { display: none; }
 .bench-entry { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--amber); background: rgba(226,180,92,.06); }
 .bench-entry div { display: flex; flex-direction: column; }
 .bench-entry span { font-size: 12px; color: var(--dim); }
