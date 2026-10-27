@@ -14,10 +14,23 @@ import type { ExpansionState } from '../expansion-state';
 import { drawAim, SWAY } from '../shooting';
 import { checkpointBodyFits, traversable } from '../spatial';
 import type { Point } from '../world';
+import type { PartNode } from '../gunsmith/instance';
 
 /** The weapons the panel hands out: the old three, the real G17 and M4A1 (the M4A1 was the #39 sample rifle until M2-01) and the knife. */
 export type RangeWeapon = 'pistol' | 'gb17' | 'carbine' | 'shotgun' | 'mb4a1' | 'knife';
 export const RANGE_WEAPONS: readonly RangeWeapon[] = ['pistol', 'gb17', 'carbine', 'shotgun', 'mb4a1', 'knife'];
+
+/**
+ * The two M4A1 builds the M2-15 playtest compares (PLAN section 11, Sol's approved preview configurations): light
+ * (quick to raise, a short magazine) and steady (calm recoil, a long scope, slow to raise). Fixed uids; the range save
+ * is in memory only.
+ */
+const node = (id: string, slot: PartNode['slot'], children: PartNode[] = []): PartNode => ({ uid: `range-${id}`, id, slot, relief: false, children });
+export const RANGE_BUILDS = {
+    light: () => [node('S01', 'stock'), node('H01', 'handguard', [node('F03', 'under')]), node('O03', 'top'), node('G10', 'mag'), node('P01', 'grip')],
+    steady: () => [node('S02', 'stock'), node('B08', 'barrel'), node('M06', 'muzzle'), node('H01', 'handguard', [node('F01', 'under')]), node('O08', 'top'), node('P02', 'grip')],
+} as const;
+export type RangeBuild = keyof typeof RANGE_BUILDS;
 
 const SEED = 42, MAP = 'coast', KIND = 'elite';
 /**
@@ -155,14 +168,16 @@ export class ShootingRange {
      * hand, with a full magazine (its effective capacity) and its ammunition in the bag, set the way the test driver
      * sets it. Every switch draws the new weapon as the game does: the aim starts from the hip and the body sways.
      */
-    arm(weapon: RangeWeapon) {
+    /** Hand out `weapon`; with `build`, the M4A1 fitted as that build (M2-15), else the gun as it is (factory when new). */
+    arm(weapon: RangeWeapon, build?: RangeBuild) {
         const c = this.core;
         if (!this.live) return;
         if (weapon === 'knife') return this.knife(true);
         const state = c.snapshot(), l = state.loadout;
-        if (l.weapon !== weapon || l.weaponUid === null) {
+        if (l.weapon !== weapon || l.weaponUid === null || build || weapon === 'mb4a1' && l.gun?.parts.length) {
             const scratch = D.createInventory(6, 5); D.addItem(scratch, weapon); // a new item uid and a factory state
             Object.assign(l, { weaponUid: scratch.items[0].uid, gun: scratch.items[0].gun });
+            if (build) l.gun = { parts: RANGE_BUILDS[build](), devices: { laser: false, light: false } };
         }
         l.weapon = weapon; l.ammo = D.equippedWeapon(l).magazine; l.ammoRelief = 0; // a full magazine; more fails checkpoint validation
         state.knife = false; state.reloadLeft = 0; state.fireCooldown = 0;

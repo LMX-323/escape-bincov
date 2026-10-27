@@ -178,6 +178,20 @@ try {
     for (const gun of ['pistol', 'gb17', 'carbine', 'shotgun', 'mb4a1']) guns.push(await hitWith(p, gun));
     const rifle = await holdRifle(p);
 
+    // #28 M2-15: the two M4A1 builds to compare. Each arms the rifle fitted as that build (its own magazine), the view
+    // draws it as built, its button shows pressed; the plain M4A1 goes back to the factory gun.
+    const build = async (selector, sig, mag) => {
+      await p.locator(selector).click();
+      await p.waitForFunction(sig => window.__bincovRange.host.lastBatch.frame.player.gun?.sig === sig, sig, { timeout: 20000 });
+      const now = await p.evaluate(() => { const f = window.__bincovRange.host.lastBatch.frame; return { id: f.hud.weapon.id, mag: f.hud.weapon.magSize }; });
+      assert.deepEqual(now, { id: 'mb4a1', mag }, selector);
+      await frames(p, 2);
+      return p.evaluate(() => [...document.querySelector('.range-panel').shadowRoot.querySelectorAll('[aria-pressed="true"][data-build], [aria-pressed="true"][data-gun]')].map(b => b.dataset.build ?? b.dataset.gun));
+    };
+    assert.deepEqual(await build('[data-build="light"]', 'handguard/under=F03,handguard=H01,mag=G10,rearGrip=P01,stock=S01,top=O03', 20), ['light']);
+    assert.deepEqual(await build('[data-build="steady"]', 'barrel=B08,handguard/under=F01,handguard=H01,muzzle=M06,rearGrip=P02,stock=S02,top=O08', 30), ['steady']);
+    assert.deepEqual(await build('[data-gun="mb4a1"]', '', 30), ['mb4a1']);
+
     // Presses on the panel: no shot, the magazine untouched, and the host's pointer (the aim's source) never moves. The
     // camera may still settle by a whole pixel, which turns the aim by under 0.01 rad; a press that reached the canvas
     // would swing it toward the panel, west of the player.
