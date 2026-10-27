@@ -101,6 +101,16 @@
 
 最终合并前按维护者授权，在 #115（`8c27ce2`）及 #129（`9400cf6`）合入后，从 #108 head `c82cc8b` 正常同步 main `9400cf6a4efdea4d8898c4d3adfdf9a61efab899`。仅本交接一处插入冲突，保留双方完整记录；与预演结果一致。同步后 Windows 同环境：939/939 单测、65/65 CI 守卫、打包通过；HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`。游戏源码/素材与本轮 main 无差异，生成物未提交。本地未重复浏览器游戏流程，准确 head CI、最终合并与部署结果以原 PR 正文为准。继续核对入口为 `scripts/ci/policy.mjs` 的 `isDocumentation` / `choosePlan`、`scripts/ci/policy.test.mjs` 与 [CI 合同](docs/CI.md#纯文档快速通道)。#61 其余耗时与分片、#95 落幕测试保持原归属。
 
+## 2026-10-28 四项纯 Node 资源辅助回归接入 CI（续作 #114）
+
+基线 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`，承接 #60 Q-E08。`scripts/ci/resource-helpers.test.mjs` 只导入原 `astra-r7-heap-graph.test.mjs` 与 `station-resource-probe.test.mjs`，让现有 `check:ci` glob 执行四项纯 Node 回归；原文件、算法、阈值与断言不改、不复制。范围是合成有向图的支配关系与独立移点可达性 oracle，以及缺少资源表、故意保留未销毁对象的负对照。两份旧测试从 review 登记为 support，浏览器 probe/trend 等其余 review 工具保持待确认。
+
+10-25 历史验证：直接运行原两文件 4/4 通过，Node 报告 224 ms、进程墙钟 0.302 s；无硬编码环境或输出写入，临时 window fixture 在 finally 恢复。聚合入口单独运行 4/4、168 ms；完整 `pnpm test` 874/874、`pnpm check:ci` 68/68、`pnpm package` 全部通过，入口文档检查与 `git diff --check` 通过，HTML/两个 ZIP 与基线发行哈希一致。没有启动浏览器、trend 或 F20，四项通过不代表资源签收。原复核只移除元数据测试对中文说明文字的无关约束，分类断言保持。
+
+10-27 按维护者“从简单任务继续”的指令，在 [PR #114](https://github.com/xuys2025/escape-bincov/pull/114) 原 head `63dc41d9db0a97c1db468e07ff1fb08fa73058c6` 正常合入 main `98968e1a99f148d6958a54ce2e4629eade8088b7`，两处文档冲突均保留主线和本任务记录；#112 的脚本登记与门禁完整保留。Windows 10 / Node 24.22.1 / pnpm 11.19.0：聚合入口 4/4、完整单测 939/939、CI 守卫 77/77、打包通过。按四个实际用例名运行的入口集合对照：原 main CI 入口匹配 0 项，加入聚合入口后匹配并通过原 4 项；Node 会把无匹配用例的文件计作通过容器，因此不拿总 pass 数冒充匹配数。原测试和三个被调用模块相对 main diff 为零。HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`，与同步前组合产品相同；生成物不提交。准确 head CI 和待审状态见原 PR，不以旧 head 绿灯代替。没有运行浏览器 probe/trend/F20。
+
+10-28 维护者授权合并时，main 已通过 #106 前进到 `02b5e1e5c5261f5caea55dccc875c8ae93e3120b`。无冲突组合的 77 项 CI 守卫通过，但 GitHub 分支保护拒绝原 head 的合并，明确要求新的 `Build and test`；因此正常合入该主线、保持原 PR 继续检查。同步后完整单测 1020/1020、CI 守卫 77/77、严格打包通过；HTML SHA-256 `cd6aed02e003c2eab97ab2705633476333cd13433f6142a2271fa230e8675708`。相对当前 main 仍只有原 5 个任务文件变化，游戏和原辅助算法没有本 PR 引入的改动。最终准确 head 检查与授权合并状态见原 PR，不绕过保护或自行变更发布规则。
+
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
 维护者在 #103 因 #102 合入出现生成物冲突时提出：产物应由 CI 编译发布。基线 main `49894e9`，随后同步 `c587685`（#104）与 `5adc64a`（#103），两次的生成物冲突都按本规则保留删除。五个生成物移出仓库并加入 `.gitignore`，`generated-files.test.mjs` 拒绝再提交；发布清单移到 `release/`。CI 删去“提交的产物与源码一致”检查，main 的 `Build and test` 通过后新增 `Publish offline release`，把同一份已验证构建发布到滚动预发布 `main-latest`（标签移到本次提交、文件同名替换），README 下载改指向它；Pages 不变。规则只写在 [CI 说明](docs/CI.md#构建与离线包发布)，AGENTS、手册、模板、README 链接过去。
