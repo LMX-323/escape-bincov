@@ -72,7 +72,7 @@ function install() {
     const ptr = this.input.pointer;
     const row = { t: P.t, rev: b.stamp.revision, phase: f.phase, stalls: window.__stallResumes ?? 0, ptr: { x: ptr.x, y: ptr.y },
       cam: { x: v.cam.x, y: v.cam.y }, lead: v.camF.lead?.m ?? 0,
-      p: { x: p.x, y: p.y, aim: p.aim, precise: p.state.precise, weapon: p.weapon }, hudAim: f.hud.aim ? { ...f.hud.aim } : null, revealed: { ...f.revealed },
+      p: { x: p.x, y: p.y, aim: p.aim, precise: p.state.precise, weapon: p.weapon, gun: p.gun ? `${p.gun.id}:${p.gun.sig}` : '' }, hudAim: f.hud.aim ? { ...f.hud.aim } : null, revealed: { ...f.revealed },
       ev: b.events.filter(e => e.type === 'shot' || e.type === 'impact').map(e => { const { stamp, ...rest } = e; return JSON.parse(JSON.stringify(rest)); }),
       bl: f.bullets.map(q => ({ uid: q.uid, x: q.x, y: q.y, vx: q.vx, vy: q.vy, enemy: q.enemy })) };
     if (P.watch) {
@@ -90,10 +90,11 @@ function install() {
   const sound = h.sound.out, impact = sound.impact;
   sound.impact = function (...a) { P.sounds.push({ k: 'impact', t: P.t }); return impact.apply(this, a); };
 }
-/** Barrel tip of a held weapon's art, independently of the view: right edge of the last column with any opaque pixel,
- *  at the middle of that column's opaque rows (texture px). */
+/** Barrel tip of the weapon art in the player's hands, independently of the view's own tip: right edge of the last column
+ *  with any opaque pixel, at the middle of that column's opaque rows (texture px). The art is the canvas the view draws:
+ *  the old held art, or the gunsmith picture of the gun's configuration (#28 M2-10). */
 function barrelTip(look) {
-  const c = window.__bincovSample.host.view.tex.canvas(`weapon:${look}:#4a463c`), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  const h = window.__bincovSample.host, c = h.view.weaponOf(h.lastBatch.frame.player).canvas, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
   for (let x = c.width - 1; x >= 0; x--) {
     const rows = []; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 0) rows.push(y);
     if (rows.length) return { u: x + 1, v: (rows[0] + rows.at(-1) + 1) / 2, w: c.width, h: c.height };
@@ -288,14 +289,13 @@ async function kickKeepsAim(page) {
 /** c. Flash on the drawn barrel tip; tracers leave that tip. */
 async function muzzleAndTracers(page) {
   const cases = [], tips = {};
-  const guns = [['pistol', null], ['shotgun', null], ['carbine', null], ['m4a1', 'm4a1']];
+  const guns = ['pistol', 'shotgun', 'carbine', 'mb4a1'];
   for (let k = 0; k < 8; k++) {
     const theta = wrap(k * Math.PI / 4);
-    await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+    await drive(page, 'weapon', 'pistol');
     await aimAt(page, theta, 110);
-    for (const [gun, sample] of guns) {
-      await drive(page, 'sampleGun', null);
-      if (sample) await drive(page, 'sampleGun', sample); else await drive(page, 'weapon', gun);
+    for (const gun of guns) {
+      await drive(page, 'weapon', gun);
       await steady(page); await settle(page, .2);
       await rec(page, true); await page.mouse.down(); await page.mouse.up();
       await page.waitForFunction(() => window.__shoot.log.some(r => r.ev.some(e => e.type === 'shot' && e.shooter === 'player')), null, { polling: 'raf' });
@@ -305,8 +305,8 @@ async function muzzleAndTracers(page) {
         || window.__shoot.log.some(r => r.ev.some(e => e.type === 'impact' && e.bullet === u))), uids, { polling: 'raf', timeout: 20000 });
       const log = await stop(page);
       const i = log.findIndex(r => r.ev.some(e => e.type === 'shot' && e.shooter === 'player')), row = log[i], g = row.gun;
-      const look = row.p.weapon; tips[look] ??= await page.evaluate(barrelTip, look);
-      const t = tips[look], c = Math.cos(g.rot), s = Math.sin(g.rot);
+      const look = row.p.weapon, art = `${look}|${row.p.gun}`; tips[art] ??= await page.evaluate(barrelTip, look);
+      const t = tips[art], c = Math.cos(g.rot), s = Math.sin(g.rot);
       const lx = (t.u - g.ax * g.tw) * g.sx, ly = (t.v - g.ay * g.th) * g.sy;
       const tip = { x: g.x + lx * c - ly * s, y: g.y + lx * s + ly * c };
       const flash = row.muzzles.reduce((m, q) => !m || q.t < m.t ? q : m, null);
@@ -328,9 +328,9 @@ async function muzzleAndTracers(page) {
         tip: { x: r3(tip.x, 2), y: r3(tip.y, 2) }, flash, flashToTipPx: r3(flashToTip, 2), flashToDesignPx: r3(flashToDesign, 2), pellets });
     }
   }
-  await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+  await drive(page, 'weapon', 'pistol');
   const all = cases.flatMap(c => c.pellets.map(p => ({ ...p, gun: c.gun, dirDeg: c.dirDeg })));
-  const summary = Object.fromEntries(guns.map(([gun]) => {
+  const summary = Object.fromEntries(guns.map(gun => {
     const cs = cases.filter(c => c.gun === gun), ps = all.filter(p => p.gun === gun && p.drawn);
     return [gun, { flashToTipMaxPx: max(cs.map(c => c.flashToTipPx)), flashToDesignMaxPx: max(cs.map(c => c.flashToDesignPx)),
       tracerOffTipMaxPx: max(ps.map(p => p.offTipPx)), tracerStartBehindTipMaxPx: max(ps.map(p => -p.startsBeyondTipPx)), undrawn: all.filter(p => p.gun === gun && !p.drawn).length }];
@@ -458,17 +458,17 @@ async function hiddenRoom(page) {
   return detail;
 }
 
-/** f. Desktop fire modes: a held left button fires a pistol once and the sample M4A1 every 0.1 s. */
+/** f. Desktop fire modes: a held left button fires a pistol once and the M4A1 every 0.1 s. */
 async function desktopModes(page) {
-  await drive(page, 'sampleGun', null); await drive(page, 'weapon', 'pistol');
+  await drive(page, 'weapon', 'pistol');
   await aimAt(page, 0, 120); await running(page);
   await rec(page); await page.mouse.down(); await waitRaid(page, .8); await page.mouse.up(); await waitRaid(page, .1);
   const pistol = shotsOf(await stop(page)).length;
-  await drive(page, 'sampleGun', 'm4a1'); await running(page);
+  await drive(page, 'weapon', 'mb4a1'); await running(page);
   await rec(page); const t0 = await simTime(page); await page.mouse.down(); await waitRaid(page, 1.05, t0);
   await page.evaluate(() => { window.__shoot.released = null; }); await page.mouse.up(); await waitRaid(page, .3);
   const m4Release = await released(page), log = await stop(page), m4 = shotsOf(log), frameDt = (log.at(-1).t - log[0].t) / Math.max(1, log.length - 1);
-  await drive(page, 'sampleGun', null);
+  await drive(page, 'weapon', 'pistol');
   const interval = m4.length > 1 ? (m4.at(-1).t - m4[0].t) / (m4.length - 1) : NaN;
   const detail = { pistolShots: pistol, m4a1Shots: m4.length, m4a1MeanInterval: r3(interval, 4), frameDt: r3(frameDt, 4), m4a1ShotsAfterRelease: m4.filter(q => q.t > m4Release).length };
   check(pistol === 1, `held pistol fired ${pistol} shots`, detail);
@@ -728,6 +728,159 @@ async function hitConfirm(page) {
   return r;
 }
 
+/** The bench lane (tests/fixtures/shooting-bench.ts LANE, the range's firing line): 700 px clear east on the seed 42 coast. */
+const LANE = { x: 208, y: 1104 };
+const node = (uid, id, slot, children = []) => ({ uid, id, slot, relief: false, children });
+/** An M4A1 with a short handguard and, on its side rail, the close laser (T01) or the close floodlight (T05). */
+const FIT_LASER = [node('fit-h01', 'H01', 'handguard', [node('fit-t01', 'T01', 'side')])];
+const FIT_LIGHT = [node('fit-h01', 'H01', 'handguard', [node('fit-t05', 'T05', 'side')])];
+const hudDevices = page => page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.devices);
+const deviceLine = page => page.evaluate(() => { const el = document.querySelector('.coast-sample [data-devices]'); return el.hidden ? null : el.textContent; });
+/** The view's device drawing: the laser line's path instructions, the light's pools in the light layer, the outlines shown. */
+const deviceDrawing = page => page.evaluate(() => {
+  const v = window.__bincovSample.host.view;
+  return { laserPaths: (v.laserG.context?.instructions ?? []).length, lights: v.deviceLights.length,
+    rims: v.litRims.filter(s => s.visible).map(s => ({ x: s.x, y: s.y })) };
+});
+/** The devices of the gun as the save holds them, after a checkpoint. */
+const savedDevices = page => page.evaluate(() => {
+  if (!window.__bincovSample.host.services.checkpoint()) return 'checkpoint failed';
+  return JSON.parse(localStorage.getItem('escape-bincov.session.v2')).expansion.raid.loadout.gun.devices;
+});
+const toast = page => page.evaluate(() => document.querySelector('.coast-sample [data-toast]').textContent);
+
+/**
+ * l. Devices (#28 M2-03) on a fitted M4A1 (driver.fit; no workbench before M2-04), by real keys: G switches the laser,
+ * the HUD's weapon card and the saved instance follow, the view draws the beam, and with the beam on an enemy 150 px out
+ * (inside the close laser's 240) the published hip cone tightens; G again clears it all. F on the floodlight lights up
+ * the ground item ahead: the HUD lists it and the view outlines it and adds the light's pools. G on a gun without a laser
+ * says so. Screenshots: devices-laser.png and devices-light.png.
+ */
+/**
+ * #28 M2-10: a configured gun in hand is drawn from the gunsmith art (its texture is not the old held art), the muzzle
+ * moves with the parts, and the raid view keeps at most 8 held pictures (each with a rim): 12 configurations in turn
+ * leave 8, and the standalone textures do not grow past them.
+ */
+async function heldArt(page) {
+  const OPTICS = ['O03', 'O08'], STOCKS = [null, 'S01', 'S02'], MUZZLES = [null, 'M06'];
+  const configs = [];
+  for (const o of OPTICS) for (const st of STOCKS) for (const m of MUZZLES) {
+    const parts = [node(`a-${o}`, o, 'top')];
+    if (st) parts.push(node(`a-${st}`, st, 'stock'));
+    if (m) parts.push(node(`a-${m}`, m, 'muzzle'));
+    configs.push(parts);
+  }
+  await drive(page, 'weapon', 'mb4a1');
+  const probe = () => page.evaluate(() => {
+    const h = window.__bincovSample.host, v = h.view, p = h.lastBatch.frame.player, art = v.weaponOf(p);
+    // Only a gunsmith picture carries its own tip; the old held art's is read from its pixels.
+    return { gun: p.gun ?? null, held: v.tex.heldCount, large: v.tex.atlas.stats.largeTextures, w: art.canvas.width, tip: art.tip ?? null };
+  }).catch(e => ({ error: String(e) }));
+  await settle(page, .2);
+  const base = await probe(), seen = [];
+  assert.ok(!base.error, base.error); assert.deepEqual(base.gun, { id: 'mb4a1', sig: '' }); assert.ok(base.tip, 'the factory M4A1 is drawn from the gunsmith art');
+  for (const parts of configs) {
+    await drive(page, 'fit', parts); await settle(page, .15);
+    const now = await probe();
+    assert.ok(!now.error, now.error);
+    assert.ok(now.tip, 'a configured gun is drawn from the gunsmith art');
+    assert.ok(now.held <= 8, `held pictures ${now.held}`);
+    assert.ok(now.large <= base.large + 16, `standalone textures ${now.large} (base ${base.large})`);
+    seen.push({ sig: now.gun.sig, w: now.w, tip: now.tip });
+  }
+  // The long scope's picture is wider than the red dot's with the same stock and muzzle; a muzzle brake moves the tip out.
+  const at = (o, st, m) => seen[OPTICS.indexOf(o) * 6 + STOCKS.indexOf(st) * 2 + MUZZLES.indexOf(m)];
+  assert.ok(at('O03', null, 'M06').tip.x > at('O03', null, null).tip.x, 'the brake lengthens the gun');
+  assert.equal((await probe()).held, 8, 'twelve configurations leave eight');
+  // The ground and the HUD card show the whole gun from the side: Sol's square close-ups do not read there (maintainer,
+  // 2026-10-27). A factory M4A1 and a G17 on the ground next to the player; the card shows the M4A1 in hand.
+  await drive(page, 'fit', []);
+  const here = await page.evaluate(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return { x: Math.round(p.x), y: Math.round(p.y) }; });
+  await drive(page, 'spawnLoot', 'mb4a1', 1, { x: here.x + 36, y: here.y + 18 }); await drive(page, 'spawnLoot', 'gb17', 1, { x: here.x - 30, y: here.y + 18 });
+  await settle(page, .3);
+  const looks = await page.evaluate(() => {
+    const t = window.__bincovSample.host.view.tex, card = document.querySelector('.coast-sample [data-weapon-icon]');
+    return { m4: t.loot('mb4a1').width, g17: t.loot('gb17').width, pistol: t.loot('pistol').width, card: card?.getAttribute('src')?.length ?? 0 };
+  });
+  assert.deepEqual([looks.m4, looks.g17, looks.pistol], [36, 28, 28], 'the M4A1 lies as its 32 px side view; the G17 and the old pistol fit the cell');
+  assert.ok(looks.card > 0);
+  await page.screenshot({ path: resolve(out, 'gunsmith-ground-card.png') });
+  return { configs: seen.length, base: base.large, held: 8, ground: looks };
+}
+
+async function devices(page) {
+  await place(page, LANE, 0);
+  await drive(page, 'weapon', 'mb4a1'); await drive(page, 'fit', FIT_LASER);
+  const foe = await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.actors.find(a => a.alive).uid);
+  await drive(page, 'placeEnemy', foe, { x: LANE.x + 150, y: LANE.y });
+  await aimAt(page, 0, 150); await steady(page); await settle(page, .3);
+  const before = { hud: await hudDevices(page), line: await deviceLine(page), cone: await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.aim.cone) };
+  check(before.hud?.parts.length === 1 && !before.hud.parts[0].on && before.hud.laser === null, 'a fitted laser starts off', before);
+  check(before.line?.includes('激光 关') && before.line.includes('G'), `the weapon card shows the switch: ${before.line}`, before);
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === true, null, { polling: 'raf' });
+  await steady(page); await settle(page, .3);
+  const on = { hud: await hudDevices(page), line: await deviceLine(page), drawing: await deviceDrawing(page), saved: await savedDevices(page),
+    cone: await page.evaluate(() => window.__bincovSample.host.lastBatch.frame.hud.aim.cone) };
+  check(on.hud.laser?.hit && on.hud.laser.inRange, 'the beam rests on the enemy within range', on);
+  check(on.cone < before.cone * .8, `the hip cone tightens with the laser on target: ${before.cone} -> ${on.cone}`, { before, on });
+  check(on.drawing.laserPaths > 0 && on.line.includes('激光 开'), 'the view draws the beam and the card says on', on);
+  check(on.saved?.laser === true && on.saved.light === false, 'the checkpoint saves the switch on the gun', on);
+  await page.screenshot({ path: resolve(out, 'devices-laser.png') });
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await settle(page, .2);
+  const off = { drawing: await deviceDrawing(page), saved: await savedDevices(page), line: await deviceLine(page) };
+  check(off.drawing.laserPaths === 0 && off.saved?.laser === false && off.line.includes('激光 关'), 'G again switches it off everywhere', off);
+  // The floodlight: the ground item 100 px ahead is lit, outlined where it is drawn.
+  await drive(page, 'fit', FIT_LIGHT);
+  const loot = await drive(page, 'spawnLoot', 'scrap', 1, { x: LANE.x + 100, y: LANE.y });
+  await page.keyboard.press('g');
+  await page.waitForFunction(() => /没有装激光/.test(document.querySelector('.coast-sample [data-toast]').textContent), null, { polling: 'raf' });
+  const refused = await toast(page);
+  await page.keyboard.press('f');
+  await page.waitForFunction(uid => window.__bincovSample.host.lastBatch.frame.hud.devices?.light?.lit.includes(uid), loot, { polling: 'raf' });
+  await settle(page, .2);
+  const light = { hud: await hudDevices(page), drawing: await deviceDrawing(page), line: await deviceLine(page),
+    item: await page.evaluate(uid => { const s = window.__bincovSample.host.view.loot.get(uid); return s && { x: s.x, y: s.y, visible: s.visible }; }, loot) };
+  check(light.drawing.lights === 3 && light.drawing.rims.some(r => r.x === light.item?.x && r.y === light.item?.y) && light.line.includes('灯光 开'),
+    'the light adds its pools and outlines the lit item', light);
+  await page.screenshot({ path: resolve(out, 'devices-light.png') });
+  await page.keyboard.press('f');
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await drive(page, 'weapon', 'pistol'); await place(page, HOME, 0);
+  return { before, on, off, refused, light };
+}
+/** l-touch. The 设备 button: hidden for a factory gun, shown for a fitted one, and each tap switches its devices. */
+async function touchDevices(page) {
+  await place(page, LANE, 0);
+  await drive(page, 'weapon', 'mb4a1');
+  await frames(page, 4);
+  const button = () => page.evaluate(() => { const b = document.querySelector('.coast-sample [data-device]'), r = b.getBoundingClientRect();
+    return { hidden: b.hidden, pressed: b.getAttribute('aria-pressed'), box: { l: r.left, t: r.top, r: r.right, b: r.bottom } }; });
+  const factory = await button();
+  check(factory.hidden, 'a factory gun has no 设备 button', factory);
+  await drive(page, 'fit', FIT_LASER);
+  await page.waitForFunction(() => !document.querySelector('.coast-sample [data-device]').hidden, null, { polling: 'raf' });
+  const shown = await button();
+  // Inside the screen and clear of every other touch button.
+  const others = await page.evaluate(() => [...document.querySelectorAll('.coast-sample .cs-touch button:not([data-device])')].filter(b => !b.hidden)
+    .map(b => { const r = b.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }));
+  const overlap = others.filter(o => o.l < shown.box.r && shown.box.l < o.r && o.t < shown.box.b && shown.box.t < o.b);
+  check(shown.box.l >= 0 && shown.box.r <= 844 && shown.box.b <= 390 && !overlap.length, 'the 设备 button fits the bar', { shown, others });
+  await page.locator('.coast-sample [data-device]').tap();
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === true, null, { polling: 'raf' });
+  await frames(page, 2);
+  const on = await button();
+  await page.locator('.coast-sample [data-device]').tap();
+  await page.waitForFunction(() => window.__bincovSample.host.lastBatch.frame.hud.devices?.parts[0].on === false, null, { polling: 'raf' });
+  await frames(page, 2);
+  const off = await button();
+  check(on.pressed === 'true' && off.pressed === 'false', 'each tap switches the laser and the button shows it', { on, off });
+  await drive(page, 'weapon', 'pistol'); await place(page, HOME, 0);
+  return { factory, shown, on: on.pressed, off: off.pressed };
+}
+const frames = (page, n) => page.evaluate(n => new Promise(done => { let k = 0; const tick = () => (++k >= n ? done() : requestAnimationFrame(tick)); requestAnimationFrame(tick); }), n);
 /** Feedback budget (src/feedback-budget.ts): live particles and sound voices a crowded fight may not pass. */
 const BUDGET = { particles: 320, voices: 96 };
 /** k. A crowded fight stays within the feedback budget (#75 H-07): copies of the live batch with twelve gunmen 90-240 px
@@ -817,13 +970,16 @@ try {
   await step('j', 'the gun pulls back after the shot frame, a pistol least and a shotgun most, and is home when its pulse ends; classic and reduced motion keep it still', desktop, gunRetraction);
   await step('f-desktop', 'mouse fire modes: pistol once, M4A1 every 0.1 s', desktop, desktopModes);
   await step('e', 'a shot out of an unrevealed room draws nothing over it', desktop, hiddenRoom);
+  await step('l', 'devices: G and F switch a fitted gun\'s laser and light; HUD, cone, beam, outline and save follow', desktop, devices);
   await step('k', 'a crowded fight stays within the particle and voice budget; the player\'s own blood and cues still come through', desktop, crowdBudget);
+  await step('m', 'a configured gun in hand is drawn from the gunsmith art; the view keeps at most 8 held pictures', desktop, heldArt);
   desktop.stallResumes = await stallResumes(desktop.page);
   phone = await context('phone', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   phone.touch = true;
   await touchReady(phone.page);
   await step('d', 'walls, a closed door and a corner stop the bullet at the surface', phone, walls);
   await step('f-touch', 'touch fire modes: outer ring repeats, inner ring never fires', phone, touchModes);
+  await step('l-touch', 'the 设备 button: hidden for a factory gun, each tap switches a fitted gun\'s devices', phone, touchDevices);
   phone.stallResumes = await stallResumes(phone.page);
 } catch (error) {
   report.failure = error.stack; console.error(error);

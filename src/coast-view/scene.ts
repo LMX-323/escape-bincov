@@ -8,7 +8,7 @@ import { solWall, type SolArt } from './art/sol';
 import { LOW_H, ROOF_MARGIN, STOREY_H, WALL_H, paintCanopy, paintCeiling, paintDoorGuide, paintDownpipe, paintLintel, paintLow, paintOpeningGuide, paintRoof, paintStairLabel, paintStairs, paintWall, paintWallAC, wallKey, type WallSpec } from './art/structures';
 import { Fx } from './fx';
 import { gait, walkFrame } from '../gait';
-import { Lighting, MOODS, lamp } from './lighting';
+import { Lighting, MOODS, lamp, type Light } from './lighting';
 import { Textures } from './textures';
 import { enemyMotion } from './enemy-motion';
 import { BLOW_TIERS, REDUCED_KICK, ShotBlows, bloodDrops, blowTier, pushCamera, type BlowTier } from './blow-feel';
@@ -161,6 +161,12 @@ export class CoastView {
   private muzzles: { s: Sprite; t: number | null; shooter?: string; weapon?: ActorView['weapon'] }[] = [];
   private swings: { g: Graphics; t: number | null }[] = [];
   private highlight = new Sprite();
+  /** The gun's laser (#28 M2-03): a thin line from the drawn muzzle to where the Runtime's beam stops, and its dot. */
+  private laserG = new Graphics();
+  /** Outlines the gun's light puts on the containers and ground items it shows (#28 M2-03), reused frame to frame. */
+  private litRims: Sprite[] = [];
+  /** The gun light's pools in the light layer (#28 M2-03), replaced every frame. */
+  private deviceLights: Light[] = [];
   private fadeClock = 0;
   private rngState = 7;
   private time = 0;
@@ -193,7 +199,7 @@ export class CoastView {
 
   constructor(private app: Application, public opts: ViewOptions) {
     try {
-      this.tex = new Textures(opts.art);
+      this.tex = new Textures(opts.art, uids => releaseManagedSlots(this.app, 'glTexture', uids));
       this.tex.atlas.defer = true;
       this.light = new Lighting(this.tex);
       this.weather = new Weather(this.tex, opts.weather, opts.reducedMotion);
@@ -332,6 +338,7 @@ export class CoastView {
     }
     this.weather.update(this.time, this.cam, this.view, f.revealed);
     this.light.syncUnseen(dt, f.revealed);
+    this.syncDevices(f);
     this.light.sync(dt, l => (l.region === undefined || l.region === null || f.revealed[l.region] === true) && !l.regions?.some(r => f.revealed[r] !== true), this.time);
     this.tintUpright(f);
     if (this.opts.debug) this.drawDebug(f); else this.debugG.clear();
@@ -354,6 +361,7 @@ export class CoastView {
     this.map = m; this.stats.rebuilds++;
     this.clearScene();
     this.highlight = new Sprite(); this.highlight.visible = false; this.xray.addChild(this.highlight);
+    this.laserG = new Graphics(); this.sorted.addChild(this.laserG); this.litRims = []; this.deviceLights = [];
     this.exitG = new Graphics(); this.groundLayer.addChild(this.exitG);
     const b = m.bounds, M = materials(m);
     let bake = this.bakes.get(mapKey);
@@ -665,7 +673,7 @@ export class CoastView {
         if (!shown(a)) break;
         const angle = tip?.angle ?? e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
         if (a.tactics?.archetype === 'sac-spitter') { this.fx.acid(a.x, a.y, angle, this.rnd); break; }
-        const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype), c = Math.cos(angle), s = Math.sin(angle);
+        const art = this.weaponOf(a), c = Math.cos(angle), s = Math.sin(angle);
         const sp = new Sprite(this.tex.muzzle(0)); sp.anchor.set(.5); sp.blendMode = 'add';
         const reach = art.muzzle * heldLength(angle);
         if (tip) sp.position.set(Math.round(tip.at.x + c * 1.5), Math.round(tip.at.y + s * 1.5));
@@ -843,7 +851,7 @@ export class CoastView {
     if (wading) { g.wade.position.set(x, y - 2); g.wade.zIndex = a.y + .02; g.wade.scale.x = this.opts.reducedMotion ? 1 : 1 + .06 * Math.sin(this.time * 4 + a.x); }
     g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame, a.tactics?.archetype); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
     g.rim.rotation = tilt;
-    const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype);
+    const art = this.weaponOf(a);
     const polearm = a.tactics?.archetype === 'tide-ritualist' && a.weapon === 'club';
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;
     const swing = polearm ? 0 : a.tactics?.phase === 'windup' ? -.6 * Math.sign(Math.cos(a.aim) || 1) : g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
@@ -853,7 +861,7 @@ export class CoastView {
     g.weapon.texture = art.texture; g.weapon.anchor.set(art.pivotX / art.canvas.width, art.pivotY / art.canvas.height);
     // The barrel lies on the line from the chest along the gun, where the shots fly: an art's barrel row may sit off its
     // grip pivot (Sol's guns by 3-4 px), so the gun moves across by that much (`off`, in the sprite's flipped frame).
-    const off = a.weapon === 'claw' ? 0 : (this.barrelTip(a.weapon, a.kind, a.tactics?.archetype).y - art.pivotY) * (Math.cos(a.aim) < 0 ? -1 : 1);
+    const off = a.weapon === 'claw' ? 0 : (this.barrelTip(a).y - art.pivotY) * (Math.cos(a.aim) < 0 ? -1 : 1);
     // Weapon and arms round their offsets, not their positions: on the body's whole pixel they never shimmer against it.
     const thrust = polearm && a.tactics ? a.tactics.phase === 'windup' ? -4 : a.tactics.phase === 'release' ? 8
       : a.tactics.phase === 'recovery' ? 8 * Math.max(0, 1 - (a.tactics.total - a.tactics.left) / .22) : 0 : 0;
@@ -1111,6 +1119,58 @@ export class CoastView {
     h.visible = true; h.tint = 0xf2deaa; h.alpha = .75 + Math.sin(this.time * 6) * .25;
   }
 
+  /**
+   * The gun's devices as the Runtime publishes them (hud.devices, #28 M2-03), drawn without bitmaps (ART-SPEC: beams are
+   * not textures). The laser is a thin line at chest height from the drawn muzzle to where the beam stops, fading along
+   * its length, with a dot where it lands; the light is three soft pools of the existing light layer along the aim,
+   * widening with its arc, gated by the rooms they fall in like every lamp; and each container or ground item the light
+   * shows gets the interaction highlight's outline. Nothing here decides an effect or draws anything the frame does not
+   * carry. Reduced motion keeps the dot and the outlines steady.
+   */
+  private syncDevices(f: ViewFrame) {
+    const p = f.player, d = p.alive ? f.hud.devices : null, still = this.opts.reducedMotion;
+    const g = this.laserG.clear(), beam = d?.laser;
+    if (beam) {
+      const from = this.muzzleOf(p)?.at ?? { x: p.x, y: p.y - AIM_H }, to = { x: beam.to.x, y: beam.to.y - AIM_H };
+      const run = { x: to.x - from.x, y: to.y - from.y }, n = 4;
+      if (Math.hypot(run.x, run.y) > 1) for (let i = 0; i < n; i++)
+        g.moveTo(from.x + run.x * i / n, from.y + run.y * i / n).lineTo(from.x + run.x * (i + 1) / n, from.y + run.y * (i + 1) / n)
+          .stroke({ width: 1, color: 0xff5a46, alpha: .38 - .07 * i });
+      if (beam.hit) g.rect(Math.round(to.x) - 1, Math.round(to.y) - 1, 2, 2).fill({ color: beam.inRange ? 0xffb09a : 0xff6a52, alpha: still ? .9 : .75 + .2 * Math.sin(this.time * 9) });
+      g.zIndex = p.y + .15;
+    }
+    this.light.lights = this.light.lights.filter(l => !this.deviceLights.includes(l));
+    this.deviceLights = [];
+    const lamp = d?.light;
+    if (lamp) {
+      const c = Math.cos(p.aim), s = Math.sin(p.aim), spread = Math.tan(Math.min(1.2, lamp.arc / 2));
+      for (const k of [.3, .6, .9]) {
+        const at = { x: p.x + c * lamp.radius * k, y: p.y + s * lamp.radius * k }, regions = this.regionsAt(at);
+        this.deviceLights.push({ x: at.x, y: at.y, r: Math.max(28, lamp.radius * k * spread * 1.15), color: 0xf3e9cf, k: .42,
+          region: regions[0] ?? null, ...regions.length > 1 ? { regions } : {} });
+      }
+      this.light.lights.push(...this.deviceLights);
+    }
+    // The drawn sprite of a lit id and its texture key: a crate, a ground item or a corpse, only while it is drawn.
+    const drawn = (id: string): { key: string; s: Sprite } | null => {
+      const crate = this.crates.get(id); if (crate?.s.visible) return { key: `crate:${crate.look}`, s: crate.s };
+      const item = this.loot.get(id), l = f.loot.find(x => x.uid === id); if (item?.visible && l) return { key: `loot:${l.item}`, s: item };
+      const c = f.containers.find(x => x.id === id), g = c?.kind === 'corpse' && c.ownerUid ? this.actors.get(c.ownerUid) : undefined;
+      return g?.corpse?.visible ? { key: g.corpseKey, s: g.corpse } : null;
+    };
+    let used = 0;
+    for (const id of lamp?.lit ?? []) {
+      const t = f.interaction?.ref.id === id ? null : drawn(id); // the interaction highlight already outlines its target
+      if (!t || !this.tex.atlas.has(t.key)) continue;
+      const rim = this.litRims[used] ??= this.xray.addChild(new Sprite());
+      rim.texture = this.tex.ensure(`${t.key}|rim`, () => rimOf(this.tex.canvas(t.key)));
+      rim.anchor.set(.5, (t.s.anchor.y * t.s.texture.height + 1) / (t.s.texture.height + 2)); rim.position.copyFrom(t.s.position);
+      rim.visible = true; rim.tint = 0xf6e7b8; rim.alpha = still ? .55 : .5 + .12 * Math.sin(this.time * 4);
+      used++;
+    }
+    for (let i = used; i < this.litRims.length; i++) this.litRims[i].visible = false;
+  }
+
   /** Half the docked panel's height, world px: the camera centres the player that much higher. */
   private inset() { return this.panelInset * this.view.dpr / this.view.s / 2; }
   /** The camera's allowed top-left range. Mall floors end in hoarding or the drop at the map edge: no margin beyond it. */
@@ -1235,15 +1295,21 @@ export class CoastView {
    * The tip of an actor's drawn gun (chest plane, world px) and the direction it points: the weapon art's barrel tip put
    * through the weapon sprite's own transform, so the flash and the tracers leave the barrel the player sees.
    */
-  private barrelTip(weapon: string, kind: ActorKind, variant?: string): Point {
-    const key = `${weapon}:${kind}:${variant ?? ''}`;
+  private barrelTip(a: ActorView): Point {
+    // A gunsmith picture carries its muzzle on the barrel row (#28 M2-10): no pixel scan, and the carbine's P0 muzzle
+    // brake (half a pixel off its bore) still fires along the aim line.
+    const art = this.weaponOf(a);
+    if (art.tip) return art.tip;
+    const key = `${a.weapon}:${a.kind}:${a.tactics?.archetype ?? ''}`;
     let tip = this.barrelTips.get(key);
-    if (!tip) { tip = barrelTip(this.tex.weapon(weapon, kind, variant).canvas); this.barrelTips.set(key, tip); }
+    if (!tip) { tip = barrelTip(art.canvas); this.barrelTips.set(key, tip); }
     return tip;
   }
+  /** The art of the weapon an actor holds: the player's configured gun from the gunsmith art when there is one. */
+  private weaponOf(a: ActorView) { return this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype, a.gun); }
   private muzzleOf(a: ActorView): { at: Point; angle: number } | null {
     const g = this.actors.get(a.uid); if (!g || !g.weapon.texture || a.weapon === 'claw') return null;
-    const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype), tip = this.barrelTip(a.weapon, a.kind, a.tactics?.archetype);
+    const art = this.weaponOf(a), tip = this.barrelTip(a);
     const w = g.weapon, c = Math.cos(w.rotation), s = Math.sin(w.rotation);
     const lx = (tip.x - art.pivotX) * w.scale.x, ly = (tip.y - art.pivotY) * w.scale.y;
     return { at: { x: w.x + lx * c - ly * s, y: w.y + lx * s + ly * c }, angle: w.rotation };

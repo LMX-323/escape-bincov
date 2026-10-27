@@ -57,7 +57,6 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
             return structuredClone(core.getLootContainer(ref.id)!.inventory);
         },
         backup: () => saves.backupRecord(),
-        sampleGun: (id: 'm4a1' | null) => core.setSampleGun(id),
     });
     // Preserve additional internal/test services in inference, while checking the view's port at its factory.
     return Object.freeze({ runtime, services }) satisfies CoastHandle;

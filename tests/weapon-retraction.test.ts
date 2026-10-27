@@ -89,7 +89,7 @@ test('replaying a packet cannot restart an aged pulse; many same-packet shots re
 });
 
 test('real 10 Hz automatic packets keep the original shot pose, including long-frame multi-shot packets', () => {
-    const b = arm(benchRaid(), 'm4a1'), state = idleRetraction(); let shots = 0;
+    const b = arm(benchRaid(), 'mb4a1'), state = idleRetraction(); let shots = 0;
     for (let i = 0; i <= 10; i++) {
         const packet = b.runtime.advance(1000 + i * 100, { ...emptyIntent(), aim: 0, firePressed: i === 0, fireHeld: true, source: 'touch' });
         const fired = packet.events.filter(e => e.type === 'shot' && e.shooter === 'player');

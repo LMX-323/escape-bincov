@@ -42,12 +42,17 @@
 
 **按需继续。**
 
-- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。
+- 物品或商人定义：[domain.ts](../src/domain.ts) 的 `ITEMS`、`MERCHANTS`、`buyQuantity`；格位/转移规则：[loot.ts](../src/loot.ts)。改枪样板的获取（货架上的 G17、基础件和 O01、G01，行动里的发现 `D.gunsmithFind`、旧敌人尸体的 `D.corpseLoot`，配件档次 `partTier`）见[改枪契约](gunsmith/CONTRACTS.md#样板获取路径m2-13)。
 - 枪的估值与售价按组成算：`D.itemSale`（枪身加每件配件，救济组成不计、有救济组成时整件不可售），商店的报价、待卖区和结算都经 [shop.ts](../src/shop.ts) 的 `saleRefusal`，不自动拆件。
 - 物品重量只经 `D.itemWeight`（枪按 `gunWeight` 连配件算，和装备时一样）：`D.weight`、行动负重、出发负重和各面板的重量显示都读它。
 - 拖放、局部反馈：[station-view/panels.ts](../src/station-view/panels.ts)、[shop-feedback-test.mjs](../scripts/shop-feedback-test.mjs)。
 - 自动拆分：[station-view/ui.ts](../src/station-view/ui.ts) 的 `UI.split` → 据点 Runtime `split` → [loot.ts](../src/loot.ts) 的 `moveQuantity`。`placementError === null` 包含合堆与交换；寻找空格还要检查 `D.fits`，不能把可接受的落点都当成空位。
 - Perk 选择与 500 现金重置：据点 Runtime 的 `perkBoard`、`previewPerk` → `choosePerk`、`previewPerkReset` → `resetPerks` → `transaction`，院子与旧页签共用。确认票据绑定的内容和失败重试写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，选择规则在 [perks.ts](../src/perks.ts)；验证见 [perk-base.test.ts](../tests/perk-base.test.ts)。界面入口是院子 [station-view/ui.ts](../src/station-view/ui.ts) 的 `confirmPerk` 和旧页签 [ui.ts](../src/ui.ts) 的 `confirmPerkTab`（写入失败只经 `retrySave` 重试）；Perk 名称、效果文案、预览行和静态暴击显示都在 [perk-copy.ts](../src/perk-copy.ts)，验证见 [perk-copy.test.ts](../tests/perk-copy.test.ts) 与 [perk-ui-browser.mjs](../scripts/perk-ui-browser.mjs)。
+- 改枪工作台的改装事务（#28 M2-04）：据点 Runtime 的 `openGunsmith` 给出 `GunsmithSession`，仿照 `ShopSession`：`preview` 只算不写，`confirm` 按 token 经 `transaction` 一次写入，写入失败保留预览、经 `retrySave` 后再确认。规则在 [gunsmith/edit.ts](../src/gunsmith/edit.ts) 的 `planGunEdit`，过期判定和失败语义写在 [contract.ts](../src/hideout-runtime/contract.ts) 方法旁，契约见[改枪契约](gunsmith/CONTRACTS.md#改装事务m2-04)；验证见 [gunsmith-edit.test.ts](../tests/gunsmith-edit.test.ts) 与 [gunsmith-edit-conservation.test.ts](../tests/gunsmith-edit-conservation.test.ts)。
+- 改枪预设（#28 M2-07）：形状和校验在 [gunsmith/presets.ts](../src/gunsmith/presets.ts)，存在 profile 的可选字段 `gunPresets`（[profile-codec.ts](../src/profile-codec.ts) 的 `checkProfile` 严格检查），写入是据点 Runtime 的 `savePreset`、`renamePreset`、`deletePreset`，应用时的配件匹配是 [gunsmith/bench.ts](../src/gunsmith/bench.ts) 的 `presetEdits`；契约见[改枪契约](gunsmith/CONTRACTS.md#预设m2-07)，验证见 [gunsmith-presets.test.ts](../tests/gunsmith-presets.test.ts)。
+- 改枪的详情与商店（#28 M2-08）：详情文字 [gunsmith/item-facts.ts](../src/gunsmith/item-facts.ts)（`partFits` 在 [gunsmith/bench.ts](../src/gunsmith/bench.ts)），目录筛选和分页是 [shop.ts](../src/shop.ts) 的 `ShopBrowse`、`catalogPage`，商店会话的 `browse`；契约见[改枪契约](gunsmith/CONTRACTS.md#详情商店与售卖预览m2-08)。
+- 改枪美术（#28 M2-10）：Sol 的图在 `assets/gunsmith/`，导入脚本 [gunsmith-assets.mjs](../scripts/gunsmith-assets.mjs) 生成 `src/art/gunsmith-art-meta.ts` 和 `gunsmith-assets.ts`；排布 [art/gunsmith-layout.ts](../src/art/gunsmith-layout.ts)，画图与缓存 [art/gunsmith-compose.ts](../src/art/gunsmith-compose.ts)，各处经 [art/gunsmith-hooks.ts](../src/art/gunsmith-hooks.ts) 取图（单测不加载 PNG）；持枪图由 [coast-view/textures.ts](../src/coast-view/textures.ts) 的 `weapon(…, gun)` 按 Runtime 发布的 `gun: { id, sig }` 组合。契约见[改枪契约](gunsmith/CONTRACTS.md#美术接入m2-10)，验证见 [gunsmith-art.test.ts](../tests/gunsmith-art.test.ts) 与 `test:gunsmith-bench` 的 A1、B8。
+- 改枪工作台界面（#28 M2-05）：面板 [gunsmith-view/bench.ts](../src/gunsmith-view/bench.ts) 的 `Workbench`，院子 [ui.ts](../src/station-view/ui.ts) 的 `gunsmith` 面板和旧页签 [src/ui.ts](../src/ui.ts) 的浮层共用；列什么、怎么比由纯模型 [gunsmith/bench.ts](../src/gunsmith/bench.ts) 算。契约见[改枪契约](gunsmith/CONTRACTS.md#工作台界面m2-05)；验证见 [gunsmith-bench.test.ts](../tests/gunsmith-bench.test.ts) 与 `test:gunsmith-bench`。
 - 新增需要保存的购买记录：继续[存档卡](#存档)，不能只改商店类型。
 
 **结束定位的判据。** 能说清规则在哪执行、哪个入口提交、失败时哪些对象保留/回滚、两个 UI 如何得知结果；与本任务无关的世界和素材不继续展开。
@@ -62,7 +67,7 @@
 2. [coast-view/input.ts](../src/coast-view/input.ts)：`Action`、`ACTION_KEYS`、`InputState.read` / `suppressHeld`。
 3. [input.ts](../src/input.ts)：`InputFrame`、`idleFrame` 与 `ActiveClock`，Runtime 内部把意图转成逐子步输入时使用；设备状态只在 `InputState` 一处。
 4. [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts)：`CoastRaidRuntime.advance` 中的转换与子步消费，再看 `step`；开火走 `pull`（本帧的点击/按住在帧末生效）→ `runTrigger`（子步内按冷却、换弹到期时刻开火）→ `shoot`。
-5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套、样本自动枪）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
+5. [shooting.ts](../src/shooting.ts)：开火方式、精瞄举枪、晃动、连射散布和后坐的纯规则与参数（维护者选定的“稳定”一套；#39 的样本自动枪已在改枪 M2-01 由正式的 M4A1 接替）；状态只在 Runtime 内存里，不进存档。手中枪的散布、射程、换弹、弹量、手感和重量不按 id 查表：经 [domain.ts](../src/domain.ts) 的 `equippedGun`（装备栏里的枪械实例）和 [gunsmith/stats.ts](../src/gunsmith/stats.ts) 的有效属性得出，Runtime 的 `currentWeapon` / `grip` 按实例缓存，见[改枪契约](gunsmith/CONTRACTS.md)的 M1-05 一节。
 6. [coast-view/host.ts](../src/coast-view/host.ts)：键鼠/触屏事件、面板与 `layer` 事件后的按键释放（`suppressHeld`）；搜刮面板里移动键（`isMoveKey`）直接离开并开始移动（#26 F13），回归在 [loot-browser-test.mjs](../scripts/loot-browser-test.mjs)。
 
 画面服务的 `CoastHandle` / `CoastServices` 也在 Runtime 契约中；[raid-runtime/host.ts](../src/raid-runtime/host.ts) 的工厂用 `satisfies CoastHandle` 检查接线。扩展端口时让类型检查发现漏接，不用双重类型断言绕过。
@@ -85,6 +90,7 @@
 
 **按需继续。**
 
+- 枪上的设备与枪声（#28 M2-03、M2-11）：F/G 发 `'light'`/`'laser'` 命令，开关规则在 [gunsmith/devices.ts](../src/gunsmith/devices.ts)；激光和暴露看 [raid-runtime/runtime.ts](../src/raid-runtime/runtime.ts) 的 `laserBeam`、`shotGrip`；枪声按 [gun-timbre.ts](../src/gun-timbre.ts) 的 `timbreOfGun` 选枪族，消音见 [audio.ts](../src/audio.ts) 的 `SUPPRESSED`。规则见[改枪实现契约](gunsmith/CONTRACTS.md#激光灯光与枪声m2-03m2-11)。
 - 新触屏按钮：[coast-view/host.ts](../src/coast-view/host.ts) 的 `.cs-touch` 按钮绑定。
 - 浏览器事件归属/失焦：[main.ts](../src/main.ts)、宿主事件处理；不要把 DOM 引入纯规则。
 - 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。县域选图展示在 [station-view/deploy-map.ts](../src/station-view/deploy-map.ts)（地标坐标、标签方向、路线与插图焦点，验证见 [deploy-map.test.ts](../tests/deploy-map.test.ts)）；`deploymentWorld` 只允许现有区域白名单，未开发区域的预览只存在于站内 UI，不创建世界或修改存档。地图与插图只由 [county-art.ts](../src/station-view/county-art.ts) 在渲染侧导入（构建按清单核对）；出击面板重绘经 [morph.ts](../src/station-view/morph.ts) 就地更新，换区的滑动与入场动画依赖元素保留，浏览器回归在 `test:raid-default` 的 R10/R11。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
@@ -155,7 +161,7 @@
 - [raid-state-projection.test.ts](../tests/raid-state-projection.test.ts)：当前层/追击归属、非当前层保留、建筑及商场捕获恢复。
 - [save-validation-audit.test.ts](../tests/save-validation-audit.test.ts)：原型键、数组伪装 ID 的拒绝与原字节保留，及正常基地/经典/分层记录对照。外部 ID 必须先用 `hasOwnStringKey` 检查字符串类型和自身键，不能只做真值查表或 `Object.hasOwn`。
 
-**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
+**枪械实例（改枪 M1）。** 枪物品和地上的枪带 `gun`（`Item.gun`、`LootState.gun`），装备栏带 `weaponUid`、`gun`，枪的 UID、配件 UID 与物品 UID 同一空间。「是不是枪」只问 `D.isGun`（`WEAPONS` 里除匕首以外的一行，见[改枪契约](gunsmith/CONTRACTS.md#g17m4a1-与样板配件m2-0102)）；配件散件是 `attachment` 类物品（`D.isAttachment`，详情行 `D.attachmentFacts`），只有改装事务（[gunsmith/edit.ts](../src/gunsmith/edit.ts) 的 `planGunEdit`，入口是据点 Runtime 的 `openGunsmith`）把它装到枪上或拆下，UID 和救济标记不变。新枪一律由 `D.factoryGun` / `D.addItem` 生出出厂状态；搬动已有的枪用 `D.placeItem`、`D.placeGroundGun`，不要用 `addItem` 重建（会换 UID、丢配件）。占格读 `D.itemSize`（含配件延伸）。校验按 profile 版本分新旧两种格式（`validInventory` 的 `guns`、`validateCheckpoint`、`validateExpansion`），旧格式的读档经 `decodeOldStoredProfile` 和 [gunsmith/migrate.ts](../src/gunsmith/migrate.ts)；字段规则与迁移见[改枪契约](gunsmith/CONTRACTS.md#存档与迁移m0-06)。
 
 **按需继续。** profile 字段进入 [domain.ts](../src/domain.ts) 的迁移与 [profile-codec.ts](../src/profile-codec.ts) 的校验；数据夹具进入 [tests/fixtures/layered.ts](../tests/fixtures/layered.ts)；真实文件导入和多窗口见 [save-browser-test.mjs](../scripts/save-browser-test.mjs)。
 

@@ -35,6 +35,13 @@ const REPORTS: Readonly<Record<GunTimbre, Report>> = {
   'shotgun-semi': { crack: [1500, .32, .045], body: [360, .92, .25, 155, 36, .29], boom: [64, 28, .22, .25], tail: [180, .11, .45], action: [[1000, 700, .02, .045, .09]] },
 };
 
+/**
+ * A suppressor on top of a family's report (#28 M2-11): clearly quieter and duller but still audible. The crack and the
+ * body are cut and low-passed, the boom softened and the bright tail dropped; the action's clicks stay, so a muffled
+ * shot is still heard. Factors of each voice's gain; `lowpass` in Hz.
+ */
+export const SUPPRESSED = Object.freeze({ crack: .25, body: .35, boom: .55, lowpass: 1100 });
+
 /** Original, synthesized audio. Nothing is fetched and no recorded samples are used. */
 export class SynthAudio {
   private context?: AudioContext;
@@ -210,7 +217,8 @@ export class SynthAudio {
     oscillator.stop(at + length + 0.025);
   }
 
-  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot, decor = false): void {
+  /** A noise burst through a high-pass at `cutoff` Hz; `lowpass` (Hz) also cuts its top, for a muffled sound. */
+  private hiss(length: number, gain: number, cutoff: number, delay = 0, spot?: Spot, decor = false, lowpass?: number): void {
     decor ||= spot !== undefined && spot.gain < VOICE_BUDGET.far;
     if (!this.noise || !this.ready(decor)) return;
     const ctx = this.context!, at = ctx.currentTime + delay;
@@ -223,19 +231,27 @@ export class SynthAudio {
     envelope.gain.setValueAtTime(gain, at);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length);
     const nodes: AudioNode[] = [source, filter, envelope];
-    source.connect(filter).connect(envelope).connect(this.route(nodes, spot));
+    let shaped: AudioNode = source.connect(filter);
+    if (lowpass !== undefined) {
+      const dull = ctx.createBiquadFilter();
+      dull.type = 'lowpass';
+      dull.frequency.value = lowpass;
+      nodes.push(dull); shaped = shaped.connect(dull);
+    }
+    shaped.connect(envelope).connect(this.route(nodes, spot));
     this.trackVoice(source, nodes, decor);
     source.start(at, Math.random() * 2);
     source.stop(at + length + 0.02);
   }
 
   /**
-   * A gunshot or other attack sound. A GunTimbre plays that family's report at `level` (enemies' shots are quieter);
-   * 'pistol', 'shotgun' and 'enemy' are the single report every gun shared before #75 H-02, kept for the range's
-   * classic A/B setting; 'knife', 'spit' and 'acid-hit' are the melee and spitter cues.
+   * A gunshot or other attack sound. A GunTimbre plays that family's report at `level` (enemies' shots are quieter),
+   * muffled when `suppressed` (#28 M2-11, SUPPRESSED); 'pistol', 'shotgun' and 'enemy' are the single report every gun
+   * shared before #75 H-02, kept for the range's classic A/B setting; 'knife', 'spit' and 'acid-hit' are the melee and
+   * spitter cues.
    */
-  shot(kind = 'pistol', spot?: Spot, level = 1): void {
-    if (Object.hasOwn(REPORTS, kind)) { this.report(REPORTS[kind as GunTimbre], level, spot); return; }
+  shot(kind = 'pistol', spot?: Spot, level = 1, suppressed = false): void {
+    if (Object.hasOwn(REPORTS, kind)) { this.report(REPORTS[kind as GunTimbre], level, spot, suppressed); return; }
     if (kind === 'spit') {
       this.hiss(.22, .28, 180, 0, spot); this.hiss(.12, .2, 260, .09, spot);
       this.tone(150, .18, .12, 'triangle', 48, 0, spot); return;
@@ -244,20 +260,31 @@ export class SynthAudio {
     if (kind === 'knife') { this.hiss(0.12, 0.35, 900, 0, spot); this.tone(320, 0.08, 0.05, 'triangle', 90, 0, spot); return; }
     const shotgun = kind === 'shotgun';
     const quiet = kind === 'enemy' ? 0.55 : 1;
+    if (suppressed) {
+      // The classic report muffled the same way: blast low-passed and a third as loud, crack lower and shorter, no
+      // bright tail, and the action's click.
+      this.hiss((shotgun ? 0.3 : 0.16) * .7, (shotgun ? 1.05 : 0.72) * quiet * .32, 160, 0, spot, false, SUPPRESSED.lowpass);
+      this.tone((shotgun ? 140 : 210) * .6, (shotgun ? 0.2 : 0.12) * .6, 0.3 * quiet * .3, 'triangle', 30, 0, spot);
+      this.tone(72, 0.13, 0.18 * quiet * .55, 'sine', 32, 0.025, spot);
+      this.tone(1300, .03, .05 * quiet, 'square', 700, .02, spot);
+      return;
+    }
     this.hiss(shotgun ? 0.3 : 0.16, (shotgun ? 1.05 : 0.72) * quiet, 380, 0, spot);
     this.tone(shotgun ? 140 : 210, shotgun ? 0.2 : 0.12, 0.3 * quiet, 'triangle', 36, 0, spot);
     this.tone(72, 0.13, 0.18 * quiet, 'sine', 32, 0.025, spot);
     this.hiss(0.06, 0.09 * quiet, 1500, 0.11, spot);
   }
 
-  private report(r: Report, level: number, spot?: Spot): void {
+  private report(r: Report, level: number, spot?: Spot, suppressed = false): void {
     const [cc, cg, cl] = r.crack, [bc, bg, bl, from, to, tg] = r.body, [of, ot, ol, og] = r.boom, [tc, tgain, tl] = r.tail;
-    this.hiss(cl, cg * level, cc, 0, spot);
-    this.hiss(bl, bg * level, bc, 0, spot);
-    this.tone(from, bl * .85, tg * level, 'triangle', to, 0, spot);
-    this.tone(of, ol, og * level, 'sine', ot, .02, spot);
-    // In a crowded fight the tail and the action's clicks go first; the crack, body and boom are the shot itself.
-    this.hiss(tl, tgain * level, tc, .04, spot, true);
+    const s = suppressed ? SUPPRESSED : null;
+    this.hiss(cl, cg * level * (s?.crack ?? 1), cc, 0, spot, false, s?.lowpass);
+    this.hiss(bl, bg * level * (s?.body ?? 1), bc, 0, spot, false, s?.lowpass);
+    this.tone(from, bl * .85, tg * level * (s?.body ?? 1), 'triangle', to, 0, spot);
+    this.tone(of, ol, og * level * (s?.boom ?? 1), 'sine', ot, .02, spot);
+    // In a crowded fight the tail and the action's clicks go first; the crack, body and boom are the shot itself. A
+    // suppressor drops the bright tail; the clicks stay.
+    if (!s) this.hiss(tl, tgain * level, tc, .04, spot, true);
     for (const [f, t, l, g, d] of r.action) this.tone(f, l, g * level, 'square', t, d, spot, true);
   }
 
