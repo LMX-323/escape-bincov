@@ -19,7 +19,7 @@ const descriptions = {
   'qol-expansion': '分层行动信息', expansion: '真实旧客户端兼容与存档往返', 'expansion-benchmark': '存档体积与时间测量',
   buildings: '建筑、门与分层世界', systems: 'RPG 与据点系统', 'layered-play': '商场分层真实计时行动',
   'mall-passages': '商场通道与连通', 'mall-landing': '商场落点与切层', 'mall-sample': '商场样板与旧布局兼容',
-  'raid-default': '默认行动、旧检查点与不支持 WebGL 的入口', range: '隔离试枪场', art: '物品与程序美术',
+  'raid-default': '默认行动、旧检查点与不支持 WebGL 的入口', range: '隔离试枪场', 'gunsmith-bench': '改枪工作台：院子与旧页签、桌面与手机、预览与一次确认、换枪与关闭询问、预设、改枪图与缓存上限', 'gunsmith-flow': '改枪全流程：购买、改装、装备、出击、刷新恢复、撤离与死亡', art: '物品与程序美术',
   tactical: '战术界面与字体', 'title-water': '标题水面表现', 'issue26-station': '院子库存操作与失败回滚',
   'issue26-inventory': '行动背包、搜刮与失败回滚', 'issue26-spatial': '门、楼梯和隐藏内容权限',
 };
@@ -53,7 +53,7 @@ export const risks = {
   save: { title: '交易、库存、结算或备份', extends: ['rules'], checks: ['test:save-browser'], evidence: ['覆盖写失败、重复重试、旧档、覆盖确认、多窗口和精确候选备份；事务回滚需叠加 input，界面改动需叠加 ui。'] },
   migration: { title: '持久字段、格式或迁移', extends: ['save'], checks: ['test:expansion', 'test:raid-default', 'test:station-reset'], evidence: ['新建/重开/旧在途行动/导入导出完整往返，拒绝未知数据并保留原字节。'] },
   inventory: { title: '背包与搜刮操作', extends: ['ui', 'save', 'input'], checks: ['test:loot', 'test:loot-target', 'test:issue26-inventory', 'test:issue26-station'], evidence: ['角色和世界同笔提交；取消、双端守恒与下次操作正常。'] },
-  shop: { title: '商店与据点交易', extends: ['ui', 'save', 'input'], checks: ['test:shop-drag', 'test:shop-feedback', 'test:hideout', 'test:station'], evidence: ['院子与旧页签都检查；救济品、净额交易与确认取消不退化。'] },
+  shop: { title: '商店与据点交易', extends: ['ui', 'save', 'input'], checks: ['test:shop-drag', 'test:shop-feedback', 'test:hideout', 'test:station', 'test:gunsmith-bench', 'test:gunsmith-flow'], evidence: ['院子与旧页签都检查；救济品、净额交易与确认取消不退化。'] },
   world: { title: '地图、建筑与分层', extends: ['rules'], checks: ['test:buildings', 'test:mall-passages', 'test:mall-landing', 'test:mall-sample', 'test:raid-default'], evidence: ['检查旧布局身份、可达性、门/楼梯和隐藏内容；改画面/输入再叠加对应风险。'] },
   combat: { title: '战斗、AI、潮汐或持续负载', extends: ['rules'], checks: ['test:shooting', 'test:range', 'test:enemy', 'test:play'], evidence: ['真人手感和平衡另验；改分层战斗再叠加 layered，改输入再叠加 input。'] },
   layered: { title: '分层自然行动', extends: ['world', 'combat'], checks: ['test:layered-play'], evidence: [] },

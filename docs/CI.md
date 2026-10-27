@@ -36,7 +36,7 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ## 八组分配
 
-各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前执行 **42** 条浏览器命令，覆盖原有 **40** 条完整逻辑套件（仅敌人套件按三个独立视口分片），包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3）、2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒），以及同日射击改造（#39）新增的两条：`test:shooting`（静止指针下瞄准不漂（空地与地图边）、开枪不动瞄准、枪口火光与曳光对齐枪管、贴墙与门角挡弹、隐藏房间不漏曳光、开火方式、受击闪白与抖动从命中当帧画起且慢帧至少一帧、抖动顺着子弹方向而血迹朝射手、暴击与击杀的命中标记和击杀确认音）排在 batch-1 末尾，试枪场 `test:range` 排在 batch-5 末尾。两条起初都放在 batch-2，但 PR 运行里 batch-2 原有五条已要约 22 分钟，加上这两条（CI 上 `test:shooting` 约 8 分钟、`test:range` 约 2.5 分钟）后，遇到安装步骤慢的 runner 就超过 45 分钟被取消；batch-1 与 batch-5 是 2026-10-22 几次运行中耗时最短的两组（套件合计约 8–17 分钟）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，原回归内容保留；本批仅将敌人套件按完整视口分片，断言、浏览器参数与真实训练计时保持原要求。
+各组在独立 Ubuntu runner 上顺序执行，最多同时八组，`fail-fast: false` 保留其他组的失败诊断。当前执行 **44** 条浏览器命令，覆盖 **42** 条完整逻辑套件（仅敌人套件按三个独立视口分片；改枪的 `test:gunsmith-bench`、`test:gunsmith-flow` 由 #106 加入 batch-5、batch-6 末尾），包括 #48 的商场样板、#57 的普通 2.5D 行动检查、#56 的开场动画验收（约 20 秒，排在 batch-3）、2026-10-22 从手动转入 batch-6 的 `test:hideout`（旧页签普通入口、商店门面、写入故障与出发，本地限 2 核软件渲染 14 秒），以及同日射击改造（#39）新增的两条：`test:shooting`（静止指针下瞄准不漂（空地与地图边）、开枪不动瞄准、枪口火光与曳光对齐枪管、贴墙与门角挡弹、隐藏房间不漏曳光、开火方式、受击闪白与抖动从命中当帧画起且慢帧至少一帧、抖动顺着子弹方向而血迹朝射手、暴击与击杀的命中标记和击杀确认音）排在 batch-1 末尾，试枪场 `test:range` 排在 batch-5 末尾。两条起初都放在 batch-2，但 PR 运行里 batch-2 原有五条已要约 22 分钟，加上这两条（CI 上 `test:shooting` 约 8 分钟、`test:range` 约 2.5 分钟）后，遇到安装步骤慢的 runner 就超过 45 分钟被取消；batch-1 与 batch-5 是 2026-10-22 几次运行中耗时最短的两组（套件合计约 8–17 分钟）。其余未排入 CI 的套件见下方“每次仍然执行的检查”提到的手动表。2.5D 收尾移除 Phaser 后，只检查 Phaser 场景的 `test:issue26-phaser-spatial` 退役（空间检查由 `test:issue26-spatial` 在 2.5D 上保留）。完整的 `test:coast-sample` 只在本地运行：CI 的软件渲染下，动画组最后一步 V-CAM 之后再开页面会超时，完整套件要先把 V-CAM 挪到最后并验证计时检查，才能进 CI。除随 Phaser 退役、在 [2.5D 收尾说明](2-5d-closeout/README.md#测试迁移) 中逐项列出的检查外，原回归内容保留；本批仅将敌人套件按完整视口分片，断言、浏览器参数与真实训练计时保持原要求。
 
 [scripts/ci/browser-suites.mjs](../scripts/ci/browser-suites.mjs) 是执行顺序和覆盖核对的清单；[run-browser.mjs](../scripts/ci/run-browser.mjs) 逐条执行原 `pnpm test:<id>`，因此 package.json 中的原参数仍生效。组合命令现在分开计时，存档检查在 batch-2 首个执行。旧客户端固定 HTML 在 batch-8 下载，随后由 expansion 校验并使用。
 
@@ -46,14 +46,14 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 | batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages` |
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
 | batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
-| batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux`、`test:range` |
-| batch-6 | `test:enemy-720`、`test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets`、`test:hideout` |
+| batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux`、`test:range`、`test:gunsmith-bench` |
+| batch-6 | `test:enemy-720`、`test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets`、`test:hideout`、`test:gunsmith-flow` |
 | batch-7 | `test:enemy-touch`、`test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
 | batch-8 | `test:enemy-1080`、`test:expansion`、`test:loot` |
 
 2.5D 收尾（#64）后，CI 没有显卡、2.5D 用软件渲染，迁移到 2.5D 的行动套件变慢：loot 一套约 30 分钟，原 batch-8 超过 45 分钟的 job 上限。因此把 mall-passages 移到 batch-2 末尾、systems 和 mobile 移到 batch-4 末尾，batch-8 只留 expansion（带旧客户端）和 loot。
 
-#61 当时按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是原 40 套件的 42 条执行命令，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
+#61 当时按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是原 42 套件的 44 条执行命令（#106 加入改枪两套），实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
 
 2026-10-23 的 #78 最初新增 `test:enemy` 到 batch-8。#81 与 #104 随后扩展至十八原型、三视口的街区及商场验收；早期“六组合约 8 秒”不再代表当前套件。
 
@@ -72,6 +72,10 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 每条视口链完成全部原断言后才写完成证明。组执行器将通过的证明装入原耗时行，独立门禁再核对六个完整街区/商场单元、全部 case ID、原视口/离线/触控配置，以及 run/SHA/attempt 和当前套件执行时间窗。缺片、零选择、重复/遗漏 case、未完成链、旧报告或配置变化均失败；原退出状态门禁同时保留。覆盖证明不新增每 case 耗时，也不宣称已有性能收益：准确候选 CI、合并后完整 main 及同产品对照仍须实际运行。
 
 同一 PR 的 S6 后续只修观测顺序：确认点击前先断言没有旧的同文案 toast，再预先等待本次精确可见反馈，点击后仍等待原 promise；20 秒、存储对话框、peer 原始字节/副本、写次数及无下载断言保留。该 toast 在 3.1 秒后删除，旧脚本在点击返回后才开始观察。main 旧脚本与候选均在真实 UI 下加入相同 3.5 秒控制端延迟，并记录实际 DOM：旧版只有 S6 失败（其他 13 步通过），候选 14 步全过，两者都实际显示并删除了正确错误反馈。这个负对照证明后置等待的测试缺口，不证明已经还原首轮 CI 的具体时序；正常不加延迟的完整回归也为 14/14，通过时页面错误/外部请求均为零；控制诊断与正常验收分别记录。准确新 head CI 与后续性能结果以 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112) 为准。
+
+2026-10-27 的 #28 M2-05 新增 `test:gunsmith-bench` 到 batch-5：真实院子和旧页签打开改枪工作台，预览不写入、确认写入一次、换护木带走导轨件、换小弹匣卸弹、换枪和关闭先询问，1280×720 与 1920×1080 截图；手机版（M2-06）在 844×390、740×300、640×300、390×844 点按完成；预设（M2-07）；改枪图（M2-10）和 Sol 的预览逐像素相同、进出工作台 20 次缓存不超上限；本地约 1 分钟。命令计数同步为 41。
+
+2026-10-27 的 #28 M2-14 新增 `test:gunsmith-flow` 到 batch-6：旧页签上买 G17 和两件配件、在工作台装上、装备、出击（手里的枪按配置画、弹匣 24 发）、刷新后恢复、撤离带回原样、再出击死亡后枪和配件一起丢失，1280×720 与 1920×1080；手机 740×300 出击、恢复、死亡。本地约 30 秒。命令计数同步为 42。
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 

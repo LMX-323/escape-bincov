@@ -9,6 +9,7 @@
  * Runtime transferLoot service; inventory-mode bag/safe edits use bounded carried-item services, which retain the
  * same SaveSession.mutate transaction and attached world. Reads are detached; the panel only edits its UI state.
  */
+import { attachmentLines, gunPartsLine } from '../gunsmith/item-facts';
 import * as D from '../domain';
 import { firstAvailableSlot, placementError, type LootEndpoint } from '../loot';
 import type { MutationResult } from '../session';
@@ -24,7 +25,6 @@ type Source = 'container' | 'bag' | 'safe';
  */
 export const labelFits = (label: string, width: number) => [...label].reduce((n, c) => n + (c.charCodeAt(0) > 255 ? 16 : 8), 0) <= width - 4;
 const LABEL: Record<Source, string> = { container: '来源', bag: '背包', safe: '安全箱' };
-const isGun = (id: string) => !!D.WEAPONS[id] && id !== 'knife';
 const NO_SPACE = '无法装备，背包装不下换下的武器和弹药。请先腾出空间。';
 
 export interface InventoryHost {
@@ -118,7 +118,7 @@ export class InventoryPanel {
   }
   /** Why `item` cannot go into the weapon slot from `source`, or null. Bag space for the swap is the Runtime's check. */
   private equipError(source: Source, item: D.Item) {
-    if (!isGun(item.id)) return '只有枪械可以放进主武器槽。';
+    if (!D.isGun(item.id)) return '只有枪械可以放进主武器槽。';
     if (source === 'safe') return '安全箱里的枪械请先移回背包，再装备主武器。';
     return null;
   }
@@ -141,7 +141,7 @@ export class InventoryPanel {
     const cell = this.cell(), sel = this.selected;
     const items = inv.items.map(i => {
       const d = D.ITEMS[i.id], size = D.itemSize(i), on = sel?.uid === i.uid && sel.source === source;
-      return `<div tabindex="0" role="button" aria-label="${esc(d.name)} × ${i.qty}" aria-pressed="${on}" title="${esc(d.name)} × ${i.qty} · ${D.itemWeight(i).toFixed(2)} kg" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${on ? 'selected' : ''}" style="left:${i.x * cell + 1}px;top:${i.y * cell + 1}px;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px"><span class="inventory-art">${itemArtwork(i.id, size.w * cell - 10, size.h * cell - 27, !!i.rotated)}</span><span class="item-label ${i.relief ? 'relief' : ''} ${labelFits(d.short || d.name, size.w * cell) ? '' : 'tight'}">${esc(d.short || d.name)}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+      return `<div tabindex="0" role="button" aria-label="${esc(d.name)} × ${i.qty}" aria-pressed="${on}" title="${esc(d.name)} × ${i.qty} · ${D.itemWeight(i).toFixed(2)} kg" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${on ? 'selected' : ''}" style="left:${i.x * cell + 1}px;top:${i.y * cell + 1}px;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px"><span class="inventory-art">${itemArtwork(i, size.w * cell - 10, size.h * cell - 27, !!i.rotated)}</span><span class="item-label ${i.relief ? 'relief' : ''} ${labelFits(d.short || d.name, size.w * cell) ? '' : 'tight'}">${esc(d.short || d.name)}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('');
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${items}${this.placementCells(inv, source, cell)}${inv.items.length ? '' : '<div class="empty-hint">暂无物品</div>'}</div>`;
   }
@@ -168,9 +168,10 @@ export class InventoryPanel {
       i.qty > 1 ? `<label class="cs-split">拆分 <input type="number" min="1" max="${i.qty - 1}" value="${Math.max(1, Math.floor(i.qty / 2))}" data-split aria-label="拆分数量"></label>${btn('拆分放置', 'inv-split')}` : '',
       carried ? btn('丢弃', 'inv-drop', 'class="cs-danger"') : '',
     ].join('');
-    const note = isGun(i.id) ? sel.source === 'safe' ? this.equipError('safe', i) : '换下的枪和弹匣余弹放回背包；放不下时不会换枪。'
+    const facts = [...attachmentLines(null, i.id), ...gunPartsLine(i) ? [gunPartsLine(i)!] : []];
+    const note = D.isGun(i.id) ? sel.source === 'safe' ? this.equipError('safe', i) : '换下的枪和弹匣余弹放回背包；放不下时不会换枪。'
       : carried ? '' : '收入背包或安全箱后，才能使用。';
-    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${D.itemWeight(i).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p><div class="cs-row cs-actions">${actions}</div>${note ? `<p class="cs-sub">${note}</p>` : ''}`;
+    return `<h3>${esc(d.name)}</h3><p class="cs-sub">${LABEL[sel.source]} · ${size.w} × ${size.h} 格 · ${i.qty} 件 · ${D.itemWeight(i).toFixed(2)} kg${i.relief ? ' · 救济' : ''}</p><p class="cs-desc">${esc(d.description ?? '')}</p>${facts.map(l => `<p class="cs-sub cs-maker">${esc(l)}</p>`).join('')}<div class="cs-row cs-actions">${actions}</div>${note ? `<p class="cs-sub">${note}</p>` : ''}`;
   }
 
   // --- actions ---
@@ -307,7 +308,7 @@ export class InventoryPanel {
     const cell = this.cell(), size = D.itemSize({ ...it, rotated: d.rotated }), g = document.createElement('div');
     g.className = 'item cs-ghost'; g.dataset.kind = D.ITEMS[it.id].kind;
     g.style.cssText = `position:fixed;left:0;top:0;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px;pointer-events:none;z-index:200;opacity:.85`;
-    g.innerHTML = `<span class="inventory-art">${itemArtwork(it.id, size.w * cell - 10, size.h * cell - 27, d.rotated)}</span>`;
+    g.innerHTML = `<span class="inventory-art">${itemArtwork(it, size.w * cell - 10, size.h * cell - 27, d.rotated)}</span>`;
     // Not inside the panel: the docked panel is centred with a transform, which makes it the containing block of a fixed
     // child, so the ghost landed off the cursor and its overflow gave the panel a scrollbar. The sample root is fixed and
     // untransformed, and a re-render of the panel mid-drag no longer wipes the ghost.
