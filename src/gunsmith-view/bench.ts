@@ -495,40 +495,42 @@ export class Workbench {
         return new Set(g ? nodesOf(g.state.parts).map(n => n.uid) : []);
     }
 
-    /** The parts going on, coming off and moving, as list items. */
-    private pendingItems(p: GunEditPreview | null) {
-        const name = (uid: string | null) => { const n = p && (findPart(p.after, uid) ?? findPart(p.before, uid)); return n ? partName(n.id) : ''; };
+    /** The phone's sheet: the parts going on and coming off (and moving), as two lists. */
+    private pendingHtml(p: GunEditPreview | null) {
+        const name = (uid: string | null) => pendingName(p, uid);
         const adds = (p?.installs ?? []).map(i => `<li class="${i.from ? '' : 'missing'}"><i>+</i><b>${esc(partName(i.id))}</b><small>${POSITION_NAMES[i.slot]} · ${i.from ? `从${{ stash: '仓库', bag: '背包', safe: '安全箱' }[i.from]}取` : '未拥有，确认前要先买到'}</small></li>`).join('');
         const rems = (p?.removals ?? []).map(r => `<li class="${r.with ? 'cascade' : ''}"><i>−</i><b>${esc(partName(r.id))}</b><small>${r.with ? `随${esc(name(r.with))}拆下 · ` : `${POSITION_NAMES[ATTACHMENTS[r.id].mount]} · `}放回仓库</small></li>`).join('');
         const moves = (p?.moves ?? []).map(m => `<li><i>↔</i><b>${esc(partName(m.id))}</b><small>换到${esc(name(m.parent) || '枪身')}上</small></li>`).join('');
-        return { adds, rems, moves };
-    }
-
-    /** The phone's sheet: the parts going on and coming off (and moving), as two lists. */
-    private pendingHtml(p: GunEditPreview | null) {
-        const { adds, rems, moves } = this.pendingItems(p);
         return `<div class="gs-pend"><h4>待装 <small>${p?.installs.length ?? 0} 件</small></h4><ul>${adds || '<li class="none">没有要装的配件</li>'}</ul></div>
 <div class="gs-pend"><h4>待卸 <small>${p?.removals.length ?? 0} 件</small></h4><ul>${rems || '<li class="none">没有要拆的配件</li>'}${moves}</ul></div>`;
     }
 
-    /** The desktop bar's left part: every pending change as one wrapping row of items. */
+    /**
+     * The desktop bar's left part (maintainer, 2026-10-27: the bar never scrolls): every pending change as a whole item,
+     * flowing over at most three lines. The notes leave out the usual case (taken from the stash, put back in it); the
+     * whole list shows on hover, and in full under the parts it changes.
+     */
     private chipsHtml(p: GunEditPreview | null) {
-        const { adds, rems, moves } = this.pendingItems(p), n = p ? p.installs.length + p.removals.length + p.moves.length : 0;
-        return `<div class="gs-pend"><h4>待改 <small>${n} 处</small></h4><ul>${adds}${rems}${moves || ''}${n ? '' : '<li class="none">还没有改动。点枪身上的位置挑配件，点配件只改预览。</li>'}</ul></div>`;
+        const n = p ? p.installs.length + p.removals.length + p.moves.length : 0;
+        if (!p || !n) return '<div class="gs-pend"><h4>待改 <small>0 处</small></h4><p class="gs-pline none">还没有改动。点枪身上的位置挑配件，点配件只改预览。</p></div>';
+        const from = { stash: '', bag: ' · 从背包取', safe: ' · 从安全箱取' };
+        const items = [
+            ...p.installs.map(i => `<span class="${i.from ? '' : 'missing'}"><i>+</i><b>${esc(partName(i.id))}</b><small>${POSITION_NAMES[i.slot]}${i.from ? from[i.from] : ' · 未拥有'}</small></span>`),
+            ...p.removals.map(r => `<span class="${r.with ? 'cascade' : ''}"><i>−</i><b>${esc(partName(r.id))}</b><small>${r.with ? `随${esc(pendingName(p, r.with))}拆下` : POSITION_NAMES[ATTACHMENTS[r.id].mount]}</small></span>`),
+            ...p.moves.map(m => `<span><i>↔</i><b>${esc(partName(m.id))}</b><small>换到${esc(pendingName(p, m.parent) || '枪身')}上</small></span>`),
+        ].join('');
+        return `<div class="gs-pend"><h4>待改 <small>${n} 处</small></h4><p class="gs-pline" title="${items.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}">${items}</p></div>`;
     }
 
-    /** The desktop bar's middle: what else the preview changes (weight, magazine, footprint, rounds unloaded). */
+    /**
+     * The desktop bar's middle: only what the header line does not show (the weight, magazine and footprint before →
+     * after are there): why the preview cannot be confirmed, and the rounds an equipped gun unloads.
+     */
     private effectsHtml(gun: BenchGun, p: GunEditPreview | null) {
-        const lines: string[] = [];
-        if (p) {
-            if (Math.abs(p.weight.after - p.weight.before) >= .005) lines.push(`枪重 ${arrow(kg(p.weight.before), kg(p.weight.after))}`);
-            if (p.capacity.after !== p.capacity.before) lines.push(`弹匣 ${arrow(`${p.capacity.before} 发`, `${p.capacity.after} 发`)}`);
-            if (sizeText(p.size.before) !== sizeText(p.size.after)) lines.push(`占格 ${arrow(sizeText(p.size.before), sizeText(p.size.after))}`);
-            if (p.unloaded && gun.where === 'equipment') lines.push(`卸出 ${p.unloaded.normal + p.unloaded.relief} 发${esc(D.ITEMS[p.unloaded.ammo]?.name ?? '')}，放进仓库${p.unloaded.relief ? `（其中救济 ${p.unloaded.relief} 发）` : ''}`);
-        }
         const why = p?.refusal && p.refusal.code !== 'unchanged' ? `<span class="gs-block" role="alert">${esc(p.refusal.reason)}</span>` : '';
+        const unload = p?.unloaded && gun.where === 'equipment' ? `<span>卸出 ${p.unloaded.normal + p.unloaded.relief} 发${esc(D.ITEMS[p.unloaded.ammo]?.name ?? '')}，放进仓库${p.unloaded.relief ? `（其中救济 ${p.unloaded.relief} 发）` : ''}</span>` : '';
         const note = p ? '确认后一次保存；取消回到枪上的配置。' : '改动只在预览里，确认前不会动到枪和仓库。';
-        return `<p class="gs-fx">${why}${lines.map(l => `<span>${l}</span>`).join('')}${why || lines.length ? '' : `<span class="gs-dim">${note}</span>`}</p>`;
+        return `<p class="gs-fx">${why}${unload}${why || unload ? '' : `<span class="gs-dim">${note}</span>`}</p>`;
     }
 
     /** Weight, magazine, unloaded rounds (equipped guns) and footprint, before → after. */
@@ -551,6 +553,8 @@ export class Workbench {
 }
 
 const sourceText = (id: string) => sourceOf(id);
+/** The name of a part in a preview, after the edit or else before it. */
+function pendingName(p: GunEditPreview | null, uid: string | null) { const n = p && (findPart(p.after, uid) ?? findPart(p.before, uid)); return n ? partName(n.id) : ''; }
 const brandName = (brand: string) => ({ beidi: '北堤', yanwan: '盐湾', binji: '滨机' } as Record<string, string>)[brand] ?? '';
 function findPart(state: GunState, uid: string | null) {
     const walk = (nodes: GunState['parts']): GunState['parts'][number] | null => { for (const n of nodes) { if (n.uid === uid) return n; const c = walk(n.children); if (c) return c; } return null; };

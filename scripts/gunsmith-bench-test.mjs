@@ -88,6 +88,9 @@ async function fits() {
     assert.ok(r && r.x >= -1 && r.y >= -1 && r.x + r.width <= size.width + 1 && r.y + r.height <= size.height + 1, `${sel} outside the viewport`);
   }
   assert.equal(await bench('.gs').evaluate(e => e.scrollWidth > e.clientWidth + 1), false, 'bench scrolls sideways');
+  // The bar never scrolls or spills (maintainer, 2026-10-27): its parts fit its fixed height.
+  const spill = await bench('.gs-foot').evaluate(f => [f, ...f.querySelectorAll('.gs-pend, .gs-fx')].filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.className));
+  assert.deepEqual(spill, [], 'the bar scrolls');
 }
 /** Phones: the header, the page and the bottom bar inside the screen, nothing scrolls sideways, cancel and confirm are on top. */
 async function phoneFits() {
@@ -174,7 +177,7 @@ try {
     await pos(side).click(); await part('T01').click();
     await pos('gun/mag/0').click(); await part('G10').click();
     const foot = await bench('.gs-foot').innerText();
-    assert.match(foot, /卸出 8 发卡宾枪弹/); assert.match(foot, /30 发 → 20 发/);
+    assert.match(foot, /卸出 8 发卡宾枪弹/); assert.match(await bench('.gs-head').innerText(), /30 → 20 发/, 'the magazine before → after is in the header');
     assert.match(await bench('.gs-badge').innerText(), /4 处改动/);
     await bench('[data-gs="detail"]').click(); assert.match(await bench('.gs-stats').innerText(), /弹匣 30 发 → 20 发/);
     await shot('02-desktop-1280x720-mid-edit'); await fits();
@@ -210,6 +213,12 @@ try {
     assert.match(await bench('.gs-badge').innerText(), /2 处改动/);
     await bench('[data-gs="detail"]').click(); assert.match(await bench('.gs-stats').innerText(), /510 → 255/);
     await shot('04-desktop-1280x720-g17');
+    // The maintainer's case (2026-10-27): four changes, two of them not owned, and a refusal; the bar still fits.
+    await bench('[data-gs="detail"]').click(); await bench('[data-gs="unowned"]').click();
+    await pos('gun/micro/0').click(); await part('O01').click();
+    await pos('gun/mag/0').click(); await part('G01').click();
+    assert.match(await bench('.gs-badge').innerText(), /4 处改动/); assert.match(await bench('.gs-fx').innerText(), /放不下|买到|未拥有/);
+    await shot('04b-desktop-1280x720-g17-four'); await fits();
     // Esc with a preview asks; Esc again stays; discarding closes back to the gear panel.
     await page.keyboard.press('Escape'); await bench('.gs-dialog').waitFor();
     await page.keyboard.press('Escape'); assert.equal(await bench('.gs-dialog').count(), 0);
