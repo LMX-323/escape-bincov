@@ -47,7 +47,7 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
 | batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
 | batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux`、`test:range`、`test:gunsmith-bench` |
-| batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets`、`test:hideout` |
+| batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets`、`test:hideout`、`test:gunsmith-flow` |
 | batch-7 | `test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
 | batch-8 | `test:expansion`、`test:loot` |
 
@@ -58,6 +58,8 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 2026-10-23 的 #78 新增 `test:enemy` 到 batch-8：真实合法新档在两个分辨率恢复前摇/换弹/恢复阶段，核对展示与离线请求；本地六组合约 8 秒。旧完整套件保留，命令计数和证据验证同步为 40。
 
 2026-10-27 的 #28 M2-05 新增 `test:gunsmith-bench` 到 batch-5：真实院子和旧页签打开改枪工作台，预览不写入、确认写入一次、换护木带走导轨件、换小弹匣卸弹、换枪和关闭先询问，1280×720 与 1920×1080 截图；手机版（M2-06）在 844×390、740×300、640×300、390×844 点按完成；预设（M2-07）；改枪图（M2-10）和 Sol 的预览逐像素相同、进出工作台 20 次缓存不超上限；本地约 1 分钟。命令计数同步为 41。
+
+2026-10-27 的 #28 M2-14 新增 `test:gunsmith-flow` 到 batch-6：旧页签上买 G17 和两件配件、在工作台装上、装备、出击（手里的枪按配置画、弹匣 24 发）、刷新后恢复、撤离带回原样、再出击死亡后枪和配件一起丢失，1280×720 与 1920×1080；手机 740×300 出击、恢复、死亡。本地约 30 秒。命令计数同步为 42。
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 
