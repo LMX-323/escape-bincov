@@ -16,6 +16,8 @@
 
 地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
 
+商场布局：骨架与各版本世界在 [mall-world.ts](../src/mall-world.ts)（`mallWorldV2`～`mallWorldV4`），家具类型与二、三版家具表在 [mall-layout-v2.ts](../src/mall-layout-v2.ts)，四版家具表与“哪些区域已布置”在 [mall-layout-v4.ts](../src/mall-layout-v4.ts)；新出击选哪一版看 [raid-areas.ts](../src/raid-areas.ts) 的 `sampleMallLayout`。改碰撞要开新版本（已存行动按原版本恢复），只换图不用。画面按格选素材在 [coast-view/mall-dressing.ts](../src/coast-view/mall-dressing.ts)，没有素材的四版家具由 [art/mall-furniture.ts](../src/coast-view/art/mall-furniture.ts) 程序绘制；约束测试 [mall-layout-v2.test.ts](../tests/mall-layout-v2.test.ts)、[mall-layout-v4.test.ts](../tests/mall-layout-v4.test.ts)，记录见[商场 2.5D](mall-2-5d/README.md)。
+
 ## 交易
 
 **职责与所有者。** 商店规则生成结果；唯一 `SaveSession` 提交；水产站和旧页签负责输入与反馈。购物车是临时状态，不能冒充已保存的库存。
@@ -71,6 +73,8 @@
 
 **验证入口。**
 
+- #75 的枪身回缩候选（#119）由 [scene.ts](../src/coast-view/scene.ts) 调用 [weapon-retraction.ts](../src/coast-view/weapon-retraction.ts)：shot 当帧保持原握枪位置，之后沿原枪轴恢复，袖管/描边跟随最终 transform；火光跟当前枪口，曳光保留发射快照。幅度和时长按枪声音色族查 `RETRACTION`（H-09：手枪最轻、霰弹最重，卡宾枪和步枪保持维护者试玩认可的 3 世界像素/80 ms），超过可见时段直接归零，低帧可能完全没有回缩，不改变 Runtime 或存档。试枪场“打击感：旧版”（`ViewOptions.feel`）和减弱动效不回缩。时序/投影边界见 [weapon-retraction.test.ts](../tests/weapon-retraction.test.ts)，场景接入见 [shooting-test.mjs](../scripts/shooting-test.mjs) 的 j 项。
+
 - [input.test.ts](../tests/input.test.ts)：`InputState` 的单次按下、取消、held-input 释放和面板切换，以及 `ActiveClock`。
 - [coast-input.test.ts](../tests/coast-input.test.ts)：触屏朝向、摇杆优先级和禁用读取。
 - [raid-runtime.test.ts](../tests/raid-runtime.test.ts)：`commands reach only the first substep`、`blocked panels advance the world`。
@@ -86,9 +90,12 @@
 - 选择区域/布局：[raid-areas.ts](../src/raid-areas.ts) 的 `raidWorlds`、`defaultWorld`、`sampleMallLayout`；`sampleEnabled` 只识别显式样板标记。县域选图展示在 [station-view/deploy-map.ts](../src/station-view/deploy-map.ts)（地标坐标、标签方向、路线与插图焦点，验证见 [deploy-map.test.ts](../tests/deploy-map.test.ts)）；`deploymentWorld` 只允许现有区域白名单，未开发区域的预览只存在于站内 UI，不创建世界或修改存档。地图与插图只由 [county-art.ts](../src/station-view/county-art.ts) 在渲染侧导入（构建按清单核对）；出击面板重绘经 [morph.ts](../src/station-view/morph.ts) 就地更新，换区的滑动与入场动画依赖元素保留，浏览器回归在 `test:raid-default` 的 R10/R11。行动视图能否接管存档里的行动看 [coast-view/sample.ts](../src/coast-view/sample.ts) 的 `sampleSupports`。
 - 显示新动作：[raid-runtime/presentation.ts](../src/raid-runtime/presentation.ts) 的 `frameView` 与渲染端；这是展示投影。射击状态在 `hud.aim`，屏息蓄力在 `hud.breath`（规则在 [breath.ts](../src/breath.ts)，Runtime 在 `step` 逐子步取瞄准目标、在 `runTrigger` 推进，清空点列在 `CoastRaidRuntime.breath` 注释）。手中枪械的暴击率在 `hud.crit`，与开枪取同一份 `CoastRaidRuntime.shotCrit` 快照；武器卡底部的文字由 [perk-copy.ts](../src/perk-copy.ts) 的 `critHud` 生成、[coast-view/host.ts](../src/coast-view/host.ts) 的 `critLines` 绘制，界面不再推算概率。
 - 鼠标瞄准与镜头：[coast-view/scene.ts](../src/coast-view/scene.ts) 的 `aimFromClient` 经平滑镜头换算瞄准，镜头前探由 [coast-view/camera.ts](../src/coast-view/camera.ts) 的 `pointerLead` / `stepLead`（鼠标，只在精瞄时）或 `aimLead`（触屏）决定；鼠标前探碰到地图边就停，上限由 `leadRoom` 给出（#80）。改前探前先跑 `test:shooting` 的“静止指针不漂”（检查 a 在空地，a-edge 在地图边）和 [coast-camera.test.ts](../tests/coast-camera.test.ts)。
-- 受击反馈（#75）：画面从 [coast-view/scene.ts](../src/coast-view/scene.ts) 的 `blow()` 开始，负责闪白、顺弹道后退和受击/恢复姿态；姿态只在角色身体所用的样式（原型自己的，否则种类的）有受击帧时换帧（`posable` 调用 [coast-view/textures.ts](../src/coast-view/textures.ts) 的 `hasBodyFrame`）。姿态帧由 [export-hurt-poses.ts](../scripts/export-hurt-poses.ts) 从 #96 图集切出，B 组图集的画布取整误差由其中的 `driftMap` 还原；[coast-view/pose-assets.ts](../src/coast-view/pose-assets.ts) 加载。声音在 [coast-view/sound.ts](../src/coast-view/sound.ts) 的 `struck`，暴击与击杀标记在 [coast-view/host.ts](../src/coast-view/host.ts) 的 `mark` / `critMark`。回归看 `test:shooting` 检查 g、h 与 [hurt-poses.test.ts](../tests/hurt-poses.test.ts)。
+- 受击反馈（#75）：画面从 [coast-view/scene.ts](../src/coast-view/scene.ts) 的 `blow()` 开始，负责闪白、顺弹道后退和受击/恢复姿态；档位、同一枪合并成一次受击和玩家中弹的镜头推动由 `landBlows` 按 [coast-view/blow-feel.ts](../src/coast-view/blow-feel.ts) 的规则（`blowTier`、`ShotBlows`、`pushCamera`）处理，墙和门的弹着点特效在 [coast-view/fx.ts](../src/coast-view/fx.ts) 的 `sparks`；姿态只在角色身体所用的样式（原型自己的，否则种类的）有受击帧时换帧（`posable` 调用 [coast-view/textures.ts](../src/coast-view/textures.ts) 的 `hasBodyFrame`）。姿态帧由 [export-hurt-poses.ts](../scripts/export-hurt-poses.ts) 从 #96、#122 的图集切出（各类采用的图集版本记在 `POSE_KINDS`，不画手臂的爪击类记在 `ARMLESS`），B 组图集的画布取整误差由其中的 `driftMap` 还原；[coast-view/pose-assets.ts](../src/coast-view/pose-assets.ts) 加载。声音在 [coast-view/sound.ts](../src/coast-view/sound.ts) 的 `struck`；枪声按音色族合成（[gun-timbre.ts](../src/gun-timbre.ts) 给出改枪目录每把枪和现有外观的音色族，`SynthAudio.shot` 的 `REPORTS` 是配方），试枪场面板的“打击感：新版 / 旧版”切换 `ViewOptions.feel`，旧版回到改动前的声音。暴击与击杀标记在 [coast-view/host.ts](../src/coast-view/host.ts) 的 `mark` / `critMark`。回归看 `test:shooting` 检查 g、h、i 与 [hurt-poses.test.ts](../tests/hurt-poses.test.ts)、[blow-feel.test.ts](../tests/blow-feel.test.ts)。
+- 拥挤时的反馈预算（#75 H-07）：规则只有 [feedback-budget.ts](../src/feedback-budget.ts) 的 `admit` 一处，反馈分核心和装饰两类。粒子在 [coast-view/fx.ts](../src/coast-view/fx.ts) 的 `spawn` 应用（离玩家远的算装饰，玩家位置由 scene 每帧写进 `fx.focus`），声音在 [audio.ts](../src/audio.ts) 的 `SynthAudio.ready` 应用（枪声尾音、机械声、脚步和远处的声音算装饰）；两边都按类计数 `dropped`。回归看 `test:shooting` 检查 k 与 [feedback-budget.test.ts](../tests/feedback-budget.test.ts)。
 - 试枪场：[range/](../src/range/index.ts)（`?range=1`，内存存档，不碰正式存档）。
 - 动作新增可恢复计时器/状态：继续[存档卡](#存档)，检查点投影与展示投影不是同一契约。
+
+- 开火与命中音关联（#75）：临时 `hurt.bullet` 的来源在 [Runtime](../src/raid-runtime/runtime.ts) 的 `observeShot`、`damageEnemy` / `hurt`；[sound.ts](../src/coast-view/sound.ts) 用已有 `shot.pellets` 关联一次开火与目标，缓存释放和旧恢复弹的降级规则见源码旁契约。跨批霰弹、同批多枪、经典路径与刷新回归见 [shotgun-hit-sounds.test.ts](../tests/shotgun-hit-sounds.test.ts)。弹道与持久弹丸不增加字段。
 
 **结束定位的判据。** 能跟踪一次输入到实际动作，并指出重复消费、失焦/面板释放的断言。资源生命周期只有在本次改变宿主归属时才展开。
 
@@ -104,7 +111,7 @@
 
 新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `LayeredRaid` v5，同时保留历史敌人 v4 和 Perk v3 的规则；记录层 #81 原用 `SessionRecord` 6/7，改枪后统一为 v8，敌人规则以 `enemyBackup` 键表示（[记录版本 v8 与敌人规则](gunsmith/CONTRACTS.md#记录版本-v8-与敌人规则与-81-合并)）；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
+[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版或四版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
 
 方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
