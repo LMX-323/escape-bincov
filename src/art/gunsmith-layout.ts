@@ -55,8 +55,11 @@ const partArt = (id: string, code: ArtCode, gun: string) => {
 interface Node { key: string; label: string; art: GunsmithArt; x: number; y: number; parent: Node | null }
 const add = (p: ArtPoint, x: number, y: number): [number, number] => [p[0] + x, p[1] + y];
 
-/** The layout of `gun` with `parts` in output `code`; null when the gun has no receiver image there (old art stays). */
-export function gunArtLayout(gun: string, parts: readonly PartNode[], code: ArtCode): ArtLayout | null {
+/**
+ * The layout of `gun` with `parts` in output `code`; null when the gun has no receiver image there (old art stays).
+ * `gloves: false` leaves the held output's hands off: the gun alone, as it lies on the ground or shows on the HUD card.
+ */
+export function gunArtLayout(gun: string, parts: readonly PartNode[], code: ArtCode, gloves = true): ArtLayout | null {
     const rootKey = `gs-${gun}-receiver-${code}`, rootArt = artOf(rootKey);
     if (!rootArt) return null;
     const root: Node = { key: rootKey, label: 'receiver', art: rootArt, x: 0, y: 0, parent: null };
@@ -99,6 +102,7 @@ export function gunArtLayout(gun: string, parts: readonly PartNode[], code: ArtC
     let hand: ArtPoint | undefined;
     if (code === 'h') {
         const glove = (which: string, at: ArtPoint) => {
+            if (!gloves) return;
             const key = `gs-glove-${which}-h`, art = artOf(key)!, anchor = art.anchor ?? [0, 0];
             nodes.push({ key, label: `glove-${which}`, art, x: at[0] - anchor[0], y: at[1] - anchor[1], parent: root });
         };
@@ -116,7 +120,7 @@ export function gunArtLayout(gun: string, parts: readonly PartNode[], code: ArtC
     const tipNode = nodes.find(n => n.label === 'muzzle' && n.art.tip) ?? nodes.find(n => n.label === 'barrel' && n.art.tip) ?? root;
     const device = nodes.find(n => n.art.beam);
     const layout: ArtLayout = {
-        key: `gs:${code}:${gun}:${partsSignature(parts)}:r${GUNSMITH_ART_REVISION}`, w: hi[0] - lo[0], h: hi[1] - lo[1], layers,
+        key: `gs:${code}${gloves ? '' : '-bare'}:${gun}:${partsSignature(parts)}:r${GUNSMITH_ART_REVISION}`, w: hi[0] - lo[0], h: hi[1] - lo[1], layers,
         tip: tipNode.art.tip ? shift(add(tipNode.art.tip, tipNode.x, tipNode.y)) : null,
     };
     if (device) layout.beam = shift(add(device.art.beam!, device.x, device.y));

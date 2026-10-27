@@ -81,6 +81,16 @@ test('every sample part that fits a gun with art has a mount in all three output
     assert.deepEqual([...new Set(checked.map(c => c.split(':')[1]))].sort(), [...parts].sort(), `checked ${checked.length}: ${checked.join(' ')}`);
 });
 
+test('the side view for the ground and the HUD card: the factory held picture without hands, within the 32 px card', () => {
+    for (const gun of ['mb4a1', 'gb17']) {
+        const bare = gunArtLayout(gun, [], 'h', false)!, held = gunArtLayout(gun, [], 'h')!;
+        assert.ok(!bare.layers.some(l => l.label.startsWith('glove')), gun);
+        assert.deepEqual(bare.layers.map(l => l.key), held.layers.filter(l => !l.label.startsWith('glove')).map(l => l.key), gun);
+        assert.ok(bare.w <= 32 && bare.h <= 32, `${gun} ${bare.w}x${bare.h}`);
+        assert.notEqual(bare.key, held.key);
+    }
+});
+
 test('the cache key: the output, the gun, the parts by place and the art revision, never a uid', () => {
     const a = gunArtLayout('mb4a1', CONFIGS.mb4a1.stable(), 'i')!, b = gunArtLayout('mb4a1', CONFIGS.mb4a1.stable().reverse(), 'i')!;
     assert.equal(a.key, b.key, 'the same parts in another order and under other uids');

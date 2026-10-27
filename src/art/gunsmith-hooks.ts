@@ -24,6 +24,11 @@ export interface GunsmithArtHooks {
      * the pivot, forward offset, front hand, muzzle tip and barrel row; null without images for that gun.
      */
     held(gun: string, sig: string): HeldPicture | null;
+    /**
+     * The whole gun from the side: its factory held picture without the hands, for the ground and the HUD weapon card,
+     * where Sol's square close-ups do not read (maintainer, 2026-10-27). Null for items without held images.
+     */
+    side(id: string): HTMLCanvasElement | null;
 }
 export interface HeldPicture { key: string; canvas: HTMLCanvasElement; grip: readonly [number, number]; forward: number; hand: readonly [number, number] | null; tip: readonly [number, number]; bore: number }
 export let gunsmithArt: GunsmithArtHooks | null = null;

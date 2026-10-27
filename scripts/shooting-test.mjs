@@ -792,7 +792,20 @@ async function heldArt(page) {
   const at = (o, st, m) => seen[OPTICS.indexOf(o) * 6 + STOCKS.indexOf(st) * 2 + MUZZLES.indexOf(m)];
   assert.ok(at('O03', null, 'M06').tip.x > at('O03', null, null).tip.x, 'the brake lengthens the gun');
   assert.equal((await probe()).held, 8, 'twelve configurations leave eight');
-  return { configs: seen.length, base: base.large, held: 8 };
+  // The ground and the HUD card show the whole gun from the side: Sol's square close-ups do not read there (maintainer,
+  // 2026-10-27). A factory M4A1 and a G17 on the ground next to the player; the card shows the M4A1 in hand.
+  await drive(page, 'fit', []);
+  const here = await page.evaluate(() => { const p = window.__bincovSample.host.lastBatch.frame.player; return { x: Math.round(p.x), y: Math.round(p.y) }; });
+  await drive(page, 'spawnLoot', 'mb4a1', 1, { x: here.x + 36, y: here.y + 18 }); await drive(page, 'spawnLoot', 'gb17', 1, { x: here.x - 30, y: here.y + 18 });
+  await settle(page, .3);
+  const looks = await page.evaluate(() => {
+    const t = window.__bincovSample.host.view.tex, card = document.querySelector('.coast-sample [data-weapon-icon]');
+    return { m4: t.loot('mb4a1').width, g17: t.loot('gb17').width, pistol: t.loot('pistol').width, card: card?.getAttribute('src')?.length ?? 0 };
+  });
+  assert.deepEqual([looks.m4, looks.g17, looks.pistol], [36, 28, 28], 'the M4A1 lies as its 32 px side view; the G17 and the old pistol fit the cell');
+  assert.ok(looks.card > 0);
+  await page.screenshot({ path: resolve(out, 'gunsmith-ground-card.png') });
+  return { configs: seen.length, base: base.large, held: 8, ground: looks };
 }
 
 async function devices(page) {

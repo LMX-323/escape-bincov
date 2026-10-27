@@ -29,6 +29,12 @@ export function loadGunsmithArt(): Promise<void> {
             return layout ? drawGunLayout(layout) : gunsmithIconImage(id, 24);
         },
         configured: gunInventoryArt, bench: gunBenchArt, releaseBench: releaseBenchArt,
+        side: id => {
+            if (sides.has(id)) return sides.get(id)!;
+            const layout = gunArtLayout(id, [], 'h', false), canvas = layout && drawGunLayout(layout);
+            sides.set(id, canvas ?? null);
+            return canvas ?? null;
+        },
         held: (gun, sig) => {
             const parts = partsOfSignature(sig), layout = parts && gunArtLayout(gun, parts, 'h');
             if (!layout?.grip || !layout.tip || layout.bore === undefined) return null;
@@ -38,6 +44,8 @@ export function loadGunsmithArt(): Promise<void> {
     }));
 }
 
+/** The side views of the gunsmith guns (the factory held picture without hands), one per gun type, kept for the page. */
+const sides = new Map<string, HTMLCanvasElement | null>();
 let carbine: { receiver: HTMLCanvasElement; handguard: HTMLCanvasElement } | null = null;
 /**
  * The old carbine's inventory image split as Sol split it for the approved previews: the factory handguard is rows 8

@@ -8,6 +8,7 @@
  * transition suppresses held controls until they are released. Item and save operations go only through the Runtime
  * services, or through SaveSession.mutate for plain bag/safe edits (the original inventory entry point).
  */
+import { gunsmithArt } from '../art/gunsmith-hooks';
 import type { Application } from 'pixi.js';
 import * as D from '../domain';
 import { exitBearing, questProgress } from '../qol';
@@ -52,13 +53,19 @@ const DRAIN: Record<Drain, { label: string; tint: string }> = {
 };
 const ease = (t: number) => t * t * (3 - 2 * t);
 const weaponIcons = new Map<string, string>();
-/** The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. Every gun is an item with art. */
+/**
+ * The game's own 32 px item drawing of the held weapon, shown at 2x in the weapon card. Every gun is an item with art.
+ * The gunsmith guns show their whole side view instead (the held picture without hands, centred), since their square
+ * icons are close-ups that do not read on the card (#28 M2-10, maintainer 2026-10-27).
+ */
 function weaponIcon(id: string): string {
   let url = weaponIcons.get(id);
   if (!url) {
     const c = document.createElement('canvas'); c.width = c.height = 32;
     const g = c.getContext('2d')!; g.imageSmoothingEnabled = false;
-    if ((ITEM_ART_IDS as readonly string[]).includes(id)) paintItem(g, id as ItemArtId, 32);
+    const side = gunsmithArt?.side(id);
+    if (side) g.drawImage(side, Math.floor((32 - side.width) / 2), Math.floor((32 - side.height) / 2));
+    else if ((ITEM_ART_IDS as readonly string[]).includes(id)) paintItem(g, id as ItemArtId, 32);
     url = c.toDataURL(); weaponIcons.set(id, url);
   }
   return url;
