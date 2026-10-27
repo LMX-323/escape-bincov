@@ -721,17 +721,36 @@ export class CoastRaidRuntime implements RaidRuntime {
             else this.spawnLoot(this.player.x, this.player.y, item.id, item.qty, !!item.relief);
         });
     }
-    equipItem(uid: string) {
+    equipItem(uid: string) { return this.equip(uid, null); }
+    /** #26 F15: equip a gun straight from the open container; same rules and checks as transferLoot's target. */
+    equipLoot(ref: TargetRef, uid: string): MutationResult {
+        if (!this.validRef(ref) || ref.kind !== 'container' || !this.canLootContainer(ref.id, ref.runId)) {
+            this.rejected('equip', 'stale-target');
+            return 'rejected';
+        }
+        return this.equip(uid, ref.id);
+    }
+    /**
+     * The gun swap (D.equipRun) from the backpack or a live container. The container is world state: its change is
+     * captured and rolled back with the carried inventory, and persists in the same write as the loadout.
+     */
+    private equip(uid: string, containerId: string | null) {
         return this.transaction('equip', () => {
+            const from = containerId === null ? undefined : this.getLootContainer(containerId)?.inventory;
+            const taken = from?.items.find(i => i.uid === uid);
+            if (containerId !== null && !taken)
+                return false;
             this.draw();
             this.syncMagazine();
-            if (!D.equipRun(this.session.loadout!, uid))
+            if (!D.equipRun(this.session.loadout!, uid, from))
                 return false;
             this.mag = this.session.loadout!.ammo;
             this.magRelief = this.session.loadout!.ammoRelief;
             this.knife = false;
             this.reloadLeft = 0;
             this.startReload();
+            if (taken)
+                this.emit({ type: 'looted', source: containerId!, item: taken.id, qty: 1, partial: false, to: 'equip' });
         });
     }
     transferLoot(ref: TargetRef, request: LootTransfer): MutationResult {

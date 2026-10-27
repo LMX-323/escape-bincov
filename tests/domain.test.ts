@@ -651,6 +651,32 @@ test('raid gun swaps unload a mixed magazine with both ammo origins preserved', 
   assert.equal(JSON.stringify(run.safe), beforeSafe);
 });
 
+test('#26 F15: a raid gun swap can take the gun from a container, never from the safe, and refuses atomically', () => {
+  const save = newSave();
+  save.bag = createInventory(6, 5);
+  save.equipment = { weapon: 'pistol', weaponUid: 'test-gun', gun: factoryState(), relief: false, ammo: 6, ammoRelief: 0 };
+  addItem(save.safe, 'pistol');
+  const run = beginRun(save, 905), box = createInventory(6, 5);
+  box.items.push({ uid: 'crate-carbine', id: 'carbine', qty: 1, x: 0, y: 0, gun: factoryState() }, { uid: 'crate-water', id: 'water', qty: 1, x: 4, y: 0 });
+  const safeBefore = JSON.stringify(run.safe);
+  assert.equal(equipRun(run, run.safe.items[0].uid, run.safe), false, 'the safe is not a source');
+  assert.equal(equipRun(run, 'crate-water', box), false, 'only a gun');
+  assert.equal(equipRun(run, run.safe.items[0].uid, box), false, 'the uid must be in the given container');
+  assert.equal(equipRun(run, 'crate-carbine', box), true);
+  assert.deepEqual(box.items.map(i => i.uid), ['crate-water']);
+  assert.equal(run.weapon, 'carbine'); assert.equal(run.weaponUid, 'crate-carbine'); assert.equal(run.ammo, 0);
+  assert.equal(run.bag.items.find(i => i.id === 'pistol')!.uid, 'test-gun');
+  assert.equal(count(run.bag, 'ammo9'), 6);
+  assert.equal(JSON.stringify(run.safe), safeBefore);
+  // A full backpack has no room for the carbine: container and loadout stay exactly as they were.
+  addItem(run.bag, 'watch', 54);
+  const shotgunBox = createInventory(6, 5);
+  shotgunBox.items.push({ uid: 'crate-shotgun', id: 'shotgun', qty: 1, x: 0, y: 0, gun: factoryState() });
+  const before = JSON.stringify([run, shotgunBox]);
+  assert.equal(equipRun(run, 'crate-shotgun', shotgunBox), false);
+  assert.equal(JSON.stringify([run, shotgunBox]), before);
+});
+
 test('a full raid backpack rejects a loaded gun swap atomically', () => {
   const save = newSave();
   save.bag = createInventory(6, 5);

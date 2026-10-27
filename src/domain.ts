@@ -695,14 +695,20 @@ export function unequip(save: SaveDataV1): boolean {
   save.equipment = emptyEquipment();
   return true;
 }
-/** Raid weapon swaps use the backpack only; safe contents remain untouched. The guns move as the same instances. */
-export function equipRun(loadout: RunLoadout, itemUid: string): boolean {
-  const selected = loadout.bag.items.find(entry => entry.uid === itemUid);
+/**
+ * Raid weapon swaps return the replaced gun and its rounds to the backpack only; safe contents remain untouched. The
+ * chosen gun comes from the backpack or, from an open container (#26 F15), `from`; the safe is never a source. The
+ * guns move as the same instances. All or nothing: a refused swap leaves the loadout and `from` as they were.
+ */
+export function equipRun(loadout: RunLoadout, itemUid: string, from: Inventory = loadout.bag): boolean {
+  if (from === loadout.safe) return false;
+  const selected = from.items.find(entry => entry.uid === itemUid);
   if (!selected || !isGun(selected.id)) return false;
   const trial = clone(loadout.bag), held = heldItem(loadout);
-  trial.items.splice(loadout.bag.items.indexOf(selected), 1);
+  if (from === loadout.bag) trial.items.splice(from.items.indexOf(selected), 1);
   if (held && !placeItem(trial, held)) return false;
   if (!unloadMagazine(trial, loadout)) return false;
+  if (from !== loadout.bag) from.items = from.items.filter(entry => entry !== selected);
   loadout.bag = trial;
   Object.assign(loadout, slotOf(selected));
   return true;
