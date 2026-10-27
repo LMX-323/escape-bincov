@@ -436,6 +436,24 @@ try {
     await shot('19-phone-844x390-shop-filter');
   });
 
+  await step('Y1-yard-import-survives-the-checkpoint-repaint', async () => {
+    // A player takes seconds in the file dialog; the yard's five-second checkpoint repaints the open menu meanwhile. The
+    // file input lives outside the menu, so the chosen file still reaches the import (it used to be lost silently).
+    await open();
+    const backup = await page.evaluate(() => { const r = JSON.parse(localStorage.getItem('escape-bincov.session.v2')); return JSON.stringify({ format: 'escape-bincov-recovery-backup', formatVersion: r.version, record: r }); });
+    const p = fixture(); p.cash = 123; await seed(p);
+    await page.keyboard.press('Escape'); await yard('.modal.k-menu').waitFor();
+    await yard('.modal.k-menu [data-act="import"]').evaluate(b => { b.dataset.before = '1'; });
+    const chooser = page.waitForEvent('filechooser');
+    await yard('.modal.k-menu [data-act="import"]').click();
+    const fc = await chooser;
+    await page.waitForFunction(() => !document.querySelector('#station-yard').shadowRoot.querySelector('.modal.k-menu [data-before]'), null, { timeout: 15000 });
+    await fc.setFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(backup) });
+    await yard('.modal.dialog [data-act="import-confirm"]').click();
+    await page.waitForFunction(() => window.__bincov.hideoutRuntime.snapshot().profile.cash === 900);
+    return { repainted: true };
+  });
+
   await step('B5-desktop-1920x1080', async () => {
     await open(fixture(), [1920, 1080]); await openFromSlot(); await fits();
     await pos('gun/top/0').click(); await bench('[data-gs="unowned"]').click(); await bench('[data-gs="detail"]').click();

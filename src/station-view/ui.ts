@@ -113,7 +113,8 @@ export class UI {
       <div class="prompt" hidden></div><div class="doortag" hidden></div><div class="toasts" role="status"></div>
       <nav class="quick"><button class="qmore" data-quickmenu aria-expanded="false"><span>功能</span></button>${SHORTCUTS.map(q => `<button data-quick="${q.kind}"><span>${q.label}</span><kbd>${q.key}</kbd></button>`).join('')}<button data-tabs title="旧版页签界面（备用入口）"><span>页签</span><kbd>0</kbd></button><button data-quick="menu"><span>菜单</span><kbd>Esc</kbd></button></nav>
       <section class="panel" hidden aria-live="polite"></section><section class="modal" hidden></section><section class="modal dialog" hidden role="dialog" aria-modal="true"></section>
-      <button class="touch-act" aria-label="交互">交互</button><div class="joy"><i></i></div>`;
+      <button class="touch-act" aria-label="交互">交互</button><div class="joy"><i></i></div>
+      <input id="backup-file" type="file" accept=".json,application/json" hidden>`;
     const q = <T extends HTMLElement>(s: string) => this.root.querySelector<T>(s)!;
     this.panel = q('.panel'); this.modal = q('.modal:not(.dialog)'); this.dialogEl = q('.dialog'); this.hud = q('.hud'); this.tags = q('.tags'); this.toasts = q('.toasts'); this.prompt = q('.prompt'); this.bubbles = q('.bubbles'); this.quick = q('.quick'); this.alarm = q('[data-alarm]');
     for (const s of STATIONS) {
