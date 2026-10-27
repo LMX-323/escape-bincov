@@ -20,7 +20,7 @@ import { paintMallGround } from './art/mall-ground';
 import { buildMall, mallDress, type Link, type MallDress, type OccluderKind } from './mall-scene';
 import type { MallArt } from './mall-art';
 import { MALL_FOOTPRINT, insideFootprint } from './mall-dressing';
-import { MALL_V2_REGIONS } from '../mall-layout-v2';
+import { mallRegionDressed } from '../mall-layout-v4';
 import { releaseManagedSlots } from './renderer-lifetime';
 import { aimLead, leadRoom, pointerLead, snapAxis, stepLead, type AxisHold, type CameraBounds, type Lead } from './camera';
 import { viewScale, type ViewScaleMode } from './view-scale';
@@ -337,6 +337,7 @@ export class CoastView {
       this.weather.shelter += (indoor - this.weather.shelter) * Math.min(1, dt * 4);
     }
     this.weather.update(this.time, this.cam, this.view, f.revealed);
+    this.light.syncUnseen(dt, f.revealed);
     this.syncDevices(f);
     this.light.sync(dt, l => (l.region === undefined || l.region === null || f.revealed[l.region] === true) && !l.regions?.some(r => f.revealed[r] !== true), this.time);
     this.tintUpright(f);
@@ -415,6 +416,8 @@ export class CoastView {
     this.tide.setMap(m);
     this.weather.setMap(m, bake.puddles, roofs, awnings, (x, y) => M[y >> 5]?.[x >> 5] === 'water' || this.tide.wet(x, y));
     this.light.mood = MOODS[this.opts.mood % MOODS.length]; this.light.setMap(m, mall?.zone ?? null);
+    // Mall floors draw no ceilings (a maintainer decision), so an unrevealed room is shaded instead (#26 F14).
+    this.light.setUnseen(m, mall ? m.regions.filter(r => r.inside && !r.sealed) : []);
     this.staticLights(m);
     this.stats.occluders = this.occluders.length;
     this.camF = { x: f.player.x - this.view.w / 2, y: f.player.y - AIM_H - this.view.h / 2 };
@@ -1349,7 +1352,7 @@ export class CoastView {
     const p = this.last?.player, m = this.map;
     if (!p || !m || !this.mall) return null;
     const id = regionAtClosed(m, this.last!.revealed, p);
-    return id && !(MALL_V2_REGIONS as readonly string[]).includes(id) ? '样板外' : null;
+    return id && !mallRegionDressed(m.key.layoutRevision, id) ? '样板外' : null;
   }
   /** Player is on the coast map but outside the dressed village corner (generic placeholder rendering). */
   outsideSample(): boolean {

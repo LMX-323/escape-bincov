@@ -243,7 +243,7 @@ export interface HideoutRuntime {
     setVolume(volume: number): Result;
     departure(): { warnings: string[]; weight: number; carry: number };
     /** mallLayout defaults to 1 and only applies to a new mall raid. */
-    deploy(req: { world: RunWorld; seed: string; mallLayout?: 1 | 2 | 3 }): Result & { runId?: string };
+    deploy(req: { world: RunWorld; seed: string; mallLayout?: 1 | 2 | 3 | 4 }): Result & { runId?: string };
     /** After the host's departure animation; never calls beginRun again. */
     startRaid(runId: string): Result;
     returnToBase(): Result;
