@@ -4,6 +4,16 @@
 
 已静态核对通用墙体与商场绘制、淡出和揭示路径及现有测试命令。没有同目标开放 PR，#130 仍承接商场家具和地面换图。默认沙箱启动失败后，提权完成 Git 状态检查与 fetch，使用独立工作树验证，保留原工作区已有修改。上游连接无分支写权限，改用已有 fork `LMX-323/escape-bincov` 提交。文档链接、源码事实和差异已核对；纯文档交付未运行游戏测试或打包；准确 head 与 CI 状态见承接 PR。游戏代码及两尺寸、真人、真机验收均未实施，不表示已上线，不自行合并。
 
+## 2026-10-28 #26 F16：水产站玩家空手手臂与手
+
+承接 [PR #131](https://github.com/xuys2025/escape-bincov/pull/131)，实现提交 `750d6a9a050495a56e7fe8eaf45d334de3d5069e`，准确 PR head 和 CI 见原 PR。
+
+完整 `test:station` 是手动项；新增的 `test:station-hands` 只运行 H15，在 CI batch-2 执行，同步了检查导航与 CI 清单（现 45 条浏览器命令）。
+
+维护者授权修复并开 PR。基线 main `02b5e1e5c5261f5caea55dccc875c8ae93e3120b`，隔离分支 `codex/f16-station-hands`。`src/station-view/art/player.ts` 的 `paintStationPlayer` 在站内生成完整空手帧，`HideoutScene.playerTex` 沿用原纹理缓存；不改共用身体 PNG 或行动手臂/武器分层，脚底、碰撞、存档与离线能力不变。
+
+源码入口、80帧浏览器检查、修复前负对照和两尺寸真实截图见[本项记录](docs/tasks/station-player-hands/README.md)。当前通过：1020 单测、打包、CI 策略 73/73、H15 两尺寸、行动动画 8/8 与冷素材加载；完整站内 78/79，I3 手机菜单切修理铺在原 main 对照和修复构建中均同样超时，保留失败，不拼为完整通过。准确 head、CI 与审阅状态见本项 PR；尚未合并/发布，真机与真人姿态观感待验。#26 其他反馈保留原归属。
+
 ## 2026-10-27 改枪 M2：工作台、预设、美术、详情与商店、全流程检查（#106）
 
 `feat/gunsmith-m2` / [PR #106](https://github.com/xuys2025/escape-bincov/pull/106)（草稿），已同步 main `0d20857`。本日合入暂停的 M2-03/04/11/13 分支，并完成 M2-05～08、M2-10、M2-12、M2-14；M2-15（维护者试玩、合入）待办。
