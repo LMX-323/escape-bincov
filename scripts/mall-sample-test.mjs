@@ -206,6 +206,103 @@ async function deployTabs(page) {
     assert.ok(shown.visible >= 1, 'control: the blood shows once the room is revealed');
     return { spot, enemy, marker, hidden, shown };
   });
+  await step('M03c (#26 F14) an unrevealed room is shaded, furniture and all, from the corridor; the shade lifts with its lights and shows nothing of who is inside', async () => {
+    // A room seen straight on from open floor in no room, three cells out: no wall between, but too far to be revealed.
+    await place(page, 59.5, 4.5, Math.PI / 2, 'mall-f1'); await frames(page, 6);
+    const spot = await page.evaluate(() => {
+      const m = window.__bincovSample.host.view.mapDef, T = 32, cell = (x, y) => m.cells[y]?.[x];
+      const rooms = (x, y) => m.regions.filter(r => r.inside && x * T + 16 >= r.x && x * T + 16 < r.x + r.w && y * T + 16 >= r.y && y * T + 16 < r.y + r.h);
+      const open = (x, y) => cell(x, y) === 'floor' && rooms(x, y).length === 0;
+      for (const r of m.regions) {
+        if (!r.inside || r.sealed) continue;
+        const x0 = r.x / T, y0 = r.y / T, x1 = (r.x + r.w) / T - 1, y1 = (r.y + r.h) / T - 1;
+        for (const [dx, dy, edge, a, b] of [[-1, 0, x0, y0, y1], [1, 0, x1, y0, y1], [0, -1, y0, x0, x1], [0, 1, y1, x0, x1]]) for (let t = a + 1; t < b; t++) {
+          const at = d => dx ? [edge + dx * d, t] : [t, edge + dy * d];
+          const [ex, ey] = at(0), [ix, iy] = at(-2), [sx, sy] = at(3);
+          if (cell(ex, ey) !== 'floor' || cell(ix, iy) !== 'floor' || [1, 2, 3].some(d => !open(...at(d)))) continue;
+          if (rooms(ix, iy).length !== 1 || rooms(ex, ey).length !== 1) continue;
+          return { room: r.id, stand: [sx + .5, sy + .5], inside: [ix + .5, iy + .5], corridor: at(1).map(c => c + .5), angle: Math.atan2(-dy, -dx) };
+        }
+      }
+      return null;
+    });
+    assert.ok(spot, 'a room seen straight on from open floor');
+    await place(page, spot.stand[0], spot.stand[1], spot.angle, 'mall-f1'); await frames(page, 20);
+    const r = await page.evaluate(spot => {
+      const h = window.__bincovSample.host, v = h.view, L = v.light, dt = 1 / 60, m = v.mapDef, T = 32;
+      const live = h.lastBatch.frame, rooms = m.regions.filter(x => x.inside && !x.sealed), others = rooms.filter(x => x.id !== spot.room);
+      h.app.ticker.stop();
+      try {
+        const base = structuredClone(h.lastBatch);
+        const enemy = base.frame.actors.find(a => a.alive && a.uid !== base.frame.player.uid);
+        base.events = []; base.frame.actors = base.frame.actors.filter(a => a.uid === base.frame.player.uid);
+        base.frame.loot = []; base.frame.containers = []; base.frame.bullets = [];
+        // Pin everything else a present moves (camera, recoil, shake, mist shelter, flicker time), as M17 does.
+        const cam = { ...v.camF }, recoil = { ...v.recoil }, shelter = v.weather.shelter;
+        const grab = (reveal, step = dt, edit) => {
+          const b = structuredClone(base); b.frame.revealed[spot.room] = reveal; edit?.(b.frame);
+          v.camF = { ...cam }; v.recoil = { ...recoil }; v.shake = 0; v.weather.shelter = shelter; v.time = 7.25 - step;
+          v.present(b, step); h.app.render();
+          const out = h.app.renderer.extract.pixels(v.upRT);
+          return { px: out.pixels.slice(), w: out.width };
+        };
+        const k = v.view.k, block = (g, c) => {
+          const cx = Math.floor((c[0] * T - v.cam.x) * k), cy = Math.floor((c[1] * T + 8 - v.cam.y) * k);
+          let s = 0, n = 0;
+          for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) { const i = (y * g.w + x) * 4; s += g.px[i] + g.px[i + 1] + g.px[i + 2]; n++; }
+          return s / n;
+        };
+        const exact = (a, b) => { let n = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2]) n++; return n; };
+        // Share of the room's on-screen rectangle that the shade darkened by at least 8%.
+        const room = m.regions.find(x => x.id === spot.room), darker = (a, b) => {
+          const x0 = Math.max(0, Math.floor((room.x - v.cam.x) * k)), x1 = Math.min(a.w, Math.floor((room.x + room.w - v.cam.x) * k));
+          const y0 = Math.max(0, Math.floor((room.y - v.cam.y) * k)), y1 = Math.min(a.px.length / 4 / a.w, Math.floor((room.y + room.h - v.cam.y) * k));
+          let n = 0, all = 0;
+          for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * a.w + x) * 4; all++; if (a.px[i] + a.px[i + 1] + a.px[i + 2] <= .92 * (b.px[i] + b.px[i + 1] + b.px[i + 2])) n++; }
+          return all ? n / all : 0;
+        };
+        const inRoom = p => p.x >= room.x && p.x < room.x + room.w && p.y >= room.y && p.y < room.y + room.h;
+        const tinted = () => v.occluders.filter(o => o.kind === 'prop' && o.sprite.renderable && o.tintAt && inRoom(o.tintAt)).map(o => o.sprite.tint);
+        // Controls shade every other room as usual and leave this one out.
+        const hidden = grab(false), hiddenTints = tinted();
+        L.setUnseen(m, others);
+        const control = grab(false), controlTints = tinted();
+        L.setUnseen(m, rooms);
+        const again = grab(false);
+        // Who is inside never shows: the same hidden frame with an enemy standing in the room.
+        const occupied = enemy ? grab(false, dt, f => f.actors.push({ ...enemy, x: spot.inside[0] * T, y: spot.inside[1] * T, regionId: spot.room })) : null;
+        const first = grab(true);
+        for (let n = 0; n < 20; n++) grab(true);
+        const settled = grab(true);
+        L.setUnseen(m, others);
+        const settledControl = grab(true);
+        L.setUnseen(m, rooms); grab(true);
+        const rehidden = grab(false, 0);
+        const ch = (c, s) => (c >> s) & 255;
+        return {
+          room: spot.room, liveRevealed: live.revealed[spot.room],
+          floor: { hidden: block(hidden, spot.inside), control: block(control, spot.inside), first: block(first, spot.inside), settled: block(settled, spot.inside) },
+          corridor: { hidden: block(hidden, spot.corridor), control: block(control, spot.corridor) },
+          darker: darker(hidden, control), againVsHidden: exact(again, hidden), occupiedVsHidden: occupied ? exact(occupied, hidden) : null, enemy: enemy?.uid ?? null,
+          props: hiddenTints.length, propRatio: hiddenTints.length ? Math.max(...hiddenTints.flatMap((t, i) => [16, 8, 0].map(s => ch(t, s) / Math.max(1, ch(controlTints[i], s))))) : null,
+          settledVsControl: exact(settled, settledControl), rehiddenVsHidden: exact(rehidden, hidden),
+        };
+      } finally { h.app.ticker.start(); }
+    }, spot);
+    await frames(page, 4);
+    assert.equal(r.liveRevealed, false, `${r.room} is not revealed from three cells out`);
+    assert.ok(r.floor.hidden <= .85 * r.floor.control, `the hidden room's floor is shaded: ${JSON.stringify(r.floor)}`);
+    assert.ok(r.floor.hidden >= .4 * r.floor.control, `but not blacked out: ${JSON.stringify(r.floor)}`);
+    assert.equal(r.corridor.hidden, r.corridor.control, 'the corridor outside the room is untouched');
+    assert.ok(r.darker >= .6, `most of the room on screen, furniture included, is darker: ${(r.darker * 100).toFixed(1)}%`);
+    assert.ok(r.props >= 1 && r.propRatio <= .75, `furniture in the room takes the shade: ${r.props} props, worst channel ratio ${r.propRatio}`);
+    assert.equal(r.againVsHidden, 0, 'restoring the shade draws the same hidden frame');
+    assert.ok(r.enemy, 'an enemy to stand in the room'); assert.equal(r.occupiedVsHidden, 0, 'an enemy in the hidden room changes no pixel');
+    assert.ok(r.floor.first > r.floor.hidden && r.floor.first < r.floor.settled, `the shade lifts over the lights' 0.3 s: ${JSON.stringify(r.floor)}`);
+    assert.equal(r.settledVsControl, 0, 'once revealed nothing of the shade is left');
+    assert.equal(r.rehiddenVsHidden, 0, 'hidden again, the shade is back in the same frame (dt 0)');
+    return r;
+  });
   await step('M04 the S-N stairs take the player up and back down; each floor keeps its own dressing', async () => {
     const rides = [];
     for (const [from, to, map] of [['mall-f1', 'mall-f2', 'mall-f1'], ['mall-f2', 'mall-f1', 'mall-f2']]) {

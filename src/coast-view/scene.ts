@@ -331,6 +331,7 @@ export class CoastView {
       this.weather.shelter += (indoor - this.weather.shelter) * Math.min(1, dt * 4);
     }
     this.weather.update(this.time, this.cam, this.view, f.revealed);
+    this.light.syncUnseen(dt, f.revealed);
     this.light.sync(dt, l => (l.region === undefined || l.region === null || f.revealed[l.region] === true) && !l.regions?.some(r => f.revealed[r] !== true), this.time);
     this.tintUpright(f);
     if (this.opts.debug) this.drawDebug(f); else this.debugG.clear();
@@ -407,6 +408,8 @@ export class CoastView {
     this.tide.setMap(m);
     this.weather.setMap(m, bake.puddles, roofs, awnings, (x, y) => M[y >> 5]?.[x >> 5] === 'water' || this.tide.wet(x, y));
     this.light.mood = MOODS[this.opts.mood % MOODS.length]; this.light.setMap(m, mall?.zone ?? null);
+    // Mall floors draw no ceilings (a maintainer decision), so an unrevealed room is shaded instead (#26 F14).
+    this.light.setUnseen(m, mall ? m.regions.filter(r => r.inside && !r.sealed) : []);
     this.staticLights(m);
     this.stats.occluders = this.occluders.length;
     this.camF = { x: f.player.x - this.view.w / 2, y: f.player.y - AIM_H - this.view.h / 2 };
