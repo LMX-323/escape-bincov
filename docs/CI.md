@@ -46,7 +46,7 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 | batch-2 | `test:save-browser`、`test:asset-load`、`test:hud-release`、`test:issue26-inventory`、`test:mall-passages` |
 | batch-3 | `test:desktop-input`、`test:portable`、`test:shop-drag`、`test:title`、`test:title-water`、`test:opening` |
 | batch-4 | `test:issue26-station`、`test:issue26-spatial`、`test:tactical`、`test:art`、`test:systems`、`test:mobile` |
-| batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux`、`test:range` |
+| batch-5 | `test:buildings`、`test:station-tier1`、`test:shop-feedback`、`test:mobile-ux`、`test:range`、`test:gunsmith-bench` |
 | batch-6 | `test:loot-target`、`test:mall-sample`、`test:qol`、`test:coast-render-targets`、`test:hideout` |
 | batch-7 | `test:raid-default`、`test:ui`、`test:mall-landing`、`test:coast-animation`、`test:station-relief`、`test:station-reset` |
 | batch-8 | `test:expansion`、`test:loot` |
@@ -56,6 +56,8 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 #61 当时按较慢运行样本重排，并将新增 raid-default 的实测 124 秒纳入负载。此前 35 套件的中位 17:33 和约 13–14 分钟调度回放仅为 #61 的研究输入；当前已经是 40 套件，实际收益必须使用同产品字节的新基线/候选对照，结果见承接 PR，不能把旧回放当成本次 CI 通过。
 
 2026-10-23 的 #78 新增 `test:enemy` 到 batch-8：真实合法新档在两个分辨率恢复前摇/换弹/恢复阶段，核对展示与离线请求；本地六组合约 8 秒。旧完整套件保留，命令计数和证据验证同步为 40。
+
+2026-10-27 的 #28 M2-05 新增 `test:gunsmith-bench` 到 batch-5：真实院子和旧页签打开改枪工作台，预览不写入、确认写入一次、换护木带走导轨件、换小弹匣卸弹、换枪和关闭先询问，1280×720 与 1920×1080 截图；本地约 15 秒。命令计数同步为 41。
 
 每组可在依赖和 Chromium 安装后用 `node scripts/ci/run-browser.mjs batch-2` 运行；batch-8 另需按工作流下载真实旧客户端。执行失败会立即停止本组后续套件并标记未运行，其他组照常完成。保留 45 分钟 job 超时，不额外缩短套件预算。
 

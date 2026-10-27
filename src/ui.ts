@@ -32,12 +32,23 @@ import { openingAutoplay, playOpening } from './opening/gate';
 import { showScreen, titleScene } from './screen';
 import { esc } from './html';
 import { SUPPLY_IDS } from './rpg';
+import { Workbench } from './gunsmith-view/bench';
 // The raid view and the station yard switch screens through this port rather than importing the page.
 provideNavigation({ changeState, enterExternalRun, render, hideoutExternal, startPreparedHideoutRaid });
 let phoneLayout = false;
 /** Phone layout, set by main.ts from the device and screen size: a presentation choice, not an input mode. */
 export function setPhoneLayout(on: boolean) { phoneLayout = on; }
 const touchLayout = () => phoneLayout;
+/** The gunsmith workbench overlay (#28 M2-05): the yard's panel, on the same HideoutRuntime. */
+let bench: Workbench | null = null;
+function openBench(gun: string) {
+    // A failed write shows the page's own storage alarm on the next paint; the toast says what happened.
+    bench = new Workbench(hideoutRuntime, gun, { toast: text => toast(text), sound: () => {}, storage: () => render() });
+    setOverlay('gunsmith');
+}
+function benchOverlayHtml(b: Workbench) {
+    return `<div class="overlay gs-page"><section class="panel modal gs-host" role="dialog" aria-modal="true" aria-label="改枪工作台"><header><h2>改枪工作台</h2><span>选好配件，按「确认」才会改到枪上</span><b>现金 ¥ ${app.save.cash.toLocaleString()}</b><button type="button" data-gs="close">关闭 <kbd>Esc</kbd></button></header>${b.html({ compact: touchLayout() })}</section></div>`;
+}
 type InventoryDrag = { uid: string; source: string; token: number; rotated?: boolean };
 let activeDrag: InventoryDrag | null = null;
 let dragToken = 0;
@@ -125,7 +136,7 @@ function occupied(inv: D.Inventory) {
 function equipmentPanel(equipment: D.Equipment, bag: D.Inventory, safe: D.Inventory) {
     const weapon = D.equippedWeapon(equipment);
     const ammo = equipment.ammo;
-    return `<section class="safe-section equipment-section"><h3 class="section-title"><b class="section-number">01</b>随身装备 <span>携行</span></h3><div class="equip"><div class="equipment-caption"><span>${equipment.weapon ? '主武器' : '随身匕首'}</span>${equipment.relief ? '<span class="orange">救济</span>' : ''}</div><div class="equipped-icon">${itemArtwork(weapon.id, inventoryCell() === 80 ? 312 : 204, inventoryCell() === 80 ? 102 : 52)}</div><div class="equipment-name"><strong>${weapon.name}</strong>${equipment.weapon ? `<span id="equipped-ammo">${ammo} / ${weapon.magazine}</span>` : '<span>始终保留</span>'}</div>${equipment.weapon ? btn('卸下主武器', 'unequip', 'text-button') : ''}</div>${weapon.ammo ? `<p class="reserve-ammo">背包备用弹药 <span>${D.ITEMS[weapon.ammo].name} · ${D.count(bag, weapon.ammo)} 发</span></p>` : '<p class="reserve-ammo">装备枪械后，备用弹药放在背包。</p>'}<h3 class="section-title secure-heading">安全箱 <span>失败也保留</span></h3><div class="secure-kit">${grid(safe, 'safe')}<div class="knife-card">${itemIcon('knife')}<strong>水手匕首</strong><span>随身携带<br>始终保留</span></div></div></section>`;
+    return `<section class="safe-section equipment-section"><h3 class="section-title"><b class="section-number">01</b>随身装备 <span>携行</span></h3><div class="equip"><div class="equipment-caption"><span>${equipment.weapon ? '主武器' : '随身匕首'}</span>${equipment.relief ? '<span class="orange">救济</span>' : ''}</div><div class="equipped-icon">${itemArtwork(weapon.id, inventoryCell() === 80 ? 312 : 204, inventoryCell() === 80 ? 102 : 52)}</div><div class="equipment-name"><strong>${weapon.name}</strong>${equipment.weapon ? `<span id="equipped-ammo">${ammo} / ${weapon.magazine}</span>` : '<span>始终保留</span>'}</div>${equipment.weapon ? btn('卸下主武器', 'unequip', 'text-button') : ''}${equipment.weapon && equipment.weaponUid && app.state === 'hideout' ? btn('改装', 'gunsmith-open', 'text-button', `data-id="${equipment.weaponUid}"`) : ''}</div>${weapon.ammo ? `<p class="reserve-ammo">背包备用弹药 <span>${D.ITEMS[weapon.ammo].name} · ${D.count(bag, weapon.ammo)} 发</span></p>` : '<p class="reserve-ammo">装备枪械后，备用弹药放在背包。</p>'}<h3 class="section-title secure-heading">安全箱 <span>失败也保留</span></h3><div class="secure-kit">${grid(safe, 'safe')}<div class="knife-card">${itemIcon('knife')}<strong>水手匕首</strong><span>随身携带<br>始终保留</span></div></div></section>`;
 }
 function bagPanel(bag: D.Inventory, weight: number) {
     const limit = carryLimit();
@@ -163,7 +174,7 @@ function details() {
     if (shopping()) return shopDetails(item);
     if (!item) return `<aside class="details details-empty"><div class="section-label">出发前检查</div><h3>选中一件物品</h3><p class="muted">查看用途、重量和操作。</p><dl class="field-notes"><div><dt>弹药</dt><dd>换弹只使用背包内的弹药。</dd></div><div><dt>安全箱</dt><dd>放入这里的物品，撤离失败也会保留。</dd></div></dl><div class="inv-help">单击查看 · 拖动整理${app.state === 'hideout' ? '<br>双击在仓库与背包间转移' : ''}</div>${app.save.reliefSupplies?.length ? btn('领取救济补给', 'relief') : ''}</aside>`;
     const d = D.ITEMS[item.id];
-    const actions = `${D.isGun(item.id) && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
+    const actions = `${D.isGun(item.id) && app.selectedSource !== 'safe' ? btn('装备主武器', 'equip', 'primary') : ''}${D.isGun(item.id) && app.state === 'hideout' ? btn('改装', 'gunsmith-open', '', `data-id="${item.uid}"`) : ''}${btn(app.selectedSource === 'stash' ? '放入背包' : '放入仓库', 'transfer')}${btn(app.selectedSource !== 'safe' ? '放入安全箱' : '放入背包', 'secure')}${!item.relief ? btn('去商店出售', 'sell') : ''}`;
     const baseActions = app.state === 'hideout' && rpgEnabled(app.expansion) ? `${d.kind === 'accessory' ? btn('佩戴', 'charm-equip') : ''}${SUPPLY_IDS.includes(item.id) ? btn('使用', 'use-base') : ''}` : '';
     const size = D.itemSize(item);
     return `<aside class="details"><div class="item-heading"><div class="detail-icon">${itemIcon(item.id)}</div><div><div class="section-label">${kindName[d.kind]}</div><h3>${d.name}</h3></div>${touchLayout() ? btn('关闭详情', 'clear-selection', 'detail-close') : ''}</div><div class="detail-body"><p class="item-description">${itemDescription(item.id)}</p>${attachmentLine(item.id, 'small item-maker')}<dl class="item-facts"><div><dt>占用</dt><dd>${size.w} × ${size.h} 格</dd></div><div><dt>重量</dt><dd>${D.itemWeight(item).toFixed(2)} kg</dd></div><div><dt>数量</dt><dd>${item.qty}</dd></div><div><dt>售价</dt><dd>${item.relief ? '不可出售' : '¥ ' + d.sell * item.qty}</dd></div></dl>${item.relief ? '<p class="small orange">救济物资 · 不可出售</p>' : ''}${D.isGun(item.id) && app.selectedSource === 'safe' ? '<p class="small">枪械先放入背包，再选中并装备主武器。</p>' : ''}<div class="item-actions">${actions}${baseActions}${d.w !== d.h ? btn('旋转', 'rotate-item') : ''}${btn('移动格位', 'place-item')}${splitControl(item)}</div></div></aside>`;
@@ -372,12 +383,19 @@ function overlayHtml() {
         return `<div class="overlay"><div class="panel modal"><h2>导入这份存档？</h2><p>现金 ¥ ${(app.pendingImport || app.pendingRecoveryImport!.profile).cash} · 累计出击 ${(app.pendingImport || app.pendingRecoveryImport!.profile).stats.runs} 次</p><p>导入会替换此浏览器中本游戏的进度，两个存档不会合并。请先导出当前存档。</p><div class="actions">${btn('先导出当前存档', 'export-save')}${btn('确认导入', 'confirm-import', 'primary')}${btn('取消', 'close')}</div></div></div>`;
     if (!app.overlay)
         return '';
+    if (app.overlay === 'gunsmith' && bench) return benchOverlayHtml(bench);
     if (app.overlay === 'shop-leave') return `<div class="overlay"><section class="panel modal"><h2>放弃未结算的清单？</h2><p>待买、待卖和仓库位置会恢复。现金与物资尚未改变。</p><div class="actions">${btn('继续挑选', 'close')}${btn('放弃清单并离开', 'shop-leave-confirm', 'danger')}</div></section></div>`;
     if (app.overlay === 'perk') return perkDialog ? perkOverlayHtml(perkDialog) : '';
     if (app.overlay === 'shop-quest') return `<div class="overlay"><section class="panel modal"><h2>这些任务物资会不够交付</h2><ul>${Shop.saleWarnings(app.save, cart()).map(w => `<li>「${w.quest}」需要 ${D.ITEMS[w.id].name} ${w.needed} 件；本次卖出 ${w.sold} 件，整笔交易后剩 ${w.remaining} 件。</li>`).join('')}</ul><div class="actions">${btn('取消，继续挑选', 'close')}${btn('仍要结算', 'checkout-confirm', 'danger')}</div></section></div>`;
     return `<div class="overlay"><div class="panel modal" style="width:610px"><div class="section-label">${touchLayout() ? '手机触控操作' : '键盘与鼠标操作'}</div><h2>行动指南</h2>${touchLayout() ? '<p class="touch-guide">左半屏按住拖动是移动，拖远冲刺；右半屏按住拖动是瞄准，拖远持续开火，松开即停。靠近物资点「搜刮」或「拾取」；几个箱子重叠时，点名称直接打开那一个。在撤离区站稳，按住「按住撤离」3 秒。背包和地图不暂停行动。</p>' : ''}<div class="help-grid">${[['W A S D', '移动'], ['鼠标', '瞄准'], ['左键 / 右键', '攻击 / 精瞄'], ['Shift', '冲刺'], ['R', '换弹'], ['E', '交互 / 搜刮 / 阅读'], ['按住 E 3 秒', '撤离（绿色标记内）'], ['滚轮', '切换搜刮目标'], ['Q', '快捷治疗'], ['Tab', '背包（不暂停）'], ['M', '地图（不暂停）'], ['1 / 2', '主武器 / 匕首'], ['Esc', '暂停 / 关闭面板']].map(([k, v]) => `<div><kbd>${k}</kbd>${v}</div>`).join('')}</div><p>每局限时 10 分钟。备用弹药放在背包中，${touchLayout() ? '靠近物资点击拾取，打开地图查看本局撤离点。在绿色圈内站稳，按住撤离按钮满 3 秒。' : '靠近箱子或尸体后，用滚轮切换高亮目标，按 E 打开双栏；关闭后可再选其他目标。散落物按 E 拾取。物品可拖入背包、安全箱或放回。搜刮不暂停。按 M 查看本局撤离点，在绿色圈内站稳，按住 E 满 3 秒撤离。'}</p><p>出击 4 分 30 秒后电台预警，5 分钟时潮位变化。涉水会积累污染；在背包中使用除藻药剂可降低污染。${touchLayout() ? '治疗按钮' : 'Q'}使用背包中的绷带或急救包。</p><p>行动中死亡、超时或放弃均按撤离失败处理：丢失背包物资和主武器，保留安全箱内的物品和水手匕首。刷新可恢复最近成功保存的进度。</p>${btn('关闭指南', 'close', 'primary')}</div></div>`;
 }
 export function closeOverlay() {
+    if (app.overlay === 'gunsmith' && bench) {
+        // Esc answers the bench's own question with "stay"; a waiting preview asks before the bench closes.
+        if (bench.asking) { bench.act('leave-stay', ''); render(); return; }
+        if (!bench.requestClose()) { render(); return; }
+        bench = null;
+    }
     setOverlay(app.overlay === 'help' ? app.helpReturn : '');
 }
 export function setOverlay(value: string) {
@@ -529,6 +547,11 @@ function commitDrop(el: HTMLElement, e: DropPoint, drag: InventoryDrag) {
     } catch { activeDrag = null; toast('拖放未完成，物品仍在原处。'); }
 }
 function bind() {
+    ui().querySelectorAll<HTMLButtonElement>('[data-gs]').forEach(el => el.onclick = () => {
+        if (!bench || el.disabled) return;
+        audio.start(); audio.click();
+        if (bench.act(el.dataset.gs!, el.dataset.arg ?? '') === 'close') { bench = null; setOverlay(''); } else render();
+    });
     ui().querySelectorAll<HTMLElement>('[data-action]').forEach(el => el.onclick = () => {
         const a = el.dataset.action!, id = el.dataset.id!;
         if (app.conflict && !['export-save', 'export-original', 'refresh'].includes(a)) {
@@ -648,6 +671,7 @@ function bind() {
                 toast(app.selectedSource === 'stash' ? '将物品放进待卖区，再统一结算。' : '先在整备中移入仓库，再到商店出售。');
                 app.tab = 'arms'; app.shop = null; clearSelection(); render();
                 break;
+            case 'gunsmith-open': if (id) openBench(id); break;
             case 'equip':
                 mutate(() => D.equip(app.save, app.selected), '主武器已装备。', '无法装备，请给换下的武器和弹药腾出空间。');
                 break;

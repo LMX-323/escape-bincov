@@ -31,6 +31,7 @@ export function detailsHtml(item: D.Item | null, source: string | null, mode: 'g
   const maker = facts ? `<span class="dmaker">制造商：${esc(facts.brand)} · 适配：${esc(facts.guns.join('、') || '暂无')}</span>` : '';
   const acts = mode === 'gear' ? [
     gun && source !== 'safe' ? btn('装备主武器', 'equip', 'primary') : '',
+    gun ? btn('改装', 'gunsmith') : '',
     d.kind === 'accessory' ? btn('佩戴', 'charm-equip', 'primary') : '',
     SUPPLY_IDS.includes(item.id) ? btn('使用', 'use') : '',
     source === 'stash' ? btn('放入背包', 'quick') : btn('放入仓库', 'quick'),
@@ -54,7 +55,7 @@ export function gearHtml(s: HideoutSnapshot, cell: number, selected: string | nu
       <div class="slot ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备">
         <img alt="" src="${itemArt(e.weapon || 'knife')}" style="height:${Math.round(cell * .6)}px"><div><b>${esc(w.name)}</b>
         <span>${e.weapon ? `弹匣 ${e.ammo} / ${w.magazine}${e.relief ? ' · 救济' : ''} · 背包备用 ${w.ammo ? `${ammo} 发` : '—'}` : '随身匕首 · 始终保留 · 把枪拖到这里装备'}</span></div>
-        ${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}
+        ${e.weapon ? `<span class="slot-acts">${btn('改装', `gunsmith:${e.weaponUid}`, 'mini')}${btn('卸下', 'unequip', 'mini')}</span>` : ''}
       </div>${charmRow(s.charm?.id ?? null)}
       <h3><i>02</i>背包 <small>${occupied(p.bag)} / ${p.bag.w * p.bag.h} 格</small></h3>${gridHtml(p.bag, 'bag', cell, selected, { empty: '背包是空的' })}
       <div class="meter ${over ? 'over' : ''}"><span>携行重量 <small>含装备与安全箱</small></span><b>${departure.weight.toFixed(1)} <small>/ ${departure.carry.toFixed(1)} kg</small></b><i style="width:${Math.min(100, departure.weight / departure.carry * 100)}%"></i></div>
@@ -76,7 +77,7 @@ export function gearCompactHtml(s: HideoutSnapshot, cell: number, selected: stri
   const inv = paneB === 'stash' ? p.stash : p.safe;
   return `<div class="cgear">${gearActions(p)}
     <p class="gear-hint">主武器槽 · 选中枪械后点「装备主武器」</p>
-    <div class="cbar"><div class="slot chip ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备"><img alt="" src="${itemArt(e.weapon || 'knife')}"><b>${esc(w.name)}</b><span>${e.weapon ? `${e.ammo} / ${w.magazine}${w.ammo ? ` · 备用 ${ammo}` : ''}` : '拖枪到这里装备'}</span>${e.weapon ? btn('卸下', 'unequip', 'mini') : ''}</div>
+    <div class="cbar"><div class="slot chip ${e.weapon ? '' : 'emptyslot'}" data-slot="weapon" aria-label="主武器槽" title="把仓库或背包里的枪拖到这里装备"><img alt="" src="${itemArt(e.weapon || 'knife')}"><b>${esc(w.name)}</b><span>${e.weapon ? `${e.ammo} / ${w.magazine}${w.ammo ? ` · 备用 ${ammo}` : ''}` : '拖枪到这里装备'}</span>${e.weapon ? `<span class="slot-acts">${btn('改装', `gunsmith:${e.weaponUid}`, 'mini')}${btn('卸下', 'unequip', 'mini')}</span>` : ''}</div>
       <div class="cweight ${over ? 'over' : ''}">携行 <b>${departure.weight.toFixed(1)}</b> / ${departure.carry.toFixed(1)} kg</div></div>${charmRow(s.charm?.id ?? null)}
     <div class="panes">
       <section class="pane"><h3>背包 <small>${occupied(p.bag)} / ${p.bag.w * p.bag.h}</small></h3><div class="pane-scroll">${gridHtml(p.bag, 'bag', cell, selected, { empty: '背包是空的' })}</div></section>
@@ -171,6 +172,8 @@ export function trainingHint(t: TrainingProgress): string {
   return '在训练区实际走动，每五秒保存。';
 }
 export const trainingSeconds = (t: TrainingProgress) => `已保存 ${t.saved.activeSeconds.toFixed(1)} 秒 · 待保存 ${t.pendingSeconds.toFixed(1)} 秒`;
+/** The workbench's gunsmith entry (#28 M2-05): open at any workbench level, the bench needs no building (M0 decision 5). */
+export const benchEntryHtml = () => `<div class="bench-entry"><div><b>改枪工作台</b><span>改装装备中和仓库、背包、安全箱里的枪。不用先修建工作台。</span></div>${btn('打开改枪', 'gunsmith', 'primary')}</div>`;
 export function facilityHtml(f: FacilityInfo, s: HideoutSnapshot, training: TrainingProgress) {
   const pips = Array.from({ length: f.maxLevel }, (_, i) => `<i class="${i < f.level ? 'on' : ''}"></i>`).join('');
   const short = f.cost ? s.profile.cash < f.cost.cash || f.cost.items.some(i => i.have < i.qty) : false;
