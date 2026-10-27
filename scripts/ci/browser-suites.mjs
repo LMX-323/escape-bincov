@@ -5,8 +5,8 @@ const schedule = {
   'batch-2': ['save-browser', 'asset-load', 'hud-release', 'issue26-inventory', 'mall-passages'],
   'batch-3': ['desktop-input', 'portable', 'shop-drag', 'title', 'title-water', 'opening'],
   'batch-4': ['issue26-station', 'issue26-spatial', 'tactical', 'art', 'systems', 'mobile'],
-  'batch-5': ['buildings', 'station-tier1', 'shop-feedback', 'mobile-ux', 'range'],
-  'batch-6': ['enemy-720', 'loot-target', 'mall-sample', 'qol', 'coast-render-targets', 'hideout'],
+  'batch-5': ['buildings', 'station-tier1', 'shop-feedback', 'mobile-ux', 'range', 'gunsmith-bench'],
+  'batch-6': ['enemy-720', 'loot-target', 'mall-sample', 'qol', 'coast-render-targets', 'hideout', 'gunsmith-flow'],
   'batch-7': ['enemy-touch', 'raid-default', 'ui', 'mall-landing', 'coast-animation', 'station-relief', 'station-reset'],
   'batch-8': ['enemy-1080', 'expansion', 'loot'],
 };
