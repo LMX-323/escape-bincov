@@ -1,5 +1,7 @@
 # 水产站玩家空手手臂与手（#26 F16）
 
+承接 [PR #131](https://github.com/xuys2025/escape-bincov/pull/131)；实现提交 `750d6a9a050495a56e7fe8eaf45d334de3d5069e`，后续记录提交不改变受检源码。
+
 维护者截图反馈“水产站里这个人看上去没有手”，[原因核查](https://github.com/xuys2025/escape-bincov/issues/26#issuecomment-6446761015)已确认：共用的行动身体素材按分层约定不画前臂和手，院子只取了身体图。2026-10-28 维护者授权修复并开 PR；基线 main `02b5e1e5c5261f5caea55dccc875c8ae93e3120b`，任务分支 `codex/f16-station-hands`。本项独立交付，不接管 #26 其他反馈；准确 head、CI 与审阅状态以本项 PR 为准。
 
 ## 实现入口与边界
