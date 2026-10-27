@@ -9,7 +9,7 @@
 - 详情与商店（M2-08）：三处详情共用文字，售价按组成；出售构成；目录筛选和分页。待买、待卖区仍 4×3，M3 加入 5、6 格长的枪时由单测提醒改成 6×2。
 - 检查：`test:gunsmith-bench`（batch-5）、`test:gunsmith-flow`（batch-6），共 42 套。本机射击检查 k（拥挤战斗声音预算）在 main 自己的构建上也失败，属本机环境，以 CI 为准。
 - 契约与决定：[CONTRACTS.md](docs/gunsmith/CONTRACTS.md)；进度：[#80](https://github.com/xuys2025/escape-bincov/issues/80)。未做：工作台插槽按钮放到图上的挂点处。
-- 10-27 晚维护者试玩反馈两处，都在 #106 修好：院子导入存档时选文件超过 5 秒，菜单重画把选中的文件丢了（main 上原有的问题，`c716003`）；工作台电脑版重排，点配件时只有枪上那一块、位置格、数字和底栏变，其他框都不动（`c503cd6`，CONTRACTS「桌面布局」）。顺带让整备面板在 1280×720 不再多出 9px（station H11）。合并时同步 main `9400cf6`（含 #127、#128、#115、#129；#129 的换枪去掉了已退役的样枪调用，局内背包的「是不是枪」改用 `D.isGun`）。合并队列里 #106 排在 #115、#129、#108、#112 之后，它们合入后要再同步一次 main。
+- 10-27 晚维护者试玩反馈两处，都在 #106 修好：院子导入存档时选文件超过 5 秒，菜单重画把选中的文件丢了（main 上原有的问题，`c716003`）；工作台电脑版重排，点配件时只有枪上那一块、位置格、数字和底栏变，其他框都不动（`c503cd6`，CONTRACTS「桌面布局」）。顺带让整备面板在 1280×720 不再多出 9px（station H11）。合并时同步 main `98968e1`（含 #127、#128、#115、#129、#108、#112；CI 共 44 条浏览器命令；#129 的换枪去掉了已退役的样枪调用，局内背包的「是不是枪」改用 `D.isGun`）。合并队列里 #106 排在 #115、#129、#108、#112 之后，它们合入后要再同步一次 main。
 
 ## 2026-10-27 #26 F15：局内主武器槽，拖枪即装备（PR #129，`agent/f15-raid-equip-slot`）
 
@@ -92,6 +92,14 @@
 #60 Q-E02 B，同一交付完成B1三有限命令+B2 detached窄读投影；起点 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`，实现/验证入口见 [摘要](docs/tasks/quality-entropy.md#q-e02-b-行动背包有限服务)、[派生读数](docs/CODEMAP.md#派生读数)和正式工厂单测 `tests/raid-inventory-services.test.ts`。面板不持Session/SaveSession，命令回调内取fresh loadout，保留原 mutate接受集合、世界同事务、失败引用替换和原UI错误反馈；inventory全量quick/loot部分quick分别保持，不改存档/时钟/规则，不搬Scope/renderer。
 
 本地正式工厂10项+原负重11/11，完整884/884、工程守卫64/64、package/最终类型检查通过。浅读投影及错误部分quick两种副本回归均被断言拦下；两尺寸键鼠与保存失败/嵌套枪件的既有issue26定向case 3/3通过，页面异常/外网0，真实截图和[验证记录](docs/tasks/raid-inventory-services/validation.json)已归档；完整其余浏览器风险由准确head CI复核。10-25 已推送并建立 PR #115；不自行合并发布。
+
+## 2026-10-27 #61：PR 模板文档分类精确路径（续作 #108）
+
+沿 [PR #108](https://github.com/xuys2025/escape-bincov/pull/108) 原分支 `fix/ci-template-doc-path`，从原 head `2468d30c9b424a88429f55a47790f0590e75b256` 正常合入已接受 main `86add10b0b7afb96948ac667d176d19badfc406b`，仅任务清单和本交接冲突，保留主线商场及打击感记录。实际文件 `.github/pull_request_template.md` 被大写白名单遗漏；仍只修唯一精确路径及 CI 说明，不扩大白名单。
+
+前一轮 Windows 10 / Node 24.22.1 / pnpm 11.19.0：`pnpm test` 921/921、`pnpm check:ci` 65/65、`pnpm package` 通过。单测首跑受沙箱 `uv_os_get_passwd ENOMEM` 阻塞，正常宿主重跑通过。工程守卫首跑 64/65：测试写死系统级 Git Bash 目录，本机为用户级安装；改从当前 `git --exec-path` 定位 Bash 后，原门禁 75 组成功/失败/跳过组合全部实际执行，全守卫通过。主线策略配相同测试的负对照为 15/17，两处预期失败；候选全部通过。push/PR 仍只在同非文档指纹和完整成功 main 证据下复用，无证据、混入代码、可执行模式和未知大写路径继续全量。
+
+最终合并前按维护者授权，在 #115（`8c27ce2`）及 #129（`9400cf6`）合入后，从 #108 head `c82cc8b` 正常同步 main `9400cf6a4efdea4d8898c4d3adfdf9a61efab899`。仅本交接一处插入冲突，保留双方完整记录；与预演结果一致。同步后 Windows 同环境：939/939 单测、65/65 CI 守卫、打包通过；HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`。游戏源码/素材与本轮 main 无差异，生成物未提交。本地未重复浏览器游戏流程，准确 head CI、最终合并与部署结果以原 PR 正文为准。继续核对入口为 `scripts/ci/policy.mjs` 的 `isDocumentation` / `choosePlan`、`scripts/ci/policy.test.mjs` 与 [CI 合同](docs/CI.md#纯文档快速通道)。#61 其余耗时与分片、#95 落幕测试保持原归属。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
@@ -331,6 +339,16 @@ EN-13 接入每五种子之一的头目＋两护卫，替换已有名册三人�
 - 评审后补的：Runtime 旧封锁区的流血/污染掉血在 0 截止（否则流血致死的结算被身体校验拒绝，`tests/loot-recovery.test.ts`）；行动中备份走 `saveSession.backupRecord()`（Runtime 的实时快照）；竖屏暂停看 `html.mobile`，输入框聚焦时不算转屏；门口引导在敌人或子弹压上时隐藏（`scene.ts` `updateStructureGuides`）；HUD 在安全区内而按视口坐标定位的标记用 `--cs-ox/--cs-oy` 抵消；电台台词由 `placeRadio()` 放在状态卡与任务卡之间。
 - 已知仍是缺口、留在测试里作回归守卫的（`scripts/raid-view.mjs` 的 `gap()` 打印 `GAP` 并断言现状，修好后测试变红、恢复原断言）：治疗被拒时 Runtime 丢掉自己的原因说明（ui、desktop-input、mobile，Astra）；「附近」逐件拾取（loot-target、mobile-ux，Astra）；楼梯名盖住正下方的敌人（issue26-spatial S03c 的 `KNOWN_GAPS`，前端）。
 - 刘海安全区可以在 Chromium 里模拟：CDP `Emulation.setSafeAreaInsetsOverride`（mobile-ux 的 `insets()`）。`test:play` 失败时会打印存储错误和最近的拒绝事件。
+
+## 2026-10-25 · #61 敌人套件完整视口分片
+
+10-27 最终组合：main `9400cf6a4efdea4d8898c4d3adfdf9a61efab899` 已按顺序合入 #115、#129；#112 正常同步前置 #108 head `aa68c3b1641b56c7676c0eba84b41c998361aa78`，保留原分支历史并提前验好组合。939 单测、73 CI 守卫、严格类型和正式打包全部通过；游戏源码/素材/领域测试/锁文件与该依赖 head 相同，HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`。前一同步 head 的本机三片 67/59/39 全过且精确并集通过；本组合浏览器结果以原 PR 最新准确 head 的完整 CI 为准，不能挪用旧字节的浏览器结论。维护者已要求准备好、等 #108 完成即可合并：等 #108 先入 main，确认其准确 head 已在本分支、最终合成树等于已验树、完整 CI 通过后，按顺序正常合并 #112，不重新索要同一授权；合并后 main/发布门禁仍必须实际通过。
+
+10-27 续作原 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112) / `ci/enemy-suite-shards`，在隔离工作树正常合并已接受 main `8b5901931f1ca6b56d5dcb6f246ea94649a9a96b`。维护者指定 #115 → #129 → #108 → #112，后续须在前三项合入后再同步复验。当前瓶颈实测见 [CI 分片说明](docs/CI.md#敌人套件的完整视口分片61)，不重复建 PR。单测 925/925、严格类型与打包通过，HTML SHA-256 `af5e1b5769a56cc2c0440b1359412a96c89f98ad8dc134ac2c777d5399f9cd0f`；游戏源码、素材、领域测试与 main 相同。AST 对照确认两敌人脚本原有的 143/31 个断言、输入、等待、截图与 context 调用完整保留。CI 守卫 71/72，本机唯一失败为写死系统 Git Bash 路径，已有前置 #108 修复；首次沙箱单测因 `uv_os_get_passwd` 的 ENOMEM 失败，正常宿主重跑通过，未改断言。三个真实浏览器分片与最新准确 head CI 结果继续记在原 PR，不把 10-25 的结果当成本轮通过。旧首败及历史证据保留如下。
+
+从 main `974a3a8` 在 `ci/enemy-suite-shards` 续作。三个成功 main 的 batch-8 套件步骤为 15:14–17:45，其余组明显较短；缓存及排队仅秒级。此次保留原敌人断言主体，将相互独立的 1280×720、1920×1080、844×390 完整街区/商场链分给 batch-6、batch-8、batch-7；其他套件和旧客户端消费者不迁组。默认 `pnpm test:enemy` 仍跑完整三视口。
+
+唯一分片计划、165 条 case 清单与证据协议见 [CI 分片说明](docs/CI.md#敌人套件的完整视口分片61)。三片在原 timing 行附加精确单元/case、输入配置、run/SHA/attempt 和时段证明，执行器及独立门禁均拒绝缺片、空选择、重复/遗漏、未完成链及旧报告；保留八 runner、失败/取消门禁和真实 120 秒训练。游戏源码、格式和原断言未改。本地 874 单测、72 CI 守卫及 package 通过，HTML 与 main `974a3a8` 一致。完整 CI 首轮 `40161563791` / `be62a79` 的三片分别 67/59/39 case 实际通过；整体因原 station-reset S6 精确 toast 等待失败，保留首败而未重跑冒充通过。S6 后续预先等待本次新反馈，先排除已有同文案 toast，原 20 秒/错误文字/原始字节/副本/写次数/无下载/存储对话框断言保留；旧 main 与候选真实 UI 的同 3.5 秒控制端延迟对照为 13/14 与 14/14，证明后置观测缺口，尚不声称重建了该次 CI 的具体时序。正常无延迟完整回归 14/14；准确新 head CI 结果见 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112)；没有将失败门禁的等待、不同 CPU 的小样本或控制诊断当作整体性能验收。
 
 ## 2026-10-15 · CI 第二阶段：八组均衡与执行耗时（#61）
 
