@@ -16,6 +16,8 @@
 
 地图/碰撞从 [expansion-worlds.ts](../src/expansion-worlds.ts) 的 `resolveExpansionWorld` 和 [spatial.ts](../src/spatial.ts) 进入；画面/资源从 [station-view/route.ts](../src/station-view/route.ts)、[coast-view/sample.ts](../src/coast-view/sample.ts) 追宿主；两者经 [navigation.ts](../src/navigation.ts) 请页面（[ui.ts](../src/ui.ts) 注册）换画面，不直接导入页面，轮用 [pixi-app.ts](../src/pixi-app.ts) 的同一个 Pixi 应用。只改素材时无需先读交易和迁移实现。
 
+商场布局：骨架与各版本世界在 [mall-world.ts](../src/mall-world.ts)（`mallWorldV2`～`mallWorldV4`），家具类型与二、三版家具表在 [mall-layout-v2.ts](../src/mall-layout-v2.ts)，四版家具表与“哪些区域已布置”在 [mall-layout-v4.ts](../src/mall-layout-v4.ts)；新出击选哪一版看 [raid-areas.ts](../src/raid-areas.ts) 的 `sampleMallLayout`。改碰撞要开新版本（已存行动按原版本恢复），只换图不用。画面按格选素材在 [coast-view/mall-dressing.ts](../src/coast-view/mall-dressing.ts)，没有素材的四版家具由 [art/mall-furniture.ts](../src/coast-view/art/mall-furniture.ts) 程序绘制；约束测试 [mall-layout-v2.test.ts](../tests/mall-layout-v2.test.ts)、[mall-layout-v4.test.ts](../tests/mall-layout-v4.test.ts)，记录见[商场 2.5D](mall-2-5d/README.md)。
+
 ## 交易
 
 **职责与所有者。** 商店规则生成结果；唯一 `SaveSession` 提交；水产站和旧页签负责输入与反馈。购物车是临时状态，不能冒充已保存的库存。
@@ -109,7 +111,7 @@
 
 新战术由 [tactical-enemy.ts](../src/raid-runtime/tactical-enemy.ts) 的 `advanceTacticalEnemy` 推进，经 `TacticalEffects` 请求 Runtime 副作用。`EnemyState.tactics` 是唯一持久来源，画面只投影其阶段。新街区 `LayeredRaid` v5，同时保留历史敌人 v4 和 Perk v3 的规则；记录层 #81 原用 `SessionRecord` 6/7，改枪后统一为 v8，敌人规则以 `enemyBackup` 键表示（[记录版本 v8 与敌人规则](gunsmith/CONTRACTS.md#记录版本-v8-与敌人规则与-81-合并)）；严格校验和双备份见[存档合同](tasks/enemy-save-contract.md)。旧行为 A/B 夹具明确使用旧敌人部署。
 
-[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
+[enemy-mall.ts](../src/enemy-mall.ts)的 `installMallEncounter` 仅在新三版或四版商场部署候选内替换二层三人和移动一只既有箱子，复用 actor v1、expansion 3 / raid 5；#98合入后外层统一写v8，`gunsBackup`与敌人/Perk备份沿原规则保留。活动旧商场不调用该初始化器。岗位、东侧绕行、旧版恢复和原子写失败见[商场记录](tasks/enemy-mall.md)与[测试](../tests/enemy-mall.test.ts)，三尺寸场景随 `test:enemy` 运行。
 
 方向性防护由 [enemy-defense.ts](../src/enemy-defense.ts) 根据实际入射方向处理，再由 `damageLayerEnemy` 结算真实生命差；不能用射手后来的位置。兵种压制、驻守、扑击上限和损失撤退见[组织合同](tasks/enemy-relations.md)。十八类角色已有身体/尸体/轮廓，由 `ActorView.tactics.archetype` 选择 [textures.ts](../src/coast-view/textures.ts)；前三类、市场头目、三种动物、四类盐蚀者、四人回收队与三类封锁队在本分支普通街区出击生成。[enemy-motion.ts](../src/coast-view/enemy-motion.ts) 从真实阶段投影身体姿态与音色，声音的阶段去重和可见性由 [sound.ts](../src/coast-view/sound.ts) 负责，不持有模拟时钟。来源、尺寸、确定性导出及动作覆盖见[美术记录](tasks/enemy-street-art.md)，旧 ID 的素材选择保持不变。
 
