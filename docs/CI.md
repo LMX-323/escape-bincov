@@ -19,7 +19,7 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ## 纯文档快速通道
 
-白名单为根目录 `README.md`、`AGENTS.md`、`CONTRIBUTING.md`、`handoff.md`、`.github/PULL_REQUEST_TEMPLATE.md`、`docs/` 内的 Markdown，以及已确认只作文学交接的 `docs/story/GEMINI-RETURN-MANIFEST-20261014.json`。必须是普通非可执行文件；符号链接和未知路径走全量。
+白名单为根目录 `README.md`、`AGENTS.md`、`CONTRIBUTING.md`、`handoff.md`、`.github/pull_request_template.md`、`docs/` 内的 Markdown，以及已确认只作文学交接的 `docs/story/GEMINI-RETURN-MANIFEST-20261014.json`。路径按仓库中的大小写精确匹配；必须是普通非可执行文件，符号链接和未知路径走全量。
 
 `THIRD_PARTY_NOTICES.md` 嵌入 HTML，`README-游玩说明.txt` 进入便携 ZIP，均不属于可跳过输入。代码、素材、测试、脚本、锁文件和配置也全部参与验证指纹。生成物不入库，指纹只看源码：构建可复现，同一份源码和锁文件在本地与 CI 上打出相同字节（移出仓库前，每次 CI 都逐字节核对过提交的生成物与 CI 构建）。
 
@@ -59,7 +59,7 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ### 敌人套件的完整视口分片（#61）
 
-2026-10-27 续作仍沿 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112)。该 PR 尚未合入，因此主线仍把完整 `enemy` 放在 batch-8。最新已接受 main `8b59019` 的[完整运行](https://github.com/xuys2025/escape-bincov/actions/runs/40520775653)中，该组套件共 1108.453 秒，其中 `expansion` 35.685 秒、`loot` 238.195 秒、`enemy` 834.570 秒；其他七组为 212.468–473.274 秒。另四轮成功运行的 `enemy` 为 641.85–705.62 秒，说明优先拆完整视口仍针对当前瓶颈。此处是定位样本，候选收益以最新准确 head 的完整 CI 为准。维护者指定合并顺序为 #115 → #129 → #108 → #112；前三项合入后，#112 须再同步主线并复验。
+2026-10-27 续作仍沿 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112)。该 PR 尚未合入，因此主线仍把完整 `enemy` 放在 batch-8。定位用 main `8b59019` 的[完整运行](https://github.com/xuys2025/escape-bincov/actions/runs/40520775653)中，该组套件共 1108.453 秒，其中 `expansion` 35.685 秒、`loot` 238.195 秒、`enemy` 834.570 秒；其他七组为 212.468–473.274 秒。另四轮成功运行的 `enemy` 为 641.85–705.62 秒，说明优先拆完整视口仍针对当前瓶颈。此处是定位样本，候选收益以最新准确 head 的完整 CI 为准。维护者指定合并顺序为 #115 → #129 → #108 → #112；当前在已接受 main `9400cf6`（含前两项）上同步前置 #108 的准确 head `aa68c3b`，提前验证组合。合并前确认前三项都已入 main，并核对最终合成树与已验版本一致，避免在无内容变化时额外重跑同一组合。
 
 2026-10-25 研究最近三个成功 main 完整运行：[40102916226](https://github.com/xuys2025/escape-bincov/actions/runs/40102916226)、[40101157725](https://github.com/xuys2025/escape-bincov/actions/runs/40101157725)、[40099269052](https://github.com/xuys2025/escape-bincov/actions/runs/40099269052)。触发到必需门禁分别为 18:32、21:22、20:43；batch-8 的套件步骤为 15:14、17:45、17:38，第二慢 batch-1 约 7:45。主机缓存全命中、浏览器组排队仅 2–3 秒，瓶颈在套件执行。单 timing artifact 和单 job logs 下载在调研环境返回代理 403，官方整 run logs ZIP 可读，补得完整 enemy 命令分别为 689.25、796.50、792.04 秒；对应 CPU 为 EPYC 9V74、Xeon 8573C、EPYC 7763（均 4 核）。三轮均为 Node 24.21.0、Chromium build 1243、lavapipe（llvmpipe / LLVM 20.1.2，Vulkan 1.4.318）。
 
