@@ -97,8 +97,10 @@ async function phoneFits() {
     assert.ok(r && r.x >= -1 && r.y >= -1 && r.x + r.width <= size.width + 1 && r.y + r.height <= size.height + 1, `${sel} outside ${size.width}x${size.height}`);
   }
   for (const sel of ['.gs', '.gs-cpage']) assert.equal(await bench(sel).evaluate(e => e.scrollWidth > e.clientWidth + 1), false, `${sel} scrolls sideways`);
-  assert.ok(await bench('[data-gs="confirm"]').evaluate(el => {
-    const r = el.getBoundingClientRect(), hit = el.getRootNode().elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  // Looked up and hit-tested in one evaluation: the yard's five-second checkpoint may repaint the panel between calls.
+  assert.ok(await page.evaluate(() => {
+    const root = document.querySelector('#station-yard').shadowRoot, el = root.querySelector('.modal.k-gunsmith [data-gs="confirm"]');
+    const r = el.getBoundingClientRect(), hit = root.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     return hit === el || el.contains(hit);
   }), 'confirm is covered');
 }
