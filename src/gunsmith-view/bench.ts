@@ -40,6 +40,19 @@ const CAP_TEXT: Readonly<Record<Capped, [string, string]>> = {
     raise: ['举枪时间', '不短于原厂的 65%'], reload: ['换弹时间', '不短于原厂的 65%'], range: ['有效距离', '最多增加 25%'], noise: ['枪声范围', '不低于原厂的 40%'],
 };
 
+/**
+ * The desktop panel's largest box and its side columns by window width (bench.css, the yard's station.css and the old
+ * page's overlay use the same numbers). The stage's room for the gun follows from them and the window alone, never
+ * from the gun's parts, so the picture's scale and place stay put while parts change (maintainer, 2026-10-27).
+ */
+const DESK = { w: 1480, h: 780, cols: [[1600, 240, 404], [1200, 224, 360], [0, 184, 300]] as const };
+function stageRoom(): { w: number; h: number } {
+    const vw = typeof innerWidth === 'number' ? innerWidth : 1280, vh = typeof innerHeight === 'number' ? innerHeight : 720;
+    const [, left, right] = DESK.cols.find(c => vw >= c[0])!;
+    // The middle column less its padding and the stage's; the panel's height less every fixed row around the picture.
+    return { w: Math.min(DESK.w, vw - 24) - left - right - 2 - 46, h: Math.max(96, Math.min(216, Math.min(DESK.h, vh - 24) - 520)) };
+}
+
 const b = (label: string, act: string, arg = '', cls = '', extra = '') =>
     `<button type="button" class="${cls}" data-gs="${act}"${arg ? ` data-arg="${esc(arg)}"` : ''} ${extra}>${label}</button>`;
 const img = (id: string, cls = '') => `<img class="${cls}" alt="" src="${inventoryArtUrl(id)}">`;
@@ -297,7 +310,7 @@ export class Workbench {
   <section class="gs-col gs-left" aria-label="枪械与预设"><h3><i>01</i>枪械 <small>点一把枪开始改</small></h3><div class="gs-guns">${this.gunsHtml(guns, changes)}</div>${this.presetsHtml(gun, preview)}</section>
   <section class="gs-col gs-mid" aria-label="枪身与属性">${this.bodyHtml(gun, list, at, preview, changes, mark)}${this.statsHtml(statsBefore, statsAfter, buildAfter)}</section>
   <section class="gs-col gs-right" aria-label="配件">${this.partsHtml(gun, buildAfter, at, list, statsAfter.scores)}</section>
-  <footer class="gs-foot">${this.pendingHtml(preview)}${this.sumHtml(gun, preview)}${this.actsHtml(preview)}</footer>
+  <footer class="gs-foot">${this.chipsHtml(preview)}${this.effectsHtml(gun, preview)}${this.actsHtml(preview)}</footer>
   ${leave}
 </div>`;
     }
@@ -339,16 +352,29 @@ export class Workbench {
     }
 
     /**
-     * The gun as the preview builds it (#28 M2-10): Sol's workbench picture at the largest whole scale that fits the stage
-     * (ART-SPEC 2: 3 to 4 times on desktops, 1 to 3 on phones), else the inventory picture.
+     * The phone's picture of the gun as the preview builds it (#28 M2-10): Sol's workbench picture at the largest whole
+     * scale that fits (ART-SPEC 2: 1 to 3 times on phones), else the inventory picture.
      */
-    private stageArt(gun: BenchGun, parts: GunState['parts'], phone: boolean) {
+    private phoneArt(gun: BenchGun, parts: GunState['parts']) {
         const pic = gunsmithArt?.bench(gun.id, parts) ?? null;
         if (!pic) return img(gun.id);
         const vw = typeof innerWidth === 'number' ? innerWidth : 1280, vh = typeof innerHeight === 'number' ? innerHeight : 720;
-        const room = phone ? [vh > vw ? vw - 60 : (vw - 60) * .4, 80] : [vw >= 1600 ? 780 : 600, vh >= 900 ? 200 : 150];
+        const room = [vh > vw ? vw - 60 : (vw - 60) * .4, 80];
         const scale = Math.max(1, Math.floor(Math.min(room[0] / pic.w, room[1] / pic.h)));
         return `<img class="gs-bench-art" alt="" src="${pic.url}" width="${pic.w * scale}" height="${pic.h * scale}" style="width:${pic.w * scale}px;height:${pic.h * scale}px">`;
+    }
+
+    /**
+     * The desktop stage's picture (maintainer, 2026-10-27): the gun's frame (every build it can take) at the largest
+     * whole scale that fits the room, centred, and the picture placed by its receiver inside it. A new part then changes
+     * only its own pixels; the rest of the gun does not move or rescale.
+     */
+    private stageHtml(gun: BenchGun, parts: GunState['parts']) {
+        const room = stageRoom(), pic = gunsmithArt?.bench(gun.id, parts) ?? null, f = gunsmithArt?.benchFrame(gun.id) ?? null;
+        if (!pic || !f) return `<div class="gs-art" style="height:${room.h}px">${img(gun.id)}</div>`;
+        const k = Math.max(1, Math.floor(Math.min(room.w / f.w, room.h / f.h)));
+        const at = `left:${(-f.x - pic.origin[0]) * k}px;top:${(-f.y - pic.origin[1]) * k}px;width:${pic.w * k}px;height:${pic.h * k}px`;
+        return `<div class="gs-art" style="height:${room.h}px"><div class="gs-frame" style="width:${f.w * k}px;height:${f.h * k}px"><img class="gs-bench-art" alt="" src="${pic.url}" width="${pic.w * k}" height="${pic.h * k}" style="${at}"></div></div>`;
     }
 
     /** The gun's line under its name: where it is, the magazine, the weight and the footprint, before → after. */
@@ -365,7 +391,7 @@ export class Workbench {
             const on = g.uid === this.gunUid;
             return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${on && changes ? ` · ${changes} 处改动` : ''}</em></button>`;
         }).join('');
-        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${this.stageArt(gun, preview?.after.parts ?? gun.state.parts, true)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>${this.presetsHtml(gun, preview)}`;
+        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${this.phoneArt(gun, preview?.after.parts ?? gun.state.parts)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>${this.presetsHtml(gun, preview)}`;
     }
 
     /** The phone's fixed bar: what the preview changes (opens the sheet), why it cannot be confirmed, cancel and confirm. */
@@ -378,17 +404,17 @@ export class Workbench {
 
     private gunsHtml(guns: BenchGun[], changes: number | null) {
         return guns.map(g => {
-            const on = g.uid === this.gunUid, mag = g.magazine ? `弹匣 ${g.magazine.ammo} / ${g.magazine.capacity} 发 · ` : '';
-            return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><img alt="" src="${itemPicture({ id: g.id, gun: g.state }, 999, 999).url}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${g.relief ? ' · 救济' : ''}</em><span>${mag}已装 ${g.parts} 件 · ${kg(g.weight)}</span>${on && changes ? `<strong>有 ${changes} 处改动没确认</strong>` : ''}</button>`;
+            const on = g.uid === this.gunUid, mag = g.magazine ? `弹匣 ${g.magazine.ammo}/${g.magazine.capacity} · ` : '';
+            return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><img alt="" src="${itemPicture({ id: g.id, gun: g.state }, 999, 999).url}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${g.relief ? ' · 救济' : ''}</em><span>${mag}配件 ${g.parts} · ${kg(g.weight)}</span>${on && changes ? `<i title="有 ${changes} 处改动没确认">改 ${changes}</i>` : ''}</button>`;
         }).join('');
     }
 
     private bodyHtml(gun: BenchGun, list: Position[], at: Position | null, preview: GunEditPreview | null, changes: number, mark: (p: Position) => boolean) {
         const box = (p: Position) => this.posHtml(p, at, mark);
         const top = list.filter(p => TOP.has(p.slot)), bottom = list.filter(p => !TOP.has(p.slot));
-        return `<header class="gs-head"><h3>${esc(gun.name)}${changes ? ` <span class="gs-badge">预览中 · ${changes} 处改动没确认</span>` : ''}</h3><p>${this.infoText(gun, preview)}</p></header>
-<div class="gs-stage"><div class="gs-row">${top.map(box).join('')}</div><div class="gs-art">${this.stageArt(gun, preview?.after.parts ?? gun.state.parts, false)}</div><div class="gs-row">${bottom.map(box).join('')}</div></div>
-<p class="gs-hint">点枪身上的位置挑配件；点配件只改预览，按「确认」才会改到枪上。</p>`;
+        const state = changes ? `<span class="gs-badge">预览中 · ${changes} 处改动没确认</span>` : '<span class="gs-dim">和枪上一致</span>';
+        return `<header class="gs-head"><div><h3>${esc(gun.name)}</h3><p>${this.infoText(gun, preview)}</p></div><span class="gs-state">${state}</span></header>
+<div class="gs-stage"><div class="gs-row">${top.map(box).join('')}</div>${this.stageHtml(gun, preview?.after.parts ?? gun.state.parts)}<div class="gs-row">${bottom.map(box).join('')}</div></div>`;
     }
 
     private statsHtml(a: { scores: BenchScores; numbers: BenchNumbers }, z: { scores: BenchScores; numbers: BenchNumbers }, build: Build) {
@@ -397,14 +423,13 @@ export class Workbench {
             const good = row.up ? d > 0 : d < 0, pct = (v: number) => unit ? Math.min(100, v / 6 * 100) : v;
             const lo = Math.min(pct(x), pct(y)), hi = Math.max(pct(x), pct(y));
             const bar = `<span class="gs-bar" aria-hidden="true"><i style="width:${lo}%"></i>${same ? '' : `<i class="${good ? 'up' : 'down'}" style="left:${lo}%;width:${hi - lo}%"></i>`}</span>`;
-            const f = (v: number) => unit ? v.toFixed(2) : String(v);
-            const val = same ? `${f(x)}${unit ? ' kg' : ''}` : `${f(x)} → ${f(y)}${unit ? ' kg' : ''}`;
+            const val = unit ? `${y.toFixed(2)} kg` : String(y);
             const dv = same ? '<span class="gs-dim">—</span>' : `<span class="${good ? 'up' : 'down'}">${signed(d, unit ? 2 : 0)}</span>`;
-            return `<div class="gs-srow"><span>${row.name}</span>${bar}<span class="gs-val">${val}</span><span class="gs-dv">${dv}</span></div>${this.detail ? `<p class="gs-sdet">${detailText(row.key, a.numbers, z.numbers)}</p>` : ''}`;
+            return `<div class="gs-stat"><div class="gs-srow"><span>${row.name}</span><b class="gs-val${same ? '' : good ? ' up' : ' down'}">${val}</b>${bar}<span class="gs-dv">${dv}</span></div>${this.detail ? `<p class="gs-sdet">${detailText(row.key, a.numbers, z.numbers)}</p>` : ''}</div>`;
         }).join('');
         const notes = capped(build).filter(c => c !== 'spread' || !capped(build).includes('precise')).map(c => `<li class="cap">${CAP_TEXT[c][0]}已到配件护栏：${CAP_TEXT[c][1]}，多装的这部分不再起作用。</li>`);
         if (z.numbers.devices) notes.push('<li>激光、灯光开着时更容易被前方的敌人看见，这一项不算在声音暴露里。</li>');
-        return `<section class="gs-stats" aria-label="属性对比"><h3>属性对比 <small>现在 → 预览 · 重量和声音暴露越低越好</small>${b(this.detail ? '收起数值' : '看具体数值', 'detail', '', 'mini', `aria-pressed="${this.detail}"`)}</h3>${rows}${notes.length ? `<ul class="gs-notes">${notes.join('')}</ul>` : ''}</section>`;
+        return `<section class="gs-stats" aria-label="属性对比"><h3>属性对比 <small>数字是预览后的值，亮色是变化 · 重量和声音暴露越低越好</small>${b(this.detail ? '收起数值' : '看具体数值', 'detail', '', 'mini', `aria-pressed="${this.detail}"`)}</h3><div class="gs-sgrid">${rows}</div>${notes.length ? `<ul class="gs-notes">${notes.join('')}</ul>` : ''}</section>`;
     }
 
     private partsHtml(gun: BenchGun, build: Build, at: Position | null, list: Position[], now: BenchScores) {
@@ -442,22 +467,26 @@ export class Workbench {
         const name = FACTORY_NAMES[at.slot] ?? '不装', current = !at.part;
         const delta = current ? '' : deltaText(now, benchStats(without(build, at)).scores);
         const off = at.part ? build.parts.filter(p => p.parent === at.part!.uid).map(p => partName(p.id)) : [];
-        return `<button type="button" class="gs-card factory${current ? ' current' : ''}" data-gs="part" data-arg="" aria-pressed="${current}"><span class="gs-fac">${FACTORY_NAMES[at.slot] ? '原厂' : '空'}</span><div><b>${name}</b>${current ? '<em>装着</em>' : ''}<small>${FACTORY_NAMES[at.slot] ? '原厂部件，一直在枪上，不占仓库' : '这个位置空着'}</small>${current ? '' : `<span class="gs-delta">换回后：${delta || '属性不变'}</span>${off.length ? `<span class="gs-why">${esc(off.join('、'))}会一起拆下</span>` : ''}`}</div></button>`;
+        const effect = current ? '<span class="gs-delta gs-dim">现在用的就是它</span>'
+            : off.length ? `<span class="gs-why" title="${esc(off.join('、'))}会一起拆下">换回后${esc(off.join('、'))}会一起拆下</span>` : `<span class="gs-delta">换回后：${delta || '属性不变'}</span>`;
+        return `<button type="button" class="gs-card factory${current ? ' current' : ''}" data-gs="part" data-arg="" aria-pressed="${current}"><span class="gs-fac">${FACTORY_NAMES[at.slot] ? '原厂' : '空'}</span><div><span class="gs-l1"><b>${name}</b>${current ? '<em>装着</em>' : ''}<small>${FACTORY_NAMES[at.slot] ? '不占仓库' : ''}</small></span><span class="gs-desc">${FACTORY_NAMES[at.slot] ? '原厂部件，一直在枪上。' : '这个位置空着。'}</span>${effect}</div></button>`;
     }
 
     private cardHtml(c: Candidate, at: Position, build: Build, now: BenchScores, all: boolean) {
         const def = D.ITEMS[c.id], brand = ATTACHMENTS[c.id].brand;
         const where = c.current ? '' : c.loose ? `${{ stash: '仓库', bag: '背包', safe: '安全箱' }[c.loose.from]} ${c.count} 件` : c.elsewhere ? `装在 ${esc(c.elsewhere)} 上` : `未拥有 · ${esc(c.source)}`;
-        let effect = '';
-        if (c.refusal) effect = `<span class="gs-why">不能装：${esc(c.refusal)}</span>`;
+        const onGun = !!at.part && this.committed().has(at.part.uid);
+        let effect = `<span class="gs-delta gs-dim">${onGun ? '现在装的就是它' : '已放进预览，按「确认」装上'}</span>`;
+        if (c.refusal) effect = `<span class="gs-why" title="${esc(c.refusal)}">不能装：${esc(c.refusal)}</span>`;
         else if (!c.current) {
             const cand = candidateBuild(build, at, c.id);
-            effect = cand ? `<span class="gs-delta">换上后：${deltaText(now, benchStats(cand).scores) || '属性不变'}</span>` : '';
+            effect = `<span class="gs-delta">换上后：${cand ? deltaText(now, benchStats(cand).scores) || '属性不变' : '属性不变'}</span>`;
         }
         const cls = ['gs-card', c.current ? 'current' : '', c.refusal ? 'refused' : '', !c.loose && !c.current ? 'missing' : ''].filter(Boolean).join(' ');
         // In the preview, not yet on the gun: "previewed"; on the gun as committed: "installed".
-        const tag = c.current ? `<em>${at.part && this.committed().has(at.part.uid) ? '装着' : '预览中'}</em>` : '';
-        return `<button type="button" class="${cls}" data-gs="part" data-arg="${c.id}" aria-pressed="${c.current}">${img(c.id, 'gs-ico')}<div><b>${esc(c.name)}</b>${tag}<small>${all ? `${at.name} · ` : ''}${where}</small><span class="gs-desc">${esc(brandName(brand))} · ${esc(def?.description ?? '')}</span>${effect}</div></button>`;
+        const tag = c.current ? `<em>${onGun ? '装着' : '预览中'}</em>` : '';
+        const desc = `${brandName(brand)} · ${def?.description ?? ''}`;
+        return `<button type="button" class="${cls}" data-gs="part" data-arg="${c.id}" aria-pressed="${c.current}">${img(c.id, 'gs-ico')}<div><span class="gs-l1"><b>${esc(c.name)}</b>${tag}<small>${all ? `${at.name} · ` : ''}${where}</small></span><span class="gs-desc" title="${esc(desc)}">${esc(desc)}</span>${effect}</div></button>`;
     }
 
     /** The uids of the parts on the gun as committed. */
@@ -466,14 +495,40 @@ export class Workbench {
         return new Set(g ? nodesOf(g.state.parts).map(n => n.uid) : []);
     }
 
-    /** The parts going on and coming off (and moving), as two lists. */
-    private pendingHtml(p: GunEditPreview | null) {
+    /** The parts going on, coming off and moving, as list items. */
+    private pendingItems(p: GunEditPreview | null) {
         const name = (uid: string | null) => { const n = p && (findPart(p.after, uid) ?? findPart(p.before, uid)); return n ? partName(n.id) : ''; };
         const adds = (p?.installs ?? []).map(i => `<li class="${i.from ? '' : 'missing'}"><i>+</i><b>${esc(partName(i.id))}</b><small>${POSITION_NAMES[i.slot]} · ${i.from ? `从${{ stash: '仓库', bag: '背包', safe: '安全箱' }[i.from]}取` : '未拥有，确认前要先买到'}</small></li>`).join('');
         const rems = (p?.removals ?? []).map(r => `<li class="${r.with ? 'cascade' : ''}"><i>−</i><b>${esc(partName(r.id))}</b><small>${r.with ? `随${esc(name(r.with))}拆下 · ` : `${POSITION_NAMES[ATTACHMENTS[r.id].mount]} · `}放回仓库</small></li>`).join('');
         const moves = (p?.moves ?? []).map(m => `<li><i>↔</i><b>${esc(partName(m.id))}</b><small>换到${esc(name(m.parent) || '枪身')}上</small></li>`).join('');
+        return { adds, rems, moves };
+    }
+
+    /** The phone's sheet: the parts going on and coming off (and moving), as two lists. */
+    private pendingHtml(p: GunEditPreview | null) {
+        const { adds, rems, moves } = this.pendingItems(p);
         return `<div class="gs-pend"><h4>待装 <small>${p?.installs.length ?? 0} 件</small></h4><ul>${adds || '<li class="none">没有要装的配件</li>'}</ul></div>
 <div class="gs-pend"><h4>待卸 <small>${p?.removals.length ?? 0} 件</small></h4><ul>${rems || '<li class="none">没有要拆的配件</li>'}${moves}</ul></div>`;
+    }
+
+    /** The desktop bar's left part: every pending change as one wrapping row of items. */
+    private chipsHtml(p: GunEditPreview | null) {
+        const { adds, rems, moves } = this.pendingItems(p), n = p ? p.installs.length + p.removals.length + p.moves.length : 0;
+        return `<div class="gs-pend"><h4>待改 <small>${n} 处</small></h4><ul>${adds}${rems}${moves || ''}${n ? '' : '<li class="none">还没有改动。点枪身上的位置挑配件，点配件只改预览。</li>'}</ul></div>`;
+    }
+
+    /** The desktop bar's middle: what else the preview changes (weight, magazine, footprint, rounds unloaded). */
+    private effectsHtml(gun: BenchGun, p: GunEditPreview | null) {
+        const lines: string[] = [];
+        if (p) {
+            if (Math.abs(p.weight.after - p.weight.before) >= .005) lines.push(`枪重 ${arrow(kg(p.weight.before), kg(p.weight.after))}`);
+            if (p.capacity.after !== p.capacity.before) lines.push(`弹匣 ${arrow(`${p.capacity.before} 发`, `${p.capacity.after} 发`)}`);
+            if (sizeText(p.size.before) !== sizeText(p.size.after)) lines.push(`占格 ${arrow(sizeText(p.size.before), sizeText(p.size.after))}`);
+            if (p.unloaded && gun.where === 'equipment') lines.push(`卸出 ${p.unloaded.normal + p.unloaded.relief} 发${esc(D.ITEMS[p.unloaded.ammo]?.name ?? '')}，放进仓库${p.unloaded.relief ? `（其中救济 ${p.unloaded.relief} 发）` : ''}`);
+        }
+        const why = p?.refusal && p.refusal.code !== 'unchanged' ? `<span class="gs-block" role="alert">${esc(p.refusal.reason)}</span>` : '';
+        const note = p ? '确认后一次保存；取消回到枪上的配置。' : '改动只在预览里，确认前不会动到枪和仓库。';
+        return `<p class="gs-fx">${why}${lines.map(l => `<span>${l}</span>`).join('')}${why || lines.length ? '' : `<span class="gs-dim">${note}</span>`}</p>`;
     }
 
     /** Weight, magazine, unloaded rounds (equipped guns) and footprint, before → after. */
@@ -482,10 +537,10 @@ export class Workbench {
         return p ? `<dl class="gs-sum"><div><dt>枪重</dt><dd>${arrow(kg(p.weight.before), kg(p.weight.after))}</dd></div><div><dt>弹匣</dt><dd>${arrow(`${p.capacity.before} 发`, `${p.capacity.after} 发`)}</dd></div>${gun.where === 'equipment' ? `<div><dt>子弹</dt><dd>${unload}</dd></div>` : ''}<div><dt>占格</dt><dd>${arrow(sizeText(p.size.before), sizeText(p.size.after))}</dd></div></dl>` : '<p class="gs-dim gs-sum">还没有改动。</p>';
     }
 
-    /** Why the preview cannot be confirmed (or what confirm does), then cancel and confirm. */
+    /** The desktop bar's cancel and confirm, side by side. */
     private actsHtml(p: GunEditPreview | null) {
-        const token = !!this.session.view().token, why = p?.refusal && p.refusal.code !== 'unchanged' ? `<p class="gs-block" role="alert">${esc(p.refusal.reason)}</p>` : `<p class="gs-dim">${p ? '确认后一次保存；取消会回到当前配置。' : '改动只在预览里，确认前不会动到枪和仓库。'}</p>`;
-        return `<div class="gs-acts">${why}<div>${b('取消', 'cancel', '', '', p ? '' : 'disabled')}${b('确认', 'confirm', '', 'primary', token ? '' : 'disabled')}</div></div>`;
+        const token = !!this.session.view().token;
+        return `<div class="gs-acts">${b('取消', 'cancel', '', '', p ? '' : 'disabled')}${b('确认', 'confirm', '', 'primary', token ? '' : 'disabled')}</div>`;
     }
 
     private leaveHtml(guns: BenchGun[], changes: number, token: boolean) {

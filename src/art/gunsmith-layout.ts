@@ -7,6 +7,7 @@
  * handguard, the factory rear sight) fall back to the factory image, a part with no image in an output keeps the
  * factory one (the held rear grips), the muzzle sits on the barrel when there is one, and the held output adds gloves.
  */
+import { ATTACHMENTS } from '../gunsmith/catalog';
 import type { PartNode } from '../gunsmith/instance';
 import { MOUNT, partsSignature } from '../gunsmith/signature';
 import { GUNSMITH_ART, GUNSMITH_ART_REVISION } from './gunsmith-art-meta';
@@ -131,4 +132,30 @@ export function gunArtLayout(gun: string, parts: readonly PartNode[], code: ArtC
         if (hand) layout.hand = shift(hand);
     }
     return layout;
+}
+
+/**
+ * The box, around the receiver's top-left corner, that every picture of `gun` in output `code` fits in: the factory
+ * gun, each part with an image alone, and each with every child it carries (a muzzle on a barrel, rail parts on a
+ * handguard, an optic on a base). Parts sit on fixed mounts and children only on their parent, so these builds reach
+ * every edge any build reaches. The workbench draws the gun at one place and scale inside it: a new part then changes
+ * only its own pixels. Null when the gun has no receiver image there.
+ */
+export function artFrame(gun: string, code: ArtCode): { x: number; y: number; w: number; h: number } | null {
+    const ids = Object.keys(ATTACHMENTS).filter(id => { const g = ATTACHMENTS[id].guns as readonly string[] | null; return (!g || g.includes(gun)) && partArt(id, code, gun); });
+    const node = (id: string, children: PartNode[] = []): PartNode => ({ uid: id, id, slot: ATTACHMENTS[id].mount, relief: false, children });
+    const builds: PartNode[][] = [[], ...ids.map(id => [node(id)])];
+    for (const p of ids) for (const c of ids) {
+        if (ATTACHMENTS[p].mount === 'barrel' && ATTACHMENTS[c].mount === 'muzzle') builds.push([node(p), node(c)]);
+        else if (c !== p && ATTACHMENTS[p].provides[ATTACHMENTS[c].mount]) builds.push([node(p, [node(c)])]);
+    }
+    let box: [number, number, number, number] | null = null;
+    for (const parts of builds) {
+        const l = gunArtLayout(gun, parts, code), r = l?.layers.find(x => x.label === 'receiver');
+        if (!l || !r) continue;
+        const e = [-r.x, -r.y, l.w - r.x, l.h - r.y];
+        box = box ? [Math.min(box[0], e[0]), Math.min(box[1], e[1]), Math.max(box[2], e[2]), Math.max(box[3], e[3])] : [e[0], e[1], e[2], e[3]];
+    }
+    // || 0: a receiver at the picture's edge gives -0.
+    return box && { x: box[0] || 0, y: box[1] || 0, w: box[2] - box[0], h: box[3] - box[1] };
 }

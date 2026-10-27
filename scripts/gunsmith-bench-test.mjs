@@ -454,6 +454,36 @@ try {
     return { repainted: true };
   });
 
+  await step('B9-desktop-click-moves-nothing-else', async () => {
+    // Maintainer, 2026-10-27: a click changes the part on the gun, its position, the numbers and the bar, nothing else.
+    // Every box keeps its place and size, and the gun its scale and place: a new stock leaves the muzzle end where it
+    // was, a new muzzle the stock end.
+    const boxes = () => bench('.gs').evaluate(g => {
+      const b = e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map(Math.round).join(','); };
+      const all = sel => [...g.querySelectorAll(sel)].map(b).join(' ');
+      const img = g.querySelector('.gs-bench-art').getBoundingClientRect();
+      return { fixed: { head: b(g.querySelector('.gs-head')), stage: b(g.querySelector('.gs-stage')), frame: b(g.querySelector('.gs-frame')), pos: all('[data-gs="pos"]'),
+        rows: all('.gs-srow'), cards: all('.gs-list .gs-card'), guns: all('.gs-left .gs-gun'), foot: b(g.querySelector('.gs-foot')), acts: all('.gs-acts button') },
+        left: Math.round(img.left), right: Math.round(img.right), top: Math.round(img.top), scale: img.height / g.querySelector('.gs-bench-art').naturalHeight };
+    });
+    const res = [];
+    for (const size of [[1920, 1080], [1280, 720]]) {
+      await open(fixture(), size); await openFromSlot();
+      await pos('gun/stock/0').click(); const a = await boxes();
+      await part('S01').click(); const b = await boxes();
+      assert.deepEqual(b.fixed, a.fixed, `${size} stock`); assert.equal(b.right, a.right, 'a new stock leaves the muzzle end'); assert.equal(b.top, a.top); assert.equal(b.scale, a.scale);
+      await pos('gun/handguard/0').click(); const c = await boxes();
+      await part('H01').click(); const d = await boxes();
+      assert.deepEqual(d.fixed, c.fixed, `${size} railed handguard: the rail positions open in place`); assert.equal(d.left, c.left); assert.equal(d.scale, c.scale);
+      await pos('gun/mag/0').click(); const e = await boxes();
+      await part('G10').click(); const f = await boxes();
+      assert.deepEqual(f.fixed, e.fixed, `${size} magazine`); assert.equal(f.left, e.left); assert.equal(f.right, e.right);
+      await fits(); res.push(`${size[0]}×${size[1]} 1:${a.scale}`);
+      await bench('[data-gs="cancel"]').click();
+    }
+    return res.join('、');
+  });
+
   await step('B5-desktop-1920x1080', async () => {
     await open(fixture(), [1920, 1080]); await openFromSlot(); await fits();
     await pos('gun/top/0').click(); await bench('[data-gs="unowned"]').click(); await bench('[data-gs="detail"]').click();

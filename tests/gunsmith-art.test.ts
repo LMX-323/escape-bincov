@@ -7,7 +7,7 @@ import { ATTACHMENTS, GUNS, type GunId } from '../src/gunsmith/catalog';
 import { checkInstall, validateBuild } from '../src/gunsmith/compat';
 import { buildOf, gunSize, type PartNode } from '../src/gunsmith/instance';
 import { GUNSMITH_ART, GUNSMITH_ART_REVISION } from '../src/art/gunsmith-art-meta';
-import { gunArtLayout, type ArtCode } from '../src/art/gunsmith-layout';
+import { artFrame, gunArtLayout, type ArtCode } from '../src/art/gunsmith-layout';
 import { partsOfSignature, partsSignature } from '../src/gunsmith/signature';
 
 const fixture = JSON.parse(readFileSync('tests/fixtures/gunsmith-assemblies.json', 'utf8'));
@@ -109,4 +109,17 @@ test('the cache key: the output, the gun, the parts by place and the art revisio
     assert.equal(gunArtLayout('pistol', [], 'h'), null);
     assert.equal(gunArtLayout('shotgun', [], 'i'), null);
     assert.ok(GUNS.pistol && gunArtLayout('pistol', [], 'w'));
+});
+
+test('the workbench frame: every build fits around the same receiver point, so a new part moves nothing else', () => {
+    assert.deepEqual(artFrame('mb4a1', 'w'), { x: -43, y: -15, w: 194, h: 50 });
+    assert.deepEqual(artFrame('gb17', 'w'), { x: 0, y: -9, w: 118, h: 51 });
+    assert.deepEqual(artFrame('carbine', 'w'), { x: 0, y: -10, w: 171, h: 52 }, 'an optic on the A07 base sits above the receiver');
+    assert.equal(artFrame('pistol', 'w')?.w, gunArtLayout('pistol', [], 'w')!.w, 'a gun without parts: its own picture');
+    for (const [gun, configs] of Object.entries(CONFIGS)) for (const [name, make] of Object.entries(configs)) {
+        const f = artFrame(gun, 'w'), l = gunArtLayout(gun, make(), 'w');
+        if (!f || !l) continue;
+        const r = l.layers.find(x => x.label === 'receiver')!;
+        assert.ok(-r.x >= f.x && -r.y >= f.y && l.w - r.x <= f.x + f.w && l.h - r.y <= f.y + f.h, `${gun} ${name} inside the frame`);
+    }
 });

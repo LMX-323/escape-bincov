@@ -6,8 +6,10 @@
  */
 import type { PartNode } from '../gunsmith/instance';
 
-/** A picture as a data URL and its size in pixels. */
-export interface ArtPicture { url: string; w: number; h: number }
+/** A picture as a data URL, its size in pixels and where its receiver's top-left corner sits on it. */
+export interface ArtPicture { url: string; w: number; h: number; origin: readonly [number, number] }
+/** A box around a receiver's top-left corner, in picture pixels. */
+export interface ArtBox { x: number; y: number; w: number; h: number }
 export interface GunsmithArtHooks {
     /** Sol's square icon of a gun or part at `size`, with its offset (a part's 24 px icon centred in 32); null without one. */
     icon(id: string, size: 24 | 32): { img: CanvasImageSource; x: number; y: number } | null;
@@ -17,6 +19,8 @@ export interface GunsmithArtHooks {
     configured(gun: string, parts: readonly PartNode[]): ArtPicture | null;
     /** The workbench picture (W); null without images for that gun. */
     bench(gun: string, parts: readonly PartNode[]): ArtPicture | null;
+    /** The box every workbench picture of `gun` fits in, around its receiver; null without images for that gun. */
+    benchFrame(gun: string): ArtBox | null;
     /** The workbench closed: its pictures go (ART-SPEC 4.3). */
     releaseBench(): void;
     /**

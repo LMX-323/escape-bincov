@@ -7,9 +7,9 @@
  */
 import type { PartNode } from '../gunsmith/instance';
 import { GUNSMITH_ART_URLS } from './gunsmith-assets';
-import { artOf, gunArtLayout, type ArtCode, type ArtLayout } from './gunsmith-layout';
+import { artFrame, artOf, gunArtLayout, type ArtCode, type ArtLayout } from './gunsmith-layout';
 import { inventoryArtSize, paintInventoryItem } from './inventory';
-import { installGunsmithArt } from './gunsmith-hooks';
+import { installGunsmithArt, type ArtBox } from './gunsmith-hooks';
 import { partsOfSignature } from '../gunsmith/signature';
 
 const images = new Map<string, HTMLImageElement>();
@@ -29,6 +29,7 @@ export function loadGunsmithArt(): Promise<void> {
             return layout ? drawGunLayout(layout) : gunsmithIconImage(id, 24);
         },
         configured: gunInventoryArt, bench: gunBenchArt, releaseBench: releaseBenchArt,
+        benchFrame: gun => { if (!frames.has(gun)) frames.set(gun, artFrame(gun, 'w')); return frames.get(gun)!; },
         side: id => {
             if (sides.has(id)) return sides.get(id)!;
             const layout = gunArtLayout(id, [], 'h', false), canvas = layout && drawGunLayout(layout);
@@ -44,6 +45,8 @@ export function loadGunsmithArt(): Promise<void> {
     }));
 }
 
+/** The workbench frame of each gun type, kept for the page. */
+const frames = new Map<string, ArtBox | null>();
 /** The side views of the gunsmith guns (the factory held picture without hands), one per gun type, kept for the page. */
 const sides = new Map<string, HTMLCanvasElement | null>();
 let carbine: { receiver: HTMLCanvasElement; handguard: HTMLCanvasElement } | null = null;
@@ -96,8 +99,8 @@ class Lru<V> {
     clear() { for (const [k, v] of this.map) this.drop(v, k); this.map.clear(); }
 }
 
-/** An inventory (I) or workbench (W) picture: its data URL and size. */
-interface GunPicture { key: string; url: string; w: number; h: number }
+/** An inventory (I) or workbench (W) picture: its data URL, size and the receiver's top-left corner on it. */
+interface GunPicture { key: string; url: string; w: number; h: number; origin: readonly [number, number] }
 /** I: 64 data URLs per page; W: 4 (current, candidate, two presets), dropped when the workbench closes. */
 const inventory = new Lru<GunPicture>(64), bench = new Lru<GunPicture>(4);
 function picture(cache: Lru<GunPicture>, gun: string, parts: readonly PartNode[], code: ArtCode): GunPicture | null {
@@ -107,7 +110,8 @@ function picture(cache: Lru<GunPicture>, gun: string, parts: readonly PartNode[]
     if (hit) return hit;
     const canvas = drawGunLayout(layout);
     if (!canvas) return null;
-    const pic = { key: layout.key, url: canvas.toDataURL(), w: layout.w, h: layout.h };
+    const r = layout.layers.find(l => l.label === 'receiver');
+    const pic = { key: layout.key, url: canvas.toDataURL(), w: layout.w, h: layout.h, origin: [r?.x ?? 0, r?.y ?? 0] as const };
     cache.set(layout.key, pic);
     return pic;
 }
