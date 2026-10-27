@@ -166,6 +166,7 @@ export function frameView(r: CoastRaidRuntime, map: MapDef, velocities: Readonly
         return { uid, kind: profile?.bodyKind ?? 'player', x: e.x, y: e.y, aim: e.rotation,
             vx: velocity.x, vy: velocity.y, hp, maxHp: enemy ? actorDefinition(enemy).hp : limits.hp, alive: hp > 0,
             weapon: profile?.weapon ?? r.weaponLook,
+            ...(player && r.heldGun ? { gun: r.heldGun } : {}),
             ...(enemy?.tactics && spec ? { tactics: { archetype: enemy.id, name: spec.name, phase: enemy.tactics.phase,
                 stance: enemy.tactics.stance, awareness: enemy.tactics.awareness, left: enemy.tactics.phaseLeft,
                 total: enemy.tactics.phase === 'windup' ? spec.windup : enemy.tactics.phase === 'reload' ? spec.reload

@@ -111,7 +111,7 @@ export class InventoryPanel {
     const cell = this.cell(), sel = this.selected;
     const items = inv.items.map(i => {
       const d = D.ITEMS[i.id], size = D.itemSize(i), on = sel?.uid === i.uid && sel.source === source;
-      return `<div tabindex="0" role="button" aria-label="${esc(d.name)} × ${i.qty}" aria-pressed="${on}" title="${esc(d.name)} × ${i.qty} · ${D.itemWeight(i).toFixed(2)} kg" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${on ? 'selected' : ''}" style="left:${i.x * cell + 1}px;top:${i.y * cell + 1}px;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px"><span class="inventory-art">${itemArtwork(i.id, size.w * cell - 10, size.h * cell - 27, !!i.rotated)}</span><span class="item-label ${i.relief ? 'relief' : ''} ${labelFits(d.short || d.name, size.w * cell) ? '' : 'tight'}">${esc(d.short || d.name)}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
+      return `<div tabindex="0" role="button" aria-label="${esc(d.name)} × ${i.qty}" aria-pressed="${on}" title="${esc(d.name)} × ${i.qty} · ${D.itemWeight(i).toFixed(2)} kg" data-uid="${i.uid}" data-source="${source}" data-kind="${d.kind}" class="item ${on ? 'selected' : ''}" style="left:${i.x * cell + 1}px;top:${i.y * cell + 1}px;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px"><span class="inventory-art">${itemArtwork(i, size.w * cell - 10, size.h * cell - 27, !!i.rotated)}</span><span class="item-label ${i.relief ? 'relief' : ''} ${labelFits(d.short || d.name, size.w * cell) ? '' : 'tight'}">${esc(d.short || d.name)}</span>${i.qty > 1 ? `<span class="qty">${i.qty}</span>` : ''}</div>`;
     }).join('');
     return `<div class="grid" data-grid="${source}" data-cell="${cell}" style="width:${inv.w * cell}px;height:${inv.h * cell}px;--cell:${cell}px">${items}${this.placementCells(inv, source, cell)}${inv.items.length ? '' : '<div class="empty-hint">暂无物品</div>'}</div>`;
   }
@@ -274,7 +274,7 @@ export class InventoryPanel {
     const cell = this.cell(), size = D.itemSize({ ...it, rotated: d.rotated }), g = document.createElement('div');
     g.className = 'item cs-ghost'; g.dataset.kind = D.ITEMS[it.id].kind;
     g.style.cssText = `position:fixed;left:0;top:0;width:${size.w * cell - 2}px;height:${size.h * cell - 2}px;pointer-events:none;z-index:200;opacity:.85`;
-    g.innerHTML = `<span class="inventory-art">${itemArtwork(it.id, size.w * cell - 10, size.h * cell - 27, d.rotated)}</span>`;
+    g.innerHTML = `<span class="inventory-art">${itemArtwork(it, size.w * cell - 10, size.h * cell - 27, d.rotated)}</span>`;
     // Not inside the panel: the docked panel is centred with a transform, which makes it the containing block of a fixed
     // child, so the ghost landed off the cursor and its overflow gave the panel a scrollbar. The sample root is fixed and
     // untransformed, and a re-render of the panel mid-drag no longer wipes the ghost.

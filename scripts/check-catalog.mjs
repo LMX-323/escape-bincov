@@ -16,7 +16,7 @@ const descriptions = {
   'qol-expansion': '分层行动信息', expansion: '真实旧客户端兼容与存档往返', 'expansion-benchmark': '存档体积与时间测量',
   buildings: '建筑、门与分层世界', systems: 'RPG 与据点系统', 'layered-play': '商场分层真实计时行动',
   'mall-passages': '商场通道与连通', 'mall-landing': '商场落点与切层', 'mall-sample': '商场样板与旧布局兼容',
-  'raid-default': '默认行动、旧检查点与不支持 WebGL 的入口', range: '隔离试枪场', 'gunsmith-bench': '改枪工作台：院子与旧页签、桌面与手机、预览与一次确认、换枪与关闭询问', art: '物品与程序美术',
+  'raid-default': '默认行动、旧检查点与不支持 WebGL 的入口', range: '隔离试枪场', 'gunsmith-bench': '改枪工作台：院子与旧页签、桌面与手机、预览与一次确认、换枪与关闭询问、预设、改枪图与缓存上限', art: '物品与程序美术',
   tactical: '战术界面与字体', 'title-water': '标题水面表现', 'issue26-station': '院子库存操作与失败回滚',
   'issue26-inventory': '行动背包、搜刮与失败回滚', 'issue26-spatial': '门、楼梯和隐藏内容权限',
 };

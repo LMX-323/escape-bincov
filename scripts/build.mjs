@@ -74,6 +74,18 @@ async function compile() {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Opening asset hash mismatch: ${a.file}`);
     if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Opening asset size mismatch: ${a.file}`);
   }
+  // Gunsmith art (Sol, #28 M2-09; ART-SPEC section 7): the importer covers exactly the manifest and every PNG matches its
+  // hash and size. The art budget (224 KiB) only reports, never fails the build (M0 review decision 4).
+  const gunsmith = JSON.parse(await readFile('assets/gunsmith/manifest.json', 'utf8'));
+  const gunsmithImports = [...(await readFile('src/art/gunsmith-assets.ts', 'utf8')).matchAll(/from '\.\.\/\.\.\/(assets\/gunsmith\/[^']+\.png)'/g)].map(m => m[1]).sort();
+  if (JSON.stringify(gunsmithImports) !== JSON.stringify(gunsmith.assets.map(a => a.file).sort())) throw new Error('Gunsmith art imports do not match assets/gunsmith/manifest.json. Run node scripts/gunsmith-assets.mjs.');
+  let gunsmithBytes = 0;
+  for (const a of gunsmith.assets) {
+    const bytes = await readFile(a.file); gunsmithBytes += bytes.length;
+    if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw new Error(`Gunsmith art hash mismatch: ${a.file}`);
+    if (bytes.readUInt32BE(16) !== a.w || bytes.readUInt32BE(20) !== a.h) throw new Error(`Gunsmith art size mismatch: ${a.file}`);
+  }
+  console.log(`Gunsmith art: ${gunsmith.assets.length} PNG, ${gunsmithBytes} bytes (budget 229376, report only).`);
   const county = JSON.parse(await readFile('assets/county-map/manifest.json', 'utf8'));
   for (const [file, hash] of [[county.source, county.sourceSha256], [county.output, county.sha256]]) {
     if (createHash('sha256').update(await readFile(file)).digest('hex') !== hash) throw new Error(`County map hash mismatch: ${file}`);

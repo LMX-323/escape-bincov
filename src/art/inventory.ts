@@ -1,5 +1,6 @@
 import { brush, C, type PixelContext } from './pixel';
 import { paintItem, type ItemArtId } from './items';
+import { gunsmithArt } from './gunsmith-hooks';
 
 /** Inventory views have room for the object's proportions; world icons stay compact. */
 export const inventoryArtSize = (id: string): readonly [number, number] => {
@@ -16,6 +17,10 @@ export const inventoryArtSize = (id: string): readonly [number, number] => {
 };
 
 export function paintInventoryItem(c: PixelContext, id: ItemArtId): void {
+  // The gunsmith guns' factory pictures and the parts' icons from Sol's art (#28 M2-10), once decoded. The old carbine
+  // keeps its painted picture here: gunsmith-compose.ts splits that one for configured carbines.
+  const sol = id === 'carbine' ? null : gunsmithArt?.inventory(id);
+  if (sol) { c.drawImage(sol, 0, 0); return; }
   const { r, p } = brush(c), S = C;
   switch (id) {
     case 'shotgun':

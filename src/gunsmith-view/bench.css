@@ -65,6 +65,7 @@
 .gs-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .gs-art { display: flex; justify-content: center; align-items: center; min-height: 72px; }
 .gs-art img { height: 72px; image-rendering: pixelated; }
+.gs-art img.gs-bench-art { max-width: none; }
 .gs-pos { position: relative; display: flex; flex-direction: column; min-width: 104px; max-width: 150px; padding: 5px 9px; background: rgba(18,24,23,.9); }
 .gs-pos small { font-size: 11px; color: var(--gs-dim); }
 .gs-pos b { font-weight: 400; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

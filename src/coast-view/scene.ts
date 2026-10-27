@@ -199,7 +199,7 @@ export class CoastView {
 
   constructor(private app: Application, public opts: ViewOptions) {
     try {
-      this.tex = new Textures(opts.art);
+      this.tex = new Textures(opts.art, uids => releaseManagedSlots(this.app, 'glTexture', uids));
       this.tex.atlas.defer = true;
       this.light = new Lighting(this.tex);
       this.weather = new Weather(this.tex, opts.weather, opts.reducedMotion);
@@ -670,7 +670,7 @@ export class CoastView {
         if (!shown(a)) break;
         const angle = tip?.angle ?? e.pellets.reduce((s, p) => s + p.angle, 0) / Math.max(1, e.pellets.length);
         if (a.tactics?.archetype === 'sac-spitter') { this.fx.acid(a.x, a.y, angle, this.rnd); break; }
-        const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype), c = Math.cos(angle), s = Math.sin(angle);
+        const art = this.weaponOf(a), c = Math.cos(angle), s = Math.sin(angle);
         const sp = new Sprite(this.tex.muzzle(0)); sp.anchor.set(.5); sp.blendMode = 'add';
         const reach = art.muzzle * heldLength(angle);
         if (tip) sp.position.set(Math.round(tip.at.x + c * 1.5), Math.round(tip.at.y + s * 1.5));
@@ -848,7 +848,7 @@ export class CoastView {
     if (wading) { g.wade.position.set(x, y - 2); g.wade.zIndex = a.y + .02; g.wade.scale.x = this.opts.reducedMotion ? 1 : 1 + .06 * Math.sin(this.time * 4 + a.x); }
     g.rim.texture = this.tex.actorRim(a.kind, g.dir, frame, a.tactics?.archetype); g.rim.position.set(x, y + 1); g.rim.tint = a.kind === 'player' ? 0xf0dca0 : 0xe07a5a;
     g.rim.rotation = tilt;
-    const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype);
+    const art = this.weaponOf(a);
     const polearm = a.tactics?.archetype === 'tide-ritualist' && a.weapon === 'club';
     const reload = a.state.reloading ? .75 * Math.sign(Math.cos(a.aim) || 1) : 0;
     const swing = polearm ? 0 : a.tactics?.phase === 'windup' ? -.6 * Math.sign(Math.cos(a.aim) || 1) : g.swingT > 0 ? (g.swingT / .14 - .5) * 1.4 : 0;
@@ -858,7 +858,7 @@ export class CoastView {
     g.weapon.texture = art.texture; g.weapon.anchor.set(art.pivotX / art.canvas.width, art.pivotY / art.canvas.height);
     // The barrel lies on the line from the chest along the gun, where the shots fly: an art's barrel row may sit off its
     // grip pivot (Sol's guns by 3-4 px), so the gun moves across by that much (`off`, in the sprite's flipped frame).
-    const off = a.weapon === 'claw' ? 0 : (this.barrelTip(a.weapon, a.kind, a.tactics?.archetype).y - art.pivotY) * (Math.cos(a.aim) < 0 ? -1 : 1);
+    const off = a.weapon === 'claw' ? 0 : (this.barrelTip(a).y - art.pivotY) * (Math.cos(a.aim) < 0 ? -1 : 1);
     // Weapon and arms round their offsets, not their positions: on the body's whole pixel they never shimmer against it.
     const thrust = polearm && a.tactics ? a.tactics.phase === 'windup' ? -4 : a.tactics.phase === 'release' ? 8
       : a.tactics.phase === 'recovery' ? 8 * Math.max(0, 1 - (a.tactics.total - a.tactics.left) / .22) : 0 : 0;
@@ -1292,15 +1292,21 @@ export class CoastView {
    * The tip of an actor's drawn gun (chest plane, world px) and the direction it points: the weapon art's barrel tip put
    * through the weapon sprite's own transform, so the flash and the tracers leave the barrel the player sees.
    */
-  private barrelTip(weapon: string, kind: ActorKind, variant?: string): Point {
-    const key = `${weapon}:${kind}:${variant ?? ''}`;
+  private barrelTip(a: ActorView): Point {
+    // A gunsmith picture carries its muzzle on the barrel row (#28 M2-10): no pixel scan, and the carbine's P0 muzzle
+    // brake (half a pixel off its bore) still fires along the aim line.
+    const art = this.weaponOf(a);
+    if (art.tip) return art.tip;
+    const key = `${a.weapon}:${a.kind}:${a.tactics?.archetype ?? ''}`;
     let tip = this.barrelTips.get(key);
-    if (!tip) { tip = barrelTip(this.tex.weapon(weapon, kind, variant).canvas); this.barrelTips.set(key, tip); }
+    if (!tip) { tip = barrelTip(art.canvas); this.barrelTips.set(key, tip); }
     return tip;
   }
+  /** The art of the weapon an actor holds: the player's configured gun from the gunsmith art when there is one. */
+  private weaponOf(a: ActorView) { return this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype, a.gun); }
   private muzzleOf(a: ActorView): { at: Point; angle: number } | null {
     const g = this.actors.get(a.uid); if (!g || !g.weapon.texture || a.weapon === 'claw') return null;
-    const art = this.tex.weapon(a.weapon, a.kind, a.tactics?.archetype), tip = this.barrelTip(a.weapon, a.kind, a.tactics?.archetype);
+    const art = this.weaponOf(a), tip = this.barrelTip(a);
     const w = g.weapon, c = Math.cos(w.rotation), s = Math.sin(w.rotation);
     const lx = (tip.x - art.pivotX) * w.scale.x, ly = (tip.y - art.pivotY) * w.scale.y;
     return { at: { x: w.x + lx * c - ly * s, y: w.y + lx * s + ly * c }, angle: w.rotation };

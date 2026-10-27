@@ -1,3 +1,4 @@
+import { gunsmithArt } from './gunsmith-hooks';
 import { brush, C, type PixelContext } from './pixel';
 
 /**
@@ -11,6 +12,9 @@ type PartArtId = typeof PART_ART_IDS[number];
 
 /** Authored 32px silhouettes. Texture identity never depends on a runtime tint. */
 export function paintItem(c: PixelContext, id: ItemArtId, size: 24 | 32): void {
+  // Sol's icons of the gunsmith guns and parts (#28 M2-10) once decoded; the placeholders below until then.
+  const sol = gunsmithArt?.icon(id, size);
+  if (sol) { c.drawImage(sol.img, sol.x, sol.y); return; }
   if (paintRpgItem(c, id, size)) return;
   if ((PART_ART_IDS as readonly string[]).includes(id)) { paintPartPlaceholder(c, id as PartArtId, size); return; }
   if (size === 24) { paintSmall(c, id); return; }

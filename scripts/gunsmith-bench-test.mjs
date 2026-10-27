@@ -15,6 +15,7 @@ import { browserOptions } from './browser-options.mjs';
 import { reportFilter, stepFilter } from './step-filter.mjs';
 import * as D from '../src/domain.ts';
 import { factoryState } from '../src/gunsmith/instance.ts';
+import { CONFIGS } from '../tests/fixtures/gunsmith-configs.ts';
 
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const htmlPath = option('html', 'dist/index.html'), html = await readFile(htmlPath, 'utf8');
@@ -114,6 +115,32 @@ async function step(name, fn) {
 }
 
 try {
+  await step('A1-composites-equal-the-approved-previews', async () => {
+    // M2-10: every approved preview assembly (Sol, M2-09) drawn by the game's compositor in the packaged page, compared
+    // with the preview PNG channel by channel.
+    const { assemblies } = JSON.parse(await readFile('tests/fixtures/gunsmith-assemblies.json', 'utf8'));
+    const cases = await Promise.all(assemblies.map(async a => ({ name: `${a.gun}-${a.configuration}-${a.code}`, gun: a.gun, code: a.code,
+      parts: CONFIGS[a.gun][a.configuration](), png: (await readFile(a.file)).toString('base64') })));
+    await open();
+    const bad = await page.evaluate(async cases => {
+      const art = window.__bincov.gunsmithArt, out = [];
+      for (const c of cases) {
+        const layout = art.layout(c.gun, c.parts, c.code), canvas = layout && art.draw(layout);
+        if (!canvas) { out.push(`${c.name}: not drawn`); continue; }
+        const img = new Image(); img.src = `data:image/png;base64,${c.png}`; await img.decode();
+        if (img.width !== canvas.width || img.height !== canvas.height) { out.push(`${c.name}: ${canvas.width}x${canvas.height}, preview ${img.width}x${img.height}`); continue; }
+        const ref = document.createElement('canvas'); ref.width = img.width; ref.height = img.height;
+        const rc = ref.getContext('2d'); rc.drawImage(img, 0, 0);
+        const a = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data, b = rc.getImageData(0, 0, img.width, img.height).data;
+        let diff = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) diff++;
+        if (diff) out.push(`${c.name}: ${diff} channel values differ`);
+      }
+      return out;
+    }, cases);
+    assert.deepEqual(bad, []);
+    return { compared: cases.length };
+  });
+
   await step('B1-preview-writes-nothing-confirm-writes-once', async () => {
     await open(); await openFromSlot(); await fits();
     const before = await raw();
@@ -326,6 +353,31 @@ try {
     assert.deepEqual((await presets()).map(p => p.name), ['轻快']);
     const raw = JSON.parse(await page.evaluate(() => localStorage.getItem('escape-bincov.session.v2')));
     assert.deepEqual(raw.profile.gunPresets.map(p => p.name), ['轻快'], 'written to the save');
+  });
+
+  await step('B8-art-pictures-and-bounded-caches', async () => {
+    // A G17 with its barrel group, suppressor, sight and long magazine in the bag: its cell shows the composite (58 x 25).
+    const p = fixture();
+    p.bag.items.push({ uid: 'g17-custom', id: 'gb17', qty: 1, x: 0, y: 2, gun: { parts: [
+      { uid: 'c-b01', id: 'B01', slot: 'barrel', relief: false, children: [] }, { uid: 'c-m03', id: 'M03', slot: 'muzzle', relief: false, children: [] },
+      { uid: 'c-o01', id: 'O01', slot: 'micro', relief: false, children: [] }, { uid: 'c-g01', id: 'G01', slot: 'mag', relief: false, children: [] }], devices: { laser: false, light: false } } });
+    await open(p); await quick('gear');
+    const cell = yard('[data-grid="bag"] [data-uid="g17-custom"] img');
+    assert.equal(await cell.evaluate(img => img.naturalWidth), 58, 'the configured G17 shows its own picture');
+    const caches = () => page.evaluate(() => window.__bincov.gunsmithArt.caches());
+    for (let i = 0; i < 20; i++) {
+      await yard(`[data-act="gunsmith:${GUN}"]`).click(); await bench('.gs').waitFor();
+      assert.equal(await bench('.gs-stage .gs-bench-art').count(), 1, 'the stage shows the workbench picture');
+      const before = await bench('.gs-bench-art').getAttribute('src');
+      await pos('gun/top/0').click(); await part(i % 2 ? 'O03' : 'O08').click();
+      assert.notEqual(await bench('.gs-bench-art').getAttribute('src'), before, 'the picture follows the preview');
+      const during = await caches();
+      assert.ok(during.bench <= 4 && during.inventory <= 64, JSON.stringify(during));
+      await bench('[data-gs="cancel"]').click();
+      await yard('.modal.k-gunsmith .phead [data-act="close"]').click(); await yard('.panel.k-gear').waitFor();
+      assert.equal((await caches()).bench, 0, 'closing the workbench drops its pictures');
+    }
+    return await caches();
   });
 
   await step('B5-desktop-1920x1080', async () => {

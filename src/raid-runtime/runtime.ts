@@ -1,4 +1,5 @@
 /** Headless coastal raid. Rules transplanted from RaidScene at f144147; no renderer/DOM imports. */
+import { partsSignature } from '../gunsmith/signature';
 import * as D from '../domain';
 import { getLegacyEnemyProfile } from '../enemy-profile';
 import { actorArchetype, actorDefinition, enemyDefinition } from '../enemy-archetypes';
@@ -290,6 +291,11 @@ export class CoastRaidRuntime implements RaidRuntime {
      * handlingOf; the #39 sample rifle is gone (M2-01): the real M4A1 is a loadout gun like any other.
      */
     get currentWeapon(): D.WeaponDef { return this.knife ? D.WEAPONS.knife : this.equipped()?.weapon ?? D.WEAPONS.knife; }
+    /** The gun in hand's type and configuration signature, for its picture (#28 M2-10); null with the knife or no gun. */
+    get heldGun(): { id: string; sig: string } | null {
+        const gun = this.knife ? null : D.equippedGun(this.session.loadout ?? this.terminalLoadout);
+        return gun ? { id: gun.id, sig: partsSignature(gun.parts) } : null;
+    }
     /** How the held weapon is drawn (heldLook). */
     get weaponLook(): WeaponLook { return heldLook(this.currentWeapon.id); }
     /** Handling of the weapon in hand, from the same source as currentWeapon. */

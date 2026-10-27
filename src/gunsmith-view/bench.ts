@@ -17,7 +17,8 @@ import {
     positions, presetEdits, remountEdits, replaceEdits, sourceOf, without, type BenchGun, type BenchNumbers, type BenchScores, type Candidate, type Capped, type Position,
 } from '../gunsmith/bench';
 import { PRESET_LIMIT, PRESET_NAME_MAX, presetIds, presetOf, type GunPreset } from '../gunsmith/presets';
-import { inventoryArtUrl } from '../art/item-images';
+import { inventoryArtUrl, itemPicture } from '../art/item-images';
+import { gunsmithArt } from '../art/gunsmith-hooks';
 import { esc } from '../html';
 
 export type BenchCue = 'ok' | 'error' | 'pick' | 'drop';
@@ -76,6 +77,9 @@ export class Workbench {
     constructor(private rt: HideoutRuntime, gun: string, private host: BenchHost) {
         this.gunUid = gun; this.session = rt.openGunsmith(gun);
     }
+
+    /** The panel closes: its workbench pictures go (ART-SPEC 4.3). */
+    dispose() { gunsmithArt?.releaseBench(); }
 
     /** The gun being edited. */
     get gun() { return this.gunUid; }
@@ -334,6 +338,19 @@ export class Workbench {
         return `<button type="button" class="${cls}" data-gs="pos" data-arg="${esc(p.key)}" aria-pressed="${p.key === at?.key}" title="${esc(p.place)}${p.reason ? ` · ${esc(p.reason)}` : ''}"><small>${p.name}</small><b>${esc(label)}</b>${p.open ? '' : `<span>${esc(p.reason ?? '')}</span>`}${m ? '<i>改</i>' : ''}</button>`;
     }
 
+    /**
+     * The gun as the preview builds it (#28 M2-10): Sol's workbench picture at the largest whole scale that fits the stage
+     * (ART-SPEC 2: 3 to 4 times on desktops, 1 to 3 on phones), else the inventory picture.
+     */
+    private stageArt(gun: BenchGun, parts: GunState['parts'], phone: boolean) {
+        const pic = gunsmithArt?.bench(gun.id, parts) ?? null;
+        if (!pic) return img(gun.id);
+        const vw = typeof innerWidth === 'number' ? innerWidth : 1280, vh = typeof innerHeight === 'number' ? innerHeight : 720;
+        const room = phone ? [vh > vw ? vw - 60 : (vw - 60) * .4, 80] : [vw >= 1600 ? 780 : 600, vh >= 900 ? 200 : 150];
+        const scale = Math.max(1, Math.floor(Math.min(room[0] / pic.w, room[1] / pic.h)));
+        return `<img class="gs-bench-art" alt="" src="${pic.url}" width="${pic.w * scale}" height="${pic.h * scale}" style="width:${pic.w * scale}px;height:${pic.h * scale}px">`;
+    }
+
     /** The gun's line under its name: where it is, the magazine, the weight and the footprint, before → after. */
     private infoText(gun: BenchGun, preview: GunEditPreview | null) {
         const mag = gun.magazine ? ` · 弹匣 ${gun.magazine.ammo} / ${arrow(String(preview?.capacity.before ?? gun.magazine.capacity), String(preview?.capacity.after ?? gun.magazine.capacity))} 发${ammoName(gun.id)}` : '';
@@ -348,7 +365,7 @@ export class Workbench {
             const on = g.uid === this.gunUid;
             return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${on && changes ? ` · ${changes} 处改动` : ''}</em></button>`;
         }).join('');
-        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${img(gun.id)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>${this.presetsHtml(gun, preview)}`;
+        return `<div class="gs-guns gs-crow">${chips}</div><div class="gs-cbody"><div class="gs-art">${this.stageArt(gun, preview?.after.parts ?? gun.state.parts, true)}</div><div class="gs-cpos">${list.map(p => this.posHtml(p, at, mark)).join('')}</div></div><p class="gs-cinfo">${this.infoText(gun, preview)}</p>${this.presetsHtml(gun, preview)}`;
     }
 
     /** The phone's fixed bar: what the preview changes (opens the sheet), why it cannot be confirmed, cancel and confirm. */
@@ -362,7 +379,7 @@ export class Workbench {
     private gunsHtml(guns: BenchGun[], changes: number | null) {
         return guns.map(g => {
             const on = g.uid === this.gunUid, mag = g.magazine ? `弹匣 ${g.magazine.ammo} / ${g.magazine.capacity} 发 · ` : '';
-            return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}">${img(g.id)}<b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${g.relief ? ' · 救济' : ''}</em><span>${mag}已装 ${g.parts} 件 · ${kg(g.weight)}</span>${on && changes ? `<strong>有 ${changes} 处改动没确认</strong>` : ''}</button>`;
+            return `<button type="button" class="gs-gun${on ? ' on' : ''}" data-gs="gun" data-arg="${esc(g.uid)}" aria-pressed="${on}"><img alt="" src="${itemPicture({ id: g.id, gun: g.state }, 999, 999).url}"><b>${esc(g.name)}</b><em>${WHERE_NAMES[g.where]}${g.relief ? ' · 救济' : ''}</em><span>${mag}已装 ${g.parts} 件 · ${kg(g.weight)}</span>${on && changes ? `<strong>有 ${changes} 处改动没确认</strong>` : ''}</button>`;
         }).join('');
     }
 
@@ -370,7 +387,7 @@ export class Workbench {
         const box = (p: Position) => this.posHtml(p, at, mark);
         const top = list.filter(p => TOP.has(p.slot)), bottom = list.filter(p => !TOP.has(p.slot));
         return `<header class="gs-head"><h3>${esc(gun.name)}${changes ? ` <span class="gs-badge">预览中 · ${changes} 处改动没确认</span>` : ''}</h3><p>${this.infoText(gun, preview)}</p></header>
-<div class="gs-stage"><div class="gs-row">${top.map(box).join('')}</div><div class="gs-art">${img(gun.id)}</div><div class="gs-row">${bottom.map(box).join('')}</div></div>
+<div class="gs-stage"><div class="gs-row">${top.map(box).join('')}</div><div class="gs-art">${this.stageArt(gun, preview?.after.parts ?? gun.state.parts, false)}</div><div class="gs-row">${bottom.map(box).join('')}</div></div>
 <p class="gs-hint">点枪身上的位置挑配件；点配件只改预览，按「确认」才会改到枪上。</p>`;
     }
 

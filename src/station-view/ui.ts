@@ -137,7 +137,7 @@ export class UI {
   show(kind: PanelKind, station: Station | null = null, facility?: Facility) {
     if (this.kind && (this.kind === 'arms' || this.kind === 'med') && kind !== this.kind && this.shop?.view().dirty) { this.toast('待买或待卖区还有物品，先结算或清空。', 'error'); this.host.sound('error'); return; }
     if (this.kind === 'gunsmith' && kind !== 'gunsmith' && this.bench && !this.bench.requestClose()) { this.render(); return; }
-    if (kind !== 'gunsmith') { this.bench = null; this.benchFrom = null; }
+    if (kind !== 'gunsmith') { this.bench?.dispose(); this.bench = null; this.benchFrom = null; }
     const was = this.kind;
     // The panel is painted anew: a drag from the old grids ends here instead of waiting for a release.
     this.drag.cancel();
@@ -180,7 +180,7 @@ export class UI {
   /** The bench closed with nothing waiting: back to the panel it came from, else to the yard. */
   private closeBench() {
     const from = this.benchFrom;
-    this.bench = null; this.benchFrom = null;
+    this.bench?.dispose(); this.bench = null; this.benchFrom = null;
     if (from) { this.show(from.kind, from.station, from.kind === 'facility' ? from.facility : undefined); return; }
     this.kind = null; this.station = null; this.selected = null;
     this.panel.hidden = true; this.modal.hidden = true; this.panel.innerHTML = ''; this.modal.innerHTML = '';
