@@ -26,7 +26,7 @@ export function wrapCoastRuntime(core: CoastRaidRuntime, session: SessionState, 
         cancelStart: core.cancelStart.bind(core),
         selectTarget: core.selectTarget.bind(core), activate: core.activate.bind(core),
         transferLoot: (ref: TargetRef, request: LootTransfer) => core.transferLoot(ref, request),
-        useSupply: core.useSupply.bind(core), equipItem: core.equipItem.bind(core), heal: core.heal.bind(core),
+        useSupply: core.useSupply.bind(core), equipItem: core.equipItem.bind(core), equipLoot: core.equipLoot.bind(core), heal: core.heal.bind(core),
         dropItem: core.dropItem.bind(core), carriedWeight: core.carriedWeight.bind(core), carryLimit: core.carryLimit.bind(core),
         inventoryView: (): CarriedInventoryView | null => {
             const l = session.loadout;

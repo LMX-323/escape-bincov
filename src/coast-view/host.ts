@@ -939,7 +939,8 @@ export class CoastSampleHost {
       }
       this.toast(e.action === 'equip' && e.reason === 'rejected' ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : reasonText(e.reason), true);
     }
-    else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
+    // A gun equipped straight from a container (#26 F15) is announced by the panel that equipped it.
+    else if (e.type === 'looted' && e.durability === 'committed' && e.to !== 'equip') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
   private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); this.placeRadio(); }

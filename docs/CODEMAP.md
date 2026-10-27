@@ -167,7 +167,7 @@
 
 行动中的 `Runtime.layered` 随模拟推进，`SessionState.expansion` 是最近提交后的状态，不能拿它重新计算实时上限。优先复用帧或只读服务里的权威值；显示层只做舍入与排版。背包打开时世界仍推进，更新读数只改对应文本，不能重建网格打断拖放。回归入口：[carried-weight.test.ts](../tests/carried-weight.test.ts)，覆盖护符、弹药、临时力量过期及保持放置状态。
 
-行动背包按需读 `CoastServices.inventoryView` 的 detached bag/safe 与装备字段，周期读数走不克隆世界的 `inventoryReadout`；不从会话拿活对象。包内写入由 `raid-runtime/host.ts` 的三个 carried 命令调用原 `SaveSession.mutate`，搜刮全部移动仍走 `transferLoot`。规则差异、引用恢复和正式工厂断言见 [raid-inventory-services.test.ts](../tests/raid-inventory-services.test.ts)；当前边界与验证见 [Q-E02 B](tasks/quality-entropy.md#q-e02-b-行动背包有限服务)。
+行动背包按需读 `CoastServices.inventoryView` 的 detached bag/safe 与装备字段，周期读数走不克隆世界的 `inventoryReadout`；不从会话拿活对象。包内写入由 `raid-runtime/host.ts` 的三个 carried 命令调用原 `SaveSession.mutate`，搜刮全部移动仍走 `transferLoot`。主武器槽（#26 F15）装备背包里的枪走 `equipItem`、来源里的枪走 `equipLoot`，两者共用 runtime 的 `equip` 与 `D.equipRun`。规则差异、引用恢复和正式工厂断言见 [raid-inventory-services.test.ts](../tests/raid-inventory-services.test.ts)；当前边界与验证见 [Q-E02 B](tasks/quality-entropy.md#q-e02-b-行动背包有限服务)。
 
 **结束定位的判据。** 能指出数值由谁计算、使用哪个时钟、什么时候刷新；修改展示不会写存档，临时效果过期后玩法与显示保持一致。
 

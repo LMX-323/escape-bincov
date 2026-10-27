@@ -12,7 +12,7 @@ import { generateRunBase } from '../src/world';
 type World = false | true | 'mall' | 'legacy';
 const worlds: World[] = [false, true, 'mall'];
 const item = (uid: string, id: string, x = 0, y = 0, qty = 1): D.Item => ({ uid, id, x, y, qty });
-function fixture(world: World = true, arm?: (l: D.RunLoadout) => void) {
+function fixture(world: World = true, arm?: (l: D.RunLoadout) => void, box?: (inv: D.Inventory) => void) {
     const data = new Map<string, string>(); let writes = 0, failed = false;
     const storage: D.StorageLike = { getItem: k => data.get(k) ?? null, setItem: (k, v) => { if (failed) throw Error('quota fixture'); data.set(k, v); writes++; } };
     let state = createSessionState(), saves = new SaveSession(state, () => storage, undefined, () => 1800000000000);
@@ -20,10 +20,10 @@ function fixture(world: World = true, arm?: (l: D.RunLoadout) => void) {
     const l = structuredClone(state.loadout!); l.bag.items = [item('water-stack', 'water', 0, 0, 2)]; l.safe.items = []; arm?.(l);
     if (state.expansion?.raid) {
         const e = structuredClone(state.expansion), r = e.raid!, c = r.maps[r.currentMap].containers[0];
-        r.loadout = l; r.player.x = c.x; r.player.y = c.y;
+        r.loadout = l; r.player.x = c.x; r.player.y = c.y; box?.(c.inventory);
         assert.ok(saves.persist(state.save, null, undefined, e), state.storageError); state.loadout = structuredClone(l);
     } else {
-        const c = structuredClone(state.checkpoint!); c.loadout = l; c.player.x = c.containers![0].x; c.player.y = c.containers![0].y;
+        const c = structuredClone(state.checkpoint!); c.loadout = l; c.player.x = c.containers![0].x; c.player.y = c.containers![0].y; box?.(c.containers![0].inventory);
         state.loadout = structuredClone(l); D.checkpointSafe(state.save, l.safe, l.runId!);
         assert.ok(saves.persist(state.save, c), state.storageError);
     }
@@ -162,4 +162,51 @@ test('the panel has no session/save capability and routes loot-mode bag/safe mov
     assert.deepEqual(calls, ['loot']); assert.equal(f.writes, 1);
     panel.mode = 'inventory'; assert.equal(panel.commit('safe', 'bag', f.state.loadout!.safe.items[0].uid, 2, 0), 'committed');
     assert.deepEqual(calls, ['loot', 'carried']); assert.equal(f.writes, 2);
+});
+
+// #26 F15: equip a gun straight from the open container.
+const crateGun = (inv: D.Inventory) => Object.assign(inv, { w: 6, h: 5, items: [{ ...item('crate-carbine', 'carbine'), gun: D.factoryGun('carbine').gun }, item('crate-water', 'water', 4, 0)] });
+const armedPistol = (l: D.RunLoadout) => { Object.assign(l, { weapon: 'pistol', weaponUid: 'own-pistol', gun: D.factoryGun('pistol').gun, relief: false, ammo: 5, ammoRelief: 0 }); };
+function openBox(f: ReturnType<typeof fixture>): TargetRef {
+    const b = f.runtime.current(), box = b.frame.containers[0], ref: TargetRef = { runId: b.stamp.world.runId, mapId: b.stamp.world.mapId, kind: 'container', id: box.id };
+    assert.equal(f.services.activate(ref), true); return ref;
+}
+
+test('equipLoot takes the gun from the container and commits loadout and world in one write, in every world', () => {
+    for (const world of worlds) {
+        const f = fixture(world, l => { armedPistol(l); }, crateGun); f.runtime.advance(0, emptyIntent());
+        const ref = openBox(f); f.runtime.advance(100, emptyIntent()); const writes = f.writes;
+        assert.equal(f.services.equipLoot(ref, 'crate-carbine'), 'committed', `${world}`); assert.equal(f.writes, writes + 1);
+        const l = f.state.loadout!; assert.equal(l.weapon, 'carbine'); assert.equal(l.weaponUid, 'crate-carbine');
+        assert.equal(l.bag.items.find(i => i.id === 'pistol')!.uid, 'own-pistol'); assert.equal(D.count(l.bag, 'ammo9'), 5);
+        assert.deepEqual(f.services.lootInventory(ref)!.items.map(i => i.uid), ['crate-water']);
+        const saved = f.saved(), live = f.live(), raid = saved.expansion?.raid ?? saved.raid!;
+        assert.deepEqual(raid.loadout, l); assert.deepEqual(saved.expansion, live.expansion); assert.deepEqual(saved.raid, live.raid);
+        const containers = 'maps' in raid ? Object.values(raid.maps).flatMap(m => m.containers) : raid.containers ?? [];
+        assert.deepEqual(containers.find(c => c.id === ref.id)!.inventory.items.map(i => i.uid), ['crate-water'], `${world}: the container change is in the same record`);
+        assert.ok(f.runtime.current().events.some(e => e.type === 'looted' && e.to === 'equip' && e.item === 'carbine' && e.durability === 'committed'));
+    }
+});
+
+test('a failed equipLoot write restores raw bytes, the container and the slot; the retry commits once', () => {
+    for (const world of worlds) {
+        const f = fixture(world, armedPistol, crateGun); f.runtime.advance(0, emptyIntent()); const ref = openBox(f);
+        const before = f.live(), raw = f.raw;
+        f.fail(true); assert.equal(f.services.equipLoot(ref, 'crate-carbine'), 'save-failed');
+        assert.equal(f.raw, raw); assert.deepEqual(f.live(), before); assert.equal(f.writes, 0);
+        assert.equal(f.state.loadout!.weaponUid, 'own-pistol'); assert.equal(f.services.lootInventory(ref)!.items.length, 2);
+        assert.ok(!f.runtime.current().events.some(e => e.type === 'looted' && e.durability === 'committed'));
+        f.fail(false); assert.ok(f.services.retrySave()); f.runtime.resume(); const writes = f.writes;
+        assert.equal(f.services.equipLoot(ref, 'crate-carbine'), 'committed'); assert.equal(f.writes, writes + 1);
+        assert.equal(f.state.loadout!.weaponUid, 'crate-carbine');
+    }
+});
+
+test('equipLoot refuses a full backpack, a non-gun, a safe gun and a stale container without writing', () => {
+    const fill = (l: D.RunLoadout) => { armedPistol(l); l.bag.items = Array.from({ length: 30 }, (_, i) => item(`fill-${i}`, 'fuse', i % 6, Math.floor(i / 6), 4)); l.safe.items = [{ ...item('safe-pistol', 'pistol'), gun: D.factoryGun('pistol').gun }]; };
+    const f = fixture(true, fill, crateGun); f.runtime.advance(0, emptyIntent()); const ref = openBox(f), raw = f.raw, before = f.live();
+    for (const [uid, at] of [['crate-carbine', ref], ['crate-water', ref], ['safe-pistol', ref], ['crate-carbine', { ...ref, id: 'no-such-box' }]] as const)
+        assert.equal(f.services.equipLoot(at, uid), 'rejected', uid);
+    assert.equal(f.raw, raw); assert.deepEqual(f.live(), before); assert.equal(f.writes, 0);
+    assert.equal(f.state.loadout!.weaponUid, 'own-pistol'); assert.equal(f.services.lootInventory(ref)!.items.length, 2);
 });
