@@ -1,3 +1,31 @@
+## 2026-10-27 #26 F15：局内主武器槽，拖枪即装备（PR #129，`agent/f15-raid-equip-slot`）
+
+维护者 10-27 说“把 #115 合进去，然后把 F15 完善起来”。分支从同步后的 #115 head `a256e3c` 开出，依赖 #115 的有限服务接口；#115 合入前本 PR 的差异里会带上它的提交。10-27 晚 #128（F14）合入 main 后，先同步 #115（`b6bffa4`），再把它合进本分支；只有任务清单冲突，F14 与 F15 两段都保留。
+
+- 面板：随身物资和搜刮面板左侧、安全箱上方加主武器槽（宽度固定三格，换枪不挪列）。背包或来源里的枪拖进去即装备；点选枪后点槽也装备（触屏和点选放置用这条）；详情的「装备主武器」现在也出现在来源里的枪上。槽在拖到上方时变绿或变红，底栏写原因；非枪和安全箱里的枪拒绝，安全箱文案与水产站一致。
+- 规则：`D.equipRun` 增加可选来源容器，安全箱永远不是来源；换下的枪和余弹仍只回背包，放不下整笔拒绝，来源和装备不动。
+- 事务：新服务 `equipLoot`（`raid-runtime/runtime.ts` 的私有 `equip` 与 `equipItem` 共用），在 Runtime 事务里从活容器取枪；容器是世界状态，经 `snapshot` / `snapshotExpansion` 与装备、背包同一笔写入，拒绝或失败由 `mutate` 回滚。提交后发 `looted`（`to: 'equip'`，契约里早已有这个值），声音和尘土照旧；提示只由面板发一次。
+- 测试：领域反例（安全箱、非枪、错容器、满包原子拒绝），正式工厂三种地图的单写、失败回滚和重试、拒绝不写；`test:issue26-inventory` 新增三组（拖箱/拖包/非法、点选/按钮、满包与配额回滚），原“外部枪不能直接装备”断言改为能装备。
+
+存档格式、版本、时钟和其他规则不变。本机结果和截图见 PR 正文与 `docs/tasks/raid-equip-slot/`。未做：真机、真人手感。和 #106（改枪 M2，草稿）在 `inventory.ts` 详情两行、`runtime.ts` 的 `equipItem` 会有文本冲突，谁后合谁解。
+
+## 2026-10-27 #115：行动背包有限服务同步 main（续作）
+
+维护者 10-27 要求查看 #115 去向并合入后再做 #26 F15。#115 自 10-25 起无人续作、无评论，准确 head `3e1047b` 当时 CI 全过。本次在隔离工作树把 main `86add10`（#126、#127 等已合入）合进原分支：源码自动合并，只有本文件冲突，保留双方小节。实现和接口不变；同步后的验证结果见 PR 正文。F15 另由 PR #129 承接（基于本分支）。10-27 晚 #128（F14）合入后，再把 main `8b59019` 合进来一次，同样只有本文件冲突，保留双方小节。
+
+## 2026-10-27 #26 F14：商场里没揭示的房间压暗（PR #128）
+
+维护者 10-27 在局域网试玩商场四版后反馈：“目前可视范围指示不太清晰：有时候敌人看不见，我又不知道他在视野盲区里，会让人感到疑惑。”分支 `claude/issue26-f14-reveal-cue-a98142`，基线 main `0d20857`，#127 合入后正常合并 main `86add10`（无冲突），在四版上复查。
+
+- 复现：一层中央超市西侧走廊，离超市 2 格、中间没有墙，超市里的敌人一个都不显示，往前一格全部出现。原因是商场不画天花板（维护者此前的决定），没揭示的店铺看上去和空房间一样。
+- 本地做了三个原型（A 压暗；B 虚线框加“视野外”；C 10 格内看得见房间地面就揭示整间，要改 Runtime 规则），配真实截图请维护者选，维护者选 A。原型只留在本地分支 `proto/f14-options`，未推送。
+- 实现：`lighting.ts` 的 `Lighting.setUnseen` / `syncUnseen` / `unseenAt` 和 `UNSEEN_TINT`；地面在光照层乘，立着的图经 `at` 乘同一层；`scene.ts` 的 `rebuild` 只给有素材的商场楼层传房间。压暗跟房间的灯同步（揭示后 0.3 秒退掉，隐藏同一帧回来），重叠房间取最暗一层，只读 `revealed`。揭示规则、存档、遭遇都不变；发光贴图不压暗。
+- 检查：`tests/coast-lighting.test.ts` 新增 4 条；`test:mall-sample` 新增 M03c（自动找一个从走廊正对、中间没墙的房间：地面和家具变暗、走廊不变、房间里有没有敌人逐像素相同、揭示后不留、再隐藏同一帧回来）。两者在 main 的源码上都失败。
+
+本机实测（合并后 head `c961d53` 的代码）：单测 925/925，`pnpm package` 通过（HTML SHA-256 `af5e1b5769a56cc2c0440b1359412a96c89f98ad8dc134ac2c777d5399f9cd0f`）；浏览器 16 套全部通过：`test:mall-sample` 24/24（含 M03c）、`test:coast-sample` 53/53、`test:coast-animation` 8/8、`test:coast-render-targets` 5/5、`test:raid-default` 11/11，以及 issue26-spatial、browser、ui、art、tactical、asset-load、hud-release、shooting、enemy、mobile、buildings；工程守卫 63/64（唯一失败是本机便携 Git 路径的已知环境问题）。`test:title-water`（本机缺 Playwright ffmpeg）和 `test:station-capability`（需真实 GPU）未运行。合并前中止的第一轮套件进程没有停下，和重跑重叠了一段并共用日志目录，以上结果按重跑写入的顺序认定。合并前那次 `test:coast-sample` 的 W13 读到空落幕文案失败一次，是 PR #95 在修的已知时序问题，合并后重跑通过。截图（1280×720 前后对比、1920×1080、844×390 触屏仿真）在 `docs/mall-2-5d/screens/19–21`。
+
+未验：真人观感、真机。下一步：等维护者看 PR #128；需要时按 https 在局域网提供本分支构建试玩。F15 未开工。
+
 ## 2026-10-27 #47：M2 家具与地面素材四批齐备（续作 PR #127）
 
 按维护者“开始作图”指令，从已接受 main `0d20857`、PR #127 head `60a0d93` 接手，隔离工作树 `C:/bincov/test-results/mall-m2-art`。沿原 PR 完成 P0 → P1 → P2 → P3：26 种家具、105 本体 + 11 emit + 10 地面，共 126 PNG；内置 image_gen 的 40 张原图（含两次修订前图）与完整提示词保留。manifest 修订 5 注册 236 项，原 110 项不变，不改布局或存档。入口：[M2 当前交付摘要及四批预览](docs/mall-2-5d/m2/README.md)、[独立验证](docs/mall-2-5d/m2/m2-validation.json)、[原任务书](docs/mall-2-5d/m2/TASK.md)。
@@ -40,13 +68,19 @@
 
 同步 main `ae2ad6b`（#120、#121 已合入）：唯一冲突在 `sound.ts` 的 `case 'shot'` 开头，按 [PR 评论](https://github.com/xuys2025/escape-bincov/pull/113#issuecomment-6398609630)保留 #121 的音色选择（`timbre`）和本 PR 的弹丸登记，玩家开枪按音色族播放；任务清单 #75 一行改掉“分枪种枪声未排期”的过时说法。合并后单测 887/887（含本 PR 10 项）、`pnpm package` 通过，`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）。之后又同步 main `7d1827c`（#122，C 组姿态图集，只有素材和文档），没有冲突，单测 887/887、`pnpm package` 通过，HTML 与上次逐字节相同。浏览器、试听和真机仍未运行。
 
+## 2026-10-25 行动背包有限服务（`refactor/raid-inventory-services`）
+
+#60 Q-E02 B，同一交付完成B1三有限命令+B2 detached窄读投影；起点 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`，实现/验证入口见 [摘要](docs/tasks/quality-entropy.md#q-e02-b-行动背包有限服务)、[派生读数](docs/CODEMAP.md#派生读数)和正式工厂单测 `tests/raid-inventory-services.test.ts`。面板不持Session/SaveSession，命令回调内取fresh loadout，保留原 mutate接受集合、世界同事务、失败引用替换和原UI错误反馈；inventory全量quick/loot部分quick分别保持，不改存档/时钟/规则，不搬Scope/renderer。
+
+本地正式工厂10项+原负重11/11，完整884/884、工程守卫64/64、package/最终类型检查通过。浅读投影及错误部分quick两种副本回归均被断言拦下；两尺寸键鼠与保存失败/嵌套枪件的既有issue26定向case 3/3通过，页面异常/外网0，真实截图和[验证记录](docs/tasks/raid-inventory-services/validation.json)已归档；完整其余浏览器风险由准确head CI复核。10-25 已推送并建立 PR #115；不自行合并发布。
+
 ## 2026-10-27 #61：PR 模板文档分类精确路径（续作 #108）
 
 沿 [PR #108](https://github.com/xuys2025/escape-bincov/pull/108) 原分支 `fix/ci-template-doc-path`，从原 head `2468d30c9b424a88429f55a47790f0590e75b256` 正常合入已接受 main `86add10b0b7afb96948ac667d176d19badfc406b`，仅任务清单和本交接冲突，保留主线商场及打击感记录。实际文件 `.github/pull_request_template.md` 被大写白名单遗漏；仍只修唯一精确路径及 CI 说明，不扩大白名单。
 
-本轮 Windows 10 / Node 24.22.1 / pnpm 11.19.0：`pnpm test` 921/921、`pnpm check:ci` 65/65、`pnpm package` 通过。单测首跑受沙箱 `uv_os_get_passwd ENOMEM` 阻塞，正常宿主重跑通过。工程守卫首跑 64/65：测试写死系统级 Git Bash 目录，本机为用户级安装；改从当前 `git --exec-path` 定位 Bash 后，原门禁 75 组成功/失败/跳过组合全部实际执行，全守卫通过。主线策略配相同测试的负对照为 15/17，两处预期失败；候选全部通过。push/PR 仍只在同非文档指纹和完整成功 main 证据下复用，无证据、混入代码、可执行模式和未知大写路径继续全量。
+前一轮 Windows 10 / Node 24.22.1 / pnpm 11.19.0：`pnpm test` 921/921、`pnpm check:ci` 65/65、`pnpm package` 通过。单测首跑受沙箱 `uv_os_get_passwd ENOMEM` 阻塞，正常宿主重跑通过。工程守卫首跑 64/65：测试写死系统级 Git Bash 目录，本机为用户级安装；改从当前 `git --exec-path` 定位 Bash 后，原门禁 75 组成功/失败/跳过组合全部实际执行，全守卫通过。主线策略配相同测试的负对照为 15/17，两处预期失败；候选全部通过。push/PR 仍只在同非文档指纹和完整成功 main 证据下复用，无证据、混入代码、可执行模式和未知大写路径继续全量。
 
-HTML SHA-256 `224d158dd9c31e05213eb73610f2474cb0543653fde49a00705dd48d44be54fd`；游戏源码/素材与本轮 main 无差异，生成物未提交。本地未重复浏览器游戏流程，准确 head 完整 CI、下一步审阅以原 PR 正文为准；未合并或部署。继续核对入口为 `scripts/ci/policy.mjs` 的 `isDocumentation` / `choosePlan`、`scripts/ci/policy.test.mjs` 与 [CI 合同](docs/CI.md#纯文档快速通道)。#61 其余耗时与分片、#95 落幕测试保持原归属。
+最终合并前按维护者授权，在 #115（`8c27ce2`）及 #129（`9400cf6`）合入后，从 #108 head `c82cc8b` 正常同步 main `9400cf6a4efdea4d8898c4d3adfdf9a61efab899`。仅本交接一处插入冲突，保留双方完整记录；与预演结果一致。同步后 Windows 同环境：939/939 单测、65/65 CI 守卫、打包通过；HTML SHA-256 `d475bb48b8dd0e7b648aae019f473c33e37e1fccf7f0dbdaaf81da5a8b3a8344`。游戏源码/素材与本轮 main 无差异，生成物未提交。本地未重复浏览器游戏流程，准确 head CI、最终合并与部署结果以原 PR 正文为准。继续核对入口为 `scripts/ci/policy.mjs` 的 `isDocumentation` / `choosePlan`、`scripts/ci/policy.test.mjs` 与 [CI 合同](docs/CI.md#纯文档快速通道)。#61 其余耗时与分片、#95 落幕测试保持原归属。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
