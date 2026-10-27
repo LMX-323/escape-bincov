@@ -26,7 +26,7 @@ export async function runMallEnemyCases(browser, report, out, { priorClient, pri
             await raidReady(page); await drive(page, 'freezeAI', true);
             const raw = await page.evaluate(key => localStorage.getItem(key), SESSION_KEY), original = decodeSession(raw);
             const raid = original.expansion.raid, team = raid.maps['mall-f2'].enemies.filter(e => e.tactics?.squad === MALL_RAIDERS);
-            assert.equal(raid.worldVersion, 'mall-v3'); assert.equal(raid.version, 5); assert.equal(team.length, 3);
+            assert.equal(raid.worldVersion, 'mall-v4'); assert.equal(raid.version, 5); assert.equal(team.length, 3);
             assert.equal(raid.roster.length, 25);
             const ids = team.map(e => e.uid);
             assert.equal(await page.evaluate(ids => window.__bincovSample.host.lastBatch.frame.actors.some(a => ids.includes(a.uid)), ids), false, 'upstairs actors cannot leak to F1');
@@ -35,7 +35,7 @@ export async function runMallEnemyCases(browser, report, out, { priorClient, pri
             await drive(page, 'placePlayer', stair.at, 0, 'mall-f1'); await frames(page, 3);
             if (touch) await page.locator('.coast-sample [data-act]').tap(); else await page.keyboard.press('e');
             await page.waitForFunction(() => window.__bincovSample.host.lastBatch.stamp.world.mapId === 'mall-f2');
-            assert.equal(await page.evaluate(() => window.__bincovSample.host.lastBatch.stamp.world.worldVersion), 'mall-v3');
+            assert.equal(await page.evaluate(() => window.__bincovSample.host.lastBatch.stamp.world.worldVersion), 'mall-v4');
             report.cases.push({ viewport, scenario: 'native-mall-real-stair', input: touch ? 'native interaction tap' : 'native E' });
             const gunner = team.find(e => e.id === 'raider-gunner');
             await drive(page, 'placePlayer', { x: gunner.x + 128, y: gunner.y + 96 }, Math.PI, 'mall-f2'); await frames(page, 5);

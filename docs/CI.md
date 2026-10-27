@@ -59,6 +59,8 @@ CI 策略测试还守住五件事。[entry-docs.test.mjs](../scripts/ci/entry-do
 
 ### 敌人套件的完整视口分片（#61）
 
+2026-10-27 续作仍沿 [PR #112](https://github.com/xuys2025/escape-bincov/pull/112)。该 PR 尚未合入，因此主线仍把完整 `enemy` 放在 batch-8。最新已接受 main `8b59019` 的[完整运行](https://github.com/xuys2025/escape-bincov/actions/runs/40520775653)中，该组套件共 1108.453 秒，其中 `expansion` 35.685 秒、`loot` 238.195 秒、`enemy` 834.570 秒；其他七组为 212.468–473.274 秒。另四轮成功运行的 `enemy` 为 641.85–705.62 秒，说明优先拆完整视口仍针对当前瓶颈。此处是定位样本，候选收益以最新准确 head 的完整 CI 为准。维护者指定合并顺序为 #115 → #129 → #108 → #112；前三项合入后，#112 须再同步主线并复验。
+
 2026-10-25 研究最近三个成功 main 完整运行：[40102916226](https://github.com/xuys2025/escape-bincov/actions/runs/40102916226)、[40101157725](https://github.com/xuys2025/escape-bincov/actions/runs/40101157725)、[40099269052](https://github.com/xuys2025/escape-bincov/actions/runs/40099269052)。触发到必需门禁分别为 18:32、21:22、20:43；batch-8 的套件步骤为 15:14、17:45、17:38，第二慢 batch-1 约 7:45。主机缓存全命中、浏览器组排队仅 2–3 秒，瓶颈在套件执行。单 timing artifact 和单 job logs 下载在调研环境返回代理 403，官方整 run logs ZIP 可读，补得完整 enemy 命令分别为 689.25、796.50、792.04 秒；对应 CPU 为 EPYC 9V74、Xeon 8573C、EPYC 7763（均 4 核）。三轮均为 Node 24.21.0、Chromium build 1243、lavapipe（llvmpipe / LLVM 20.1.2，Vulkan 1.4.318）。
 
 [PR #112 首轮 be62a79](https://github.com/xuys2025/escape-bincov/actions/runs/40161563791) 的三片实际为 207.37、265.70、195.42 秒（720、1080、touch），共 165 条原 case 通过，页面错误/外部请求均为零；CPU 分别为 EPYC 9V45、9V45、7763（均 4 核），浏览器/Node/renderer 与基线相同。各片身份、配置和六单元/case 并集也从真实输出独立复核。portable 输出证明候选与最近两轮 main 的实际 HTML SHA-256 均为 `b309e11f248f46e9c10ba08d0056aab8160212adb20ecab35bedf54c1d8bfe7f`；更早 `c587685` 的游戏字节不同，不混入同产品对照。首轮整体因既有 station-reset S6 的精确 toast 等待失败，最终门禁正确阻断，不能把 10:18 到失败门禁算作完整通过或提速验收；CPU 不同的小样本也不是受控三轮性能结论。
