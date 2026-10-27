@@ -212,7 +212,10 @@ test('actual shell gate rejects missing policy, failed build and unintended skip
   const yaml = readFileSync(resolve('.github/workflows/ci-pages.yml'), 'utf8');
   const block = yaml.split('name: Require build and the selected browser policy to succeed')[1].split('\n      - ')[0];
   const script = block.split('run: |\n')[1].split('\n').map(line => line.slice(10)).join('\n');
-  const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
+  // Git for Windows can be installed per-user; use the active Git installation.
+  const bash = process.platform === 'win32'
+    ? resolve(execFileSync('git', ['--exec-path'], { encoding: 'utf8' }).trim(), '../../../bin/bash.exe')
+    : 'bash';
   for (const build of ['success', 'failure', 'skipped', 'cancelled', '']) for (const required of ['true', 'false', '']) {
     for (const result of ['success', 'failure', 'skipped', 'cancelled', '']) {
       let passed = true;
