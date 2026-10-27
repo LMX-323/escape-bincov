@@ -20,6 +20,8 @@ export interface CoastServices {
     transferLoot(ref: TargetRef, request: LootTransfer): MutationResult;
     useSupply(id: string, from?: 'bag' | 'safe', uid?: string): MutationResult;
     equipItem(uid: string): MutationResult;
+    /** Equip a gun from the open container (#26 F15): the replaced gun and rounds go to the backpack, in one write. */
+    equipLoot(ref: TargetRef, uid: string): MutationResult;
     dropItem(uid: string, from?: 'bag' | 'safe'): MutationResult;
     /** Live carried kg, including worn charm and loaded rounds; views only format this value. */
     carriedWeight(): number;
