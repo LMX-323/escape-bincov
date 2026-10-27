@@ -140,7 +140,7 @@ export class CoastSampleHost {
 
   constructor(readonly handle: CoastHandle, private session: SessionState, private saves: SaveSession, readonly opts: ViewOptions,
     private onExit: (o: SampleExit) => void, private exportBackup: () => void) {
-    this.sound = new SampleSound(audio);
+    this.sound = new SampleSound(audio, () => this.opts.feel ?? 'enhanced');
   }
 
   get runtime() { return this.handle.runtime; }
@@ -161,7 +161,7 @@ export class CoastSampleHost {
       this.view.onRebuild = () => this.fade();
       this.input.touch = document.documentElement.classList.contains('mobile') || matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches;
       this.inv = new InventoryPanel(this.q('[data-panel]'), {
-        session: this.session, saves: this.saves, services: this.services,
+        services: this.services,
         lootRef: () => this.lootRef(), touch: () => this.input.touch, toast: (t, bad) => this.toast(t, bad),
         saveFailed: () => { if (!this.services.checkpoint()) this.lastRejected = 'checkpoint'; },
         close: () => this.closePanel(true),
@@ -939,7 +939,8 @@ export class CoastSampleHost {
       }
       this.toast(e.action === 'equip' && e.reason === 'rejected' ? '无法装备，背包装不下换下的武器和弹药。请先腾出空间。' : reasonText(e.reason), true);
     }
-    else if (e.type === 'looted' && e.durability === 'committed') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
+    // A gun equipped straight from a container (#26 F15) is announced by the panel that equipped it.
+    else if (e.type === 'looted' && e.durability === 'committed' && e.to !== 'equip') this.toast(`获得 ${name(e.item)} ×${e.qty}${e.partial ? '（部分）' : ''}`);
   }
   /** Radio line: the original shows Runtime messages (say) in a timed radio box. */
   private radio(text: string, seconds: number) { const r = this.q('[data-radio]'); r.textContent = text; r.hidden = false; this.radioLeft = Math.max(3, seconds || 6); this.placeRadio(); }

@@ -153,6 +153,15 @@ html.mobile[data-coast-sample] #toast { bottom: calc(76px + var(--safe-bottom, 0
 .cs-split { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; }
 .cs-split input { width: 3.5em; font: inherit; background: #2b2a26; color: var(--cs-text); border: 1px solid var(--cs-line); padding: 2px 4px; }
 .cs-inv-foot { margin-top: 8px; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; color: var(--cs-muted); }
+/* Primary-weapon slot (#26 F15): a drop target above the safe, styled like the grid cells beside it. */
+.cs-slot { display: grid; justify-items: center; gap: 2px; padding: 6px 8px; background: #0d1815; border: 1px solid #5d6e50; cursor: pointer; user-select: none; font-family: "Microsoft YaHei", sans-serif; font-size: 12px; line-height: 16px; color: var(--cs-muted); }
+.cs-slot .inventory-art { position: static; }
+.cs-slot b { font-weight: 400; font-size: 14px; line-height: 18px; color: #dce3c7; }
+.cs-slot.empty { border-style: dashed; }
+.cs-slot:hover, .cs-slot.ready { border-color: #b9c58e; background: #1b2a20; }
+.cs-slot.ready { box-shadow: 0 0 0 1px #dae4ad inset; }
+.cs-slot.over { border-color: #dae4ad; background: #2c3d2a; box-shadow: 0 0 0 2px #dae4ad66; }
+.cs-slot.over.invalid { border-color: #ce9672; background: #3a2721; box-shadow: 0 0 0 2px #ce967266; }
 .cs-place-bar { margin-bottom: 8px; }
 .cs-guide { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin: 0 0 10px; }
 .cs-guide kbd { display: inline-block; min-width: 7em; margin-right: 8px; padding: 0 4px; background: #3a372f; color: #f0e3bd; border: 1px solid #5a554a; font: inherit; font-size: 13px; line-height: 18px; }

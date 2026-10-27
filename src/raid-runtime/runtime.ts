@@ -612,18 +612,37 @@ export class CoastRaidRuntime implements RaidRuntime {
             else this.spawnLoot(this.player.x, this.player.y, item.id, item.qty, !!item.relief);
         });
     }
-    equipItem(uid: string) {
+    equipItem(uid: string) { return this.equip(uid, null); }
+    /** #26 F15: equip a gun straight from the open container; same rules and checks as transferLoot's target. */
+    equipLoot(ref: TargetRef, uid: string): MutationResult {
+        if (!this.validRef(ref) || ref.kind !== 'container' || !this.canLootContainer(ref.id, ref.runId)) {
+            this.rejected('equip', 'stale-target');
+            return 'rejected';
+        }
+        return this.equip(uid, ref.id);
+    }
+    /**
+     * The gun swap (D.equipRun) from the backpack or a live container. The container is world state: its change is
+     * captured and rolled back with the carried inventory, and persists in the same write as the loadout.
+     */
+    private equip(uid: string, containerId: string | null) {
         this.setSampleGun(null);
         return this.transaction('equip', () => {
+            const from = containerId === null ? undefined : this.getLootContainer(containerId)?.inventory;
+            const taken = from?.items.find(i => i.uid === uid);
+            if (containerId !== null && !taken)
+                return false;
             this.draw();
             this.syncMagazine();
-            if (!D.equipRun(this.session.loadout!, uid))
+            if (!D.equipRun(this.session.loadout!, uid, from))
                 return false;
             this.mag = this.session.loadout!.ammo;
             this.magRelief = this.session.loadout!.ammoRelief;
             this.knife = false;
             this.reloadLeft = 0;
             this.startReload();
+            if (taken)
+                this.emit({ type: 'looted', source: containerId!, item: taken.id, qty: 1, partial: false, to: 'equip' });
         });
     }
     transferLoot(ref: TargetRef, request: LootTransfer): MutationResult {
@@ -1264,7 +1283,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         const sources = critSources({ technique: effectiveAttributes(state).technique, weapon: w, perks, focus: state.body.effects.focus > 0, breath: charge });
         return sources ? { sources, multiplier: critMultiplier(perks), target: sources.some(s => s.id === 'technique-15-a') ? breath.target : null } : undefined;
     }
-    damageEnemy(e: Enemy, damage: number, incomingAngle = Math.atan2(this.player.y - e.y, this.player.x - e.x)) {
+    damageEnemy(e: Enemy, damage: number, incomingAngle = Math.atan2(this.player.y - e.y, this.player.x - e.x), bullet?: string) {
         if (e.hp <= 0)
             return;
         const hp = e.hp, angle = incomingAngle;
@@ -1294,7 +1313,8 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         const now = this.enemies.find(a => a.uid === e.uid)!;
         this.hurtTimers.set(e.uid, .07);
-        this.emit({ type: 'hurt', cause: 'blow', uid: e.uid, at: { x: e.x, y: e.y }, damage: hp - now.hp, critical: false, angle });
+        this.emit({ type: 'hurt', cause: 'blow', uid: e.uid, at: { x: e.x, y: e.y }, damage: hp - now.hp, critical: false, angle,
+            ...(bullet === undefined ? {} : { bullet }) });
         if (now.hp <= 0) {
             this.emit({ type: 'death', uid: e.uid, ...(enemyRules(this.layered?.raid) ? { killer: 'player' } : {}), corpseAngle: now.rotation - (this.layered ? 0 : Math.PI / 2), containerId: `corpse-${e.uid}` });
             this.targetDied(e.uid);
@@ -1322,7 +1342,7 @@ export class CoastRaidRuntime implements RaidRuntime {
         }
         this.hitNotice = 1;
     }
-    hurt(amount: number, source?: Point, owner?: string) {
+    hurt(amount: number, source?: Point, owner?: string, bullet?: string) {
         if (this.extracted)
             return;
         const hp = this.hp;
@@ -1344,7 +1364,8 @@ export class CoastRaidRuntime implements RaidRuntime {
             clearBreath(this.breath);
         this.extractTime = 0;
         this.emit({ type: 'hurt', cause: 'blow', uid: 'player', at: { ...this.player }, damage: hp - this.hp, critical: false,
-            angle: source ? Math.atan2(source.y - this.player.y, source.x - this.player.x) : null });
+            angle: source ? Math.atan2(source.y - this.player.y, source.x - this.player.x) : null,
+            ...(bullet === undefined ? {} : { bullet }) });
         if (this.hp <= 0) {
             this.emit({ type: 'death', uid: 'player', corpseAngle: this.player.rotation, containerId: null });
             this.finish('death');
@@ -1353,7 +1374,7 @@ export class CoastRaidRuntime implements RaidRuntime {
     private observeShot(e: ShotObservation) {
         this.emit({ type: 'impact', bullet: e.bullet.uid, owner: bulletOwner(e.bullet), reason: e.reason, lastFree: e.lastFree, contact: e.contact, normal: e.normal, surface: e.surface, target: e.target });
         if (e.target && e.damage > 0) {
-            this.emit({ type: 'hurt', cause: 'blow', uid: e.target, at: e.contact ?? e.lastFree, damage: e.damage, critical: e.critical, angle: e.angle });
+            this.emit({ type: 'hurt', cause: 'blow', uid: e.target, at: e.contact ?? e.lastFree, damage: e.damage, critical: e.critical, angle: e.angle, bullet: e.bullet.uid });
             if (e.dead) {
                 const enemy = this.enemies.find(a => a.uid === e.target);
                 const killer = enemyRules(this.layered?.raid) ? bulletOwner(e.bullet) : null;
@@ -1407,9 +1428,9 @@ export class CoastRaidRuntime implements RaidRuntime {
                 if (target) {
                     this.emit({ type: 'impact', bullet: b.uid, owner: bulletOwner(b), reason: 'hit-actor', lastFree: previous, contact: { x: b.x, y: b.y }, normal: null, surface: 'actor', target });
                     if (target === 'player')
-                        this.hurt(b.damage, { x: this.player.x - b.vx, y: this.player.y - b.vy });
+                        this.hurt(b.damage, { x: this.player.x - b.vx, y: this.player.y - b.vy }, undefined, b.uid);
                     else
-                        this.damageEnemy(this.enemies.find(e => e.uid === target)!, b.damage, Math.atan2(-b.vy, -b.vx));
+                        this.damageEnemy(this.enemies.find(e => e.uid === target)!, b.damage, Math.atan2(-b.vy, -b.vx), b.uid);
                     remove = true;
                     break;
                 }
