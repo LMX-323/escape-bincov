@@ -11,14 +11,14 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
-import { mallWorldV3 } from '../src/mall-world.ts';
+import { mallWorldV4 } from '../src/mall-world.ts';
 import { traversable } from '../src/spatial.ts';
 import { browserOptions } from './browser-options.mjs';
 import { raidReady, frames } from './raid-view.mjs';
 const out=resolve('test-results');await mkdir(out,{recursive:true});
 const report={htmlSha256:createHash('sha256').update(await readFile('dist/index.html')).digest('hex'),startedAt:new Date().toISOString(),methodology:'Offline native mall E input on the 2.5D view (layout 4). Explicit candidates move the original 25 enemy identities to obstruct target landing slots and freeze enemy AI, then clear exactly one slot. No fabricated enemy identities or reset population.',steps:[],errors:[],requests:[]};
 const browser=await chromium.launch(browserOptions);report.browser=browser.version();const ctx=await browser.newContext({viewport:{width:1280,height:720},offline:true}),page=await ctx.newPage();page.setDefaultTimeout(30000);page.on('pageerror',e=>report.errors.push(e.stack??e.message));ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
-const WORLD=mallWorldV3(),entry=WORLD.maps['mall-f1'].entries.find(e=>e.id==='S-N-up'),at=entry.landing,slots=[];
+const WORLD=mallWorldV4(),entry=WORLD.maps['mall-f1'].entries.find(e=>e.id==='S-N-up'),at=entry.landing,slots=[];
 for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++){const p={x:at.x+x*32,y:at.y+y*32};if(Math.hypot(p.x-at.x,p.y-at.y)<=64&&traversable({definition:WORLD.maps['mall-f2'],doors:{},highTide:true},p,'body',10))slots.push(p);}
 const snapshot=()=>page.evaluate(()=>{const s=window.__bincov.saveSession.captureExpansion(),b=window.__bincovSample.host.lastBatch;return{map:s.raid.currentMap,shown:b.stamp.world.mapId,player:s.raid.player,enemies:Object.values(s.raid.maps).flatMap(m=>m.enemies).map(e=>e.uid).sort(),roster:s.raid.roster,pursuits:s.raid.pursuits,mag:b.frame.hud.weapon.mag};});
 const mapShown=id=>page.waitForFunction(id=>window.__bincovSample.host.lastBatch?.stamp.world.mapId===id,id);

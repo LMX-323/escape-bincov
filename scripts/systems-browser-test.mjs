@@ -8,7 +8,7 @@ import { deployFromYard } from './yard-entry.mjs';
 import { batch, dragItem, frames, raidReady, waitPanel } from './raid-view.mjs';
 import * as D from '../src/domain.ts';
 import { spacePath, traversable } from '../src/spatial.ts';
-import { MALL_ANCHORS, mallWorldV3 } from '../src/mall-world.ts';
+import { MALL_ANCHORS, mallWorldV4 } from '../src/mall-world.ts';
 import { browserOptions } from './browser-options.mjs';
 import { resumeStalls } from './stall-resume.mjs';
 const out = resolve('test-results'); await mkdir(out, {recursive:true});
@@ -19,7 +19,7 @@ await resumeStalls(ctx);
 const page = await ctx.newPage(); page.setDefaultTimeout(30000); page.on('pageerror',e=>report.errors.push(e.stack ?? e.message)); ctx.on('request',r=>{if(/^https?:/.test(r.url()))report.requests.push(r.url());});
 const action=(name,id)=>page.locator(`[data-action="${name}"]${id?`[data-id="${id}"]`:''}`);
 const doButton=(name,p=page)=>p.locator(`.coast-sample [data-do="${name}"]`);
-const MALL=mallWorldV3();
+const MALL=mallWorldV4();
 // Stored record, profile, live expansion (the raid Runtime's capture during a raid) and the open panel (old page or raid host).
 const state=()=>page.evaluate(()=>{const a=window.__bincov.app;return {raw:localStorage.getItem('escape-bincov.session.v2'),profile:a.save,expansion:window.__bincov.saveSession.captureExpansion(),overlay:a.overlay,panel:window.__bincovSample?.host?.panel??null};});
 async function step(name,task){const row={name,status:'running'};report.steps.push(row);try{await task();assert.deepEqual(report.errors,[]);assert.deepEqual(report.requests,[]);row.status='passed';console.log('PASS',name);}catch(e){row.status='failed';row.error=e.stack;throw e;}}

@@ -137,7 +137,8 @@
 ### 检查
 
 - 单测：[`tests/mall-layout-v4.test.ts`](../../tests/mall-layout-v4.test.ts)（注册与哈希、保留三版全部家具、与一版的差别只在家具/旧陈设格、每个区域都有家具、小队岗位、连排间距）；布局约束、世界、运行时、遭遇和画法测试都把四版加进了版本循环（落点、穿行带、锚点、通道宽度、两种潮位连通、敌人物资分配、碰撞/视线/子弹、逐区路线、十次楼梯往返、刷新与备份、100 个种子装小队、东侧绕行、程序绘制与灯光只在四版生效）。
-- 浏览器：`test:mall-sample` 新增 M20（10 处地点、1280×720 与 1920×1080，HUD 地点名、无“样板外”、无压暗、两层程序绘制件 132/107 件），其余步骤改查四版；`test:mall-landing`、`test:mall-passages`、`test:raid-default`、`test:systems`、`test:qol-expansion`、`test:enemy` 改查四版。
+- 浏览器：`test:mall-sample` 新增 M20（10 处地点、1280×720 与 1920×1080，HUD 地点名、无“样板外”、无压暗、两层程序绘制件 132/107 件），其余步骤改查四版；`test:mall-landing`、`test:mall-passages`、`test:raid-default`、`test:systems`、`test:qol-expansion`、`test:enemy` 改查四版；`test:mall-landing`、`test:systems`、`test:layered-play` 的路线和落点也改按四版地图计算。
+- 自然游玩 `test:layered-play`（真实时钟，种子 41）：首局 600 秒超时、第二局死亡、第三局撤离，四次换层，零错误。同一种子在四版里敌人落点和三版不同（可用空地变了），二层等待点附近多了一名拾荒者，脚本首局因此要先打一架；脚本一度还按三版地图导航，改正后通过。
 
 ### 已知问题与剩余
 
