@@ -1,3 +1,7 @@
+## 2026-10-27 #115：行动背包有限服务同步 main（续作）
+
+维护者 10-27 要求查看 #115 去向并合入后再做 #26 F15。#115 自 10-25 起无人续作、无评论，准确 head `3e1047b` 当时 CI 全过。本次在隔离工作树把 main `86add10`（#126、#127 等已合入）合进原分支：源码自动合并，只有本文件冲突，保留双方小节。实现和接口不变；同步后的验证结果见 PR 正文。F15 另由 PR #129 承接（基于本分支）。10-27 晚 #128（F14）合入后，再把 main `8b59019` 合进来一次，同样只有本文件冲突，保留双方小节。
+
 ## 2026-10-27 #26 F14：商场里没揭示的房间压暗（PR #128）
 
 维护者 10-27 在局域网试玩商场四版后反馈：“目前可视范围指示不太清晰：有时候敌人看不见，我又不知道他在视野盲区里，会让人感到疑惑。”分支 `claude/issue26-f14-reveal-cue-a98142`，基线 main `0d20857`，#127 合入后正常合并 main `86add10`（无冲突），在四版上复查。
@@ -52,6 +56,12 @@
 新增回归在 [shotgun-hit-sounds.test.ts](tests/shotgun-hit-sounds.test.ts)，声音规则在 [sound.ts](src/coast-view/sound.ts)，可选字段在 [事件契约](src/raid-runtime/contract.ts)。本地完整单测 884/884（含新增 10 项）、专项与原声音测试 25/25、工程守卫 64/64、类型检查及打包已通过。HTML SHA-256 为 `da677d7e3f8dbdcfc97524383fbf111ee8752abb660b76dd2fee8e61bf8d0979`；独立只读审阅无阻断。共享 node_modules 的 pnpm 依赖预检拒绝工作树链接后，实际验证使用相同 package scripts 的 Node 命令，未安装依赖。浏览器、真机和试听未运行；产品改动已由 root 与独立审阅者复核，获准推送并创建关联 #75 的草稿 PR；不自行合并或发布，最终 head 与 CI 以 PR 正文为准。#106 的改枪 M2 仍走原分支，后续正常处理公共模块冲突。
 
 同步 main `ae2ad6b`（#120、#121 已合入）：唯一冲突在 `sound.ts` 的 `case 'shot'` 开头，按 [PR 评论](https://github.com/xuys2025/escape-bincov/pull/113#issuecomment-6398609630)保留 #121 的音色选择（`timbre`）和本 PR 的弹丸登记，玩家开枪按音色族播放；任务清单 #75 一行改掉“分枪种枪声未排期”的过时说法。合并后单测 887/887（含本 PR 10 项）、`pnpm package` 通过，`check:ci` 63/64（唯一失败是本机 Git 路径的已知环境问题）。之后又同步 main `7d1827c`（#122，C 组姿态图集，只有素材和文档），没有冲突，单测 887/887、`pnpm package` 通过，HTML 与上次逐字节相同。浏览器、试听和真机仍未运行。
+
+## 2026-10-25 行动背包有限服务（`refactor/raid-inventory-services`）
+
+#60 Q-E02 B，同一交付完成B1三有限命令+B2 detached窄读投影；起点 main `974a3a8d1ad2a7662c3a828226295d6c9b31eb64`，实现/验证入口见 [摘要](docs/tasks/quality-entropy.md#q-e02-b-行动背包有限服务)、[派生读数](docs/CODEMAP.md#派生读数)和正式工厂单测 `tests/raid-inventory-services.test.ts`。面板不持Session/SaveSession，命令回调内取fresh loadout，保留原 mutate接受集合、世界同事务、失败引用替换和原UI错误反馈；inventory全量quick/loot部分quick分别保持，不改存档/时钟/规则，不搬Scope/renderer。
+
+本地正式工厂10项+原负重11/11，完整884/884、工程守卫64/64、package/最终类型检查通过。浅读投影及错误部分quick两种副本回归均被断言拦下；两尺寸键鼠与保存失败/嵌套枪件的既有issue26定向case 3/3通过，页面异常/外网0，真实截图和[验证记录](docs/tasks/raid-inventory-services/validation.json)已归档；完整其余浏览器风险由准确head CI复核。10-25 已推送并建立 PR #115；不自行合并发布。
 
 ## 2026-10-24 打包产物改由 CI 构建和发布（`ci/no-committed-builds`）
 
