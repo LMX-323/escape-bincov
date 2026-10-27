@@ -9,7 +9,7 @@
  * aisles, and the F2 fashion-store posts and crate stores of the raider encounter (src/enemy-mall.ts). Parallel rows of
  * fixtures keep two open rows between them.
  */
-import { MALL_V3_LAYOUT, type Placement } from './mall-layout-v2';
+import { MALL_V2_REGIONS, MALL_V3_LAYOUT, type Placement } from './mall-layout-v2';
 
 const F1: readonly Placement[] = [
     // F1-01 pharmacy: medicine shelves on the back wall, the dispensing counter (staff rows behind it), one shelf run
@@ -44,11 +44,12 @@ const F1: readonly Placement[] = [
     // O-03 east alley: condensers on the facade, a skip, a car, pallets, a barrier before the loading yard.
     { type: 'dumpster', x: 67, y: 7 }, { type: 'ac-unit', x: 65, y: 10 }, { type: 'ac-unit', x: 65, y: 16 }, { type: 'car', x: 71, y: 12 },
     { type: 'pallet', x: 73, y: 19 }, { type: 'ac-unit', x: 65, y: 33 }, { type: 'barrier', x: 66, y: 42, n: 3 },
-    // O-04 south street: two cars, a barrier line, a skip, sandbags; the south exit and P-S lane stay clear.
-    { type: 'dumpster', x: 2, y: 53 }, { type: 'car', x: 24, y: 52 }, { type: 'barrier', x: 30, y: 53, n: 4 }, { type: 'planter', x: 37, y: 49 },
-    { type: 'sandbags', x: 44, y: 53 }, { type: 'car', x: 47, y: 50 },
+    // O-04 south street: two cars, a barrier line, a skip, sandbags; the south exit and P-S lane stay clear. Pieces stand
+    // north of row 53: the hoarding along the map edge hides what stands against it.
+    { type: 'dumpster', x: 2, y: 52 }, { type: 'car', x: 24, y: 50 }, { type: 'barrier', x: 30, y: 52, n: 4 }, { type: 'planter', x: 37, y: 49 },
+    { type: 'sandbags', x: 44, y: 52 }, { type: 'car', x: 47, y: 50 },
     // O-05 loading yard: a container, pallets, a skip; the loading exit stays clear.
-    { type: 'pallet', x: 59, y: 52 }, { type: 'pallet', x: 60, y: 52 }, { type: 'dumpster', x: 63, y: 53 }, { type: 'container', x: 70, y: 51 },
+    { type: 'pallet', x: 59, y: 51 }, { type: 'pallet', x: 60, y: 51 }, { type: 'dumpster', x: 63, y: 52 }, { type: 'container', x: 70, y: 50 },
 ];
 
 const F2: readonly Placement[] = [
@@ -84,6 +85,12 @@ const F2: readonly Placement[] = [
     { type: 'vending', x: 57, y: 43 }, { type: 'bench', x: 57, y: 47 }, { type: 'planter', x: 63, y: 47 },
     { type: 'vending', x: 9, y: 30 }, { type: 'lockers', x: 9, y: 33, n: 2 },
 ];
+
+/** Whether a layout revision furnishes every region (the view then dims no room and marks none as outside the sample). */
+export const mallFullyDressed = (revision: string | null | undefined): boolean => revision === 'mall-layout-4';
+/** Whether a region of a layout revision is furnished: every region in layout 4, the demo route (MALL_V2_REGIONS) otherwise. */
+export const mallRegionDressed = (revision: string | null | undefined, region: string): boolean =>
+    mallFullyDressed(revision) || (MALL_V2_REGIONS as readonly string[]).includes(region);
 
 export const MALL_V4_LAYOUT: Record<'mall-f1' | 'mall-f2', readonly Placement[]> = {
     'mall-f1': [...MALL_V3_LAYOUT['mall-f1'], ...F1],

@@ -25,7 +25,7 @@ test('布局四版按自己的世界注册：一至三版逐字节不变，四�
     assert.deepEqual([V4.id, V4.revision, V4.enemyCount, V4.spawnMap, V4.spawn], ['mall-v4', 'mall-layout-4', 25, 'mall-f1', MALL_V2_SPAWN]);
     // Layout 3 is pinned now that layout 4 shares its builder; layout 4 is pinned for the raids saved on it.
     assert.equal(createHash('sha256').update(JSON.stringify(V3)).digest('hex'), '8b114a63909ce3ead9080ea763e8770b2552cea220797e9048222ad6a7961c47');
-    assert.equal(createHash('sha256').update(JSON.stringify(V4)).digest('hex'), 'V4_SHA');
+    assert.equal(createHash('sha256').update(JSON.stringify(V4)).digest('hex'), '934ba1384c4009bf0586cf8e79c06f760d11680847c8606e134699385b5780df');
     for (const id of Object.keys(V3.maps)) {
         const a = V3.maps[id], b = V4.maps[id];
         assert.deepEqual(b.regions, a.regions); assert.deepEqual(b.doors, a.doors); assert.deepEqual(b.entries, a.entries);
